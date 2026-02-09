@@ -29,6 +29,10 @@ def create_app() -> Flask:
     def index() -> str:
         return render_template("index.html")
 
+    @app.route("/ui")
+    def ui() -> str:
+        return render_template("custom_ui.html")
+
     @app.get("/api/scenarios")
     def scenarios() -> Any:
         return jsonify(
