@@ -5,7 +5,7 @@ import json
 import os
 from typing import Any, Dict, List
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 from mssdppg.scenarios import DEFAULT_SCENARIO, INVESTOR_SCENARIOS, scenario_dict
 from mssdppg.physics.dp2d import DPParams, simulate as simulate_2d
@@ -22,12 +22,22 @@ from mssdppg.economics.land import land_metrics
 from mssdppg.economics.smoothing import smoothing_curve
 
 
+def _scenario_value(key: str) -> Any:
+    if isinstance(DEFAULT_SCENARIO, dict):
+        return DEFAULT_SCENARIO[key]
+    return getattr(DEFAULT_SCENARIO, key)
+
+
 def create_app() -> Flask:
     app = Flask(__name__)
 
     @app.route("/")
     def index() -> str:
-        return render_template("index.html")
+        return redirect(url_for("ui"))
+
+    @app.route("/ui")
+    def ui() -> str:
+        return render_template("custom_ui.html")
 
     @app.get("/api/scenarios")
     def scenarios() -> Any:
@@ -57,13 +67,13 @@ def create_app() -> Flask:
         if cached:
             return jsonify({"cache_key": key, "curve": cached["curve"], "cached": True})
         sim_params = DPParams(
-            l1=sim_inputs.get("l1", DEFAULT_SCENARIO.l1),
-            l2=sim_inputs.get("l2", DEFAULT_SCENARIO.l2),
-            m_upper_arm=sim_inputs.get("m_upper_arm", DEFAULT_SCENARIO.m_upper_arm),
-            m_middle=sim_inputs.get("m_middle", DEFAULT_SCENARIO.m_middle),
-            m_lower_arm=sim_inputs.get("m_lower_arm", DEFAULT_SCENARIO.m_lower_arm),
-            m_tip=sim_inputs.get("m_tip", DEFAULT_SCENARIO.m_tip),
-            n_pendulums=int(sim_inputs.get("n_pendulums", DEFAULT_SCENARIO.n_pendulums)),
+            l1=sim_inputs.get("l1", _scenario_value("l1")),
+            l2=sim_inputs.get("l2", _scenario_value("l2")),
+            m_upper_arm=sim_inputs.get("m_upper_arm", _scenario_value("m_upper_arm")),
+            m_middle=sim_inputs.get("m_middle", _scenario_value("m_middle")),
+            m_lower_arm=sim_inputs.get("m_lower_arm", _scenario_value("m_lower_arm")),
+            m_tip=sim_inputs.get("m_tip", _scenario_value("m_tip")),
+            n_pendulums=int(sim_inputs.get("n_pendulums", _scenario_value("n_pendulums"))),
         )
         curve = build_power_curve(speeds, mode, aero_params, sim_params)
         write_cache(key, {"curve": curve})
@@ -78,8 +88,8 @@ def create_app() -> Flask:
             histogram = payload.get("histogram", [])
             bins = [(float(v), float(p)) for v, p in histogram]
         else:
-            k = float(payload.get("weibull_k", DEFAULT_SCENARIO.weibull_k))
-            c = float(payload.get("weibull_c", DEFAULT_SCENARIO.weibull_c))
+            k = float(payload.get("weibull_k", _scenario_value("weibull_k")))
+            c = float(payload.get("weibull_c", _scenario_value("weibull_c")))
             speeds = [v for v, _ in curve]
             bins = bin_probabilities(speeds, k, c)
         aep_kwh = aep_from_bins(curve, bins)
@@ -92,12 +102,13 @@ def create_app() -> Flask:
         investor_rows = []
         for scenario in INVESTOR_SCENARIOS:
             inputs = dict(payload)
-            inputs["wacc_pct"] = scenario["wacc_pct"]
-            inputs["mechanical_usd"] = inputs.get("mechanical_usd", 0.0) * scenario["capex_multiplier"]
-            inputs["electrical_usd"] = inputs.get("electrical_usd", 0.0) * scenario["capex_multiplier"]
-            inputs["civil_bos_usd"] = inputs.get("civil_bos_usd", 0.0) * scenario["capex_multiplier"]
-            inputs["soft_costs_usd"] = inputs.get("soft_costs_usd", 0.0) * scenario["capex_multiplier"]
-            land_cost = scenario["land_cost_usd_per_m2"] * payload.get("land_area_m2", 0.0)
+            multiplier = float(scenario.get("multiplier", scenario.get("capex_multiplier", 1.0)))
+            inputs["wacc_pct"] = float(scenario.get("wacc_pct", payload.get("wacc_pct", 8.0)))
+            inputs["mechanical_usd"] = inputs.get("mechanical_usd", 0.0) * multiplier
+            inputs["electrical_usd"] = inputs.get("electrical_usd", 0.0) * multiplier
+            inputs["civil_bos_usd"] = inputs.get("civil_bos_usd", 0.0) * multiplier
+            inputs["soft_costs_usd"] = inputs.get("soft_costs_usd", 0.0) * multiplier
+            land_cost = float(scenario.get("land_cost_usd_per_m2", 0.0)) * payload.get("land_area_m2", 0.0)
             inputs["mechanical_usd"] += land_cost
             row = lcoe_table(inputs)
             row["name"] = scenario["name"]
@@ -144,13 +155,13 @@ def create_app() -> Flask:
         payload = request.get_json(force=True)
         wind_speed = float(payload.get("wind_speed", 8.0))
         params = DPParams(
-            l1=payload.get("l1", DEFAULT_SCENARIO.l1),
-            l2=payload.get("l2", DEFAULT_SCENARIO.l2),
-            m_upper_arm=payload.get("m_upper_arm", DEFAULT_SCENARIO.m_upper_arm),
-            m_middle=payload.get("m_middle", DEFAULT_SCENARIO.m_middle),
-            m_lower_arm=payload.get("m_lower_arm", DEFAULT_SCENARIO.m_lower_arm),
-            m_tip=payload.get("m_tip", DEFAULT_SCENARIO.m_tip),
-            n_pendulums=int(payload.get("n_pendulums", DEFAULT_SCENARIO.n_pendulums)),
+            l1=payload.get("l1", _scenario_value("l1")),
+            l2=payload.get("l2", _scenario_value("l2")),
+            m_upper_arm=payload.get("m_upper_arm", _scenario_value("m_upper_arm")),
+            m_middle=payload.get("m_middle", _scenario_value("m_middle")),
+            m_lower_arm=payload.get("m_lower_arm", _scenario_value("m_lower_arm")),
+            m_tip=payload.get("m_tip", _scenario_value("m_tip")),
+            n_pendulums=int(payload.get("n_pendulums", _scenario_value("n_pendulums"))),
         )
         frames = simulate_2d(wind_speed, params, duration_s=payload.get("duration_s", 20.0))
         frames = downsample_frames(frames, step=payload.get("downsample", 5))
