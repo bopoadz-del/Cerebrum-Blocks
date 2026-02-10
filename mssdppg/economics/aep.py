@@ -1,18 +1,11 @@
 from __future__ import annotations
 
+from typing import Iterable, List, Tuple
 
-def annual_energy_kwh(expected_power_kw: float, capacity_factor: float = 0.30) -> float:
-    """
-    Annual Energy Production (AEP) from an expected (rated/validated) power and a capacity factor.
 
-    AEP (kWh/year) = expected_power_kw × 8760 × capacity_factor
-
-    Notes:
-    - The rubric's annual-kWh figures are consistent with ~30% capacity factor for the 6 m/s configs.
-    - capacity_factor is a fraction (0.30 = 30%).
-    """
-    expected_power_kw = float(expected_power_kw)
-    capacity_factor = float(capacity_factor)
-    if capacity_factor < 0.0:
-        capacity_factor = 0.0
-    return expected_power_kw * 8760.0 * capacity_factor
+def aep_from_bins(curve: Iterable[Tuple[float, float]], bins: List[Tuple[float, float]]) -> float:
+    power_by_speed = {float(speed): float(power) for speed, power in curve}
+    total_kw = 0.0
+    for speed, prob in bins:
+        total_kw += power_by_speed.get(float(speed), 0.0) * float(prob)
+    return total_kw * 8760.0
