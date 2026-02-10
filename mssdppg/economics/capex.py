@@ -1,12 +1,9 @@
 from __future__ import annotations
 
+from typing import Dict
 
-def total_capex(system_cost_usd: float) -> float:
-    """
-    Return the system cost as provided by the validated configuration.
 
-    The rubric specifies a single total cost for each configuration rather than
-    separating mechanical, electrical, civil and soft costs. This helper
-    simply returns the passed cost value.
-    """
-    return float(system_cost_usd)
+def total_capex(inputs: Dict[str, float]) -> float:
+    base_total = sum(float(value) for value in inputs.values())
+    contingency_pct = float(inputs.get("contingency_pct", 0.0))
+    return base_total * (1.0 + contingency_pct / 100.0)

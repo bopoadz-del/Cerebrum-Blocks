@@ -23,25 +23,10 @@ from mssdppg.economics.aep import annual_energy_kwh
 from mssdppg.economics.smoothing import smoothing_curve
 
 
-def aep_from_bins(curve: List[List[float]], bins: List[tuple[float, float]]) -> float:
-    power_by_speed = {float(speed): float(power) for speed, power in curve}
-    total_kw = 0.0
-    for speed, prob in bins:
-        total_kw += power_by_speed.get(float(speed), 0.0) * float(prob)
-    return total_kw * 8760.0
-
-
 def _scenario_value(key: str) -> Any:
     if isinstance(DEFAULT_SCENARIO, dict):
         return DEFAULT_SCENARIO[key]
     return getattr(DEFAULT_SCENARIO, key)
-
-
-def _resolve_config(payload: Dict[str, Any]) -> Dict[str, Any] | None:
-    config_name = payload.get("config_name")
-    if not config_name:
-        return None
-    return CONFIGS.get(str(config_name))
 
 
 def create_app() -> Flask:
@@ -49,7 +34,7 @@ def create_app() -> Flask:
 
     @app.route("/")
     def index() -> str:
-        return redirect(url_for("ui"))
+        return render_template("custom_ui.html")
 
     @app.route("/ui")
     def ui() -> str:
@@ -176,18 +161,12 @@ def create_app() -> Flask:
             inputs = dict(payload)
             multiplier = float(scenario.get("multiplier", scenario.get("capex_multiplier", 1.0)))
             inputs["wacc_pct"] = float(scenario.get("wacc_pct", payload.get("wacc_pct", 8.0)))
-            if "system_cost_usd" in inputs:
-                inputs["system_cost_usd"] = float(inputs.get("system_cost_usd", 0.0)) * multiplier
-            else:
-                inputs["mechanical_usd"] = inputs.get("mechanical_usd", 0.0) * multiplier
-                inputs["electrical_usd"] = inputs.get("electrical_usd", 0.0) * multiplier
-                inputs["civil_bos_usd"] = inputs.get("civil_bos_usd", 0.0) * multiplier
-                inputs["soft_costs_usd"] = inputs.get("soft_costs_usd", 0.0) * multiplier
+            inputs["mechanical_usd"] = inputs.get("mechanical_usd", 0.0) * multiplier
+            inputs["electrical_usd"] = inputs.get("electrical_usd", 0.0) * multiplier
+            inputs["civil_bos_usd"] = inputs.get("civil_bos_usd", 0.0) * multiplier
+            inputs["soft_costs_usd"] = inputs.get("soft_costs_usd", 0.0) * multiplier
             land_cost = float(scenario.get("land_cost_usd_per_m2", 0.0)) * payload.get("land_area_m2", 0.0)
-            if "system_cost_usd" in inputs:
-                inputs["system_cost_usd"] = float(inputs.get("system_cost_usd", 0.0)) + land_cost
-            else:
-                inputs["mechanical_usd"] = inputs.get("mechanical_usd", 0.0) + land_cost
+            inputs["mechanical_usd"] += land_cost
             row = lcoe_table(inputs)
             row["name"] = scenario["name"]
             investor_rows.append(row)

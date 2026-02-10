@@ -257,7 +257,7 @@ const calcSite = async () => {
       <li>Total AEP: ${data.total_aep_kwh.toFixed(0)} kWh</li>
       <li>Total avg kW: ${data.total_avg_kw.toFixed(2)} kW</li>
       <li>Land area: ${data.land_area_m2.toFixed(1)} m² (${data.land_area_ha.toFixed(2)} ha)</li>
-      <li>LCOE: $${(data.lcoe.lcoe_usd_per_kwh ?? data.lcoe.lcoe ?? 0).toFixed(4)} / kWh</li>
+      <li>LCOE: $${data.lcoe.lcoe.toFixed(4)} / kWh</li>
     </ul>
   `;
 };
