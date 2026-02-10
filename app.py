@@ -27,7 +27,7 @@ def create_app() -> Flask:
 
     @app.route("/")
     def index() -> str:
-        return render_template("index.html")
+        return render_template("custom_ui.html")
 
     @app.route("/ui")
     def ui() -> str:
