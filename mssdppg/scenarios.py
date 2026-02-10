@@ -14,12 +14,6 @@ class Scenario:
     m_lower_arm: float
     m_tip: float
     n_pendulums: int
-    swept_area_m2: float
-    cp: float
-    rho: float
-    drivetrain_eff: float
-    availability: float
-    inverter_rating_kw: float
     weibull_k: float
     weibull_c: float
 
@@ -33,12 +27,6 @@ DEFAULT_SCENARIO = Scenario(
     m_lower_arm=60.0,
     m_tip=40.0,
     n_pendulums=3,
-    swept_area_m2=45.0,
-    cp=0.35,
-    rho=1.225,
-    drivetrain_eff=0.96,
-    availability=0.97,
-    inverter_rating_kw=250.0,
     weibull_k=2.0,
     weibull_c=8.0,
 )
