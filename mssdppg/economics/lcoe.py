@@ -37,7 +37,6 @@ def lcoe_table(inputs: Dict[str, float]) -> Dict[str, float]:
         "annual_om_usd": annual_om,
         "aep_kwh": aep_kwh,
         "lcoe_usd_per_kwh": lcoe,
-        "lcoe": lcoe,
         "wacc_pct": wacc_pct,
         "project_life_years": life_years,
     }
