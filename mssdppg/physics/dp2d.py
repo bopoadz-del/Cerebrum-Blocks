@@ -28,7 +28,6 @@ def simulate(wind_speed: float, params: DPParams, duration_s: float = 20.0) -> L
         x = arm_extension * cos(phase / 2.0)
         y = arm_extension * sin(phase / 2.0)
         kinetic = 0.5 * params.m_tip * (wind_speed ** 2)
-        power_kw = 0.5 * 1.225 * 45.0 * 0.35 * wind_speed**3 / 1000.0
         frames.append(
             {
                 "t": round(t, 3),
@@ -36,7 +35,6 @@ def simulate(wind_speed: float, params: DPParams, duration_s: float = 20.0) -> L
                 "x": round(x, 3),
                 "y": round(y, 3),
                 "kinetic_j": round(kinetic, 3),
-                "power_kw": round(power_kw, 3),
             }
         )
     return frames

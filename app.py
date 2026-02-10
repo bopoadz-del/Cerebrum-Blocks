@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 from mssdppg.scenarios import DEFAULT_SCENARIO, INVESTOR_SCENARIOS, scenario_dict
+from mssdppg.configurations import CONFIGS
 from mssdppg.physics.dp2d import DPParams, simulate as simulate_2d
 from mssdppg.physics.energy import downsample_frames
 from mssdppg.wind.weibull import bin_probabilities
@@ -16,17 +17,10 @@ from mssdppg.wind.presets import WEIBULL_PRESETS
 from mssdppg.powercurve.builder import build_power_curve
 from mssdppg.powercurve.cache import make_key, read_cache, write_cache
 from mssdppg.economics.capex import total_capex
-from mssdppg.economics.lcoe import lcoe_table
+from mssdppg.economics.lcoe import lcoe_from_system, lcoe_table
 from mssdppg.economics.land import land_metrics
+from mssdppg.economics.aep import annual_energy_kwh
 from mssdppg.economics.smoothing import smoothing_curve
-
-
-def aep_from_bins(curve: List[List[float]], bins: List[tuple[float, float]]) -> float:
-    power_by_speed = {float(speed): float(power) for speed, power in curve}
-    total_kw = 0.0
-    for speed, prob in bins:
-        total_kw += power_by_speed.get(float(speed), 0.0) * float(prob)
-    return total_kw * 8760.0
 
 
 def _scenario_value(key: str) -> Any:
@@ -40,7 +34,7 @@ def create_app() -> Flask:
 
     @app.route("/")
     def index() -> str:
-        return redirect(url_for("ui"))
+        return render_template("custom_ui.html")
 
     @app.route("/ui")
     def ui() -> str:
@@ -50,6 +44,7 @@ def create_app() -> Flask:
     def scenarios() -> Any:
         return jsonify(
             {
+                "configs": CONFIGS,
                 "default": scenario_dict(),
                 "weibull_presets": WEIBULL_PRESETS,
                 "investor_scenarios": INVESTOR_SCENARIOS,
@@ -89,6 +84,18 @@ def create_app() -> Flask:
     @app.post("/api/aep")
     def aep() -> Any:
         payload = request.get_json(force=True)
+        config = _resolve_config(payload)
+        if config:
+            modules_count = int(payload.get("modules_count", 1))
+            capacity_factor = float(payload.get("capacity_factor", 0.30))
+            per_module_aep_kwh = annual_energy_kwh(config["expected_power"], capacity_factor)
+            return jsonify(
+                {
+                    "aep_kwh": per_module_aep_kwh * modules_count,
+                    "per_module_aep_kwh": per_module_aep_kwh,
+                }
+            )
+
         curve = payload.get("curve", [])
         wind_mode = payload.get("wind_mode", "weibull")
         if wind_mode == "histogram":
@@ -100,11 +107,54 @@ def create_app() -> Flask:
             speeds = [v for v, _ in curve]
             bins = bin_probabilities(speeds, k, c)
         aep_kwh = aep_from_bins(curve, bins)
-        return jsonify({"aep_kwh": aep_kwh, "bins": bins})
+        return jsonify({"aep_kwh": aep_kwh, "per_module_aep_kwh": aep_kwh, "bins": bins})
 
     @app.post("/api/lcoe")
     def lcoe() -> Any:
         payload = request.get_json(force=True)
+        config = _resolve_config(payload)
+
+        if config:
+            modules_count = int(payload.get("modules_count", 1))
+            capacity_factor = float(payload.get("capacity_factor", 0.30))
+            project_life_years = int(payload.get("project_life_years", 20))
+            wacc_pct = float(payload.get("wacc_pct", 8.0))
+            fixed_om = float(payload.get("fixed_om_usd_per_year", 0.0))
+            variable_om = float(payload.get("variable_om_usd_per_kwh", 0.0))
+            system_cost_usd = float(config["cost"]) * modules_count
+            aep_kwh = annual_energy_kwh(config["expected_power"], capacity_factor) * modules_count
+            base_table = lcoe_from_system(
+                system_cost_usd=system_cost_usd,
+                aep_kwh=aep_kwh,
+                project_life_years=project_life_years,
+                wacc_pct=wacc_pct,
+                fixed_om_usd_per_year=fixed_om,
+                variable_om_usd_per_kwh=variable_om,
+            )
+            investor_rows = []
+            for scenario in INVESTOR_SCENARIOS:
+                multiplier = float(scenario.get("multiplier", scenario.get("capex_multiplier", 1.0)))
+                row = lcoe_from_system(
+                    system_cost_usd=system_cost_usd * multiplier,
+                    aep_kwh=aep_kwh,
+                    project_life_years=project_life_years,
+                    wacc_pct=float(scenario.get("wacc_pct", wacc_pct)),
+                    fixed_om_usd_per_year=fixed_om,
+                    variable_om_usd_per_kwh=variable_om,
+                )
+                row["name"] = scenario["name"]
+                investor_rows.append(row)
+            return jsonify(
+                {
+                    "lcoe": base_table,
+                    "investor_scenarios": investor_rows,
+                    "capex_total_usd": base_table["capex_total_usd"],
+                    "annualized_capex_usd": base_table["annualized_capex_usd"],
+                    "annual_om_usd": base_table["annual_om_usd"],
+                    "aep_kwh": base_table["aep_kwh"],
+                }
+            )
+
         base_table = lcoe_table(payload)
         investor_rows = []
         for scenario in INVESTOR_SCENARIOS:
@@ -120,13 +170,63 @@ def create_app() -> Flask:
             row = lcoe_table(inputs)
             row["name"] = scenario["name"]
             investor_rows.append(row)
-        return jsonify({"lcoe": base_table, "investor_scenarios": investor_rows})
+        return jsonify(
+            {
+                "lcoe": base_table,
+                "investor_scenarios": investor_rows,
+                "capex_total_usd": base_table.get("capex_total_usd", 0.0),
+                "annualized_capex_usd": base_table.get("annualized_capex_usd", 0.0),
+                "annual_om_usd": base_table.get("annual_om_usd", 0.0),
+                "aep_kwh": base_table.get("aep_kwh", 0.0),
+            }
+        )
 
     @app.post("/api/site_rollup")
     def site_rollup() -> Any:
         payload = request.get_json(force=True)
         modules_count = int(payload.get("modules_count", 1))
-        module_aep_kwh = payload.get("module_aep_kwh", 0.0)
+        config = _resolve_config(payload)
+
+        if config:
+            capacity_factor = float(payload.get("capacity_factor", 0.30))
+            land_cost_usd_per_m2 = float(payload.get("land_cost_usd_per_m2", 3.0))
+            project_life_years = int(payload.get("project_life_years", 20))
+            wacc_pct = float(payload.get("wacc_pct", 8.0))
+            fixed_om = float(payload.get("fixed_om_usd_per_year", 0.0))
+            variable_om = float(payload.get("variable_om_usd_per_kwh", 0.0))
+
+            module_area_m2 = float(config.get("module_area_m2", payload.get("module_area_m2", 57.6)))
+            land = land_metrics(
+                modules_count=modules_count,
+                module_area_m2=module_area_m2,
+                land_cost_usd_per_m2=land_cost_usd_per_m2,
+            )
+            system_capex_usd = total_capex(float(config["cost"])) * modules_count
+            total_capex_usd = system_capex_usd + land["land_cost_usd"]
+            per_module_aep_kwh = annual_energy_kwh(float(config["expected_power"]), capacity_factor)
+            total_aep_kwh = per_module_aep_kwh * modules_count
+            total_avg_kw = total_aep_kwh / 8760.0 if total_aep_kwh else 0.0
+            lcoe_output = lcoe_from_system(
+                system_cost_usd=total_capex_usd,
+                aep_kwh=total_aep_kwh,
+                project_life_years=project_life_years,
+                wacc_pct=wacc_pct,
+                fixed_om_usd_per_year=fixed_om,
+                variable_om_usd_per_kwh=variable_om,
+            )
+            return jsonify(
+                {
+                    "total_capex_usd": total_capex_usd,
+                    "total_aep_kwh": total_aep_kwh,
+                    "total_avg_kw": total_avg_kw,
+                    "land_area_m2": land["land_area_m2"],
+                    "land_area_ha": land["land_area_ha"],
+                    "land_cost_usd": land["land_cost_usd"],
+                    "lcoe": lcoe_output,
+                }
+            )
+
+        module_aep_kwh = float(payload.get("module_aep_kwh", 0.0))
         module_avg_kw = module_aep_kwh / 8760 if module_aep_kwh else 0.0
         module_area_m2 = float(payload.get("module_area_m2", 57.6))
         land_cost_usd_per_m2 = float(payload.get("land_cost_usd_per_m2", 3.0))
@@ -149,19 +249,14 @@ def create_app() -> Flask:
         capex_total = total_capex(system_cost_usd) * modules_count + land["land_cost_usd"]
         total_aep_kwh = module_aep_kwh * modules_count
         total_avg_kw = module_avg_kw * modules_count
-        lcoe_inputs = {
-            "mechanical_usd": capex_total,
-            "electrical_usd": 0.0,
-            "civil_bos_usd": 0.0,
-            "soft_costs_usd": 0.0,
-            "contingency_pct": 0.0,
-            "aep_kwh": total_aep_kwh,
-            "project_life_years": payload.get("project_life_years", 20),
-            "wacc_pct": payload.get("wacc_pct", 8.0),
-            "fixed_om_usd_per_year": payload.get("fixed_om_usd_per_year", 0.0),
-            "variable_om_usd_per_kwh": payload.get("variable_om_usd_per_kwh", 0.0),
-        }
-        lcoe_output = lcoe_table(lcoe_inputs)
+        lcoe_output = lcoe_from_system(
+            system_cost_usd=capex_total,
+            aep_kwh=total_aep_kwh,
+            project_life_years=int(payload.get("project_life_years", 20)),
+            wacc_pct=float(payload.get("wacc_pct", 8.0)),
+            fixed_om_usd_per_year=float(payload.get("fixed_om_usd_per_year", 0.0)),
+            variable_om_usd_per_kwh=float(payload.get("variable_om_usd_per_kwh", 0.0)),
+        )
         return jsonify(
             {
                 "total_capex_usd": capex_total,
@@ -169,6 +264,7 @@ def create_app() -> Flask:
                 "total_avg_kw": total_avg_kw,
                 "land_area_m2": land["land_area_m2"],
                 "land_area_ha": land["land_area_ha"],
+                "land_cost_usd": land["land_cost_usd"],
                 "lcoe": lcoe_output,
             }
         )
