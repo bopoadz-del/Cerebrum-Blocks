@@ -121,9 +121,25 @@ def create_app() -> Flask:
         modules_count = int(payload.get("modules_count", 1))
         module_aep_kwh = payload.get("module_aep_kwh", 0.0)
         module_avg_kw = module_aep_kwh / 8760 if module_aep_kwh else 0.0
-        land = land_metrics(payload)
-        capex_inputs = payload.get("capex_inputs", {})
-        capex_total = total_capex(capex_inputs) * modules_count + land["land_cost_total"]
+        module_area_m2 = float(payload.get("module_area_m2", 57.6))
+        land_cost_usd_per_m2 = float(payload.get("land_cost_usd_per_m2", 3.0))
+        land = land_metrics(
+            modules_count=modules_count,
+            module_area_m2=module_area_m2,
+            land_cost_usd_per_m2=land_cost_usd_per_m2,
+        )
+        system_cost_usd = float(payload.get("system_cost_usd", 0.0))
+        if system_cost_usd <= 0.0:
+            capex_inputs = payload.get("capex_inputs", {})
+            contingency_pct = float(capex_inputs.get("contingency_pct", 0.0))
+            direct_cost = (
+                float(capex_inputs.get("mechanical_usd", 0.0))
+                + float(capex_inputs.get("electrical_usd", 0.0))
+                + float(capex_inputs.get("civil_bos_usd", 0.0))
+                + float(capex_inputs.get("soft_costs_usd", 0.0))
+            )
+            system_cost_usd = direct_cost * (1.0 + contingency_pct / 100.0)
+        capex_total = total_capex(system_cost_usd) * modules_count + land["land_cost_usd"]
         total_aep_kwh = module_aep_kwh * modules_count
         total_avg_kw = module_avg_kw * modules_count
         lcoe_inputs = {
