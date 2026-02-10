@@ -1,59 +1,57 @@
-"""
-Scenario definitions for validated MSSDPPG configurations.
-
-This module exports a default scenario derived from the rubric-defined
-4×40 ft asymmetric system. For other scenarios, import CONFIGS from
-mssdppg.configurations and select the desired entry.
-"""
-
 from __future__ import annotations
 
-from copy import deepcopy
-from typing import Any, Dict, List
-
-from mssdppg.configurations import CONFIGS, calculate_arm_masses
+from dataclasses import asdict, dataclass
+from typing import Dict, List
 
 
-def _build_default() -> Dict[str, Any]:
-    base = deepcopy(CONFIGS["4x40ft_asymmetric"])
-    m_upper_arm, m_lower_arm = calculate_arm_masses(base["L1"], base["L2"])
-    return {
-        "name": base["name"],
-        "l1": base["L1"],
-        "l2": base["L2"],
-        "m_upper_arm": m_upper_arm,
-        "m_middle": base["m_middle"],
-        "m_lower_arm": m_lower_arm,
-        "m_tip": base["m_tip"],
-        "n_pendulums": base["pendulums"],
-        "swept_area_m2": 57.6,
-        "cp": 0.35,
-        "rho": 1.225,
-        "drivetrain_eff": 0.96,
-        "availability": 0.97,
-        "inverter_rating_kw": 250.0,
-        "weibull_k": 2.0,
-        "weibull_c": 8.0,
-        "expected_power": base["expected_power"],
-        "cost": base["cost"],
-        "module_area_m2": base["module_area_m2"],
-    }
+@dataclass(frozen=True)
+class Scenario:
+    name: str
+    l1: float
+    l2: float
+    m_upper_arm: float
+    m_middle: float
+    m_lower_arm: float
+    m_tip: float
+    n_pendulums: int
+    weibull_k: float
+    weibull_c: float
 
 
-DEFAULT_SCENARIO = _build_default()
-
-
-def get_default_scenario() -> Dict[str, Any]:
-    """Return a deep copy of the default scenario configuration."""
-    return deepcopy(DEFAULT_SCENARIO)
-
+DEFAULT_SCENARIO = Scenario(
+    name="baseline",
+    l1=1.8,
+    l2=2.2,
+    m_upper_arm=120.0,
+    m_middle=85.0,
+    m_lower_arm=60.0,
+    m_tip=40.0,
+    n_pendulums=3,
+    weibull_k=2.0,
+    weibull_c=8.0,
+)
 
 INVESTOR_SCENARIOS: List[Dict[str, float]] = [
-    {"name": "Conservative", "multiplier": 1.1},
-    {"name": "Base", "multiplier": 1.0},
-    {"name": "Aggressive", "multiplier": 0.9},
+    {
+        "name": "Conservative",
+        "wacc_pct": 6.5,
+        "capex_multiplier": 1.15,
+        "land_cost_usd_per_m2": 4.5,
+    },
+    {
+        "name": "Balanced",
+        "wacc_pct": 8.0,
+        "capex_multiplier": 1.0,
+        "land_cost_usd_per_m2": 3.0,
+    },
+    {
+        "name": "Aggressive",
+        "wacc_pct": 10.5,
+        "capex_multiplier": 0.9,
+        "land_cost_usd_per_m2": 1.5,
+    },
 ]
 
 
-def scenario_dict() -> Dict[str, Any]:
-    return get_default_scenario()
+def scenario_dict() -> Dict[str, float]:
+    return asdict(DEFAULT_SCENARIO)

@@ -33,7 +33,7 @@ def create_app() -> Flask:
 
     @app.route("/")
     def index() -> str:
-        return redirect(url_for("ui"))
+        return render_template("custom_ui.html")
 
     @app.route("/ui")
     def ui() -> str:
