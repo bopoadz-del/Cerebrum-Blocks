@@ -8,7 +8,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from typing import Any, Dict, List, Optional
 import aiofiles
@@ -300,6 +301,7 @@ async def root():
         "blocks_available": len(BLOCK_REGISTRY),
         "environment": "render" if os.getenv("RENDER") else "development",
         "documentation": "/docs",
+        "todo": "/todo",
         "endpoints": {
             "v1_api": "/v1",
             "blocks": "/blocks",
@@ -307,6 +309,13 @@ async def root():
             "chain": "/chain",
             "health": "/health"
         }
+
+
+@app.get("/todo")
+async def todo():
+    """Launch TODO guide."""
+    static_file = os.path.join(os.path.dirname(__file__), "static", "todo.html")
+    return FileResponse(static_file)
     }
 
 @app.get("/blocks")
