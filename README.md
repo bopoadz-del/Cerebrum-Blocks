@@ -1,211 +1,192 @@
-# Cerebrum Blocks
+# 🧠 Cerebrum Blocks
 
-**Build AI like Lego.** One API. 13 blocks. Zero setup.
+> **AI for Developers in 3 Lines of Code**
+
+Build AI applications like Lego. One API key. 16 blocks. Infinite possibilities.
+
+[![PyPI](https://img.shields.io/pypi/v/cerebrum-sdk)](https://pypi.org/project/cerebrum-sdk/)
+[![npm](https://img.shields.io/npm/v/cerebrum-js)](https://www.npmjs.com/package/cerebrum-js)
+[![API Status](https://img.shields.io/badge/api-up-success)](https://api.cerebrumblocks.com/v1/health)
+
+---
+
+## ⚡ Quickstart
+
+### Python
 
 ```bash
-pip install cerebrum-blocks
+pip install cerebrum-sdk
 ```
 
 ```python
-from cerebrum import CerebrumClient
+from cerebrum_sdk import Cerebrum
 
-client = CerebrumClient(api_key="your-key")
-response = client.chat("Explain quantum computing in 3 sentences")
-print(response.text)
-```
+client = Cerebrum(api_key="cb_your_key")
 
----
-
-## 3-Line Quickstart
-
-```bash
-pip install cerebrum-blocks
-export CEREBRUM_API_KEY=your-key
-python -c "from cerebrum import CerebrumClient; print(CerebrumClient().chat('Hello!').text)"
-```
-
----
-
-## What You Get
-
-| Block | What It Does |
-|-------|-------------|
-| **chat** | OpenAI, Anthropic, local LLMs — with streaming |
-| **vector_search** | Semantic search with ChromaDB |
-| **image** | Analyze and generate images |
-| **ocr** | Extract text from images |
-| **pdf** | Extract text, images, metadata from PDFs |
-| **voice** | Speech-to-text & text-to-speech |
-| **translate** | Text translation |
-| **code** | Execute and analyze code |
-| **web** | Scrape and fetch web content |
-| **search** | Web search (Serper, DuckDuckGo) |
-| **google_drive** | Read/write Google Drive |
-| **onedrive** | Read/write Microsoft OneDrive |
-| **local_drive** | Local filesystem operations |
-| **android_drive** | Android storage access |
-
----
-
-## Python SDK
-
-```bash
-pip install cerebrum-blocks
-```
-
-```python
-from cerebrum import CerebrumClient
-
-client = CerebrumClient(api_key="your-key")
-
-# Chat with streaming
-for chunk in client.chat.stream("Tell me a story"):
+# Streaming chat
+async for chunk in client.chat.stream("Explain AI in simple terms"):
     print(chunk.text, end="")
-
-# Vector search
-client.vector_search.add(documents=[
-    {"text": "Python is great", "metadata": {"topic": "python"}},
-    {"text": "JavaScript is versatile", "metadata": {"topic": "js"}}
-], collection="docs")
-
-results = client.vector_search.query(
-    "What language should I learn?",
-    collection="docs",
-    top_k=2
-)
-
-# Chain blocks
-from cerebrum import chain
-
-result = chain(client) \
-    .then("ocr") \
-    .then("vector_search", {"operation": "add"}) \
-    .then("chat", {"prompt": "Summarize this:"}) \
-    .run("/path/to/image.png")
 ```
 
----
-
-## JavaScript SDK
+### JavaScript
 
 ```bash
-npm install cerebrum-blocks
+npm install cerebrum-js
 ```
 
 ```javascript
-import { CerebrumClient } from 'cerebrum-blocks';
+import { Cerebrum } from 'cerebrum-js';
 
-const client = new CerebrumClient({ apiKey: 'your-key' });
+const client = new Cerebrum({ apiKey: 'cb_your_key' });
 
-// Chat
-const response = await client.chat("Hello!");
-console.log(response.text);
-
-// Chat with streaming
-const stream = await client.chat.stream("Tell me a story");
-for await (const chunk of stream) {
-    process.stdout.write(chunk.text);
+// Streaming chat
+for await (const chunk of client.chatStream('Explain AI in simple terms')) {
+  process.stdout.write(chunk.text);
 }
-
-// Vector search
-await client.vectorSearch.add({
-    documents: [
-        { text: "Python is great", metadata: { topic: "python" } },
-    ],
-    collection: "docs"
-});
-
-const results = await client.vectorSearch.query({
-    query: "What language should I learn?",
-    collection: "docs",
-    topK: 2
-});
 ```
 
 ---
 
-## Self-Host (Optional)
+## 🔑 Get Your API Key
 
-Don't want to use our API? Run your own instance:
+👉 **[Get your API key](https://cerebrumblocks.com/dashboard)**
+
+- **Free**: 1,000 requests/month
+- **Pro**: $29/month, 50,000 requests
+- **Enterprise**: Custom pricing
+
+---
+
+## 🧱 16 AI Blocks
+
+| Block | Description |
+|-------|-------------|
+| 💬 **Chat** | GPT-4, Claude, Groq with streaming |
+| 📄 **PDF** | Extract text, images, tables |
+| 👁️ **OCR** | Image text extraction |
+| 🔊 **Voice** | Text-to-speech, speech-to-text |
+| 🔍 **Vector Search** | Semantic search with embeddings |
+| 🖼️ **Image** | Image analysis & generation |
+| 🌐 **Translate** | 100+ languages |
+| 💻 **Code** | Code generation & execution |
+| 🕸️ **Web** | Web scraping & browsing |
+| 📁 **Google Drive** | Cloud file processing |
+| ☁️ **OneDrive** | Microsoft integration |
+| 💾 **Local Drive** | Local file processing |
+
+---
+
+## 🔗 Chain Blocks Together
+
+Build complex AI pipelines by chaining blocks:
+
+```python
+from cerebrum_sdk import Cerebrum, chain
+
+client = Cerebrum(api_key="cb_your_key")
+
+# Document AI: PDF → OCR → Chat
+result = await chain(client) \
+    .then("pdf", {"extract": "text"}) \
+    .then("ocr", {"lang": "eng"}) \
+    .then("chat", {"prompt": "Extract invoice data:"}) \
+    .run("invoice.pdf")
+
+print(result.final_output)
+```
+
+---
+
+## 📚 Documentation
+
+- **[Full Documentation](https://docs.cerebrumblocks.com)**
+- **[API Reference](https://docs.cerebrumblocks.com/api)**
+- **[Python SDK](https://github.com/bopoadz-del/cerebrum-blocks/tree/main/packages/python)**
+- **[JavaScript SDK](https://github.com/bopoadz-del/cerebrum-blocks/tree/main/packages/js)**
+
+---
+
+## 🚀 Deploy Your Own
+
+### Render (Recommended)
+
+```yaml
+# render.yaml
+services:
+  - type: web
+    name: cerebrum-api
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+### Docker
 
 ```bash
+docker build -t cerebrum .
+docker run -p 8000:8000 -e CEREBRUM_API_KEY=cb_key cerebrum
+```
+
+### Local Development
+
+```bash
+# Clone
 git clone https://github.com/bopoadz-del/cerebrum-blocks.git
 cd cerebrum-blocks
+
+# Setup
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
 
-Or deploy to Render in one click:
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](./RENDER_DEPLOY.md)
-
----
-
-## API Reference
-
-### Authentication
-
-All requests require an API key header:
-
-```bash
-curl https://api.cerebrumblocks.com/v1/chat \
-  -H "Authorization: Bearer your-api-key" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello!"}'
-```
-
-### Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/chat` | POST | Chat completions |
-| `/v1/chat/stream` | POST | Streaming chat |
-| `/v1/vector/search` | POST | Semantic search |
-| `/v1/vector/add` | POST | Add documents |
-| `/v1/blocks` | GET | List all blocks |
-| `/v1/health` | GET | Health check |
-
-See full docs at [docs.cerebrumblocks.com](https://docs.cerebrumblocks.com)
-
----
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `CEREBRUM_API_KEY` | Your API key (for SDK) |
-| `CEREBRUM_BASE_URL` | Custom endpoint (default: `https://api.cerebrumblocks.com`) |
-
----
-
-## Project Structure
-
-```
-cerebrum-blocks/
-├── app/                    # FastAPI server
-│   ├── main.py            # API entry point
-│   ├── core/              # Framework (block, chain, client)
-│   └── blocks/            # 13 block implementations
-├── sdk/                   # Python SDK source
-│   └── cerebrum/          # PyPI package
-├── js-sdk/                # JavaScript SDK source
-│   └── src/               # npm package
-├── tests/                 # Test suite
-├── render.yaml            # Render deployment config
-└── Dockerfile             # Docker image
+# Run
+uvicorn app.main:app --reload
 ```
 
 ---
 
-## Contributing
+## 💰 Pricing
 
-1. Fork the repo
-2. Create a feature branch
-3. Add tests
-4. Submit a PR
+| Feature | Free | Pro $29/mo | Enterprise |
+|---------|------|------------|------------|
+| Requests/month | 1,000 | 50,000 | Unlimited |
+| Blocks | 9 | 16 | 16 + Custom |
+| Support | Community | Priority | Dedicated |
+| Streaming | ✅ | ✅ | ✅ |
+| Vector Search | ✅ | ✅ | ✅ |
+| SLA | - | - | ✅ |
 
 ---
 
-## License
+## 🛠️ API Endpoints
 
-MIT
+```
+POST /v1/chat              # Chat completion
+POST /v1/chat/stream       # Streaming chat
+GET  /v1/blocks            # List blocks
+POST /v1/execute           # Execute block
+POST /v1/chain             # Chain blocks
+POST /v1/vector/add        # Add to vector DB
+POST /v1/vector/search     # Semantic search
+GET  /v1/health            # Health check
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  Built with 💜 by the Cerebrum Team<br>
+  <a href="https://cerebrumblocks.com">cerebrumblocks.com</a>
+</p>

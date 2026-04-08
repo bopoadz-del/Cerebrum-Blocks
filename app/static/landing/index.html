@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cerebrum Blocks - Build AI Like Lego</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Hero Section */
+        .hero {
+            padding: 120px 0 80px;
+            text-align: center;
+            background: linear-gradient(135deg, #0a0a0f 0%, #151525 100%);
+        }
+        
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero p {
+            font-size: 1.4rem;
+            color: #888;
+            max-width: 700px;
+            margin: 0 auto 40px;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 60px;
+        }
+        
+        .btn {
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
+            color: #fff;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(108, 99, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #fff;
+            border: 2px solid #2e2e3e;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #6c63ff;
+        }
+        
+        /* Blocks Section */
+        .blocks {
+            padding: 80px 0;
+            background: #0d0d18;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .section-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+        
+        .section-header p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+        
+        .blocks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        
+        .block-card {
+            background: #151525;
+            border: 1px solid #1e1e2e;
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s;
+        }
+        
+        .block-card:hover {
+            border-color: #6c63ff;
+            transform: translateY(-4px);
+        }
+        
+        .block-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #6c63ff22, #3ec6ff22);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        
+        .block-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+        
+        .block-card p {
+            color: #888;
+            font-size: 0.95rem;
+        }
+        
+        /* How It Works */
+        .how-it-works {
+            padding: 80px 0;
+            background: #0a0a0f;
+        }
+        
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+        
+        .step {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin: 0 auto 24px;
+            color: #fff;
+        }
+        
+        .step h3 {
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+        }
+        
+        .step p {
+            color: #888;
+        }
+        
+        /* Code Example */
+        .code-section {
+            padding: 80px 0;
+            background: #0d0d18;
+        }
+        
+        .code-block {
+            background: #080810;
+            border: 1px solid #1e1e2e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-top: 40px;
+            overflow-x: auto;
+        }
+        
+        .code-block pre {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: #c9d1d9;
+        }
+        
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .function { color: #d2a8ff; }
+        .code-block .comment { color: #8b949e; }
+        
+        /* Pricing */
+        .pricing {
+            padding: 80px 0;
+            background: #0a0a0f;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 60px;
+        }
+        
+        .pricing-card {
+            background: #151525;
+            border: 1px solid #1e1e2e;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .pricing-card.popular {
+            border-color: #6c63ff;
+            position: relative;
+        }
+        
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .pricing-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .price {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 20px 0;
+        }
+        
+        .price span {
+            font-size: 1rem;
+            color: #888;
+            font-weight: 400;
+        }
+        
+        .features {
+            list-style: none;
+            margin: 32px 0;
+        }
+        
+        .features li {
+            padding: 10px 0;
+            color: #aaa;
+        }
+        
+        /* Footer */
+        .footer {
+            padding: 60px 0;
+            background: #080810;
+            border-top: 1px solid #1e1e2e;
+            text-align: center;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 32px;
+        }
+        
+        .footer-links a {
+            color: #888;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: #fff;
+        }
+        
+        .footer p {
+            color: #555;
+        }
+        
+        /* Chat Widget */
+        .chat-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 380px;
+            max-height: 600px;
+            background: #151525;
+            border: 1px solid #2e2e3e;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1000;
+        }
+        
+        .chat-widget.active {
+            display: flex;
+        }
+        
+        .chat-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-header h4 {
+            margin: 0;
+            color: #fff;
+        }
+        
+        .chat-close {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 350px;
+        }
+        
+        .message {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 85%;
+        }
+        
+        .message.user {
+            background: #6c63ff;
+            margin-left: auto;
+            color: #fff;
+        }
+        
+        .message.assistant {
+            background: #1e1e2e;
+            margin-right: auto;
+        }
+        
+        .chat-input {
+            padding: 16px 20px;
+            border-top: 1px solid #2e2e3e;
+            display: flex;
+            gap: 12px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            background: #0a0a0f;
+            border: 1px solid #2e2e3e;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+        
+        .chat-input button {
+            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .chat-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 10px 40px rgba(108, 99, 255, 0.3);
+            z-index: 999;
+        }
+        
+        .chat-toggle:hover {
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .chat-widget { width: calc(100% - 40px); right: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Build AI Like Lego</h1>
+            <p>Snap together AI blocks. PDF + OCR + Chat = Document AI in 5 minutes. No months of development. No complex setup. Just blocks.</p>
+            <div class="cta-buttons">
+                <a href="#blocks" class="btn btn-primary">Explore Blocks</a>
+                <a href="/docs" class="btn btn-secondary">API Docs</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blocks Section -->
+    <section class="blocks" id="blocks">
+        <div class="container">
+            <div class="section-header">
+                <h2>16 Blocks. Infinite Possibilities.</h2>
+                <p>Each block is a fully-featured AI capability. Snap them together to build anything you can imagine.</p>
+            </div>
+            <div class="blocks-grid">
+                <div class="block-card">
+                    <div class="block-icon">💬</div>
+                    <h3>Chat</h3>
+                    <p>Conversational AI with memory and context. Support for multiple providers.</p>
+                </div>
+                <div class="block-card">
+                    <div class="block-icon">📄</div>
+                    <h3>PDF</h3>
+                    <p>Extract text, images, and structured data from PDF documents.</p>
+                </div>
+                <div class="block-card">
+                    <div class="block-icon">👁️</div>
+                    <h3>OCR</h3>
+                    <p>Optical character recognition for images and scanned documents.</p>
+                </div>
+                <div class="block-card">
+                    <div class="block-icon">🔊</div>
+                    <h3>Voice</h3>
+                    <p>Text-to-speech and speech-to-text capabilities.</p>
+                </div>
+                <div class="block-card">
+                    <div class="block-icon">🔍</div>
+                    <h3>Vector Search</h3>
+                    <p>Semantic search with embeddings. Find meaning, not just keywords.</p>
+                </div>
+                <div class="block-card">
+                    <div class="block-icon">🖼️</div>
+                    <h3>Image</h3>
+                    <p>Image analysis, generation, and manipulation.</p>
+                </div>
+                <div class="block-card">
+                    <div class="block-icon">🌐</div>
+                    <h3>Translate</h3>
+                    <p>Language translation with context awareness.</p>
+                </div>
+                <div class="block-card">
+                    <div class="block-icon">💻</div>
+                    <h3>Code</h3>
+                    <p>Code generation, analysis, and execution.</p>
+                </div>
+                <div class="block-card">
+                    <div class="block-icon">🕸️</div>
+                    <h3>Web</h3>
+                    <p>Web scraping and browsing capabilities.</p>
+                </div>
+                <div class="block-card">
+                    <div class="block-icon">📁</div>
+                    <h3>Google Drive</h3>
+                    <p>Connect and process files from Google Drive.</p>
+                </div>
+                <div class="block-card">
+                    <div class="block-icon">☁️</div>
+                    <h3>OneDrive</h3>
+                    <p>Microsoft OneDrive integration.</p>
+                </div>
+                <div class="block-card">
+                    <div class="block-icon">💾</div>
+                    <h3>Local Drive</h3>
+                    <p>Process local files and folders.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <h2>How It Works</h2>
+                <p>Build AI in 3 Steps. No complex setup. No months of development.</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Pick Your Blocks</h3>
+                    <p>Choose from 16 AI blocks. Each is a complete AI capability ready to use.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Snap Them Together</h3>
+                    <p>Chain blocks with our SDK. PDF → OCR → Chat = Document AI in 3 lines.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Deploy Anywhere</h3>
+                    <p>Same code runs on your laptop, server, or cloud. Hardware auto-detected.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Code Example -->
+    <section class="code-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>3 Lines. Full AI Pipeline.</h2>
+                <p>No complex setup. No boilerplate. Just snap blocks together.</p>
+            </div>
+            <div class="code-block">
+                <pre><span class="keyword">from</span> cerebrum <span class="keyword">import</span> CerebrumClient, chain
+
+<span class="comment"># Initialize client</span>
+client = <span class="function">CerebrumClient</span>(<span class="string">"http://localhost:8000"</span>, <span class="string">"your-api-key"</span>)
+
+<span class="comment"># Chain blocks together</span>
+result = <span class="keyword">await</span> <span class="function">chain</span>(client) \
+    .<span class="function">then</span>(<span class="string">"pdf"</span>, {<span class="string">"extract"</span>: <span class="string">"text"</span>}) \
+    .<span class="function">then</span>(<span class="string">"translate"</span>, {<span class="string">"target"</span>: <span class="string">"en"</span>}) \
+    .<span class="function">then</span>(<span class="string">"chat"</span>, {<span class="string">"prompt"</span>: <span class="string">"Summarize this contract:"</span>}) \
+    .<span class="function">run</span>(<span class="string">"contract.pdf"</span>)
+
+<span class="function">print</span>(result.final_output)
+<span class="comment"># Output: "This contract outlines payment terms..."</span></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing">
+        <div class="container">
+            <div class="section-header">
+                <h2>Simple, Transparent Pricing</h2>
+                <p>Start free. Scale as you grow. No hidden fees.</p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Free</h3>
+                    <div class="price">$0<span>/month</span></div>
+                    <ul class="features">
+                        <li>All 16 official blocks</li>
+                        <li>1,000 executions/month</li>
+                        <li>Community support</li>
+                        <li>Local deployment</li>
+                        <li>Open source</li>
+                    </ul>
+                    <button class="btn btn-secondary" style="width: 100%;">Get Started</button>
+                </div>
+                <div class="pricing-card popular">
+                    <div class="popular-badge">Most Popular</div>
+                    <h3>Pro</h3>
+                    <div class="price">$29<span>/month</span></div>
+                    <ul class="features">
+                        <li>All 16 official blocks</li>
+                        <li>50,000 executions/month</li>
+                        <li>Priority support</li>
+                        <li>Cloud deployment</li>
+                        <li>API keys</li>
+                        <li>Usage analytics</li>
+                    </ul>
+                    <button class="btn btn-primary" style="width: 100%;">Upgrade to Pro</button>
+                </div>
+                <div class="pricing-card">
+                    <h3>Enterprise</h3>
+                    <div class="price">Custom</div>
+                    <ul class="features">
+                        <li>Everything in Pro</li>
+                        <li>Unlimited executions</li>
+                        <li>Custom blocks</li>
+                        <li>SLA guarantee</li>
+                        <li>Dedicated support</li>
+                        <li>On-premise option</li>
+                    </ul>
+                    <button class="btn btn-secondary" style="width: 100%;">Contact Sales</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="/docs">API Docs</a>
+                <a href="/blocks">Blocks</a>
+                <a href="https://github.com/bopoadz-del/SSDPPG">GitHub</a>
+                <a href="#">Contact</a>
+            </div>
+            <p>© 2025 Cerebrum Blocks. Built with 💜 for developers.</p>
+        </div>
+    </footer>
+
+    <!-- Chat Widget -->
+    <button class="chat-toggle" onclick="toggleChat()">💬</button>
+    
+    <div class="chat-widget" id="chatWidget">
+        <div class="chat-header">
+            <h4>💬 Cerebrum Assistant</h4>
+            <button class="chat-close" onclick="toggleChat()">×</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message assistant">Hello! I'm your AI assistant. How can I help you today?</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        
+        function toggleChat() {
+            const widget = document.getElementById('chatWidget');
+            widget.classList.toggle('active');
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const messages = document.getElementById('chatMessages');
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.textContent = text;
+            messages.appendChild(userMsg);
+            input.value = '';
+            messages.scrollTop = messages.scrollHeight;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer demo-key'
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-3.5-turbo',
+                        messages: [{ role: 'user', content: text }],
+                        max_tokens: 1000,
+                        temperature: 0.7
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const assistantText = data.choices?.[0]?.message?.content || 'Sorry, I could not process your request.';
+                
+                const assistantMsg = document.createElement('div');
+                assistantMsg.className = 'message assistant';
+                assistantMsg.textContent = assistantText;
+                messages.appendChild(assistantMsg);
+                messages.scrollTop = messages.scrollHeight;
+            } catch (error) {
+                console.error('Chat error:', error);
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'message assistant';
+                errorMsg.textContent = 'Sorry, I\'m having trouble connecting. Please try again later.';
+                messages.appendChild(errorMsg);
+                messages.scrollTop = messages.scrollHeight;
+            }
+        }
+    </script>
+</body>
+</html>
