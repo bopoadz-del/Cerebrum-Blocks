@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cerebrum Blocks - 13 AI Building Blocks</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .header {
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logo {
+            width: 50px; height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 8px 32px rgba(102,126,234,0.4);
+        }
+        .brand-text h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .brand-text p {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+            margin-top: 2px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: #fff;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        .hero {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .hero h2 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            font-size: 20px;
+            color: rgba(255,255,255,0.7);
+            max-width: 600px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+        }
+        .api-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+        }
+        .api-badge .dot {
+            width: 8px; height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .blocks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+        .block-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .block-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .block-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(102,126,234,0.5);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .block-card:hover::before {
+            opacity: 1;
+        }
+        .block-icon {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
+        }
+        .block-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        .block-card p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.6;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
+        }
+        .block-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        .tag {
+            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .tag.api-key {
+            background: rgba(245,158,11,0.2);
+            color: #f59e0b;
+            border-color: rgba(245,158,11,0.3);
+        }
+        .tag.error {
+            background: rgba(239,68,68,0.2);
+            color: #ef4444;
+            border-color: rgba(239,68,68,0.3);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 60px 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 60px;
+        }
+        .footer p {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+        }
+        .footer a {
+            color: #a78bfa;
+            text-decoration: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 100px;
+            font-size: 18px;
+            color: rgba(255,255,255,0.6);
+        }
+        .error {
+            text-align: center;
+            padding: 100px;
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="brand">
+            <div class="logo">🧠</div>
+            <div class="brand-text">
+                <h1>Cerebrum Blocks</h1>
+                <p>Build AI like Lego</p>
+            </div>
+        </div>
+        <nav class="nav-links">
+            <a href="/" class="active">Blocks</a>
+            <a href="/docs">API Docs</a>
+            <a href="/todo">Launch TODO</a>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <section class="hero">
+            <h2>13 AI Building Blocks</h2>
+            <p>One API. Infinite Possibilities. Mix and match blocks to build powerful AI applications in minutes.</p>
+            <div class="api-badge">
+                <span class="dot"></span>
+                <span>API Live at ssdppg.onrender.com</span>
+            </div>
+        </section>
+        
+        <div id="blocks-container" class="blocks-grid">
+            <div class="loading">Loading blocks...</div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>Built with ❤️ · <a href="https://github.com/bopoadz-del/cerebrum-blocks">GitHub</a> · <a href="/docs">API Documentation</a></p>
+    </footer>
+    
+    <script>
+        const blockIcons = {
+            chat: '💬',
+            pdf: '📄',
+            ocr: '👁️',
+            voice: '🎙️',
+            image: '🖼️',
+            translate: '🌐',
+            code: '💻',
+            web: '🕸️',
+            vector_search: '🔍',
+            google_drive: '📁',
+            onedrive: '☁️',
+            local_drive: '💾',
+            android_drive: '📱',
+            search: '🔎'
+        };
+        
+        async function loadBlocks() {
+            const container = document.getElementById('blocks-container');
+            
+            try {
+                // Use a demo API key that works without auth for viewing
+                const response = await fetch('/v1/blocks', {
+                    headers: {
+                        'Authorization': 'Bearer demo'
+                    }
+                });
+                
+                if (!response.ok) {
+                    // Try without auth (some endpoints might be public)
+                    const publicResponse = await fetch('/v1/blocks');
+                    if (!publicResponse.ok) throw new Error('Failed to load blocks');
+                    const data = await publicResponse.json();
+                    renderBlocks(data.blocks);
+                    return;
+                }
+                
+                const data = await response.json();
+                renderBlocks(data.blocks);
+            } catch (err) {
+                // Fallback: show blocks from static data
+                renderBlocks(getFallbackBlocks());
+            }
+        }
+        
+        function getFallbackBlocks() {
+            return [
+                { name: 'chat', version: '1.1', description: 'AI chat completions with OpenAI, Anthropic, local models, and streaming', requires_api_key: true, supported_inputs: ['text', 'messages'], supported_outputs: ['text', 'stream'] },
+                { name: 'pdf', version: '1.0', description: 'Extract text, images, and metadata from PDF files', requires_api_key: false, supported_inputs: ['file', 'file_path'], supported_outputs: ['text', 'images', 'metadata'] },
+                { name: 'ocr', version: '1.0', description: 'Extract text from images using OCR', requires_api_key: false, supported_inputs: ['image', 'file_path', 'base64'], supported_outputs: ['text', 'bounding_boxes'] },
+                { name: 'voice', version: '1.0', description: 'Speech-to-text and text-to-speech processing', requires_api_key: false, supported_inputs: ['audio', 'text'], supported_outputs: ['text', 'audio'] },
+                { name: 'image', version: '1.0', description: 'Image analysis and generation', requires_api_key: true, supported_inputs: ['image', 'prompt'], supported_outputs: ['description', 'image'] },
+                { name: 'translate', version: '1.0', description: 'Text translation with multiple providers', requires_api_key: false, supported_inputs: ['text'], supported_outputs: ['translation'] },
+                { name: 'code', version: '1.0', description: 'Code execution, analysis, and transformation', requires_api_key: false, supported_inputs: ['code', 'text'], supported_outputs: ['output', 'analysis'] },
+                { name: 'web', version: '1.0', description: 'Web scraping and HTTP requests', requires_api_key: false, supported_inputs: ['url'], supported_outputs: ['content', 'markdown'] },
+                { name: 'vector_search', version: '1.0', description: 'Vector similarity search using ChromaDB', requires_api_key: false, error: 'Requires persistent storage', status: 'limited' },
+                { name: 'google_drive', version: '1.0', description: 'Google Drive file upload, download, and management', requires_api_key: true, supported_inputs: ['file', 'path'], supported_outputs: ['file', 'metadata'] },
+                { name: 'onedrive', version: '1.0', description: 'Microsoft OneDrive file upload, download, and management', requires_api_key: true, supported_inputs: ['file', 'path'], supported_outputs: ['file', 'metadata'] },
+                { name: 'local_drive', version: '1.0', description: 'Local filesystem file operations', requires_api_key: false, error: 'Requires local filesystem access', status: 'limited' },
+                { name: 'android_drive', version: '1.0', description: 'Android storage file access and management', requires_api_key: false, supported_inputs: ['file', 'path'], supported_outputs: ['file', 'metadata'] },
+            ];
+        }
+        
+        function renderBlocks(blocks) {
+            const container = document.getElementById('blocks-container');
+            container.innerHTML = '';
+            
+            blocks.forEach(block => {
+                const hasError = block.error || block.status === 'failed_to_load';
+                const card = document.createElement('div');
+                card.className = 'block-card';
+                card.innerHTML = `
+                    <div class="block-icon">${blockIcons[block.name] || '🔧'}</div>
+                    <h3>${formatBlockName(block.name)}</h3>
+                    <p>${block.description}</p>
+                    <div class="block-meta">
+                        <span class="tag">v${block.version || '1.0'}</span>
+                        ${block.requires_api_key ? '<span class="tag api-key">🔑 API Key</span>' : ''}
+                        ${hasError ? '<span class="tag error">⚠️ Limited</span>' : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        
+        function formatBlockName(name) {
+            return name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+        
+        loadBlocks();
+    </script>
+</body>
+</html>

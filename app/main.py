@@ -292,9 +292,16 @@ async def v1_vector_search(request: VectorSearchRequest, _: Dict[str, Any] = Dep
 
 # --------------------- LEGACY ENDPOINTS (Backward Compatible) ---------------------
 
-@app.get("/")
+@app.get("/", response_class=FileResponse)
 async def root():
-    """Root endpoint with system info."""
+    """Serve the blocks explorer UI."""
+    static_file = os.path.join(os.path.dirname(__file__), "static", "blocks.html")
+    return FileResponse(static_file)
+
+
+@app.get("/api")
+async def api_info():
+    """API info endpoint (JSON)."""
     return {
         "status": "Cerebrum Blocks running",
         "version": "1.1.0",
