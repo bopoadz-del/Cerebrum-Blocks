@@ -1,9 +1,9 @@
 version: "3.8"
 
 services:
-  ai-block-system:
+  cerebrum-blocks:
     build: .
-    container_name: ai-block-system
+    container_name: cerebrum-blocks
     ports:
       - "8000:8000"
     volumes:

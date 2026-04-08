@@ -1,10 +1,10 @@
-# 🚀 Deploy to Render
+# 🚀 Deploy Cerebrum Blocks to Render
 
-Complete guide to deploy the AI Block System on Render.
+Complete guide to deploy the Cerebrum Blocks API on Render.
 
 ## Quick Deploy (One-Click)
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/yourusername/ai-block-system)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/bopoadz-del/cerebrum-blocks)
 
 *(Replace with your actual repo URL)*
 
@@ -22,7 +22,7 @@ Complete guide to deploy the AI Block System on Render.
 
 | Setting | Value |
 |---------|-------|
-| **Name** | `ai-block-system` |
+| **Name** | `cerebrum-blocks` |
 | **Environment** | `Python 3` |
 | **Build Command** | `pip install -r requirements.txt` |
 | **Start Command** | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
@@ -42,6 +42,9 @@ Go to **Environment** tab and add:
 # Required
 PYTHON_VERSION=3.11.0
 DATA_DIR=/app/data
+
+# API Keys (set at least one)
+CEREBRUM_MASTER_KEY=your-admin-key
 
 # Optional - AI Features
 OPENAI_API_KEY=sk-your-key
@@ -66,22 +69,49 @@ Wait for build (~2-3 minutes), then visit your URL!
 
 ### 1. Verify Deployment
 ```bash
-curl https://your-service.onrender.com/health
+curl https://your-service.onrender.com/v1/health
 ```
 
 ### 2. Test a Block
 ```bash
-curl -X POST https://your-service.onrender.com/execute \
+curl -X POST https://your-service.onrender.com/v1/chat \
+  -H "Authorization: Bearer your-api-key" \
   -H "Content-Type: application/json" \
   -d '{
-    "block": "chat",
-    "input": "Hello from Render!",
-    "params": {"provider": "mock"}
+    "message": "Hello from Render!"
   }'
 ```
 
 ### 3. API Documentation
 Visit: `https://your-service.onrender.com/docs`
+
+---
+
+## SDK Usage with Your Deployed API
+
+```python
+from cerebrum import CerebrumClient
+
+client = CerebrumClient(
+    api_key="your-key",
+    base_url="https://your-service.onrender.com"
+)
+
+response = client.chat("Hello!")
+print(response.text)
+```
+
+```javascript
+import { CerebrumClient } from 'cerebrum-blocks';
+
+const client = new CerebrumClient({
+  apiKey: 'your-key',
+  baseUrl: 'https://your-service.onrender.com'
+});
+
+const response = await client.chat('Hello!');
+console.log(response.text);
+```
 
 ---
 

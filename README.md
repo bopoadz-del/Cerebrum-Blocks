@@ -1,366 +1,211 @@
-# AI Block System v1.0 🚀
+# Cerebrum Blocks
 
-**Build AI Like Lego** - 13 Blocks. Infinite Possibilities.
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](./RENDER_DEPLOY.md)
-
-![Blocks](https://img.shields.io/badge/Blocks-13-blue)
-![Tests](https://img.shields.io/badge/Tests-Complete-green)
-![Render](https://img.shields.io/badge/Render-Ready-purple)
-![ChromaDB](https://img.shields.io/badge/ChromaDB-Integrated-orange)
-
-## 🎯 Overview
-
-A modular AI system where each block is a fully-featured AI capability. Snap them together to build anything you can imagine.
-
-### 9 AI Blocks
-| Block | Description |
-|-------|-------------|
-| **PDF** | Extract text, images, and metadata from PDF files |
-| **OCR** | Extract text from images using OCR |
-| **Chat** | AI chat completions (OpenAI, Anthropic, local) |
-| **Voice** | Speech-to-text and text-to-speech |
-| **Vector Search** | Semantic search with ChromaDB ⭐ |
-| **Image** | Image analysis and generation |
-| **Translate** | Text translation |
-| **Code** | Code execution, analysis, and transformation |
-| **Web** | Web scraping and HTTP requests |
-
-### 4 Drive Blocks
-| Block | Description |
-|-------|-------------|
-| **Google Drive** | Full Google Drive integration |
-| **OneDrive** | Microsoft OneDrive integration |
-| **Local Drive** | Local filesystem operations |
-| **Android Drive** | Android storage access |
-
----
-
-## 🚀 Quick Start
-
-### Option 1: Deploy to Render (Recommended)
-
-1. Fork this repository
-2. Create account on [render.com](https://render.com)
-3. Click **New +** → **Web Service**
-4. Connect your GitHub repo
-5. Use settings:
-   - **Build**: `pip install -r requirements.txt`
-   - **Start**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-6. Add Disk for persistence (optional): `/app/data`
-7. Deploy!
-
-See [RENDER_DEPLOY.md](./RENDER_DEPLOY.md) for detailed instructions.
-
-### Option 2: Local Development
+**Build AI like Lego.** One API. 13 blocks. Zero setup.
 
 ```bash
-# Clone
-git clone <repository-url>
-cd ai-block-system
-
-# Install
-pip install -r requirements.txt
-
-# Copy environment variables
-cp .env.example .env
-# Edit .env with your API keys
-
-# Run
-uvicorn app.main:app --reload
+pip install cerebrum-blocks
 ```
-
-### Option 3: Docker
-
-```bash
-# Build
-docker-compose up --build
-
-# Or use Docker directly
-docker build -t ai-block-system .
-docker run -p 8000:8000 ai-block-system
-```
-
----
-
-## 📡 API Usage
-
-### Health Check
-```bash
-curl http://localhost:8000/health
-```
-
-### List All Blocks
-```bash
-curl http://localhost:8000/blocks
-```
-
-### Vector Search (ChromaDB) - NEW!
-
-```bash
-# 1. Create a collection
-curl -X POST http://localhost:8000/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "block": "vector_search",
-    "input": "my_documents",
-    "params": {"operation": "create_collection"}
-  }'
-
-# 2. Add documents
-curl -X POST http://localhost:8000/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "block": "vector_search",
-    "input": {
-      "documents": [
-        {"text": "Machine learning is amazing", "metadata": {"topic": "ml"}},
-        {"text": "Deep learning is powerful", "metadata": {"topic": "dl"}},
-        {"text": "Neural networks are cool", "metadata": {"topic": "nn"}}
-      ]
-    },
-    "params": {"operation": "add", "collection": "my_documents"}
-  }'
-
-# 3. Search
-curl -X POST http://localhost:8000/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "block": "vector_search",
-    "input": "artificial intelligence",
-    "params": {"operation": "search", "collection": "my_documents", "top_k": 3}
-  }'
-
-# 4. List collections
-curl -X POST http://localhost:8000/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "block": "vector_search",
-    "input": {},
-    "params": {"operation": "list_collections"}
-  }'
-
-# 5. Count documents
-curl -X POST http://localhost:8000/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "block": "vector_search",
-    "input": {},
-    "params": {"operation": "count", "collection": "my_documents"}
-  }'
-```
-
-### Execute Single Block
-```bash
-curl -X POST http://localhost:8000/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "block": "chat",
-    "input": "Hello, how are you?",
-    "params": {"provider": "mock"}
-  }'
-```
-
-### Chain Multiple Blocks
-```bash
-curl -X POST http://localhost:8000/chain \
-  -H "Content-Type: application/json" \
-  -d '{
-    "steps": [
-      {"block": "ocr", "params": {"language": "eng"}},
-      {"block": "vector_search", "params": {"operation": "add"}},
-      {"block": "chat", "params": {"prompt": "Summarize:"}}
-    ],
-    "initial_input": {"image_path": "/path/to/image.png"}
-  }'
-```
-
-### Drive Operations
-```bash
-# List files in local drive
-curl -X POST http://localhost:8000/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "block": "local_drive",
-    "input": {},
-    "params": {"operation": "list", "folder_path": "/"}
-  }'
-
-# Google Drive (requires auth)
-curl -X POST http://localhost:8000/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "block": "google_drive",
-    "input": {},
-    "params": {"operation": "list"}
-  }'
-```
-
----
-
-## 🐍 Python SDK
 
 ```python
-from app.core import CerebrumClient, chain
+from cerebrum import CerebrumClient
 
-# Initialize client
-client = CerebrumClient("http://localhost:8000")
+client = CerebrumClient(api_key="your-key")
+response = client.chat("Explain quantum computing in 3 sentences")
+print(response.text)
+```
 
-# Vector Search Example
-result = await client.execute_block(
-    "vector_search",
-    "machine learning",
-    {
-        "operation": "search",
-        "collection": "my_docs",
-        "top_k": 5
-    }
+---
+
+## 3-Line Quickstart
+
+```bash
+pip install cerebrum-blocks
+export CEREBRUM_API_KEY=your-key
+python -c "from cerebrum import CerebrumClient; print(CerebrumClient().chat('Hello!').text)"
+```
+
+---
+
+## What You Get
+
+| Block | What It Does |
+|-------|-------------|
+| **chat** | OpenAI, Anthropic, local LLMs — with streaming |
+| **vector_search** | Semantic search with ChromaDB |
+| **image** | Analyze and generate images |
+| **ocr** | Extract text from images |
+| **pdf** | Extract text, images, metadata from PDFs |
+| **voice** | Speech-to-text & text-to-speech |
+| **translate** | Text translation |
+| **code** | Execute and analyze code |
+| **web** | Scrape and fetch web content |
+| **search** | Web search (Serper, DuckDuckGo) |
+| **google_drive** | Read/write Google Drive |
+| **onedrive** | Read/write Microsoft OneDrive |
+| **local_drive** | Local filesystem operations |
+| **android_drive** | Android storage access |
+
+---
+
+## Python SDK
+
+```bash
+pip install cerebrum-blocks
+```
+
+```python
+from cerebrum import CerebrumClient
+
+client = CerebrumClient(api_key="your-key")
+
+# Chat with streaming
+for chunk in client.chat.stream("Tell me a story"):
+    print(chunk.text, end="")
+
+# Vector search
+client.vector_search.add(documents=[
+    {"text": "Python is great", "metadata": {"topic": "python"}},
+    {"text": "JavaScript is versatile", "metadata": {"topic": "js"}}
+], collection="docs")
+
+results = client.vector_search.query(
+    "What language should I learn?",
+    collection="docs",
+    top_k=2
 )
 
 # Chain blocks
-result = await chain(client) \
-    .then("pdf", {"extract_text": True}) \
+from cerebrum import chain
+
+result = chain(client) \
+    .then("ocr") \
     .then("vector_search", {"operation": "add"}) \
-    .then("chat", {"prompt": "Answer based on context:"}) \
-    .run("document.pdf")
-
-print(result.final_output)
+    .then("chat", {"prompt": "Summarize this:"}) \
+    .run("/path/to/image.png")
 ```
 
 ---
 
-## 📁 Project Structure
-
-```
-ai-block-system/
-├── app/
-│   ├── __init__.py
-│   ├── main.py                    # FastAPI application (Render ready)
-│   ├── core/                      # Framework
-│   │   ├── __init__.py
-│   │   ├── block.py              # Base block class
-│   │   ├── chain.py              # Block chaining
-│   │   ├── client.py             # CerebrumClient SDK
-│   │   └── response.py           # Standard response
-│   └── blocks/                    # 13 Blocks
-│       ├── __init__.py
-│       ├── pdf.py                # PDF extraction
-│       ├── ocr.py                # OCR text recognition
-│       ├── chat.py               # AI chat
-│       ├── voice.py              # STT/TTS
-│       ├── vector_search.py      # ChromaDB vector search ⭐ NEW!
-│       ├── image.py              # Image analysis/generation
-│       ├── translate.py          # Translation
-│       ├── code.py               # Code execution
-│       ├── web.py                # Web scraping
-│       ├── google_drive.py       # Google Drive ⭐
-│       ├── onedrive.py           # OneDrive ⭐
-│       ├── local_drive.py        # Local filesystem ⭐
-│       └── android_drive.py      # Android storage ⭐
-├── tests/                         # Comprehensive test suite
-│   ├── blocks/                    # 14 test files
-│   ├── integration/               # API & chain tests
-│   └── run_tests.py               # Test runner
-├── render.yaml                    # Render configuration
-├── Dockerfile                     # Docker build
-├── docker-compose.yml             # Docker compose
-├── start.sh                       # Start script
-├── Procfile                       # Render Procfile
-├── runtime.txt                    # Python version
-├── requirements.txt               # Dependencies
-├── .env.example                   # Environment template
-└── README.md                      # This file
-```
-
----
-
-## 🧪 Testing
+## JavaScript SDK
 
 ```bash
-# Run all tests
-pytest tests/ -v
-
-# Run with coverage
-pytest tests/ --cov=app --cov-report=html
-
-# Run specific block
-pytest tests/blocks/test_vector_search.py -v
-
-# Generate test report
-python tests/run_tests.py
+npm install cerebrum-blocks
 ```
 
-See [tests/reports/TEST_REPORT.md](tests/reports/TEST_REPORT.md)
+```javascript
+import { CerebrumClient } from 'cerebrum-blocks';
+
+const client = new CerebrumClient({ apiKey: 'your-key' });
+
+// Chat
+const response = await client.chat("Hello!");
+console.log(response.text);
+
+// Chat with streaming
+const stream = await client.chat.stream("Tell me a story");
+for await (const chunk of stream) {
+    process.stdout.write(chunk.text);
+}
+
+// Vector search
+await client.vectorSearch.add({
+    documents: [
+        { text: "Python is great", metadata: { topic: "python" } },
+    ],
+    collection: "docs"
+});
+
+const results = await client.vectorSearch.query({
+    query: "What language should I learn?",
+    collection: "docs",
+    topK: 2
+});
+```
 
 ---
 
-## 🔐 Environment Variables
+## Self-Host (Optional)
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `PORT` | Server port | Auto on Render |
-| `DATA_DIR` | Data storage path | `/app/data` |
-| `CHROMA_PERSIST_DIR` | ChromaDB storage | `/app/data/chroma_db` |
-| `VECTOR_COLLECTION` | Default vector collection | `default` |
-| `EMBEDDING_MODEL` | Sentence transformer model | `all-MiniLM-L6-v2` |
-| `OPENAI_API_KEY` | OpenAI API (for embeddings) | Optional |
-| `ANTHROPIC_API_KEY` | Anthropic API | Optional |
-| `GOOGLE_CREDENTIALS_PATH` | Google OAuth | For Google Drive |
-| `ONEDRIVE_ACCESS_TOKEN` | MS Graph | For OneDrive |
-
-See `.env.example` for complete list.
-
----
-
-## 📚 API Documentation
-
-Once running, visit:
-- **Swagger UI**: `http://localhost:8000/docs`
-- **ReDoc**: `http://localhost:8000/redoc`
-
----
-
-## 🛠️ Development
+Don't want to use our API? Run your own instance:
 
 ```bash
-# Install dev dependencies
+git clone https://github.com/bopoadz-del/cerebrum-blocks.git
+cd cerebrum-blocks
 pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
 
-# Run in development mode
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+Or deploy to Render in one click:
 
-# Run tests
-pytest
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](./RENDER_DEPLOY.md)
 
-# Build Docker image
-docker build -t ai-block-system .
+---
+
+## API Reference
+
+### Authentication
+
+All requests require an API key header:
+
+```bash
+curl https://api.cerebrumblocks.com/v1/chat \
+  -H "Authorization: Bearer your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello!"}'
+```
+
+### Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v1/chat` | POST | Chat completions |
+| `/v1/chat/stream` | POST | Streaming chat |
+| `/v1/vector/search` | POST | Semantic search |
+| `/v1/vector/add` | POST | Add documents |
+| `/v1/blocks` | GET | List all blocks |
+| `/v1/health` | GET | Health check |
+
+See full docs at [docs.cerebrumblocks.com](https://docs.cerebrumblocks.com)
+
+---
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `CEREBRUM_API_KEY` | Your API key (for SDK) |
+| `CEREBRUM_BASE_URL` | Custom endpoint (default: `https://api.cerebrumblocks.com`) |
+
+---
+
+## Project Structure
+
+```
+cerebrum-blocks/
+├── app/                    # FastAPI server
+│   ├── main.py            # API entry point
+│   ├── core/              # Framework (block, chain, client)
+│   └── blocks/            # 13 block implementations
+├── sdk/                   # Python SDK source
+│   └── cerebrum/          # PyPI package
+├── js-sdk/                # JavaScript SDK source
+│   └── src/               # npm package
+├── tests/                 # Test suite
+├── render.yaml            # Render deployment config
+└── Dockerfile             # Docker image
 ```
 
 ---
 
-## 📄 License
+## Contributing
 
-MIT License
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
+1. Fork the repo
 2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a PR
+3. Add tests
+4. Submit a PR
 
 ---
 
-## 🆕 What's New
+## License
 
-### v1.0 - Vector Search Block
-- **ChromaDB integration** for semantic document search
-- **Local embeddings** with sentence-transformers
-- **OpenAI embeddings** support (optional)
-- **Collection management** (create, delete, list)
-- **Full CRUD operations** on vector documents
-
-**Built with ❤️ for the AI community**
+MIT

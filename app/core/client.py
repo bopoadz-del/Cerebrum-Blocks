@@ -6,7 +6,7 @@ import aiohttp
 
 
 class CerebrumClient:
-    """Client for interacting with the AI Block System."""
+    """Client for interacting with the Cerebrum Blocks API."""
     
     def __init__(self, base_url: str = "http://localhost:8000", api_key: Optional[str] = None):
         self.base_url = base_url.rstrip("/")

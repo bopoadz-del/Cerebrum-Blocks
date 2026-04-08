@@ -1,10 +1,10 @@
 #!/bin/bash
-# Start script for AI Block System
+# Start script for Cerebrum Blocks
 
 # Use PORT from environment (Render sets this) or default to 8000
 PORT=${PORT:-8000}
 
-echo "🚀 Starting AI Block System..."
+echo "🚀 Starting Cerebrum Blocks..."
 echo "📍 Port: $PORT"
 echo "📁 Data Directory: ${DATA_DIR:-/app/data}"
 

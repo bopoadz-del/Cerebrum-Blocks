@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 @pytest.fixture
 def sample_text():
-    return "Hello, this is a test document for the AI Block System."
+    return "Hello, this is a test document for Cerebrum Blocks."
 
 @pytest.fixture
 def sample_code():

@@ -1,1 +1,1 @@
-"""Test suite for AI Block System."""
+"""Test suite for Cerebrum Blocks."""

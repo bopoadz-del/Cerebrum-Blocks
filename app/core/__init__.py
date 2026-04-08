@@ -1,4 +1,4 @@
-"""Core framework for the AI Block System."""
+"""Core framework for Cerebrum Blocks."""
 
 from .block import BaseBlock, BlockConfig
 from .chain import Chain, chain
