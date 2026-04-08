@@ -1,6 +1,8 @@
 # Environment variables for Render deployment
 # Add these manually in Render Dashboard:
 # https://dashboard.render.com/web/srv-d651qphr0fns73c50ohg/environment
+# 
+# Repo: https://github.com/bopoadz-del/cerebrum-blocks
 
 CEREBRUM_MASTER_KEY=cb_master_22347732f8f09bed3ad4aee7f9849f77
 PYTHON_VERSION=3.11.0
