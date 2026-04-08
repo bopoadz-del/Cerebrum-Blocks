@@ -309,6 +309,7 @@ async def root():
             "chain": "/chain",
             "health": "/health"
         }
+    }
 
 
 @app.get("/todo")
@@ -316,7 +317,6 @@ async def todo():
     """Launch TODO guide."""
     static_file = os.path.join(os.path.dirname(__file__), "static", "todo.html")
     return FileResponse(static_file)
-    }
 
 @app.get("/blocks")
 async def list_blocks():
