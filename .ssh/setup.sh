@@ -20,6 +20,8 @@ if ! grep -q "$RENDER_HOST" ~/.ssh/config 2>/dev/null; then
     cat >> ~/.ssh/config << EOF
 
 # Cerebrum Blocks Render Instance
+# Service: srv-d651qphr0fns73c50ohg
+# Repo: https://github.com/bopoadz-del/cerebrum-blocks
 Host render-cerebrum
     HostName ssh.oregon.render.com
     User srv-d651qphr0fns73c50ohg
