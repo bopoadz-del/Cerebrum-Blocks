@@ -1,8 +1,23 @@
 services:
   - type: web
-    name: mssdppg-live-simulator
-    env: python
+    name: ai-block-system
+    runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: bash start.sh
-    autoDeploy: false
-    plan: free
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATA_DIR
+        value: /app/data
+      - key: CHROMA_PERSIST_DIR
+        value: /app/data/chroma_db
+      - key: VECTOR_COLLECTION
+        value: default
+      - key: EMBEDDING_MODEL
+        value: all-MiniLM-L6-v2
+      - key: PORT
+        value: 8000
+    disk:
+      name: data
+      mountPath: /app/data
+      sizeGB: 2  # Increased for ChromaDB storage

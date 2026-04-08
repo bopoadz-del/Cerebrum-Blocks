@@ -1,7 +1,15 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+# Start script for AI Block System
 
-# Start the Flask application using gunicorn.  The PORT environment
-# variable is respected by the Render deployment environment, but it
-# defaults to 5000 for local development.
-gunicorn app:app --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 4 --timeout 180
+# Use PORT from environment (Render sets this) or default to 8000
+PORT=${PORT:-8000}
+
+echo "🚀 Starting AI Block System..."
+echo "📍 Port: $PORT"
+echo "📁 Data Directory: ${DATA_DIR:-/app/data}"
+
+# Create data directory if it doesn't exist
+mkdir -p ${DATA_DIR:-/app/data}
+
+# Start the server
+exec uvicorn app.main:app --host 0.0.0.0 --port $PORT
