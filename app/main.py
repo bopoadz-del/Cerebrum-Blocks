@@ -50,8 +50,13 @@ DATA_DIR = os.getenv("DATA_DIR", "/app/data")
 PORT = int(os.getenv("PORT", 8000))
 HOST = os.getenv("HOST", "0.0.0.0")
 
-# Ensure data directory exists
-os.makedirs(DATA_DIR, exist_ok=True)
+# Ensure data directory exists (with fallback for local dev)
+try:
+    os.makedirs(DATA_DIR, exist_ok=True)
+except PermissionError:
+    # Fallback to local data dir if /app/data not accessible
+    DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+    os.makedirs(DATA_DIR, exist_ok=True)
 
 # Store block instances
 block_instances = {}

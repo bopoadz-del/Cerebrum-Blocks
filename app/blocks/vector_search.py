@@ -6,7 +6,14 @@ import json
 from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass
 from app.core.block import BaseBlock, BlockConfig
-import numpy as np
+
+# Optional numpy import
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    np = None
+    NUMPY_AVAILABLE = False
 
 
 @dataclass
