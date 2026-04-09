@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cerebrum Blocks - Build AI Like Lego</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,7 +15,7 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #0a0a0f;
             color: #e0e0e0;
             line-height: 1.6;
@@ -21,156 +24,349 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 24px;
+        }
+        
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid #1e1e2e;
+            z-index: 1000;
+            padding: 16px 0;
+        }
+        
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+        
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            -webkit-text-fill-color: initial;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-links a:hover {
+            color: #fff;
         }
         
         /* Hero Section */
         .hero {
-            padding: 120px 0 80px;
+            padding: 160px 0 100px;
             text-align: center;
-            background: linear-gradient(135deg, #0a0a0f 0%, #151525 100%);
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(108, 99, 255, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(62, 198, 255, 0.1), transparent),
+                #0a0a0f;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236c63ff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+        
+        .hero .container {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(108, 99, 255, 0.1);
+            border: 1px solid rgba(108, 99, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 0.875rem;
+            color: #6c63ff;
+            margin-bottom: 32px;
+        }
+        
+        .badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #00cc88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
         .hero h1 {
-            font-size: 4rem;
+            font-size: 4.5rem;
             font-weight: 800;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
+            margin-bottom: 24px;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 50%, #6c63ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         
         .hero p {
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             color: #888;
-            max-width: 700px;
+            max-width: 650px;
             margin: 0 auto 40px;
+            line-height: 1.6;
         }
         
         .cta-buttons {
             display: flex;
-            gap: 20px;
+            gap: 16px;
             justify-content: center;
-            margin-bottom: 60px;
+            margin-bottom: 80px;
         }
         
         .btn {
-            padding: 14px 32px;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 0.95rem;
             font-weight: 600;
             text-decoration: none;
-            transition: all 0.3s;
+            transition: all 0.2s;
             cursor: pointer;
             border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .btn-primary {
             background: linear-gradient(135deg, #6c63ff, #3ec6ff);
             color: #fff;
+            box-shadow: 0 4px 20px rgba(108, 99, 255, 0.3);
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 40px rgba(108, 99, 255, 0.3);
+            box-shadow: 0 8px 30px rgba(108, 99, 255, 0.4);
         }
         
         .btn-secondary {
             background: transparent;
             color: #fff;
-            border: 2px solid #2e2e3e;
+            border: 1px solid #2e2e3e;
         }
         
         .btn-secondary:hover {
             border-color: #6c63ff;
+            background: rgba(108, 99, 255, 0.05);
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            padding: 32px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #1e1e2e;
+            border-radius: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 4px;
         }
         
         /* Blocks Section */
         .blocks {
-            padding: 80px 0;
+            padding: 100px 0;
             background: #0d0d18;
         }
         
         .section-header {
             text-align: center;
-            margin-bottom: 60px;
+            margin-bottom: 64px;
         }
         
         .section-header h2 {
-            font-size: 2.5rem;
+            font-size: 2.75rem;
+            font-weight: 800;
             margin-bottom: 16px;
         }
         
         .section-header p {
-            color: #888;
-            font-size: 1.1rem;
+            color: #666;
+            font-size: 1.15rem;
+            max-width: 600px;
+            margin: 0 auto;
         }
         
         .blocks-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
         }
         
         .block-card {
             background: #151525;
             border: 1px solid #1e1e2e;
             border-radius: 16px;
-            padding: 32px;
+            padding: 28px;
             transition: all 0.3s;
+            cursor: pointer;
         }
         
         .block-card:hover {
             border-color: #6c63ff;
             transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .block-card:hover .block-icon {
+            transform: scale(1.1);
         }
         
         .block-icon {
-            width: 56px;
-            height: 56px;
+            width: 52px;
+            height: 52px;
             background: linear-gradient(135deg, #6c63ff22, #3ec6ff22);
-            border-radius: 12px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 26px;
             margin-bottom: 20px;
+            transition: transform 0.3s;
+            border: 1px solid rgba(108, 99, 255, 0.2);
         }
         
         .block-card h3 {
-            font-size: 1.3rem;
+            font-size: 1.15rem;
+            font-weight: 600;
             margin-bottom: 8px;
+            color: #fff;
         }
         
         .block-card p {
-            color: #888;
-            font-size: 0.95rem;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .block-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(108, 99, 255, 0.1);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: #6c63ff;
+            margin-top: 12px;
+            font-weight: 500;
         }
         
         /* How It Works */
         .how-it-works {
-            padding: 80px 0;
+            padding: 100px 0;
             background: #0a0a0f;
         }
         
         .steps {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 40px;
-            margin-top: 60px;
+            margin-top: 64px;
         }
         
         .step {
             text-align: center;
-            padding: 40px;
+            padding: 40px 32px;
+            background: #151525;
+            border: 1px solid #1e1e2e;
+            border-radius: 20px;
+            position: relative;
+        }
+        
+        .step::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #6c63ff, #3ec6ff);
+            border-radius: 20px 20px 0 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .step:hover::before {
+            opacity: 1;
         }
         
         .step-number {
-            width: 60px;
-            height: 60px;
+            width: 56px;
+            height: 56px;
             background: linear-gradient(135deg, #6c63ff, #3ec6ff);
-            border-radius: 50%;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -178,35 +374,68 @@
             font-weight: 800;
             margin: 0 auto 24px;
             color: #fff;
+            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.3);
         }
         
         .step h3 {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
+            font-weight: 600;
             margin-bottom: 12px;
         }
         
         .step p {
-            color: #888;
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
         }
         
-        /* Code Example */
+        /* Code Section */
         .code-section {
-            padding: 80px 0;
+            padding: 100px 0;
             background: #0d0d18;
+        }
+        
+        .code-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: -1px;
+            padding: 0 4px;
+        }
+        
+        .code-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s;
+        }
+        
+        .code-tab:hover {
+            color: #fff;
+        }
+        
+        .code-tab.active {
+            background: #080810;
+            color: #fff;
+            border: 1px solid #1e1e2e;
+            border-bottom: none;
         }
         
         .code-block {
             background: #080810;
             border: 1px solid #1e1e2e;
-            border-radius: 16px;
+            border-radius: 0 16px 16px 16px;
             padding: 32px;
-            margin-top: 40px;
             overflow-x: auto;
         }
         
         .code-block pre {
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 0.95rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
             line-height: 1.8;
             color: #c9d1d9;
         }
@@ -214,113 +443,307 @@
         .code-block .keyword { color: #ff7b72; }
         .code-block .string { color: #a5d6ff; }
         .code-block .function { color: #d2a8ff; }
-        .code-block .comment { color: #8b949e; }
+        .code-block .comment { color: #8b949e; font-style: italic; }
+        .code-block .number { color: #79c0ff; }
+        
+        /* Live Demo */
+        .demo-section {
+            padding: 100px 0;
+            background: #0a0a0f;
+        }
+        
+        .demo-container {
+            background: #151525;
+            border: 1px solid #1e1e2e;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .demo-header {
+            padding: 20px 24px;
+            background: #1a1a2e;
+            border-bottom: 1px solid #1e1e2e;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .demo-dots {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .demo-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .demo-dot.red { background: #ff5f56; }
+        .demo-dot.yellow { background: #ffbd2e; }
+        .demo-dot.green { background: #27ca40; }
+        
+        .demo-title {
+            font-size: 0.875rem;
+            color: #666;
+            margin-left: 8px;
+        }
+        
+        .demo-body {
+            padding: 32px;
+        }
+        
+        .demo-input {
+            width: 100%;
+            background: #080810;
+            border: 1px solid #1e1e2e;
+            border-radius: 12px;
+            padding: 16px 20px;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            font-family: inherit;
+        }
+        
+        .demo-input:focus {
+            outline: none;
+            border-color: #6c63ff;
+        }
+        
+        .demo-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        
+        .demo-btn {
+            padding: 10px 18px;
+            background: #1e1e2e;
+            border: 1px solid #2e2e3e;
+            border-radius: 8px;
+            color: #888;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .demo-btn:hover {
+            border-color: #6c63ff;
+            color: #fff;
+        }
+        
+        .demo-output {
+            background: #080810;
+            border: 1px solid #1e1e2e;
+            border-radius: 12px;
+            padding: 24px;
+            min-height: 120px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        .demo-output.has-content {
+            color: #c9d1d9;
+        }
         
         /* Pricing */
         .pricing {
-            padding: 80px 0;
-            background: #0a0a0f;
+            padding: 100px 0;
+            background: #0d0d18;
         }
         
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 24px;
-            margin-top: 60px;
+            margin-top: 64px;
         }
         
         .pricing-card {
             background: #151525;
             border: 1px solid #1e1e2e;
-            border-radius: 16px;
-            padding: 40px;
+            border-radius: 20px;
+            padding: 40px 32px;
             text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-4px);
         }
         
         .pricing-card.popular {
             border-color: #6c63ff;
+            background: linear-gradient(180deg, #151525 0%, #1a1a35 100%);
             position: relative;
+            transform: scale(1.05);
         }
         
         .popular-badge {
             position: absolute;
-            top: -12px;
+            top: -14px;
             left: 50%;
             transform: translateX(-50%);
             background: linear-gradient(135deg, #6c63ff, #3ec6ff);
             color: #fff;
-            padding: 6px 16px;
-            border-radius: 20px;
+            padding: 6px 18px;
+            border-radius: 100px;
             font-size: 0.8rem;
             font-weight: 600;
         }
         
         .pricing-card h3 {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
+            font-weight: 600;
             margin-bottom: 8px;
         }
         
         .price {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 800;
-            margin: 20px 0;
+            margin: 24px 0;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px;
         }
         
         .price span {
             font-size: 1rem;
-            color: #888;
-            font-weight: 400;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 8px;
         }
         
         .features {
             list-style: none;
             margin: 32px 0;
+            text-align: left;
         }
         
         .features li {
-            padding: 10px 0;
+            padding: 12px 0;
             color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+        }
+        
+        .features li::before {
+            content: '✓';
+            width: 20px;
+            height: 20px;
+            background: rgba(0, 204, 136, 0.1);
+            color: #00cc88;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            flex-shrink: 0;
         }
         
         /* Footer */
         .footer {
-            padding: 60px 0;
+            padding: 80px 0 40px;
             background: #080810;
             border-top: 1px solid #1e1e2e;
-            text-align: center;
         }
         
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin-bottom: 32px;
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+        
+        .footer-brand {
+            max-width: 300px;
+        }
+        
+        .footer-brand .logo {
+            margin-bottom: 16px;
+            display: inline-flex;
+        }
+        
+        .footer-brand p {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .footer-links h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .footer-links a {
-            color: #888;
+            display: block;
+            color: #666;
             text-decoration: none;
-            transition: color 0.3s;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            transition: color 0.2s;
         }
         
         .footer-links a:hover {
-            color: #fff;
+            color: #6c63ff;
         }
         
-        .footer p {
-            color: #555;
+        .footer-bottom {
+            padding-top: 40px;
+            border-top: 1px solid #1e1e2e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-bottom p {
+            color: #444;
+            font-size: 0.875rem;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            background: #151525;
+            border: 1px solid #1e1e2e;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .social-links a:hover {
+            border-color: #6c63ff;
+            color: #6c63ff;
         }
         
         /* Chat Widget */
         .chat-widget {
             position: fixed;
-            bottom: 30px;
+            bottom: 100px;
             right: 30px;
-            width: 380px;
+            width: 400px;
             max-height: 600px;
             background: #151525;
             border: 1px solid #2e2e3e;
-            border-radius: 16px;
+            border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
             display: none;
             flex-direction: column;
@@ -333,7 +756,7 @@
         }
         
         .chat-header {
-            padding: 20px;
+            padding: 20px 24px;
             background: linear-gradient(135deg, #6c63ff, #3ec6ff);
             display: flex;
             justify-content: space-between;
@@ -343,6 +766,10 @@
         .chat-header h4 {
             margin: 0;
             color: #fff;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .chat-close {
@@ -351,6 +778,17 @@
             color: #fff;
             font-size: 1.5rem;
             cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        
+        .chat-close:hover {
+            background: rgba(255,255,255,0.1);
         }
         
         .chat-messages {
@@ -358,24 +796,43 @@
             padding: 20px;
             overflow-y: auto;
             max-height: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
         
         .message {
-            margin-bottom: 16px;
-            padding: 12px 16px;
-            border-radius: 12px;
+            padding: 14px 18px;
+            border-radius: 16px;
             max-width: 85%;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            animation: messageIn 0.3s ease;
+        }
+        
+        @keyframes messageIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .message.user {
-            background: #6c63ff;
+            background: linear-gradient(135deg, #6c63ff, #3ec6ff);
             margin-left: auto;
             color: #fff;
+            border-bottom-right-radius: 4px;
         }
         
         .message.assistant {
             background: #1e1e2e;
             margin-right: auto;
+            color: #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message.error {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            color: #ff6b6b;
         }
         
         .chat-input {
@@ -389,20 +846,37 @@
             flex: 1;
             background: #0a0a0f;
             border: 1px solid #2e2e3e;
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 12px 16px;
             color: #fff;
             font-size: 0.95rem;
+            font-family: inherit;
+        }
+        
+        .chat-input input:focus {
+            outline: none;
+            border-color: #6c63ff;
         }
         
         .chat-input button {
             background: linear-gradient(135deg, #6c63ff, #3ec6ff);
             border: none;
-            border-radius: 8px;
-            padding: 12px 20px;
+            border-radius: 12px;
+            padding: 12px 24px;
             color: #fff;
             font-weight: 600;
             cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .chat-input button:hover {
+            transform: scale(1.05);
+        }
+        
+        .chat-input button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .chat-toggle {
@@ -417,29 +891,123 @@
             color: #fff;
             font-size: 1.5rem;
             cursor: pointer;
-            box-shadow: 0 10px 40px rgba(108, 99, 255, 0.3);
+            box-shadow: 0 10px 40px rgba(108, 99, 255, 0.4);
             z-index: 999;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .chat-toggle:hover {
-            transform: scale(1.05);
+            transform: scale(1.1);
+            box-shadow: 0 15px 50px rgba(108, 99, 255, 0.5);
+        }
+        
+        .chat-toggle.hidden {
+            transform: scale(0);
+            opacity: 0;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 12px;
+        }
+        
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #666;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+                margin: 64px auto 0;
+            }
+            
+            .pricing-card.popular {
+                transform: none;
+                order: -1;
+            }
+            
+            .steps {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
         
         @media (max-width: 768px) {
-            .hero h1 { font-size: 2.5rem; }
-            .chat-widget { width: calc(100% - 40px); right: 20px; }
+            .hero h1 { font-size: 2.75rem; }
+            .hero p { font-size: 1.1rem; }
+            .nav-links { display: none; }
+            .stats-bar { flex-direction: column; gap: 24px; }
+            .chat-widget { width: calc(100% - 40px); right: 20px; bottom: 90px; }
+            .footer-grid { grid-template-columns: 1fr; gap: 40px; }
+            .footer-bottom { flex-direction: column; gap: 20px; text-align: center; }
         }
     </style>
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <div class="logo-icon">🧠</div>
+                Cerebrum
+            </a>
+            <div class="nav-links">
+                <a href="#blocks">Blocks</a>
+                <a href="#docs">Docs</a>
+                <a href="#pricing">Pricing</a>
+                <a href="/dashboard" class="btn btn-primary" style="padding: 10px 20px;">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
+            <div class="badge">API Status: Operational</div>
             <h1>Build AI Like Lego</h1>
-            <p>Snap together AI blocks. PDF + OCR + Chat = Document AI in 5 minutes. No months of development. No complex setup. Just blocks.</p>
+            <p>14 AI blocks. Snap them together. Deploy anywhere. From PDF processing to chat completions — build production-ready AI in minutes, not months.</p>
             <div class="cta-buttons">
-                <a href="#blocks" class="btn btn-primary">Explore Blocks</a>
-                <a href="/docs" class="btn btn-secondary">API Docs</a>
+                <a href="#blocks" class="btn btn-primary">Explore All Blocks</a>
+                <a href="#demo" class="btn btn-secondary">Try Live Demo</a>
+            </div>
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-value" id="blockCount">14</div>
+                    <div class="stat-label">AI Blocks</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Lines of Code</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">API Key</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">∞</div>
+                    <div class="stat-label">Possibilities</div>
+                </div>
             </div>
         </div>
     </section>
@@ -448,70 +1016,11 @@
     <section class="blocks" id="blocks">
         <div class="container">
             <div class="section-header">
-                <h2>16 Blocks. Infinite Possibilities.</h2>
-                <p>Each block is a fully-featured AI capability. Snap them together to build anything you can imagine.</p>
+                <h2>14 Blocks. Infinite Possibilities.</h2>
+                <p>Each block is a fully-featured AI capability. Chain them together to build anything you can imagine.</p>
             </div>
-            <div class="blocks-grid">
-                <div class="block-card">
-                    <div class="block-icon">💬</div>
-                    <h3>Chat</h3>
-                    <p>Conversational AI with memory and context. Support for multiple providers.</p>
-                </div>
-                <div class="block-card">
-                    <div class="block-icon">📄</div>
-                    <h3>PDF</h3>
-                    <p>Extract text, images, and structured data from PDF documents.</p>
-                </div>
-                <div class="block-card">
-                    <div class="block-icon">👁️</div>
-                    <h3>OCR</h3>
-                    <p>Optical character recognition for images and scanned documents.</p>
-                </div>
-                <div class="block-card">
-                    <div class="block-icon">🔊</div>
-                    <h3>Voice</h3>
-                    <p>Text-to-speech and speech-to-text capabilities.</p>
-                </div>
-                <div class="block-card">
-                    <div class="block-icon">🔍</div>
-                    <h3>Vector Search</h3>
-                    <p>Semantic search with embeddings. Find meaning, not just keywords.</p>
-                </div>
-                <div class="block-card">
-                    <div class="block-icon">🖼️</div>
-                    <h3>Image</h3>
-                    <p>Image analysis, generation, and manipulation.</p>
-                </div>
-                <div class="block-card">
-                    <div class="block-icon">🌐</div>
-                    <h3>Translate</h3>
-                    <p>Language translation with context awareness.</p>
-                </div>
-                <div class="block-card">
-                    <div class="block-icon">💻</div>
-                    <h3>Code</h3>
-                    <p>Code generation, analysis, and execution.</p>
-                </div>
-                <div class="block-card">
-                    <div class="block-icon">🕸️</div>
-                    <h3>Web</h3>
-                    <p>Web scraping and browsing capabilities.</p>
-                </div>
-                <div class="block-card">
-                    <div class="block-icon">📁</div>
-                    <h3>Google Drive</h3>
-                    <p>Connect and process files from Google Drive.</p>
-                </div>
-                <div class="block-card">
-                    <div class="block-icon">☁️</div>
-                    <h3>OneDrive</h3>
-                    <p>Microsoft OneDrive integration.</p>
-                </div>
-                <div class="block-card">
-                    <div class="block-icon">💾</div>
-                    <h3>Local Drive</h3>
-                    <p>Process local files and folders.</p>
-                </div>
+            <div class="blocks-grid" id="blocksGrid">
+                <!-- Blocks will be loaded dynamically -->
             </div>
         </div>
     </section>
@@ -521,70 +1030,138 @@
         <div class="container">
             <div class="section-header">
                 <h2>How It Works</h2>
-                <p>Build AI in 3 Steps. No complex setup. No months of development.</p>
+                <p>From idea to production in 3 simple steps.</p>
             </div>
             <div class="steps">
                 <div class="step">
                     <div class="step-number">1</div>
                     <h3>Pick Your Blocks</h3>
-                    <p>Choose from 16 AI blocks. Each is a complete AI capability ready to use.</p>
+                    <p>Choose from 14 AI blocks. Each is a complete AI capability ready to use with a single API call.</p>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
-                    <h3>Snap Them Together</h3>
-                    <p>Chain blocks with our SDK. PDF → OCR → Chat = Document AI in 3 lines.</p>
+                    <h3>Chain Them Together</h3>
+                    <p>Use our SDK to chain blocks: PDF → OCR → Chat = Document AI in just 3 lines of code.</p>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
                     <h3>Deploy Anywhere</h3>
-                    <p>Same code runs on your laptop, server, or cloud. Hardware auto-detected.</p>
+                    <p>Same code runs locally, on-premise, or in the cloud. Auto-scaling built-in.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Code Example -->
-    <section class="code-section">
+    <!-- Code Section -->
+    <section class="code-section" id="docs">
         <div class="container">
             <div class="section-header">
-                <h2>3 Lines. Full AI Pipeline.</h2>
-                <p>No complex setup. No boilerplate. Just snap blocks together.</p>
+                <h2>Simple Code. Powerful Results.</h2>
+                <p>No boilerplate. No complex setup. Just snap blocks together.</p>
+            </div>
+            <div class="code-tabs">
+                <button class="code-tab active" onclick="switchTab('python')">Python</button>
+                <button class="code-tab" onclick="switchTab('javascript')">JavaScript</button>
+                <button class="code-tab" onclick="switchTab('curl')">cURL</button>
             </div>
             <div class="code-block">
-                <pre><span class="keyword">from</span> cerebrum <span class="keyword">import</span> CerebrumClient, chain
+                <pre id="codePython"><span class="comment"># Document AI Pipeline: PDF → OCR → Chat Summary</span>
+<span class="keyword">import</span> requests
 
-<span class="comment"># Initialize client</span>
-client = <span class="function">CerebrumClient</span>(<span class="string">"http://localhost:8000"</span>, <span class="string">"your-api-key"</span>)
+<span class="comment"># 1. Extract text from PDF</span>
+pdf_result = requests.post(<span class="string">"https://ssdppg.onrender.com/v1/execute"</span>, json={
+    <span class="string">"block"</span>: <span class="string">"pdf"</span>,
+    <span class="string">"input"</span>: <span class="string">"contract.pdf"</span>,
+    <span class="string">"params"</span>: {<span class="string">"extract"</span>: <span class="string">"text"</span>}
+}).json()
 
-<span class="comment"># Chain blocks together</span>
-result = <span class="keyword">await</span> <span class="function">chain</span>(client) \
-    .<span class="function">then</span>(<span class="string">"pdf"</span>, {<span class="string">"extract"</span>: <span class="string">"text"</span>}) \
-    .<span class="function">then</span>(<span class="string">"translate"</span>, {<span class="string">"target"</span>: <span class="string">"en"</span>}) \
-    .<span class="function">then</span>(<span class="string">"chat"</span>, {<span class="string">"prompt"</span>: <span class="string">"Summarize this contract:"</span>}) \
-    .<span class="function">run</span>(<span class="string">"contract.pdf"</span>)
+<span class="comment"># 2. Get AI summary via Chat</span>
+chat_result = requests.post(<span class="string">"https://ssdppg.onrender.com/v1/chat"</span>, json={
+    <span class="string">"message"</span>: <span class="string">f"Summarize: {pdf_result['result']['text'][:2000]}"</span>,
+    <span class="string">"model"</span>: <span class="string">"gpt-3.5-turbo"</span>
+}).json()
 
-<span class="function">print</span>(result.final_output)
-<span class="comment"># Output: "This contract outlines payment terms..."</span></pre>
+<span class="keyword">print</span>(chat_result[<span class="string">"text"</span>])
+<span class="comment"># "This contract outlines payment terms of $50,000..."</span></pre>
+                <pre id="codeJavascript" style="display:none"><span class="comment">// Document AI Pipeline: PDF → OCR → Chat Summary</span>
+<span class="keyword">const</span> response = <span class="keyword">await</span> fetch(<span class="string">'https://ssdppg.onrender.com/v1/chain'</span>, {
+  method: <span class="string">'POST'</span>,
+  headers: { <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span> },
+  body: JSON.stringify({
+    steps: [
+      { block: <span class="string">'pdf'</span>, params: { extract: <span class="string">'text'</span> } },
+      { block: <span class="string">'chat'</span>, params: { 
+        prompt: <span class="string">'Summarize this document:'</span>,
+        model: <span class="string">'gpt-3.5-turbo'</span>
+      }}
+    ],
+    initial_input: <span class="string">'contract.pdf'</span>
+  })
+});
+
+<span class="keyword">const</span> result = <span class="keyword">await</span> response.json();
+console.log(result.final_output);
+<span class="comment">// "This contract outlines payment terms..."</span></pre>
+                <pre id="codeCurl" style="display:none"><span class="comment"># Chain multiple blocks in one request</span>
+curl -X POST https://ssdppg.onrender.com/v1/chain \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -d <span class="string">'{
+    "steps": [
+      {"block": "ocr", "params": {"lang": "eng"}},
+      {"block": "translate", "params": {"target": "en"}},
+      {"block": "chat", "params": {"prompt": "Extract key info:"}}
+    ],
+    "initial_input": "invoice.png"
+  }'</span></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Demo -->
+    <section class="demo-section" id="demo">
+        <div class="container">
+            <div class="section-header">
+                <h2>Try It Live</h2>
+                <p>Test the Chat block directly from your browser.</p>
+            </div>
+            <div class="demo-container">
+                <div class="demo-header">
+                    <div class="demo-dots">
+                        <div class="demo-dot red"></div>
+                        <div class="demo-dot yellow"></div>
+                        <div class="demo-dot green"></div>
+                    </div>
+                    <span class="demo-title">Live API Demo — Chat Block</span>
+                </div>
+                <div class="demo-body">
+                    <input type="text" class="demo-input" id="demoInput" placeholder="Ask anything... (e.g., 'Explain quantum computing in simple terms')">
+                    <div class="demo-buttons">
+                        <button class="demo-btn" onclick="runDemo('What is AI?')">What is AI?</button>
+                        <button class="demo-btn" onclick="runDemo('Write a Python hello world')">Python Hello World</button>
+                        <button class="demo-btn" onclick="runDemo('Summarize: The quick brown fox')">Summarize Text</button>
+                    </div>
+                    <div class="demo-output" id="demoOutput">Click a button above or type your own question and press Enter...</div>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Pricing -->
-    <section class="pricing">
+    <section class="pricing" id="pricing">
         <div class="container">
             <div class="section-header">
-                <h2>Simple, Transparent Pricing</h2>
-                <p>Start free. Scale as you grow. No hidden fees.</p>
+                <h2>Simple Pricing</h2>
+                <p>Start free, scale as you grow. No hidden fees.</p>
             </div>
             <div class="pricing-grid">
                 <div class="pricing-card">
                     <h3>Free</h3>
                     <div class="price">$0<span>/month</span></div>
                     <ul class="features">
-                        <li>All 16 official blocks</li>
-                        <li>1,000 executions/month</li>
+                        <li>All 14 AI blocks</li>
+                        <li>1,000 requests/month</li>
                         <li>Community support</li>
-                        <li>Local deployment</li>
+                        <li>Self-hosted option</li>
                         <li>Open source</li>
                     </ul>
                     <button class="btn btn-secondary" style="width: 100%;">Get Started</button>
@@ -594,12 +1171,12 @@ result = <span class="keyword">await</span> <span class="function">chain</span>(
                     <h3>Pro</h3>
                     <div class="price">$29<span>/month</span></div>
                     <ul class="features">
-                        <li>All 16 official blocks</li>
-                        <li>50,000 executions/month</li>
+                        <li>All 14 AI blocks</li>
+                        <li>50,000 requests/month</li>
                         <li>Priority support</li>
-                        <li>Cloud deployment</li>
-                        <li>API keys</li>
+                        <li>Hosted on Render</li>
                         <li>Usage analytics</li>
+                        <li>Custom API keys</li>
                     </ul>
                     <button class="btn btn-primary" style="width: 100%;">Upgrade to Pro</button>
                 </div>
@@ -608,11 +1185,11 @@ result = <span class="keyword">await</span> <span class="function">chain</span>(
                     <div class="price">Custom</div>
                     <ul class="features">
                         <li>Everything in Pro</li>
-                        <li>Unlimited executions</li>
+                        <li>Unlimited requests</li>
                         <li>Custom blocks</li>
                         <li>SLA guarantee</li>
                         <li>Dedicated support</li>
-                        <li>On-premise option</li>
+                        <li>On-premise deployment</li>
                     </ul>
                     <button class="btn btn-secondary" style="width: 100%;">Contact Sales</button>
                 </div>
@@ -623,50 +1200,187 @@ result = <span class="keyword">await</span> <span class="function">chain</span>(
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <div class="footer-links">
-                <a href="/docs">API Docs</a>
-                <a href="/blocks">Blocks</a>
-                <a href="https://github.com/bopoadz-del/SSDPPG">GitHub</a>
-                <a href="#">Contact</a>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="/" class="logo">
+                        <div class="logo-icon">🧠</div>
+                        Cerebrum
+                    </a>
+                    <p>Build AI applications like Lego. 14 blocks. One API. Infinite possibilities.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Product</h4>
+                    <a href="#blocks">Blocks</a>
+                    <a href="#docs">Documentation</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="/dashboard">Dashboard</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Resources</h4>
+                    <a href="/docs">API Reference</a>
+                    <a href="https://github.com/bopoadz-del/cerebrum-blocks">GitHub</a>
+                    <a href="#">Examples</a>
+                    <a href="#">Blog</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Company</h4>
+                    <a href="#">About</a>
+                    <a href="#">Contact</a>
+                    <a href="#">Privacy</a>
+                    <a href="#">Terms</a>
+                </div>
             </div>
-            <p>© 2025 Cerebrum Blocks. Built with 💜 for developers.</p>
+            <div class="footer-bottom">
+                <p>© 2025 Cerebrum Blocks. Built with 💜 for developers.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="GitHub">📦</a>
+                    <a href="#" aria-label="Twitter">🐦</a>
+                    <a href="#" aria-label="Discord">💬</a>
+                </div>
+            </div>
         </div>
     </footer>
 
     <!-- Chat Widget -->
-    <button class="chat-toggle" onclick="toggleChat()">💬</button>
+    <button class="chat-toggle" id="chatToggle" onclick="toggleChat()">💬</button>
     
     <div class="chat-widget" id="chatWidget">
         <div class="chat-header">
-            <h4>💬 Cerebrum Assistant</h4>
+            <h4>🧠 Cerebrum Assistant</h4>
             <button class="chat-close" onclick="toggleChat()">×</button>
         </div>
         <div class="chat-messages" id="chatMessages">
-            <div class="message assistant">Hello! I'm your AI assistant. How can I help you today?</div>
+            <div class="message assistant">Hello! I'm powered by Cerebrum Blocks. Ask me anything or try the live demo below!</div>
         </div>
         <div class="chat-input">
             <input type="text" id="chatInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
-            <button onclick="sendMessage()">Send</button>
+            <button onclick="sendMessage()" id="sendBtn">Send</button>
         </div>
     </div>
 
     <script>
-        const API_BASE_URL = window.location.origin;
-        
-        function toggleChat() {
-            const widget = document.getElementById('chatWidget');
-            widget.classList.toggle('active');
-        }
-        
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
+        // Block data with icons and descriptions
+        const blockData = {
+            'chat': { icon: '💬', desc: 'AI chat completions with streaming support', tag: 'AI' },
+            'pdf': { icon: '📄', desc: 'Extract text, images from PDF documents', tag: 'Document' },
+            'ocr': { icon: '👁️', desc: 'Extract text from images and scans', tag: 'Vision' },
+            'voice': { icon: '🔊', desc: 'Text-to-speech and speech-to-text', tag: 'Audio' },
+            'image': { icon: '🖼️', desc: 'Image analysis and generation', tag: 'Vision' },
+            'translate': { icon: '🌐', desc: 'Translate between 100+ languages', tag: 'NLP' },
+            'code': { icon: '💻', desc: 'Code generation and execution', tag: 'Dev' },
+            'web': { icon: '🕸️', desc: 'Web scraping and browsing', tag: 'Web' },
+            'search': { icon: '🔎', desc: 'Web search with multiple providers', tag: 'Web' },
+            'vector_search': { icon: '🔍', desc: 'Semantic search with embeddings', tag: 'AI' },
+            'google_drive': { icon: '📁', desc: 'Google Drive integration', tag: 'Storage' },
+            'onedrive': { icon: '☁️', desc: 'Microsoft OneDrive integration', tag: 'Storage' },
+            'local_drive': { icon: '💾', desc: 'Local file system access', tag: 'Storage' },
+            'android_drive': { icon: '📱', desc: 'Android storage integration', tag: 'Storage' }
+        };
+
+        // Load blocks dynamically
+        async function loadBlocks() {
+            const grid = document.getElementById('blocksGrid');
+            
+            try {
+                const response = await fetch('/v1/blocks');
+                const data = await response.json();
+                
+                // Update block count
+                document.getElementById('blockCount').textContent = data.blocks.length;
+                
+                // Render blocks
+                grid.innerHTML = data.blocks.map(block => {
+                    const info = blockData[block.name] || { icon: '📦', desc: block.description || 'AI Block', tag: 'AI' };
+                    return `
+                        <div class="block-card" onclick="showBlockDetails('${block.name}')">
+                            <div class="block-icon">${info.icon}</div>
+                            <h3>${block.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h3>
+                            <p>${info.desc}</p>
+                            <span class="block-tag">${info.tag}</span>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load blocks:', error);
+                // Fallback to static blocks
+                grid.innerHTML = Object.entries(blockData).map(([name, info]) => `
+                    <div class="block-card">
+                        <div class="block-icon">${info.icon}</div>
+                        <h3>${name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h3>
+                        <p>${info.desc}</p>
+                        <span class="block-tag">${info.tag}</span>
+                    </div>
+                `).join('');
             }
         }
-        
+
+        // Show block details (placeholder)
+        function showBlockDetails(blockName) {
+            console.log('Block clicked:', blockName);
+        }
+
+        // Code tab switching
+        function switchTab(lang) {
+            document.querySelectorAll('.code-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('codePython').style.display = lang === 'python' ? 'block' : 'none';
+            document.getElementById('codeJavascript').style.display = lang === 'javascript' ? 'block' : 'none';
+            document.getElementById('codeCurl').style.display = lang === 'curl' ? 'block' : 'none';
+        }
+
+        // Live demo
+        async function runDemo(message) {
+            const output = document.getElementById('demoOutput');
+            const input = document.getElementById('demoInput');
+            
+            if (message) input.value = message;
+            else message = input.value;
+            
+            if (!message.trim()) return;
+            
+            output.textContent = '⏳ Processing...';
+            output.classList.add('has-content');
+            
+            try {
+                const response = await fetch('/v1/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        model: 'mock'
+                    })
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                output.textContent = data.text || 'No response received';
+            } catch (error) {
+                output.textContent = `❌ Error: ${error.message}\n\nNote: The API might be starting up (Render free tier sleeps after 15 min). Try again in 30 seconds.`;
+            }
+        }
+
+        document.getElementById('demoInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') runDemo();
+        });
+
+        // Chat widget
+        function toggleChat() {
+            const widget = document.getElementById('chatWidget');
+            const toggle = document.getElementById('chatToggle');
+            widget.classList.toggle('active');
+            toggle.classList.toggle('hidden');
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+
         async function sendMessage() {
             const input = document.getElementById('chatInput');
             const messages = document.getElementById('chatMessages');
+            const sendBtn = document.getElementById('sendBtn');
             const text = input.value.trim();
             
             if (!text) return;
@@ -679,42 +1393,42 @@ result = <span class="keyword">await</span> <span class="function">chain</span>(
             input.value = '';
             messages.scrollTop = messages.scrollHeight;
             
+            // Show typing indicator
+            sendBtn.disabled = true;
+            sendBtn.textContent = '...';
+            
             try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/chat/completions`, {
+                const response = await fetch('/v1/chat', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer demo-key'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        model: 'gpt-3.5-turbo',
-                        messages: [{ role: 'user', content: text }],
-                        max_tokens: 1000,
-                        temperature: 0.7
+                        message: text,
+                        model: 'mock'
                     })
                 });
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
-                const assistantText = data.choices?.[0]?.message?.content || 'Sorry, I could not process your request.';
                 
                 const assistantMsg = document.createElement('div');
                 assistantMsg.className = 'message assistant';
-                assistantMsg.textContent = assistantText;
+                assistantMsg.textContent = data.text || 'I received your message! (Chat block is running in mock mode)';
                 messages.appendChild(assistantMsg);
-                messages.scrollTop = messages.scrollHeight;
             } catch (error) {
-                console.error('Chat error:', error);
                 const errorMsg = document.createElement('div');
-                errorMsg.className = 'message assistant';
-                errorMsg.textContent = 'Sorry, I\'m having trouble connecting. Please try again later.';
+                errorMsg.className = 'message error';
+                errorMsg.textContent = `Sorry, I couldn't connect to the API. Error: ${error.message}`;
                 messages.appendChild(errorMsg);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
                 messages.scrollTop = messages.scrollHeight;
             }
         }
+
+        // Initialize
+        loadBlocks();
     </script>
 </body>
 </html>

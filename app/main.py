@@ -10,7 +10,8 @@ from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
@@ -33,6 +34,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Store block instances
 block_instances: Dict[str, Any] = {}
@@ -61,8 +65,14 @@ class ChatRequest(BaseModel):
 
 # -------------------- BLOCKS --------------------
 
-@app.get("/")
-def root():
+@app.get("/", response_class=FileResponse)
+async def root():
+    """Serve landing page."""
+    return FileResponse("app/static/landing/index.html")
+
+
+@app.get("/api")
+def api_info():
     """API info."""
     return {
         "name": "Cerebrum Blocks",
@@ -70,11 +80,11 @@ def root():
         "tagline": "Build AI Like Lego",
         "blocks": len(BLOCK_REGISTRY),
         "endpoints": {
-            "blocks": "/blocks",
-            "execute": "/execute",
-            "chain": "/chain",
-            "chat": "/chat",
-            "health": "/health",
+            "blocks": "/v1/blocks",
+            "execute": "/v1/execute",
+            "chain": "/v1/chain",
+            "chat": "/v1/chat",
+            "health": "/v1/health",
         }
     }
 
