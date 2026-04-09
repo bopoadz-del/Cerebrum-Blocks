@@ -36,7 +36,7 @@ app.add_middleware(
 
 # Store block instances
 block_instances: Dict[str, Any] = {}
-DATA_DIR = os.getenv("DATA_DIR", "/app/data")
+DATA_DIR = os.getenv("DATA_DIR", "./data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 
@@ -82,6 +82,17 @@ def root():
 @app.get("/health")
 def health():
     """Health check."""
+    return {
+        "status": "healthy",
+        "blocks_loaded": len(block_instances),
+        "blocks_available": len(BLOCK_REGISTRY),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+@app.get("/v1/health")
+def health_v1():
+    """Health check for Render (v1 API)."""
     return {
         "status": "healthy",
         "blocks_loaded": len(block_instances),
@@ -288,6 +299,44 @@ async def chat_stream(request: ChatRequest):
             "Connection": "keep-alive",
         }
     )
+
+
+# -------------------- V1 API ROUTES --------------------
+
+@app.get("/v1/blocks")
+def list_blocks_v1():
+    """List all available blocks (v1 API)."""
+    return list_blocks()
+
+
+@app.get("/v1/blocks/{block_name}")
+def get_block_v1(block_name: str):
+    """Get block details (v1 API)."""
+    return get_block(block_name)
+
+
+@app.post("/v1/execute")
+async def execute_v1(request: ExecuteRequest):
+    """Execute a single block (v1 API)."""
+    return await execute(request)
+
+
+@app.post("/v1/chain")
+async def chain_execute_v1(request: ChainRequest):
+    """Execute a chain of blocks (v1 API)."""
+    return await chain_execute(request)
+
+
+@app.post("/v1/chat")
+async def chat_v1(request: ChatRequest):
+    """Simple chat endpoint (v1 API)."""
+    return await chat(request)
+
+
+@app.post("/v1/chat/stream")
+async def chat_stream_v1(request: ChatRequest):
+    """Streaming chat endpoint (v1 API)."""
+    return await chat_stream(request)
 
 
 # -------------------- ERROR HANDLERS --------------------

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CreditCard, Check, Zap } from 'lucide-react'
+import { CreditCard, Check } from 'lucide-react'
 
 interface Plan {
   id: string

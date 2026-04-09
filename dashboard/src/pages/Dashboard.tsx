@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Activity, Zap, CreditCard, TrendingUp } from 'lucide-react'
-import { format } from 'date-fns'
 
 interface Stats {
   totalRequests: number
@@ -134,7 +133,7 @@ function UsageChart() {
 }
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<Stats>({
+  const [stats] = useState<Stats>({
     totalRequests: 12847,
     totalTokens: 2843920,
     avgLatency: 245,

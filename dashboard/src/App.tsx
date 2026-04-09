@@ -4,13 +4,14 @@ import {
   Key, 
   BarChart3, 
   CreditCard, 
-  Settings,
+  Settings as SettingsIcon,
   Brain
 } from 'lucide-react'
 import Dashboard from './pages/Dashboard'
 import APIKeys from './pages/APIKeys'
 import Usage from './pages/Usage'
 import Billing from './pages/Billing'
+import Settings from './pages/Settings'
 import './App.css'
 
 function NavLink({ to, icon: Icon, children }: { to: string; icon: React.ElementType; children: React.ReactNode }) {
@@ -45,7 +46,7 @@ function App() {
         </nav>
         
         <div className="sidebar-footer">
-          <NavLink to="/settings" icon={Settings}>Settings</NavLink>
+          <NavLink to="/settings" icon={SettingsIcon}>Settings</NavLink>
         </div>
       </aside>
       
@@ -55,6 +56,7 @@ function App() {
           <Route path="/keys" element={<APIKeys />} />
           <Route path="/usage" element={<Usage />} />
           <Route path="/billing" element={<Billing />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>
     </div>

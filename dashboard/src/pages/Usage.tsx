@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Calendar, Download } from 'lucide-react'
+import { Download } from 'lucide-react'
 
 interface DailyUsage {
   date: string
