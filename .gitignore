@@ -47,10 +47,3 @@ env/
 .mypy_cache/
 .dmypy.json
 dmypy.json
-
-# Secrets
-.ssh/
-.render/api-key
-.env
-*.pem
-*.key
