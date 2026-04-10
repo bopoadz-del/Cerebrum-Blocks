@@ -43,7 +43,7 @@ class VectorSearchBlock(BaseBlock):
         
         # Default collection name
         self.default_collection = os.getenv("VECTOR_COLLECTION", "default")
-        self.persist_directory = os.getenv("CHROMA_PERSIST_DIR", "/app/data/chroma_db")
+        self.persist_directory = os.getenv("CHROMA_PERSIST_DIR", "./data/chroma_db")
         
         # Embedding model cache
         self._embedding_model = None

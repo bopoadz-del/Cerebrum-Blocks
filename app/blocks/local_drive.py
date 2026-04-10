@@ -19,7 +19,7 @@ class LocalDriveBlock(BaseBlock):
             supported_inputs=["file", "file_path"],
             supported_outputs=["file_path", "url", "metadata"]
         ))
-        self.base_path = os.getenv("LOCAL_DRIVE_PATH", "/app/data")
+        self.base_path = os.getenv("LOCAL_DRIVE_PATH", "./data")
         os.makedirs(self.base_path, exist_ok=True)
     
     async def process(self, input_data: Any, params: Dict[str, Any] = None) -> Dict[str, Any]:
