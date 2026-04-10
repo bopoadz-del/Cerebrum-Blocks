@@ -2,11 +2,10 @@
 
 > **AI for Developers in 3 Lines of Code**
 
-Build AI applications like Lego. One API key. 16 blocks. Infinite possibilities.
+Build AI applications like Lego. One API key. 15 blocks. Infinite possibilities.
 
-[![PyPI](https://img.shields.io/pypi/v/cerebrum-sdk)](https://pypi.org/project/cerebrum-sdk/)
-[![npm](https://img.shields.io/npm/v/cerebrum-js)](https://www.npmjs.com/package/cerebrum-js)
-[![API Status](https://img.shields.io/badge/api-up-success)](https://api.cerebrumblocks.com/v1/health)
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-bopoadz--del%2Fcerebrum--blocks-blue?logo=docker)](https://hub.docker.com/r/bopoadz-del/cerebrum-blocks)
+[![API Status](https://img.shields.io/badge/api-up-success)](https://cerebrum-blocks.onrender.com/v1/health)
 
 ---
 
