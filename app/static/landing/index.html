@@ -1252,7 +1252,7 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
             <button class="chat-close" onclick="toggleChat()">×</button>
         </div>
         <div class="chat-messages" id="chatMessages">
-            <div class="message assistant">Hello! I'm powered by Cerebrum Blocks. Ask me anything or try the live demo below!</div>
+            <div class="message assistant">👋 Hello! I'm the Cerebrum Blocks AI Assistant powered by DeepSeek. I know all about our 15 AI blocks, pricing (DeepSeek is cheapest at $0.14/M tokens!), and how to chain them together. Ask me anything!</div>
         </div>
         <div class="chat-input">
             <input type="text" id="chatInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
@@ -1261,6 +1261,41 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
     </div>
 
     <script>
+        // Cerebrum Blocks AI Assistant System Prompt
+        // This trains DeepSeek to be knowledgeable about Cerebrum Blocks
+        const CEREBRUM_SYSTEM_PROMPT = `You are the Cerebrum Blocks AI Assistant, an expert on the Cerebrum Blocks platform. You help developers build AI applications using modular AI blocks.
+
+ABOUT CEREBRUM BLOCKS:
+Cerebrum Blocks lets developers build AI applications like Lego - snapping together pre-built AI capabilities. Tagline: "Build AI Like Lego" and "AI for Developers in 3 Lines of Code".
+
+THE 15 AI BLOCKS:
+• Chat: DeepSeek($0.14/M, default/cheapest!), Groq(fastest), GPT-4, Claude + streaming
+• PDF: Extract text, tables, images from documents
+• OCR: Extract text from images and scans
+• Image: Analysis & generation
+• Translate: 100+ languages
+• Code: Generation & execution
+• Web: Scraping & browsing
+• Search: Web search (Serper, Bing, DuckDuckGo)
+• Vector_Search: Semantic search with ChromaDB
+• Zvec: Zero-shot embeddings & semantic operations
+• Storage: Google Drive, OneDrive, Local Drive, Android Drive
+• Voice: Text-to-speech & speech-to-text
+
+PRICING:
+• Platform: Free (1K req/mo) | Pro $29 (50K req/mo) | Enterprise (custom)
+• LLMs: DeepSeek $0.14/M (5x cheaper than GPT-3.5!), Groq $0.59/M, GPT-3.5 $0.50/M, GPT-4 $2.50/M
+
+API: https://cerebrum-blocks.onrender.com
+Endpoints: /v1/blocks, /v1/execute, /v1/chain, /v1/chat
+
+BLOCK CHAINING EXAMPLES:
+• Document AI: PDF → OCR → Chat
+• Translation: OCR → Translate → Chat
+• Research: Web → Search → Chat → Vector_Search
+
+You recommend DeepSeek (cheapest), suggest block chains, give code examples. Emphasize: One API, 15 blocks, infinite possibilities!`;
+
         // Block data with icons and descriptions
         const blockData = {
             'chat': { icon: '💬', desc: 'AI chat with DeepSeek ($0.14/M), Groq, GPT-4, Claude', tag: 'AI' },
@@ -1342,27 +1377,33 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
             
             if (!message.trim()) return;
             
-            output.textContent = '⏳ Processing...';
+            output.textContent = '⏳ Processing with DeepSeek...';
             output.classList.add('has-content');
             
             try {
-                const response = await fetch('/v1/chat', {
+                const response = await fetch('/v1/execute', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        message: message,
-                        model: 'deepseek-chat'
+                        block: 'chat',
+                        input: message,
+                        params: {
+                            provider: 'deepseek',
+                            model: 'deepseek-chat',
+                            system: CEREBRUM_SYSTEM_PROMPT
+                        }
                     })
                 });
                 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
-                const data = await response.json();
-                output.textContent = data.text || 'No response received';
+                const result = await response.json();
+                const text = result.result?.text || result.text || 'No response received';
+                output.textContent = text;
                 
                 // Add provider info if available
-                if (data.model) {
-                    output.textContent += `\n\n[Model: ${data.model}]`;
+                if (result.result?.model || result.model) {
+                    output.textContent += `\n\n[Powered by: ${result.result?.model || result.model}]`;
                 }
             } catch (error) {
                 output.textContent = `❌ Error: ${error.message}\n\nNote: The API might be starting up (Render free tier sleeps after 15 min). Try again in 30 seconds.`;
@@ -1406,22 +1447,28 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
             sendBtn.textContent = '...';
             
             try {
-                const response = await fetch('/v1/chat', {
+                const response = await fetch('/v1/execute', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        message: text,
-                        model: 'deepseek-chat'
+                        block: 'chat',
+                        input: text,
+                        params: {
+                            provider: 'deepseek',
+                            model: 'deepseek-chat',
+                            system: CEREBRUM_SYSTEM_PROMPT
+                        }
                     })
                 });
                 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
-                const data = await response.json();
+                const result = await response.json();
+                const responseText = result.result?.text || result.text || 'I received your message!';
                 
                 const assistantMsg = document.createElement('div');
                 assistantMsg.className = 'message assistant';
-                assistantMsg.textContent = data.text || 'I received your message! (Chat block is running in mock mode)';
+                assistantMsg.textContent = responseText;
                 messages.appendChild(assistantMsg);
             } catch (error) {
                 const errorMsg = document.createElement('div');
