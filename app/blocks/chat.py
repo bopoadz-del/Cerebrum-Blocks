@@ -24,28 +24,28 @@ class ChatBlock(BaseBlock):
     def _check_openai(self) -> bool:
         try:
             import openai
-            return True
+            return bool(os.getenv("OPENAI_API_KEY"))
         except ImportError:
             return False
 
     def _check_anthropic(self) -> bool:
         try:
             import anthropic
-            return True
+            return bool(os.getenv("ANTHROPIC_API_KEY"))
         except ImportError:
             return False
 
     def _check_groq(self) -> bool:
         try:
             import groq
-            return True
+            return bool(os.getenv("GROQ_API_KEY"))
         except ImportError:
             return False
 
     def _check_deepseek(self) -> bool:
         try:
             import openai  # DeepSeek uses OpenAI-compatible API
-            return True
+            return bool(os.getenv("DEEPSEEK_API_KEY"))
         except ImportError:
             return False
 
@@ -73,7 +73,7 @@ class ChatBlock(BaseBlock):
             result["text"] = ""
             return result
 
-        # Non-streaming (cheapest first)
+        # Non-streaming (cheapest first, with fallback to mock)
         if provider == "deepseek" and self._deepseek_available:
             response = await self._call_deepseek(messages, model or "deepseek-chat", max_tokens, temperature)
         elif provider == "groq" and self._groq_available:
@@ -82,8 +82,11 @@ class ChatBlock(BaseBlock):
             response = await self._call_openai(messages, model, max_tokens, temperature)
         elif provider == "anthropic" and self._anthropic_available:
             response = await self._call_anthropic(messages, model, max_tokens, temperature)
+        elif provider == "mock":
+            response = self._call_mock(messages)
         else:
-            response = {"text": f"[Provider {provider} not available. Install package or set API key.]", "confidence": 0.3}
+            # Auto-fallback to mock if no providers available
+            response = self._call_mock(messages)
 
         result.update(response)
         return result
@@ -129,6 +132,33 @@ class ChatBlock(BaseBlock):
             return mock_stream()
 
     # ==================== PROVIDER CALLS ====================
+
+    def _call_mock(self, messages: List[Dict]) -> Dict:
+        """Mock provider for demo/development - no API key needed."""
+        user_message = messages[-1]["content"] if messages else ""
+        
+        # Simple canned responses based on keywords
+        user_lower = user_message.lower()
+        if "hello" in user_lower or "hi" in user_lower:
+            response_text = "Hello! I'm running in demo mode. Set DEEPSEEK_API_KEY for real AI responses."
+        elif "python" in user_lower or "code" in user_lower:
+            response_text = "```python\nprint('Hello, World!')\n```\n\nI'm in demo mode. Add an API key for real code generation."
+        elif "ai" in user_lower or "what is" in user_lower:
+            response_text = "AI (Artificial Intelligence) refers to computer systems that can perform tasks that typically require human intelligence.\n\n*[Demo mode - add API key for full responses]*"
+        elif "summarize" in user_lower:
+            response_text = "This is a summary of your text.\n\n*[Demo mode - add API key for real summarization]*"
+        else:
+            response_text = f"I received: '{user_message[:50]}...'\n\nI'm running in mock/demo mode. To get real AI responses, set DEEPSEEK_API_KEY, GROQ_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY."
+        
+        return {
+            "text": response_text,
+            "finish_reason": "stop",
+            "tokens_prompt": len(str(messages)) // 4,
+            "tokens_completion": len(response_text) // 4,
+            "tokens_total": (len(str(messages)) + len(response_text)) // 4,
+            "confidence": 1.0,
+            "provider": "mock"
+        }
 
     async def _call_deepseek(self, messages: List[Dict], model: str, max_tokens: int, temperature: float) -> Dict:
         """Call DeepSeek API - cheapest provider ($0.14/M tokens)."""
