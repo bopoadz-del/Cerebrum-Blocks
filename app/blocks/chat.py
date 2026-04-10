@@ -164,6 +164,7 @@ class ChatBlock(BaseBlock):
         
         return {
             "text": response_text,
+            "model": "mock-model",
             "finish_reason": "stop",
             "tokens_prompt": len(str(messages)) // 4,
             "tokens_completion": len(response_text) // 4,
@@ -190,6 +191,7 @@ class ChatBlock(BaseBlock):
             )
             return {
                 "text": response.choices[0].message.content,
+                "model": deepseek_model,
                 "finish_reason": response.choices[0].finish_reason,
                 "tokens_prompt": response.usage.prompt_tokens,
                 "tokens_completion": response.usage.completion_tokens,
@@ -211,6 +213,7 @@ class ChatBlock(BaseBlock):
             )
             return {
                 "text": response.choices[0].message.content,
+                "model": model or "llama-3.3-70b-versatile",
                 "finish_reason": response.choices[0].finish_reason,
                 "tokens_prompt": response.usage.prompt_tokens,
                 "tokens_completion": response.usage.completion_tokens,
