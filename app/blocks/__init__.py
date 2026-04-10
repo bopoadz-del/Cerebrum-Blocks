@@ -11,6 +11,7 @@ from .translate import TranslateBlock
 from .code import CodeBlock
 from .web import WebBlock
 from .search import SearchBlock
+from .zvec import ZvecBlock
 
 # Drive Blocks
 from .google_drive import GoogleDriveBlock
@@ -30,6 +31,7 @@ __all__ = [
     "CodeBlock",
     "WebBlock",
     "SearchBlock",
+    "ZvecBlock",
     # Drive Blocks
     "GoogleDriveBlock",
     "OneDriveBlock",
@@ -62,6 +64,7 @@ register_block("translate", TranslateBlock)
 register_block("code", CodeBlock)
 register_block("web", WebBlock)
 register_block("search", SearchBlock)
+register_block("zvec", ZvecBlock)
 register_block("google_drive", GoogleDriveBlock)
 register_block("onedrive", OneDriveBlock)
 register_block("local_drive", LocalDriveBlock)
