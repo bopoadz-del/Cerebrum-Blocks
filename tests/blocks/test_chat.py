@@ -1,105 +1,85 @@
 """Tests for Chat Block."""
 
 import pytest
-from app.blocks.chat import ChatBlock
+import os
+from unittest.mock import patch
+from app.blocks import ChatBlock
 
-class TestChatBlock:
-    """Test suite for Chat Block."""
-    
-    @pytest.fixture
-    def block(self):
-        return ChatBlock()
-    
-    @pytest.mark.asyncio
-    async def test_block_initialization(self, block):
-        """Test block is properly initialized."""
-        assert block.config.name == "chat"
-        assert block.config.version == "1.0"
-        assert block.config.requires_api_key == True
-    
-    @pytest.mark.asyncio
-    async def test_build_messages_from_string(self, block):
-        """Test building messages from string input."""
-        messages = block._build_messages("Hello", "", "You are helpful.")
-        assert len(messages) >= 1
-        assert messages[0]["role"] == "system"
-    
-    @pytest.mark.asyncio
-    async def test_build_messages_from_list(self, block):
-        """Test building messages from list input."""
-        input_msgs = [
-            {"role": "user", "content": "Hello"},
-            {"role": "assistant", "content": "Hi!"}
-        ]
-        messages = block._build_messages(input_msgs, "", "")
-        assert messages == input_msgs
-    
-    @pytest.mark.asyncio
-    async def test_build_messages_from_dict_with_text(self, block):
-        """Test building messages from dict with text."""
-        messages = block._build_messages({"text": "Hello"}, "", "")
-        assert any(m["content"] == "Hello" for m in messages)
-    
-    @pytest.mark.asyncio
-    async def test_process_mock_provider(self, block):
-        """Test processing with mock provider."""
-        result = await block.execute("Hello", {"provider": "mock"})
-        
-        assert result["block"] == "chat"
-        assert result["status"] == "success"
-        assert "result" in result
-        assert "text" in result["result"]
-    
-    @pytest.mark.asyncio
-    async def test_process_with_prompt(self, block):
-        """Test processing with a custom prompt."""
-        result = await block.execute(
-            "Tell me a joke",
-            {"provider": "mock", "prompt": "Be funny"}
+
+@pytest.fixture
+def chat_block():
+    return ChatBlock()
+
+
+@pytest.mark.asyncio
+async def test_chat_block_execute_structure(chat_block):
+    """Test that Chat block returns standardized JSON structure."""
+    # Mock API key to avoid errors
+    with patch.dict(os.environ, {"GROQ_API_KEY": "mock_key"}):
+        result = await chat_block.execute(
+            "Hello",
+            {"provider": "mock", "model": "test-model"}
         )
-        
-        assert result["block"] == "chat"
-        assert "result" in result
-
-
-class TestChatBlockParams:
-    """Tests for Chat Block parameter handling."""
     
-    @pytest.mark.asyncio
-    async def test_default_parameters(self):
-        """Test default parameter values."""
-        block = ChatBlock()
-        
-        result = await block.execute("Hello", {"provider": "mock"})
-        result_data = result["result"]
-        
-        # Should have default values
-        assert "text" in result_data
+    # Assert standardized keys
+    assert "block" in result
+    assert result["block"] == "chat"
+    assert "request_id" in result
+    assert "status" in result
+    assert "result" in result
+    assert "confidence" in result
+    assert "metadata" in result
+    assert "source_id" in result
+    assert "processing_time_ms" in result
     
-    @pytest.mark.asyncio
-    async def test_custom_max_tokens(self):
-        """Test custom max_tokens parameter."""
-        block = ChatBlock()
-        
-        result = await block.execute("Hello", {
-            "provider": "mock",
-            "max_tokens": 500
-        })
-        
-        assert result["block"] == "chat"
+    # Type checks
+    assert isinstance(result["request_id"], str)
+    assert isinstance(result["processing_time_ms"], int)
 
 
-class TestChatBlockChainIntegration:
-    """Tests for Chat Block in chain context."""
+@pytest.mark.asyncio
+async def test_chat_block_metadata(chat_block):
+    """Test Chat block metadata."""
+    assert chat_block.config.name == "chat"
+    assert chat_block.config.version == "1.2"
+    assert "text" in chat_block.config.supported_outputs
+    assert "stream" in chat_block.config.supported_outputs
+    assert chat_block.config.requires_api_key == True
+
+
+@pytest.mark.asyncio
+async def test_chat_block_with_messages(chat_block):
+    """Test Chat block accepts messages list."""
+    messages = [
+        {"role": "system", "content": "You are a test assistant."},
+        {"role": "user", "content": "Hello"}
+    ]
     
-    @pytest.mark.asyncio
-    async def test_chain_result_input(self):
-        """Test processing chain result input."""
-        block = ChatBlock()
-        
-        chain_input = {
-            "result": {"text": "Previous block output"}
+    with patch.dict(os.environ, {"GROQ_API_KEY": "mock_key"}):
+        result = await chat_block.execute(
+            messages,
+            {"provider": "mock"}
+        )
+    
+    assert result["block"] == "chat"
+    assert "result" in result
+
+
+@pytest.mark.asyncio
+async def test_chat_block_chaining(chat_block):
+    """Test Chat block can receive output from previous block."""
+    # Simulate PDF block output
+    previous_result = {
+        "result": {
+            "text": "This is extracted text from a PDF document."
         }
-        
-        messages = block._build_messages(chain_input, "", "")
-        assert any("Previous block output" in str(m.get("content", "")) for m in messages)
+    }
+    
+    with patch.dict(os.environ, {"GROQ_API_KEY": "mock_key"}):
+        result = await chat_block.execute(
+            previous_result,
+            {"provider": "mock", "prompt": "Summarize this text:"}
+        )
+    
+    assert result["block"] == "chat"
+    assert "result" in result

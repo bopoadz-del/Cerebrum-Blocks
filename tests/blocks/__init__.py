@@ -1,1 +1,1 @@
-"""Block-specific tests."""
+"""Block tests package."""

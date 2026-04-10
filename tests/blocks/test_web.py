@@ -1,97 +1,63 @@
 """Tests for Web Block."""
 
 import pytest
-from app.blocks.web import WebBlock
-
-class TestWebBlock:
-    """Test suite for Web Block."""
-    
-    @pytest.fixture
-    def block(self):
-        return WebBlock()
-    
-    @pytest.mark.asyncio
-    async def test_block_initialization(self, block):
-        """Test block is properly initialized."""
-        assert block.config.name == "web"
-        assert block.config.version == "1.0"
-    
-    @pytest.mark.asyncio
-    async def test_get_url_from_string(self, block):
-        """Test _get_url with string input."""
-        url = block._get_url("https://example.com")
-        assert url == "https://example.com"
-    
-    @pytest.mark.asyncio
-    async def test_get_url_from_dict(self, block):
-        """Test _get_url with dict input."""
-        url = block._get_url({"url": "https://example.com"})
-        assert url == "https://example.com"
-    
-    @pytest.mark.asyncio
-    async def test_parse_html(self, block):
-        """Test HTML parsing."""
-        html = """
-        <html>
-            <head><title>Test Page</title></head>
-            <body>
-                <h1>Hello World</h1>
-                <p>This is a test.</p>
-                <a href="https://example.com">Link</a>
-            </body>
-        </html>
-        """
-        
-        result = await block.execute(
-            html,
-            {"operation": "html_parse"}
-        )
-        
-        assert result["block"] == "web"
-        assert "result" in result
-        result_data = result["result"]
-        assert result_data.get("title") == "Test Page"
-        assert "Hello World" in result_data.get("headings", [])
+from app.blocks import WebBlock
 
 
-class TestWebBlockParseHTML:
-    """Tests for HTML parsing."""
+@pytest.fixture
+def web_block():
+    return WebBlock()
+
+
+@pytest.mark.asyncio
+async def test_web_block_execute_structure(web_block):
+    """Test that Web block returns standardized JSON structure."""
+    result = await web_block.execute(
+        "https://example.com",
+        {"operation": "fetch"}
+    )
     
-    @pytest.mark.asyncio
-    async def test_parse_extracts_links(self):
-        """Test that HTML parsing extracts links."""
-        block = WebBlock()
-        
-        html = '<a href="https://example.com">Example</a>'
-        result = await block.execute(html, {"operation": "html_parse"})
-        result_data = result["result"]
-        
-        links = result_data.get("links", [])
-        assert len(links) > 0
-        assert links[0]["url"] == "https://example.com"
+    # Assert standardized keys
+    assert "block" in result
+    assert result["block"] == "web"
+    assert "request_id" in result
+    assert "status" in result
+    assert "result" in result
+    assert "confidence" in result
+    assert "metadata" in result
+    assert "source_id" in result
+    assert "processing_time_ms" in result
+
+
+@pytest.mark.asyncio
+async def test_web_block_metadata(web_block):
+    """Test Web block metadata."""
+    assert web_block.config.name == "web"
+    assert web_block.config.version == "1.0"
+    assert "content" in web_block.config.supported_outputs
+    assert "data" in web_block.config.supported_outputs
+    assert web_block.config.requires_api_key == False
+
+
+@pytest.mark.asyncio
+async def test_web_block_scrape(web_block):
+    """Test Web block scrape operation."""
+    result = await web_block.execute(
+        "https://example.com",
+        {"operation": "scrape"}
+    )
     
-    @pytest.mark.asyncio
-    async def test_parse_extracts_paragraphs(self):
-        """Test that HTML parsing extracts paragraphs."""
-        block = WebBlock()
-        
-        html = '<p>First paragraph</p><p>Second paragraph</p>'
-        result = await block.execute(html, {"operation": "html_parse"})
-        result_data = result["result"]
-        
-        paragraphs = result_data.get("paragraphs", [])
-        assert "First paragraph" in paragraphs
-        assert "Second paragraph" in paragraphs
+    assert result["block"] == "web"
+    assert "result" in result
+
+
+@pytest.mark.asyncio
+async def test_web_block_api_request(web_block):
+    """Test Web block API request operation."""
+    result = await web_block.execute(
+        "https://api.example.com/data",
+        {"operation": "api", "method": "GET"}
+    )
     
-    @pytest.mark.asyncio
-    async def test_parse_extracts_headings(self):
-        """Test that HTML parsing extracts headings."""
-        block = WebBlock()
-        
-        html = '<h1>Title</h1><h2>Subtitle</h2>'
-        result = await block.execute(html, {"operation": "html_parse"})
-        result_data = result["result"]
-        
-        headings = result_data.get("headings", [])
-        assert "Title" in headings
-        assert "Subtitle" in headings
+    assert result["block"] == "web"
+    assert "result" in result

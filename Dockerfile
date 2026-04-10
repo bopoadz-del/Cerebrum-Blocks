@@ -1,36 +1,26 @@
-# AI Block System - Docker Image
-FROM python:3.11-slim
-
-# Set working directory
+# Multi-stage build - slim, fast, multi-platform
+FROM python:3.11-slim AS builder
 WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first (for layer caching)
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY ./app ./app
-COPY ./start.sh .
+FROM python:3.11-slim
+WORKDIR /app
 
-# Create data directory
-RUN mkdir -p /app/data
+# System deps for hardware detection + common AI libs
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    clinfo \
+    libgl1-mesa-glx \
+    && rm -rf /var/lib/apt/lists/*
 
-# Make start script executable
-RUN chmod +x start.sh
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Expose port
+COPY . .
+
+# Persistent data for ingest
+VOLUME /app/data
+
 EXPOSE 8000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Run the application
-CMD ["./start.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
