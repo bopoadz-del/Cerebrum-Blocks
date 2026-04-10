@@ -984,9 +984,9 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
-            <div class="badge">API Status: Operational</div>
+            <div class="badge">🔥 DeepSeek: $0.14/M tokens — 5x Cheaper than GPT-3.5</div>
             <h1>Build AI Like Lego</h1>
-            <p>15 AI blocks. Snap them together. Deploy anywhere. From PDF processing to chat completions — build production-ready AI in minutes, not months.</p>
+            <p>15 AI blocks. Snap them together. Deploy anywhere. From PDF processing to chat completions with <strong>DeepSeek</strong> (cheapest LLM!) — build production-ready AI in minutes, not months.</p>
             <div class="cta-buttons">
                 <a href="#blocks" class="btn btn-primary">Explore All Blocks</a>
                 <a href="#demo" class="btn btn-secondary">Try Live Demo</a>
@@ -1075,10 +1075,11 @@ pdf_result = requests.post(<span class="string">"https://cerebrum-blocks.onrende
     <span class="string">"params"</span>: {<span class="string">"extract"</span>: <span class="string">"text"</span>}
 }).json()
 
-<span class="comment"># 2. Get AI summary via Chat</span>
+<span class="comment"># 2. Get AI summary via Chat (DeepSeek = cheapest!)</span>
 chat_result = requests.post(<span class="string">"https://cerebrum-blocks.onrender.com/v1/chat"</span>, json={
     <span class="string">"message"</span>: <span class="string">f"Summarize: {pdf_result['result']['text'][:2000]}"</span>,
-    <span class="string">"model"</span>: <span class="string">"gpt-3.5-turbo"</span>
+    <span class="string">"model"</span>: <span class="string">"deepseek-chat"</span>,
+    <span class="string">"provider"</span>: <span class="string">"deepseek"</span>
 }).json()
 
 <span class="keyword">print</span>(chat_result[<span class="string">"text"</span>])
@@ -1092,7 +1093,8 @@ chat_result = requests.post(<span class="string">"https://cerebrum-blocks.onrend
       { block: <span class="string">'pdf'</span>, params: { extract: <span class="string">'text'</span> } },
       { block: <span class="string">'chat'</span>, params: { 
         prompt: <span class="string">'Summarize this document:'</span>,
-        model: <span class="string">'gpt-3.5-turbo'</span>
+        model: <span class="string">'deepseek-chat'</span>,
+        provider: <span class="string">'deepseek'</span>
       }}
     ],
     initial_input: <span class="string">'contract.pdf'</span>
@@ -1261,7 +1263,7 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
     <script>
         // Block data with icons and descriptions
         const blockData = {
-            'chat': { icon: '💬', desc: 'AI chat completions with streaming support', tag: 'AI' },
+            'chat': { icon: '💬', desc: 'AI chat with DeepSeek ($0.14/M), Groq, GPT-4, Claude', tag: 'AI' },
             'pdf': { icon: '📄', desc: 'Extract text, images from PDF documents', tag: 'Document' },
             'ocr': { icon: '👁️', desc: 'Extract text from images and scans', tag: 'Vision' },
             'voice': { icon: '🔊', desc: 'Text-to-speech and speech-to-text', tag: 'Audio' },
@@ -1349,7 +1351,7 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: message,
-                        model: 'mock'
+                        model: 'deepseek-chat'
                     })
                 });
                 
@@ -1357,6 +1359,11 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
                 
                 const data = await response.json();
                 output.textContent = data.text || 'No response received';
+                
+                // Add provider info if available
+                if (data.model) {
+                    output.textContent += `\n\n[Model: ${data.model}]`;
+                }
             } catch (error) {
                 output.textContent = `❌ Error: ${error.message}\n\nNote: The API might be starting up (Render free tier sleeps after 15 min). Try again in 30 seconds.`;
             }
@@ -1404,7 +1411,7 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: text,
-                        model: 'mock'
+                        model: 'deepseek-chat'
                     })
                 });
                 

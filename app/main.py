@@ -59,7 +59,7 @@ class ChainRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
-    model: str = "gpt-3.5-turbo"
+    model: str = "deepseek-chat"
     stream: bool = False
 
 
