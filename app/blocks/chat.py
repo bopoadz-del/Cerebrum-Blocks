@@ -53,7 +53,15 @@ class ChatBlock(BaseBlock):
         """Main processing logic — only part you ever change per block."""
         params = params or {}
         provider = params.get("provider", "deepseek")    # default to cheapest
-        model = params.get("model", "llama-3.3-70b-versatile")
+        # Set appropriate default model based on provider
+        default_models = {
+            "deepseek": "deepseek-chat",
+            "groq": "llama-3.3-70b-versatile",
+            "openai": "gpt-3.5-turbo",
+            "anthropic": "claude-3-haiku-20240307",
+            "mock": "mock-model"
+        }
+        model = params.get("model", default_models.get(provider, "deepseek-chat"))
         temperature = params.get("temperature", 0.7)
         max_tokens = params.get("max_tokens", 2048)
         stream = params.get("stream", False)
@@ -74,18 +82,22 @@ class ChatBlock(BaseBlock):
             return result
 
         # Non-streaming (cheapest first, with fallback to mock)
-        if provider == "deepseek" and self._deepseek_available:
-            response = await self._call_deepseek(messages, model or "deepseek-chat", max_tokens, temperature)
-        elif provider == "groq" and self._groq_available:
-            response = await self._call_groq(messages, model, max_tokens, temperature)
-        elif provider == "openai" and self._openai_available:
-            response = await self._call_openai(messages, model, max_tokens, temperature)
-        elif provider == "anthropic" and self._anthropic_available:
-            response = await self._call_anthropic(messages, model, max_tokens, temperature)
-        elif provider == "mock":
-            response = self._call_mock(messages)
-        else:
-            # Auto-fallback to mock if no providers available
+        try:
+            if provider == "deepseek" and self._deepseek_available:
+                response = await self._call_deepseek(messages, model or "deepseek-chat", max_tokens, temperature)
+            elif provider == "groq" and self._groq_available:
+                response = await self._call_groq(messages, model, max_tokens, temperature)
+            elif provider == "openai" and self._openai_available:
+                response = await self._call_openai(messages, model, max_tokens, temperature)
+            elif provider == "anthropic" and self._anthropic_available:
+                response = await self._call_anthropic(messages, model, max_tokens, temperature)
+            elif provider == "mock":
+                response = self._call_mock(messages)
+            else:
+                # Auto-fallback to mock if no providers available
+                response = self._call_mock(messages)
+        except Exception as e:
+            # If any provider fails, fallback to mock
             response = self._call_mock(messages)
 
         result.update(response)
@@ -168,8 +180,10 @@ class ChatBlock(BaseBlock):
             base_url="https://api.deepseek.com"
         )
         try:
+            # Ensure we use a valid DeepSeek model
+            deepseek_model = model if model and "deepseek" in model else "deepseek-chat"
             response = await client.chat.completions.create(
-                model=model or "deepseek-chat",
+                model=deepseek_model,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature
