@@ -57,12 +57,12 @@ for await (const chunk of client.chatStream('Explain AI in simple terms')) {
 
 ---
 
-## 🧱 16 AI Blocks
+## 🧱 15 AI Blocks
 
 | Block | Description |
 |-------|-------------|
 | 💬 **Chat** | GPT-4, Claude, Groq with streaming |
-| 📄 **PDF** | Extract text, images, tables |
+| 📄 **PDF** | Extract text, tables, images |
 | 👁️ **OCR** | Image text extraction |
 | 🔊 **Voice** | Text-to-speech, speech-to-text |
 | 🔍 **Vector Search** | Semantic search with embeddings |
@@ -70,9 +70,12 @@ for await (const chunk of client.chatStream('Explain AI in simple terms')) {
 | 🌐 **Translate** | 100+ languages |
 | 💻 **Code** | Code generation & execution |
 | 🕸️ **Web** | Web scraping & browsing |
+| 🔎 **Search** | Web search with multiple providers |
+| 🧮 **Zvec** | Zero-shot vector embeddings |
 | 📁 **Google Drive** | Cloud file processing |
 | ☁️ **OneDrive** | Microsoft integration |
 | 💾 **Local Drive** | Local file processing |
+| 📱 **Android Drive** | Android storage access |
 
 ---
 

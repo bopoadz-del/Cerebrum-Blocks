@@ -279,7 +279,7 @@
     
     <div class="container">
         <section class="hero">
-            <h2>13 AI Building Blocks</h2>
+            <h2>15 AI Building Blocks</h2>
             <p>One API. Infinite Possibilities. Mix and match blocks to build powerful AI applications in minutes.</p>
             <div class="api-badge">
                 <span class="dot"></span>
@@ -307,11 +307,12 @@
             code: '💻',
             web: '🕸️',
             vector_search: '🔍',
+            search: '🔎',
+            zvec: '🧮',
             google_drive: '📁',
             onedrive: '☁️',
             local_drive: '💾',
-            android_drive: '📱',
-            search: '🔎'
+            android_drive: '📱'
         };
         
         const GITHUB_REPO = 'https://github.com/bopoadz-del/cerebrum-blocks';
@@ -341,18 +342,20 @@
         
         function getFallbackBlocks() {
             return [
-                { name: 'chat', version: '1.1', description: 'AI chat completions with OpenAI, Anthropic, local models, and streaming', requires_api_key: true, supported_inputs: ['text', 'messages'], supported_outputs: ['text', 'stream'] },
-                { name: 'pdf', version: '1.0', description: 'Extract text, images, and metadata from PDF files', requires_api_key: false, supported_inputs: ['file', 'file_path'], supported_outputs: ['text', 'images', 'metadata'] },
+                { name: 'chat', version: '1.2', description: 'AI chat completions with OpenAI, Groq, Anthropic, and streaming', requires_api_key: true, supported_inputs: ['text', 'messages', 'file_result'], supported_outputs: ['text', 'stream', 'tokens', 'model'] },
+                { name: 'pdf', version: '1.1', description: 'Extract text, tables, images, and metadata from PDF files', requires_api_key: false, supported_inputs: ['file', 'file_path', 'source_id'], supported_outputs: ['text', 'tables', 'images', 'metadata', 'pages'] },
                 { name: 'ocr', version: '1.0', description: 'Extract text from images using OCR', requires_api_key: false, supported_inputs: ['image', 'file_path', 'base64'], supported_outputs: ['text', 'bounding_boxes'] },
                 { name: 'voice', version: '1.0', description: 'Speech-to-text and text-to-speech processing', requires_api_key: false, supported_inputs: ['audio', 'text'], supported_outputs: ['text', 'audio'] },
                 { name: 'image', version: '1.0', description: 'Image analysis and generation', requires_api_key: true, supported_inputs: ['image', 'prompt'], supported_outputs: ['description', 'image'] },
                 { name: 'translate', version: '1.0', description: 'Text translation with multiple providers', requires_api_key: false, supported_inputs: ['text'], supported_outputs: ['translation'] },
                 { name: 'code', version: '1.0', description: 'Code execution, analysis, and transformation', requires_api_key: false, supported_inputs: ['code', 'text'], supported_outputs: ['output', 'analysis'] },
-                { name: 'web', version: '1.0', description: 'Web scraping and HTTP requests', requires_api_key: false, supported_inputs: ['url'], supported_outputs: ['content', 'markdown'] },
-                { name: 'vector_search', version: '1.0', description: 'Vector similarity search using ChromaDB', requires_api_key: false, error: 'Requires persistent storage', status: 'limited', supported_inputs: ['query', 'documents'], supported_outputs: ['results'] },
+                { name: 'web', version: '1.0', description: 'Web scraping and HTTP requests', requires_api_key: false, supported_inputs: ['url', 'html'], supported_outputs: ['content', 'data'] },
+                { name: 'search', version: '1.0', description: 'Web search using Serper, Bing, or DuckDuckGo', requires_api_key: true, supported_inputs: ['query'], supported_outputs: ['results'] },
+                { name: 'vector_search', version: '1.0', description: 'Vector similarity search using ChromaDB', requires_api_key: false, supported_inputs: ['query', 'text', 'documents'], supported_outputs: ['results', 'embeddings', 'matches'] },
+                { name: 'zvec', version: '1.0', description: 'Zero-shot vector embeddings and semantic operations', requires_api_key: false, supported_inputs: ['text', 'query', 'vectors', 'labels'], supported_outputs: ['embeddings', 'similarities', 'classifications', 'vectors'] },
                 { name: 'google_drive', version: '1.0', description: 'Google Drive file upload, download, and management', requires_api_key: true, supported_inputs: ['file', 'path'], supported_outputs: ['file', 'metadata'] },
                 { name: 'onedrive', version: '1.0', description: 'Microsoft OneDrive file upload, download, and management', requires_api_key: true, supported_inputs: ['file', 'path'], supported_outputs: ['file', 'metadata'] },
-                { name: 'local_drive', version: '1.0', description: 'Local filesystem file operations', requires_api_key: false, error: 'Requires local filesystem access', status: 'limited', supported_inputs: ['file', 'path'], supported_outputs: ['file'] },
+                { name: 'local_drive', version: '1.0', description: 'Local filesystem file operations', requires_api_key: false, supported_inputs: ['file', 'path'], supported_outputs: ['file'] },
                 { name: 'android_drive', version: '1.0', description: 'Android storage file access and management', requires_api_key: false, supported_inputs: ['file', 'path'], supported_outputs: ['file', 'metadata'] },
             ];
         }
