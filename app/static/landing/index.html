@@ -1069,14 +1069,14 @@
 <span class="keyword">import</span> requests
 
 <span class="comment"># 1. Extract text from PDF</span>
-pdf_result = requests.post(<span class="string">"https://ssdppg.onrender.com/v1/execute"</span>, json={
+pdf_result = requests.post(<span class="string">"https://cerebrum-blocks.onrender.com/v1/execute"</span>, json={
     <span class="string">"block"</span>: <span class="string">"pdf"</span>,
     <span class="string">"input"</span>: <span class="string">"contract.pdf"</span>,
     <span class="string">"params"</span>: {<span class="string">"extract"</span>: <span class="string">"text"</span>}
 }).json()
 
 <span class="comment"># 2. Get AI summary via Chat</span>
-chat_result = requests.post(<span class="string">"https://ssdppg.onrender.com/v1/chat"</span>, json={
+chat_result = requests.post(<span class="string">"https://cerebrum-blocks.onrender.com/v1/chat"</span>, json={
     <span class="string">"message"</span>: <span class="string">f"Summarize: {pdf_result['result']['text'][:2000]}"</span>,
     <span class="string">"model"</span>: <span class="string">"gpt-3.5-turbo"</span>
 }).json()
@@ -1084,7 +1084,7 @@ chat_result = requests.post(<span class="string">"https://ssdppg.onrender.com/v1
 <span class="keyword">print</span>(chat_result[<span class="string">"text"</span>])
 <span class="comment"># "This contract outlines payment terms of $50,000..."</span></pre>
                 <pre id="codeJavascript" style="display:none"><span class="comment">// Document AI Pipeline: PDF → OCR → Chat Summary</span>
-<span class="keyword">const</span> response = <span class="keyword">await</span> fetch(<span class="string">'https://ssdppg.onrender.com/v1/chain'</span>, {
+<span class="keyword">const</span> response = <span class="keyword">await</span> fetch(<span class="string">'https://cerebrum-blocks.onrender.com/v1/chain'</span>, {
   method: <span class="string">'POST'</span>,
   headers: { <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span> },
   body: JSON.stringify({
@@ -1103,7 +1103,7 @@ chat_result = requests.post(<span class="string">"https://ssdppg.onrender.com/v1
 console.log(result.final_output);
 <span class="comment">// "This contract outlines payment terms..."</span></pre>
                 <pre id="codeCurl" style="display:none"><span class="comment"># Chain multiple blocks in one request</span>
-curl -X POST https://ssdppg.onrender.com/v1/chain \
+curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
   -H <span class="string">"Content-Type: application/json"</span> \
   -d <span class="string">'{
     "steps": [

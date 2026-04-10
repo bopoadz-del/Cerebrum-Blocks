@@ -7,9 +7,9 @@ const todos = [
     time: "2 min",
     priority: "CRITICAL",
     color: "#ff4444",
-    description: "SSDPPG is your wind energy patent. This repo needs a developer-friendly name.",
+    description: "This repo needs a developer-friendly name.",
     steps: [
-      "Go to github.com/bopoadz-del/SSDPPG",
+      "Go to github.com/bopoadz-del/cerebrum-blocks",
       "Settings → scroll to bottom → Danger Zone",
       'Click "Rename" → type cerebrum-blocks → confirm',
       "Update your local clone: git remote set-url origin https://github.com/bopoadz-del/cerebrum-blocks",
