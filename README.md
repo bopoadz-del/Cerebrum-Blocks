@@ -60,7 +60,7 @@ for await (const chunk of client.chatStream('Explain AI in simple terms')) {
 
 | Block | Description |
 |-------|-------------|
-| 💬 **Chat** | GPT-4, Claude, Groq with streaming |
+| 💬 **Chat** | DeepSeek (cheapest), Groq (fastest), GPT-4, Claude |
 | 📄 **PDF** | Extract text, tables, images |
 | 👁️ **OCR** | Image text extraction |
 | 🔊 **Voice** | Text-to-speech, speech-to-text |
