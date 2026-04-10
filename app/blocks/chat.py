@@ -19,6 +19,7 @@ class ChatBlock(BaseBlock):
         self._openai_available = self._check_openai()
         self._anthropic_available = self._check_anthropic()
         self._groq_available = self._check_groq()
+        self._deepseek_available = self._check_deepseek()
 
     def _check_openai(self) -> bool:
         try:
@@ -41,10 +42,17 @@ class ChatBlock(BaseBlock):
         except ImportError:
             return False
 
+    def _check_deepseek(self) -> bool:
+        try:
+            import openai  # DeepSeek uses OpenAI-compatible API
+            return True
+        except ImportError:
+            return False
+
     async def process(self, input_data: Any, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Main processing logic — only part you ever change per block."""
         params = params or {}
-        provider = params.get("provider", "groq")          # default to fastest
+        provider = params.get("provider", "deepseek")    # default to cheapest
         model = params.get("model", "llama-3.3-70b-versatile")
         temperature = params.get("temperature", 0.7)
         max_tokens = params.get("max_tokens", 2048)
@@ -65,8 +73,10 @@ class ChatBlock(BaseBlock):
             result["text"] = ""
             return result
 
-        # Non-streaming
-        if provider == "groq" and self._groq_available:
+        # Non-streaming (cheapest first)
+        if provider == "deepseek" and self._deepseek_available:
+            response = await self._call_deepseek(messages, model or "deepseek-chat", max_tokens, temperature)
+        elif provider == "groq" and self._groq_available:
             response = await self._call_groq(messages, model, max_tokens, temperature)
         elif provider == "openai" and self._openai_available:
             response = await self._call_openai(messages, model, max_tokens, temperature)
@@ -102,7 +112,9 @@ class ChatBlock(BaseBlock):
 
     def _get_stream_generator(self, provider: str, messages: List[Dict], model: str, max_tokens: int, temperature: float):
         """Returns async generator for streaming."""
-        if provider == "groq" and self._groq_available:
+        if provider == "deepseek" and self._deepseek_available:
+            return self._stream_deepseek(messages, model, max_tokens, temperature)
+        elif provider == "groq" and self._groq_available:
             return self._stream_groq(messages, model, max_tokens, temperature)
         elif provider == "openai" and self._openai_available:
             return self._stream_openai(messages, model, max_tokens, temperature)
@@ -117,6 +129,31 @@ class ChatBlock(BaseBlock):
             return mock_stream()
 
     # ==================== PROVIDER CALLS ====================
+
+    async def _call_deepseek(self, messages: List[Dict], model: str, max_tokens: int, temperature: float) -> Dict:
+        """Call DeepSeek API - cheapest provider ($0.14/M tokens)."""
+        import openai
+        client = openai.AsyncOpenAI(
+            api_key=os.getenv("DEEPSEEK_API_KEY"),
+            base_url="https://api.deepseek.com"
+        )
+        try:
+            response = await client.chat.completions.create(
+                model=model or "deepseek-chat",
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+            return {
+                "text": response.choices[0].message.content,
+                "finish_reason": response.choices[0].finish_reason,
+                "tokens_prompt": response.usage.prompt_tokens,
+                "tokens_completion": response.usage.completion_tokens,
+                "tokens_total": response.usage.total_tokens,
+                "confidence": 0.96
+            }
+        except Exception as e:
+            return {"text": f"[DeepSeek Error: {str(e)}]", "confidence": 0.0}
 
     async def _call_groq(self, messages: List[Dict], model: str, max_tokens: int, temperature: float) -> Dict:
         import groq
@@ -181,6 +218,25 @@ class ChatBlock(BaseBlock):
             return {"text": f"[Anthropic Error: {str(e)}]", "confidence": 0.0}
 
     # Streaming helpers (similar pattern)
+
+    async def _stream_deepseek(self, messages, model, max_tokens, temperature):
+        """Stream from DeepSeek - cheapest provider."""
+        import openai
+        client = openai.AsyncOpenAI(
+            api_key=os.getenv("DEEPSEEK_API_KEY"),
+            base_url="https://api.deepseek.com"
+        )
+        try:
+            stream = await client.chat.completions.create(
+                model=model or "deepseek-chat", messages=messages, max_tokens=max_tokens,
+                temperature=temperature, stream=True
+            )
+            async for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield {"text": chunk.choices[0].delta.content, "done": False}
+            yield {"text": "", "done": True}
+        except Exception as e:
+            yield {"text": f"[DeepSeek Stream Error: {str(e)}]", "done": True}
 
     async def _stream_groq(self, messages, model, max_tokens, temperature):
         import groq
