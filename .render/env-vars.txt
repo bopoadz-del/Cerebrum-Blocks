@@ -11,7 +11,11 @@ CHROMA_PERSIST_DIR=/app/data/chroma_db
 VECTOR_COLLECTION=default
 EMBEDDING_MODEL=all-MiniLM-L6-v2
 
-# Optional (for AI features):
+# AI Provider Keys (DeepSeek = cheapest):
+DEEPSEEK_API_KEY=sk-a8082ab8320f4136ad20af522b61c373
+# GROQ_API_KEY=gsk-your-groq-key
 # OPENAI_API_KEY=sk-your-openai-key
 # ANTHROPIC_API_KEY=sk-ant-your-anthropic-key
+
+# Search (optional):
 # SERPER_API_KEY=your-serper-key
