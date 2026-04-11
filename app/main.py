@@ -371,6 +371,200 @@ async def server_error(request, exc):
 import asyncio
 
 
+# -------------------- MONITORING & MEMORY BLOCKS --------------------
+
+# Import Memory and Monitoring blocks
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from blocks.memory.src.block import MemoryBlock
+    from blocks.monitoring.src.block import MonitoringBlock
+    
+    # Initialize blocks
+    _memory_block = None
+    _monitoring_block = None
+    
+    def get_memory_block():
+        global _memory_block
+        if _memory_block is None:
+            _memory_block = MemoryBlock(None, {"max_size": 10000, "default_ttl": 3600})
+            asyncio.create_task(_memory_block.initialize())
+        return _memory_block
+    
+    def get_monitoring_block():
+        global _monitoring_block
+        if _monitoring_block is None:
+            _monitoring_block = MonitoringBlock(None, {})
+            _monitoring_block.memory_block = get_memory_block()
+            asyncio.create_task(_monitoring_block.initialize())
+        return _monitoring_block
+    
+    MEMORY_AVAILABLE = True
+    MONITORING_AVAILABLE = True
+    print("✅ Memory & Monitoring blocks loaded")
+except Exception as e:
+    MEMORY_AVAILABLE = False
+    MONITORING_AVAILABLE = False
+    print(f"⚠️ Memory/Monitoring blocks not available: {e}")
+
+
+@app.get("/v1/leaderboard")
+async def get_leaderboard():
+    """Provider reliability leaderboard"""
+    if not MONITORING_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Monitoring not available")
+    block = get_monitoring_block()
+    return await block.execute({"action": "leaderboard"})
+
+
+@app.get("/v1/recommend")
+async def recommend_provider():
+    """AI-powered provider recommendation"""
+    if not MONITORING_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Monitoring not available")
+    block = get_monitoring_block()
+    return await block.execute({"action": "recommend"})
+
+
+@app.get("/v1/predict")
+async def predictive_failover():
+    """Predict potential failures before they happen"""
+    if not MONITORING_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Monitoring not available")
+    block = get_monitoring_block()
+    return await block.execute({"action": "predictive_failover"})
+
+
+@app.post("/v1/metrics/record")
+async def record_metrics(request: dict):
+    """Record call metrics for tracking"""
+    if not MONITORING_AVAILABLE:
+        return {"status": "no_op"}
+    block = get_monitoring_block()
+    return await block.execute({"action": "record_call", **request})
+
+
+@app.get("/v1/system/health")
+async def full_health():
+    """Complete system health with predictions"""
+    if not MONITORING_AVAILABLE:
+        return await health_v1()
+    
+    block = get_monitoring_block()
+    return await block.execute({"action": "health_report"})
+
+
+# Memory block endpoints
+@app.get("/v1/memory/stats")
+async def memory_stats():
+    """Get memory cache statistics"""
+    if not MEMORY_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Memory block not available")
+    block = get_memory_block()
+    return await block.execute({"action": "stats"})
+
+
+@app.post("/v1/memory/{action}")
+async def memory_operation(action: str, request: dict):
+    """Memory cache operations: get, set, delete, flush, keys"""
+    if not MEMORY_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Memory block not available")
+    
+    if action not in ["get", "set", "delete", "flush", "keys", "exists"]:
+        raise HTTPException(status_code=400, detail=f"Unknown action: {action}")
+    
+    block = get_memory_block()
+    return await block.execute({"action": action, **request})
+
+
+# -------------------- AUTH BLOCK --------------------
+
+try:
+    from blocks.auth.src.block import AuthBlock
+    
+    _auth_block = None
+    
+    def get_auth_block():
+        global _auth_block
+        if _auth_block is None:
+            _auth_block = AuthBlock(None, {
+                "rate_limit_default": 100,
+                "rate_limit_window": 60,
+                "master_key": os.getenv("CEREBRUM_MASTER_KEY")
+            })
+            _auth_block.memory_block = get_memory_block()
+            asyncio.create_task(_auth_block.initialize())
+        return _auth_block
+    
+    AUTH_AVAILABLE = True
+    print("✅ Auth block loaded")
+except Exception as e:
+    AUTH_AVAILABLE = False
+    print(f"⚠️ Auth block not available: {e}")
+
+
+@app.post("/v1/auth/validate")
+async def validate_key(request: dict):
+    """Validate an API key"""
+    if not AUTH_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Auth not available")
+    block = get_auth_block()
+    return await block.execute({"action": "validate", "key": request.get("key")})
+
+
+@app.post("/v1/auth/keys")
+async def create_key(request: dict):
+    """Create a new API key (admin only)"""
+    if not AUTH_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Auth not available")
+    block = get_auth_block()
+    return await block.execute({"action": "create_key", **request})
+
+
+@app.get("/v1/auth/keys")
+async def list_keys(admin_key: str):
+    """List all API keys (admin only)"""
+    if not AUTH_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Auth not available")
+    block = get_auth_block()
+    return await block.execute({"action": "list_keys", "admin_key": admin_key})
+
+
+@app.post("/v1/auth/keys/revoke")
+async def revoke_key(request: dict):
+    """Revoke an API key"""
+    if not AUTH_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Auth not available")
+    block = get_auth_block()
+    return await block.execute({"action": "revoke_key", **request})
+
+
+@app.post("/v1/auth/keys/rotate")
+async def rotate_key(request: dict):
+    """Rotate an API key"""
+    if not AUTH_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Auth not available")
+    block = get_auth_block()
+    return await block.execute({"action": "rotate_key", **request})
+
+
+@app.post("/v1/auth/check")
+async def check_permission(request: dict):
+    """Check if key has a permission"""
+    if not AUTH_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Auth not available")
+    block = get_auth_block()
+    return await block.execute({"action": "check_permission", **request})
+
+
+@app.get("/v1/auth/usage")
+async def get_usage(key: str, admin_key: Optional[str] = None):
+    """Get usage stats for a key"""
+    if not AUTH_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Auth not available")
+    block = get_auth_block()
+    return await block.execute({"action": "get_usage", "key": key, "admin_key": admin_key})
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
