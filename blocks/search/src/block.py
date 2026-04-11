@@ -4,17 +4,17 @@ from typing import Dict, Any
 import urllib.parse
 
 class SearchBlock(LegoBlock):
-    """Web Search - TESTED DuckDuckGo + API providers"""
+    """Web Search - FREE DuckDuckGo (no API key) + optional API providers"""
     name = "search"
     version = "1.0.0"
     requires = ["config"]
     layer = 4  # Integration layer
-    tags = ["search", "web", "integration"]
+    tags = ["search", "web", "integration", "free"]
     default_config = {
-        "default_provider": "duckduckgo",
-        "brave_key": None,
-        "serper_key": None,
-        "tavily_key": None
+        "default_provider": "duckduckgo",  # FREE - no API key needed!
+        "brave_key": None,      # Optional: brave.com/search/api
+        "serper_key": None,     # Optional: serper.dev
+        "tavily_key": None      # Optional: tavily.com
     }
     
     PROVIDERS = {
@@ -33,9 +33,9 @@ class SearchBlock(LegoBlock):
     async def initialize(self) -> bool:
         """Initialize search block"""
         print(f"🔎 Search Block initialized")
-        print(f"   Default: {self.default_provider}")
+        print(f"   Default: {self.default_provider} (FREE - no API key!)")
         print(f"   Providers: {', '.join(self.PROVIDERS.keys())}")
-        print(f"   API Keys: serper={'yes' if self.config.get('serper_key') else 'no'}, "
+        print(f"   Optional API Keys: serper={'yes' if self.config.get('serper_key') else 'no'}, "
               f"tavily={'yes' if self.config.get('tavily_key') else 'no'}, "
               f"brave={'yes' if self.brave_key else 'no'}")
         self.initialized = True
@@ -269,18 +269,59 @@ class SearchBlock(LegoBlock):
             return {"error": f"Brave search failed: {str(e)}"}
     
     async def _news_search(self, data: Dict) -> Dict:
-        """Search news specifically"""
+        """Search news specifically (uses DuckDuckGo - free, no API key)"""
         query = data.get("query")
-        # Add news filter
+        # Add news filter and use DuckDuckGo (free)
         news_query = f"{query} news"
-        return await self._web_search({"query": news_query, "provider": "serper"})
+        return await self._duckduckgo_search(news_query, data.get("num", 10))
     
     async def _image_search(self, data: Dict) -> Dict:
-        """Image search"""
+        """Image search (uses DuckDuckGo Images - free, no API key)"""
         query = data.get("query")
-        provider = data.get("provider", "serper")
+        num = data.get("num", 10)
         
-        if provider == "serper" and self.api_key:
+        # Try DuckDuckGo Images first (free, no API key)
+        try:
+            import aiohttp
+            from bs4 import BeautifulSoup
+            
+            encoded_query = urllib.parse.quote_plus(query)
+            url = f"https://duckduckgo.com/?q={encoded_query}&iax=images&ia=images"
+            
+            headers = {
+                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers, timeout=10) as resp:
+                    if resp.status == 200:
+                        html = await resp.text()
+                        soup = BeautifulSoup(html, 'html.parser')
+                        
+                        # Extract image results
+                        images = []
+                        for img in soup.select('.tile--img__img')[:num]:
+                            src = img.get('src', '')
+                            if src.startswith('//'):
+                                src = 'https:' + src
+                            images.append({
+                                "title": img.get('alt', ''),
+                                "link": src,
+                                "source": "duckduckgo"
+                            })
+                        
+                        if images:
+                            return {
+                                "images": images,
+                                "provider": "duckduckgo",
+                                "query": query,
+                                "count": len(images)
+                            }
+        except Exception:
+            pass  # Fall through to API provider
+        
+        # Fallback to Serper if configured
+        if self.api_key:
             try:
                 import aiohttp
                 
@@ -291,7 +332,7 @@ class SearchBlock(LegoBlock):
                             "X-API-KEY": self.api_key,
                             "Content-Type": "application/json"
                         },
-                        json={"q": query, "num": 10}
+                        json={"q": query, "num": num}
                     ) as resp:
                         result = await resp.json()
                         
@@ -310,7 +351,7 @@ class SearchBlock(LegoBlock):
             except Exception as e:
                 return {"error": f"Image search failed: {str(e)}"}
         
-        return {"error": "Image search requires Serper API key"}
+        return {"error": "Image search: DuckDuckGo failed and no API key configured"}
     
     def health(self) -> Dict:
         h = super().health()
