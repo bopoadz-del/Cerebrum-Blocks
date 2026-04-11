@@ -1,5 +1,31 @@
 services:
-  # PLATFORM BACKEND - Block execution, chains, file processing
+  # STORE BACKEND (1) - Block catalog, shopping, billing
+  - type: web
+    name: cerebrum-store-api
+    env: python
+    plan: starter
+    rootDir: store-api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ENV
+        value: production
+    healthCheckPath: /health
+
+  # STORE FRONTEND (2) - Marketplace UI
+  - type: web
+    name: cerebrum-store
+    env: static
+    rootDir: frontend-store
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://cerebrum-store-api.onrender.com
+
+  # PLATFORM BACKEND (3) - Block execution, chains, files
   - type: web
     name: cerebrum-platform-api
     env: python
@@ -13,52 +39,19 @@ services:
         value: /app/data
       - key: ENV
         value: production
-      - key: SERVICE_TYPE
-        value: platform
     disk:
       name: data
       mountPath: /app/data
       sizeGB: 1
     healthCheckPath: /health
 
-  # STORE BACKEND - Block catalog, pricing, discovery
-  - type: web
-    name: cerebrum-store-api
-    env: python
-    plan: starter
-    buildCommand: pip install -r requirements-render.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: DATA_DIR
-        value: /app/data
-      - key: ENV
-        value: production
-      - key: SERVICE_TYPE
-        value: store
-    disk:
-      name: data
-      mountPath: /app/data
-      sizeGB: 1
-    healthCheckPath: /health
-
-  # STORE FRONTEND - Marketplace UI
-  - type: web
-    name: cerebrum-store
-    env: static
-    buildCommand: cd frontend-store && npm install && npm run build
-    staticPublishPath: ./frontend-store/dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://cerebrum-store-api.onrender.com
-
-  # PLATFORM FRONTEND - Universal UI Shell
+  # PLATFORM FRONTEND (4) - Universal UI Shell
   - type: web
     name: cerebrum-platform
     env: static
-    buildCommand: echo "Universal UI Shell - no build needed"
-    staticPublishPath: ./frontend-platform
+    rootDir: frontend-platform
+    buildCommand: echo "No build needed"
+    staticPublishPath: .
     envVars:
       - key: API_URL
         value: https://cerebrum-platform-api.onrender.com
