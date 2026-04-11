@@ -45,7 +45,7 @@ class BIMBlock(LegoBlock):
         # Check ifcopenshell availability
         try:
             import ifcopenshell
-            print(f"   IFC parsing: ENABLED (ifcopenshell {ifcopenshell.version})"))
+            print(f"   IFC parsing: ENABLED (ifcopenshell {ifcopenshell.version})")
         except ImportError:
             print("   IFC parsing: LIMITED (pip install ifcopenshell for full support)")
         
