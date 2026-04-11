@@ -404,3 +404,44 @@ MIT License - see [LICENSE](LICENSE) for details.
   Built with 💜 by the Cerebrum Team<br>
   <a href="https://cerebrumblocks.com">cerebrumblocks.com</a>
 </p>
+
+---
+
+## 🏗️ Architecture: Platform + Block Store
+
+This repo contains TWO separate systems:
+
+### 1. PLATFORM (`app/`)
+- **Purpose**: End-user API for using blocks
+- **Blocks**: 15 core blocks (cloned from Block Store)
+- **Deploy**: Render Starter ($7/mo)
+- **Branch**: `main`
+
+```bash
+curl https://ssdppg.onrender.com/v1/execute \
+  -d '{"block":"chat","input":{"message":"Hello"}}'
+```
+
+### 2. BLOCK STORE (`blocks/`)
+- **Purpose**: Publish, discover, validate blocks
+- **Blocks**: ALL 58 blocks + containers
+- **Run locally**: `python blockstore.py`
+- **Branch**: `blockstore`
+
+```bash
+git checkout blockstore
+python blockstore.py
+```
+
+### Why Separate?
+
+| Concern | Platform | Block Store |
+|---------|----------|-------------|
+| **Stability** | Stable, tested blocks | Experimental, new blocks |
+| **Memory** | 15 blocks = ~200MB | 58 blocks = ~800MB |
+| **Deployment** | Public API | Internal/Marketplace |
+| **Updates** | Manual clone from store | Continuous publishing |
+
+**The Platform CLONES blocks from the Block Store** - it doesn't use them directly!
+
+---
