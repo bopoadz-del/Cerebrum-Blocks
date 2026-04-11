@@ -114,36 +114,30 @@ def health_v1():
 @app.get("/blocks")
 def list_blocks():
     """List all available blocks."""
-    from app.blocks import CORE_BLOCKS
-    
-    # Only load core blocks to save memory
     blocks = []
-    for name in CORE_BLOCKS:
-        block_class = get_all_blocks().get(name)
-        if block_class:
-            try:
-                if name not in block_instances:
-                    block_instances[name] = block_class()
-                instance = block_instances[name]
-                
-                blocks.append({
-                    "name": name,
-                    "version": instance.config.version,
-                    "description": instance.config.description,
-                    "inputs": instance.config.supported_inputs,
-                    "outputs": instance.config.supported_outputs,
-                })
-            except Exception as e:
-                blocks.append({
-                    "name": name,
-                    "error": str(e),
-                    "status": "failed"
-                })
+    for name, block_class in get_all_blocks().items():
+        try:
+            if name not in block_instances:
+                block_instances[name] = block_class()
+            instance = block_instances[name]
+            
+            blocks.append({
+                "name": name,
+                "version": instance.config.version,
+                "description": instance.config.description,
+                "inputs": instance.config.supported_inputs,
+                "outputs": instance.config.supported_outputs,
+            })
+        except Exception as e:
+            blocks.append({
+                "name": name,
+                "error": str(e),
+                "status": "failed"
+            })
     
     return {
         "blocks": blocks,
         "total": len(blocks),
-        "available": len(get_all_blocks()),
         "categories": {
             "ai": ["chat", "pdf", "ocr", "voice", "image", "translate", "code", "web", "search"],
             "storage": ["google_drive", "onedrive", "local_drive", "android_drive"],

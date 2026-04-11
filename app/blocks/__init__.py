@@ -1,40 +1,68 @@
-"""Cerebrum Blocks - Lazy loading for memory efficiency (Starter Plan)."""
+"""Platform Blocks - Self-contained (cloned from Block Store).
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+These are LOCAL copies of blocks the platform uses.
+The Block Store (blocks/) is separate - for publishing/discovery.
+"""
 
-# Lazy registry - only load what's needed
-_block_cache = {}
-_block_registry = None
+# Core AI Blocks (cloned from Block Store)
+from .pdf import PDFBlock
+from .ocr import OCRBlock
+from .chat import ChatBlock
+from .voice import VoiceBlock
+from .vector_search import VectorSearchBlock
+from .image import ImageBlock
+from .translate import TranslateBlock
+from .code import CodeBlock
+from .web import WebBlock
+from .search import SearchBlock
+from .zvec import ZvecBlock
 
-def _get_registry():
-    """Lazy load the registry"""
-    global _block_registry
-    if _block_registry is None:
-        try:
-            from universal_assembler import UniversalAssembler
-            _assembler = UniversalAssembler(mode="production")
-            _block_registry = _assembler.discover()
-            print(f"✅ Discovered {len(_block_registry)} blocks")
-        except Exception as e:
-            print(f"⚠️  Discovery failed: {e}")
-            _block_registry = {}
-    return _block_registry
+# Drive Blocks
+from .google_drive import GoogleDriveBlock
+from .onedrive import OneDriveBlock
+from .local_drive import LocalDriveBlock
+from .android_drive import AndroidDriveBlock
 
-def get_block(name: str):
-    """Get a block class (lazy load instance)"""
-    registry = _get_registry()
-    return registry.get(name)
-
-def get_all_blocks():
-    """Get all registered block names"""
-    return _get_registry()
-
-# Core blocks for immediate use
-CORE_BLOCKS = [
-    "pdf", "ocr", "chat", "voice", "image", "vector_search", 
-    "search", "translate", "code", "web", "zvec"
+__all__ = [
+    # AI Blocks
+    "PDFBlock", "OCRBlock", "ChatBlock", "VoiceBlock", "VectorSearchBlock",
+    "ImageBlock", "TranslateBlock", "CodeBlock", "WebBlock", "SearchBlock", "ZvecBlock",
+    # Drive Blocks
+    "GoogleDriveBlock", "OneDriveBlock", "LocalDriveBlock", "AndroidDriveBlock",
+    # Registry
+    "BLOCK_REGISTRY", "get_block", "get_all_blocks"
 ]
 
-__all__ = ["get_block", "get_all_blocks", "CORE_BLOCKS"]
+# Platform's local block registry (15 core blocks)
+BLOCK_REGISTRY = {
+    "pdf": PDFBlock,
+    "ocr": OCRBlock,
+    "chat": ChatBlock,
+    "voice": VoiceBlock,
+    "vector_search": VectorSearchBlock,
+    "image": ImageBlock,
+    "translate": TranslateBlock,
+    "code": CodeBlock,
+    "web": WebBlock,
+    "search": SearchBlock,
+    "zvec": ZvecBlock,
+    "google_drive": GoogleDriveBlock,
+    "onedrive": OneDriveBlock,
+    "local_drive": LocalDriveBlock,
+    "android_drive": AndroidDriveBlock,
+}
+
+def register_block(name: str, block_class):
+    """Register a block class."""
+    BLOCK_REGISTRY[name] = block_class
+
+def get_block(name: str):
+    """Get a block class by name."""
+    return BLOCK_REGISTRY.get(name)
+
+def get_all_blocks():
+    """Get all registered blocks."""
+    return BLOCK_REGISTRY
+
+# Note: Block Store (blocks/) is separate for publishing new blocks
+# Platform only uses its local cloned blocks above
