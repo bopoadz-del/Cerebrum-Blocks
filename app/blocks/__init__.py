@@ -1,13 +1,11 @@
-"""Platform Blocks - Self-contained (cloned from Block Store).
+"""Platform Blocks - Universal Block System (Single Source of Truth)"""
 
-These are LOCAL copies of blocks the platform uses.
-The Block Store (blocks/) is separate - for publishing/discovery.
-"""
+from app.core.universal_base import UniversalBlock, UniversalContainer
 
-# Core AI Blocks (cloned from Block Store)
+# Core AI Blocks
+from .chat import ChatBlock
 from .pdf import PDFBlock
 from .ocr import OCRBlock
-from .chat import ChatBlock
 from .voice import VoiceBlock
 from .vector_search import VectorSearchBlock
 from .image import ImageBlock
@@ -23,31 +21,23 @@ from .onedrive import OneDriveBlock
 from .local_drive import LocalDriveBlock
 from .android_drive import AndroidDriveBlock
 
-# Containers
+# Domain Containers
 from app.containers import (
-    StoreContainer, SecurityContainer, AICoreContainer, ConstructionContainer,
-    MedicalContainer, LegalContainer, FinanceContainer
+    ConstructionContainer,
+    MedicalContainer,
+    LegalContainer,
+    FinanceContainer,
+    SecurityContainer,
+    AICoreContainer,
+    StoreContainer,
 )
 
-__all__ = [
-    # AI Blocks
-    "PDFBlock", "OCRBlock", "ChatBlock", "VoiceBlock", "VectorSearchBlock",
-    "ImageBlock", "TranslateBlock", "CodeBlock", "WebBlock", "SearchBlock", "ZvecBlock",
-    # Drive Blocks
-    "GoogleDriveBlock", "OneDriveBlock", "LocalDriveBlock", "AndroidDriveBlock",
-    # Containers
-    "StoreContainer", "SecurityContainer", "AICoreContainer", "ConstructionContainer",
-    "MedicalContainer", "LegalContainer", "FinanceContainer",
-    # Registry
-    "BLOCK_REGISTRY", "get_block", "get_all_blocks"
-]
-
-# Platform's local block registry (15 core blocks)
+# Unified Registry
 BLOCK_REGISTRY = {
-    # Core blocks
+    # Core AI
+    "chat": ChatBlock,
     "pdf": PDFBlock,
     "ocr": OCRBlock,
-    "chat": ChatBlock,
     "voice": VoiceBlock,
     "vector_search": VectorSearchBlock,
     "image": ImageBlock,
@@ -56,31 +46,43 @@ BLOCK_REGISTRY = {
     "web": WebBlock,
     "search": SearchBlock,
     "zvec": ZvecBlock,
+    # Drive
     "google_drive": GoogleDriveBlock,
     "onedrive": OneDriveBlock,
     "local_drive": LocalDriveBlock,
     "android_drive": AndroidDriveBlock,
-    # Containers
-    "store": StoreContainer,
-    "security": SecurityContainer,
-    "ai_core": AICoreContainer,
+    # Domain Containers
     "construction": ConstructionContainer,
     "medical": MedicalContainer,
     "legal": LegalContainer,
     "finance": FinanceContainer,
+    "security": SecurityContainer,
+    "ai_core": AICoreContainer,
+    "store": StoreContainer,
 }
 
-def register_block(name: str, block_class):
-    """Register a block class."""
-    BLOCK_REGISTRY[name] = block_class
 
 def get_block(name: str):
-    """Get a block class by name."""
+    """Get a block class by name"""
     return BLOCK_REGISTRY.get(name)
 
+
 def get_all_blocks():
-    """Get all registered blocks."""
+    """Get all registered blocks"""
     return BLOCK_REGISTRY
 
-# Note: Block Store (blocks/) is separate for publishing new blocks
-# Platform only uses its local cloned blocks above
+
+__all__ = [
+    # Base
+    "UniversalBlock", "UniversalContainer",
+    # Core
+    "ChatBlock", "PDFBlock", "OCRBlock", "VoiceBlock", "VectorSearchBlock",
+    "ImageBlock", "TranslateBlock", "CodeBlock", "WebBlock", "SearchBlock", "ZvecBlock",
+    # Drive
+    "GoogleDriveBlock", "OneDriveBlock", "LocalDriveBlock", "AndroidDriveBlock",
+    # Containers
+    "ConstructionContainer", "MedicalContainer", "LegalContainer", "FinanceContainer",
+    "SecurityContainer", "AICoreContainer", "StoreContainer",
+    # Registry
+    "BLOCK_REGISTRY", "get_block", "get_all_blocks"
+]
