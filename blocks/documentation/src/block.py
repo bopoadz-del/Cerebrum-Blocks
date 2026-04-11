@@ -460,13 +460,14 @@ class DocumentationBlock(LegoBlock):
         
     def _generate_basic_playground(self, block_id: str) -> str:
         """Generate basic playground code"""
-        return f'''# {block_id.title()} Block Playground
+        class_name = block_id.title().replace('_', '') + "Block"
+        return f'''# {class_name} Playground
 import asyncio
-from blocks.{block_id}.src.block import {block_id.title()}Block
+from blocks.{block_id}.src.block import {class_name}
 
 async def main():
     # Initialize the block
-    block = {block_id.title()}Block(config={})
+    block = {class_name}(config=dict())
     await block.initialize()
     
     # Try it out
