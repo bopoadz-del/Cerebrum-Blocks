@@ -83,6 +83,10 @@ export const BLOCKS: Block[] = [
   
   // Adaptive/Router
   { name: 'adaptive_router', displayName: 'Adaptive Router', description: 'Smart routing based on latency/cost', price: 0, category: 'AI Core', tags: ['ai', 'routing', 'adaptive'], icon: '🔀', author: 'Cerebrum', rating: 4.7, reviews: 18 },
+  
+  // Missing blocks
+  { name: 'bim', displayName: 'BIM', description: 'Building Information Modeling processing', price: 149, category: 'Domain Containers', tags: ['aec', 'bim', 'modeling'], icon: '🏢', author: 'Cerebrum', rating: 4.6, reviews: 21 },
+  { name: 'container', displayName: 'Container', description: 'Hyper-Block pattern for nesting blocks', price: 0, category: 'Infrastructure', tags: ['infrastructure', 'container', 'sandbox'], icon: '📦', author: 'Cerebrum', rating: 4.5, reviews: 17 },
 ];
 
 export const CATEGORIES = [
