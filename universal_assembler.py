@@ -85,20 +85,28 @@ class UniversalAssembler:
                 # Find LegoBlock subclasses
                 for name, obj in inspect.getmembers(module, inspect.isclass):
                     # Skip base classes and non-blocks
-                    if name in ["LegoBlock", "ContainerBlock"]:
+                    if name in ["LegoBlock", "ContainerBlock", "BaseBlock"]:
                         continue
-                    if hasattr(obj, 'name') and hasattr(obj, 'requires'):
-                        instance_name = getattr(obj, 'name', block_name)
+                    
+                    # Check if it's a valid block (has name or config.name)
+                    block_name_attr = getattr(obj, 'name', None)
+                    has_config = hasattr(obj, 'config') and hasattr(obj.config, 'name')
+                    
+                    if block_name_attr or has_config:
+                        instance_name = block_name_attr or obj.config.name
                         found[instance_name] = obj
+                        
+                        # Get layer from either pattern
+                        layer = self._get_block_layer(obj)
                         
                         # Track containers
                         if block_name.startswith("container_"):
                             containers.append(instance_name)
-                            print(f"   📦 {instance_name} ({obj.__name__}) - CONTAINER (layer {getattr(obj, 'layer', 99)})")
+                            print(f"   📦 {instance_name} ({obj.__name__}) - CONTAINER (layer {layer})")
                         elif block_name == "event_bus":
-                            print(f"   🔌 {instance_name} ({obj.__name__}) - EVENT BUS (layer {getattr(obj, 'layer', 99)})")
+                            print(f"   🔌 {instance_name} ({obj.__name__}) - EVENT BUS (layer {layer})")
                         else:
-                            print(f"   ✓ {instance_name} ({obj.__name__}) - layer {getattr(obj, 'layer', 99)}")
+                            print(f"   ✓ {instance_name} ({obj.__name__}) - layer {layer}")
                         
             except Exception as e:
                 print(f"   ⚠️  {block_name}: {e}")
@@ -116,10 +124,40 @@ class UniversalAssembler:
         """Check if block is the event bus"""
         return name == "event_bus"
     
+    def _get_block_layer(self, block_class) -> int:
+        """Get layer from either pattern (class attr or config)"""
+        # Try class attribute first (blocks/ style)
+        if hasattr(block_class, 'layer'):
+            return block_class.layer
+        # Try config (app/blocks/ style)
+        if hasattr(block_class, 'config') and hasattr(block_class.config, 'layer'):
+            return block_class.config.layer
+        return 99
+    
+    def _get_block_requires(self, block_class) -> list:
+        """Get requires from either pattern"""
+        # Try class attribute first (blocks/ style)
+        if hasattr(block_class, 'requires'):
+            return block_class.requires
+        # Try config (app/blocks/ style)
+        if hasattr(block_class, 'config') and hasattr(block_class.config, 'requires'):
+            return block_class.config.requires or []
+        return []
+    
+    def _get_block_tags(self, block_class) -> list:
+        """Get tags from either pattern"""
+        # Try class attribute first (blocks/ style)
+        if hasattr(block_class, 'tags'):
+            return block_class.tags
+        # Try config (app/blocks/ style)
+        if hasattr(block_class, 'config') and hasattr(block_class.config, 'tags'):
+            return block_class.config.tags or []
+        return []
+    
     def build_deps(self):
         """Build dependency graph from block.requires"""
         for name, block_class in self.discovered.items():
-            self.dep_graph[name] = set(getattr(block_class, 'requires', []))
+            self.dep_graph[name] = set(self._get_block_requires(block_class))
         return self.dep_graph
     
     def topological_sort(self) -> List[str]:
@@ -138,7 +176,7 @@ class UniversalAssembler:
         # Start with no-deps nodes, sorted by layer
         # Event bus and infrastructure containers first
         def sort_key(x):
-            layer = getattr(self.discovered[x], 'layer', 99)
+            layer = self._get_block_layer(self.discovered[x])
             # Prioritize event_bus and infrastructure
             if self.is_event_bus(x):
                 return (0, x)
@@ -241,7 +279,7 @@ class UniversalAssembler:
         for i, name in enumerate(order, 1):
             deps = self.dep_graph[name]
             dep_str = f" ← {', '.join(deps)}" if deps else ""
-            layer = getattr(self.discovered[name], 'layer', 99)
+            layer = self._get_block_layer(self.discovered[name])
             block_type = "📦" if self.is_container(name) else "🔌" if self.is_event_bus(name) else "📦"
             print(f"   {i}. {block_type} {name} (L{layer}){dep_str}")
         
