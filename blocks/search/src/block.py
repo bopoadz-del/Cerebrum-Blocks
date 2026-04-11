@@ -8,6 +8,14 @@ class SearchBlock(LegoBlock):
     name = "search"
     version = "1.0.0"
     requires = ["config"]
+    layer = 4  # Integration layer
+    tags = ["search", "web", "integration"]
+    default_config = {
+        "default_provider": "duckduckgo",
+        "brave_key": None,
+        "serper_key": None,
+        "tavily_key": None
+    }
     
     PROVIDERS = {
         "serper": {"url": "https://google.serper.dev/search", "type": "google"},

@@ -15,6 +15,14 @@ class VectorBlock(LegoBlock):
     name = "vector"
     version = "1.0.0"
     requires = ["config", "memory"]
+    layer = 3  # Core infrastructure
+    tags = ["ai", "vector", "search", "core"]
+    default_config = {
+        "backend": "chroma",
+        "embedding_model": "all-MiniLM-L6-v2",
+        "collection": "default",
+        "persist_directory": "./data/vector"
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

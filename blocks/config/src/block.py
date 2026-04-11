@@ -15,6 +15,12 @@ class ConfigBlock(LegoBlock):
     name = "config"
     version = "1.0.0"
     requires = ["hal"]
+    layer = 0  # Infrastructure - must initialize first
+    tags = ["infrastructure", "core"]
+    default_config = {
+        "config_file": "config/blocks.json",
+        "env_prefix": "CEREBRUM_"
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

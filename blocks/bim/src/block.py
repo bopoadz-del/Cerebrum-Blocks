@@ -14,6 +14,13 @@ class BIMBlock(LegoBlock):
     name = "bim"
     version = "1.0.0"
     requires = ["config", "storage", "vector", "pdf", "ocr"]
+    layer = 6  # Domain layer
+    tags = ["construction", "bim", "cad", "domain"]
+    default_config = {
+        "ifc_enabled": True,
+        "dwg_enabled": True,
+        "auto_index": True
+    }
     
     SUPPORTED_FORMATS = {
         ".ifc": "bim_model",

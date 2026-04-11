@@ -15,6 +15,13 @@ class MonitoringBlock(LegoBlock):
     name = "monitoring"
     version = "1.0.0"
     requires = ["config", "memory"]  # Uses Memory Block for metrics storage
+    layer = 2  # Monitoring layer
+    tags = ["monitoring", "observability", "core"]
+    default_config = {
+        "track_providers": ["deepseek", "groq", "openai", "anthropic"],
+        "window_size": 100,
+        "prediction_threshold": 0.3
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

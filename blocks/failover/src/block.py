@@ -21,6 +21,13 @@ class FailoverBlock(LegoBlock):
     name = "failover"
     version = "1.0.0"
     requires = ["config", "monitoring"]
+    layer = 2  # Monitoring/resilience layer
+    tags = ["resilience", "failover", "core"]
+    default_config = {
+        "circuit_breaker_threshold": 5,
+        "recovery_timeout": 60,
+        "health_check_interval": 30
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

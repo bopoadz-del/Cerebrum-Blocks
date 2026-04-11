@@ -13,6 +13,13 @@ class MemoryBlock(LegoBlock):
     name = "memory"
     version = "1.0.0"
     requires = ["config"]
+    layer = 1  # Security/Session layer
+    tags = ["security", "cache", "infrastructure"]
+    default_config = {
+        "max_size": 10000,
+        "default_ttl": 3600,
+        "cleanup_interval": 300
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

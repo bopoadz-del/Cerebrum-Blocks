@@ -20,6 +20,13 @@ class AuthBlock(LegoBlock):
     name = "auth"
     version = "1.0.0"
     requires = ["memory"]  # Stores API keys and rate limit counters
+    layer = 1  # Security layer
+    tags = ["security", "auth", "core"]
+    default_config = {
+        "master_key": None,
+        "rate_limit_default": 100,
+        "rate_limit_window": 3600
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)
