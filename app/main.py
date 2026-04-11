@@ -36,27 +36,9 @@ except Exception as e:
 def _get_cors_origins() -> List[str]:
     """Resolve CORS origins from environment with explicit defaults."""
     raw_origins = os.getenv("CORS_ORIGINS", "").strip()
-    environment = os.getenv("ENV", "production").strip().lower()
-
-    if raw_origins:
-        origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
-    elif environment == "production":
-        origins = [
-            "https://ssdppg.onrender.com",
-            "https://cerebrum-blocks.onrender.com",
-            "https://cerebrum-platform.onrender.com",
-            "https://cerebrum-platform-j1zs.onrender.com",
-            "https://cerebrum-store.onrender.com",
-        ]
-    else:
-        origins = [
-            "http://localhost:3000",
-            "http://localhost:5173",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:5173",
-        ]
-
-    return origins or ["http://localhost:3000"]
+    
+    # Allow all origins for now - restricts via API key
+    return ["*"]
 
 def _create_block_instance(block_class):
     """Create block instance with proper arguments"""
@@ -82,10 +64,10 @@ CORS_ORIGINS = _get_cors_origins()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_credentials=True,
+    allow_credentials=False,  # Must be False when using ["*"]
 )
 
 # Mount static files
