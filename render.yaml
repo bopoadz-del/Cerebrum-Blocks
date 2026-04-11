@@ -1,4 +1,5 @@
 services:
+  # API Backend
   - type: web
     name: cerebrum-api
     env: python
@@ -19,40 +20,49 @@ services:
           type: redis
           name: cerebrum-redis
           property: connectionString
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
       - key: DEEPSEEK_API_KEY
         sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: ENV
+        value: production
     disk:
       name: data
       mountPath: /app/data
       sizeGB: 1
-    healthCheckPath: /v1/health
+    healthCheckPath: /health
 
+  # Block Store Frontend (Public Marketplace)
   - type: web
-    name: cerebrum-dashboard
+    name: cerebrum-store
     env: static
-    buildCommand: cd dashboard && npm install && npm run build
-    staticPublishPath: ./dashboard/dist
+    buildCommand: cd frontend-store && npm install && npm run build
+    staticPublishPath: ./frontend-store/dist
     envVars:
       - key: VITE_API_URL
-        value: https://api.cerebrumblocks.com
+        value: https://ssdppg.onrender.com
 
+  # Platform Frontend (Developer Console)
+  - type: web
+    name: cerebrum-platform
+    env: static
+    buildCommand: cd frontend-platform && npm install && npm run build
+    staticPublishPath: ./frontend-platform/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://ssdppg.onrender.com
+
+  # Redis
   - type: redis
     name: cerebrum-redis
     plan: free
     ipAllowList: []
 
+  # Worker
   - type: worker
     name: cerebrum-worker
     env: docker
