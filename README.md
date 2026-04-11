@@ -1,447 +1,303 @@
 # 🧠 Cerebrum Blocks
 
-> **AI for Developers in 3 Lines of Code**
+> **The Domain Adapter Protocol (DAP) — An AI Operating System for Every Industry**
 
-Build AI applications like Lego. One API key. 23+ blocks. Infinite possibilities.
+**One platform. Seven verticals. Infinite possibilities.**
 
 [![Docker Hub](https://img.shields.io/badge/Docker%20Hub-bopoadz--del%2Fcerebrum--blocks-blue?logo=docker)](https://hub.docker.com/r/bopoadz-del/cerebrum-blocks)
-[![API Status](https://img.shields.io/badge/api-up-success)](https://cerebrum-blocks.onrender.com/v1/health)
+[![API Status](https://img.shields.io/badge/api-up-success)](https://ssdppg.onrender.com/health)
+[![Domain Containers](https://img.shields.io/badge/Domain%20Containers-7-blueviolet)]()
+[![Lego Tax](https://img.shields.io/badge/Lego%20Tax-20%25-gold)]()
+
+---
+
+## 🎯 What We Built
+
+**Not a product. A protocol.**
+
+```
+Layer 0  Infrastructure    ← HAL, Config, Memory, Database    [UNIVERSAL]
+Layer 1  Security          ← Auth, Secrets, Rate Limiter      [UNIVERSAL]
+Layer 2  AI Core           ← Router, Failover, Leaderboard    [UNIVERSAL]
+Layer 3  [YOUR DOMAIN]     ← Construction, Medical, Legal     [SWAP THIS]
+Layer 4  Store             ← Discovery, Reviews, Payments     [UNIVERSAL]
+Layer 5  Event Bus         ← Cross-container messaging        [UNIVERSAL]
+```
+
+**Swap Layer 3 → New Industry:**
+
+| Industry | Container | Price | Status |
+|----------|-----------|-------|--------|
+| 🏗️ **Construction** | BIM, QA, Progress | $299/mo | ✅ LIVE |
+| 🏥 **Medical** | DICOM, HIPAA, Clinical | $499/mo | ✅ LIVE |
+| ⚖️ **Legal** | Contracts, Precedents | $399/mo | ✅ LIVE |
+| 💰 **Finance** | Risk, Compliance | $599/mo | ✅ LIVE |
+| 🎓 Education | *(coming)* | $199/mo | 📝 Roadmap |
+| 🏛️ Government | *(coming)* | $799/mo | 📝 Roadmap |
+| 🛒 Retail | *(coming)* | $249/mo | 📝 Roadmap |
+
+**Same 5 layers. One container swap. New $B industry.**
 
 ---
 
 ## ⚡ Quickstart
 
-### Python
+### 3-Minute Construction AI Chain
 
 ```bash
-pip install cerebrum-sdk
-```
-
-```python
-from cerebrum_sdk import Cerebrum
-
-client = Cerebrum(api_key="cb_your_key")
-
-# Streaming chat with DeepSeek (cheapest LLM!)
-async for chunk in client.chat.stream("Explain AI in simple terms", provider="deepseek"):
-    print(chunk.text, end="")
-```
-
-### JavaScript
-
-```bash
-npm install cerebrum-js
-```
-
-```javascript
-import { Cerebrum } from 'cerebrum-js';
-
-const client = new Cerebrum({ apiKey: 'cb_your_key' });
-
-// Streaming chat with DeepSeek (cheapest LLM!)
-for await (const chunk of client.chatStream('Explain AI in simple terms', { provider: 'deepseek' })) {
-  process.stdout.write(chunk.text);
-}
-```
-
-### cURL
-
-```bash
-# Chat with DeepSeek - $0.14/M tokens (5x cheaper than OpenAI!)
-curl -X POST https://cerebrum-blocks.onrender.com/v1/chat \
+curl -X POST https://ssdppg.onrender.com/chain \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "Hello!",
-    "model": "deepseek-chat",
-    "provider": "deepseek"
+    "steps": [
+      {"block": "construction", "params": {"action": "extract_measurements"}},
+      {"block": "ai_core", "params": {"action": "route"}},
+      {"block": "construction", "params": {"action": "generate_report"}}
+    ],
+    "initial_input": {"url": "floorplan.pdf"}
+  }'
+```
+
+### Medical Chain (HIPAA-Compliant)
+
+```bash
+curl -X POST https://ssdppg.onrender.com/chain \
+  -H "Content-Type: application/json" \
+  -d '{
+    "steps": [
+      {"block": "security", "params": {"action": "auth"}},
+      {"block": "medical", "params": {"action": "process_dicom"}},
+      {"block": "medical", "params": {"action": "extract_entities"}},
+      {"block": "medical", "params": {"action": "validate"}}
+    ]
+  }'
+```
+
+### Legal Contract Analysis
+
+```bash
+curl -X POST https://ssdppg.onrender.com/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "block": "legal",
+    "input": {"url": "contract.pdf"},
+    "params": {"action": "process_contract"}
   }'
 ```
 
 ---
 
-## 🔥 DeepSeek - The Cheapest LLM
+## 🏗️ Architecture: The 5+1 Model
 
-**Default Provider: DeepSeek** - Only **$0.14/M input tokens** ($0.28/M output)
+**5 Universal Layers** (never change)
+1. **Infrastructure** — HAL, databases, memory, configuration
+2. **Security** — Auth, secrets, rate limiting, audit
+3. **AI Core** — Adaptive routing, failover, provider leaderboard
+4. **Store** — Block discovery, reviews, Lego Tax (20%)
+5. **Event Bus** — Cross-container messaging (Block 42)
 
-| Provider | Input Price | Output Price | Speed | Best For |
-|----------|-------------|--------------|-------|----------|
-| 🏆 **DeepSeek** | **$0.14/M** | **$0.28/M** | Fast | **Default - Best value** |
-| Groq | $0.59/M | $0.79/M | Fastest | Speed critical |
-| OpenAI GPT-4 | $2.50/M | $10.00/M | Medium | Complex reasoning |
-| OpenAI GPT-3.5 | $0.50/M | $1.50/M | Fast | General tasks |
-| Anthropic Claude | $0.80/M | $2.40/M | Medium | Long context |
+**1 Swappable Layer** (your product)
+- **Layer 3** — Domain-specific containers
 
-**DeepSeek is 5x cheaper than GPT-3.5 and 18x cheaper than GPT-4!**
+### How to Create a New Vertical
 
----
-
-## 🔑 Get Your API Key
-
-👉 **[Get your API key](https://cerebrumblocks.com/dashboard)**
-
-- **Free**: 1,000 requests/month
-- **Pro**: $29/month, 50,000 requests
-- **Enterprise**: Custom pricing
-
----
-
-## 🧱 23+ AI Blocks
-
-### Core AI Blocks
-| Block | Description |
-|-------|-------------|
-| 💬 **Chat** | DeepSeek (cheapest!), Groq (fastest), GPT-4, Claude - with streaming |
-| 📄 **PDF** | Extract text, tables, images with OCR support |
-| 👁️ **OCR** | Image text extraction with Tesseract |
-| 🔊 **Voice** | Text-to-speech, speech-to-text |
-| 🔍 **Vector** | ChromaDB semantic search with sentence-transformers |
-| 🖼️ **Image** | Image analysis & generation |
-| 🌐 **Translate** | 100+ languages with Google Translate |
-| 💻 **Code** | Code generation & execution |
-| 🕸️ **Web** | Web scraping & browsing |
-| 🔎 **Search** | Web search with multiple providers |
-| 🧮 **Zvec** | Zero-shot vector embeddings |
-
-### Infrastructure Blocks
-| Block | Description |
-|-------|-------------|
-| 🔧 **HAL** | Hardware Abstraction Layer - auto-detects cloud/edge/local |
-| ⚙️ **Config** | Centralized configuration management with profile support |
-| 🧠 **Memory** | High-speed cache with TTL & LRU eviction |
-| 📊 **Monitoring** | Provider leaderboard & predictive failover |
-| 🔐 **Auth** | API keys, rate limiting, RBAC (admin/pro/basic/readonly) |
-| 📬 **Queue** | Async job processing (Redis/memory) |
-| 💾 **Storage** | Multi-backend file storage (local/cloud) |
-| 🛡️ **Failover** | Circuit breaker, failure counting, route switching |
-
-### Integration Blocks
-| Block | Description |
-|-------|-------------|
-| 🏗️ **BIM** | IFC/DWG/PDF parsing with ifcopenshell & ezdxf |
-| 🗄️ **Database** | SQL/NoSQL database operations |
-| 📧 **Email** | Send/receive emails with SMTP/IMAP |
-| 🎯 **Webhook** | Incoming/outgoing webhook handlers |
-| ⚡ **Workflow** | Workflow orchestration & automation |
-| 💰 **Billing** | Usage tracking & billing management |
-
-### Storage Blocks
-| Block | Description |
-|-------|-------------|
-| 📁 **Google Drive** | Cloud file processing |
-| ☁️ **OneDrive** | Microsoft integration |
-| 💾 **Local Drive** | Local file processing |
-| 📱 **Android Drive** | Android storage access |
-
----
-
-## 🔗 Chain Blocks Together
-
-Build complex AI pipelines by chaining blocks:
-
+1. **Copy the template:**
 ```python
-from cerebrum_sdk import Cerebrum, chain
+from app.core.block import BaseBlock, BlockConfig
 
-client = Cerebrum(api_key="cb_your_key")
-
-# Document AI: PDF → OCR → Chat (using DeepSeek - cheapest!)
-result = await chain(client) \
-    .then("pdf", {"extract": "text"}) \
-    .then("ocr", {"lang": "eng"}) \
-    .then("chat", {"prompt": "Extract invoice data:", "provider": "deepseek"}) \
-    .run("invoice.pdf")
-
-print(result.final_output)
+class MyDomainContainer(BaseBlock):
+    """Your domain container"""
+    
+    async def process_document(self, input_data, params): ...
+    async def extract_entities(self, input_data, params): ...
+    async def validate(self, input_data, params): ...
+    async def generate_report(self, input_data, params): ...
 ```
 
+2. **Implement the 5 required methods**
+3. **Register in BLOCK_REGISTRY**
+4. **Publish to Store** → Collect 80% of revenue
+
+See **[DOMAIN_CONTAINER_SPEC.md](DOMAIN_CONTAINER_SPEC.md)** for the complete specification.
+
 ---
 
-## 🏗️ Infrastructure Deep Dive
+## 💰 Economics: The Lego Tax
 
-### 🔧 HAL Block
-Auto-detects hardware environment and selects optimal configuration profile.
+**Platform takes 20%. Creator keeps 80%.**
 
-```python
-# HAL automatically detects your environment
-# cloud_render, cloud_aws, edge_jetson, local_gpu, local_std
-profile = await client.hal.detect()
-print(f"Running on: {profile}")  # "cloud_render" or "edge_jetson"
-```
+| Domain Pack | Monthly Price | Platform (20%) | Creator (80%) |
+|-------------|---------------|----------------|---------------|
+| Construction | $299 | $59.80 | $239.20 |
+| Medical | $499 | $99.80 | $399.20 |
+| Legal | $399 | $79.80 | $319.20 |
+| Finance | $599 | $119.80 | $479.20 |
 
-### 🧠 Memory Block
-High-speed in-memory cache with TTL and LRU eviction. Perfect for edge deployments without Redis.
+**Community builds the verticals. You collect the Lego Tax.**
 
-```python
-# Store with 60s TTL
-await client.memory.set("key", {"data": "value"}, ttl=60)
+---
 
-# Retrieve
-result = await client.memory.get("key")
+## 📦 Available Blocks (22 Total)
 
-# Stats
-stats = await client.memory.stats()
-print(f"Hit rate: {stats['hit_rate']}%")
-```
+### Core AI Blocks (15)
+| Block | Description |
+|-------|-------------|
+| 💬 **chat** | Multi-provider AI (DeepSeek, Groq, GPT-4) with streaming |
+| 📄 **pdf** | PDF text/table extraction |
+| 👁️ **ocr** | Image text extraction |
+| 🔊 **voice** | Text-to-speech, speech-to-text |
+| 🔍 **vector_search** | Semantic search with ChromaDB |
+| 🖼️ **image** | Image analysis |
+| 🌐 **translate** | 100+ languages |
+| 💻 **code** | Code generation |
+| 🌐 **web** | Web scraping |
+| 🔎 **search** | Web search |
+| 🔗 **zvec** | Zero-vector ops |
+| 📁 **google_drive** | Google Drive integration |
+| 📁 **onedrive** | OneDrive integration |
+| 📁 **local_drive** | Local file system |
+| 📁 **android_drive** | Android storage |
 
-### 📊 Monitoring Block
-Provider reliability leaderboard with predictive failover. Automatically routes to the best AI provider.
+### Domain Containers (7)
+| Container | Domain | Key Features | Revenue |
+|-----------|--------|--------------|---------|
+| 🏗️ **construction** | AEC Industry | BIM, PDF extraction, QA inspection, progress tracking | $299/mo |
+| 🏥 **medical** | Healthcare | DICOM processing, clinical entities, HIPAA validation | $499/mo |
+| ⚖️ **legal** | Law Firms | Contract analysis, precedent validation, brief generation | $399/mo |
+| 💰 **finance** | Trading/Banking | Risk analysis, SOX/MiFID compliance, regulatory reporting | $599/mo |
+| 🔐 **security** | Platform | Auth, rate limiting, sandbox, audit | Platform |
+| 🤖 **ai_core** | Platform | Adaptive routing, failover, leaderboard | Platform |
+| 🏪 **store** | Platform | Discovery, reviews, payment split | Platform |
+
+---
+
+## 🔐 Security: Layer 1 Fortress
 
 ```bash
-# Get provider rankings
-curl https://cerebrum-blocks.onrender.com/v1/leaderboard \
-  -H "Authorization: Bearer cb_your_key"
-```
+# Generate API key
+POST /execute {"block": "security", "params": {"action": "create_key"}}
+# → {"api_key": "cb_abc123...", "role": "admin"}
 
-Response:
-```json
-{
-  "leaderboard": [
-    {"rank": 1, "name": "DeepSeek", "reliability_score": 96.5, "status": "excellent"},
-    {"rank": 2, "name": "Groq", "reliability_score": 94.2, "status": "excellent"}
-  ]
-}
-```
+# Check rate limit
+POST /execute {"block": "security", "params": {"action": "check_rate", "key": "user_123"}}
+# → {"allowed": true, "remaining": 95, "reset_at": ...}
 
-### 🔐 Auth Block
-Multi-tenant API key management with role-based access control.
-
-| Role | Rate Limit | Blocks |
-|------|------------|--------|
-| Admin | 1M/hour | All + user management |
-| Pro | 50K/hour | All AI blocks |
-| Basic | 1K/hour | Core blocks only |
-| Readonly | 500/hour | View-only access |
-
-```bash
-# Create API key (admin only)
-curl -X POST https://cerebrum-blocks.onrender.com/v1/auth/keys \
-  -H "Authorization: Bearer cb_admin_key" \
-  -d '{"name": "production", "role": "pro"}'
-```
-
-### 🛡️ Failover Block
-Circuit breaker pattern with automatic failure detection and route switching.
-
-```python
-# Automatic provider failover
-result = await client.chat.complete(
-    "Hello!",
-    failover=True  # Auto-switches if provider fails
-)
+# Sandbox validation
+POST /execute {"block": "security", "params": {"action": "sandbox_check", "code": "exec('rm -rf /')"}}
+# → {"safe": false, "violations": ["exec("]}
 ```
 
 ---
 
-## 🏗️ BIM Block (NEW!)
-Real BIM/CAD file processing with native parsing:
+## 🤖 AI Core: Layer 2 Brain
 
-```python
-# Parse IFC file
-result = await client.bim.process({
-    "file_path": "/path/to/model.ifc",
-    "action": "extract_metadata"
-})
-print(result["schema"])  # "IFC4"
-print(result["entities"])  # 15420
+```bash
+# Provider leaderboard (auto-updated)
+POST /execute {"block": "ai_core", "params": {"action": "leaderboard"}}
+# → {
+#   "rankings": [
+#     {"provider": "deepseek", "score": 99.3, "latency_ms": 89},
+#     {"provider": "groq", "score": 98.7, "latency_ms": 45},
+#     {"provider": "openai", "score": 97.5, "latency_ms": 234}
+#   ]
+# }
 
-# Parse DWG file
-result = await client.bim.process({
-    "file_path": "/path/to/drawing.dwg",
-    "action": "extract_metadata"
-})
+# Adaptive routing
+POST /execute {"block": "ai_core", "params": {"action": "route", "quality": "fast"}}
+# → {"selected_provider": "groq", "estimated_cost": 0.00059}
 ```
 
-**Supported formats:** IFC (via ifcopenshell), DWG (via ezdxf), PDF drawings (via OCR)
+---
+
+## 🏪 Block Store: Layer 4 Marketplace
+
+```bash
+# Platform stats
+POST /execute {"block": "store", "params": {"action": "platform_stats"}}
+# → {
+#   "total_blocks": 58,
+#   "published_blocks": 22,
+#   "total_reviews": 847,
+#   "avg_rating": 4.7,
+#   "platform_revenue": "$12,450.00"
+# }
+
+# Purchase with Lego Tax
+POST /execute {"block": "store", "params": {"action": "purchase", "price_cents": 49900}}
+# → {"platform_fee": "$99.80", "creator_earns": "$399.20"}
+```
+
+---
+
+## 🚀 Deployment
+
+### Render (Production)
+```bash
+git push origin main  # Auto-deploys to https://ssdppg.onrender.com
+```
+
+### Docker
+```bash
+docker pull bopoadz-del/cerebrum-blocks:latest
+docker run -p 8000:8000 -e API_KEY=cb_xxx bopoadz-del/cerebrum-blocks
+```
 
 ---
 
 ## 📚 Documentation
 
-- **[Full Documentation](https://docs.cerebrumblocks.com)**
-- **[API Reference](https://docs.cerebrumblocks.com/api)**
-- **[Python SDK](https://github.com/bopoadz-del/cerebrum-blocks/tree/main/packages/python)**
-- **[JavaScript SDK](https://github.com/bopoadz-del/cerebrum-blocks/tree/main/packages/js)**
+| Document | Description |
+|----------|-------------|
+| **[API.md](API.md)** | Complete API reference |
+| **[DOMAIN_CONTAINER_SPEC.md](DOMAIN_CONTAINER_SPEC.md)** | Build your own vertical |
+| **[DEPLOYMENT.md](RENDER_DEPLOY.md)** | Deployment guide |
 
 ---
 
-## 🚀 Deploy Your Own
+## 🎓 SDKs
 
-### Render (Recommended)
-
-```yaml
-# render.yaml
-services:
-  - type: web
-    name: cerebrum-api
-    env: python
-    plan: starter
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: DEEPSEEK_API_KEY
-        sync: false
-      - key: GROQ_API_KEY
-        sync: false
-```
-
-### Docker
-
+### Python
 ```bash
-docker build -t cerebrum .
-docker run -p 8000:8000 \
-  -e DEEPSEEK_API_KEY=your_key \
-  -e CEREBRUM_API_KEY=cb_key \
-  cerebrum
+pip install cerebrum-sdk
 ```
 
-### Local Development
-
+### JavaScript
 ```bash
-# Clone
-git clone https://github.com/bopoadz-del/cerebrum-blocks.git
-cd cerebrum-blocks
-
-# Setup
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Set DeepSeek API key (get one at platform.deepseek.com)
-export DEEPSEEK_API_KEY=your_key
-
-# Run
-uvicorn app.main:app --reload
+npm install cerebrum-js
 ```
 
 ---
 
-## 💰 Pricing
+## 💡 Revenue Projection
 
-| Feature | Free | Pro $29/mo | Enterprise |
-|---------|------|------------|------------|
-| Requests/month | 1,000 | 50,000 | Unlimited |
-| Blocks | 23+ | 23+ | 23+ + Custom |
-| DeepSeek Access | ✅ | ✅ | ✅ |
-| Streaming | ✅ | ✅ | ✅ |
-| Vector Search | ✅ | ✅ | ✅ |
-| BIM Processing | ✅ | ✅ | ✅ |
-| Support | Community | Priority | Dedicated |
-| SLA | - | - | ✅ |
+| Stream | Units | ARPU | Monthly |
+|--------|-------|------|---------|
+| Construction Pro | 50 | $299 | $14,950 |
+| Medical Pro | 30 | $499 | $14,970 |
+| Legal Pro | 40 | $399 | $15,960 |
+| Finance Pro | 20 | $599 | $11,980 |
+| **Platform Fee (20%)** | | | **$11,572** |
 
----
-
-## 🛠️ API Endpoints
-
-### AI Blocks
-```
-POST /v1/chat              # Chat completion (DeepSeek default)
-POST /v1/chat/stream       # Streaming chat
-GET  /v1/blocks            # List blocks
-POST /v1/execute           # Execute block
-POST /v1/chain             # Chain blocks
-POST /v1/vector/add        # Add to vector DB
-POST /v1/vector/search     # Semantic search
-POST /v1/bim/process       # BIM/CAD processing
-```
-
-### Infrastructure Blocks
-```
-GET  /v1/leaderboard       # Provider reliability rankings
-GET  /v1/recommend         # AI-powered provider selection
-GET  /v1/predict           # Predictive failure analysis
-GET  /v1/system/health     # Full system health report
-GET  /v1/memory/stats      # Cache statistics
-POST /v1/memory/{action}   # Cache operations (get/set/delete)
-POST /v1/auth/validate     # Validate API key
-POST /v1/auth/keys         # Create API key (admin)
-GET  /v1/auth/keys         # List API keys
-POST /v1/auth/check        # Check permission
-GET  /v1/hal/profile       # Get hardware profile
-GET  /v1/failover/status   # Failover system status
-```
-
-### Health
-```
-GET  /v1/health            # Health check
-```
-
-### Example: Chat with DeepSeek
-
-```bash
-curl -X POST https://cerebrum-blocks.onrender.com/v1/chat \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer cb_your_key" \
-  -d '{
-    "message": "Explain quantum computing",
-    "model": "deepseek-chat",
-    "provider": "deepseek"
-  }'
-```
-
-Response:
-```json
-{
-  "text": "Quantum computing uses quantum bits (qubits)...",
-  "model": "deepseek-chat",
-  "provider": "deepseek"
-}
-```
+**Plus:** Community-built verticals × 20% Lego Tax
 
 ---
 
-## 🤝 Contributing
+## 🌐 Links
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
----
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
+- **Live Platform:** https://ssdppg.onrender.com
+- **Health Check:** https://ssdppg.onrender.com/health
+- **GitHub:** https://github.com/bopoadz-del/Cerebrum-Blocks
+- **Docker Hub:** https://hub.docker.com/r/bopoadz-del/cerebrum-blocks
 
 ---
 
-<p align="center">
-  Built with 💜 by the Cerebrum Team<br>
-  <a href="https://cerebrumblocks.com">cerebrumblocks.com</a>
-</p>
+## 🏆 Status
+
+**Version:** 2.0.0 — Domain Adapter Protocol  
+**Blocks:** 22 (15 core + 7 containers)  
+**Layers:** 5 universal + 1 swappable  
+**Revenue Model:** Lego Tax (20% platform, 80% creator)  
+**Status:** ✅ **PRODUCTION + ECOSYSTEM READY**
 
 ---
 
-## 🏗️ Architecture: Platform + Block Store
-
-This repo contains TWO separate systems:
-
-### 1. PLATFORM (`app/`)
-- **Purpose**: End-user API for using blocks
-- **Blocks**: 15 core blocks (cloned from Block Store)
-- **Deploy**: Render Starter ($7/mo)
-- **Branch**: `main`
-
-```bash
-curl https://ssdppg.onrender.com/v1/execute \
-  -d '{"block":"chat","input":{"message":"Hello"}}'
-```
-
-### 2. BLOCK STORE (`blocks/`)
-- **Purpose**: Publish, discover, validate blocks
-- **Blocks**: ALL 58 blocks + containers
-- **Run locally**: `python blockstore.py`
-- **Branch**: `blockstore`
-
-```bash
-git checkout blockstore
-python blockstore.py
-```
-
-### Why Separate?
-
-| Concern | Platform | Block Store |
-|---------|----------|-------------|
-| **Stability** | Stable, tested blocks | Experimental, new blocks |
-| **Memory** | 15 blocks = ~200MB | 58 blocks = ~800MB |
-| **Deployment** | Public API | Internal/Marketplace |
-| **Updates** | Manual clone from store | Continuous publishing |
-
-**The Platform CLONES blocks from the Block Store** - it doesn't use them directly!
-
----
+*One container swap. Infinite markets. The Domain Adapter Protocol.*
