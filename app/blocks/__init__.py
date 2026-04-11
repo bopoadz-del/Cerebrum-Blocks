@@ -23,18 +23,24 @@ from .onedrive import OneDriveBlock
 from .local_drive import LocalDriveBlock
 from .android_drive import AndroidDriveBlock
 
+# Containers
+from app.containers import StoreContainer
+
 __all__ = [
     # AI Blocks
     "PDFBlock", "OCRBlock", "ChatBlock", "VoiceBlock", "VectorSearchBlock",
     "ImageBlock", "TranslateBlock", "CodeBlock", "WebBlock", "SearchBlock", "ZvecBlock",
     # Drive Blocks
     "GoogleDriveBlock", "OneDriveBlock", "LocalDriveBlock", "AndroidDriveBlock",
+    # Containers
+    "StoreContainer",
     # Registry
     "BLOCK_REGISTRY", "get_block", "get_all_blocks"
 ]
 
 # Platform's local block registry (15 core blocks)
 BLOCK_REGISTRY = {
+    # Core blocks
     "pdf": PDFBlock,
     "ocr": OCRBlock,
     "chat": ChatBlock,
@@ -50,6 +56,8 @@ BLOCK_REGISTRY = {
     "onedrive": OneDriveBlock,
     "local_drive": LocalDriveBlock,
     "android_drive": AndroidDriveBlock,
+    # Containers
+    "store": StoreContainer,
 }
 
 def register_block(name: str, block_class):
