@@ -87,6 +87,14 @@ export const BLOCKS: Block[] = [
   // Missing blocks
   { name: 'bim', displayName: 'BIM', description: 'Building Information Modeling processing', price: 149, category: 'Domain Containers', tags: ['aec', 'bim', 'modeling'], icon: '🏢', author: 'Cerebrum', rating: 4.6, reviews: 21 },
   { name: 'container', displayName: 'Container', description: 'Hyper-Block pattern for nesting blocks', price: 0, category: 'Infrastructure', tags: ['infrastructure', 'container', 'sandbox'], icon: '📦', author: 'Cerebrum', rating: 4.5, reviews: 17 },
+  
+  // Drive/Storage blocks
+  { name: 'google_drive', displayName: 'Google Drive', description: 'Google Drive integration and file access', price: 19, category: 'Integration', tags: ['storage', 'drive', 'google'], icon: '📁', author: 'Cerebrum', rating: 4.4, reviews: 47 },
+  { name: 'onedrive', displayName: 'OneDrive', description: 'Microsoft OneDrive integration', price: 19, category: 'Integration', tags: ['storage', 'drive', 'microsoft'], icon: '☁️', author: 'Cerebrum', rating: 4.3, reviews: 38 },
+  { name: 'local_drive', displayName: 'Local Drive', description: 'Local filesystem access', price: 0, category: 'Infrastructure', tags: ['storage', 'local', 'filesystem'], icon: '💿', author: 'Cerebrum', rating: 4.2, reviews: 29 },
+  { name: 'android_drive', displayName: 'Android Drive', description: 'Android storage access', price: 0, category: 'Integration', tags: ['storage', 'android', 'mobile'], icon: '📱', author: 'Cerebrum', rating: 4.1, reviews: 18 },
+  { name: 'vector_search', displayName: 'Vector Search', description: 'ChromaDB semantic search (alias)', price: 49, category: 'AI Core', tags: ['ai', 'vector', 'search'], icon: '🔍', author: 'Cerebrum', rating: 4.7, reviews: 89 },
+  { name: 'zvec', displayName: 'ZVec', description: 'Zero-vector optimization for embeddings', price: 0, category: 'AI Core', tags: ['ai', 'vector', 'optimization'], icon: '⚡', author: 'Cerebrum', rating: 4.5, reviews: 12 },
 ];
 
 export const CATEGORIES = [
