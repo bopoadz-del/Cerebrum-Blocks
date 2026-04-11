@@ -117,7 +117,13 @@ class ChatRequest(BaseModel):
 
 @app.get("/", response_class=FileResponse)
 async def root():
-    """Serve landing page."""
+    """Serve Block Store UI."""
+    return FileResponse("app/static/index.html")
+
+
+@app.get("/landing", response_class=FileResponse)
+async def landing():
+    """Serve legacy landing page."""
     return FileResponse("app/static/landing/index.html")
 
 
