@@ -48,11 +48,22 @@ app = FastAPI(
     docs_url="/docs",
 )
 
+# CORS - Restrict to known origins in production
+# In development, allow all. In production, use specific origins.
+CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
+if os.environ.get("ENV", "production") == "production" and "*" in CORS_ORIGINS:
+    # Default to Render URL if no origins specified in production
+    CORS_ORIGINS = [
+        "https://ssdppg.onrender.com",
+        "https://cerebrum-blocks.onrender.com",
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=CORS_ORIGINS,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key"],
+    allow_credentials=True,
 )
 
 # Mount static files

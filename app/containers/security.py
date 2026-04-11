@@ -3,6 +3,7 @@
 Provides: Auth, Secrets, Sandbox, Audit, Rate Limiter
 """
 
+import os
 import hashlib
 import time
 from typing import Dict, Any, Optional
@@ -78,13 +79,15 @@ class SecurityContainer(BaseBlock):
         if not api_key:
             return {"authenticated": False, "error": "No API key provided"}
         
-        # Check dev key (for testing)
-        if api_key == "cb_dev_key":
+        # Check dev key (only in development, never production)
+        # In production, require real API keys from environment or database
+        if api_key == os.environ.get("CB_DEV_KEY", "") and os.environ.get("ENV", "production") != "production":
             return {
                 "authenticated": True,
                 "key_id": "dev",
                 "role": "admin",
-                "rate_limit": 1000
+                "rate_limit": 1000,
+                "warning": "Development key - do not use in production"
             }
         
         # Check stored keys
