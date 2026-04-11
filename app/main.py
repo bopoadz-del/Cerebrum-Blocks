@@ -663,3 +663,4 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
 # CORS fix deployed - Sat Apr 11 22:21:38 UTC 2026
+# Redeploy trigger: Sat Apr 11 22:53:40 UTC 2026
