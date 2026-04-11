@@ -8,6 +8,12 @@ class PDFBlock(LegoBlock):
     name = "pdf"
     version = "1.0.0"
     requires = ["config"]
+    layer = 3  # Domain layer
+    tags = ["pdf", "document", "extraction", "domain"]
+    default_config = {
+        "extract_tables": True,
+        "extract_images": False
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

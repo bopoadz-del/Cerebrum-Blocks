@@ -6,6 +6,13 @@ class ImageBlock(LegoBlock):
     name = "image"
     version = "1.0.0"
     requires = ["config"]
+    layer = 4  # Utility layer
+    tags = ["image", "vision", "generation", "utility"]
+    default_config = {
+        "provider": "openai",
+        "model": "dall-e-3",
+        "size": "1024x1024"
+    }
     
     PROVIDERS = {
         "openai": {"url": "https://api.openai.com/v1/images", "model": "dall-e-3"},

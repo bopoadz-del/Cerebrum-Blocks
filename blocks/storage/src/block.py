@@ -17,6 +17,12 @@ class StorageBlock(LegoBlock):
     name = "storage"
     version = "1.0.0"
     requires = ["config"]
+    layer = 2  # Core layer
+    tags = ["storage", "files", "core"]
+    default_config = {
+        "backend": "local",
+        "data_dir": "./data/storage"
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

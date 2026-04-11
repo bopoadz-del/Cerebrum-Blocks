@@ -7,6 +7,12 @@ class OCRBlock(LegoBlock):
     name = "ocr"
     version = "1.0.0"
     requires = ["config"]
+    layer = 3  # Domain layer
+    tags = ["ocr", "text", "document", "domain"]
+    default_config = {
+        "engine": "tesseract",
+        "lang": "eng"
+    }
     
     ENGINES = {
         "tesseract": {"local": True, "accuracy": "high"},

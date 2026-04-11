@@ -8,8 +8,8 @@ class BillingBlock(LegoBlock):
     name = "billing"
     version = "1.0.0"
     requires = ["config", "auth", "memory"]
-    layer = 7  # Utility layer
-    tags = ["billing", "usage", "utility"]
+    layer = 5  # Integration layer
+    tags = ["billing", "usage", "integration"]
     default_config = {
         "stripe_key": None,
         "free_tier_requests": 1000,

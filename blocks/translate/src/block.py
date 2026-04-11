@@ -7,6 +7,13 @@ class TranslateBlock(LegoBlock):
     name = "translate"
     version = "1.0.0"
     requires = ["config"]
+    layer = 4  # Utility layer
+    tags = ["translation", "language", "nlp", "utility"]
+    default_config = {
+        "engine": "argos",
+        "source_lang": "auto",
+        "target_lang": "en"
+    }
     
     LANGUAGES = {
         "en": "English", "ar": "Arabic", "zh": "Chinese", "es": "Spanish",

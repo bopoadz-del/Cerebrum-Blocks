@@ -26,6 +26,13 @@ class QueueBlock(LegoBlock):
     name = "queue"
     version = "1.0.0"
     requires = ["config", "memory"]
+    layer = 2  # Core layer
+    tags = ["queue", "jobs", "async", "core"]
+    default_config = {
+        "backend": "memory",
+        "redis_url": None,
+        "max_workers": 4
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

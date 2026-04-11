@@ -10,6 +10,13 @@ class CodeBlock(LegoBlock):
     name = "code"
     version = "1.0.0"
     requires = ["config"]
+    layer = 4  # Utility layer
+    tags = ["code", "execution", "sandbox", "utility"]
+    default_config = {
+        "sandbox": True,
+        "timeout": 30,
+        "allowed_langs": ["python", "javascript", "bash"]
+    }
     
     LANGUAGES = {
         "python": {"ext": ".py", "executor": "python3"},

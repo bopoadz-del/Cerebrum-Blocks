@@ -7,6 +7,13 @@ class EmailBlock(LegoBlock):
     name = "email"
     version = "1.0.0"
     requires = ["config"]
+    layer = 5  # Integration layer
+    tags = ["email", "notification", "integration"]
+    default_config = {
+        "provider": "smtp",
+        "smtp_host": "localhost",
+        "smtp_port": 587
+    }
     
     PROVIDERS = {
         "sendgrid": {"url": "https://api.sendgrid.com/v3/mail/send"},

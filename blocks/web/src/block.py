@@ -6,6 +6,13 @@ class WebBlock(LegoBlock):
     name = "web"
     version = "1.0.0"
     requires = ["config"]
+    layer = 4  # Utility layer
+    tags = ["web", "scraping", "browser", "utility"]
+    default_config = {
+        "timeout": 30,
+        "user_agent": "CerebrumBot/1.0",
+        "respect_robots": True
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

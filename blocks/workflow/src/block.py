@@ -9,6 +9,13 @@ class WorkflowBlock(LegoBlock):
     name = "workflow"
     version = "1.0.0"
     requires = ["config", "queue"]
+    layer = 5  # Integration layer
+    tags = ["workflow", "automation", "integration"]
+    default_config = {
+        "max_steps": 100,
+        "timeout": 300,
+        "parallel": True
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

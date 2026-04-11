@@ -10,6 +10,13 @@ class WebhookBlock(LegoBlock):
     name = "webhook"
     version = "1.0.0"
     requires = ["config", "queue"]
+    layer = 5  # Integration layer
+    tags = ["webhook", "http", "integration"]
+    default_config = {
+        "timeout": 30,
+        "retries": 3,
+        "verify_ssl": True
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

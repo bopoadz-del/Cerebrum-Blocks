@@ -8,6 +8,12 @@ class DatabaseBlock(LegoBlock):
     name = "database"
     version = "1.0.0"
     requires = ["config"]
+    layer = 0  # Infrastructure layer
+    tags = ["infrastructure", "database", "storage"]
+    default_config = {
+        "backend": "sqlite",
+        "connection_string": "sqlite:///data/cerebrum.db"
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

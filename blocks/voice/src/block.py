@@ -7,6 +7,13 @@ class VoiceBlock(LegoBlock):
     name = "voice"
     version = "1.0.0"
     requires = ["config"]
+    layer = 4  # Utility layer
+    tags = ["voice", "tts", "stt", "audio", "utility"]
+    default_config = {
+        "tts_engine": "edge",
+        "stt_engine": "whisper",
+        "voice": "en-US-AriaNeural"
+    }
     
     PROVIDERS = {
         "elevenlabs": {"tts": True, "stt": False, "url": "https://api.elevenlabs.io/v1"},
