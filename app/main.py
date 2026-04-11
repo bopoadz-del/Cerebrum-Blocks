@@ -21,6 +21,26 @@ load_dotenv()
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.blocks import BLOCK_REGISTRY, get_all_blocks
 
+# Import HAL for container initialization
+try:
+    from blocks.hal.src.detector import HALBlock
+    _hal = HALBlock()
+except:
+    _hal = None
+
+def _create_block_instance(block_class):
+    """Create block instance with proper arguments"""
+    import inspect
+    sig = inspect.signature(block_class.__init__)
+    params = list(sig.parameters.keys())
+    
+    # Check if it's a ContainerBlock (needs hal_block, config)
+    if 'hal_block' in params and 'config' in params:
+        return block_class(hal_block=_hal, config={})
+    else:
+        # Regular BaseBlock
+        return block_class()
+
 app = FastAPI(
     title="Cerebrum Blocks",
     description="Build AI Like Lego - Simple Block Execution API",
@@ -116,9 +136,12 @@ def list_blocks():
     """List all available blocks."""
     blocks = []
     for name, block_class in get_all_blocks().items():
+        # Skip containers - they belong to Block Store
+        if name.startswith("container_"):
+            continue
         try:
             if name not in block_instances:
-                block_instances[name] = block_class()
+                block_instances[name] = _create_block_instance(block_class)
             instance = block_instances[name]
             
             blocks.append({
@@ -146,13 +169,13 @@ def list_blocks():
 
 
 @app.get("/blocks/{block_name}")
-def get_block(block_name: str):
+def get_block_info(block_name: str):
     """Get block details."""
     if block_name not in BLOCK_REGISTRY:
         raise HTTPException(404, f"Block '{block_name}' not found")
     
     if block_name not in block_instances:
-        block_instances[block_name] = BLOCK_REGISTRY[block_name]()
+        block_instances[block_name] = _create_block_instance(BLOCK_REGISTRY[block_name])
     
     instance = block_instances[block_name]
     return {
@@ -177,9 +200,13 @@ async def execute(request: ExecuteRequest):
     if block_name not in BLOCK_REGISTRY:
         raise HTTPException(404, f"Block '{block_name}' not found. Available: {list(BLOCK_REGISTRY.keys())}")
     
+    # Skip containers - they belong to Block Store
+    if block_name.startswith("container_"):
+        raise HTTPException(400, f"Container '{block_name}' cannot be executed directly. Use Block Store.")
+    
     try:
         if block_name not in block_instances:
-            block_instances[block_name] = BLOCK_REGISTRY[block_name]()
+            block_instances[block_name] = _create_block_instance(BLOCK_REGISTRY[block_name])
         
         block = block_instances[block_name]
         result = await block.execute(request.input, request.params or {})
@@ -204,9 +231,13 @@ async def chain_execute(request: ChainRequest):
         if block_name not in BLOCK_REGISTRY:
             raise HTTPException(404, f"Step {i}: Block '{block_name}' not found")
         
+        # Skip containers
+        if block_name.startswith("container_"):
+            raise HTTPException(400, f"Step {i}: Container '{block_name}' cannot be executed directly")
+        
         try:
             if block_name not in block_instances:
-                block_instances[block_name] = BLOCK_REGISTRY[block_name]()
+                block_instances[block_name] = _create_block_instance(BLOCK_REGISTRY[block_name])
             
             block = block_instances[block_name]
             result = await block.execute(current_input, params)
