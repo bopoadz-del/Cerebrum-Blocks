@@ -23,7 +23,7 @@ services:
   - type: web
     name: cerebrum-platform
     env: static
-    buildCommand: echo "Static HTML"
+    buildCommand: echo "Static HTML - no build"
     staticPublishPath: ./platform
     envVars:
       - key: API_URL
@@ -34,8 +34,9 @@ services:
     name: cerebrum-store-api
     env: python
     plan: starter
+    rootDir: store
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn store.main:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -47,8 +48,9 @@ services:
   - type: web
     name: cerebrum-store
     env: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./store/dist
+    rootDir: store
+    buildCommand: mkdir -p dist && cp src/index.html dist/
+    staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
         value: https://cerebrum-store-api.onrender.com
