@@ -1,42 +1,40 @@
-"""Full Cerebrum Blocks - All 58 blocks + containers (Upgraded Plan)."""
+"""Cerebrum Blocks - Lazy loading for memory efficiency (Starter Plan)."""
 
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-# Import Universal Assembler
-try:
-    from universal_assembler import UniversalAssembler
-    
-    # Initialize and discover all blocks
-    _assembler = UniversalAssembler(mode="production")
-    BLOCK_REGISTRY = _assembler.discover()
-    
-    print(f"✅ Loaded {len(BLOCK_REGISTRY)} blocks/containers")
-    
-except Exception as e:
-    print(f"⚠️  Universal Assembler failed: {e}")
-    print(f"🔄 Falling back to manual registration...")
-    
-    # Legacy imports
-    from .pdf import PDFBlock
-    from .ocr import OCRBlock
-    from .chat import ChatBlock
-    
-    BLOCK_REGISTRY = {
-        "pdf": PDFBlock,
-        "ocr": OCRBlock,
-        "chat": ChatBlock,
-    }
+# Lazy registry - only load what's needed
+_block_cache = {}
+_block_registry = None
 
-# Helper functions
-def register_block(name: str, block_class):
-    BLOCK_REGISTRY[name] = block_class
+def _get_registry():
+    """Lazy load the registry"""
+    global _block_registry
+    if _block_registry is None:
+        try:
+            from universal_assembler import UniversalAssembler
+            _assembler = UniversalAssembler(mode="production")
+            _block_registry = _assembler.discover()
+            print(f"✅ Discovered {len(_block_registry)} blocks")
+        except Exception as e:
+            print(f"⚠️  Discovery failed: {e}")
+            _block_registry = {}
+    return _block_registry
 
 def get_block(name: str):
-    return BLOCK_REGISTRY.get(name)
+    """Get a block class (lazy load instance)"""
+    registry = _get_registry()
+    return registry.get(name)
 
 def get_all_blocks():
-    return BLOCK_REGISTRY
+    """Get all registered block names"""
+    return _get_registry()
 
-__all__ = ["BLOCK_REGISTRY", "get_block", "get_all_blocks", "register_block"]
+# Core blocks for immediate use
+CORE_BLOCKS = [
+    "pdf", "ocr", "chat", "voice", "image", "vector_search", 
+    "search", "translate", "code", "web", "zvec"
+]
+
+__all__ = ["get_block", "get_all_blocks", "CORE_BLOCKS"]
