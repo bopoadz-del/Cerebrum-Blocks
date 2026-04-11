@@ -14,6 +14,25 @@ class LocalDriveBlock(UniversalBlock):
     tags = ["integration", "storage", "local"]
     requires = []
     
+    ui_schema = {
+        "input": {
+            "type": "file",
+            "accept": ["*/*"],
+            "placeholder": "Browse local files...",
+            "multiline": False
+        },
+        "output": {
+            "type": "list",
+            "fields": [
+                {"name": "files", "type": "array", "label": "Files"},
+                {"name": "path", "type": "text", "label": "Path"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "📁", "label": "Browse Local", "prompt": "List local files"}
+        ]
+    }
+    
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """List, read, or write local files"""
         path = input_data if isinstance(input_data, str) else "./"

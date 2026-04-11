@@ -13,6 +13,26 @@ class ImageBlock(UniversalBlock):
     tags = ["domain", "vision", "image"]
     requires = []
     
+    ui_schema = {
+        "input": {
+            "type": "image",
+            "accept": [".jpg", ".jpeg", ".png", ".webp"],
+            "placeholder": "Upload image to analyze...",
+            "multiline": True
+        },
+        "output": {
+            "type": "text",
+            "fields": [
+                {"name": "description", "type": "markdown", "label": "Analysis"},
+                {"name": "objects_detected", "type": "array", "label": "Objects"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "🖼️", "label": "Analyze Image", "prompt": "Describe what's in this image"},
+            {"icon": "🔍", "label": "Find Objects", "prompt": "Identify all objects in this image"}
+        ]
+    }
+    
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Analyze or generate image"""
         return {

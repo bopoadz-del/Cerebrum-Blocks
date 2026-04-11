@@ -182,10 +182,12 @@ def list_blocks():
             
             blocks.append({
                 "name": name,
-                "version": instance.config.version,
-                "description": instance.config.description,
-                "inputs": instance.config.supported_inputs,
-                "outputs": instance.config.supported_outputs,
+                "version": getattr(instance, 'version', '1.0'),
+                "description": getattr(instance, 'description', ''),
+                "layer": getattr(instance, 'layer', 3),
+                "tags": getattr(instance, 'tags', []),
+                "requires": getattr(instance, 'requires', []),
+                "ui_schema": getattr(block_class, 'ui_schema', {}),
             })
         except Exception as e:
             blocks.append({
@@ -214,14 +216,18 @@ def get_block_info(block_name: str):
         block_instances[block_name] = _create_block_instance(BLOCK_REGISTRY[block_name])
     
     instance = block_instances[block_name]
+    block_class = BLOCK_REGISTRY[block_name]
+    
     return {
         "name": block_name,
         "config": {
-            "version": instance.config.version,
-            "description": instance.config.description,
-            "inputs": instance.config.supported_inputs,
-            "outputs": instance.config.supported_outputs,
+            "version": getattr(instance, 'version', '1.0'),
+            "description": getattr(instance, 'description', ''),
+            "layer": getattr(instance, 'layer', 3),
+            "tags": getattr(instance, 'tags', []),
+            "requires": getattr(instance, 'requires', []),
         },
+        "ui_schema": getattr(block_class, 'ui_schema', {}),
         "stats": instance.get_stats()
     }
 

@@ -13,6 +13,26 @@ class WebBlock(UniversalBlock):
     tags = ["domain", "web", "scraping"]
     requires = []
     
+    ui_schema = {
+        "input": {
+            "type": "url",
+            "accept": None,
+            "placeholder": "Enter URL to scrape...",
+            "multiline": False
+        },
+        "output": {
+            "type": "text",
+            "fields": [
+                {"name": "title", "type": "text", "label": "Title"},
+                {"name": "text", "type": "markdown", "label": "Content"},
+                {"name": "links", "type": "array", "label": "Links"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "🌐", "label": "Scrape URL", "prompt": "Extract content from URL"}
+        ]
+    }
+    
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Scrape web page"""
         url = input_data if isinstance(input_data, str) else ""

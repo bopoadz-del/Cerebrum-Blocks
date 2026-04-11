@@ -21,6 +21,28 @@ class PDFBlock(UniversalBlock):
         "ocr_fallback": True
     }
     
+    # UI Schema - Universal UI Shell configuration
+    ui_schema = {
+        "input": {
+            "type": "file",
+            "accept": [".pdf"],
+            "placeholder": "Drop PDF or click to upload...",
+            "multiline": False
+        },
+        "output": {
+            "type": "json",
+            "fields": [
+                {"name": "text", "type": "text", "label": "Extracted Text"},
+                {"name": "pages", "type": "number", "label": "Pages"},
+                {"name": "tables", "type": "array", "label": "Tables Found"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "📄", "label": "Extract Text", "prompt": "Extract all text from this PDF"},
+            {"icon": "📊", "label": "Find Tables", "prompt": "Extract tables from this PDF"}
+        ]
+    }
+    
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)
         self._pymupdf_available = self._check_pymupdf()

@@ -34,6 +34,22 @@ class UniversalBlock(ABC):
     default_config: Dict = {}
     author: str = ""
     
+    # UI Schema - Auto-configures Universal UI Shell (frontend)
+    # Blocks self-describe: what inputs they need, what outputs they produce
+    ui_schema: Dict = {
+        "input": {
+            "type": "text",  # text, file, audio, image, pdf, json
+            "accept": None,  # for files: [".pdf", ".jpg"]
+            "placeholder": "Enter your request...",
+            "multiline": False,
+        },
+        "output": {
+            "type": "text",  # text, table, chart, json, pdf_viewer, image
+            "fields": [],    # for table: [{"name": "concrete_m3", "type": "number", "unit": "m³"}]
+        },
+        "quick_actions": []  # [{"icon": "📄", "label": "Analyze PDF", "prompt": "..."}]
+    }
+    
     def __init__(self, hal_block=None, config: Dict = None):
         """Initialize with HAL and config"""
         self.hal = hal_block

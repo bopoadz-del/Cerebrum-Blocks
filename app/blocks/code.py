@@ -13,6 +13,27 @@ class CodeBlock(UniversalBlock):
     tags = ["domain", "code", "execution"]
     requires = []
     
+    ui_schema = {
+        "input": {
+            "type": "code",
+            "accept": None,
+            "placeholder": "Describe code to generate or paste code to execute...",
+            "multiline": True
+        },
+        "output": {
+            "type": "code",
+            "fields": [
+                {"name": "output", "type": "code", "label": "Result"},
+                {"name": "language", "type": "text", "label": "Language"},
+                {"name": "execution_time_ms", "type": "number", "label": "Time (ms)"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "🐍", "label": "Python", "prompt": "Write Python code to"},
+            {"icon": "📜", "label": "JavaScript", "prompt": "Write JavaScript code to"}
+        ]
+    }
+    
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Execute or generate code"""
         code = input_data if isinstance(input_data, str) else str(input_data)

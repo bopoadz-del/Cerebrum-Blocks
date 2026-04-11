@@ -13,6 +13,24 @@ class GoogleDriveBlock(UniversalBlock):
     tags = ["integration", "storage", "cloud"]
     requires = ["auth"]
     
+    ui_schema = {
+        "input": {
+            "type": "file",
+            "accept": ["*/*"],
+            "placeholder": "Select file from Google Drive...",
+            "multiline": False
+        },
+        "output": {
+            "type": "list",
+            "fields": [
+                {"name": "files", "type": "array", "label": "Files"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "☁️", "label": "Browse Drive", "prompt": "List files from Google Drive"}
+        ]
+    }
+    
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """List, upload, or download files"""
         return {

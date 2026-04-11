@@ -23,6 +23,32 @@ class ConstructionContainer(UniversalContainer):
         "default_trade": "concrete"
     }
     
+    # UI Schema - Universal UI Shell configuration
+    ui_schema = {
+        "input": {
+            "type": "file",
+            "accept": [".pdf", ".ifc", ".dwg", ".jpg", ".png"],
+            "placeholder": "Upload construction drawing or BIM model...",
+            "multiline": True
+        },
+        "output": {
+            "type": "table",
+            "fields": [
+                {"name": "concrete_volume_m3", "type": "number", "unit": "m³", "label": "Concrete"},
+                {"name": "steel_weight_kg", "type": "number", "unit": "kg", "label": "Steel"},
+                {"name": "floor_area_m2", "type": "number", "unit": "m²", "label": "Floor Area"},
+                {"name": "rebar_length_m", "type": "number", "unit": "m", "label": "Rebar"},
+                {"name": "confidence", "type": "percentage", "label": "Confidence"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "📄", "label": "Analyze Floorplan", "prompt": "Analyze this PDF floorplan and calculate material costs"},
+            {"icon": "📐", "label": "Extract Measurements", "prompt": "Extract all measurements from this drawing"},
+            {"icon": "✅", "label": "Check Compliance", "prompt": "Check this blueprint for Saudi building code compliance"},
+            {"icon": "🏗️", "label": "BIM Analysis", "prompt": "Analyze this BIM model for clashes and quantities"}
+        ]
+    }
+    
     async def route(self, action: str, input_data: Any, params: Dict) -> Dict:
         """Route to construction-specific action"""
         

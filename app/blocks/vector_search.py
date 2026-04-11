@@ -13,6 +13,24 @@ class VectorSearchBlock(UniversalBlock):
     tags = ["ai", "core", "vector", "search"]
     requires = []
     
+    ui_schema = {
+        "input": {
+            "type": "text",
+            "accept": None,
+            "placeholder": "Search knowledge base...",
+            "multiline": False
+        },
+        "output": {
+            "type": "list",
+            "fields": [
+                {"name": "results", "type": "array", "label": "Matches"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "🔍", "label": "Search Docs", "prompt": "Search for similar documents about"}
+        ]
+    }
+    
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Search vectors"""
         return {

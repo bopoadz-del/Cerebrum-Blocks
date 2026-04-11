@@ -13,6 +13,25 @@ class ZvecBlock(UniversalBlock):
     tags = ["ai", "core", "vector", "zero-shot"]
     requires = []
     
+    ui_schema = {
+        "input": {
+            "type": "text",
+            "accept": None,
+            "placeholder": "Semantic search query...",
+            "multiline": False
+        },
+        "output": {
+            "type": "json",
+            "fields": [
+                {"name": "vector", "type": "array", "label": "Embedding"},
+                {"name": "operation", "type": "text", "label": "Operation"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "⚡", "label": "Vectorize", "prompt": "Convert to vector embedding"}
+        ]
+    }
+    
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Process vectors"""
         return {

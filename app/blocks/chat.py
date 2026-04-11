@@ -21,6 +21,26 @@ class ChatBlock(UniversalBlock):
         "temperature": 0.7
     }
     
+    # UI Schema - Universal UI Shell configuration
+    ui_schema = {
+        "input": {
+            "type": "text",
+            "accept": None,
+            "placeholder": "Ask anything...",
+            "multiline": True
+        },
+        "output": {
+            "type": "text",
+            "fields": [
+                {"name": "completion", "type": "markdown", "label": "Response"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "💡", "label": "Explain", "prompt": "Explain this in simple terms"},
+            {"icon": "📝", "label": "Summarize", "prompt": "Summarize the key points"}
+        ]
+    }
+    
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)
         self._openai_available = self._check_openai()

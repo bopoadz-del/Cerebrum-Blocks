@@ -13,6 +13,28 @@ class TranslateBlock(UniversalBlock):
     tags = ["domain", "nlp", "translation"]
     requires = []
     
+    ui_schema = {
+        "input": {
+            "type": "text",
+            "accept": None,
+            "placeholder": "Enter text to translate...",
+            "multiline": True
+        },
+        "output": {
+            "type": "text",
+            "fields": [
+                {"name": "translated", "type": "text", "label": "Translation"},
+                {"name": "source_language", "type": "text", "label": "From"},
+                {"name": "target_language", "type": "text", "label": "To"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "🇪🇸", "label": "To Spanish", "prompt": "Translate to Spanish: "},
+            {"icon": "🇸🇦", "label": "To Arabic", "prompt": "Translate to Arabic: "},
+            {"icon": "🇫🇷", "label": "To French", "prompt": "Translate to French: "}
+        ]
+    }
+    
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Translate text"""
         text = input_data if isinstance(input_data, str) else str(input_data)
