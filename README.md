@@ -85,8 +85,9 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chat \
 
 ---
 
-## 🧱 15 AI Blocks
+## 🧱 18 AI Blocks
 
+### Core AI Blocks
 | Block | Description |
 |-------|-------------|
 | 💬 **Chat** | DeepSeek (cheapest!), Groq (fastest), GPT-4, Claude - with streaming |
@@ -100,6 +101,17 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chat \
 | 🕸️ **Web** | Web scraping & browsing |
 | 🔎 **Search** | Web search with multiple providers |
 | 🧮 **Zvec** | Zero-shot vector embeddings |
+
+### Infrastructure Blocks
+| Block | Description |
+|-------|-------------|
+| 🧠 **Memory** | High-speed cache with TTL & LRU eviction (Redis alternative) |
+| 📊 **Monitoring** | Provider leaderboard, reliability scoring & predictive failover |
+| 🔐 **Auth** | API keys, rate limiting & role-based access control |
+
+### Storage Blocks
+| Block | Description |
+|-------|-------------|
 | 📁 **Google Drive** | Cloud file processing |
 | ☁️ **OneDrive** | Microsoft integration |
 | 💾 **Local Drive** | Local file processing |
@@ -125,6 +137,50 @@ result = await chain(client) \
 
 print(result.final_output)
 ```
+
+---
+
+## 🏗️ Infrastructure Blocks
+
+### 🧠 Memory Block
+High-speed in-memory cache with TTL and LRU eviction. Perfect for edge deployments without Redis.
+
+```python
+# Store with 60s TTL
+await client.memory.set("key", {"data": "value"}, ttl=60)
+
+# Retrieve
+result = await client.memory.get("key")
+```
+
+### 📊 Monitoring Block
+Provider reliability leaderboard with predictive failover. Automatically routes to the best AI provider.
+
+```bash
+# Get provider rankings
+curl https://cerebrum-blocks.onrender.com/v1/leaderboard \
+  -H "Authorization: Bearer cb_your_key"
+```
+
+Response:
+```json
+{
+  "leaderboard": [
+    {"rank": 1, "name": "DeepSeek", "reliability_score": 96.5, "status": "excellent"},
+    {"rank": 2, "name": "Groq", "reliability_score": 94.2, "status": "excellent"}
+  ]
+}
+```
+
+### 🔐 Auth Block
+Multi-tenant API key management with role-based access control.
+
+| Role | Rate Limit | Blocks |
+|------|------------|--------|
+| Admin | 1M/hour | All + user management |
+| Pro | 50K/hour | All AI blocks |
+| Basic | 1K/hour | Core blocks only |
+| Readonly | 500/hour | View-only access |
 
 ---
 
@@ -204,6 +260,7 @@ uvicorn app.main:app --reload
 
 ## 🛠️ API Endpoints
 
+### AI Blocks
 ```
 POST /v1/chat              # Chat completion (DeepSeek default)
 POST /v1/chat/stream       # Streaming chat
@@ -212,6 +269,24 @@ POST /v1/execute           # Execute block
 POST /v1/chain             # Chain blocks
 POST /v1/vector/add        # Add to vector DB
 POST /v1/vector/search     # Semantic search
+```
+
+### Infrastructure Blocks
+```
+GET  /v1/leaderboard       # Provider reliability rankings
+GET  /v1/recommend         # AI-powered provider selection
+GET  /v1/predict           # Predictive failure analysis
+GET  /v1/system/health     # Full system health report
+GET  /v1/memory/stats      # Cache statistics
+POST /v1/memory/{action}   # Cache operations (get/set/delete)
+POST /v1/auth/validate     # Validate API key
+POST /v1/auth/keys         # Create API key (admin)
+GET  /v1/auth/keys         # List API keys
+POST /v1/auth/check        # Check permission
+```
+
+### Health
+```
 GET  /v1/health            # Health check
 ```
 
