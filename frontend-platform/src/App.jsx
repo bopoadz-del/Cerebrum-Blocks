@@ -1,7 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './App.css';
 
-const API = 'https://ssdppg.onrender.com';
+// Block imports
+import { UIBlock } from './blocks/UIBlock.js';
+import APIBlock from './ui-blocks/system/APIBlock.js';
+import ChainBlock from './ui-blocks/chain/ChainBlock.js';
+import FileUploadBlock from './ui-blocks/input/FileUploadBlock.js';
+import ChatInputBlock from './ui-blocks/input/ChatInputBlock.js';
+import VoiceInputBlock from './ui-blocks/input/VoiceInputBlock.js';
+import ChatWindowBlock from './ui-blocks/output/ChatWindowBlock.js';
+import OutcomesBlock from './ui-blocks/output/OutcomesBlock.js';
 
 const PROJECTS = ['Diriyah Phase 1', 'Qiddam Tower', 'KAUST Lab', 'Riyadh Metro'];
 
@@ -13,114 +21,219 @@ const QUICK_ACTIONS = [
 ];
 
 export default function App() {
+  // React state
   const [messages, setMessages] = useState([{ 
+    id: 'welcome',
     role: 'assistant', 
-    text: 'Hello! I can analyze documents, extract measurements, or help with construction projects. What would you like to do?', 
+    content: 'Hello! I can analyze documents, extract measurements, or help with construction projects. What would you like to do?', 
     showActions: true 
   }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [activeChain, setActiveChain] = useState([]);
+  const [activeChain, setActiveChain] = useState(null);
   const [outcomes, setOutcomes] = useState([]);
   const [activeProject, setActiveProject] = useState('Diriyah Phase 1');
+  const [isRecording, setIsRecording] = useState(false);
+  
   const fileInput = useRef(null);
   const messagesEnd = useRef(null);
 
-  useEffect(() => messagesEnd.current?.scrollIntoView({ behavior: 'smooth' }), [messages]);
+  // Initialize blocks (singleton pattern)
+  const blocks = useRef({});
+  
+  useEffect(() => {
+    // Create block instances
+    const api = new APIBlock({});
+    const chain = new ChainBlock({ api });
+    const fileUpload = new FileUploadBlock({ api, chain });
+    const chatInput = new ChatInputBlock({ api, chain });
+    const voiceInput = new VoiceInputBlock({ api });
+    const chatWindow = new ChatWindowBlock({
+      onMessage: (msg) => setMessages(prev => [...prev, msg]),
+      onChain: (indicator) => setActiveChain(indicator.active ? indicator : null)
+    });
+    const outcomesBlock = new OutcomesBlock({
+      onOutcome: (outcome) => setOutcomes(prev => [outcome, ...prev])
+    });
 
-  // Plug & Play: Auto-route to correct blocks based on input
-  const routeBlocks = (text, file) => {
-    const isPDF = file?.type === 'application/pdf';
-    const isImage = file?.type?.startsWith('image/');
-    const isConstruction = text.match(/concrete|steel|measurement|area|cost|bim|floorplan|masonry|blueprint/i);
+    // Wire up chain events
+    chain.on('chain:start', ({ display }) => {
+      setActiveChain({ chain: display, step: 0 });
+    });
     
-    if (file && isPDF && isConstruction) return { 
-      chain: ['pdf', 'construction', 'ai_core'], 
-      display: ['PDF Extractor', 'Construction AI', 'AI Core'] 
-    };
-    if (file && isPDF) return { 
-      chain: ['pdf', 'ocr', 'chat'], 
-      display: ['PDF Reader', 'OCR', 'Chat'] 
-    };
-    if (file && isImage) return { 
-      chain: ['ocr', 'chat'], 
-      display: ['OCR Vision', 'Chat'] 
-    };
-    if (text.match(/search|find/i)) return { 
-      chain: ['search', 'chat'], 
-      display: ['Search', 'Chat'] 
-    };
-    if (text.match(/code|program/i)) return { 
-      chain: ['code'], 
-      display: ['Code'] 
-    };
-    return { chain: ['chat'], display: ['Chat'] };
-  };
+    chain.on('step:start', ({ step, total, display }) => {
+      setActiveChain(prev => prev ? { ...prev, step, total, current: display } : null);
+    });
+    
+    chain.on('chain:complete', () => {
+      setActiveChain(null);
+    });
 
-  const execute = async (text, file = null) => {
-    if (!text.trim() && !file) return;
+    // Wire up outcomes from chain results
+    chain.on('chain:complete', (result) => {
+      const constructionOutcomes = outcomesBlock.parseConstructionResult(result);
+      constructionOutcomes.forEach(o => {
+        outcomesBlock.addOutcome({ ...o, project: activeProject }, { category: o.type });
+      });
+    });
+
+    blocks.current = {
+      api,
+      chain,
+      fileUpload,
+      chatInput,
+      voiceInput,
+      chatWindow,
+      outcomes: outcomesBlock
+    };
+
+    // Add welcome message to chatWindow
+    chatWindow.messages = messages;
+
+    return () => {
+      // Cleanup
+      Object.values(blocks.current).forEach(block => {
+        if (block.listeners) block.listeners = {};
+      });
+    };
+  }, []);
+
+  // Auto-scroll messages
+  useEffect(() => {
+    messagesEnd.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Handle text input submission
+  const handleSend = useCallback(async () => {
+    if (!input.trim() || loading) return;
     
-    const route = routeBlocks(text, file);
     setLoading(true);
-    setActiveChain(route.display);
-    
-    setMessages(prev => [...prev, { 
-      role: 'user', 
-      text: file ? `📎 ${file.name}` : text 
-    }]);
+    const text = input;
     setInput('');
-    
-    try {
-      let fileUrl = null;
-      if (file) {
-        const form = new FormData();
-        form.append('file', file);
-        const up = await fetch(`${API}/v1/upload`, { method: 'POST', body: form }).then(r => r.json());
-        fileUrl = up.url;
-      }
-      
-      const result = await fetch(`${API}/v1/chain`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chain: route.chain,
-          input: fileUrl ? { url: fileUrl, text } : text
-        })
-      }).then(r => r.json());
-      
-      setMessages(prev => [...prev, { role: 'assistant', text: result.final_output || result.completion || 'Done' }]);
-      
-      if (result.quantities) {
-        setOutcomes(prev => [{
-          id: Date.now(),
-          project: activeProject,
-          area: result.quantities.floor_area_sqm,
-          concrete: result.quantities.concrete_volume_m3,
-          steel: result.quantities.steel_weight_kg,
-          cost: result.ai_estimate?.total,
-          time: new Date().toLocaleTimeString()
-        }, ...prev]);
-      }
-    } catch (err) {
-      setMessages(prev => [...prev, { role: 'error', text: `Error: ${err.message}` }]);
-    }
-    
-    setLoading(false);
-    setActiveChain([]);
-  };
 
-  const send = () => execute(input);
-  const handleFile = (e) => {
+    // Add user message to UI immediately
+    const userMsg = { id: Date.now(), role: 'user', content: text };
+    setMessages(prev => [...prev, userMsg]);
+
+    try {
+      const result = await blocks.current.chatInput.execute(text);
+      
+      // Add assistant response
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: result.response,
+        chain: result.chain
+      }]);
+
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        role: 'error',
+        content: `Error: ${error.message}`
+      }]);
+    }
+
+    setLoading(false);
+  }, [input, loading]);
+
+  // Handle file upload
+  const handleFile = useCallback(async (e) => {
     const file = e.target.files[0];
-    if (file) execute('', file);
-  };
+    if (!file || loading) return;
+
+    setLoading(true);
+
+    // Add file message to UI
+    setMessages(prev => [...prev, {
+      id: Date.now(),
+      role: 'user',
+      content: `📎 ${file.name}`
+    }]);
+
+    try {
+      const result = await blocks.current.fileUpload.execute(file);
+      
+      // Add assistant response
+      const response = result.chain?.final_output?.completion 
+        || result.chain?.final_output 
+        || 'File processed successfully';
+
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: response,
+        chain: result.chain?.chain
+      }]);
+
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        role: 'error',
+        content: `Error processing file: ${error.message}`
+      }]);
+    }
+
+    setLoading(false);
+  }, [loading]);
+
+  // Handle voice recording
+  const handleVoice = useCallback(async () => {
+    if (isRecording) {
+      // Stop recording
+      setLoading(true);
+      try {
+        const result = await blocks.current.voiceInput.execute('stop');
+        setInput(prev => prev + ' ' + result.text);
+      } catch (error) {
+        console.error('Voice error:', error);
+      }
+      setIsRecording(false);
+      setLoading(false);
+    } else {
+      // Start recording
+      try {
+        await blocks.current.voiceInput.execute('start');
+        setIsRecording(true);
+      } catch (error) {
+        console.error('Voice error:', error);
+      }
+    }
+  }, [isRecording, loading]);
+
+  // Handle quick action
+  const handleQuickAction = useCallback(async (prompt) => {
+    if (loading) return;
+    setInput(prompt);
+    // Small delay to show the prompt in input, then send
+    setTimeout(() => handleSend(), 100);
+  }, [loading, handleSend]);
+
+  // New chat
+  const handleNewChat = useCallback(() => {
+    blocks.current.chatInput.clear();
+    blocks.current.outcomes.clearOutcomes();
+    setMessages([{ 
+      id: 'welcome',
+      role: 'assistant', 
+      content: 'New conversation started. How can I help?', 
+      showActions: true 
+    }]);
+    setOutcomes([]);
+  }, []);
 
   return (
     <div className="app">
-      {/* Block chain indicator - shows during execution */}
-      {activeChain.length > 0 && (
+      {/* Chain indicator - shows executing blocks */}
+      {activeChain && (
         <div className="chain-indicator">
-          <span className="pulse">⚡</span> Running: {activeChain.join(' → ')}
+          <span className="pulse">⚡</span>
+          <span className="chain-text">
+            Running: {activeChain.chain.join(' → ')}
+            {activeChain.current && (
+              <span className="current"> ({activeChain.current})</span>
+            )}
+          </span>
         </div>
       )}
 
@@ -131,17 +244,18 @@ export default function App() {
           <span>Cerebrum</span>
         </div>
         
-        <button className="new-btn" onClick={() => {
-          setMessages([{ role: 'assistant', text: 'New conversation started. How can I help?', showActions: true }]);
-          setOutcomes([]);
-        }}>
+        <button className="new-btn" onClick={handleNewChat}>
           + New Chat
         </button>
         
         <div className="section">Projects</div>
         <div className="projects">
           {PROJECTS.map(p => (
-            <div key={p} className={`project ${activeProject === p ? 'active' : ''}`} onClick={() => setActiveProject(p)}>
+            <div 
+              key={p} 
+              className={`project ${activeProject === p ? 'active' : ''}`} 
+              onClick={() => setActiveProject(p)}
+            >
               {activeProject === p && <span className="active-dot">●</span>}
               {p}
             </div>
@@ -160,7 +274,7 @@ export default function App() {
         </div>
       </aside>
 
-      {/* CENTER: Chat - Kimi Minimal Style */}
+      {/* CENTER: Chat */}
       <main className="chat">
         <header>
           <span className="project-name">{activeProject}</span>
@@ -168,14 +282,22 @@ export default function App() {
         </header>
 
         <div className="messages">
-          {messages.map((m, i) => (
-            <div key={i} className={`msg ${m.role}`}>
-              <div className="bubble">{m.text}</div>
+          {messages.map((m) => (
+            <div key={m.id} className={`msg ${m.role}`}>
+              <div className="bubble">{m.content}</div>
+              
+              {m.chain && (
+                <div className="chain-tag">
+                  {m.chain.map((b, i) => (
+                    <span key={i} className="tag">{b}</span>
+                  ))}
+                </div>
+              )}
               
               {m.showActions && (
                 <div className="quick-actions">
                   {QUICK_ACTIONS.map((a, idx) => (
-                    <button key={idx} onClick={() => execute(a.prompt)}>
+                    <button key={idx} onClick={() => handleQuickAction(a.prompt)}>
                       <span>{a.icon}</span> {a.text}
                     </button>
                   ))}
@@ -184,21 +306,40 @@ export default function App() {
             </div>
           ))}
           
-          {loading && !activeChain.length && <div className="thinking">Analyzing...</div>}
+          {loading && <div className="thinking">Processing...</div>}
           <div ref={messagesEnd} />
         </div>
 
         <div className="input-area">
-          <input type="file" ref={fileInput} style={{ display: 'none' }} onChange={handleFile} />
+          <input 
+            type="file" 
+            ref={fileInput} 
+            style={{ display: 'none' }} 
+            onChange={handleFile}
+            accept=".pdf,.jpg,.jpeg,.png,.webp,.mp3,.wav,.webm"
+          />
           <div className="input-box">
             <button className="upload" onClick={() => fileInput.current.click()}>+</button>
             <textarea
               value={input}
               onChange={e => setInput(e.target.value)}
               placeholder="Ask anything or upload a file..."
-              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              disabled={loading}
             />
-            <button className="send" onClick={send} disabled={loading}>
+            <button 
+              className={`voice ${isRecording ? 'recording' : ''}`} 
+              onClick={handleVoice}
+              disabled={loading}
+            >
+              {isRecording ? '◉' : '🎤'}
+            </button>
+            <button className="send" onClick={handleSend} disabled={loading || !input.trim()}>
               {loading ? '◐' : '➤'}
             </button>
           </div>
@@ -218,16 +359,42 @@ export default function App() {
           outcomes.map(o => (
             <div key={o.id} className="card">
               <div className="card-header">
-                <span className="type">CONSTRUCTION</span>
-                <span className="time">{o.time}</span>
+                <span className="type">{o.type?.toUpperCase() || 'RESULT'}</span>
+                <span className="time">{o.timestamp?.toLocaleTimeString?.() || new Date().toLocaleTimeString()}</span>
               </div>
               <div className="doc">{o.project}</div>
               
               <div className="stats">
-                {o.area && <div><label>Floor Area</label><value>{o.area} m²</value></div>}
-                {o.concrete && <div><label>Concrete</label><value>{o.concrete} m³</value></div>}
-                {o.steel && <div><label>Steel</label><value>{o.steel} kg</value></div>}
-                {o.cost && <div className="cost"><label>Est. Cost</label><value>${o.cost}</value></div>}
+                {o.area && (
+                  <div>
+                    <label>Floor Area</label>
+                    <value>{typeof o.area === 'number' ? o.area.toLocaleString() : o.area} m²</value>
+                  </div>
+                )}
+                {o.concrete && (
+                  <div>
+                    <label>Concrete</label>
+                    <value>{typeof o.concrete === 'number' ? o.concrete.toLocaleString() : o.concrete} m³</value>
+                  </div>
+                )}
+                {o.steel && (
+                  <div>
+                    <label>Steel</label>
+                    <value>{typeof o.steel === 'number' ? o.steel.toLocaleString() : o.steel} kg</value>
+                  </div>
+                )}
+                {o.cost && (
+                  <div className="cost">
+                    <label>Est. Cost</label>
+                    <value>${typeof o.cost === 'number' ? o.cost.toLocaleString() : o.cost}</value>
+                  </div>
+                )}
+                {o.confidence && (
+                  <div className="confidence">
+                    <label>Confidence</label>
+                    <value>{Math.round(o.confidence * 100)}%</value>
+                  </div>
+                )}
               </div>
             </div>
           ))
