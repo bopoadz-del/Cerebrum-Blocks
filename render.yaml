@@ -1,7 +1,7 @@
 services:
-  # API Backend (existing)
+  # Backend API
   - type: web
-    name: cerebrum-api
+    name: ssdppg-api
     env: python
     plan: starter
     buildCommand: pip install -r requirements-render.txt
@@ -11,10 +11,6 @@ services:
         value: 3.11.0
       - key: DATA_DIR
         value: /app/data
-      - key: DEEPSEEK_API_KEY
-        sync: false
-      - key: GROQ_API_KEY
-        sync: false
       - key: ENV
         value: production
     disk:
@@ -23,9 +19,9 @@ services:
       sizeGB: 1
     healthCheckPath: /health
 
-  # Block Store Frontend
+  # Store Frontend (Marketplace)
   - type: web
-    name: store
+    name: cerebrum-store
     env: static
     buildCommand: cd frontend-store && npm install && npm run build
     staticPublishPath: ./frontend-store/dist
@@ -33,14 +29,12 @@ services:
       - key: VITE_API_URL
         value: https://ssdppg.onrender.com
 
-  # Platform Frontend  
+  # Platform Frontend (Developer Console)
   - type: web
-    name: platform
+    name: cerebrum-platform
     env: static
     buildCommand: cd frontend-platform && npm install && npm run build
     staticPublishPath: ./frontend-platform/dist
     envVars:
       - key: VITE_API_URL
         value: https://ssdppg.onrender.com
-
-# No database needed for now
