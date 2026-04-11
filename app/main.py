@@ -1,5 +1,6 @@
 """Cerebrum Blocks - Simple Block Execution API."""
 
+import logging
 import os
 import sys
 import time
@@ -17,6 +18,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 # Import blocks
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.blocks import BLOCK_REGISTRY, get_all_blocks
@@ -25,8 +28,32 @@ from app.blocks import BLOCK_REGISTRY, get_all_blocks
 try:
     from blocks.hal.src.detector import HALBlock
     _hal = HALBlock()
-except:
+except Exception as e:
+    logger.warning("HALBlock not available during startup: %s", e)
     _hal = None
+
+
+def _get_cors_origins() -> List[str]:
+    """Resolve CORS origins from environment with explicit defaults."""
+    raw_origins = os.getenv("CORS_ORIGINS", "").strip()
+    environment = os.getenv("ENV", "production").strip().lower()
+
+    if raw_origins:
+        origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+    elif environment == "production":
+        origins = [
+            "https://ssdppg.onrender.com",
+            "https://cerebrum-blocks.onrender.com",
+        ]
+    else:
+        origins = [
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+        ]
+
+    return origins or ["http://localhost:3000"]
 
 def _create_block_instance(block_class):
     """Create block instance with proper arguments"""
@@ -48,22 +75,14 @@ app = FastAPI(
     docs_url="/docs",
 )
 
-# CORS - Restrict to known origins in production
-# In development, allow all. In production, use specific origins.
-CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
-if os.environ.get("ENV", "production") == "production" and "*" in CORS_ORIGINS:
-    # Default to Render URL if no origins specified in production
-    CORS_ORIGINS = [
-        "https://ssdppg.onrender.com",
-        "https://cerebrum-blocks.onrender.com",
-    ]
+CORS_ORIGINS = _get_cors_origins()
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-API-Key"],
-    allow_credentials=True,
+    allow_credentials="*" not in CORS_ORIGINS,
 )
 
 # Mount static files
@@ -80,7 +99,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 class ExecuteRequest(BaseModel):
     block: str = Field(..., description="Block name (chat, pdf, ocr, voice, etc.)")
     input: Any = Field(..., description="Input data for the block")
-    params: Optional[Dict[str, Any]] = Field(default={}, description="Block parameters")
+    params: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Block parameters")
 
 
 class ChainRequest(BaseModel):
@@ -364,7 +383,7 @@ def list_blocks_v1():
 @app.get("/v1/blocks/{block_name}")
 def get_block_v1(block_name: str):
     """Get block details (v1 API)."""
-    return get_block(block_name)
+    return get_block_info(block_name)
 
 
 @app.post("/v1/execute")

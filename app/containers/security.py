@@ -43,6 +43,11 @@ class SecurityContainer(BaseBlock):
         
         # Sandbox registry
         self.sandbox_policies: Dict[str, Dict] = {}
+
+    def _is_development_mode(self) -> bool:
+        """Allow development-only shortcuts only outside production."""
+        environment = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()
+        return environment in {"dev", "development", "local", "test", "testing"}
         
     async def process(self, input_data: Any, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Main entry for security operations"""
@@ -81,7 +86,8 @@ class SecurityContainer(BaseBlock):
         
         # Check dev key (only in development, never production)
         # In production, require real API keys from environment or database
-        if api_key == os.environ.get("CB_DEV_KEY", "") and os.environ.get("ENV", "production") != "production":
+        dev_key = os.getenv("CB_DEV_KEY", "").strip()
+        if dev_key and self._is_development_mode() and api_key == dev_key:
             return {
                 "authenticated": True,
                 "key_id": "dev",
