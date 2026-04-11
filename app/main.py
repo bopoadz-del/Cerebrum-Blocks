@@ -44,6 +44,9 @@ def _get_cors_origins() -> List[str]:
         origins = [
             "https://ssdppg.onrender.com",
             "https://cerebrum-blocks.onrender.com",
+            "https://cerebrum-platform.onrender.com",
+            "https://cerebrum-platform-j1zs.onrender.com",
+            "https://cerebrum-store.onrender.com",
         ]
     else:
         origins = [
@@ -80,9 +83,9 @@ CORS_ORIGINS = _get_cors_origins()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-API-Key"],
-    allow_credentials="*" not in CORS_ORIGINS,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
 )
 
 # Mount static files
