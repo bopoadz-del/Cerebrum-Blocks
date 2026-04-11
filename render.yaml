@@ -1,31 +1,5 @@
 services:
-  # STORE BACKEND (1) - Block catalog, shopping, billing
-  - type: web
-    name: cerebrum-store-api
-    env: python
-    plan: starter
-    rootDir: store-api
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: ENV
-        value: production
-    healthCheckPath: /health
-
-  # STORE FRONTEND (2) - Marketplace UI
-  - type: web
-    name: cerebrum-store
-    env: static
-    rootDir: frontend-store
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://cerebrum-store-api.onrender.com
-
-  # PLATFORM BACKEND (3) - Block execution, chains, files
+  # PLATFORM BACKEND - Block execution
   - type: web
     name: cerebrum-platform-api
     env: python
@@ -45,13 +19,36 @@ services:
       sizeGB: 1
     healthCheckPath: /health
 
-  # PLATFORM FRONTEND (4) - Universal UI Shell
+  # PLATFORM FRONTEND
   - type: web
     name: cerebrum-platform
     env: static
-    rootDir: frontend-platform
-    buildCommand: echo "No build needed"
-    staticPublishPath: .
+    buildCommand: echo "Static HTML"
+    staticPublishPath: ./platform
     envVars:
       - key: API_URL
         value: https://cerebrum-platform-api.onrender.com
+
+  # STORE BACKEND - Block catalog
+  - type: web
+    name: cerebrum-store-api
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn store.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ENV
+        value: production
+    healthCheckPath: /health
+
+  # STORE FRONTEND
+  - type: web
+    name: cerebrum-store
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./store/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://cerebrum-store-api.onrender.com
