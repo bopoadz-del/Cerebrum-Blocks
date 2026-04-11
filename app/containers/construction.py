@@ -21,7 +21,10 @@ class ConstructionContainer(BaseBlock):
             requires_api_key=True,
             supported_inputs=["pdf", "image", "ifc", "dwg"],
             supported_outputs=["measurements", "quantities", "defects", "progress"]
-        ))
+        ,
+            layer=3,
+            tags=["domain", "container", "aec", "bim"],
+            requires=["pdf", "ocr"]))
         
     async def process(self, input_data: Any, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Main entry for construction operations"""

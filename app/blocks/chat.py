@@ -15,7 +15,9 @@ class ChatBlock(BaseBlock):
             requires_api_key=True,
             supported_inputs=["text", "messages", "file_result"],
             supported_outputs=["text", "stream", "tokens", "model"]
-        ))
+        ,
+            layer=2,
+            tags=["ai", "core", "llm"]))
         self._openai_available = self._check_openai()
         self._anthropic_available = self._check_anthropic()
         self._groq_available = self._check_groq()

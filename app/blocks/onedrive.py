@@ -18,7 +18,10 @@ class OneDriveBlock(BaseBlock):
             requires_api_key=True,
             supported_inputs=["file", "file_path"],
             supported_outputs=["file_id", "url", "metadata"]
-        ))
+        ,
+            layer=4,
+            tags=["integration", "storage", "cloud"],
+            requires=["auth"]))
         self._msal_available = self._check_msal()
         self.access_token = os.getenv("ONEDRIVE_ACCESS_TOKEN")
     

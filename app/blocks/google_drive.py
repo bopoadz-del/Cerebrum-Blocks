@@ -18,7 +18,10 @@ class GoogleDriveBlock(BaseBlock):
             requires_api_key=True,
             supported_inputs=["file", "file_path"],
             supported_outputs=["file_id", "url", "metadata"]
-        ))
+        ,
+            layer=4,
+            tags=["integration", "storage", "cloud"],
+            requires=["auth"]))
         self._google_auth_available = self._check_google_auth()
         self._drive_service = None
     

@@ -33,7 +33,10 @@ class LegalContainer(BaseBlock):
             supported_inputs=["pdf", "docx", "txt", "xml"],
             supported_outputs=["report", "entities", "validation", "brief"],
             author="Cerebrum Ecosystem"
-        ))
+        ,
+            layer=3,
+            tags=["domain", "container", "legal", "contracts"],
+            requires=["pdf", "ocr"]))
         # Domain-specific initialization
         self.clause_types = self._load_clause_types()
         self.precedent_db = self._load_precedent_index()

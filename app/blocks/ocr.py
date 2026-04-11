@@ -18,7 +18,9 @@ class OCRBlock(BaseBlock):
             description="Extract text from images using OCR",
             supported_inputs=["image", "file_path", "base64"],
             supported_outputs=["text", "bounding_boxes"]
-        ))
+        ,
+            layer=3,
+            tags=["domain", "documents", "ocr", "vision"]))
         self._pytesseract_available = self._check_pytesseract()
         self._easyocr_available = self._check_easyocr()
     

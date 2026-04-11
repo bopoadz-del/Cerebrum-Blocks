@@ -33,7 +33,10 @@ class MedicalContainer(BaseBlock):
             supported_inputs=["dicom", "pdf", "hl7", "fhir", "text"],
             supported_outputs=["report", "entities", "validation", "anonymized_data"],
             author="Cerebrum Ecosystem"
-        ))
+        ,
+            layer=3,
+            tags=["domain", "container", "healthcare", "hipaa"],
+            requires=["pdf", "ocr"]))
         # Domain-specific initialization
         self.hipaa_rules = self._load_hipaa_rules()
         self.dicom_tags = self._load_dicom_dictionary()

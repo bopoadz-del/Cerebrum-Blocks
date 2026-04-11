@@ -22,7 +22,9 @@ class ZvecBlock(BaseBlock):
             requires_api_key=False,
             supported_inputs=["text", "query", "vectors", "labels"],
             supported_outputs=["embeddings", "similarities", "classifications", "vectors"]
-        ))
+        ,
+            layer=2,
+            tags=["ai", "vector", "zero-shot"]))
         self._sentence_transformers_available = self._check_sentence_transformers()
         self._numpy_available = self._check_numpy()
         self._embedding_model = None

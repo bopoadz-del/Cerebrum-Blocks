@@ -33,7 +33,10 @@ class FinanceContainer(BaseBlock):
             supported_inputs=["csv", "xml", "json", "fix", "swift"],
             supported_outputs=["report", "risk_metrics", "validation", "filing"],
             author="Cerebrum Ecosystem"
-        ))
+        ,
+            layer=3,
+            tags=["domain", "container", "finance", "risk"],
+            requires=["pdf", "search"]))
         # Domain-specific initialization
         self.risk_models = self._load_risk_models()
         self.compliance_rules = self._load_compliance_rules()

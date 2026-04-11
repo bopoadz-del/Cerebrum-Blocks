@@ -19,7 +19,9 @@ class AICoreContainer(BaseBlock):
             requires_api_key=True,
             supported_inputs=["prompt", "query", "chain"],
             supported_outputs=["completion", "embedding", "routing", "metrics"]
-        ))
+        ,
+            layer=2,
+            tags=["ai", "core", "container"]))
         self.provider_stats = {
             "deepseek": {"latency": [], "success": 0, "failure": 0},
             "groq": {"latency": [], "success": 0, "failure": 0},

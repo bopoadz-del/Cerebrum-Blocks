@@ -17,7 +17,9 @@ class VoiceBlock(BaseBlock):
             description="Speech-to-text and text-to-speech processing",
             supported_inputs=["audio", "text"],
             supported_outputs=["text", "audio"]
-        ))
+        ,
+            layer=3,
+            tags=["domain", "audio", "tts", "stt"]))
         self._openai_available = self._check_openai()
         self._speech_recognition_available = self._check_speech_recognition()
         self._gtts_available = self._check_gtts()

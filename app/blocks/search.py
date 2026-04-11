@@ -17,7 +17,9 @@ class SearchBlock(BaseBlock):
             requires_api_key=True,
             supported_inputs=["query"],
             supported_outputs=["results"]
-        ))
+        ,
+            layer=3,
+            tags=["domain", "search", "web"]))
         self._duckduckgo_available = self._check_duckduckgo()
     
     def _check_duckduckgo(self) -> bool:

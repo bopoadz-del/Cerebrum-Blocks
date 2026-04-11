@@ -16,7 +16,9 @@ class AndroidDriveBlock(BaseBlock):
             description="Android storage file access and management",
             supported_inputs=["file", "uri"],
             supported_outputs=["uri", "metadata"]
-        ))
+        ,
+            layer=4,
+            tags=["integration", "storage", "mobile"]))
         self.android_root = os.getenv("ANDROID_ROOT", "/sdcard")
         self.app_data_path = os.getenv("ANDROID_APP_DATA", "/data/data/com.cerebrum.app/files")
         self.shared_storage = os.getenv("ANDROID_SHARED_STORAGE", "/sdcard")

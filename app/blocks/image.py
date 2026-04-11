@@ -20,7 +20,9 @@ class ImageBlock(BaseBlock):
             requires_api_key=True,
             supported_inputs=["image", "prompt"],
             supported_outputs=["description", "image"]
-        ))
+        ,
+            layer=3,
+            tags=["domain", "vision", "image"]))
         self._openai_available = self._check_openai()
     
     def _check_openai(self) -> bool:

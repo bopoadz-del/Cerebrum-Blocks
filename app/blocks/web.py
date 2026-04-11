@@ -16,7 +16,9 @@ class WebBlock(BaseBlock):
             description="Web scraping and HTTP requests",
             supported_inputs=["url", "html"],
             supported_outputs=["content", "data"]
-        ))
+        ,
+            layer=3,
+            tags=["domain", "web", "scraping"]))
         self._beautifulsoup_available = self._check_bs4()
     
     def _check_bs4(self) -> bool:

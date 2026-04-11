@@ -36,7 +36,9 @@ class VectorSearchBlock(BaseBlock):
             requires_api_key=False,
             supported_inputs=["query", "text", "documents"],
             supported_outputs=["results", "embeddings", "matches"]
-        ))
+        ,
+            layer=2,
+            tags=["ai", "core", "vector", "search"]))
         self._chromadb_available = self._check_chromadb()
         self._sentence_transformers_available = self._check_sentence_transformers()
         self._openai_available = self._check_openai()

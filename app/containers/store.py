@@ -32,7 +32,9 @@ class StoreContainer(BaseBlock):
         super().__init__(BlockConfig(
             name="store",
             version="1.0.0",
-            description="Block Store: Discovery, Reviews, Payments, Validation (20% platform fee)",
+            description="Block Store: Discovery, Reviews, Payments, Validation (20% platform fee - Lego Tax)",
+            layer=4,
+            tags=["integration", "marketplace", "container"],
             requires_api_key=False,
             supported_inputs=["publish", "discover", "review", "purchase"],
             supported_outputs=["published", "discovered", "reviewed", "purchased"]

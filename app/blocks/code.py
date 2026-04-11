@@ -18,7 +18,9 @@ class CodeBlock(BaseBlock):
             description="Code execution, analysis, and transformation",
             supported_inputs=["code", "text"],
             supported_outputs=["result", "analysis"]
-        ))
+        ,
+            layer=3,
+            tags=["domain", "code", "execution"]))
     
     async def process(self, input_data: Any, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Process code (execute, analyze, or transform)."""

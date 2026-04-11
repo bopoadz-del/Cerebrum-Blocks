@@ -16,7 +16,9 @@ class TranslateBlock(BaseBlock):
             description="Text translation with multiple providers",
             supported_inputs=["text"],
             supported_outputs=["translated_text"]
-        ))
+        ,
+            layer=3,
+            tags=["domain", "nlp", "translation"]))
         self._googletrans_available = self._check_googletrans()
         self._deep_available = self._check_deepl()
     

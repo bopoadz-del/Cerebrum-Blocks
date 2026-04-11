@@ -9,7 +9,16 @@ import uuid
 
 @dataclass
 class BlockConfig:
-    """Configuration for a block."""
+    """Configuration for a block - Universal Format (Domain Adapter Protocol).
+    
+    Layers:
+        0 = Infrastructure (memory, config, monitoring)
+        1 = Security (auth, secrets, sandbox)
+        2 = AI Core (chat, vector, ai_core)
+        3 = Domain (pdf, ocr, construction, medical, etc.)
+        4 = Integration (drive blocks, store)
+        5 = Interface (failover, hal)
+    """
     name: str
     version: str = "1.0"
     description: str = ""
@@ -17,6 +26,12 @@ class BlockConfig:
     requires_api_key: bool = False
     supported_inputs: list = None
     supported_outputs: list = None
+    
+    # Universal metadata (NEW - for Domain Adapter Protocol)
+    layer: int = 3  # Default to domain layer
+    tags: list = None  # e.g., ["ai", "documents", "vision"]
+    requires: list = None  # Dependency blocks e.g., ["auth", "config"]
+    default_config: dict = None  # Auto-wired configuration
 
 
 class BaseBlock(ABC):

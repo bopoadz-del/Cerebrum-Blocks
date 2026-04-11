@@ -16,7 +16,9 @@ class PDFBlock(BaseBlock):
             description="Extract text, tables, images, and metadata from PDF files with layout preservation",
             supported_inputs=["file", "file_path", "source_id"],
             supported_outputs=["text", "tables", "images", "metadata", "pages"]
-        ))
+        ,
+            layer=3,
+            tags=["domain", "documents", "pdf"]))
         self._pymupdf_available = self._check_pymupdf()
 
     def _check_pymupdf(self) -> bool:

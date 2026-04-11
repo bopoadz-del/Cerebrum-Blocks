@@ -18,7 +18,9 @@ class LocalDriveBlock(BaseBlock):
             description="Local filesystem file upload, download, and management",
             supported_inputs=["file", "file_path"],
             supported_outputs=["file_path", "url", "metadata"]
-        ))
+        ,
+            layer=4,
+            tags=["integration", "storage", "local"]))
         self.base_path = os.getenv("LOCAL_DRIVE_PATH", "./data")
         os.makedirs(self.base_path, exist_ok=True)
     

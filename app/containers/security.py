@@ -26,7 +26,10 @@ class SecurityContainer(BaseBlock):
             requires_api_key=False,
             supported_inputs=["auth", "secrets", "sandbox", "audit", "rate_limit"],
             supported_outputs=["authenticated", "secured", "audited", "rate_limited"]
-        ))
+        ,
+            layer=1,
+            tags=["security", "container"],
+            requires=["config"]))
         
         # Auth storage
         self.api_keys: Dict[str, Dict] = {}
