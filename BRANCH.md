@@ -1,8 +1,15 @@
-# Platform Branch
-This branch includes:
-- Core blocks (15)
-- Platform Container (Dashboard, Docs, Analytics, Health, Errors, Notifications)
-- Store Container (Discovery, Review, Payments, etc.)
+# Enterprise Branch
+This branch includes ALL containers:
+- Infrastructure (7 modules)
+- Security (5 modules)
+- AI Core (6 modules)
+- Construction (6 modules)
+- Platform (6 modules)
+- Store (6 modules)
+- Team (4 modules)
+- Utility (8 modules)
 - Event Bus
 
-For Render deployment with 1GB+ RAM.
+Total: 53 blocks + 8 containers + event bus = 62 modules
+
+Requires Render Pro or self-hosted.
