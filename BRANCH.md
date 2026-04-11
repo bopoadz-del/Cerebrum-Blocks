@@ -1,15 +1,9 @@
-# Enterprise Branch
-This branch includes ALL containers:
-- Infrastructure (7 modules)
-- Security (5 modules)
-- AI Core (6 modules)
-- Construction (6 modules)
-- Platform (6 modules)
-- Store (6 modules)
-- Team (4 modules)
-- Utility (8 modules)
-- Event Bus
+# Main Branch (Free Tier Optimized)
+This branch is optimized for Render Free Tier (512MB RAM):
 
-Total: 53 blocks + 8 containers + event bus = 62 modules
+Includes:
+- 15 Core Blocks (PDF, OCR, Chat, Voice, etc.)
+- Event Bus (lightweight mode)
+- No containers (memory intensive)
 
-Requires Render Pro or self-hosted.
+For full containers, use platform or enterprise branches.

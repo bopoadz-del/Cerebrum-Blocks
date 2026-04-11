@@ -1,28 +1,40 @@
-"""Enterprise Branch - Full 58 blocks + 8 containers + Event Bus."""
+"""Cerebrum Blocks - Lazy loading for memory efficiency (Starter Plan)."""
 
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-# Full Universal Assembler
-try:
-    from universal_assembler import UniversalAssembler
-    ASSEMBLER = UniversalAssembler(mode="production")
-    BLOCK_REGISTRY = ASSEMBLER.discover()
-    print(f"✅ Enterprise: {len(BLOCK_REGISTRY)} blocks loaded")
-except Exception as e:
-    print(f"❌ Discovery failed: {e}")
-    BLOCK_REGISTRY = {}
+# Lazy registry - only load what's needed
+_block_cache = {}
+_block_registry = None
+
+def _get_registry():
+    """Lazy load the registry"""
+    global _block_registry
+    if _block_registry is None:
+        try:
+            from universal_assembler import UniversalAssembler
+            _assembler = UniversalAssembler(mode="production")
+            _block_registry = _assembler.discover()
+            print(f"✅ Discovered {len(_block_registry)} blocks")
+        except Exception as e:
+            print(f"⚠️  Discovery failed: {e}")
+            _block_registry = {}
+    return _block_registry
 
 def get_block(name: str):
-    return BLOCK_REGISTRY.get(name)
+    """Get a block class (lazy load instance)"""
+    registry = _get_registry()
+    return registry.get(name)
 
 def get_all_blocks():
-    return BLOCK_REGISTRY
+    """Get all registered block names"""
+    return _get_registry()
 
-def discover_all():
-    """Rediscover all blocks"""
-    global BLOCK_REGISTRY
-    if 'ASSEMBLER' in globals():
-        BLOCK_REGISTRY = ASSEMBLER.discover()
-    return BLOCK_REGISTRY
+# Core blocks for immediate use
+CORE_BLOCKS = [
+    "pdf", "ocr", "chat", "voice", "image", "vector_search", 
+    "search", "translate", "code", "web", "zvec"
+]
+
+__all__ = ["get_block", "get_all_blocks", "CORE_BLOCKS"]
