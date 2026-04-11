@@ -24,7 +24,7 @@ from .local_drive import LocalDriveBlock
 from .android_drive import AndroidDriveBlock
 
 # Containers
-from app.containers import StoreContainer, SecurityContainer, AICoreContainer
+from app.containers import StoreContainer, SecurityContainer, AICoreContainer, ConstructionContainer
 
 __all__ = [
     # AI Blocks
@@ -33,7 +33,7 @@ __all__ = [
     # Drive Blocks
     "GoogleDriveBlock", "OneDriveBlock", "LocalDriveBlock", "AndroidDriveBlock",
     # Containers
-    "StoreContainer", "SecurityContainer", "AICoreContainer",
+    "StoreContainer", "SecurityContainer", "AICoreContainer", "ConstructionContainer",
     # Registry
     "BLOCK_REGISTRY", "get_block", "get_all_blocks"
 ]
@@ -60,6 +60,7 @@ BLOCK_REGISTRY = {
     "store": StoreContainer,
     "security": SecurityContainer,
     "ai_core": AICoreContainer,
+    "construction": ConstructionContainer,
 }
 
 def register_block(name: str, block_class):
