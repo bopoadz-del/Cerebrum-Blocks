@@ -85,7 +85,7 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chat \
 
 ---
 
-## 🧱 18 AI Blocks
+## 🧱 24 AI Blocks (2000+ Lines of Infrastructure)
 
 ### Core AI Blocks
 | Block | Description |
@@ -102,12 +102,18 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chat \
 | 🔎 **Search** | Web search with multiple providers |
 | 🧮 **Zvec** | Zero-shot vector embeddings |
 
-### Infrastructure Blocks
+### Infrastructure Blocks (NEW!)
 | Block | Description |
 |-------|-------------|
-| 🧠 **Memory** | High-speed cache with TTL & LRU eviction (Redis alternative) |
-| 📊 **Monitoring** | Provider leaderboard, reliability scoring & predictive failover |
-| 🔐 **Auth** | API keys, rate limiting & role-based access control |
+| 🔧 **HAL** | Hardware Abstraction Layer - auto-detects cloud/edge/local |
+| ⚙️ **Config** | Centralized configuration management |
+| 🧠 **Memory** | High-speed cache with TTL & LRU eviction |
+| 📊 **Monitoring** | Provider leaderboard & predictive failover |
+| 🔐 **Auth** | API keys, rate limiting, RBAC |
+| 📬 **Queue** | Async job processing (Redis/memory) |
+| 💾 **Storage** | Multi-backend file storage |
+| 🔍 **Vector** | Semantic search with embeddings |
+| 🛡️ **Failover** | Unified provider/hardware/logic failover |
 
 ### Storage Blocks
 | Block | Description |
