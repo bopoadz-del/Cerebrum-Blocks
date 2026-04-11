@@ -281,10 +281,9 @@ class MonitoringBlock(LegoBlock):
             }
         }
     
-    async def health(self) -> Dict:
+    def health(self) -> Dict:
         h = super().health()
         h["providers_tracked"] = len(self.providers)
         h["metrics_retention"] = f"{self.metrics_window} calls per provider"
         h["auto_route_enabled"] = True
-        h["current_leaderboard"] = (await self._get_leaderboard())["top_provider"]
         return h

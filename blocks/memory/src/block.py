@@ -155,7 +155,7 @@ class MemoryBlock(LegoBlock):
             "memory_items": len(self.cache)
         }
     
-    async def health(self) -> Dict:
+    def health(self) -> Dict:
         h = super().health()
         h.update(self._get_stats())
         h["utilization_percent"] = round(len(self.cache) / self.max_size * 100, 2)

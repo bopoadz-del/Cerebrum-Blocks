@@ -30,7 +30,7 @@ class LegoBlock(ABC):
         """Initialize the block."""
         pass
     
-    async def health(self) -> Dict[str, Any]:
+    def health(self) -> Dict[str, Any]:
         """Return health status."""
         return {
             "name": self.name,

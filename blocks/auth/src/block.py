@@ -319,10 +319,10 @@ class AuthBlock(LegoBlock):
         
         return {"keys": key_details, "count": len(key_details)}
     
-    async def health(self) -> Dict:
+    def health(self) -> Dict:
         h = super().health()
         h["auth_method"] = "api_key_bearer"
         h["rate_limiting"] = True
         h["rbac_roles"] = len(Role)
-        h["master_key_preview"] = self.master_key[:8] + "..."
+        h["master_key_preview"] = (self.master_key or "none")[:8] + "..."
         return h
