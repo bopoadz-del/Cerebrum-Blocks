@@ -7,7 +7,7 @@ Domain: Legal / Contracts / Litigation
 Standards: ABA, Bluebook, Local Court Rules
 """
 from typing import Any, Dict, Union
-from app.core.base import BaseBlock, BlockConfig
+from app.core.block import BaseBlock, BlockConfig
 
 
 class LegalContainer(BaseBlock):
@@ -32,7 +32,7 @@ class LegalContainer(BaseBlock):
             description="Legal Container: Contract analysis, precedent validation, brief generation",
             supported_inputs=["pdf", "docx", "txt", "xml"],
             supported_outputs=["report", "entities", "validation", "brief"],
-            layer=3
+            author="Cerebrum Ecosystem"
         ))
         # Domain-specific initialization
         self.clause_types = self._load_clause_types()

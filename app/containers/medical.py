@@ -7,7 +7,7 @@ Domain: Healthcare / Medical Imaging / Clinical Records
 Standards: HIPAA, DICOM, HL7 FHIR
 """
 from typing import Any, Dict, Union
-from app.core.base import BaseBlock, BlockConfig
+from app.core.block import BaseBlock, BlockConfig
 
 
 class MedicalContainer(BaseBlock):
@@ -32,7 +32,7 @@ class MedicalContainer(BaseBlock):
             description="Medical Container: DICOM processing, clinical extraction, HIPAA compliance",
             supported_inputs=["dicom", "pdf", "hl7", "fhir", "text"],
             supported_outputs=["report", "entities", "validation", "anonymized_data"],
-            layer=3
+            author="Cerebrum Ecosystem"
         ))
         # Domain-specific initialization
         self.hipaa_rules = self._load_hipaa_rules()

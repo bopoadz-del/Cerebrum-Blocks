@@ -7,7 +7,7 @@ Domain: Finance / Trading / Banking / Risk Management
 Standards: SOX, MiFID II, Basel III, Dodd-Frank
 """
 from typing import Any, Dict, Union
-from app.core.base import BaseBlock, BlockConfig
+from app.core.block import BaseBlock, BlockConfig
 
 
 class FinanceContainer(BaseBlock):
@@ -32,7 +32,7 @@ class FinanceContainer(BaseBlock):
             description="Finance Container: Risk analysis, compliance validation, regulatory reporting",
             supported_inputs=["csv", "xml", "json", "fix", "swift"],
             supported_outputs=["report", "risk_metrics", "validation", "filing"],
-            layer=3
+            author="Cerebrum Ecosystem"
         ))
         # Domain-specific initialization
         self.risk_models = self._load_risk_models()
