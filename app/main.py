@@ -9,7 +9,7 @@ import hashlib
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -405,6 +405,42 @@ async def chat_v1(request: ChatRequest):
 async def chat_stream_v1(request: ChatRequest):
     """Streaming chat endpoint (v1 API)."""
     return await chat_stream(request)
+
+
+@app.post("/v1/upload")
+async def upload_v1(file: UploadFile = File(...)):
+    """File upload endpoint (v1 API).
+    
+    Accepts any file and stores it. Returns URL for processing.
+    """
+    import uuid
+    import os
+    import shutil
+    
+    try:
+        # Generate unique filename
+        file_id = str(uuid.uuid4())[:8]
+        original_name = file.filename or "unknown"
+        filename = f"{file_id}_{original_name}"
+        filepath = os.path.join(DATA_DIR, filename)
+        
+        # Save uploaded file
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        file_size = os.path.getsize(filepath)
+        
+        # Return URL for processing
+        base_url = os.getenv("API_BASE_URL", "https://ssdppg.onrender.com")
+        return {
+            "url": f"{base_url}/static/{filename}",
+            "filename": original_name,
+            "stored_as": filename,
+            "size": file_size
+        }
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # -------------------- ERROR HANDLERS --------------------
