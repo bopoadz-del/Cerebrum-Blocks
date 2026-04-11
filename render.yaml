@@ -1,7 +1,7 @@
 services:
-  # Backend API
+  # PLATFORM BACKEND - Block execution, chains, file processing
   - type: web
-    name: ssdppg-api
+    name: cerebrum-platform-api
     env: python
     plan: starter
     buildCommand: pip install -r requirements-render.txt
@@ -13,13 +13,37 @@ services:
         value: /app/data
       - key: ENV
         value: production
+      - key: SERVICE_TYPE
+        value: platform
     disk:
       name: data
       mountPath: /app/data
       sizeGB: 1
     healthCheckPath: /health
 
-  # Store Frontend (Marketplace)
+  # STORE BACKEND - Block catalog, pricing, discovery
+  - type: web
+    name: cerebrum-store-api
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATA_DIR
+        value: /app/data
+      - key: ENV
+        value: production
+      - key: SERVICE_TYPE
+        value: store
+    disk:
+      name: data
+      mountPath: /app/data
+      sizeGB: 1
+    healthCheckPath: /health
+
+  # STORE FRONTEND - Marketplace UI
   - type: web
     name: cerebrum-store
     env: static
@@ -27,9 +51,9 @@ services:
     staticPublishPath: ./frontend-store/dist
     envVars:
       - key: VITE_API_URL
-        value: https://ssdppg.onrender.com
+        value: https://cerebrum-store-api.onrender.com
 
-  # Platform Frontend (Universal UI Shell)
+  # PLATFORM FRONTEND - Universal UI Shell
   - type: web
     name: cerebrum-platform
     env: static
@@ -37,4 +61,4 @@ services:
     staticPublishPath: ./frontend-platform
     envVars:
       - key: API_URL
-        value: https://ssdppg.onrender.com
+        value: https://cerebrum-platform-api.onrender.com
