@@ -1,31 +1,27 @@
-"""Platform Branch - Core + Platform + Store Containers."""
+"""Full Cerebrum Blocks - All 58 blocks + containers (Upgraded Plan)."""
 
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-# Try Universal Assembler
+# Import Universal Assembler
 try:
     from universal_assembler import UniversalAssembler
-    ASSEMBLER = UniversalAssembler(mode="platform")  # Platform mode
-    DISCOVERED = ASSEMBLER.discover()
     
-    # Filter for platform-relevant blocks
-    PLATFORM_BLOCKS = {k: v for k, v in DISCOVERED.items() 
-                      if not k.startswith('container_') or k in [
-                          'container_platform', 'container_store', 'event_bus'
-                      ]}
+    # Initialize and discover all blocks
+    _assembler = UniversalAssembler(mode="production")
+    BLOCK_REGISTRY = _assembler.discover()
     
-    BLOCK_REGISTRY = PLATFORM_BLOCKS
+    print(f"✅ Loaded {len(BLOCK_REGISTRY)} blocks/containers")
     
 except Exception as e:
-    # Fallback to manual registration
-    print(f"Warning: Using fallback registration: {e}")
+    print(f"⚠️  Universal Assembler failed: {e}")
+    print(f"🔄 Falling back to manual registration...")
     
-    # Core blocks
-    from app.blocks.pdf import PDFBlock
-    from app.blocks.ocr import OCRBlock
-    from app.blocks.chat import ChatBlock
+    # Legacy imports
+    from .pdf import PDFBlock
+    from .ocr import OCRBlock
+    from .chat import ChatBlock
     
     BLOCK_REGISTRY = {
         "pdf": PDFBlock,
@@ -33,8 +29,14 @@ except Exception as e:
         "chat": ChatBlock,
     }
 
+# Helper functions
+def register_block(name: str, block_class):
+    BLOCK_REGISTRY[name] = block_class
+
 def get_block(name: str):
     return BLOCK_REGISTRY.get(name)
 
 def get_all_blocks():
     return BLOCK_REGISTRY
+
+__all__ = ["BLOCK_REGISTRY", "get_block", "get_all_blocks", "register_block"]

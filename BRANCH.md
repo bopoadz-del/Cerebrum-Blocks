@@ -1,8 +1,9 @@
-# Platform Branch
-This branch includes:
-- Core blocks (15)
-- Platform Container (Dashboard, Docs, Analytics, Health, Errors, Notifications)
-- Store Container (Discovery, Review, Payments, etc.)
-- Event Bus
+# Main Branch (Free Tier Optimized)
+This branch is optimized for Render Free Tier (512MB RAM):
 
-For Render deployment with 1GB+ RAM.
+Includes:
+- 15 Core Blocks (PDF, OCR, Chat, Voice, etc.)
+- Event Bus (lightweight mode)
+- No containers (memory intensive)
+
+For full containers, use platform or enterprise branches.
