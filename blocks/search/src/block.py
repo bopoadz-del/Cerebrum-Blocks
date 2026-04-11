@@ -18,8 +18,20 @@ class SearchBlock(LegoBlock):
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)
-        self.api_key = config.get("serper_key") or config.get("tavily_key")
+        self.api_key = config.get("serper_key") or config.get("tavily_key") or config.get("brave_key")
+        self.brave_key = config.get("brave_key")
         self.default_provider = config.get("default", "duckduckgo")
+    
+    async def initialize(self) -> bool:
+        """Initialize search block"""
+        print(f"🔎 Search Block initialized")
+        print(f"   Default: {self.default_provider}")
+        print(f"   Providers: {', '.join(self.PROVIDERS.keys())}")
+        print(f"   API Keys: serper={'yes' if self.config.get('serper_key') else 'no'}, "
+              f"tavily={'yes' if self.config.get('tavily_key') else 'no'}, "
+              f"brave={'yes' if self.brave_key else 'no'}")
+        self.initialized = True
+        return True
         
     async def execute(self, input_data: Dict) -> Dict:
         action = input_data.get("action")
@@ -43,6 +55,8 @@ class SearchBlock(LegoBlock):
             return await self._serper_search(query, num_results)
         elif provider == "tavily":
             return await self._tavily_search(query, num_results)
+        elif provider == "brave":
+            return await self._brave_search(query, num_results)
         
         return {"error": f"Unknown provider: {provider}"}
     
@@ -189,6 +203,63 @@ class SearchBlock(LegoBlock):
         except Exception as e:
             return {"error": f"Tavily search failed: {str(e)}"}
     
+    async def _brave_search(self, query: str, num: int) -> Dict:
+        """Brave Search API - Privacy-focused, no tracking"""
+        if not self.brave_key:
+            return {"error": "Brave API key not configured. Get one at: https://brave.com/search/api/"}
+        
+        try:
+            import aiohttp
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    self.PROVIDERS["brave"]["url"],
+                    headers={
+                        "X-Subscription-Token": self.brave_key,
+                        "Accept": "application/json"
+                    },
+                    params={
+                        "q": query,
+                        "count": min(num, 20),  # Brave max is 20
+                        "offset": 0,
+                        "mkt": "en-US"
+                    }
+                ) as resp:
+                    if resp.status != 200:
+                        error = await resp.text()
+                        return {"error": f"Brave API error: {resp.status} - {error}"}
+                    
+                    result = await resp.json()
+                    
+                    # Parse Brave results
+                    web_results = result.get("web", {}).get("results", [])
+                    
+                    return {
+                        "results": [
+                            {
+                                "title": r.get("title"),
+                                "link": r.get("url"),
+                                "snippet": r.get("description"),
+                                "age": r.get("age"),
+                                "family_friendly": r.get("family_friendly", True)
+                            }
+                            for r in web_results
+                        ],
+                        "query": query,
+                        "provider": "brave",
+                        "total": len(web_results),
+                        "features": {
+                            "privacy": True,
+                            "no_tracking": True,
+                            "independent_index": True
+                        }
+                    }
+                    
+        except ImportError:
+            return {"error": "aiohttp not installed"}
+        except Exception as e:
+            return {"error": f"Brave search failed: {str(e)}"}
+    
     async def _news_search(self, data: Dict) -> Dict:
         """Search news specifically"""
         query = data.get("query")
@@ -238,4 +309,5 @@ class SearchBlock(LegoBlock):
         h["providers"] = list(self.PROVIDERS.keys())
         h["default"] = self.default_provider
         h["api_key_configured"] = self.api_key is not None
+        h["brave_key_configured"] = self.brave_key is not None
         return h
