@@ -21,3 +21,16 @@ export { TranslateBlock } from './Translate';
 export { CodeBlock } from './Code';
 export { FailoverBlock } from './Failover';
 export { ConfigBlock } from './Config';
+
+// Infrastructure Blocks
+export { AuthBlock } from './Auth';
+export { MemoryBlock } from './Memory';
+export { MonitoringBlock } from './Monitoring';
+export { HALBlock } from './HAL';
+
+// Integration Blocks
+export { DatabaseBlock } from './Database';
+export { EmailBlock } from './Email';
+export { WebhookBlock } from './Webhook';
+export { WorkflowBlock } from './Workflow';
+export { BillingBlock } from './Billing';

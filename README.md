@@ -2,7 +2,7 @@
 
 > **AI for Developers in 3 Lines of Code**
 
-Build AI applications like Lego. One API key. 15 blocks. Infinite possibilities.
+Build AI applications like Lego. One API key. 23+ blocks. Infinite possibilities.
 
 [![Docker Hub](https://img.shields.io/badge/Docker%20Hub-bopoadz--del%2Fcerebrum--blocks-blue?logo=docker)](https://hub.docker.com/r/bopoadz-del/cerebrum-blocks)
 [![API Status](https://img.shields.io/badge/api-up-success)](https://cerebrum-blocks.onrender.com/v1/health)
@@ -85,35 +85,44 @@ curl -X POST https://cerebrum-blocks.onrender.com/v1/chat \
 
 ---
 
-## 🧱 24 AI Blocks (2000+ Lines of Infrastructure)
+## 🧱 23+ AI Blocks
 
 ### Core AI Blocks
 | Block | Description |
 |-------|-------------|
 | 💬 **Chat** | DeepSeek (cheapest!), Groq (fastest), GPT-4, Claude - with streaming |
-| 📄 **PDF** | Extract text, tables, images |
-| 👁️ **OCR** | Image text extraction |
+| 📄 **PDF** | Extract text, tables, images with OCR support |
+| 👁️ **OCR** | Image text extraction with Tesseract |
 | 🔊 **Voice** | Text-to-speech, speech-to-text |
-| 🔍 **Vector Search** | Semantic search with embeddings |
+| 🔍 **Vector** | ChromaDB semantic search with sentence-transformers |
 | 🖼️ **Image** | Image analysis & generation |
-| 🌐 **Translate** | 100+ languages |
+| 🌐 **Translate** | 100+ languages with Google Translate |
 | 💻 **Code** | Code generation & execution |
 | 🕸️ **Web** | Web scraping & browsing |
 | 🔎 **Search** | Web search with multiple providers |
 | 🧮 **Zvec** | Zero-shot vector embeddings |
 
-### Infrastructure Blocks (NEW!)
+### Infrastructure Blocks
 | Block | Description |
 |-------|-------------|
 | 🔧 **HAL** | Hardware Abstraction Layer - auto-detects cloud/edge/local |
-| ⚙️ **Config** | Centralized configuration management |
+| ⚙️ **Config** | Centralized configuration management with profile support |
 | 🧠 **Memory** | High-speed cache with TTL & LRU eviction |
 | 📊 **Monitoring** | Provider leaderboard & predictive failover |
-| 🔐 **Auth** | API keys, rate limiting, RBAC |
+| 🔐 **Auth** | API keys, rate limiting, RBAC (admin/pro/basic/readonly) |
 | 📬 **Queue** | Async job processing (Redis/memory) |
-| 💾 **Storage** | Multi-backend file storage |
-| 🔍 **Vector** | Semantic search with embeddings |
-| 🛡️ **Failover** | Unified provider/hardware/logic failover |
+| 💾 **Storage** | Multi-backend file storage (local/cloud) |
+| 🛡️ **Failover** | Circuit breaker, failure counting, route switching |
+
+### Integration Blocks
+| Block | Description |
+|-------|-------------|
+| 🏗️ **BIM** | IFC/DWG/PDF parsing with ifcopenshell & ezdxf |
+| 🗄️ **Database** | SQL/NoSQL database operations |
+| 📧 **Email** | Send/receive emails with SMTP/IMAP |
+| 🎯 **Webhook** | Incoming/outgoing webhook handlers |
+| ⚡ **Workflow** | Workflow orchestration & automation |
+| 💰 **Billing** | Usage tracking & billing management |
 
 ### Storage Blocks
 | Block | Description |
@@ -146,7 +155,17 @@ print(result.final_output)
 
 ---
 
-## 🏗️ Infrastructure Blocks
+## 🏗️ Infrastructure Deep Dive
+
+### 🔧 HAL Block
+Auto-detects hardware environment and selects optimal configuration profile.
+
+```python
+# HAL automatically detects your environment
+# cloud_render, cloud_aws, edge_jetson, local_gpu, local_std
+profile = await client.hal.detect()
+print(f"Running on: {profile}")  # "cloud_render" or "edge_jetson"
+```
 
 ### 🧠 Memory Block
 High-speed in-memory cache with TTL and LRU eviction. Perfect for edge deployments without Redis.
@@ -157,6 +176,10 @@ await client.memory.set("key", {"data": "value"}, ttl=60)
 
 # Retrieve
 result = await client.memory.get("key")
+
+# Stats
+stats = await client.memory.stats()
+print(f"Hit rate: {stats['hit_rate']}%")
 ```
 
 ### 📊 Monitoring Block
@@ -187,6 +210,47 @@ Multi-tenant API key management with role-based access control.
 | Pro | 50K/hour | All AI blocks |
 | Basic | 1K/hour | Core blocks only |
 | Readonly | 500/hour | View-only access |
+
+```bash
+# Create API key (admin only)
+curl -X POST https://cerebrum-blocks.onrender.com/v1/auth/keys \
+  -H "Authorization: Bearer cb_admin_key" \
+  -d '{"name": "production", "role": "pro"}'
+```
+
+### 🛡️ Failover Block
+Circuit breaker pattern with automatic failure detection and route switching.
+
+```python
+# Automatic provider failover
+result = await client.chat.complete(
+    "Hello!",
+    failover=True  # Auto-switches if provider fails
+)
+```
+
+---
+
+## 🏗️ BIM Block (NEW!)
+Real BIM/CAD file processing with native parsing:
+
+```python
+# Parse IFC file
+result = await client.bim.process({
+    "file_path": "/path/to/model.ifc",
+    "action": "extract_metadata"
+})
+print(result["schema"])  # "IFC4"
+print(result["entities"])  # 15420
+
+# Parse DWG file
+result = await client.bim.process({
+    "file_path": "/path/to/drawing.dwg",
+    "action": "extract_metadata"
+})
+```
+
+**Supported formats:** IFC (via ifcopenshell), DWG (via ezdxf), PDF drawings (via OCR)
 
 ---
 
@@ -255,10 +319,11 @@ uvicorn app.main:app --reload
 | Feature | Free | Pro $29/mo | Enterprise |
 |---------|------|------------|------------|
 | Requests/month | 1,000 | 50,000 | Unlimited |
-| Blocks | 15 | 15 | 15 + Custom |
+| Blocks | 23+ | 23+ | 23+ + Custom |
 | DeepSeek Access | ✅ | ✅ | ✅ |
 | Streaming | ✅ | ✅ | ✅ |
 | Vector Search | ✅ | ✅ | ✅ |
+| BIM Processing | ✅ | ✅ | ✅ |
 | Support | Community | Priority | Dedicated |
 | SLA | - | - | ✅ |
 
@@ -275,6 +340,7 @@ POST /v1/execute           # Execute block
 POST /v1/chain             # Chain blocks
 POST /v1/vector/add        # Add to vector DB
 POST /v1/vector/search     # Semantic search
+POST /v1/bim/process       # BIM/CAD processing
 ```
 
 ### Infrastructure Blocks
@@ -289,6 +355,8 @@ POST /v1/auth/validate     # Validate API key
 POST /v1/auth/keys         # Create API key (admin)
 GET  /v1/auth/keys         # List API keys
 POST /v1/auth/check        # Check permission
+GET  /v1/hal/profile       # Get hardware profile
+GET  /v1/failover/status   # Failover system status
 ```
 
 ### Health
