@@ -1,38 +1,6 @@
-import { useState, useEffect } from 'react';
-import { ShoppingCart, Search, Star, Package, Layers, Shield, Cpu, Database } from 'lucide-react';
-
-interface Block {
-  name: string;
-  displayName: string;
-  description: string;
-  price: number;
-  category: string;
-  tags: string[];
-  icon: string;
-  author: string;
-  rating: number;
-  reviews: number;
-}
-
-const BLOCKS: Block[] = [
-  // Domain Containers
-  { name: 'construction', displayName: 'Construction', description: 'BIM processing, PDF extraction, QA inspection for AEC', price: 299, category: 'Domain', tags: ['aec', 'bim', 'pdf'], icon: '🏗️', author: 'Cerebrum', rating: 4.8, reviews: 42 },
-  { name: 'medical', displayName: 'Medical', description: 'HIPAA-compliant DICOM processing, clinical entities', price: 499, category: 'Domain', tags: ['healthcare', 'hipaa', 'dicom'], icon: '🏥', author: 'Cerebrum', rating: 4.9, reviews: 28 },
-  { name: 'legal', displayName: 'Legal', description: 'Contract analysis, precedent validation, brief generation', price: 399, category: 'Domain', tags: ['legal', 'contracts', 'nlp'], icon: '⚖️', author: 'Cerebrum', rating: 4.7, reviews: 35 },
-  { name: 'finance', displayName: 'Finance', description: 'Risk analysis, SOX/MiFID compliance, reporting', price: 599, category: 'Domain', tags: ['finance', 'risk', 'compliance'], icon: '💰', author: 'Cerebrum', rating: 4.6, reviews: 19 },
-  
-  // Core AI
-  { name: 'chat', displayName: 'Chat AI', description: 'Multi-provider LLM (DeepSeek, Groq, OpenAI)', price: 49, category: 'AI Core', tags: ['ai', 'llm', 'chat'], icon: '💬', author: 'Cerebrum', rating: 4.9, reviews: 156 },
-  { name: 'vector_search', displayName: 'Vector Search', description: 'Semantic search with ChromaDB embeddings', price: 49, category: 'AI Core', tags: ['ai', 'vector', 'search'], icon: '🔍', author: 'Cerebrum', rating: 4.7, reviews: 89 },
-  { name: 'ocr', displayName: 'OCR', description: 'Text extraction from images and PDFs', price: 29, category: 'Documents', tags: ['vision', 'ocr', 'pdf'], icon: '👁️', author: 'Cerebrum', rating: 4.5, reviews: 67 },
-  { name: 'pdf', displayName: 'PDF Processor', description: 'Extract text, tables, images from PDFs', price: 29, category: 'Documents', tags: ['pdf', 'documents'], icon: '📄', author: 'Cerebrum', rating: 4.6, reviews: 78 },
-  { name: 'voice', displayName: 'Voice AI', description: 'Text-to-speech and speech-to-text', price: 39, category: 'Audio', tags: ['audio', 'tts', 'stt'], icon: '🔊', author: 'Cerebrum', rating: 4.4, reviews: 45 },
-  { name: 'image', displayName: 'Image AI', description: 'Image analysis and generation', price: 39, category: 'Vision', tags: ['vision', 'image'], icon: '🖼️', author: 'Cerebrum', rating: 4.5, reviews: 52 },
-  { name: 'translate', displayName: 'Translate', description: '100+ language translation', price: 19, category: 'NLP', tags: ['nlp', 'translation'], icon: '🌐', author: 'Cerebrum', rating: 4.3, reviews: 34 },
-  { name: 'code', displayName: 'Code AI', description: 'Code generation and execution', price: 29, category: 'Developer', tags: ['code', 'developer'], icon: '💻', author: 'Cerebrum', rating: 4.6, reviews: 91 },
-];
-
-const CATEGORIES = ['All', 'Domain', 'AI Core', 'Documents', 'Vision', 'Audio', 'NLP', 'Developer'];
+import { useState } from 'react';
+import { ShoppingCart, Search, Star, Box, Layers, Shield, Cpu, Database } from 'lucide-react';
+import { BLOCKS, CATEGORIES, Block } from './blocks';
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -72,7 +40,7 @@ function App() {
             <div style={{ fontSize: '32px' }}>🧠</div>
             <div>
               <h1 style={{ margin: 0, fontSize: '24px', color: '#fff' }}>Cerebrum Block Store</h1>
-              <p style={{ margin: 0, fontSize: '12px', color: '#888' }}>Build AI Like Lego • 22 Blocks Available</p>
+              <p style={{ margin: 0, fontSize: '12px', color: '#888' }}>Build AI Like Lego • {BLOCKS.length} Blocks Available</p>
             </div>
           </div>
           
@@ -309,7 +277,7 @@ function App() {
       <footer style={{ padding: '40px', textAlign: 'center', borderTop: '1px solid #1e1e2e', color: '#666' }}>
         <p>Cerebrum Blocks • Domain Adapter Protocol v2.0</p>
         <p style={{ fontSize: '12px', marginTop: '8px' }}>
-          22 Blocks • 4 Domain Containers • 20% Lego Tax
+          {BLOCKS.length} Blocks • 8 Domain Containers • 20% Lego Tax
         </p>
       </footer>
     </div>
