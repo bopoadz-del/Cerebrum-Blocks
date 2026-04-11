@@ -1,0 +1,24 @@
+services:
+  # STORE BACKEND - Block catalog, shopping, billing
+  - type: web
+    name: cerebrum-store-api
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ENV
+        value: production
+    healthCheckPath: /health
+
+  # STORE FRONTEND - Marketplace UI
+  - type: web
+    name: cerebrum-store
+    env: static
+    buildCommand: cd ../frontend-store && npm install && npm run build
+    staticPublishPath: ../frontend-store/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://cerebrum-store-api.onrender.com

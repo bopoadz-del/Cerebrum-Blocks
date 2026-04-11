@@ -45,7 +45,7 @@ function App() {
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <a href="https://ssdppg.onrender.com" style={{ color: '#6c63ff', textDecoration: 'none', fontSize: '14px' }}>
+            <a href="https://cerebrum-platform.onrender.com" style={{ color: '#6c63ff', textDecoration: 'none', fontSize: '14px' }}>
               Platform Console →
             </a>
             <div style={{ 
