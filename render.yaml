@@ -29,12 +29,12 @@ services:
       - key: VITE_API_URL
         value: https://ssdppg.onrender.com
 
-  # Platform Frontend (Developer Console)
+  # Platform Frontend (Universal UI Shell)
   - type: web
     name: cerebrum-platform
     env: static
-    buildCommand: cd frontend-platform && npm install && npm run build
-    staticPublishPath: ./frontend-platform/dist
+    buildCommand: echo "Universal UI Shell - no build needed"
+    staticPublishPath: ./frontend-platform
     envVars:
-      - key: VITE_API_URL
+      - key: API_URL
         value: https://ssdppg.onrender.com
