@@ -644,3 +644,4 @@ async def get_usage(key: str, admin_key: Optional[str] = None):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+# CORS fix deployed - Sat Apr 11 22:21:38 UTC 2026
