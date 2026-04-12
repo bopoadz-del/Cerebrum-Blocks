@@ -4,11 +4,10 @@ services:
     name: cerebrum-platform-api
     env: python
     plan: starter
+    runtime: python-3.11.0
     buildCommand: pip install -r requirements-render.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: DATA_DIR
         value: /app/data
       - key: ENV
@@ -34,12 +33,11 @@ services:
     name: cerebrum-store-api
     env: python
     plan: starter
+    runtime: python-3.11.0
     rootDir: store
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: ENV
         value: production
     healthCheckPath: /health
