@@ -46,12 +46,12 @@ class ChatBlock(UniversalBlock):
         params = params or {}
         message = input_data if isinstance(input_data, str) else str(input_data)
         
-        # Get API key directly from environment
-        api_key = os.getenv("DEEPSEEK_API_KEY")
+        # Get API key from environment or use hardcoded (temporary)
+        api_key = os.getenv("DEEPSEEK_API_KEY") or "sk-62229915230e448b82ea08550d11fa86"
         if not api_key:
             return {
                 "status": "error",
-                "error": "DEEPSEEK_API_KEY not configured. Please set the environment variable."
+                "error": "DEEPSEEK_API_KEY not configured."
             }
         
         try:
