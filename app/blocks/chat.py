@@ -78,16 +78,21 @@ class ChatBlock(UniversalBlock):
         provider = params.get("provider", self.config.get("default_provider", "deepseek"))
         message = input_data if isinstance(input_data, str) else str(input_data)
         
+        # Check env vars directly (not cached)
+        deepseek_available = bool(os.getenv("DEEPSEEK_API_KEY"))
+        groq_available = bool(os.getenv("GROQ_API_KEY"))
+        openai_available = bool(os.getenv("OPENAI_API_KEY"))
+        
         # Route to available provider
-        if provider == "deepseek" and self._deepseek_available:
+        if provider == "deepseek" and deepseek_available:
             result = await self._call_deepseek(message, params)
             if "error" not in result:
                 return result
         
-        if provider == "groq" and self._groq_available:
+        if provider == "groq" and groq_available:
             return await self._call_groq(message, params)
         
-        if provider == "openai" and self._openai_available:
+        if provider == "openai" and openai_available:
             return await self._call_openai(message, params)
         
         # No API available - return error
