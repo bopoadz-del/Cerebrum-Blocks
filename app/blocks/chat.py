@@ -73,26 +73,28 @@ class ChatBlock(UniversalBlock):
         return bool(os.getenv("DEEPSEEK_API_KEY"))
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        """Process chat request"""
+        """Process chat request using real AI APIs"""
         params = params or {}
         provider = params.get("provider", self.config.get("default_provider", "deepseek"))
         message = input_data if isinstance(input_data, str) else str(input_data)
         
-        # Route to provider (only if explicitly requested and available)
-        use_mock = params.get("mock", False)
+        # Route to available provider
+        if provider == "deepseek" and self._deepseek_available:
+            result = await self._call_deepseek(message, params)
+            if "error" not in result:
+                return result
         
-        if not use_mock:
-            if provider == "deepseek" and self._deepseek_available:
-                result = await self._call_deepseek(message, params)
-                if "error" not in result:
-                    return result
-            elif provider == "groq" and self._groq_available:
-                return await self._call_groq(message, params)
-            elif provider == "openai" and self._openai_available:
-                return await self._call_openai(message, params)
+        if provider == "groq" and self._groq_available:
+            return await self._call_groq(message, params)
         
-        # Mock mode: Return intelligent responses for testing
-        return self._mock_response(message)
+        if provider == "openai" and self._openai_available:
+            return await self._call_openai(message, params)
+        
+        # No API available - return error
+        return {
+            "status": "error",
+            "error": "No AI API available. Please set DEEPSEEK_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY environment variable."
+        }
     
     async def _call_deepseek(self, message: str, params: Dict) -> Dict:
         """Call DeepSeek API"""
