@@ -704,3 +704,16 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
 # CORS fix deployed - Sat Apr 11 22:21:38 UTC 2026
 # Redeploy trigger: Sat Apr 11 22:53:40 UTC 2026
+
+
+# -------------------- DEBUG ENDPOINT --------------------
+@app.get("/debug/env")
+def debug_env():
+    """Debug endpoint to check environment variables (remove in production)"""
+    import os
+    return {
+        "deepseek_key_set": bool(os.getenv("DEEPSEEK_API_KEY")),
+        "deepseek_key_prefix": os.getenv("DEEPSEEK_API_KEY", "")[:10] if os.getenv("DEEPSEEK_API_KEY") else None,
+        "environment": os.getenv("ENV", "unknown"),
+        "data_dir": os.getenv("DATA_DIR", "not_set")
+    }
