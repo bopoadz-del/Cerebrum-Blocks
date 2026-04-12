@@ -50,3 +50,9 @@ serpapi>=0.1.0
 # Utilities
 tenacity>=8.2.0
 colorama>=0.4.6
+
+# OCR
+tesseract-ocr>=0.3.10
+pytesseract>=0.3.10
+easyocr>=1.7.0
+Pillow>=10.0.0
