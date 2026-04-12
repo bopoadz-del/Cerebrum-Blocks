@@ -62,13 +62,53 @@ app = FastAPI(
 
 CORS_ORIGINS = _get_cors_origins()
 
+# Add CORS middleware with explicit settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-    allow_credentials=False,  # Must be False when using ["*"]
+    allow_origins=[
+        "*",
+        "https://cerebrum-platform.onrender.com",
+        "https://cerebrum-platform-j1zs.onrender.com",
+        "https://cerebrum-store.onrender.com",
+        "https://cerebrum-store-j1zs.onrender.com",
+        "http://localhost:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:8000",
+    ],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*", "Content-Type", "Authorization", "X-Requested-With"],
+    allow_credentials=False,
+    max_age=86400,  # Cache preflight for 24 hours
 )
+
+# Add explicit CORS headers middleware
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    """Add CORS headers to all responses"""
+    response = await call_next(request)
+    
+    origin = request.headers.get("origin", "*")
+    response.headers["Access-Control-Allow-Origin"] = origin if origin else "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Max-Age"] = "86400"
+    
+    return response
+
+# Handle OPTIONS requests globally
+@app.options("/{path:path}")
+async def options_handler(request: Request, path: str):
+    """Handle CORS preflight requests"""
+    origin = request.headers.get("origin", "*")
+    return JSONResponse(
+        content={"status": "ok"},
+        headers={
+            "Access-Control-Allow-Origin": origin if origin else "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
