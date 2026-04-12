@@ -24,8 +24,8 @@ pytest-json-report>=1.5.0
 pymupdf>=1.23.0
 PyPDF2>=3.0.0
 
-# OCR
-pytesseract>=0.3.10
+# OCR - EasyOCR only (pure Python, no system deps)
+easyocr>=1.7.0
 
 # Audio
 SpeechRecognition>=3.10.0
@@ -44,15 +44,6 @@ beautifulsoup4>=4.12.0
 # Search
 serpapi>=0.1.0
 
-# Translations (removed googletrans due to httpx conflict)
-# googletrans==4.0.0rc1
-
 # Utilities
 tenacity>=8.2.0
 colorama>=0.4.6
-
-# OCR
-tesseract-ocr>=0.3.10
-pytesseract>=0.3.10
-easyocr>=1.7.0
-Pillow>=10.0.0

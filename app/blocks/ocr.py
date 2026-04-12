@@ -1,4 +1,4 @@
-"""OCR Block - Extract text from images using Tesseract"""
+"""OCR Block - Extract text from images using EasyOCR"""
 
 import os
 from typing import Any, Dict
@@ -6,7 +6,7 @@ from app.core.universal_base import UniversalBlock
 
 
 class OCRBlock(UniversalBlock):
-    """Optical Character Recognition from images using Tesseract"""
+    """Optical Character Recognition from images using EasyOCR (pure Python, no system dependencies)"""
     
     name = "ocr"
     version = "1.0"
@@ -16,7 +16,7 @@ class OCRBlock(UniversalBlock):
     requires = []
     
     default_config = {
-        "language": "eng",
+        "languages": ["en"],
         "confidence_threshold": 0.6
     }
     
@@ -41,8 +41,23 @@ class OCRBlock(UniversalBlock):
         ]
     }
     
+    def __init__(self, hal_block=None, config: Dict = None):
+        super().__init__(hal_block, config)
+        self._reader = None
+    
+    def _get_reader(self):
+        """Lazy initialization of EasyOCR reader"""
+        if self._reader is None:
+            try:
+                import easyocr
+                languages = self.config.get("languages", ["en"])
+                self._reader = easyocr.Reader(languages, gpu=False)
+            except Exception as e:
+                raise RuntimeError(f"Failed to initialize EasyOCR: {e}")
+        return self._reader
+    
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        """Extract text from image using OCR"""
+        """Extract text from image using EasyOCR"""
         params = params or {}
         
         # Get image path
@@ -64,80 +79,39 @@ class OCRBlock(UniversalBlock):
                 "error": f"Image file not found: {image_path}"
             }
         
-        # Try EasyOCR first (no system dependencies)
-        easyocr_result = await self._try_easyocr(image_path, params)
-        if easyocr_result.get("status") == "success":
-            return easyocr_result
-        
-        # Fallback: Try Tesseract OCR
         try:
-            import pytesseract
-            from PIL import Image
-            
-            # Open image
-            image = Image.open(image_path)
-            
-            # Configure OCR
-            lang = params.get("language", self.config.get("language", "eng"))
-            
-            # Extract text
-            text = pytesseract.image_to_string(image, lang=lang)
-            
-            # Get confidence data
-            data = pytesseract.image_to_data(image, lang=lang, output_type=pytesseract.Output.DICT)
-            
-            # Calculate average confidence
-            confidences = [int(c) for c in data["conf"] if int(c) > 0]
-            avg_confidence = sum(confidences) / len(confidences) / 100 if confidences else 0.5
-            
-            # Count words
-            word_count = len(text.split())
-            
-            return {
-                "status": "success",
-                "text": text.strip(),
-                "confidence": round(avg_confidence, 2),
-                "word_count": word_count,
-                "language": lang,
-                "image_size": f"{image.width}x{image.height}"
-            }
-            
-        except ImportError:
-            return {
-                "status": "error",
-                "text": "",
-                "confidence": 0,
-                "error": "No OCR engine available. Install easyocr or pytesseract."
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "text": "",
-                "confidence": 0,
-                "error": f"OCR failed: {str(e)}"
-            }
-    
-    async def _try_easyocr(self, image_path: str, params: Dict) -> Dict:
-        """Fallback OCR using EasyOCR"""
-        try:
-            import easyocr
-            
-            reader = easyocr.Reader(['en'])
+            # Use EasyOCR for text extraction
+            reader = self._get_reader()
             results = reader.readtext(image_path)
             
-            # Combine text
-            texts = [result[1] for result in results]
-            full_text = "\n".join(texts)
+            if not results:
+                return {
+                    "status": "success",
+                    "text": "",
+                    "confidence": 0,
+                    "word_count": 0,
+                    "message": "No text detected in image"
+                }
             
-            # Average confidence
-            confidences = [result[2] for result in results]
-            avg_conf = sum(confidences) / len(confidences) if confidences else 0.5
+            # Combine all detected text
+            texts = []
+            confidences = []
+            
+            for (bbox, text, conf) in results:
+                if text.strip():
+                    texts.append(text)
+                    confidences.append(conf)
+            
+            full_text = "\n".join(texts)
+            avg_confidence = sum(confidences) / len(confidences) if confidences else 0
+            word_count = len(full_text.split())
             
             return {
                 "status": "success",
                 "text": full_text,
-                "confidence": round(avg_conf, 2),
-                "word_count": len(full_text.split()),
+                "confidence": round(avg_confidence, 2),
+                "word_count": word_count,
+                "detections": len(results),
                 "engine": "easyocr"
             }
             
@@ -146,7 +120,14 @@ class OCRBlock(UniversalBlock):
                 "status": "error",
                 "text": "",
                 "confidence": 0,
-                "error": "No OCR engine available. Install pytesseract or easyocr."
+                "error": "EasyOCR not installed. Run: pip install easyocr"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "text": "",
+                "confidence": 0,
+                "error": f"OCR failed: {str(e)}"
             }
     
     def _get_image_path(self, input_data: Any) -> str:
