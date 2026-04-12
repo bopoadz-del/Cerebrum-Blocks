@@ -699,13 +699,6 @@ async def get_usage(key: str, admin_key: Optional[str] = None):
     return await block.execute({"action": "get_usage", "key": key, "admin_key": admin_key})
 
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
-# CORS fix deployed - Sat Apr 11 22:21:38 UTC 2026
-# Redeploy trigger: Sat Apr 11 22:53:40 UTC 2026
-
-
 # -------------------- DEBUG ENDPOINT --------------------
 @app.get("/debug/env")
 def debug_env():
@@ -717,3 +710,10 @@ def debug_env():
         "environment": os.getenv("ENV", "unknown"),
         "data_dir": os.getenv("DATA_DIR", "not_set")
     }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+# CORS fix deployed - Sat Apr 11 22:21:38 UTC 2026
+# Redeploy trigger: Sat Apr 11 22:53:40 UTC 2026
