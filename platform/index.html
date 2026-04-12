@@ -70,7 +70,7 @@
     <div class="chain-indicator" id="chainIndicator">⚡ Processing...</div>
 
 <script>
-const API_BASE = 'https://cerebrum-platform-api.onrender.com';
+const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://cerebrum-platform-api.onrender.com';
 
 function addMessage(text, role) {
     const div = document.createElement('div');
