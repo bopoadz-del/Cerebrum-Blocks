@@ -12,6 +12,8 @@ services:
         value: /app/data
       - key: ENV
         value: production
+      - key: DEEPSEEK_API_KEY
+        value: sk-62229915230e448b82ea08550d11fa86
     disk:
       name: data
       mountPath: /app/data
