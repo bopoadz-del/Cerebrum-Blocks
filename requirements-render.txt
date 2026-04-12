@@ -1,7 +1,8 @@
 # FastAPI & Server
-fastapi>=0.104.0
+fastapi>=0.104.0,<0.136.0
 uvicorn[standard]>=0.24.0
-pydantic>=2.5.0
+pydantic==2.5.3
+pydantic-core==2.14.6
 python-multipart>=0.0.6
 aiofiles>=23.2.0
 python-dotenv>=1.0.0
@@ -19,10 +20,33 @@ pytest-asyncio>=0.21.0
 pytest-cov>=4.1.0
 pytest-json-report>=1.5.0
 
-# AI Providers (for DeepSeek, OpenAI)
-openai>=1.3.0
+# PDF Processing
+pymupdf>=1.23.0
+PyPDF2>=3.0.0
 
-# Note: chromadb, sentence-transformers, anthropic are optional
-# Install full requirements with: pip install -r requirements.txt
-# Deployed: Sat Apr 11 22:26:40 UTC 2026
-# Deployed: Sat Apr 11 22:26:45 UTC 2026
+# OCR
+pytesseract>=0.3.10
+
+# Audio
+SpeechRecognition>=3.10.0
+
+# Code Execution
+ RestrictedPython>=7.0
+
+# Vector Search
+chromadb==0.4.18
+sentence-transformers==2.2.2
+numpy==1.26.4
+
+# Web Scraping
+beautifulsoup4>=4.12.0
+
+# Search
+serpapi>=0.1.0
+
+# Translations
+googletrans==4.0.0rc1
+
+# Utilities
+tenacity>=8.2.0
+colorama>=0.4.6
