@@ -191,7 +191,7 @@ async function handleFile(input) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                steps: [{block: 'chat', params: {mock: true}}], 
+                steps: [{block: 'chat', params: {}}], 
                 initial_input: `Analyze this file content and extract key information:\n\nFile: ${file.name}\nSize: ${(file.size / 1024).toFixed(1)} KB\n\nContent:\n${fileContent.substring(0, 3000)}` 
             })
         });
