@@ -42,7 +42,7 @@ class OCRBlock(UniversalBlock):
     }
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        """Extract text from image using Tesseract OCR"""
+        """Extract text from image using OCR"""
         params = params or {}
         
         # Get image path
@@ -64,7 +64,12 @@ class OCRBlock(UniversalBlock):
                 "error": f"Image file not found: {image_path}"
             }
         
-        # Try Tesseract OCR
+        # Try EasyOCR first (no system dependencies)
+        easyocr_result = await self._try_easyocr(image_path, params)
+        if easyocr_result.get("status") == "success":
+            return easyocr_result
+        
+        # Fallback: Try Tesseract OCR
         try:
             import pytesseract
             from PIL import Image
@@ -98,8 +103,12 @@ class OCRBlock(UniversalBlock):
             }
             
         except ImportError:
-            # Fallback: Try easyocr
-            return await self._try_easyocr(image_path, params)
+            return {
+                "status": "error",
+                "text": "",
+                "confidence": 0,
+                "error": "No OCR engine available. Install easyocr or pytesseract."
+            }
         except Exception as e:
             return {
                 "status": "error",
