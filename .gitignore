@@ -48,3 +48,8 @@ env/
 .dmypy.json
 dmypy.json
 frontend/node_modules
+
+# Secrets vault (plaintext removed - see vault/secrets.tar.gz.gpg)
+.ssh/
+.render/
+
