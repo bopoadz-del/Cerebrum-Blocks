@@ -38,6 +38,8 @@ class SecurityContainer(UniversalContainer):
             return await self.audit(params)
         elif action == "validate_file":
             return await self.validate_file(input_data, params)
+        elif action == "validate_block_code":
+            return await self.validate_block_code(input_data, params)
         elif action == "health_check":
             return await self.health_check()
         else:
@@ -284,10 +286,204 @@ class SecurityContainer(UniversalContainer):
             "scanned": True
         }
 
+    async def validate_block_code(self, input_data: Any, params: Dict) -> Dict:
+        """Validate block source code before publishing to store"""
+        import re
+        import ast
+        import hashlib
+        from datetime import datetime
+
+        code = ""
+        block_name = "unknown"
+        language = "python"
+
+        if isinstance(input_data, dict):
+            code = input_data.get("code", "")
+            block_name = input_data.get("block_name", block_name)
+            language = input_data.get("language", language)
+        if params:
+            code = code or params.get("code", "")
+            block_name = params.get("block_name", block_name) if params.get("block_name") else block_name
+            language = params.get("language", language) if params.get("language") else language
+
+        if not code:
+            return {"status": "error", "error": "No code provided", "safe": False}
+
+        # Dangerous patterns for Python blocks
+        python_dangerous = [
+            (r'\bexec\s*\(', "exec() execution"),
+            (r'\beval\s*\(', "eval() execution"),
+            (r'\bcompile\s*\(', "code compilation"),
+            (r'\b__import__\s*\(', "dynamic import"),
+            (r'\bimportlib\b', "importlib usage"),
+            (r'\bsubprocess\b', "subprocess calls"),
+            (r'\bos\.system\s*\(', "system command execution"),
+            (r'\bos\.popen\s*\(', "popen execution"),
+            (r'\bpty\.spawn\s*\(', "spawn shell"),
+            (r'\bsocket\b', "network sockets"),
+            (r'\brequests\.(get|post|put|delete)\s*\(', "HTTP requests"),
+            (r'\burllib\b', "urllib network access"),
+            (r'\bftplib\b', "FTP access"),
+            (r'\bparamiko\b', "SSH access"),
+            (r'\bsmtplib\b', "email sending"),
+            (r'\bopen\s*\([^)]*[\'"]/(etc|root|home|var)', "sensitive file access"),
+            (r'\bopen\s*\([^)]*[\'"].*\.(key|pem|env|config)', "credential file access"),
+            (r'\brm\s+-rf\b', "recursive delete"),
+            (r'\bshutil\.rmtree\s*\(', "directory deletion"),
+            (r'\bos\.remove\s*\(', "file deletion"),
+            (r'\bos\.chmod\s*\(', "permission changes"),
+            (r'\bos\.chown\s*\(', "ownership changes"),
+            (r'\bpty\b', "pseudo-terminal"),
+            (r'\bplatform\b', "system fingerprinting"),
+            (r'\bgetpass\b', "credential harvesting"),
+            (r'\bkeyring\b', "password access"),
+            (r'\bcryptography\b', "crypto operations"),
+            (r'\bpickle\.loads\s*\(', "pickle deserialization (RCE risk)"),
+            (r'\byaml\.load\s*\(', "YAML unsafe load"),
+            (r'\bxml\.etree\.ElementTree\b', "XML parsing (XXE risk)"),
+            (r'\bxml\.sax\b', "XML SAX parsing"),
+            (r'\bxmlrpc\b', "XML-RPC"),
+            (r'\bBase64\s*\.\s*b64decode\s*\(.*exec\s*\(|eval\s*\(', "encoded payload execution"),
+        ]
+
+        # Dangerous patterns for JavaScript/TypeScript blocks
+        js_dangerous = [
+            (r'\beval\s*\(', "eval() execution"),
+            (r'\bFunction\s*\(', "Function constructor"),
+            (r'\bsetTimeout\s*\([^,]*["\']', "string timeout (code exec)"),
+            (r'\bsetInterval\s*\([^,]*["\']', "string interval (code exec)"),
+            (r'\brequire\s*\(\s*["\']child_process', "child_process"),
+            (r'\brequire\s*\(\s*["\']fs["\']\s*\)\s*\.\s*(writeFile|unlink|rmdir)', "file system deletion"),
+            (r'\brequire\s*\(\s*["\']http["\']', "HTTP server"),
+            (r'\brequire\s*\(\s*["\']net["\']', "network access"),
+            (r'\brequire\s*\(\s*["\']dgram["\']', "UDP sockets"),
+            (r'\brequire\s*\(\s*["\']tls["\']', "TLS/network"),
+            (r'\bprocess\.env', "environment access"),
+            (r'\bprocess\.exit\s*\(', "process termination"),
+            (r'\brequire\s*\(\s*["\']vm["\']', "vm module (sandbox escape)"),
+            (r'\bWebSocket\s*\(', "WebSocket connections"),
+            (r'\bfetch\s*\(', "fetch API calls"),
+            (r'\bXMLHttpRequest\b', "XHR requests"),
+            (r'\bdocument\.write\s*\(', "DOM manipulation"),
+            (r'\blocalStorage\b', "storage access"),
+            (r'\bsessionStorage\b', "session storage"),
+            (r'\batob\s*\(.*\btobytes', "base64 decode chain"),
+            (r'\bimport\s*\(\s*["\']https?://', "dynamic URL import"),
+        ]
+
+        patterns = python_dangerous if language == "python" else js_dangerous
+
+        violations = []
+        lines = code.split('\n')
+
+        for i, line in enumerate(lines, 1):
+            for pattern, description in patterns:
+                if re.search(pattern, line, re.IGNORECASE):
+                    violations.append({
+                        "line": i,
+                        "code": line.strip()[:50],
+                        "risk": description
+                    })
+
+        # AST analysis for Python (deeper inspection)
+        if language == "python":
+            try:
+                tree = ast.parse(code)
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Import):
+                        for alias in node.names:
+                            if alias.name in ['subprocess', 'os', 'socket', 'requests', 'urllib', 'ftplib', 'smtplib', 'paramiko', 'pty', 'pickle', 'yaml', 'xmlrpc']:
+                                violations.append({
+                                    "line": getattr(node, 'lineno', 0),
+                                    "code": f"import {alias.name}",
+                                    "risk": f"Import of restricted module: {alias.name}"
+                                })
+                    elif isinstance(node, ast.ImportFrom):
+                        if node.module in ['subprocess', 'os', 'socket', 'requests', 'urllib', 'ftplib', 'smtplib', 'paramiko', 'pty', 'pickle', 'yaml', 'xmlrpc', 'system', 'popen']:
+                            violations.append({
+                                "line": getattr(node, 'lineno', 0),
+                                "code": f"from {node.module} import ...",
+                                "risk": f"Import from restricted module: {node.module}"
+                            })
+                    elif isinstance(node, ast.Call):
+                        if isinstance(node.func, ast.Name):
+                            if node.func.id in ['exec', 'eval', 'compile', '__import__']:
+                                violations.append({
+                                    "line": getattr(node, 'lineno', 0),
+                                    "code": f"{node.func.id}(...)",
+                                    "risk": f"Dangerous function call: {node.func.id}"
+                                })
+            except SyntaxError:
+                return {
+                    "status": "error",
+                    "error": "Invalid Python syntax",
+                    "safe": False,
+                    "violation": "syntax_error"
+                }
+
+        # Calculate code hash for integrity tracking
+        code_hash = hashlib.sha256(code.encode()).hexdigest()[:16]
+
+        # Severity assessment
+        critical = ['exec', 'eval', 'subprocess', 'os.system', 'pickle.loads', '__import__', 'compile']
+        high = ['socket', 'requests', 'urllib', 'ftplib', 'paramiko', 'pty', 'yaml.load']
+
+        severity = "low"
+        for v in violations:
+            risk = v.get("risk", "").lower()
+            if any(c in risk for c in critical):
+                severity = "critical"
+                break
+            elif any(h in risk for h in high):
+                severity = "high" if severity != "critical" else severity
+
+        if violations:
+            return {
+                "status": "error",
+                "error": f"Security violations found in block '{block_name}'",
+                "safe": False,
+                "violation": "dangerous_code",
+                "severity": severity,
+                "violations_count": len(violations),
+                "violations": violations[:5],
+                "code_hash": code_hash,
+                "recommendation": "Remove dangerous imports and function calls. Use provided APIs only."
+            }
+
+        return {
+            "status": "success",
+            "safe": True,
+            "block_name": block_name,
+            "language": language,
+            "lines_of_code": len(lines),
+            "code_hash": code_hash,
+            "scanned": True,
+            "violations_found": 0
+        }
+
+    async def audit_block_submission(self, block_name: str, validation_result: dict, submitter: str) -> dict:
+        """Log all block submissions for security review"""
+        from datetime import datetime
+        audit_record = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "block_name": block_name,
+            "submitter": submitter,
+            "validation_passed": validation_result.get("safe"),
+            "code_hash": validation_result.get("code_hash"),
+            "lines_of_code": validation_result.get("lines_of_code"),
+            "violations": validation_result.get("violations_count", 0),
+            "severity": validation_result.get("severity", "none")
+        }
+        self.audit_log.append({
+            "action": "block_submission",
+            **audit_record
+        })
+        return audit_record
+
     async def health_check(self) -> Dict:
         return {
             "status": "healthy",
             "container": self.name,
-            "capabilities": ["create_key", "auth", "check_rate", "sandbox_check", "audit", "validate_file"],
+            "capabilities": ["create_key", "auth", "check_rate", "sandbox_check", "audit", "validate_file", "validate_block_code"],
             "keys_issued": len(self.api_keys)
         }
