@@ -4802,6 +4802,15 @@ Total Extension of Time Sought: {total_delay} days
             "commissioning_checklist": self.commissioning_checklist,
             "resource_histogram": self.resource_histogram,
             "claims_builder": self.claims_builder,
+            "tender_bid_analysis": self.tender_bid_analysis,
+            "variation_order_manager": self.variation_order_manager,
+            "forensic_delay_analysis": self.forensic_delay_analysis,
+            "cash_flow_forecast": self.cash_flow_forecast,
+            "procurement_optimizer": self.procurement_optimizer,
+            "esg_sustainability_report": self.esg_sustainability_report,
+            "om_manual_generator": self.om_manual_generator,
+            "digital_twin_sync": self.digital_twin_sync,
+            "intelligent_workflow": self.intelligent_workflow,
             "health_check": self.health_check,
         }
         
