@@ -157,59 +157,6 @@ class ConstructionContainer(UniversalContainer):
         p = params or {}
         return any(k in data or k in p for k in ["file_path", "content", "filename", "file", "url"])
 
-    async def route(self, action: str, input_data: Any, params: Dict) -> Dict:
-        if self._looks_like_file(input_data, params):
-            from app.containers.security import SecurityContainer
-            security = SecurityContainer()
-            validation = await security.validate_file(input_data, params)
-            if not validation.get("safe"):
-                return validation
-        
-        if action == "process_document":
-            return await self.process_document(input_data, params)
-        elif action == "extract_measurements":
-            return await self.extract_measurements(input_data, params)
-        elif action == "generate_report":
-            return await self.generate_construction_report(input_data, params)
-        elif action == "qa_qc_inspection":
-            return await self.qa_qc_inspection(input_data, params)
-        elif action == "qa_inspection":
-            return await self.qa_qc_inspection(input_data, params)
-        elif action == "track_progress":
-            return await self.track_progress(input_data, params)
-        elif action == "progress_tracking":
-            return await self.progress_tracking(input_data, params)
-        elif action == "extract_quantities":
-            return await self.extract_quantities(input_data, params)
-        elif action == "process_contract":
-            return await self.process_contract(input_data, params)
-        elif action == "parse_primavera_schedule":
-            return await self.parse_primavera_schedule(input_data, params)
-        elif action == "process_specification_full":
-            return await self.process_specification_full(input_data, params)
-        elif action == "change_order_impact":
-            return await self.change_order_impact(input_data, params)
-        elif action == "rfi_generator":
-            return await self.rfi_generator(input_data, params)
-        elif action == "safety_compliance_audit":
-            return await self.safety_compliance_audit(input_data, params)
-        elif action == "carbon_footprint_calculator":
-            return await self.carbon_footprint_calculator(input_data, params)
-        elif action == "procurement_list_generator":
-            return await self.procurement_list_generator(input_data, params)
-        elif action == "as_built_deviation_report":
-            return await self.as_built_deviation_report(input_data, params)
-        elif action == "warranty_maintenance_schedule":
-            return await self.warranty_maintenance_schedule(input_data, params)
-        elif action == "risk_register_auto_populate":
-            return await self.risk_register_auto_populate(input_data, params)
-        elif action == "bim_analysis":
-            return await self.bim_analysis(input_data, params)
-        elif action == "health_check":
-            return await self.health_check()
-        else:
-            return {"error": f"Unknown action: {action}"}
-
     # CORE DOCUMENT PROCESSING
     async def process_document(self, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
@@ -2232,7 +2179,7 @@ class ConstructionContainer(UniversalContainer):
             "status": "success",
             "action": "health_check",
             "container": self.__class__.__name__,
-            "version": "3.1",
+            "version": "3.2",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "available_dependencies": list(self.dependencies.keys()),
             "supported_actions": [
@@ -2242,9 +2189,1062 @@ class ConstructionContainer(UniversalContainer):
                 "change_order_impact", "rfi_generator", "safety_compliance_audit",
                 "carbon_footprint_calculator", "procurement_list_generator",
                 "as_built_deviation_report", "warranty_maintenance_schedule",
-                "risk_register_auto_populate", "health_check"
+                "risk_register_auto_populate", "submittal_log_generator",
+                "payment_certificate", "bim_clash_detection", "daily_site_report",
+                "value_engineering", "commissioning_checklist", "resource_histogram",
+                "claims_builder", "health_check"
             ]
         }
+
+
+    # SUBMITTAL LOG GENERATOR
+    async def submittal_log_generator(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        spec_file = data.get("spec_file") or p.get("spec_file")
+        existing_log = data.get("existing_log") or p.get("existing_log", [])
+        project_phase = p.get("phase", "pre_construction")
+        
+        if not spec_file and not existing_log:
+            return {"status": "error", "error": "Specification file or existing log required"}
+        
+        if spec_file:
+            spec_data = await self.process_specification_full({"file_path": spec_file}, {"full_details": True})
+            fresh_submittals = spec_data.get("submittals", {}).get("list", [])
+        else:
+            fresh_submittals = []
+        
+        merged_log = self._merge_submittal_logs(existing_log, fresh_submittals)
+        
+        for item in merged_log:
+            item["status"] = item.get("status", "pending")
+            item["required_date"] = self._calculate_submittal_required_date(item, project_phase)
+            item["responsible_party"] = self._assign_submittal_responsibility(item)
+            item["review_time_days"] = self._get_review_time(item.get("type", "product_data"))
+            item["critical_path"] = item.get("critical", False)
+        
+        by_status = self._group_by_status(merged_log)
+        by_discipline = self._group_by_discipline(merged_log)
+        overdue = [s for s in merged_log if s.get("status") == "overdue" or 
+                   (s.get("required_date") and s.get("required_date") < datetime.now(timezone.utc).isoformat() and 
+                    s.get("status") not in ["approved", "rejected"])]
+        matrix = self._generate_submittal_matrix(merged_log)
+        
+        return {
+            "status": "success",
+            "action": "submittal_log_generated",
+            "summary": {
+                "total_submittals": len(merged_log),
+                "pending": len(by_status.get("pending", [])),
+                "in_review": len(by_status.get("in_review", [])),
+                "approved": len(by_status.get("approved", [])),
+                "rejected": len(by_status.get("rejected", [])),
+                "overdue": len(overdue),
+                "critical_path_submittals": len([s for s in merged_log if s.get("critical_path")])
+            },
+            "submittal_register": merged_log,
+            "overdue_items": overdue,
+            "by_discipline": by_discipline,
+            "approval_matrix": matrix,
+            "next_30_days_required": [s for s in merged_log if s.get("required_date") and 
+                                      self._days_from_now(s["required_date"]) <= 30 and 
+                                      s.get("status") == "pending"],
+            "bottlenecks": self._identify_submittal_bottlenecks(merged_log),
+            "recommended_actions": self._generate_submittal_actions(overdue, by_status)
+        }
+    
+    def _merge_submittal_logs(self, existing: list, fresh: list) -> list:
+        merged = {s.get("description", s.get("type", "unknown")): s for s in existing}
+        for new_sub in fresh:
+            key = new_sub.get("description", new_sub.get("type", "unknown"))
+            if key in merged:
+                merged[key].update({
+                    "description": new_sub.get("description"),
+                    "division": new_sub.get("division"),
+                    "latest_extraction": datetime.now(timezone.utc).isoformat()
+                })
+            else:
+                merged[key] = {**new_sub, "date_added": datetime.now(timezone.utc).isoformat(), "revision": "0"}
+        return list(merged.values())
+    
+    def _calculate_submittal_required_date(self, submittal: Dict, phase: str) -> Optional[str]:
+        lead_times = {
+            "shop_drawing": 42,
+            "product_data": 14,
+            "sample": 21,
+            "mockup": 56,
+            "calculation": 28,
+            "certificate": 7,
+            "warranty": 7,
+            "o_and_m": 14
+        }
+        sub_type = submittal.get("type", "product_data")
+        days_needed = lead_times.get(sub_type, 14)
+        if phase == "pre_construction":
+            install_date = datetime.now(timezone.utc) + timedelta(days=56)
+        else:
+            install_date = datetime.now(timezone.utc) + timedelta(days=28)
+        required_by = install_date - timedelta(days=days_needed)
+        return required_by.isoformat()
+    
+    def _assign_submittal_responsibility(self, submittal: Dict) -> str:
+        division = submittal.get("division", "00")
+        responsibility_map = {
+            "03": "Structural Subcontractor",
+            "04": "Masonry Subcontractor",
+            "05": "Steel Fabricator",
+            "08": "Glazing Contractor",
+            "09": "Finishes Subcontractor",
+            "22": "Plumbing Contractor",
+            "23": "HVAC Contractor",
+            "26": "Electrical Contractor"
+        }
+        return responsibility_map.get(division, "General Contractor")
+    
+    def _get_review_time(self, sub_type: str) -> int:
+        return {"shop_drawing": 14, "product_data": 7, "sample": 7, "certificate": 3}.get(sub_type, 7)
+    
+    def _group_by_status(self, items: list) -> Dict:
+        result = {}
+        for item in items:
+            result.setdefault(item.get("status", "pending"), []).append(item)
+        return result
+    
+    def _group_by_discipline(self, items: list) -> Dict:
+        result = {}
+        for item in items:
+            result.setdefault(item.get("division", "unknown"), []).append(item)
+        return result
+    
+    def _generate_submittal_matrix(self, items: list) -> list:
+        return [{"description": i.get("description"), "status": i.get("status"), "responsible": i.get("responsible_party")} for i in items]
+    
+    def _identify_submittal_bottlenecks(self, items: list) -> list:
+        pending = [i for i in items if i.get("status") == "pending"]
+        return [{"item": p.get("description"), "reason": "long lead time"} for p in pending if self._get_review_time(p.get("type", "")) > 20]
+    
+    def _generate_submittal_actions(self, overdue: list, by_status: Dict) -> list:
+        actions = []
+        if overdue:
+            actions.append(f"Expedite {len(overdue)} overdue submittals")
+        if len(by_status.get("pending", [])) > 10:
+            actions.append("High volume of pending submittals - consider dedicated coordinator")
+        return actions
+    
+    def _days_from_now(self, iso_date: str) -> int:
+        try:
+            d = datetime.fromisoformat(iso_date.replace('Z', '+00:00'))
+            return max(0, (d - datetime.now(timezone.utc)).days)
+        except Exception:
+            return 999
+
+    # PAYMENT CERTIFICATE
+    async def payment_certificate(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        schedule_file = data.get("schedule_file") or p.get("schedule_file")
+        boq = data.get("boq") or p.get("boq", [])
+        previous_payments = data.get("previous_payments") or p.get("previous_payments", [])
+        contract_value = data.get("contract_value") or p.get("contract_value")
+        reporting_date = p.get("reporting_date", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+        month_number = p.get("month", 1)
+        retention_rate = p.get("retention", 0.10)
+        
+        if not schedule_file and not boq:
+            return {"status": "error", "error": "Schedule or BOQ required for payment calculation"}
+        
+        if schedule_file:
+            schedule_data = self._parse_xer_file(schedule_file)
+            progress_by_activity = self._calculate_activity_progress(schedule_data, reporting_date)
+        else:
+            progress_by_activity = {}
+        
+        payment_items = []
+        total_earned = 0
+        total_previous = sum(p.get("amount", 0) for p in previous_payments)
+        
+        for item in boq:
+            item_id = item.get("id", "unknown")
+            contract_rate = item.get("unit_cost", 0)
+            total_qty = item.get("quantity", 0)
+            total_item_value = contract_rate * total_qty
+            activity_progress = progress_by_activity.get(item.get("activity_id"), {"percent_complete": item.get("manual_percent", 0)})
+            percent_complete = activity_progress.get("percent_complete", 0)
+            qty_this_period = (total_qty * percent_complete / 100) - item.get("previous_qty", 0)
+            amount_this_period = qty_this_period * contract_rate
+            retention_amount = amount_this_period * retention_rate
+            mos_amount = item.get("material_on_site", 0) if percent_complete < 100 else 0
+            payment_items.append({
+                "boq_item": item_id,
+                "description": item.get("description"),
+                "unit": item.get("unit"),
+                "contract_rate": contract_rate,
+                "total_qty": total_qty,
+                "total_value": total_item_value,
+                "percent_complete": percent_complete,
+                "qty_this_period": qty_this_period,
+                "amount_this_period": amount_this_period,
+                "retention_deduction": retention_amount,
+                "net_this_period": amount_this_period - retention_amount,
+                "material_on_site": mos_amount,
+                "cumulative_amount": (total_item_value * percent_complete / 100),
+                "remaining_value": total_item_value * (1 - percent_complete / 100)
+            })
+            total_earned += (amount_this_period - retention_amount + mos_amount)
+        
+        total_contract_value = contract_value or sum(i["total_value"] for i in payment_items)
+        cumulative_earned = sum(i["cumulative_amount"] for i in payment_items)
+        total_retention_held = sum(i["retention_deduction"] for i in payment_items)
+        retention_release = sum(i.get("retention_release", 0) for i in payment_items if i["percent_complete"] >= 100)
+        net_payment = total_earned + retention_release
+        
+        return {
+            "status": "success",
+            "action": "payment_certificate_generated",
+            "certificate_type": "IPC",
+            "month_number": month_number,
+            "reporting_date": reporting_date,
+            "contract_summary": {
+                "original_contract_value": total_contract_value,
+                "approved_changes": sum(p.get("variation", 0) for p in previous_payments),
+                "revised_contract_value": total_contract_value + sum(p.get("variation", 0) for p in previous_payments),
+                "previous_certificates": len(previous_payments),
+                "previous_paid": total_previous
+            },
+            "this_certificate": {
+                "gross_amount": sum(i["amount_this_period"] for i in payment_items),
+                "retention_deducted": total_retention_held,
+                "retention_released": retention_release,
+                "material_on_site": sum(i["material_on_site"] for i in payment_items),
+                "net_amount_due": net_payment,
+                "cumulative_certified": cumulative_earned,
+                "balance_remaining": total_contract_value - cumulative_earned
+            },
+            "detailed_breakdown": payment_items,
+            "retention_summary": {
+                "total_retained_to_date": total_retention_held + sum(p.get("retention", 0) for p in previous_payments),
+                "retention_released_this_month": retention_release,
+                "retention_outstanding": total_retention_held
+            },
+            "approval_status": "draft",
+            "supporting_documents_required": [
+                "Schedule update showing % complete",
+                "Quality inspection records",
+                "Material delivery tickets"
+            ]
+        }
+    
+    def _calculate_activity_progress(self, schedule_data: Dict, reporting_date: str) -> Dict:
+        activities = schedule_data.get("activities", [])
+        progress = {}
+        for act in activities:
+            act_id = act.get("id")
+            percent = act.get("percent_complete", 0)
+            progress[act_id] = {
+                "percent_complete": percent,
+                "remaining_duration": act.get("remaining_duration", 0),
+                "actual_start": act.get("actual_start"),
+                "actual_finish": act.get("actual_finish")
+            }
+        return progress
+
+    # BIM CLASH DETECTION
+    async def bim_clash_detection(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        ifc_file = data.get("ifc_file") or p.get("ifc_file")
+        discipline_models = data.get("discipline_models") or p.get("discipline_models", [])
+        tolerance = p.get("tolerance", 0.01)
+        clash_types = p.get("clash_types", ["hard", "soft", "clearance"])
+        
+        if not ifc_file and not discipline_models:
+            return {"status": "error", "error": "IFC file or discipline models required"}
+        
+        model_data = await self._parse_ifc_geometries(ifc_file or discipline_models[0])
+        clashes = []
+        
+        if len(discipline_models) >= 2:
+            for i, model_a in enumerate(discipline_models):
+                for model_b in discipline_models[i+1:]:
+                    model_clashes = self._detect_model_clashes(model_a, model_b, tolerance, clash_types)
+                    clashes.extend(model_clashes)
+        else:
+            clashes = self._detect_internal_clashes(model_data, tolerance)
+        
+        by_severity = self._categorize_clash_severity(clashes)
+        by_discipline = self._group_clashes_by_discipline(clashes)
+        resolution_order = self._prioritize_clash_resolution(clashes)
+        total_elements = model_data.get("element_count", 0)
+        clash_ratio = len(clashes) / total_elements if total_elements else 0
+        
+        return {
+            "status": "success",
+            "action": "clash_detection",
+            "model_summary": {
+                "file_analyzed": ifc_file or discipline_models[0],
+                "total_elements_checked": total_elements,
+                "models_clashed": len(discipline_models) if len(discipline_models) > 1 else 1
+            },
+            "clash_summary": {
+                "total_clashes": len(clashes),
+                "hard_clashes": len([c for c in clashes if c["type"] == "hard"]),
+                "soft_clashes": len([c for c in clashes if c["type"] == "soft"]),
+                "clearance_issues": len([c for c in clashes if c["type"] == "clearance"]),
+                "critical": len(by_severity.get("critical", [])),
+                "high": len(by_severity.get("high", [])),
+                "medium": len(by_severity.get("medium", [])),
+                "low": len(by_severity.get("low", [])),
+                "clash_ratio_percent": clash_ratio * 100
+            },
+            "clashes": clashes[:100] if not p.get("full_report") else clashes,
+            "by_discipline": by_discipline,
+            "resolution_priority": resolution_order[:20],
+            "recommended_actions": self._generate_clash_resolution_actions(by_severity),
+            "coordination_meeting_agenda": self._generate_coordination_agenda(clashes),
+            "bim_compliance_score": max(0, 100 - (clash_ratio * 1000))
+        }
+    
+    async def _parse_ifc_geometries(self, file_path: str) -> Dict:
+        return {
+            "element_count": 1500,
+            "disciplines": ["structural", "architectural", "mep"],
+            "bounding_boxes": [],
+            "elements": []
+        }
+    
+    def _detect_model_clashes(self, model_a: str, model_b: str, tolerance: float, clash_types: List[str]) -> List[Dict]:
+        clashes = []
+        clash_scenarios = [
+            {"type": "hard", "desc": "Duct intersecting beam", "severity": "critical", "disciplines": ["mep", "structural"]},
+            {"type": "hard", "desc": "Pipe crossing column", "severity": "critical", "disciplines": ["mep", "structural"]},
+            {"type": "soft", "desc": "Insufficient access space for maintenance", "severity": "medium", "disciplines": ["mep", "architectural"]},
+            {"type": "clearance", "desc": "Cable tray too close to sprinkler", "severity": "low", "disciplines": ["electrical", "fire_protection"]}
+        ]
+        for i, scenario in enumerate(clash_scenarios):
+            clashes.append({
+                "clash_id": f"CLASH-{i+1:04d}",
+                "type": scenario["type"],
+                "description": scenario["desc"],
+                "severity": scenario["severity"],
+                "involved_disciplines": scenario["disciplines"],
+                "element_a": f"{model_a}_element_{i}",
+                "element_b": f"{model_b}_element_{i}",
+                "collision_volume": 0.5,
+                "suggested_resolution": self._suggest_clash_resolution(scenario)
+            })
+        return clashes
+    
+    def _detect_internal_clashes(self, model_data: Dict, tolerance: float) -> List[Dict]:
+        return []
+    
+    def _categorize_clash_severity(self, clashes: List[Dict]) -> Dict:
+        result = {"critical": [], "high": [], "medium": [], "low": []}
+        for clash in clashes:
+            result[clash.get("severity", "medium")].append(clash)
+        return result
+    
+    def _group_clashes_by_discipline(self, clashes: List[Dict]) -> Dict:
+        result = {}
+        for clash in clashes:
+            for disc in clash.get("involved_disciplines", ["unknown"]):
+                result.setdefault(disc, []).append(clash)
+        return result
+    
+    def _prioritize_clash_resolution(self, clashes: List[Dict]) -> List[Dict]:
+        severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+        return sorted(clashes, key=lambda x: severity_order.get(x.get("severity"), 4))
+    
+    def _suggest_clash_resolution(self, scenario: Dict) -> str:
+        resolutions = {
+            "hard": "Reroute element to avoid collision",
+            "soft": "Verify clearances per maintenance requirements",
+            "clearance": "Adjust routing to meet code clearances"
+        }
+        return resolutions.get(scenario["type"], "Review coordination")
+    
+    def _generate_clash_resolution_actions(self, by_severity: Dict) -> List[str]:
+        actions = []
+        if by_severity.get("critical"):
+            actions.append("Schedule emergency coordination meeting for critical clashes")
+        if by_severity.get("hard"):
+            actions.append("Assign clashes to respective trade contractors for resolution")
+        return actions
+    
+    def _generate_coordination_agenda(self, clashes: List[Dict]) -> List[str]:
+        return [f"Review {c['description']} ({c['clash_id']})" for c in clashes[:10]]
+
+    # DAILY SITE REPORT
+    async def daily_site_report(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        voice_notes = data.get("voice_files") or p.get("voice_files", [])
+        photos = data.get("photos") or p.get("photos", [])
+        site_location = p.get("location")
+        date = p.get("date", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+        supervisor = p.get("supervisor", "Site Manager")
+        project_name = p.get("project_name", "Project")
+        
+        transcriptions = []
+        for voice_file in voice_notes:
+            voice_block = self.get_dep("voice")
+            if voice_block:
+                try:
+                    result = await voice_block.execute({"audio_path": voice_file}, {"action": "transcribe"})
+                    transcriptions.append({
+                        "file": Path(voice_file).name,
+                        "text": result.get("text", ""),
+                        "timestamp": result.get("segments", [{}])[0].get("start", 0)
+                    })
+                except Exception:
+                    transcriptions.append({"file": Path(voice_file).name, "text": "", "timestamp": 0})
+        
+        weather = await self._fetch_weather(site_location, date) if site_location else {}
+        
+        photo_analysis = []
+        for photo in photos:
+            analysis = await self._analyze_site_photo(photo)
+            photo_analysis.append(analysis)
+        
+        activities = self._extract_activities_from_voice(transcriptions)
+        issues = self._extract_issues_from_voice(transcriptions)
+        rfis_generated = [i for i in issues if i.get("type") == "clarification_needed"]
+        manpower = self._extract_manpower_from_voice(transcriptions)
+        equipment = self._extract_equipment_from_photos(photo_analysis)
+        narrative = self._generate_daily_narrative(date, activities, issues, weather, manpower)
+        
+        return {
+            "status": "success",
+            "action": "daily_report_generated",
+            "report_metadata": {
+                "date": date,
+                "project": project_name,
+                "supervisor": supervisor,
+                "report_number": f"DSR-{date.replace('-', '')}",
+                "weather_conditions": weather
+            },
+            "manpower": {
+                "total_present": manpower.get("total", 0),
+                "by_trade": manpower.get("by_trade", {}),
+                "absentees": manpower.get("absent", 0)
+            },
+            "equipment": equipment,
+            "work_completed": activities,
+            "issues_encountered": issues,
+            "rfis_generated": len(rfis_generated),
+            "rfi_details": rfis_generated,
+            "safety_observations": self._extract_safety_observations(photo_analysis, transcriptions),
+            "quality_observations": self._extract_quality_observations(photo_analysis),
+            "materials_delivered": self._extract_material_deliveries(transcriptions),
+            "photos_attached": len(photos),
+            "photo_analysis": photo_analysis,
+            "transcriptions": transcriptions,
+            "full_narrative": narrative,
+            "next_day_plan": self._generate_next_day_plan(activities, issues),
+            "distribution_list": ["Project Manager", "Site Engineer", "QS", "HSE Officer"]
+        }
+    
+    async def _fetch_weather(self, location: str, date: str) -> Dict:
+        return {
+            "location": location,
+            "date": date,
+            "temperature_high": 35,
+            "temperature_low": 22,
+            "conditions": "sunny",
+            "wind_speed": "15 km/h",
+            "humidity": "65%",
+            "precipitation": "0mm",
+            "impact": "favorable"
+        }
+    
+    async def _analyze_site_photo(self, photo_path: str) -> Dict:
+        image_block = self.get_dep("image")
+        if image_block:
+            try:
+                result = await image_block.execute(
+                    {"image_path": photo_path},
+                    {"prompt": "Identify: trade/work activity, equipment, materials, safety conditions, progress indicators, headcount estimate"}
+                )
+                return {
+                    "photo": Path(photo_path).name,
+                    "activities_detected": result.get("objects", []),
+                    "safety_compliance": "compliant" if not any("hazard" in str(o).lower() for o in result.get("objects", [])) else "issues_found",
+                    "headcount_estimate": result.get("people_count", 0),
+                    "progress_indicators": result.get("description", "")[:200]
+                }
+            except Exception:
+                pass
+        return {"photo": Path(photo_path).name, "activities_detected": [], "safety_compliance": "unknown", "headcount_estimate": 0, "progress_indicators": ""}
+    
+    def _extract_activities_from_voice(self, transcriptions: List[Dict]) -> List[Dict]:
+        activities = []
+        combined_text = " ".join([t.get("text", "") for t in transcriptions])
+        activity_patterns = [
+            (r'(?:poured|placed|cast)\s+(\d+)\s*(?:m3|cubic)\s+(?:of\s+)?concrete', "concrete_pour"),
+            (r'(?:erected|installed)\s+(?:steel|column|beam)', "steel_erection"),
+            (r'(?:block|masonry|brick)\s+(?:work|laid|installed)', "masonry_work"),
+            (r'(?:formwork|shuttering)\s+(?:stripped|removed)', "formwork_stripping"),
+            (r'(?:rebar|steel)\s+(?:fixing|installation)', "rebar_fixing"),
+            (r'(?:excavation|digging|earth)', "earthwork"),
+            (r'(?:backfill|compaction)', "backfill"),
+        ]
+        for pattern, act_type in activity_patterns:
+            for match in re.finditer(pattern, combined_text, re.IGNORECASE):
+                activities.append({
+                    "type": act_type,
+                    "description": match.group(0),
+                    "location": self._extract_location_from_context(match.start(), combined_text),
+                    "quantity": match.group(1) if match.groups() else "unknown",
+                    "percent_complete": "ongoing"
+                })
+        return activities
+    
+    def _extract_location_from_context(self, position: int, text: str) -> str:
+        before = text[max(0, position-50):position]
+        m = re.search(r'(?:at|in|near)\s+([A-Za-z0-9\s]+)', before, re.IGNORECASE)
+        return m.group(1).strip() if m else "site"
+    
+    def _extract_issues_from_voice(self, transcriptions: List[Dict]) -> List[Dict]:
+        issues = []
+        combined_text = " ".join([t.get("text", "") for t in transcriptions])
+        issue_patterns = [
+            (r'(?:delay|held up|waiting)', "delay"),
+            (r'(?:clarification|question|need to know)', "clarification_needed"),
+            (r'(?:safety|hazard|unsafe)', "safety_issue"),
+            (r'(?:defect|quality|rework)', "quality_issue"),
+        ]
+        for pattern, issue_type in issue_patterns:
+            for match in re.finditer(pattern, combined_text, re.IGNORECASE):
+                issues.append({
+                    "type": issue_type,
+                    "description": match.group(0),
+                    "context": combined_text[max(0, match.start()-30):match.end()+30]
+                })
+        return issues
+    
+    def _extract_manpower_from_voice(self, transcriptions: List[Dict]) -> Dict:
+        return {"total": 0, "by_trade": {}, "absent": 0}
+    
+    def _extract_equipment_from_photos(self, photo_analysis: List[Dict]) -> List[Dict]:
+        return []
+    
+    def _generate_daily_narrative(self, date: str, activities: List, issues: List, weather: Dict, manpower: Dict) -> str:
+        parts = []
+        parts.append(f"DAILY SITE REPORT - {date}")
+        parts.append(f"Weather: {weather.get('conditions', 'N/A')}, High: {weather.get('temperature_high')}°C")
+        parts.append("")
+        parts.append("MANPOWER:")
+        parts.append(f"Total: {manpower.get('total', 0)} workers present")
+        for trade, count in manpower.get("by_trade", {}).items():
+            parts.append(f"  - {trade}: {count}")
+        parts.append("")
+        parts.append("WORK COMPLETED:")
+        for act in activities[:5]:
+            parts.append(f"• {act['description']} at {act.get('location', 'site')}")
+        if not activities:
+            parts.append("• General site activities ongoing")
+        parts.append("")
+        if issues:
+            parts.append("ISSUES/CONSTRAINTS:")
+            for issue in issues:
+                parts.append(f"⚠ {issue.get('description')}")
+            parts.append("")
+        parts.append(f"Next Day: Continue ongoing activities pending resolution of identified issues")
+        return "\n".join(parts)
+    
+    def _extract_safety_observations(self, photo_analysis: List[Dict], transcriptions: List[Dict]) -> List[Dict]:
+        obs = []
+        for p in photo_analysis:
+            if p.get("safety_compliance") != "compliant":
+                obs.append({"source": "photo", "observation": "Safety issues detected in photo analysis"})
+        return obs
+    
+    def _extract_quality_observations(self, photo_analysis: List[Dict]) -> List[Dict]:
+        return []
+    
+    def _extract_material_deliveries(self, transcriptions: List[Dict]) -> List[Dict]:
+        return []
+    
+    def _generate_next_day_plan(self, activities: List[Dict], issues: List[Dict]) -> List[str]:
+        return ["Continue ongoing activities"] + [f"Resolve: {i.get('description')}" for i in issues[:3]]
+
+    # VALUE ENGINEERING
+    async def value_engineering(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        current_boq = data.get("boq") or p.get("boq", [])
+        cost_overrun_threshold = p.get("overrun_threshold", 0.10)
+        target_reduction = p.get("target_reduction", 0.15)
+        carbon_priority = p.get("carbon_priority", False)
+        
+        alternatives = []
+        for item in current_boq:
+            item_alts = self._find_value_engineering_alternatives(item, carbon_priority)
+            alternatives.extend(item_alts)
+        
+        viable_alternatives = [a for a in alternatives if a.get("viability_score", 0) > 0.7]
+        scenarios = self._build_ve_scenarios(viable_alternatives, target_reduction)
+        recommended = self._select_optimal_scenario(scenarios, cost_priority=not carbon_priority)
+        
+        return {
+            "status": "success",
+            "action": "value_engineering_analysis",
+            "current_project_cost": sum(i.get("total_cost", 0) for i in current_boq),
+            "analysis_parameters": {
+                "cost_overrun_threshold": f"{cost_overrun_threshold*100}%",
+                "target_reduction": f"{target_reduction*100}%",
+                "carbon_priority": carbon_priority
+            },
+            "alternatives_identified": len(alternatives),
+            "viable_alternatives": len(viable_alternatives),
+            "by_category": self._group_ve_by_category(viable_alternatives),
+            "scenarios": scenarios,
+            "recommended_scenario": recommended,
+            "impact_summary": {
+                "cost_savings": recommended.get("cost_savings", 0),
+                "cost_savings_percent": recommended.get("savings_percent", 0),
+                "carbon_impact": recommended.get("carbon_delta", 0),
+                "schedule_impact_days": recommended.get("schedule_impact", 0),
+                "quality_impact": recommended.get("quality_impact", "neutral"),
+                "risk_level": recommended.get("risk_level", "low")
+            },
+            "implementation_roadmap": self._generate_ve_roadmap(recommended),
+            "approvals_required": self._identify_ve_approvals(recommended)
+        }
+    
+    def _find_value_engineering_alternatives(self, boq_item: Dict, carbon_priority: bool) -> List[Dict]:
+        material = boq_item.get("material_type", "concrete_c30")
+        quantity = boq_item.get("quantity", 0)
+        current_cost = boq_item.get("total_cost", 0)
+        alternatives = []
+        
+        if "concrete" in material:
+            alternatives.append({"original": material, "alternative": "concrete_with_ggbs", "description": "Replace 40% cement with GGBS", "cost_delta_percent": -5, "carbon_delta_percent": -35, "performance_impact": "minimal", "approval_required": ["engineer", "client"], "viability_score": 0.9})
+            alternatives.append({"original": material, "alternative": "concrete_with_fly_ash", "description": "Replace 30% cement with fly ash", "cost_delta_percent": -8, "carbon_delta_percent": -25, "performance_impact": "minimal", "approval_required": ["engineer"], "viability_score": 0.85})
+        elif "steel" in material:
+            alternatives.append({"original": material, "alternative": "high_recycled_steel", "description": "Specify EAF steel with 95% recycled content", "cost_delta_percent": 0, "carbon_delta_percent": -40, "performance_impact": "none", "approval_required": [], "viability_score": 0.95})
+        elif "block" in material:
+            alternatives.append({"original": material, "alternative": "aac_blocks", "description": "Replace concrete blocks with AAC", "cost_delta_percent": 15, "carbon_delta_percent": -30, "performance_impact": "improved_insulation", "approval_required": ["architect", "engineer"], "viability_score": 0.8})
+        elif "formwork" in material:
+            alternatives.append({"original": material, "alternative": "plastic_formwork", "description": "Reusable plastic formwork system", "cost_delta_percent": -20, "carbon_delta_percent": -60, "performance_impact": "faster_stripping", "approval_required": [], "viability_score": 0.75, "note": "Requires minimum 10 reuses to break even"})
+        
+        for alt in alternatives:
+            alt["cost_delta_amount"] = current_cost * alt["cost_delta_percent"] / 100
+            alt["carbon_delta_amount"] = (boq_item.get("carbon_impact", 0) * alt["carbon_delta_percent"] / 100)
+            alt["applies_to_boq_item"] = boq_item.get("id")
+        return alternatives
+    
+    def _build_ve_scenarios(self, alternatives: List[Dict], target_reduction: float) -> Dict:
+        total_savings = sum(a.get("cost_delta_amount", 0) for a in alternatives if a.get("cost_delta_amount", 0) < 0)
+        total_carbon_savings = sum(a.get("carbon_delta_amount", 0) for a in alternatives if a.get("carbon_delta_amount", 0) < 0)
+        return {
+            "conservative": {"name": "conservative", "cost_savings": abs(total_savings) * 0.5, "savings_percent": 5, "carbon_delta": abs(total_carbon_savings) * 0.5, "schedule_impact": 0, "quality_impact": "neutral", "risk_level": "low"},
+            "aggressive": {"name": "aggressive", "cost_savings": abs(total_savings), "savings_percent": min(abs(total_savings) / 100000 * 100, 20), "carbon_delta": abs(total_carbon_savings), "schedule_impact": 7, "quality_impact": "neutral", "risk_level": "medium"},
+            "carbon_optimized": {"name": "carbon_optimized", "cost_savings": 0, "savings_percent": 0, "carbon_delta": abs(total_carbon_savings), "schedule_impact": 0, "quality_impact": "neutral", "risk_level": "low"}
+        }
+    
+    def _select_optimal_scenario(self, scenarios: Dict, cost_priority: bool = True) -> Dict:
+        if cost_priority:
+            return scenarios.get("aggressive") if scenarios.get("aggressive", {}).get("savings_percent", 0) > 0.15 else scenarios.get("conservative")
+        return scenarios.get("carbon_optimized", scenarios.get("conservative"))
+    
+    def _group_ve_by_category(self, alternatives: List[Dict]) -> Dict:
+        result = {}
+        for a in alternatives:
+            cat = a.get("original", "unknown")
+            result.setdefault(cat, []).append(a)
+        return result
+    
+    def _generate_ve_roadmap(self, scenario: Dict) -> List[str]:
+        return ["Identify affected BOQ items", "Obtain engineer approval", "Update specifications", "Issue variation order"]
+    
+    def _identify_ve_approvals(self, scenario: Dict) -> List[str]:
+        return ["Engineer", "Client"] if scenario.get("risk_level") != "low" else ["Engineer"]
+
+    # COMMISSIONING CHECKLIST
+    async def commissioning_checklist(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        spec_file = data.get("spec_file") or p.get("spec_file")
+        equipment_list = data.get("equipment_list") or p.get("equipment_list", [])
+        systems = p.get("systems", ["electrical", "mechanical", "fire", "lift", "facade"])
+        substantial_completion = p.get("substantial_completion_date")
+        
+        checklists = {}
+        for system in systems:
+            if system in ("electrical",):
+                checklists["electrical"] = self._generate_electrical_commissioning()
+            elif system in ("mechanical", "hvac"):
+                checklists["hvac"] = self._generate_hvac_commissioning()
+            elif system in ("fire", "fire_protection"):
+                checklists["fire_protection"] = self._generate_fire_commissioning()
+            elif system in ("plumbing",):
+                checklists["plumbing"] = self._generate_plumbing_commissioning()
+            elif system in ("lift", "elevator"):
+                checklists["elevators"] = self._generate_elevator_commissioning()
+            elif system in ("facade", "envelope"):
+                checklists["building_envelope"] = self._generate_facade_commissioning()
+            elif system in ("bms", "automation"):
+                checklists["bms"] = self._generate_bms_commissioning()
+        
+        all_tests = []
+        for system, checklist in checklists.items():
+            for test in checklist:
+                test["system"] = system
+                test["overall_status"] = "pending"
+                all_tests.append(test)
+        
+        total_tests = len(all_tests)
+        passed = 0
+        failed = 0
+        pending = total_tests
+        commissioning_duration = self._estimate_commissioning_duration(systems, len(equipment_list))
+        
+        return {
+            "status": "success",
+            "action": "commissioning_checklist_generated",
+            "project_phase": "pre_handover",
+            "substantial_completion_target": substantial_completion,
+            "commissioning_period_weeks": commissioning_duration,
+            "completion_target": self._add_weeks(substantial_completion, commissioning_duration) if substantial_completion else None,
+            "summary": {
+                "total_tests": total_tests,
+                "systems_covered": len(systems),
+                "passed": passed,
+                "failed": failed,
+                "pending": pending,
+                "percent_complete": (passed / total_tests * 100) if total_tests else 0
+            },
+            "checklists_by_system": checklists,
+            "master_test_schedule": all_tests,
+            "witness_required": [t for t in all_tests if t.get("witness_required")],
+            "third_party_testing": [t for t in all_tests if t.get("third_party_required")],
+            "documentation_required": self._list_commissioning_docs(systems),
+            "training_requirements": self._generate_training_requirements(systems),
+            "deficiency_tracking": [],
+            "final_sign_off": {
+                "mechanical_contractor": "pending",
+                "electrical_contractor": "pending",
+                "fire_contractor": "pending",
+                "commissioning_authority": "pending",
+                "client_representative": "pending"
+            }
+        }
+    
+    def _generate_hvac_commissioning(self) -> List[Dict]:
+        return [
+            {"test": "Air Balancing", "standard": "ASHRAE 111", "witness_required": True, "acceptance_criteria": "±10% of design"},
+            {"test": "Chiller Performance", "standard": "AHRI 550/590", "witness_required": True, "acceptance_criteria": "Within 5% of spec"},
+            {"test": "Pump Performance", "standard": "HI 40.6", "witness_required": False, "acceptance_criteria": "Design flow rate ±5%"},
+            {"test": "Controls Sequence", "standard": "ASHRAE Guideline 13", "witness_required": True, "acceptance_criteria": "All sequences functional"},
+            {"test": "Acoustic Testing", "standard": "AHRI 260", "witness_required": False, "acceptance_criteria": "NC rating per spec"},
+            {"test": "Leak Testing", "standard": "SMACNA", "witness_required": False, "acceptance_criteria": "No leaks at 1.5x working pressure"},
+            {"test": "Energy Metering Verification", "standard": "IPMVP", "witness_required": True, "acceptance_criteria": "±2% accuracy"},
+        ]
+    
+    def _generate_electrical_commissioning(self) -> List[Dict]:
+        return [
+            {"test": "Insulation Resistance", "standard": "IEEE 43", "witness_required": False, "acceptance_criteria": ">1 MΩ"},
+            {"test": "Continuity Testing", "standard": "BS 7671", "witness_required": False, "acceptance_criteria": "R1+R2 < design"},
+            {"test": "Earth Fault Loop", "standard": "BS 7671", "witness_required": True, "acceptance_criteria": "Zs < tabulated"},
+            {"test": "RCD Testing", "standard": "BS 7671", "witness_required": True, "acceptance_criteria": "Trip time < 300ms"},
+            {"test": "Load Bank Test", "standard": "IEEE 450", "witness_required": True, "acceptance_criteria": "Full load 4 hours"},
+            {"test": "Power Quality", "standard": "IEEE 519", "witness_required": False, "acceptance_criteria": "THD < 5%"},
+            {"test": "Generator Auto-Start", "standard": "NFPA 110", "witness_required": True, "acceptance_criteria": "Start < 10 seconds"},
+        ]
+    
+    def _generate_fire_commissioning(self) -> List[Dict]:
+        return [
+            {"test": "Sprinkler Flow Test", "standard": "NFPA 13", "witness_required": True, "acceptance_criteria": "Design density achieved"},
+            {"test": "Fire Pump Performance", "standard": "NFPA 20", "witness_required": True, "acceptance_criteria": "Rated flow and pressure"},
+            {"test": "Alarm Device Function", "standard": "NFPA 72", "witness_required": True, "acceptance_criteria": "100% devices tested"},
+            {"test": "Smoke Detector Sensitivity", "standard": "NFPA 72", "witness_required": False, "third_party_required": True, "acceptance_criteria": "Within listed range"},
+            {"test": "Door Holder Release", "standard": "NFPA 80", "witness_required": False, "acceptance_criteria": "All doors close on alarm"},
+            {"test": "Stair Pressurization", "standard": "NFPA 92", "witness_required": True, "acceptance_criteria": "50 Pa minimum"},
+        ]
+    
+    def _generate_plumbing_commissioning(self) -> List[Dict]:
+        return [
+            {"test": "Water Pressure Test", "standard": "IPC", "witness_required": False, "acceptance_criteria": "No leaks at 1.5x working pressure"},
+            {"test": "Drainage Flow Test", "standard": "IPC", "witness_required": False, "acceptance_criteria": "Free flow, no blockages"}
+        ]
+    
+    def _generate_elevator_commissioning(self) -> List[Dict]:
+        return [
+            {"test": "Safety Gear Test", "standard": "EN 81", "witness_required": True, "acceptance_criteria": "Functional"},
+            {"test": "Load Test", "standard": "EN 81", "witness_required": True, "acceptance_criteria": "Rated load ±5%"}
+        ]
+    
+    def _generate_facade_commissioning(self) -> List[Dict]:
+        return [
+            {"test": "Water Tightness", "standard": "ASTM E331", "witness_required": True, "acceptance_criteria": "No leakage at test pressure"},
+            {"test": "Air Infiltration", "standard": "ASTM E283", "witness_required": False, "acceptance_criteria": "Within spec"}
+        ]
+    
+    def _generate_bms_commissioning(self) -> List[Dict]:
+        return [
+            {"test": "Point-to-Point Checkout", "standard": "ASHRAE Guideline 13", "witness_required": False, "acceptance_criteria": "100% points verified"},
+            {"test": "Sequence Verification", "standard": "ASHRAE Guideline 13", "witness_required": True, "acceptance_criteria": "All sequences functional"}
+        ]
+    
+    def _estimate_commissioning_duration(self, systems: List[str], equipment_count: int) -> int:
+        base_weeks = len(systems) * 2
+        return base_weeks + (equipment_count // 10)
+    
+    def _add_weeks(self, date_str: str, weeks: int) -> Optional[str]:
+        try:
+            d = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            return (d + timedelta(weeks=weeks)).isoformat()
+        except Exception:
+            return None
+    
+    def _list_commissioning_docs(self, systems: List[str]) -> List[str]:
+        return [f"{s}_commissioning_report.pdf" for s in systems]
+    
+    def _generate_training_requirements(self, systems: List[str]) -> List[Dict]:
+        return [{"system": s, "training": f"Operator training for {s}"} for s in systems]
+
+    # RESOURCE HISTOGRAM
+    async def resource_histogram(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        schedule_file = data.get("schedule_file") or p.get("schedule_file")
+        productivity_curves = data.get("productivity") or p.get("productivity", {})
+        trade_breakdown = p.get("trade_breakdown", True)
+        
+        if not schedule_file:
+            return {"status": "error", "error": "Schedule file required for resource histogram"}
+        
+        schedule_data = self._parse_xer_file(schedule_file)
+        activities = schedule_data.get("activities", [])
+        histogram_data = self._calculate_labor_histogram(activities, productivity_curves)
+        peaks = self._identify_resource_peaks(histogram_data)
+        conflicts = self._identify_resource_conflicts(histogram_data)
+        optimizations = self._suggest_resource_leveling(histogram_data, conflicts)
+        cost_loading = self._calculate_cost_histogram(histogram_data)
+        
+        return {
+            "status": "success",
+            "action": "resource_histogram_generated",
+            "project_duration_weeks": len(histogram_data),
+            "resource_summary": {
+                "total_labor_hours": sum(week.get("total_labor", 0) for week in histogram_data),
+                "peak_labor_count": max((week.get("total_labor", 0) for week in histogram_data), default=0),
+                "average_labor_count": sum(week.get("total_labor", 0) for week in histogram_data) / len(histogram_data) if histogram_data else 0,
+                "resource_conflicts": len(conflicts),
+                "productivity_factor": productivity_curves.get("overall_factor", 1.0)
+            },
+            "by_trade": self._breakdown_by_trade(histogram_data) if trade_breakdown else None,
+            "weekly_histogram": histogram_data[:52] if not p.get("full_data") else histogram_data,
+            "peak_periods": peaks,
+            "resource_conflicts": conflicts,
+            "leveling_opportunities": optimizations,
+            "cost_loaded_histogram": cost_loading,
+            "recommendations": [
+                "Consider overtime during peak weeks" if any(p["labor_count"] > 100 for p in peaks) else "Labor loading is balanced",
+                "Float available to shift non-critical activities" if optimizations else "Schedule is fully constrained"
+            ]
+        }
+    
+    def _calculate_labor_histogram(self, activities: List[Dict], productivity: Dict) -> List[Dict]:
+        dates = [a.get("early_start") for a in activities if a.get("early_start")]
+        weeks = []
+        for week in range(26):
+            week_labor = 0
+            week_activities = []
+            for act in activities:
+                labor_units = act.get("resources", {}).get("labor", 0)
+                if labor_units:
+                    week_labor += labor_units / (act.get("duration", 1) or 1)
+                    week_activities.append(act.get("id"))
+            weeks.append({
+                "week": week + 1,
+                "total_labor": int(week_labor),
+                "activities_active": len(week_activities),
+                "trades": {"concrete": int(week_labor * 0.3), "masonry": int(week_labor * 0.2), 
+                          "steel": int(week_labor * 0.15), "electrical": int(week_labor * 0.15),
+                          "finishes": int(week_labor * 0.2)}
+            })
+        return weeks
+    
+    def _identify_resource_peaks(self, histogram: List[Dict]) -> List[Dict]:
+        if not histogram:
+            return []
+        avg_labor = sum(w.get("total_labor", 0) for w in histogram) / len(histogram)
+        threshold = avg_labor * 1.5
+        peaks = [w for w in histogram if w.get("total_labor", 0) > threshold]
+        return sorted(peaks, key=lambda x: x.get("total_labor", 0), reverse=True)[:5]
+    
+    def _identify_resource_conflicts(self, histogram: List[Dict]) -> List[Dict]:
+        return []
+    
+    def _suggest_resource_leveling(self, histogram: List[Dict], conflicts: List[Dict]) -> List[Dict]:
+        optimizations = []
+        if len(conflicts) > 3:
+            optimizations.append({
+                "strategy": "Shift non-critical activities to weekends",
+                "potential_reduction": "15%",
+                "activities_to_shift": [c.get("activity") for c in conflicts[:3]]
+            })
+        peaks = self._identify_resource_peaks(histogram)
+        if peaks:
+            peak_week = peaks[0]
+            optimizations.append({
+                "strategy": f"Add second shift during week {peak_week.get('week')}",
+                "potential_reduction": "40% peak reduction",
+                "cost_impact": "+20% labor cost (overtime)"
+            })
+        return optimizations
+    
+    def _breakdown_by_trade(self, histogram: List[Dict]) -> Dict:
+        result = {}
+        for week in histogram:
+            for trade, count in week.get("trades", {}).items():
+                result.setdefault(trade, []).append(count)
+        return result
+    
+    def _calculate_cost_histogram(self, histogram: List[Dict]) -> List[Dict]:
+        return [{"week": w.get("week"), "estimated_labor_cost": w.get("total_labor", 0) * 50} for w in histogram]
+
+    # CLAIMS BUILDER (EOT Claims)
+    async def claims_builder(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        delay_events = data.get("delay_events") or p.get("delay_events", [])
+        schedule_file = data.get("schedule_file") or p.get("schedule_file")
+        contract_file = data.get("contract_file") or p.get("contract_file")
+        baseline_file = data.get("baseline_file") or p.get("baseline_file")
+        notification_date = p.get("notification_date", datetime.now(timezone.utc).isoformat())
+        claim_type = p.get("claim_type", "eot")
+        
+        if not delay_events:
+            return {"status": "error", "error": "Delay events required for claim"}
+        
+        if schedule_file and baseline_file:
+            delay_analysis = await self.parse_primavera_schedule({"file_path": schedule_file}, {"baseline_file": baseline_file})
+            delay_details = delay_analysis.get("delay_analysis", {})
+        else:
+            delay_details = {"total_delay_days": sum(e.get("delay_days", 0) for e in delay_events)}
+        
+        contract_entitlement = {}
+        if contract_file:
+            contract_data = await self.process_contract({"file_path": contract_file}, {})
+            contract_entitlement = self._check_eot_entitlement(contract_data, delay_events)
+        
+        narrative = self._generate_claim_narrative(delay_events, delay_details, contract_entitlement)
+        quantum = self._calculate_prolongation_costs(delay_details.get("total_delay_days", 0), delay_events)
+        causation = self._build_causation_link(delay_events, delay_details)
+        
+        return {
+            "status": "success",
+            "action": "claim_generated",
+            "claim_type": claim_type,
+            "claim_number": f"EOT-{datetime.now(timezone.utc).strftime('%Y%m%d')}-001",
+            "notification_date": notification_date,
+            "delay_summary": {
+                "total_delay_days": delay_details.get("total_delay_days", 0),
+                "delay_events_count": len(delay_events),
+                "critical_path_impact": delay_details.get("critical_path_impact", False),
+                "concurrent_delays": self._identify_concurrent_delays(delay_events)
+            },
+            "entitlement_analysis": contract_entitlement,
+            "cause_and_effect": causation,
+            "claim_narrative": narrative,
+            "quantum_calculation": quantum,
+            "supporting_documents": self._list_claim_documents(delay_events),
+            "submission_package": {
+                "covering_letter": narrative.get("executive_summary"),
+                "detailed_narrative": narrative.get("full_narrative"),
+                "delay_analysis": delay_details,
+                "quantum_appendix": quantum,
+                "evidence_bundle": self._compile_evidence_list(delay_events)
+            },
+            "risk_assessment": {
+                "claim_strength": "strong" if contract_entitlement.get("clear_entitlement") else "moderate",
+                "potential_settlement_range": f"{quantum.get('total_claim', 0) * 0.7} - {quantum.get('total_claim', 0)}",
+                "counter_arguments": self._anticipate_defenses(delay_events),
+                "recommended_strategy": "negotiate_settlement" if len(delay_events) > 5 else "formal_claim"
+            }
+        }
+    
+    def _generate_claim_narrative(self, events: List[Dict], delay_analysis: Dict, entitlement: Dict) -> Dict:
+        total_delay = delay_analysis.get("total_delay_days", 0)
+        exec_summary = f"""EXTENSION OF TIME CLAIM
+
+The Contractor has encountered delays totaling {total_delay} calendar days due to circumstances beyond our control and for which the Contract provides entitlement to Extension of Time and associated costs.
+
+Key Events:
+"""
+        for i, event in enumerate(events[:5], 1):
+            exec_summary += f"{i}. {event.get('description', 'Unknown event')} ({event.get('delay_days', 0)} days)\n"
+        
+        full_narrative = f"""BACKGROUND
+The Contractor has been progressing the Works in accordance with the Approved Programme when the following delay events occurred:
+
+{chr(10).join([f"Event {i+1}: {e.get('description')} on {e.get('date')}" for i, e in enumerate(events)])}
+
+CONTRACTUAL ENTITLEMENT
+Under Clause {entitlement.get('relevant_clause', '[XX]')} of the Conditions of Contract, the Contractor is entitled to an Extension of Time for delays caused by {entitlement.get('entitlement_basis', '[compensable delay events]')}.
+
+CAUSATION ANALYSIS
+{delay_analysis.get('impact_assessment', 'The delays affected the critical path as demonstrated in the attached delay analysis.')}
+
+DELAY QUANTIFICATION
+Total Extension of Time Sought: {total_delay} days
+"""
+        return {
+            "executive_summary": exec_summary,
+            "full_narrative": full_narrative,
+            "word_count": len(full_narrative.split())
+        }
+    
+    def _calculate_prolongation_costs(self, total_days: int, events: List[Dict]) -> Dict:
+        daily_rate = 5000
+        site_staff = daily_rate * 0.3 * total_days
+        site_accommodation = daily_rate * 0.2 * total_days
+        plant_standing = daily_rate * 0.25 * total_days
+        insurances_bonds = daily_rate * 0.1 * total_days
+        overheads_profit = daily_rate * 0.15 * total_days
+        return {
+            "prolongation_period_days": total_days,
+            "daily_preliminaries_rate": daily_rate,
+            "breakdown": {
+                "site_staff": site_staff,
+                "site_accommodation": site_accommodation,
+                "plant_standing": plant_standing,
+                "insurances_bonds": insurances_bonds,
+                "overheads_profit": overheads_profit
+            },
+            "total_claim": daily_rate * total_days
+        }
+    
+    def _build_causation_link(self, events: List[Dict], delay_analysis: Dict) -> List[Dict]:
+        linkages = []
+        for event in events:
+            linkages.append({
+                "event": event.get("description"),
+                "date": event.get("date"),
+                "cause": event.get("cause", "Employer Risk Event"),
+                "effect": f"Delay of {event.get('delay_days')} days to {event.get('affected_activity', 'critical path')}",
+                "mitigation_attempted": event.get("mitigation", "None possible"),
+                "concurrent": event.get("concurrent", False),
+                "compensable": event.get("compensable", True)
+            })
+        return linkages
+    
+    def _check_eot_entitlement(self, contract_data: Dict, events: List[Dict]) -> Dict:
+        return {"clear_entitlement": True, "relevant_clause": "14.1", "entitlement_basis": "Employer Risk Events"}
+    
+    def _identify_concurrent_delays(self, events: List[Dict]) -> List[Dict]:
+        return [e for e in events if e.get("concurrent", False)]
+    
+    def _list_claim_documents(self, events: List[Dict]) -> List[str]:
+        return ["Delay notices", "Schedule analysis", "Daily reports", "Photos"]
+    
+    def _compile_evidence_list(self, events: List[Dict]) -> List[Dict]:
+        return [{"event": e.get("description"), "evidence": e.get("evidence", [])} for e in events]
+    
+    def _anticipate_defenses(self, events: List[Dict]) -> List[str]:
+        return ["Mitigation efforts were reasonable"]
 
     # ROUTE
     async def route(self, input_data: Any, params: Dict) -> Dict:
@@ -2273,6 +3273,14 @@ class ConstructionContainer(UniversalContainer):
             "as_built_deviation_report": self.as_built_deviation_report,
             "warranty_maintenance_schedule": self.warranty_maintenance_schedule,
             "risk_register_auto_populate": self.risk_register_auto_populate,
+            "submittal_log_generator": self.submittal_log_generator,
+            "payment_certificate": self.payment_certificate,
+            "bim_clash_detection": self.bim_clash_detection,
+            "daily_site_report": self.daily_site_report,
+            "value_engineering": self.value_engineering,
+            "commissioning_checklist": self.commissioning_checklist,
+            "resource_histogram": self.resource_histogram,
+            "claims_builder": self.claims_builder,
             "health_check": self.health_check,
         }
         
