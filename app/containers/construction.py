@@ -49,8 +49,20 @@ class ConstructionContainer(UniversalContainer):
         ]
     }
     
+    def _looks_like_file(self, input_data: Any, params: Dict) -> bool:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        return any(k in data or k in p for k in ["file_path", "content", "filename", "file"])
+
     async def route(self, action: str, input_data: Any, params: Dict) -> Dict:
         """Route to construction-specific action"""
+        # Auto-validate file uploads first
+        if self._looks_like_file(input_data, params):
+            from app.containers.security import SecurityContainer
+            security = SecurityContainer()
+            validation = await security.validate_file(input_data, params)
+            if not validation.get("safe"):
+                return validation
         
         if action == "extract_measurements":
             return await self.extract_measurements(input_data, params)

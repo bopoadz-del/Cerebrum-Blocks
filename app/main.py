@@ -141,6 +141,49 @@ async def add_cors_headers(request: Request, call_next):
     
     return response
 
+# File upload security middleware
+@app.middleware("http")
+async def file_upload_security_middleware(request: Request, call_next):
+    """Auto-validate file uploads on /ingest and /upload endpoints"""
+    path = request.url.path.lower()
+    
+    if any(x in path for x in ["/ingest", "/upload", "/process-file", "/chain"]):
+        body = await request.body()
+        
+        try:
+            data = json.loads(body) if body else {}
+        except Exception:
+            data = {}
+        
+        # Check if file-related
+        if any(k in str(data) for k in ["file_path", "content", "filename", "file"]):
+            if "security" not in block_instances:
+                block_instances["security"] = _create_block_instance(BLOCK_REGISTRY["security"])
+            security = block_instances["security"]
+            if security:
+                try:
+                    validation = await security.validate_file(data, {})
+                    if not validation.get("safe"):
+                        return JSONResponse(
+                            status_code=400,
+                            content={
+                                "status": "error",
+                                "error": "Security validation failed",
+                                "details": validation.get("error"),
+                                "violation": validation.get("violation")
+                            }
+                        )
+                except Exception:
+                    pass
+        
+        # Rebuild request with original body
+        async def receive():
+            return {"type": "http.request", "body": body}
+        
+        request = Request(request.scope, receive, request._send)
+    
+    return await call_next(request)
+
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

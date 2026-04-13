@@ -16,7 +16,20 @@ class LegalContainer(UniversalContainer):
     tags = ["domain", "container", "legal", "contracts"]
     requires = ["pdf", "ocr"]
     
+    def _looks_like_file(self, input_data: Any, params: Dict) -> bool:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        return any(k in data or k in p for k in ["file_path", "content", "filename", "file"])
+
     async def route(self, action: str, input_data: Any, params: Dict) -> Dict:
+        # Auto-validate file uploads first
+        if self._looks_like_file(input_data, params):
+            from app.containers.security import SecurityContainer
+            security = SecurityContainer()
+            validation = await security.validate_file(input_data, params)
+            if not validation.get("safe"):
+                return validation
+        
         if action == "process_contract":
             return await self.process_contract(input_data, params)
         elif action == "extract_entities":
