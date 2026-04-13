@@ -175,6 +175,36 @@ console.log('API_BASE:', API_BASE);
 // Connected drives state
 const connectedDrives = {};
 
+// Active file context for chat
+let activeFileContext = null;
+
+function setActiveFileContext(name, content, driveName) {
+    activeFileContext = { name, content, driveName };
+    updateFileContextBadge();
+}
+
+function clearActiveFileContext() {
+    activeFileContext = null;
+    updateFileContextBadge();
+}
+
+function updateFileContextBadge() {
+    let badge = document.getElementById('fileContextBadge');
+    if (!activeFileContext) {
+        if (badge) badge.style.display = 'none';
+        return;
+    }
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'fileContextBadge';
+        badge.style.cssText = 'display:flex;align-items:center;gap:6px;padding:6px 10px;background:#8b5cf620;border:1px solid #8b5cf6;border-radius:6px;color:#8b5cf6;font-size:12px;margin-bottom:8px;';
+        const inputArea = document.querySelector('.input-area');
+        inputArea.insertBefore(badge, inputArea.firstChild);
+    }
+    badge.innerHTML = `📄 Active: ${activeFileContext.name} <span style="cursor:pointer;color:#fff;" onclick="clearActiveFileContext();event.stopPropagation();">✕</span>`;
+    badge.style.display = 'flex';
+}
+
 function addMessage(text, role) {
     const div = document.createElement('div');
     div.className = `msg ${role}`;
@@ -245,6 +275,14 @@ async function handleLocalFiles(input) {
         
         renderDrives();
         
+        // Auto-select first file for chat context
+        const firstFileObj = files[0];
+        if (firstFileObj) {
+            const firstContent = await readFileContent(firstFileObj);
+            const trimmed = firstContent.length > 5000 ? firstContent.substring(0, 5000) + '\n\n... [truncated] ...' : firstContent;
+            setActiveFileContext(firstFileObj.name, trimmed, folderName);
+        }
+        
         const outcomeHtml = `
             <div class="outcome-item">
                 <div class="outcome-label">Connected</div>
@@ -254,7 +292,7 @@ async function handleLocalFiles(input) {
             </div>
         `;
         setOutcomes(outcomeHtml);
-        addMessage(`Loaded ${files.length} files from your device. Ready to chat about them.`, 'assistant');
+        addMessage(`Loaded ${files.length} files from your device. "${firstFileObj ? firstFileObj.name : 'No file'}" is active. Ready to chat about it.`, 'assistant');
         
     } catch (err) {
         console.error('Local files error:', err);
@@ -462,8 +500,9 @@ async function selectFile(driveKey, fileName) {
             ` : ''}
         `);
         
-        // If we have content, also send a system context so chat knows about it
+        // Set active file context for subsequent chat messages
         if (fileContent) {
+            setActiveFileContext(fileName, fileContent, drive.name);
             addMessage(`Loaded "${fileName}" from ${drive.name}. You can now ask questions about it.`, 'assistant');
         } else {
             addMessage(`File loaded from ${drive.name}. ${related.length > 0 ? `Found ${related.length} related files via ZVec.` : ''}`, 'assistant');
@@ -484,10 +523,15 @@ function escapeHtml(text) {
 
 async function sendMessage() {
     const input = document.getElementById('textInput');
-    const text = input.value.trim();
+    let text = input.value.trim();
     if (!text) return;
     
-    addMessage(text, 'user');
+    // Inject active file context into the prompt
+    if (activeFileContext && activeFileContext.content) {
+        text = `I am asking about the file "${activeFileContext.name}" from ${activeFileContext.driveName}.\n\nHere is the file content:\n---\n${activeFileContext.content}\n---\n\nMy question: ${text}`;
+    }
+    
+    addMessage(input.value.trim(), 'user');
     input.value = '';
     input.style.height = 'auto';
     document.getElementById('sendBtn').disabled = true;
@@ -577,6 +621,10 @@ async function handleFile(input) {
         const output = analysisData.final_output;
         const analysisText = typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
         
+        // Set active context for uploaded file
+        const trimmedContent = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
+        setActiveFileContext(file.name, trimmedContent, 'Upload');
+        
         let quantitiesHtml = '';
         if (fileContent.toLowerCase().includes('concrete') || fileContent.toLowerCase().includes('steel')) {
             quantitiesHtml = `
@@ -652,6 +700,7 @@ function resetChat() {
     `;
     setOutcomes('');
     document.getElementById('textInput').value = '';
+    clearActiveFileContext();
 }
 
 // Auto-resize textarea

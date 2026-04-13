@@ -82,20 +82,6 @@ app.add_middleware(
     max_age=86400,  # Cache preflight for 24 hours
 )
 
-# Add explicit CORS headers middleware
-@app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
-    """Add CORS headers to all responses"""
-    response = await call_next(request)
-    
-    origin = request.headers.get("origin", "*")
-    response.headers["Access-Control-Allow-Origin"] = origin if origin else "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Access-Control-Max-Age"] = "86400"
-    
-    return response
-
 # Handle OPTIONS requests globally
 @app.options("/{path:path}")
 async def options_handler(request: Request, path: str):
@@ -110,6 +96,40 @@ async def options_handler(request: Request, path: str):
             "Access-Control-Max-Age": "86400",
         }
     )
+
+# Robust CORS middleware — must run BEFORE any other middleware
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    """Add CORS headers to every response, including errors"""
+    origin = request.headers.get("origin", "*")
+    
+    # Handle preflight directly in middleware too
+    if request.method == "OPTIONS":
+        return JSONResponse(
+            content={"status": "ok"},
+            headers={
+                "Access-Control-Allow-Origin": origin if origin else "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Max-Age": "86400",
+            }
+        )
+    
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        logger.exception("Request failed, returning CORS-enabled error")
+        response = JSONResponse(
+            content={"detail": "Internal Server Error"},
+            status_code=500
+        )
+    
+    response.headers["Access-Control-Allow-Origin"] = origin if origin else "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Max-Age"] = "86400"
+    
+    return response
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
