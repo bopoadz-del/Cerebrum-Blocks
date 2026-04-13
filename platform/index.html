@@ -10,12 +10,27 @@
         .sidebar { width: 280px; background: #0a0a0a; border-right: 1px solid #222; padding: 20px; display: flex; flex-direction: column; }
         .logo { font-size: 20px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
         .logo::before { content: "◆"; color: #8b5cf6; font-size: 24px; }
-        .new-btn { width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 8px; cursor: pointer; margin-bottom: 24px; }
+        .new-btn { width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 8px; cursor: pointer; margin-bottom: 8px; }
         .new-btn:hover { background: #252525; }
-        .section { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-        .projects { flex: 1; }
+        .connect-btn { width: 100%; padding: 12px; background: #8b5cf6; border: 1px solid #8b5cf6; color: #fff; border-radius: 8px; cursor: pointer; margin-bottom: 24px; font-size: 14px; }
+        .connect-btn:hover { background: #7c4ddb; }
+        .section { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .section button { background: transparent; border: none; color: #8b5cf6; cursor: pointer; font-size: 11px; padding: 0; }
+        .projects { flex: 1; overflow-y: auto; }
         .project { padding: 10px 12px; border-radius: 6px; cursor: pointer; margin-bottom: 4px; color: #999; }
         .project:hover, .project.active { background: #1a1a1a; color: #fff; }
+        .drive-project { margin-bottom: 8px; }
+        .drive-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 6px; cursor: pointer; color: #ccc; font-size: 14px; }
+        .drive-header:hover, .drive-header.active { background: #1a1a1a; color: #fff; }
+        .drive-header .icon { font-size: 16px; }
+        .drive-header .toggle { margin-left: auto; font-size: 10px; color: #666; transition: transform 0.2s; }
+        .drive-header.expanded .toggle { transform: rotate(90deg); }
+        .drive-files { padding-left: 24px; display: none; }
+        .drive-files.expanded { display: block; }
+        .drive-file { padding: 6px 10px; border-radius: 4px; cursor: pointer; color: #888; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        .drive-file:hover { background: #151515; color: #fff; }
+        .drive-file .zvec-badge { margin-left: auto; font-size: 10px; background: #8b5cf620; color: #8b5cf6; padding: 2px 6px; border-radius: 4px; }
+        .drive-empty { padding: 8px 10px; color: #555; font-size: 12px; font-style: italic; }
         .main { flex: 1; display: flex; flex-direction: column; max-width: 800px; margin: 0 auto; width: 100%; }
         header { padding: 16px; border-bottom: 1px solid #1a1a1a; text-align: center; color: #666; }
         .messages { flex: 1; overflow-y: auto; padding: 40px 20px; }
@@ -43,17 +58,41 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .file-preview { max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 8px; }
         .raw-output { background: #0f0f0f; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px; margin-top: 12px; font-family: monospace; font-size: 12px; color: #888; overflow-x: auto; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+        /* Drive Connect Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #151515; border: 1px solid #333; border-radius: 12px; padding: 24px; width: 320px; }
+        .modal h3 { margin-bottom: 16px; font-size: 16px; color: #fff; }
+        .drive-option { display: flex; align-items: center; gap: 12px; padding: 12px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
+        .drive-option:hover { background: #252525; border-color: #8b5cf6; }
+        .drive-option .icon { font-size: 20px; }
+        .drive-option .name { font-size: 14px; color: #e0e0e0; }
+        .drive-option .desc { font-size: 11px; color: #666; }
+        .modal-close { width: 100%; margin-top: 8px; padding: 10px; background: transparent; border: 1px solid #333; color: #999; border-radius: 6px; cursor: pointer; }
+        .modal-close:hover { border-color: #666; color: #fff; }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <div class="logo">Cerebrum</div>
         <button class="new-btn" onclick="resetChat()">+ New Chat</button>
-        <div class="section">Projects</div>
-        <div class="projects">
+        <button class="connect-btn" onclick="showDriveModal()">☁️ Connect Drive</button>
+        
+        <div class="section">
+            <span>Projects</span>
+        </div>
+        <div class="projects" id="projectsList">
             <div class="project active">Diriyah Phase 1</div>
             <div class="project">Qiddam Tower</div>
             <div class="project">KAUST Lab</div>
+        </div>
+        
+        <div class="section" style="margin-top: 16px;">
+            <span>Connected Drives</span>
+            <button onclick="clearAllDrives()">Clear</button>
+        </div>
+        <div class="projects" id="drivesList">
+            <!-- Drives injected here -->
         </div>
     </div>
     
@@ -61,7 +100,7 @@
         <header>Cerebrum Platform</header>
         <div class="messages" id="messages">
             <div class="msg assistant">
-                <div class="bubble">Hello! Upload a file or type a message to get started.</div>
+                <div class="bubble">Hello! Upload a file, connect a drive, or type a message to get started.</div>
             </div>
         </div>
         <div class="input-area">
@@ -81,6 +120,42 @@
     
     <div class="chain-indicator" id="chainIndicator">⚡ Processing...</div>
 
+    <!-- Drive Connect Modal -->
+    <div class="modal-overlay" id="driveModal" onclick="if(event.target===this)hideDriveModal()">
+        <div class="modal">
+            <h3>Connect a Drive</h3>
+            <div class="drive-option" onclick="connectDrive('google_drive')">
+                <span class="icon">📁</span>
+                <div>
+                    <div class="name">Google Drive</div>
+                    <div class="desc">Connect Google cloud storage</div>
+                </div>
+            </div>
+            <div class="drive-option" onclick="connectDrive('onedrive')">
+                <span class="icon">☁️</span>
+                <div>
+                    <div class="name">OneDrive</div>
+                    <div class="desc">Connect Microsoft cloud storage</div>
+                </div>
+            </div>
+            <div class="drive-option" onclick="connectDrive('local_drive')">
+                <span class="icon">💾</span>
+                <div>
+                    <div class="name">Local Drive</div>
+                    <div class="desc">Browse local filesystem</div>
+                </div>
+            </div>
+            <div class="drive-option" onclick="connectDrive('android_drive')">
+                <span class="icon">📱</span>
+                <div>
+                    <div class="name">Android Drive</div>
+                    <div class="desc">Connect Android device storage</div>
+                </div>
+            </div>
+            <button class="modal-close" onclick="hideDriveModal()">Cancel</button>
+        </div>
+    </div>
+
 <script>
 // API Configuration - Auto-detect environment
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
@@ -88,6 +163,9 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
     : 'https://cerebrum-platform-api.onrender.com';
 
 console.log('API_BASE:', API_BASE);
+
+// Connected drives state
+const connectedDrives = {};
 
 function addMessage(text, role) {
     const div = document.createElement('div');
@@ -106,6 +184,199 @@ function setOutcomes(html) {
     document.getElementById('outcomes').innerHTML = html;
 }
 
+function showDriveModal() {
+    document.getElementById('driveModal').classList.add('active');
+}
+
+function hideDriveModal() {
+    document.getElementById('driveModal').classList.remove('active');
+}
+
+async function connectDrive(driveType) {
+    hideDriveModal();
+    showIndicator(true);
+    addMessage(`Connecting to ${driveType.replace('_', ' ')}...`, 'system');
+    
+    try {
+        // Step 1: List files from drive
+        const listRes = await fetch(`${API_BASE}/v1/execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                block: driveType,
+                params: { operation: 'list', folder_path: './' }
+            })
+        });
+        
+        if (!listRes.ok) {
+            throw new Error(`HTTP ${listRes.status}: ${await listRes.text()}`);
+        }
+        
+        const listData = await listRes.json();
+        console.log(`${driveType} list:`, listData);
+        
+        let files = [];
+        if (listData.result) {
+            if (Array.isArray(listData.result.files)) {
+                files = listData.result.files;
+            } else if (Array.isArray(listData.result.paths)) {
+                files = listData.result.paths;
+            } else if (Array.isArray(listData.result.results)) {
+                files = listData.result.results;
+            }
+        }
+        
+        // Step 2: ZVec index the file list
+        let zvecResult = null;
+        if (files.length > 0) {
+            const zvecRes = await fetch(`${API_BASE}/v1/execute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    block: 'zvec',
+                    input: files.join('\n'),
+                    params: { operation: 'embed' }
+                })
+            });
+            if (zvecRes.ok) {
+                zvecResult = await zvecRes.json();
+            }
+        }
+        
+        // Save drive state
+        connectedDrives[driveType] = {
+            name: driveType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            icon: getDriveIcon(driveType),
+            files: files,
+            indexed: !!zvecResult,
+            path: listData.result?.path || './'
+        };
+        
+        renderDrives();
+        
+        const outcomeHtml = `
+            <div class="outcome-item">
+                <div class="outcome-label">Connected</div>
+                <div class="outcome-value" style="font-size: 16px;">${connectedDrives[driveType].name}</div>
+                <div style="color: #888; font-size: 12px; margin-top: 4px;">${files.length} files found</div>
+                ${zvecResult ? '<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">✅ ZVec indexed</div>' : ''}
+            </div>
+        `;
+        setOutcomes(outcomeHtml);
+        addMessage(`Connected to ${connectedDrives[driveType].name} — ${files.length} files loaded.`, 'assistant');
+        
+    } catch (err) {
+        console.error('Drive connect error:', err);
+        addMessage(`Error connecting to ${driveType}: ${err.message}`, 'error');
+        setOutcomes(`<p style="color: #ff6666;">Error: ${err.message}</p>`);
+    }
+    
+    showIndicator(false);
+}
+
+function getDriveIcon(type) {
+    const icons = {
+        google_drive: '📁',
+        onedrive: '☁️',
+        local_drive: '💾',
+        android_drive: '📱'
+    };
+    return icons[type] || '💿';
+}
+
+function renderDrives() {
+    const container = document.getElementById('drivesList');
+    if (Object.keys(connectedDrives).length === 0) {
+        container.innerHTML = '<div class="drive-empty">No drives connected yet</div>';
+        return;
+    }
+    
+    container.innerHTML = Object.entries(connectedDrives).map(([key, drive]) => `
+        <div class="drive-project">
+            <div class="drive-header" onclick="toggleDrive('${key}')" id="drive-header-${key}">
+                <span class="icon">${drive.icon}</span>
+                <span>${drive.name}</span>
+                <span class="toggle">▶</span>
+            </div>
+            <div class="drive-files" id="drive-files-${key}">
+                ${drive.files.length === 0 
+                    ? '<div class="drive-empty">No files found</div>' 
+                    : drive.files.map(f => `
+                        <div class="drive-file" onclick="selectFile('${key}', '${typeof f === 'string' ? f.replace(/'/g, "\\'") : JSON.stringify(f).replace(/'/g, "\\'")}')">
+                            <span>${typeof f === 'string' ? f : (f.name || f.text || JSON.stringify(f))}</span>
+                            ${drive.indexed ? '<span class="zvec-badge">zvec</span>' : ''}
+                        </div>
+                    `).join('')
+                }
+            </div>
+        </div>
+    `).join('');
+}
+
+function toggleDrive(key) {
+    const header = document.getElementById(`drive-header-${key}`);
+    const files = document.getElementById(`drive-files-${key}`);
+    header.classList.toggle('expanded');
+    files.classList.toggle('expanded');
+}
+
+function clearAllDrives() {
+    Object.keys(connectedDrives).forEach(k => delete connectedDrives[k]);
+    renderDrives();
+    addMessage('All drives disconnected.', 'system');
+}
+
+async function selectFile(driveKey, fileName) {
+    addMessage(`Selected file from ${driveKey}: ${fileName}`, 'user');
+    showIndicator(true);
+    
+    try {
+        // Use zvec search to find related files
+        const zvecRes = await fetch(`${API_BASE}/v1/execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                block: 'zvec',
+                input: fileName,
+                params: { 
+                    operation: 'search', 
+                    corpus: connectedDrives[driveKey].files.filter(f => typeof f === 'string'),
+                    top_k: 3 
+                }
+            })
+        });
+        
+        let related = [];
+        if (zvecRes.ok) {
+            const zvecData = await zvecRes.json();
+            related = zvecData.result?.results || [];
+        }
+        
+        setOutcomes(`
+            <div class="outcome-item">
+                <div class="outcome-label">Selected File</div>
+                <div class="outcome-value" style="font-size: 14px;">${fileName}</div>
+                <div style="color: #888; font-size: 12px; margin-top: 4px;">From ${connectedDrives[driveKey].name}</div>
+            </div>
+            ${related.length > 0 ? `
+            <div class="outcome-item">
+                <div class="outcome-label">Related Files (ZVec)</div>
+                <div style="color: #ccc; font-size: 12px; margin-top: 8px;">
+                    ${related.map(r => `<div style="margin-bottom:4px;">• ${r.text || r} ${r.score ? `(${Math.round(r.score*100)}%)` : ''}</div>`).join('')}
+                </div>
+            </div>
+            ` : ''}
+        `);
+        
+        addMessage(`File loaded from ${connectedDrives[driveKey].name}. ${related.length > 0 ? `Found ${related.length} related files via ZVec.` : ''}`, 'assistant');
+        
+    } catch (err) {
+        addMessage(`Error loading file: ${err.message}`, 'error');
+    }
+    
+    showIndicator(false);
+}
+
 async function sendMessage() {
     const input = document.getElementById('textInput');
     const text = input.value.trim();
@@ -118,7 +389,6 @@ async function sendMessage() {
     showIndicator(true);
     
     try {
-        // Use chat block with DeepSeek (no mock mode)
         const res = await fetch(`${API_BASE}/v1/chain`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -160,7 +430,6 @@ async function handleFile(input) {
     setOutcomes('<p style="color: #666;">Uploading...</p>');
     
     try {
-        // Step 1: Upload file
         const form = new FormData();
         form.append('file', file);
         
@@ -184,7 +453,6 @@ async function handleFile(input) {
             <p style="color: #666; font-size: 12px;">Analyzing content...</p>
         `);
         
-        // Step 2: Analyze file content using chat block with file info
         const fileContent = await readFileContent(file);
         
         const analysisRes = await fetch(`${API_BASE}/v1/chain`, {
@@ -201,13 +469,9 @@ async function handleFile(input) {
         }
         
         const analysisData = await analysisRes.json();
-        console.log('Analysis response:', analysisData);
-        
-        // Display results
         const output = analysisData.final_output;
         const analysisText = typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
         
-        // Try to extract quantities for display
         let quantitiesHtml = '';
         if (fileContent.toLowerCase().includes('concrete') || fileContent.toLowerCase().includes('steel')) {
             quantitiesHtml = `
@@ -253,22 +517,12 @@ function readFileContent(file) {
         const reader = new FileReader();
         reader.onload = (e) => resolve(e.target.result);
         reader.onerror = (e) => reject(new Error('Failed to read file'));
-        
-        if (file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.json')) {
-            reader.readAsText(file);
-        } else if (file.name.endsWith('.docx')) {
-            // For docx, we'll just read as binary and note it
-            reader.readAsText(file);
-        } else {
-            reader.readAsText(file);
-        }
+        reader.readAsText(file);
     });
 }
 
 function extractQuantities(text) {
-    // Simple regex to find quantities in text
     const quantities = [];
-    
     const patterns = [
         { regex: /(\d+[\d,]*)\s*(?:cubic meters?|m³|cbm)/gi, label: 'Concrete', unit: 'm³' },
         { regex: /(\d+[\d,]*)\s*(?:metric tons?|tons?|kg)/gi, label: 'Steel', unit: 'kg' },
@@ -288,7 +542,7 @@ function extractQuantities(text) {
 function resetChat() {
     document.getElementById('messages').innerHTML = `
         <div class="msg assistant">
-            <div class="bubble">Hello! Upload a file or type a message to get started.</div>
+            <div class="bubble">Hello! Upload a file, connect a drive, or type a message to get started.</div>
         </div>
     `;
     setOutcomes('');
@@ -312,6 +566,9 @@ fetch(`${API_BASE}/health`)
         console.error('Health check failed:', err);
         addMessage(`⚠️ API not available at ${API_BASE}`, 'error');
     });
+
+// Initialize drives list
+renderDrives();
 </script>
 </body>
 </html>
