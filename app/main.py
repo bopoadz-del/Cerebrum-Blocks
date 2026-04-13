@@ -124,13 +124,13 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 class ExecuteRequest(BaseModel):
     block: str = Field(..., description="Block name (chat, pdf, ocr, voice, etc.)")
-    input: Any = Field(..., description="Input data for the block")
+    input: Optional[Any] = Field(default=None, description="Input data for the block")
     params: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Block parameters")
 
 
 class ChainRequest(BaseModel):
     steps: List[Dict[str, Any]] = Field(..., description="Chain of blocks to execute")
-    initial_input: Any = Field(..., description="Starting input")
+    initial_input: Optional[Any] = Field(default=None, description="Starting input")
 
 
 class ChatRequest(BaseModel):
