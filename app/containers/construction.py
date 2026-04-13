@@ -4550,10 +4550,10 @@ Total Extension of Time Sought: {total_delay} days
         }
 
 
-    async def route(self, input_data: Any, params: Dict) -> Dict:
+    async def route(self, action: str, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
-        action = data.get("action") or p.get("action")
+        action = data.get("action") or p.get("action") or action
         
         if not action:
             return {"status": "error", "error": "No action specified"}
