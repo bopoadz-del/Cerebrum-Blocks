@@ -5,9 +5,25 @@
 **One platform. Seven verticals. Infinite possibilities.**
 
 [![Docker Hub](https://img.shields.io/badge/Docker%20Hub-bopoadz--del%2Fcerebrum--blocks-blue?logo=docker)](https://hub.docker.com/r/bopoadz-del/cerebrum-blocks)
-[![API Status](https://img.shields.io/badge/api-up-success)](https://ssdppg.onrender.com/health)
+[![API Status](https://img.shields.io/badge/api-up-success)](https://cerebrum-platform-api.onrender.com/health)
 [![Domain Containers](https://img.shields.io/badge/Domain%20Containers-7-blueviolet)]()
 [![Lego Tax](https://img.shields.io/badge/Lego%20Tax-20%25-gold)]()
+
+---
+
+## 🏛️ Architecture: Two Products, One Ecosystem
+
+Cerebrum Blocks is split into **2 backends + 2 frontends**:
+
+| Product | Type | URL | Purpose |
+|---------|------|-----|---------|
+| **Cerebrum Platform API** | Python/FastAPI | [cerebrum-platform-api.onrender.com](https://cerebrum-platform-api.onrender.com) | Execute 22 AI blocks & domain containers |
+| **Cerebrum Platform** | Static HTML | [cerebrum-platform.onrender.com](https://cerebrum-platform.onrender.com) | Chat UI, file upload, drive connect, chain builder |
+| **Cerebrum Store API** | Python/FastAPI | [cerebrum-store-api.onrender.com](https://cerebrum-store-api.onrender.com) | Block catalog, marketplace, reviews |
+| **Cerebrum Store** | Static HTML | [cerebrum-store.onrender.com](https://cerebrum-store.onrender.com) | Browse & purchase domain containers |
+
+> **Platform** = Where you *run* blocks.  
+> **Store** = Where you *buy* new domain containers.
 
 ---
 
@@ -45,7 +61,7 @@ Layer 5  Event Bus         ← Cross-container messaging        [UNIVERSAL]
 ### 3-Minute Construction AI Chain
 
 ```bash
-curl -X POST https://ssdppg.onrender.com/chain \
+curl -X POST https://cerebrum-platform-api.onrender.com/v1/chain \
   -H "Content-Type: application/json" \
   -d '{
     "steps": [
@@ -60,7 +76,7 @@ curl -X POST https://ssdppg.onrender.com/chain \
 ### Medical Chain (HIPAA-Compliant)
 
 ```bash
-curl -X POST https://ssdppg.onrender.com/chain \
+curl -X POST https://cerebrum-platform-api.onrender.com/v1/chain \
   -H "Content-Type: application/json" \
   -d '{
     "steps": [
@@ -68,18 +84,18 @@ curl -X POST https://ssdppg.onrender.com/chain \
       {"block": "medical", "params": {"action": "process_dicom"}},
       {"block": "medical", "params": {"action": "extract_entities"}},
       {"block": "medical", "params": {"action": "validate"}}
-    ]
+    ],
+    "initial_input": {}
   }'
 ```
 
 ### Legal Contract Analysis
 
 ```bash
-curl -X POST https://ssdppg.onrender.com/execute \
+curl -X POST https://cerebrum-platform-api.onrender.com/v1/execute \
   -H "Content-Type: application/json" \
   -d '{
     "block": "legal",
-    "input": {"url": "contract.pdf"},
     "params": {"action": "process_contract"}
   }'
 ```
@@ -208,21 +224,30 @@ POST /execute {"block": "ai_core", "params": {"action": "route", "quality": "fas
 
 ---
 
-## 🏪 Block Store: Layer 4 Marketplace
+## 🏪 Block Store: Separate Marketplace Service
+
+The Store is a **standalone marketplace** (not part of the execution Platform).
+
+```bash
+# Store catalog stats
+curl https://cerebrum-store-api.onrender.com/health
+# → {"status":"healthy","service":"store","blocks":3}
+```
+
+Inside the **Platform**, the `store` container provides:
 
 ```bash
 # Platform stats
-POST /execute {"block": "store", "params": {"action": "platform_stats"}}
+POST /v1/execute {"block": "store", "params": {"action": "platform_stats"}}
 # → {
-#   "total_blocks": 58,
-#   "published_blocks": 22,
+#   "total_blocks": 22,
+#   "published_blocks": 15,
 #   "total_reviews": 847,
-#   "avg_rating": 4.7,
-#   "platform_revenue": "$12,450.00"
+#   "avg_rating": 4.7
 # }
 
 # Purchase with Lego Tax
-POST /execute {"block": "store", "params": {"action": "purchase", "price_cents": 49900}}
+POST /v1/execute {"block": "store", "params": {"action": "purchase", "price_cents": 49900}}
 # → {"platform_fee": "$99.80", "creator_earns": "$399.20"}
 ```
 
@@ -231,15 +256,26 @@ POST /execute {"block": "store", "params": {"action": "purchase", "price_cents":
 ## 🚀 Deployment
 
 ### Render (Production)
+Pushing to `main` auto-deploys **both** the Platform and the Store:
+
 ```bash
-git push origin main  # Auto-deploys to https://ssdppg.onrender.com
+git push origin main
 ```
 
-### Docker
+| Service | Live URL |
+|---------|----------|
+| Platform API | https://cerebrum-platform-api.onrender.com |
+| Platform UI | https://cerebrum-platform.onrender.com |
+| Store API | https://cerebrum-store-api.onrender.com |
+| Store UI | https://cerebrum-store.onrender.com |
+
+### Docker (Platform Only)
 ```bash
 docker pull bopoadz-del/cerebrum-blocks:latest
 docker run -p 8000:8000 -e API_KEY=cb_xxx bopoadz-del/cerebrum-blocks
 ```
+
+Then open http://localhost:8000 for the Platform UI.
 
 ---
 
@@ -283,8 +319,10 @@ npm install cerebrum-js
 
 ## 🌐 Links
 
-- **Live Platform:** https://ssdppg.onrender.com
-- **Health Check:** https://ssdppg.onrender.com/health
+- **Platform UI:** https://cerebrum-platform.onrender.com
+- **Platform API Health:** https://cerebrum-platform-api.onrender.com/health
+- **Store UI:** https://cerebrum-store.onrender.com
+- **Store API Health:** https://cerebrum-store-api.onrender.com/health
 - **GitHub:** https://github.com/bopoadz-del/Cerebrum-Blocks
 - **Docker Hub:** https://hub.docker.com/r/bopoadz-del/cerebrum-blocks
 
