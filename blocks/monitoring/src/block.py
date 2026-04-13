@@ -3,7 +3,7 @@ from typing import Dict, Any, List, Optional
 import time
 import statistics
 from collections import deque, defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 
 class MonitoringBlock(LegoBlock):
@@ -186,7 +186,7 @@ class MonitoringBlock(LegoBlock):
         
         # Cache result
         self.leaderboard_cache = {
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "leaderboard": leaderboard,
             "top_provider": leaderboard[0]["provider"] if leaderboard else None,
             "auto_route_enabled": True
@@ -255,7 +255,7 @@ class MonitoringBlock(LegoBlock):
         return {
             "predictions": predictions,
             "preventive_actions_recommended": len(predictions) > 0,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(timezone.utc).isoformat()
         }
     
     async def _health_report(self) -> Dict:
