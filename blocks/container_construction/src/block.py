@@ -4403,6 +4403,203 @@ Total Extension of Time Sought: {total_delay} days
         return recs
 
 
+
+    # INTELLIGENT WORKFLOW ENGINE
+    async def intelligent_workflow(self, input_data: Any, params: Dict) -> Dict:
+        """Smart orchestrator - auto-detects user intent and chains actions"""
+        user_goal = params.get("goal") or params.get("prompt", "process document")
+        file_path = input_data.get("file_path") or input_data.get("url")
+        
+        chain_steps = self._build_intelligent_chain(user_goal, file_path)
+        results = []
+        current_data = input_data
+        
+        for step in chain_steps:
+            method = getattr(self, step["action"], None)
+            if method:
+                result = await method(current_data, step.get("params", {}))
+                results.append({
+                    "step": step["action"],
+                    "status": result.get("status"),
+                    "key_findings": self._extract_key_findings(result)
+                })
+                current_data = {**current_data, "previous_result": result}
+        
+        next_action = self._suggest_next_action(results, user_goal)
+        
+        return {
+            "status": "success",
+            "action": "intelligent_workflow",
+            "workflow_executed": [s["action"] for s in chain_steps],
+            "step_results": results,
+            "consolidated_summary": self._consolidate_results(results),
+            "next_recommended_action": next_action,
+            "user_query": user_goal
+        }
+    
+    def _build_intelligent_chain(self, user_goal: str, file_path: Optional[str]) -> List[Dict]:
+        """Determine which construction methods to call based on user intent"""
+        goal = user_goal.lower()
+        chain = []
+        
+        if file_path and file_path.endswith('.pdf'):
+            if any(k in goal for k in ["drawing", "plan", "elevation", "section"]):
+                chain.append({"action": "process_document", "params": {"doc_type": "drawing"}})
+            elif any(k in goal for k in ["spec", "specification", "csi", "masterformat"]):
+                chain.append({"action": "process_specification_full", "params": {}})
+            elif any(k in goal for k in ["contract", "clause", "terms", "risk"]):
+                chain.append({"action": "process_contract", "params": {}})
+            else:
+                chain.append({"action": "process_document", "params": {}})
+        
+        if any(k in goal for k in ["qto", "quantity", "takeoff", "boq", "measurement", "material estimate"]):
+            chain.append({"action": "extract_quantities", "params": {}})
+        
+        if any(k in goal for k in ["cost", "price", "budget", "estimate", "value"]):
+            chain.append({"action": "estimate_costs", "params": {}})
+        
+        if any(k in goal for k in ["buy", "purchase", "procure", "supplier", "enquiry", "order", "lead time"]):
+            if not any(s["action"] == "extract_quantities" for s in chain):
+                chain.append({"action": "extract_quantities", "params": {}})
+            chain.append({"action": "procurement_optimizer", "params": {}})
+        
+        if any(k in goal for k in ["schedule", "programme", "primavera", "delay", "critical path", "progress"]):
+            chain.append({"action": "parse_primavera_schedule", "params": {}})
+        
+        if any(k in goal for k in ["delay analysis", "forensic", "time impact", "extension of time", "eot", "claim"]):
+            chain.append({"action": "forensic_delay_analysis", "params": {}})
+            chain.append({"action": "claims_builder", "params": {}})
+        
+        if any(k in goal for k in ["variation", "change order", "vo", "additional work", "omission"]):
+            chain.append({"action": "change_order_impact", "params": {}})
+            chain.append({"action": "variation_order_manager", "params": {}})
+        
+        if any(k in goal for k in ["cash flow", "s-curve", "payment", "invoice", "billing"]):
+            chain.append({"action": "cash_flow_forecast", "params": {}})
+            chain.append({"action": "payment_certificate", "params": {}})
+        
+        if any(k in goal for k in ["quality", "defect", "inspection", "qc", "honeycomb", "crack"]):
+            chain.append({"action": "qa_qc_inspection", "params": {}})
+        
+        if any(k in goal for k in ["safety", "osha", "hazard", "incident", "audit"]):
+            chain.append({"action": "safety_compliance_audit", "params": {}})
+        
+        if any(k in goal for k in ["tender", "bid", "bid evaluation", "contractor selection", "quote comparison"]):
+            chain.append({"action": "tender_bid_analysis", "params": {}})
+        
+        if any(k in goal for k in ["carbon", "co2", "green", "esg", "sustainability", "leed", "breeam"]):
+            chain.append({"action": "carbon_footprint_calculator", "params": {}})
+            chain.append({"action": "esg_sustainability_report", "params": {}})
+        
+        if any(k in goal for k in ["value engineering", "ve", "alternative", "substitution", "saving", "optimization"]):
+            chain.append({"action": "value_engineering", "params": {}})
+        
+        if any(k in goal for k in ["commissioning", "handover", "practical completion", "testing"]):
+            chain.append({"action": "commissioning_checklist", "params": {}})
+        
+        if any(k in goal for k in ["o&m", "operation and maintenance", "manual", "warranty", "maintenance schedule"]):
+            chain.append({"action": "om_manual_generator", "params": {}})
+            chain.append({"action": "warranty_maintenance_schedule", "params": {}})
+        
+        if any(k in goal for k in ["as built", "as-built", "deviation", "record drawing"]):
+            chain.append({"action": "as_built_deviation_report", "params": {}})
+        
+        if any(k in goal for k in ["bim", "clash", "coordination", "model"]):
+            chain.append({"action": "bim_clash_detection", "params": {}})
+        
+        if any(k in goal for k in ["digital twin", "sync", "iot", "sensor"]):
+            chain.append({"action": "digital_twin_sync", "params": {}})
+        
+        if any(k in goal for k in ["submittal", "shop drawing", "sample", "mockup", "approval"]):
+            chain.append({"action": "submittal_log_generator", "params": {}})
+        
+        if any(k in goal for k in ["labor", "manpower", "resource", "histogram", "loading"]):
+            chain.append({"action": "resource_histogram", "params": {}})
+        
+        if any(k in goal for k in ["rfi", "request for information", "clarification", "ambiguity"]):
+            chain.append({"action": "rfi_generator", "params": {}})
+        
+        if any(k in goal for k in ["risk", "risk register", "mitigation", "contingency"]):
+            chain.append({"action": "risk_register_auto_populate", "params": {}})
+        
+        if any(k in goal for k in ["daily report", "site diary", "daily log", "progress photo"]):
+            chain.append({"action": "daily_site_report", "params": {}})
+        
+        if not chain:
+            chain.append({"action": "process_document", "params": {}})
+        
+        return chain
+    
+    def _suggest_next_action(self, results: List[Dict], original_goal: str) -> Dict:
+        """Suggest logical next step based on completed workflow"""
+        completed_actions = [r["step"] for r in results]
+        last_result = results[-1] if results else {}
+        
+        if "extract_quantities" in completed_actions and "procurement_optimizer" not in completed_actions:
+            return {"suggested_action": "procurement_optimizer", "reason": "Quantities calculated - ready to source materials", "confidence": 0.95}
+        
+        if "parse_primavera_schedule" in completed_actions and "cash_flow_forecast" not in completed_actions:
+            return {"suggested_action": "cash_flow_forecast", "reason": "Schedule loaded - can now project cash requirements", "confidence": 0.90}
+        
+        if "qa_qc_inspection" in completed_actions and last_result.get("status") == "success":
+            defects = last_result.get("key_findings", {}).get("defects_found", 0)
+            if defects > 0:
+                return {"suggested_action": "generate_construction_report", "reason": f"{defects} defects found - generate formal QA report", "confidence": 0.88}
+        
+        if "forensic_delay_analysis" in completed_actions:
+            return {"suggested_action": "claims_builder", "reason": "Delay analysis complete - prepare formal claim submission", "confidence": 0.92}
+        
+        if "process_specification_full" in completed_actions:
+            return {"suggested_action": "submittal_log_generator", "reason": "Specifications parsed - extract all required submittals", "confidence": 0.85}
+        
+        if "tender_bid_analysis" in completed_actions:
+            return {"suggested_action": "process_contract", "reason": "Bid selected - prepare contract with identified risks", "confidence": 0.80}
+        
+        if "carbon_footprint_calculator" in completed_actions:
+            return {"suggested_action": "esg_sustainability_report", "reason": "Carbon calculated - generate full ESG disclosure", "confidence": 0.85}
+        
+        return {"suggested_action": "process_document", "reason": "Consolidate all findings into formal report", "confidence": 0.75}
+    
+    def _extract_key_findings(self, result: Dict) -> Dict:
+        """Extract summary data from result for chaining"""
+        return {
+            "status": result.get("status"),
+            "metrics": result.get("summary", {}),
+            "risks_found": len(result.get("risks", [])) if isinstance(result.get("risks"), list) else 0,
+            "cost_impact": result.get("cost_impact") or result.get("total_cost") or result.get("grand_total"),
+            "schedule_impact": result.get("schedule_impact", {}).get("days", 0) if isinstance(result.get("schedule_impact"), dict) else 0,
+            "defects_found": result.get("defects_found", 0),
+            "approval_status": result.get("approval_status") or result.get("pass_fail")
+        }
+    
+    def _consolidate_results(self, results: List[Dict]) -> Dict:
+        """Create unified summary from multiple workflow steps"""
+        total_cost_impact = sum([
+            r.get("key_findings", {}).get("cost_impact", 0) or 0 
+            for r in results 
+            if isinstance(r.get("key_findings", {}).get("cost_impact"), (int, float))
+        ])
+        
+        total_schedule_impact = sum([
+            r.get("key_findings", {}).get("schedule_impact", 0) 
+            for r in results
+        ])
+        
+        all_risks = []
+        for r in results:
+            if "risk" in r.get("step", ""):
+                all_risks.extend(r.get("result", {}).get("risks", []))
+        
+        return {
+            "workflow_steps_completed": len(results),
+            "total_cost_impact_usd": total_cost_impact,
+            "total_schedule_impact_days": total_schedule_impact,
+            "risks_identified": len(all_risks),
+            "critical_issues": len([r for r in results if r.get("status") == "error"]),
+            "success_rate": len([r for r in results if r.get("status") == "success"]) / len(results) if results else 0
+        }
+
+
     async def route(self, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
