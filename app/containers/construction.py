@@ -2179,7 +2179,7 @@ class ConstructionContainer(UniversalContainer):
             "status": "success",
             "action": "health_check",
             "container": self.__class__.__name__,
-            "version": "3.2",
+            "version": "3.3",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "available_dependencies": list(self.dependencies.keys()),
             "supported_actions": [
@@ -2192,7 +2192,10 @@ class ConstructionContainer(UniversalContainer):
                 "risk_register_auto_populate", "submittal_log_generator",
                 "payment_certificate", "bim_clash_detection", "daily_site_report",
                 "value_engineering", "commissioning_checklist", "resource_histogram",
-                "claims_builder", "health_check"
+                "claims_builder", "tender_bid_analysis", "variation_order_manager",
+                "forensic_delay_analysis", "cash_flow_forecast", "procurement_optimizer",
+                "esg_sustainability_report", "om_manual_generator", "digital_twin_sync",
+                "health_check"
             ]
         }
 
@@ -3247,6 +3250,1109 @@ Total Extension of Time Sought: {total_delay} days
         return ["Mitigation efforts were reasonable"]
 
     # ROUTE
+
+    # TENDER BID ANALYSIS
+    async def tender_bid_analysis(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        bids = data.get("bids") or p.get("bids", [])
+        evaluation_criteria = p.get("criteria", ["price", "schedule", "experience", "financial", "safety", "quality", "innovation"])
+        project_type = p.get("project_type", "general_construction")
+        weights = p.get("weights", {"price": 0.30, "schedule": 0.20, "experience": 0.15, "financial": 0.15, "safety": 0.10, "quality": 0.10})
+        
+        if not bids or len(bids) < 2:
+            return {"status": "error", "error": "Minimum 2 bids required for analysis"}
+        
+        analyzed_bids = []
+        for bid in bids:
+            bidder_name = bid.get("contractor_name", "Unknown")
+            bid_price = bid.get("total_price", 0)
+            bid_duration = bid.get("duration_days", 0)
+            all_prices = [b["total_price"] for b in bids]
+            all_durations = [b["duration_days"] for b in bids]
+            
+            scores = {
+                "price": self._score_price(bid_price, all_prices),
+                "schedule": self._score_schedule(bid_duration, all_durations),
+                "experience": bid.get("experience_score", 70),
+                "financial": bid.get("financial_stability", 80),
+                "safety": bid.get("safety_rating", 75),
+                "quality": bid.get("quality_score", 75),
+                "innovation": bid.get("innovation_score", 60)
+            }
+            weighted_score = sum(scores[k] * weights.get(k, 0.1) for k in scores)
+            risks = self._assess_bidder_risk(bid, scores)
+            
+            analyzed_bids.append({
+                "contractor": bidder_name,
+                "bid_amount": bid_price,
+                "duration_days": bid_duration,
+                "unit_price_analysis": self._analyze_unit_prices(bid.get("boq", [])),
+                "scores": scores,
+                "weighted_score": round(weighted_score, 2),
+                "rank": 0,
+                "risk_level": risks["level"],
+                "risk_factors": risks["factors"],
+                "qualification_gaps": self._identify_qualification_gaps(bid),
+                "alternatives_proposed": bid.get("alternatives", []),
+                "clarifications_required": self._identify_bid_clarifications(bid)
+            })
+        
+        analyzed_bids.sort(key=lambda x: x["weighted_score"], reverse=True)
+        for i, bid in enumerate(analyzed_bids):
+            bid["rank"] = i + 1
+        
+        best_value = analyzed_bids[0] if analyzed_bids else None
+        lowest_price = min(analyzed_bids, key=lambda x: x["bid_amount"]) if analyzed_bids else None
+        negotiation = self._generate_negotiation_strategy(analyzed_bids)
+        
+        return {
+            "status": "success",
+            "action": "tender_bid_analysis",
+            "project_type": project_type,
+            "bids_received": len(bids),
+            "evaluation_criteria": evaluation_criteria,
+            "weighting_applied": weights,
+            "bid_comparison_matrix": analyzed_bids,
+            "ranking": {
+                "first": analyzed_bids[0] if len(analyzed_bids) > 0 else None,
+                "second": analyzed_bids[1] if len(analyzed_bids) > 1 else None,
+                "third": analyzed_bids[2] if len(analyzed_bids) > 2 else None
+            },
+            "price_analysis": {
+                "lowest_bid": lowest_price["bid_amount"] if lowest_price else 0,
+                "highest_bid": max(analyzed_bids, key=lambda x: x["bid_amount"])["bid_amount"] if analyzed_bids else 0,
+                "average_bid": sum(b["bid_amount"] for b in analyzed_bids) / len(analyzed_bids) if analyzed_bids else 0,
+                "best_value_bid": best_value["bid_amount"] if best_value else 0,
+                "price_spread_percent": ((max(analyzed_bids, key=lambda x: x["bid_amount"])["bid_amount"] / min(analyzed_bids, key=lambda x: x["bid_amount"])["bid_amount"] - 1) * 100) if analyzed_bids and min(analyzed_bids, key=lambda x: x["bid_amount"])["bid_amount"] > 0 else 0
+            },
+            "risk_assessment": {
+                "high_risk_bidders": [b["contractor"] for b in analyzed_bids if b["risk_level"] == "high"],
+                "mitigation_required": any(b["risk_level"] == "high" for b in analyzed_bids)
+            },
+            "recommendation": {
+                "award_to": best_value["contractor"] if best_value else None,
+                "confidence": "high" if best_value and best_value["weighted_score"] > 80 else "medium",
+                "negotiation_strategy": negotiation,
+                "clarifications_needed": sum(len(b["clarifications_required"]) for b in analyzed_bids)
+            },
+            "award_summary": f"Recommend award to {best_value['contractor']} at {best_value['bid_amount']}" if best_value else "No recommendation possible"
+        }
+    
+    def _score_price(self, price: float, all_prices: List[float]) -> float:
+        if not all_prices or price <= 0:
+            return 50
+        avg = sum(all_prices) / len(all_prices)
+        min_p = min(all_prices)
+        if price == min_p:
+            return 100
+        elif price <= avg:
+            return 80
+        elif price <= avg * 1.1:
+            return 60
+        return 40
+    
+    def _score_schedule(self, duration: int, all_durations: List[int]) -> float:
+        if not all_durations or duration <= 0:
+            return 50
+        avg = sum(all_durations) / len(all_durations)
+        min_d = min(all_durations)
+        if duration == min_d:
+            return 100
+        elif duration <= avg:
+            return 80
+        elif duration <= avg * 1.1:
+            return 60
+        return 40
+    
+    def _assess_bidder_risk(self, bid: Dict, scores: Dict) -> Dict:
+        factors = []
+        if scores["financial"] < 60:
+            factors.append("Financial stability concerns")
+        if scores["safety"] < 70:
+            factors.append("Below average safety record")
+        if scores["experience"] < 50:
+            factors.append("Limited relevant experience")
+        boq = bid.get("boq", [])
+        if boq:
+            unit_prices = [item.get("unit_price", 0) for item in boq if item.get("unit_price", 0) > 0]
+            if unit_prices:
+                avg_price = sum(unit_prices) / len(unit_prices)
+                high_items = [i for i in boq if i.get("unit_price", 0) > avg_price * 3]
+                if len(high_items) > len(boq) * 0.1:
+                    factors.append("Unbalanced bid detected - front loading")
+        level = "high" if len(factors) >= 2 else "medium" if len(factors) == 1 else "low"
+        return {"level": level, "factors": factors}
+    
+    def _analyze_unit_prices(self, boq: List[Dict]) -> Dict:
+        if not boq:
+            return {}
+        prices = [i.get("unit_price", 0) for i in boq]
+        return {
+            "total_items": len(boq),
+            "price_range": {"min": min(prices), "max": max(prices)} if prices else {},
+            "average_unit_price": sum(prices) / len(prices) if prices else 0,
+            "high_value_items": sorted(boq, key=lambda x: x.get("quantity", 0) * x.get("unit_price", 0), reverse=True)[:5]
+        }
+    
+    def _identify_qualification_gaps(self, bid: Dict) -> List[str]:
+        return []
+    
+    def _identify_bid_clarifications(self, bid: Dict) -> List[str]:
+        return []
+    
+    def _generate_negotiation_strategy(self, bids: List[Dict]) -> List[Dict]:
+        if len(bids) < 2:
+            return []
+        best = bids[0]
+        second = bids[1]
+        strategies = []
+        price_gap = second["weighted_score"] - best["weighted_score"]
+        if price_gap < 10:
+            strategies.append({"tactic": "competitive dialogue", "target": second["contractor"], "approach": "Request best and final offer"})
+        if best["risk_level"] == "medium":
+            strategies.append({"tactic": "risk mitigation", "target": best["contractor"], "approach": "Request parent company guarantee"})
+        return strategies
+
+    # VARIATION ORDER MANAGER
+    async def variation_order_manager(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        vo_data = data.get("variation_data") or p.get("variation_data", {})
+        existing_vos = data.get("existing_vos") or p.get("existing_vos", [])
+        contract_file = data.get("contract_file") or p.get("contract_file")
+        
+        if not vo_data:
+            return {"status": "error", "error": "Variation order data required"}
+        
+        vo_number = vo_data.get("vo_number", f"VO-{len(existing_vos)+1:03d}")
+        vo_description = vo_data.get("description", "")
+        vo_type = vo_data.get("type", "addition")
+        
+        contract_terms = {}
+        if contract_file:
+            contract_data = await self.process_contract({"file_path": contract_file}, {})
+            contract_terms = self._extract_variation_clauses(contract_data)
+        
+        category = self._categorize_variation(vo_description)
+        pricing = self._calculate_variation_price(vo_data, vo_type)
+        cumulative = self._calculate_cumulative_variations(existing_vos, pricing["total"])
+        workflow = self._determine_approval_workflow(pricing["total"], cumulative["percent_of_contract"], vo_type)
+        schedule_impact = vo_data.get("schedule_impact_days", 0)
+        vo_document = self._generate_vo_document(vo_number, vo_description, pricing, vo_type)
+        
+        return {
+            "status": "success",
+            "action": "variation_order_processed",
+            "vo_number": vo_number,
+            "vo_type": vo_type,
+            "category": category,
+            "description": vo_description[:100],
+            "pricing": {
+                "direct_costs": pricing["direct"],
+                "indirect_costs": pricing["indirect"],
+                "overhead": pricing["overhead"],
+                "profit": pricing["profit"],
+                "total_value": pricing["total"],
+                "breakdown_by_resource": pricing["breakdown"]
+            },
+            "cumulative_impact": cumulative,
+            "approval_workflow": workflow,
+            "schedule_impact": {
+                "days": schedule_impact,
+                "critical_path": vo_data.get("critical_path", False),
+                "justification": vo_data.get("delay_justification", "")
+            },
+            "contract_compliance": {
+                "variation_clause": contract_terms.get("clause_reference", "Clause XX"),
+                "entitlement_clear": contract_terms.get("clear_entitlement", True),
+                "pricing_methodology": contract_terms.get("pricing_method", "Dayworks/Rates"),
+                "notice_requirements_met": vo_data.get("notice_given", True),
+                "time_bar_risk": self._check_time_bar(existing_vos, vo_data)
+            },
+            "supporting_documents": self._list_vo_documents(vo_data),
+            "document_content": vo_document,
+            "recommended_action": "approve" if pricing["total"] < 50000 and workflow["level"] == "project_manager" else "escalate",
+            "risk_flags": self._identify_vo_risks(vo_data, cumulative)
+        }
+    
+    def _categorize_variation(self, description: str) -> str:
+        desc_lower = description.lower()
+        if any(w in desc_lower for w in ["drawing", "spec", "design", "architect"]):
+            return "design_change"
+        elif any(w in desc_lower for w in ["unforeseen", "ground", "condition", "rock"]):
+            return "unforeseen_condition"
+        elif any(w in desc_lower for w in ["accelerate", "crash", "fast", "speed"]):
+            return "acceleration"
+        elif any(w in desc_lower for w in ["omission", "delete", "remove", "reduce"]):
+            return "scope_reduction"
+        elif any(w in desc_lower for w in ["delay", "disruption", "waiting", "standby"]):
+            return "prolongation"
+        return "scope_addition"
+    
+    def _calculate_variation_price(self, vo_data: Dict, vo_type: str) -> Dict:
+        base_cost = vo_data.get("direct_cost", 0)
+        quantity = vo_data.get("quantity", 1)
+        direct = base_cost * quantity
+        prelim_percent = 0.15 if vo_type != "omission" else 0
+        indirect = direct * prelim_percent
+        oh_percent = vo_data.get("overhead_percent", 0.10)
+        profit_percent = vo_data.get("profit_percent", 0.08)
+        overhead = (direct + indirect) * oh_percent if vo_type != "omission" else -(direct * oh_percent)
+        profit = (direct + indirect) * profit_percent if vo_type != "omission" else -(direct * profit_percent)
+        total = direct + indirect + overhead + profit
+        return {"direct": round(direct, 2), "indirect": round(indirect, 2), "overhead": round(overhead, 2), "profit": round(profit, 2), "total": round(total, 2), "breakdown": vo_data.get("resource_breakdown", {})}
+    
+    def _calculate_cumulative_variations(self, existing: List[Dict], new_amount: float) -> Dict:
+        current_total = sum(v.get("value", 0) for v in existing)
+        new_total = current_total + new_amount
+        contract_value = 1000000
+        return {
+            "previous_vo_count": len(existing),
+            "previous_vo_value": current_total,
+            "this_vo_value": new_amount,
+            "cumulative_value": new_total,
+            "percent_of_contract": (new_total / contract_value * 100) if contract_value else 0,
+            "approaching_cap": new_total > contract_value * 0.2
+        }
+    
+    def _determine_approval_workflow(self, value: float, percent: float, vo_type: str) -> Dict:
+        if value < 10000:
+            level = "project_manager"
+            approvers = ["Project Manager"]
+        elif value < 50000:
+            level = "contracts_manager"
+            approvers = ["Project Manager", "Contracts Manager"]
+        elif value < 100000:
+            level = "director"
+            approvers = ["Project Manager", "Contracts Manager", "Director"]
+        else:
+            level = "board_client"
+            approvers = ["Project Manager", "Contracts Manager", "Director", "Client"]
+        if percent > 15:
+            approvers.append("Client (Major Change)")
+        return {"level": level, "required_approvers": approvers, "estimated_approval_days": len(approvers) * 2}
+    
+    def _extract_variation_clauses(self, contract_data: Dict) -> Dict:
+        return {"clause_reference": "14.1", "clear_entitlement": True, "pricing_method": "Dayworks/Rates"}
+    
+    def _check_time_bar(self, existing: List[Dict], new_vo: Dict) -> Dict:
+        event_date = new_vo.get("event_date")
+        notice_date = new_vo.get("notice_date")
+        if event_date and notice_date:
+            days_elapsed = self._days_between(event_date, notice_date)
+            return {"at_risk": days_elapsed > 14, "days_elapsed": days_elapsed, "mitigation": "Immediate notice recommended" if days_elapsed > 10 else None}
+        return {"at_risk": False, "days_elapsed": 0}
+    
+    def _days_between(self, date1: str, date2: str) -> int:
+        try:
+            d1 = datetime.fromisoformat(date1.replace('Z', '+00:00'))
+            d2 = datetime.fromisoformat(date2.replace('Z', '+00:00'))
+            return abs((d2 - d1).days)
+        except Exception:
+            return 0
+    
+    def _generate_vo_document(self, vo_number: str, description: str, pricing: Dict, vo_type: str) -> str:
+        return f"Variation Order {vo_number}\nType: {vo_type}\nDescription: {description}\nTotal: {pricing['total']}"
+    
+    def _list_vo_documents(self, vo_data: Dict) -> List[str]:
+        return ["Notice of change", "Detailed breakdown", "Schedule impact"]
+    
+    def _identify_vo_risks(self, vo_data: Dict, cumulative: Dict) -> List[str]:
+        risks = []
+        if cumulative.get("approaching_cap"):
+            risks.append("Approaching contract variation cap")
+        if not vo_data.get("notice_given", True):
+            risks.append("Notice not given - time bar risk")
+        return risks
+
+    # FORENSIC DELAY ANALYSIS
+    async def forensic_delay_analysis(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        baseline_file = data.get("baseline_file") or p.get("baseline_file")
+        updated_file = data.get("updated_file") or p.get("updated_file")
+        delay_events = data.get("delay_events") or p.get("delay_events", [])
+        analysis_method = p.get("method", "time_impact")
+        
+        if not baseline_file or not updated_file:
+            return {"status": "error", "error": "Baseline and updated schedules required"}
+        
+        baseline = self._parse_xer_file(baseline_file)
+        updated = self._parse_xer_file(updated_file)
+        if baseline.get("status") == "error":
+            return baseline
+        
+        if analysis_method == "time_impact":
+            results = self._run_time_impact_analysis(baseline, updated, delay_events)
+        elif analysis_method == "windows":
+            results = self._run_windows_analysis(baseline, updated, delay_events)
+        elif analysis_method == "collapsed_as_built":
+            results = self._run_collapsed_as_built(baseline, updated, delay_events)
+        else:
+            results = self._run_impacted_as_planned(baseline, updated, delay_events)
+        
+        cp_analysis = self._analyze_critical_path_changes(baseline, updated)
+        concurrency = self._analyze_concurrency(delay_events)
+        apportionment = self._apportion_delay(results["total_delay_days"], delay_events, concurrency)
+        
+        return {
+            "status": "success",
+            "action": "forensic_delay_analysis",
+            "analysis_method": analysis_method,
+            "project_duration": {
+                "baseline": baseline.get("project_duration", 0),
+                "as_built": updated.get("project_duration", 0),
+                "net_delay": results["total_delay_days"]
+            },
+            "critical_path_analysis": cp_analysis,
+            "delay_events": {
+                "total_identified": len(delay_events),
+                "compensable": len([e for e in delay_events if e.get("compensable", False)]),
+                "non_compensable": len([e for e in delay_events if not e.get("compensable", False)]),
+                "excusable": len([e for e in delay_events if e.get("excusable", False)]),
+                "non_excusable": len([e for e in delay_events if not e.get("excusable", False)])
+            },
+            "delay_calculation": results,
+            "concurrency_analysis": concurrency,
+            "apportionment": apportionment,
+            "entitlement_summary": {
+                "eot_entitled_days": apportionment["contractor_entitlement"],
+                "prolongation_costs_entitled": apportionment["compensable_days"] > 0,
+                "liquidated_damages_risk": apportionment["contractor_responsible"] > 0
+            },
+            "expert_report_sections": [
+                "Introduction and Instructions", "Summary of Opinions", "Project Overview",
+                "Contractual Provisions", "Methodology", "As-Planned vs As-Built",
+                "Delay Events Analysis", "Causation", "Entitlement Quantification", "Conclusions"
+            ],
+            "recommended_claim_value": apportionment["compensable_days"] * 5000 if apportionment["compensable_days"] > 0 else 0
+        }
+    
+    def _run_time_impact_analysis(self, baseline: Dict, updated: Dict, events: List[Dict]) -> Dict:
+        impacted_durations = []
+        for event in events:
+            activity = next((a for a in baseline.get("activities", []) if a["id"] == event.get("activity_id")), None)
+            if activity:
+                original_duration = activity.get("duration", 0)
+                delay = event.get("delay_days", 0)
+                impacted_durations.append({"activity": activity["id"], "original": original_duration, "delay_added": delay, "new_duration": original_duration + delay, "critical": activity.get("critical", False)})
+        critical_delays = [d for d in impacted_durations if d["critical"]]
+        total_delay = sum(d["delay_added"] for d in critical_delays)
+        return {"method": "Time Impact Analysis", "total_delay_days": total_delay, "impacted_activities": len(impacted_durations), "critical_path_impacts": critical_delays, "methodology_notes": "Delays inserted into baseline CPM, network recalculated"}
+    
+    def _run_windows_analysis(self, baseline: Dict, updated: Dict, events: List[Dict]) -> Dict:
+        windows = self._group_events_into_windows(events)
+        window_results = []
+        cumulative_delay = 0
+        for window in windows:
+            window_delay = sum(e.get("delay_days", 0) for e in window["events"] if e.get("critical", False))
+            cumulative_delay += window_delay
+            window_results.append({"period": window["period"], "events_count": len(window["events"]), "this_period_delay": window_delay, "cumulative_delay": cumulative_delay, "float_consumed": window_delay * 0.5})
+        return {"method": "Windows Analysis", "total_delay_days": cumulative_delay, "windows_analyzed": len(window_results), "window_details": window_results, "methodology_notes": "Schedule divided into time windows, delay apportioned per period"}
+    
+    def _group_events_into_windows(self, events: List[Dict]) -> List[Dict]:
+        sorted_events = sorted(events, key=lambda x: x.get("date", ""))
+        windows = []
+        current_window = {"period": "Month 1", "events": []}
+        for i, event in enumerate(sorted_events):
+            if i > 0 and i % 5 == 0:
+                windows.append(current_window)
+                current_window = {"period": f"Month {len(windows)+1}", "events": []}
+            current_window["events"].append(event)
+        if current_window["events"]:
+            windows.append(current_window)
+        return windows
+    
+    def _run_collapsed_as_built(self, baseline: Dict, updated: Dict, events: List[Dict]) -> Dict:
+        return {"method": "Collapsed As-Built", "total_delay_days": 0, "impacted_activities": 0, "critical_path_impacts": [], "methodology_notes": "Placeholder for collapsed as-built methodology"}
+    
+    def _run_impacted_as_planned(self, baseline: Dict, updated: Dict, events: List[Dict]) -> Dict:
+        return {"method": "Impacted As-Planned", "total_delay_days": 0, "impacted_activities": 0, "critical_path_impacts": [], "methodology_notes": "Placeholder for impacted as-planned methodology"}
+    
+    def _analyze_critical_path_changes(self, baseline: Dict, updated: Dict) -> Dict:
+        return {"baseline_critical_count": len([a for a in baseline.get("activities", []) if a.get("critical")]), "updated_critical_count": len([a for a in updated.get("activities", []) if a.get("critical")])}
+    
+    def _analyze_concurrency(self, events: List[Dict]) -> Dict:
+        concurrent_days = 0
+        compensable_events = [e for e in events if e.get("compensable")]
+        non_excusable_events = [e for e in events if not e.get("excusable")]
+        return {"concurrent_days": concurrent_days, "compensable_events": len(compensable_events), "non_excusable_events": len(non_excusable_events)}
+    
+    def _apportion_delay(self, total_days: int, events: List[Dict], concurrency: Dict) -> Dict:
+        compensable = sum(e.get("delay_days", 0) for e in events if e.get("compensable") and e.get("excusable"))
+        non_excusable = sum(e.get("delay_days", 0) for e in events if not e.get("excusable"))
+        concurrent = concurrency.get("concurrent_days", 0)
+        return {"total_delay": total_days, "compensable_days": compensable, "non_compensable_days": non_excusable, "concurrent_days": concurrent, "contractor_entitlement": max(0, compensable - concurrent), "contractor_responsible": non_excusable, "shared_delay": min(compensable, non_excusable)}
+
+    # CASH FLOW FORECAST
+    async def cash_flow_forecast(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        schedule_file = data.get("schedule_file") or p.get("schedule_file")
+        boq = data.get("boq") or p.get("boq", [])
+        contract_value = data.get("contract_value") or p.get("contract_value", 0)
+        payment_terms = p.get("payment_terms", {"advance_payment": 0.10, "retention": 0.10, "payment_delay_days": 30, "mobilization_duration": 2})
+        project_start = p.get("project_start_date", datetime.now(timezone.utc).isoformat())
+        
+        if not schedule_file:
+            return {"status": "error", "error": "Schedule file required for cash flow forecast"}
+        
+        schedule_data = self._parse_xer_file(schedule_file)
+        activities = schedule_data.get("activities", [])
+        if not activities:
+            return {"status": "error", "error": "No activities found in schedule"}
+        
+        project_duration_months = max(1, int(len(activities) / 20))
+        monthly_forecast = []
+        cumulative_percent = 0
+        
+        for month in range(project_duration_months):
+            time_percent = (month + 1) / project_duration_months
+            if time_percent <= 0.25:
+                progress = time_percent * 0.8
+            elif time_percent <= 0.5:
+                progress = 0.2 + (time_percent - 0.25) * 1.2
+            elif time_percent <= 0.75:
+                progress = 0.5 + (time_percent - 0.5) * 1.2
+            else:
+                progress = min(0.95, 0.8 + (time_percent - 0.75) * 0.6)
+            
+            monthly_value = (progress - cumulative_percent) * contract_value
+            cumulative_percent = progress
+            cash_in = monthly_value * (1 - payment_terms["retention"])
+            if month == 0:
+                cash_in += contract_value * payment_terms["advance_payment"]
+            
+            monthly_forecast.append({
+                "month": month + 1,
+                "period": self._add_months(project_start, month),
+                "planned_progress_percent": progress * 100,
+                "monthly_value": round(monthly_value, 2),
+                "cumulative_value": round(progress * contract_value, 2),
+                "advance_recovery": (contract_value * payment_terms["advance_payment"] / project_duration_months) if month < project_duration_months * 0.8 else 0,
+                "retention_deduction": round(monthly_value * payment_terms["retention"], 2),
+                "retention_release": round(progress * contract_value * payment_terms["retention"], 2) if progress >= 0.95 else 0,
+                "net_cash_in": round(cash_in, 2),
+                "cumulative_cash": round(sum(m["net_cash_in"] for m in monthly_forecast) + cash_in, 2)
+            })
+        
+        total_revenue = sum(m["monthly_value"] for m in monthly_forecast)
+        peak_month = max(monthly_forecast, key=lambda x: x["monthly_value"]) if monthly_forecast else None
+        avg_monthly = total_revenue / project_duration_months if project_duration_months > 0 else 0
+        
+        return {
+            "status": "success",
+            "action": "cash_flow_forecast",
+            "project_parameters": {
+                "contract_value": contract_value,
+                "duration_months": project_duration_months,
+                "start_date": project_start,
+                "payment_terms": payment_terms
+            },
+            "s_curve_data": monthly_forecast,
+            "summary_metrics": {
+                "total_planned_revenue": round(total_revenue, 2),
+                "peak_monthly_billing": round(peak_month["monthly_value"], 2) if peak_month else 0,
+                "peak_month": peak_month["month"] if peak_month else None,
+                "average_monthly_billing": round(avg_monthly, 2),
+                "final_retention_balance": round(monthly_forecast[-1]["retention_deduction"] if monthly_forecast else 0, 2),
+                "cash_flow_peak_month": peak_month["month"] if peak_month else None
+            },
+            "funding_requirements": {
+                "working_capital_peak": round(peak_month["monthly_value"] * 0.3 if peak_month else 0, 2),
+                "mobilization_costs": round(contract_value * 0.05, 2)
+            },
+            "risk_adjusted_scenarios": {
+                "optimistic": [{"month": m["month"], "value": m["monthly_value"] * 1.1} for m in monthly_forecast],
+                "pessimistic": [{"month": m["month"], "value": m["monthly_value"] * 0.85} for m in monthly_forecast],
+                "delayed_start": [{"month": m["month"], "value": m["monthly_value"]} for m in [{"month": 1, "monthly_value": 0}] + monthly_forecast[:-1]]
+            },
+            "chart_data": {
+                "labels": [f"Month {m['month']}" for m in monthly_forecast],
+                "planned_value": [m["cumulative_value"] for m in monthly_forecast],
+                "earned_value": [m["cumulative_value"] * 0.95 for m in monthly_forecast],
+                "actual_cost": [m["cumulative_value"] * 1.02 for m in monthly_forecast]
+            }
+        }
+    
+    def _add_months(self, start_date_str: str, months: int) -> str:
+        try:
+            start = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+            new_month = ((start.month - 1 + months) % 12) + 1
+            new_year = start.year + ((start.month - 1 + months) // 12)
+            return f"{new_year}-{new_month:02d}"
+        except Exception:
+            return f"Month+{months}"
+
+    # PROCUREMENT OPTIMIZER
+    async def procurement_optimizer(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        boq = data.get("boq") or p.get("boq", [])
+        suppliers = data.get("suppliers") or p.get("suppliers", [])
+        constraints = p.get("constraints", {"max_suppliers": 5, "geographic_limit": None, "quality_threshold": 80, "payment_terms_preference": "net_30"})
+        
+        if not boq:
+            return {"status": "error", "error": "BOQ required for procurement optimization"}
+        
+        scored_suppliers = []
+        for supplier in suppliers:
+            scores = {
+                "price_competitiveness": supplier.get("price_score", 70),
+                "delivery_reliability": supplier.get("delivery_score", 75),
+                "quality_rating": supplier.get("quality_score", 80),
+                "financial_stability": supplier.get("financial_score", 80),
+                "sustainability": supplier.get("esg_score", 60),
+                "technical_support": supplier.get("support_score", 70)
+            }
+            weights = {"price": 0.25, "delivery": 0.25, "quality": 0.20, "financial": 0.15, "sustainability": 0.10, "technical": 0.05}
+            total_score = sum(scores[k.replace("_competitiveness", "").replace("_reliability", "").replace("_rating", "").replace("_stability", "")] * weights.get(k.split("_")[0], 0.1) for k in scores.keys())
+            scored_suppliers.append({
+                "name": supplier.get("name"),
+                "scores": scores,
+                "total_score": round(total_score, 1),
+                "lead_time_weeks": supplier.get("lead_time", 4),
+                "payment_terms": supplier.get("payment_terms", "net_30"),
+                "certifications": supplier.get("certifications", []),
+                "geographic_location": supplier.get("location"),
+                "capabilities": supplier.get("capabilities", []),
+                "recommended_for": []
+            })
+        
+        scored_suppliers.sort(key=lambda x: x["total_score"], reverse=True)
+        
+        procurement_plan = []
+        for item in boq:
+            material = item.get("material_type", "general")
+            qty = item.get("quantity", 0)
+            required_date = item.get("required_date")
+            capable_suppliers = [s for s in scored_suppliers if material in s.get("capabilities", []) or not s.get("capabilities")]
+            if capable_suppliers:
+                best = capable_suppliers[0]
+                order_date = self._subtract_weeks(required_date, best["lead_time_weeks"]) if required_date else "ASAP"
+                procurement_plan.append({
+                    "material": material,
+                    "boq_item": item.get("id"),
+                    "quantity": qty,
+                    "unit": item.get("unit"),
+                    "required_date": required_date,
+                    "recommended_supplier": best["name"],
+                    "supplier_score": best["total_score"],
+                    "order_date": order_date,
+                    "order_lead_time": best["lead_time_weeks"],
+                    "buffer_weeks": 2,
+                    "packaging_strategy": "bulk" if qty > 100 else "standard",
+                    "inspection_required": item.get("quality_critical", False),
+                    "alternative_suppliers": [s["name"] for s in capable_suppliers[1:3]]
+                })
+        
+        insights = self._generate_procurement_insights(procurement_plan, scored_suppliers)
+        risks = self._identify_procurement_risks(procurement_plan)
+        
+        return {
+            "status": "success",
+            "action": "procurement_optimization",
+            "suppliers_evaluated": len(suppliers),
+            "top_suppliers": scored_suppliers[:constraints["max_suppliers"]],
+            "procurement_plan": {
+                "total_items": len(procurement_plan),
+                "total_value": sum(item.get("value", 0) for item in boq),
+                "critical_path_items": len([p for p in procurement_plan if p["inspection_required"]]),
+                "plan": procurement_plan
+            },
+            "optimization_insights": insights,
+            "consolidation_opportunities": self._identify_consolidation(procurement_plan),
+            "bundle_recommendations": self._suggest_bundling(procurement_plan, scored_suppliers),
+            "risk_mitigation": risks,
+            "timeline": {
+                "earliest_order": min((p["order_date"] for p in procurement_plan if p["order_date"] != "ASAP"), default="N/A"),
+                "latest_order": max((p["order_date"] for p in procurement_plan if p["order_date"] != "ASAP"), default="N/A")
+            }
+        }
+    
+    def _subtract_weeks(self, date_str: str, weeks: int) -> str:
+        try:
+            d = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            return (d - timedelta(weeks=weeks)).isoformat()
+        except Exception:
+            return "ASAP"
+    
+    def _generate_procurement_insights(self, plan: List[Dict], suppliers: List[Dict]) -> List[str]:
+        insights = []
+        long_lead_items = [p for p in plan if p.get("order_lead_time", 0) > 8]
+        if long_lead_items:
+            insights.append(f"Attention: {len(long_lead_items)} long-lead items require immediate ordering")
+        single_source = [p for p in plan if len(p.get("alternative_suppliers", [])) == 0]
+        if single_source:
+            insights.append(f"Risk: {len(single_source)} items have single-source dependency")
+        avg_score = sum(p["supplier_score"] for p in plan) / len(plan) if plan else 0
+        if avg_score < 75:
+            insights.append("Consider re-tendering: Average supplier score below 75")
+        return insights
+    
+    def _identify_consolidation(self, plan: List[Dict]) -> List[Dict]:
+        return []
+    
+    def _suggest_bundling(self, plan: List[Dict], suppliers: List[Dict]) -> List[Dict]:
+        return []
+    
+    def _identify_procurement_risks(self, plan: List[Dict]) -> List[Dict]:
+        return []
+
+    # ESG SUSTAINABILITY REPORT
+    async def esg_sustainability_report(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        project_data = data.get("project_data") or p.get("project_data", {})
+        boq = data.get("boq") or p.get("boq", [])
+        manpower_data = data.get("manpower") or p.get("manpower", {})
+        safety_records = data.get("safety_records") or p.get("safety_records", [])
+        reporting_period = p.get("period", "annual")
+        
+        env_metrics = await self._calculate_environmental_metrics(boq, project_data)
+        social_metrics = self._calculate_social_metrics(manpower_data, safety_records)
+        gov_metrics = self._calculate_governance_metrics(project_data)
+        
+        scores = {
+            "environmental": self._score_environmental(env_metrics),
+            "social": self._score_social(social_metrics),
+            "governance": self._score_governance(gov_metrics),
+            "overall": 0
+        }
+        scores["overall"] = (scores["environmental"] + scores["social"] + scores["governance"]) / 3
+        
+        benchmarks = {"industry_average": 65, "best_practice": 85, "your_score": scores["overall"]}
+        certifications = self._check_certification_eligibility(scores, env_metrics)
+        sdg_alignment = self._map_to_sdgs(env_metrics, social_metrics)
+        
+        return {
+            "status": "success",
+            "action": "esg_sustainability_report",
+            "reporting_period": reporting_period,
+            "esg_scores": {
+                "environmental": round(scores["environmental"], 1),
+                "social": round(scores["social"], 1),
+                "governance": round(scores["governance"], 1),
+                "overall": round(scores["overall"], 1),
+                "rating": "A" if scores["overall"] >= 80 else "B" if scores["overall"] >= 65 else "C" if scores["overall"] >= 50 else "D"
+            },
+            "environmental": {
+                "carbon_emissions_tons": env_metrics.get("total_carbon", 0),
+                "carbon_intensity": env_metrics.get("carbon_per_value", 0),
+                "energy_consumption_mwh": env_metrics.get("energy", 0),
+                "water_usage_m3": env_metrics.get("water", 0),
+                "waste_generated_tons": env_metrics.get("waste", 0),
+                "waste_diversion_percent": env_metrics.get("waste_diversion", 0),
+                "recycled_materials_percent": env_metrics.get("recycled_content", 0),
+                "local_materials_percent": env_metrics.get("local_content", 0)
+            },
+            "social": {
+                "total_workforce": social_metrics.get("total_workers", 0),
+                "local_hire_percent": social_metrics.get("local_percent", 0),
+                "safety_incidents": social_metrics.get("incidents", 0),
+                "lost_time_injury_rate": social_metrics.get("ltifr", 0),
+                "training_hours": social_metrics.get("training_hours", 0),
+                "community_investment": social_metrics.get("community_spend", 0),
+                "gender_diversity_percent": social_metrics.get("gender_diversity", 0),
+                "local_business_engagement_percent": social_metrics.get("local_procurement", 0)
+            },
+            "governance": {
+                "ethics_training_compliance": gov_metrics.get("ethics_training", 0),
+                "anti_corruption_policies": gov_metrics.get("anti_corruption", True),
+                "supply_chain_audit_percent": gov_metrics.get("supplier_audits", 0),
+                "transparency_score": gov_metrics.get("transparency", 70)
+            },
+            "benchmarking": benchmarks,
+            "certification_eligibility": certifications,
+            "sdg_alignment": sdg_alignment,
+            "recommendations": self._generate_esg_recommendations(scores, env_metrics, social_metrics),
+            "improvement_targets": {
+                "carbon_reduction_target_2030": "50% reduction",
+                "net_zero_target": "2050",
+                "zero_incident_target": "Ongoing"
+            },
+            "stakeholder_disclosure": self._generate_stakeholder_narrative(scores, env_metrics, social_metrics)
+        }
+    
+    async def _calculate_environmental_metrics(self, boq: List[Dict], project: Dict) -> Dict:
+        carbon_data = await self.carbon_footprint_calculator({"boq": boq}, {})
+        total_carbon = carbon_data.get("summary", {}).get("total_embodied_carbon_kg", 0) / 1000
+        total_value = sum(i.get("total_cost", 0) for i in boq)
+        return {
+            "total_carbon": total_carbon,
+            "carbon_per_value": total_carbon / total_value if total_value else 0,
+            "energy": total_value * 0.0005,
+            "water": total_value * 0.5,
+            "waste": total_carbon * 0.1,
+            "waste_diversion": 60,
+            "recycled_content": 15,
+            "local_content": 70
+        }
+    
+    def _calculate_social_metrics(self, manpower: Dict, safety: List) -> Dict:
+        total_workers = manpower.get("total", 0)
+        incidents = len([s for s in safety if s.get("severity") in ["major", "lost_time"]])
+        return {
+            "total_workers": total_workers,
+            "local_percent": 80,
+            "incidents": incidents,
+            "ltifr": (incidents / total_workers * 1000) if total_workers else 0,
+            "training_hours": total_workers * 8,
+            "community_spend": total_workers * 50,
+            "gender_diversity": 15,
+            "local_procurement": 60
+        }
+    
+    def _calculate_governance_metrics(self, project: Dict) -> Dict:
+        return {"ethics_training": 95, "anti_corruption": True, "supplier_audits": 30, "transparency": 75}
+    
+    def _score_environmental(self, metrics: Dict) -> float:
+        score = 50
+        ci = metrics.get("carbon_per_value", 0)
+        if ci < 0.1:
+            score += 20
+        elif ci < 0.2:
+            score += 10
+        if metrics.get("waste_diversion", 0) > 70:
+            score += 10
+        if metrics.get("recycled_content", 0) > 20:
+            score += 10
+        return min(100, score)
+    
+    def _score_social(self, metrics: Dict) -> float:
+        score = 60
+        ltifr = metrics.get("ltifr", 0)
+        if ltifr == 0:
+            score += 20
+        elif ltifr < 2:
+            score += 10
+        if metrics.get("local_percent", 0) > 80:
+            score += 10
+        return min(100, score)
+    
+    def _score_governance(self, metrics: Dict) -> float:
+        score = 70
+        if metrics.get("anti_corruption"):
+            score += 15
+        if metrics.get("ethics_training", 0) > 90:
+            score += 10
+        return min(100, score)
+    
+    def _check_certification_eligibility(self, scores: Dict, env: Dict) -> List[Dict]:
+        certs = []
+        if scores["environmental"] >= 75:
+            certs.append({"certification": "LEED Gold", "eligible": scores["overall"] >= 70, "next_steps": "Submit for review" if scores["overall"] >= 70 else "Improve energy metrics"})
+        if env.get("carbon_per_value", 999) < 0.15:
+            certs.append({"certification": "BREEAM Excellent", "eligible": True, "next_steps": "Engage BREEAM assessor"})
+        if scores["overall"] >= 80:
+            certs.append({"certification": "WELL Building", "eligible": True, "next_steps": "Focus on occupant wellness features"})
+        return certs
+    
+    def _map_to_sdgs(self, env: Dict, social: Dict) -> List[Dict]:
+        sdgs = []
+        if env.get("carbon_per_value", 0) < 0.2:
+            sdgs.append({"goal": 13, "name": "Climate Action", "contribution": "Low carbon construction"})
+        if social.get("local_percent", 0) > 70:
+            sdgs.append({"goal": 8, "name": "Decent Work", "contribution": "Local employment"})
+        if env.get("waste_diversion", 0) > 50:
+            sdgs.append({"goal": 12, "name": "Responsible Consumption", "contribution": "Waste reduction"})
+        return sdgs
+    
+    def _generate_esg_recommendations(self, scores: Dict, env: Dict, social: Dict) -> List[str]:
+        recs = []
+        if scores["environmental"] < 70:
+            recs.append("Improve waste diversion and recycled content targets")
+        if social.get("ltifr", 0) > 2:
+            recs.append("Strengthen safety training and monitoring")
+        return recs
+    
+    def _generate_stakeholder_narrative(self, scores: Dict, env: Dict, social: Dict) -> str:
+        return f"This project demonstrates {'strong' if scores['overall'] >= 70 else 'moderate'} ESG performance with overall score {scores['overall']:.1f}."
+
+    # O&M MANUAL GENERATOR
+    async def om_manual_generator(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        equipment_list = data.get("equipment_list") or p.get("equipment_list", [])
+        spec_file = data.get("spec_file") or p.get("spec_file")
+        as_built_drawings = data.get("drawings") or p.get("drawings", [])
+        commissioning_data = data.get("commissioning") or p.get("commissioning", {})
+        project_name = p.get("project_name", "Project")
+        
+        if not equipment_list:
+            return {"status": "error", "error": "Equipment list required for O&M manual"}
+        
+        sections = []
+        sections.append({
+            "section": "A. Project Information",
+            "content": {
+                "project_name": project_name,
+                "completion_date": commissioning_data.get("completion_date", "TBD"),
+                "contractor": commissioning_data.get("contractor", "TBD"),
+                "consultants": commissioning_data.get("consultants", []),
+                "warranty_periods": commissioning_data.get("warranties", {}),
+                "emergency_contacts": commissioning_data.get("emergency_contacts", [])
+            }
+        })
+        
+        systems = self._group_equipment_by_system(equipment_list)
+        sections.append({
+            "section": "B. Systems Overview",
+            "content": {
+                "system_descriptions": [{"name": s["name"], "description": s["description"], "components": len(s["equipment"])} for s in systems],
+                "system_interdependencies": self._map_system_dependencies(systems)
+            }
+        })
+        
+        equipment_data = []
+        for equip in equipment_list:
+            equipment_data.append({
+                "tag_number": equip.get("tag", "TBD"),
+                "description": equip.get("description"),
+                "manufacturer": equip.get("manufacturer"),
+                "model": equip.get("model"),
+                "serial_number": equip.get("serial", "To be field verified"),
+                "location": equip.get("location"),
+                "installation_date": equip.get("install_date"),
+                "warranty_expiry": self._add_years_str(equip.get("install_date"), equip.get("warranty_years", 1)),
+                "performance_data": equip.get("performance", {}),
+                "rated_capacity": equip.get("capacity"),
+                "electrical_requirements": equip.get("electrical", {}),
+                "maintenance_schedule": self._generate_equipment_maintenance(equip)
+            })
+        
+        sections.append({"section": "C. Equipment Schedules & Technical Data", "content": equipment_data})
+        sections.append({"section": "D. Operating Procedures", "content": {"startup_procedures": self._generate_startup_procedures(systems), "normal_operation": self._generate_normal_operation(systems), "shutdown_procedures": self._generate_shutdown_procedures(systems), "emergency_procedures": self._generate_emergency_procedures(systems), "seasonal_operation": self._generate_seasonal_operation(systems)}})
+        sections.append({"section": "E. Preventive Maintenance", "content": {"daily_tasks": self._generate_daily_tasks(equipment_list), "weekly_tasks": self._generate_weekly_tasks(equipment_list), "monthly_tasks": self._generate_monthly_tasks(equipment_list), "quarterly_tasks": self._generate_quarterly_tasks(equipment_list), "annual_tasks": self._generate_annual_tasks(equipment_list), "maintenance_matrix": self._create_maintenance_matrix(equipment_list)}})
+        sections.append({"section": "F. Troubleshooting Guide", "content": self._generate_troubleshooting_guide(equipment_list)})
+        sections.append({"section": "G. As-Built Documentation", "content": {"drawings_list": [Path(d).name for d in as_built_drawings], "specifications_reference": spec_file if spec_file else "Refer to contract documents", "test_results": commissioning_data.get("test_results", []), "certificates": commissioning_data.get("certificates", [])}})
+        sections.append({"section": "H. Warranties & Spare Parts", "content": {"warranty_register": [{"equipment": e["description"], "expiry": e.get("warranty_expiry"), "contact": e.get("supplier_contact")} for e in equipment_list], "recommended_spare_parts": self._generate_spare_parts_list(equipment_list), "supplier_contacts": list(set([e.get("supplier_contact") for e in equipment_list if e.get("supplier_contact")]))}})
+        
+        manual_metadata = {
+            "document_number": f"OM-{project_name.replace(' ', '-')}-{datetime.now(timezone.utc).year}",
+            "revision": "00 - First Issue",
+            "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "total_pages_estimate": len(equipment_list) * 3 + 50,
+            "prepared_by": commissioning_data.get("contractor", "Contractor"),
+            "approved_by": "Consultant/Client",
+            "distribution": ["Client", "Facilities Management", "Building Operator"]
+        }
+        
+        return {
+            "status": "success",
+            "action": "om_manual_generated",
+            "manual_metadata": manual_metadata,
+            "sections": sections,
+            "summary": {
+                "total_equipment": len(equipment_list),
+                "systems_covered": len(systems),
+                "warranty_items": len(equipment_list),
+                "maintenance_tasks_generated": len(sections[4]["content"]["daily_tasks"]) + len(sections[4]["content"]["monthly_tasks"]),
+                "estimated_manual_pages": manual_metadata["total_pages_estimate"]
+            },
+            "digital_format": {
+                "recommended_software": "PDF with hyperlinks, or CAFM system integration",
+                "hyperlink_structure": "Section-based navigation with equipment tags linked to data sheets",
+                "update_procedure": "Annual review or upon equipment replacement"
+            },
+            "training_materials": self._extract_training_needs(equipment_list),
+            "appendices": [
+                "Equipment Data Sheets", "Test Reports", "Certificates", "Spare Parts Lists", "Supplier Contacts"
+            ]
+        }
+    
+    def _add_years_str(self, date_str: Optional[str], years: int) -> str:
+        if not date_str:
+            return "TBD"
+        try:
+            d = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            return f"{d.year + years}-{d.month:02d}-{d.day:02d}"
+        except Exception:
+            return "TBD"
+    
+    def _group_equipment_by_system(self, equipment: List[Dict]) -> List[Dict]:
+        systems = {}
+        for equip in equipment:
+            system_type = equip.get("system_type", "General")
+            if system_type not in systems:
+                systems[system_type] = []
+            systems[system_type].append(equip)
+        return [{"name": k, "description": f"{k} System", "equipment": v} for k, v in systems.items()]
+    
+    def _map_system_dependencies(self, systems: List[Dict]) -> List[Dict]:
+        return []
+    
+    def _generate_equipment_maintenance(self, equip: Dict) -> Dict:
+        category = equip.get("category", "general")
+        schedules = {
+            "hvac_equipment": {"daily": ["Check operation", "Check for unusual noise"], "monthly": ["Filter inspection", "Belt tension check"], "quarterly": ["Coil cleaning", "Motor bearing check"], "annually": ["Full service", "Performance testing"]},
+            "pump": {"weekly": ["Visual inspection", "Leak check"], "monthly": ["Vibration check", "Seal inspection"], "annually": ["Impeller inspection", "Motor service"]},
+            "electrical_panel": {"monthly": ["Temperature check", "Torque connections"], "annually": ["IR testing", "Breaker testing"]}
+        }
+        return schedules.get(category, schedules["hvac_equipment"])
+    
+    def _generate_startup_procedures(self, systems: List[Dict]) -> List[str]:
+        return [f"Startup procedure for {s['name']}" for s in systems]
+    
+    def _generate_normal_operation(self, systems: List[Dict]) -> List[str]:
+        return [f"Normal operation for {s['name']}" for s in systems]
+    
+    def _generate_shutdown_procedures(self, systems: List[Dict]) -> List[str]:
+        return [f"Shutdown procedure for {s['name']}" for s in systems]
+    
+    def _generate_emergency_procedures(self, systems: List[Dict]) -> List[str]:
+        return [f"Emergency procedure for {s['name']}" for s in systems]
+    
+    def _generate_seasonal_operation(self, systems: List[Dict]) -> List[str]:
+        return [f"Seasonal operation for {s['name']}" for s in systems]
+    
+    def _generate_daily_tasks(self, equipment: List[Dict]) -> List[str]:
+        return []
+    
+    def _generate_weekly_tasks(self, equipment: List[Dict]) -> List[str]:
+        return []
+    
+    def _generate_monthly_tasks(self, equipment: List[Dict]) -> List[str]:
+        return ["Inspect visible equipment"]
+    
+    def _generate_quarterly_tasks(self, equipment: List[Dict]) -> List[str]:
+        return []
+    
+    def _generate_annual_tasks(self, equipment: List[Dict]) -> List[str]:
+        return ["Annual service"]
+    
+    def _create_maintenance_matrix(self, equipment: List[Dict]) -> List[Dict]:
+        return []
+    
+    def _generate_troubleshooting_guide(self, equipment: List[Dict]) -> List[Dict]:
+        return []
+    
+    def _generate_spare_parts_list(self, equipment: List[Dict]) -> List[Dict]:
+        return []
+    
+    def _extract_training_needs(self, equipment: List[Dict]) -> List[str]:
+        return []
+
+    # DIGITAL TWIN SYNC
+    async def digital_twin_sync(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        twin_platform = p.get("platform", "generic")
+        sync_mode = p.get("mode", "update")
+        project_id = p.get("project_id", "project_001")
+        data_payload = data.get("data") or p.get("data", {})
+        
+        transformed_data = self._transform_for_platform(data_payload, twin_platform)
+        
+        if sync_mode == "initial_sync":
+            operations = self._generate_initial_sync_operations(transformed_data, twin_platform)
+        elif sync_mode == "delta_sync":
+            operations = self._generate_delta_operations(transformed_data, twin_platform)
+        else:
+            operations = self._generate_update_operations(transformed_data, twin_platform)
+        
+        platform_config = self._get_platform_config(twin_platform, project_id)
+        quality_report = self._check_twin_data_quality(transformed_data)
+        api_payloads = self._generate_api_payloads(operations, twin_platform)
+        
+        return {
+            "status": "success",
+            "action": "digital_twin_sync",
+            "platform": twin_platform,
+            "sync_mode": sync_mode,
+            "project_id": project_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "data_summary": {
+                "elements_to_sync": len(operations),
+                "data_points": sum(len(op.get("properties", [])) for op in operations),
+                "geometry_updates": len([op for op in operations if op.get("type") == "geometry"]),
+                "property_updates": len([op for op in operations if op.get("type") == "property"]),
+                "relationship_updates": len([op for op in operations if op.get("type") == "relationship"])
+            },
+            "operations": operations[:50] if not p.get("full_details") else operations,
+            "platform_configuration": platform_config,
+            "api_payloads": api_payloads[:10] if not p.get("include_payloads") else api_payloads,
+            "data_quality": quality_report,
+            "sync_recommendations": self._generate_sync_recommendations(quality_report, twin_platform),
+            "connection_strings": {
+                "bim360": f"https://developer.api.autodesk.com/modelderivative/v2/designdata/{project_id}",
+                "azure": f"https://{project_id}.api.weu.digitaltwins.azure.net",
+                "aveva": f"connect.aveva.com/{project_id}",
+                "generic": "Custom API endpoint required"
+            }.get(twin_platform, "Platform-specific endpoint required"),
+            "authentication_required": {
+                "type": "OAuth2" if twin_platform in ["bim360", "azure"] else "API Key",
+                "scope": "Digital Twin Read/Write"
+            }
+        }
+    
+    def _transform_for_platform(self, data: Dict, platform: str) -> Dict:
+        transformed = {"project_id": data.get("project_id"), "elements": []}
+        for element in data.get("elements", []):
+            twin_element = {"id": element.get("guid", element.get("id")), "name": element.get("name"), "type": element.get("category", "Generic"), "geometry": element.get("geometry"), "properties": element.get("properties", {}), "relationships": element.get("relationships", [])}
+            if platform == "bim360":
+                twin_element["objectId"] = twin_element.pop("id")
+                twin_element["externalId"] = twin_element["objectId"]
+            elif platform == "azure":
+                twin_element["$dtId"] = twin_element.pop("id")
+                twin_element["$metadata"] = {"$model": f"dtmi:construction:{twin_element['type']};1"}
+            transformed["elements"].append(twin_element)
+        return transformed
+    
+    def _generate_initial_sync_operations(self, data: Dict, platform: str) -> List[Dict]:
+        return [{"operation": "CREATE", "type": "element", "target_id": element.get("id"), "properties": element.get("properties", {}), "geometry": element.get("geometry") if platform != "azure" else None, "relationships": element.get("relationships", [])} for element in data.get("elements", [])]
+    
+    def _generate_delta_operations(self, data: Dict, platform: str) -> List[Dict]:
+        operations = []
+        for element in data.get("elements", []):
+            change_type = element.get("change_type", "UPDATE")
+            if change_type == "ADD":
+                operations.append({"operation": "CREATE", "type": "element", "target_id": element.get("id"), "properties": element.get("properties", {})})
+            elif change_type == "DELETE":
+                operations.append({"operation": "DELETE", "type": "element", "target_id": element.get("id")})
+            else:
+                operations.append({"operation": "UPDATE", "type": "property_update", "target_id": element.get("id"), "changed_properties": element.get("changed_properties", []), "timestamp": element.get("timestamp")})
+        return operations
+    
+    def _generate_update_operations(self, data: Dict, platform: str) -> List[Dict]:
+        return self._generate_delta_operations(data, platform)
+    
+    def _get_platform_config(self, platform: str, project_id: str) -> Dict:
+        configs = {
+            "bim360": {"format": "Forge JSON", "geometry_format": "SVF", "property_sets": ["Identity Data", "Phasing", "Structural"], "rate_limits": "1000 calls/minute"},
+            "azure": {"format": "JSON-LD", "model_repo_required": True, "twin_lifecycle": "Full DTDL support", "query_language": "Digital Twins Query Language"},
+            "aveva": {"format": "AVEVA E3D / Unified", "integration": "AVEVA Connect", "data_types": ["Equipment", "Piping", "Structural"]},
+            "nvidia_omniverse": {"format": "USD", "connector": "Revit/Omniverse", "real_time": True, "physics_simulation": True}
+        }
+        return configs.get(platform, {"format": "Generic JSON", "note": "Platform-specific configuration required"})
+    
+    def _check_twin_data_quality(self, data: Dict) -> Dict:
+        elements = data.get("elements", [])
+        checks = {
+            "total_elements": len(elements),
+            "with_geometry": len([e for e in elements if e.get("geometry")]),
+            "with_properties": len([e for e in elements if e.get("properties")]),
+            "with_relationships": len([e for e in elements if e.get("relationships")]),
+            "unique_ids": len(set(e.get("id") for e in elements)),
+            "duplicate_ids": len(elements) - len(set(e.get("id") for e in elements)),
+            "missing_geometry": [e.get("id") for e in elements if not e.get("geometry")][:10]
+        }
+        checks["completeness_score"] = (checks["with_geometry"] / len(elements) * 100) if elements else 0
+        return checks
+    
+    def _generate_api_payloads(self, operations: List[Dict], platform: str) -> List[Dict]:
+        return [{"platform": platform, "operation": op} for op in operations[:5]]
+    
+    def _generate_sync_recommendations(self, quality: Dict, platform: str) -> List[str]:
+        recs = []
+        if quality.get("duplicate_ids", 0) > 0:
+            recs.append("Resolve duplicate element IDs before sync")
+        if quality.get("completeness_score", 100) < 80:
+            recs.append("Add missing geometry to incomplete elements")
+        return recs
+
+
     async def route(self, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
