@@ -49,10 +49,20 @@ def _create_block_instance(block_class):
     
     # Check if it's a ContainerBlock (needs hal_block, config)
     if 'hal_block' in params and 'config' in params:
-        return block_class(hal_block=_hal, config={})
+        instance = block_class(hal_block=_hal, config={})
     else:
         # Regular BaseBlock
-        return block_class()
+        instance = block_class()
+    
+    # Wire platform services for infrastructure blocks
+    if hasattr(instance, 'set_platform'):
+        try:
+            instance.set_platform(BLOCK_REGISTRY, block_instances, _create_block_instance, get_memory_block)
+        except NameError:
+            # get_memory_block may not be defined yet during early import
+            pass
+    
+    return instance
 
 app = FastAPI(
     title="Cerebrum Blocks",
@@ -318,53 +328,31 @@ async def execute(request: ExecuteRequest):
 
 @app.post("/chain")
 async def chain_execute(request: ChainRequest):
-    """Execute a chain of blocks."""
-    results = []
-    current_input = request.initial_input
+    """Execute a chain of blocks via OrchestratorBlock."""
+    if "orchestrator" not in BLOCK_REGISTRY:
+        raise HTTPException(500, "Orchestrator block not available")
     
-    for i, step in enumerate(request.steps):
-        block_name = step.get("block")
-        params = step.get("params", {})
+    try:
+        if "orchestrator" not in block_instances:
+            block_instances["orchestrator"] = _create_block_instance(BLOCK_REGISTRY["orchestrator"])
         
-        if block_name not in BLOCK_REGISTRY:
-            raise HTTPException(404, f"Step {i}: Block '{block_name}' not found")
+        orchestrator = block_instances["orchestrator"]
+        orch_result = await orchestrator.execute(
+            request.initial_input,
+            {"steps": request.steps}
+        )
         
-        # Skip containers
-        if block_name.startswith("container_"):
-            raise HTTPException(400, f"Step {i}: Container '{block_name}' cannot be executed directly")
+        inner = orch_result.get("result", {})
         
-        try:
-            if block_name not in block_instances:
-                block_instances[block_name] = _create_block_instance(BLOCK_REGISTRY[block_name])
-            
-            block = block_instances[block_name]
-            result = await block.execute(current_input, params)
-            
-            results.append({
-                "step": i,
-                "block": block_name,
-                "success": True,
-                "result": result
-            })
-            
-            # Pass output to next step
-            current_input = result.get("result", result)
-            
-        except Exception as e:
-            results.append({
-                "step": i,
-                "block": block_name,
-                "success": False,
-                "error": str(e)
-            })
-            break
+        return {
+            "success": inner.get("status") == "success",
+            "steps_executed": inner.get("steps_executed", 0),
+            "final_output": inner.get("final_output"),
+            "results": inner.get("results", [])
+        }
     
-    return {
-        "success": all(r.get("success") for r in results),
-        "steps_executed": len(results),
-        "final_output": current_input,
-        "results": results
-    }
+    except Exception as e:
+        raise HTTPException(500, f"Chain execution failed: {str(e)}")
 
 
 # -------------------- CHAT --------------------

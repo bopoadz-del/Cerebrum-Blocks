@@ -21,6 +21,12 @@ from .onedrive import OneDriveBlock
 from .local_drive import LocalDriveBlock
 from .android_drive import AndroidDriveBlock
 
+# Infrastructure Blocks
+from .orchestrator import OrchestratorBlock
+from .traffic_manager import TrafficManagerBlock
+from .event_bus import EventBusBlock
+from .context_broker import ContextBrokerBlock
+
 # Domain Containers
 from app.containers import (
     ConstructionContainer,
@@ -51,6 +57,11 @@ BLOCK_REGISTRY = {
     "onedrive": OneDriveBlock,
     "local_drive": LocalDriveBlock,
     "android_drive": AndroidDriveBlock,
+    # Infrastructure
+    "orchestrator": OrchestratorBlock,
+    "traffic_manager": TrafficManagerBlock,
+    "event_bus": EventBusBlock,
+    "context_broker": ContextBrokerBlock,
     # Domain Containers
     "construction": ConstructionContainer,
     "medical": MedicalContainer,
@@ -80,6 +91,8 @@ __all__ = [
     "ImageBlock", "TranslateBlock", "CodeBlock", "WebBlock", "SearchBlock", "ZvecBlock",
     # Drive
     "GoogleDriveBlock", "OneDriveBlock", "LocalDriveBlock", "AndroidDriveBlock",
+    # Infrastructure
+    "OrchestratorBlock", "TrafficManagerBlock", "EventBusBlock", "ContextBrokerBlock",
     # Containers
     "ConstructionContainer", "MedicalContainer", "LegalContainer", "FinanceContainer",
     "SecurityContainer", "AICoreContainer", "StoreContainer",
