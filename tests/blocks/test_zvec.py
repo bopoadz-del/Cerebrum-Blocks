@@ -32,7 +32,7 @@ async def test_zvec_block_execute_structure(zvec_block):
 @pytest.mark.asyncio
 async def test_zvec_block_metadata(zvec_block):
     """Test Zvec block metadata."""
-    assert zvec_block.config.name == "zvec"
+    assert zvec_block.name == "zvec"
     assert zvec_block.config.version == "1.0"
     assert "embeddings" in zvec_block.config.supported_outputs
     assert "classifications" in zvec_block.config.supported_outputs

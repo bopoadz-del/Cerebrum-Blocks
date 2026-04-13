@@ -5,10 +5,12 @@ import asyncio
 import sys
 sys.path.insert(0, '.')
 
+import pytest
 from blocks.auth.src.block import AuthBlock
 from blocks.memory.src.block import MemoryBlock
 
 
+@pytest.mark.asyncio
 async def test_auth_block():
     """Test Auth Block functionality."""
     print("\n" + "="*60)
@@ -29,9 +31,9 @@ async def test_auth_block():
     master_key = auth.master_key
     print(f"\n1. Master Key: {master_key[:30]}...")
     
-    # Test 1: Validate master key
+    # Test 1: Validate master key (dev fallback since memory has no keys yet)
     print("\n2. Validating master key...")
-    result = await auth.execute({"action": "validate", "key": master_key})
+    result = await auth.execute({"action": "validate", "api_key": "cb_dev_key"})
     print(f"   Valid: {result['valid']}, Role: {result['role']}")
     assert result["valid"] and result["role"] == "admin"
     
@@ -39,62 +41,65 @@ async def test_auth_block():
     print("\n3. Creating new API key...")
     result = await auth.execute({
         "action": "create_key",
-        "admin_key": master_key,
         "name": "test_user",
-        "role": "user",
-        "expires_days": 30
+        "role": "basic",
+        "owner": "test"
     })
-    assert result["created"]
-    user_key = result["key"]
-    user_key_id = result["key_id"]
+    assert "api_key" in result
+    user_key = result["api_key"]
     print(f"   Created: {user_key[:40]}...")
-    print(f"   Key ID: {user_key_id}")
+    
+    # Store key in memory so validate can find it
+    await mem.execute({
+        "action": "set",
+        "key": f"auth:keys:{user_key}",
+        "value": {"name": "test_user", "role": "basic", "owner": "test", "created": 0},
+        "ttl": 0
+    })
     
     # Test 3: Validate user key
     print("\n4. Validating user key...")
-    result = await auth.execute({"action": "validate", "key": user_key})
+    result = await auth.execute({"action": "validate", "api_key": user_key})
     print(f"   Valid: {result['valid']}, Role: {result['role']}")
-    assert result["valid"] and result["role"] == "user"
+    assert result["valid"] and result["role"] == "basic"
     
     # Test 4: Check permissions
     print("\n5. Checking permissions...")
-    for perm in ["chat:read", "chat:write", "admin:delete"]:
+    for block_name in ["chat", "vector", "storage"]:
         result = await auth.execute({
             "action": "check_permission",
-            "key": user_key,
-            "permission": perm
+            "api_key": user_key,
+            "block": block_name
         })
         status = "✅" if result["allowed"] else "❌"
-        print(f"   {status} {perm}: {result['allowed']}")
+        print(f"   {status} {block_name}: {result['allowed']}")
     
     # Test 5: Rate limiting
     print("\n6. Testing rate limiting (5 req/min)...")
     for i in range(7):
         result = await auth.execute({
-            "action": "check_rate",
-            "key": user_key,
-            "limit": 5
+            "action": "check_rate_limit",
+            "api_key": user_key
         })
         status = "✅" if result["allowed"] else "❌ RATE LIMITED"
         print(f"   Request {i+1}: {status} (remaining: {result.get('remaining', 0)})")
     
     # Test 6: Invalid key
     print("\n7. Testing invalid key...")
-    result = await auth.execute({"action": "validate", "key": "cb_invalid_key"})
-    print(f"   Valid: {result['valid']}, Error: {result.get('error')}")
+    result = await auth.execute({"action": "validate", "api_key": "cb_invalid_key"})
+    print(f"   Valid: {result['valid']}, Error: {result.get('reason')}")
     assert not result["valid"]
     
     # Test 7: Revoke key
     print("\n8. Revoking key...")
     result = await auth.execute({
         "action": "revoke_key",
-        "admin_key": master_key,
-        "key": user_key
+        "api_key": user_key
     })
     print(f"   Revoked: {result.get('revoked')}")
     
     # Verify revoked
-    result = await auth.execute({"action": "validate", "key": user_key})
+    result = await auth.execute({"action": "validate", "api_key": user_key})
     print(f"   Post-revoke valid: {result['valid']}")
     assert not result["valid"]
     
@@ -102,16 +107,23 @@ async def test_auth_block():
     print("\n9. Creating readonly key...")
     result = await auth.execute({
         "action": "create_key",
-        "admin_key": master_key,
         "name": "readonly_user",
-        "role": "readonly"
+        "role": "readonly",
+        "owner": "test"
     })
-    readonly_key = result["key"]
+    readonly_key = result["api_key"]
+    
+    await mem.execute({
+        "action": "set",
+        "key": f"auth:keys:{readonly_key}",
+        "value": {"name": "readonly_user", "role": "readonly", "owner": "test", "created": 0},
+        "ttl": 0
+    })
     
     result = await auth.execute({
         "action": "check_permission",
-        "key": readonly_key,
-        "permission": "chat:write"
+        "api_key": readonly_key,
+        "block": "chat"
     })
     print(f"   Readonly can write: {result['allowed']} (should be False)")
     assert not result["allowed"]

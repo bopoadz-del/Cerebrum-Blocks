@@ -1,3 +1,4 @@
+import pytest
 """
 Simple Block Tests - Verify all 22 blocks instantiate and respond
 """
@@ -22,6 +23,7 @@ def log(block, test, passed, error=None):
     })
 
 # Test all blocks can be imported and instantiated
+@pytest.mark.asyncio
 async def test_imports():
     print("\n📦 Testing Block Imports...")
     
@@ -72,6 +74,7 @@ async def test_imports():
             log(class_name, "import_instantiate", False, str(e))
 
 # Test domain containers with proper initialization
+@pytest.mark.asyncio
 async def test_domain_containers():
     print("\n🏭 Testing Domain Containers...")
     
@@ -107,6 +110,7 @@ async def test_domain_containers():
             log(name, "process", False, str(e))
 
 # Test block registry
+@pytest.mark.asyncio
 async def test_registry():
     print("\n📋 Testing Block Registry...")
     

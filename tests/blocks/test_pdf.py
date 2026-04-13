@@ -59,7 +59,7 @@ async def test_pdf_block_file_not_found(pdf_block):
 @pytest.mark.asyncio
 async def test_pdf_block_metadata(pdf_block):
     """Test PDF block metadata is correct."""
-    assert pdf_block.config.name == "pdf"
+    assert pdf_block.name == "pdf"
     assert pdf_block.config.version == "1.1"
     assert "text" in pdf_block.config.supported_outputs
     assert "tables" in pdf_block.config.supported_outputs

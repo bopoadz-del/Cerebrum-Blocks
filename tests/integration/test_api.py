@@ -10,12 +10,11 @@ class TestAPIEndpoints:
     """Test suite for API endpoints."""
     
     def test_root_endpoint(self):
-        """Test root endpoint."""
+        """Test root endpoint serves platform frontend HTML."""
         response = client.get("/")
         assert response.status_code == 200
-        data = response.json()
-        assert "status" in data
-        assert "blocks_available" in data
+        assert "text/html" in response.headers.get("content-type", "")
+        assert "<!DOCTYPE html>" in response.text or "<html" in response.text
     
     def test_list_blocks(self):
         """Test listing all blocks."""
@@ -24,8 +23,8 @@ class TestAPIEndpoints:
         data = response.json()
         assert "blocks" in data
         assert "total" in data
-        # 9 AI + 4 Drive = 13 blocks
-        assert data["total"] == 13
+        # 11 AI + 4 Drive = 15 blocks (containers excluded from /blocks)
+        assert data["total"] == 15
         
         # Check that vector_search is included
         block_names = [b["name"] for b in data["blocks"]]
@@ -169,12 +168,16 @@ class TestDriveEndpoints:
     """Tests for drive-specific endpoints."""
     
     def test_local_drive_list(self):
-        """Test local drive list endpoint."""
-        response = client.post("/drive/local_drive/list", json={
-            "params": {"folder_path": "/"}
+        """Test local drive via execute endpoint."""
+        response = client.post("/execute", json={
+            "block": "local_drive",
+            "input": "/",
+            "params": {"operation": "list"}
         })
         
-        assert response.status_code in [200, 422]  # 422 if validation fails
+        assert response.status_code == 200
+        data = response.json()
+        assert data["block"] == "local_drive"
     
     def test_google_drive_mock(self):
         """Test Google Drive with mock."""

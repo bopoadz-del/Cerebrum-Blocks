@@ -34,9 +34,10 @@ class VoiceBlock(UniversalBlock):
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Convert text to speech or vice versa"""
-        action = (params or {}).get("action", "tts")
+        params = params or {}
+        operation = params.get("operation", params.get("action", "tts"))
         
-        if action == "tts":
-            return {"status": "success", "audio_url": "https://example.com/audio.mp3"}
+        if operation == "tts":
+            return {"status": "success", "operation": "tts", "audio_url": "https://example.com/audio.mp3"}
         else:
-            return {"status": "success", "text": "[Transcribed text]"}
+            return {"status": "success", "operation": "stt", "text": "[Transcribed text]"}

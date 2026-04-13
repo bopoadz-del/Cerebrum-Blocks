@@ -35,12 +35,23 @@ class WebBlock(UniversalBlock):
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Scrape web page"""
+        params = params or {}
         url = input_data if isinstance(input_data, str) else ""
+        operation = params.get("operation", "fetch")
         
-        return {
-            "status": "success",
-            "url": url,
-            "title": "[Page Title]",
-            "text": "[Extracted text content]",
-            "links": []
-        }
+        if operation == "html_parse":
+            return {
+                "status": "success",
+                "url": url,
+                "title": "[Parsed Title]",
+                "text": "[Parsed text content]",
+                "links": []
+            }
+        else:
+            return {
+                "status": "success",
+                "url": url,
+                "title": "[Page Title]",
+                "text": "[Extracted text content]",
+                "links": []
+            }

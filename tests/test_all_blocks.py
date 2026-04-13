@@ -1,3 +1,4 @@
+import pytest
 """
 Comprehensive Block Test Suite
 Tests all 22 blocks (15 core + 7 containers)
@@ -44,6 +45,7 @@ def log_test(block_name: str, test_name: str, passed: bool, error: str = None, d
 # CORE AI BLOCKS (15)
 # ============================================================================
 
+@pytest.mark.asyncio
 async def test_chat_block():
     """Test Chat Block"""
     print("\n🤖 Testing Chat Block...")
@@ -64,6 +66,7 @@ async def test_chat_block():
     except Exception as e:
         log_test("chat", "basic_chat", False, str(e))
 
+@pytest.mark.asyncio
 async def test_pdf_block():
     """Test PDF Block"""
     print("\n📄 Testing PDF Block...")
@@ -82,6 +85,7 @@ async def test_pdf_block():
     except Exception as e:
         log_test("pdf", "extract", False, str(e))
 
+@pytest.mark.asyncio
 async def test_ocr_block():
     """Test OCR Block"""
     print("\n👁️ Testing OCR Block...")
@@ -100,6 +104,7 @@ async def test_ocr_block():
     except Exception as e:
         log_test("ocr", "process", False, str(e))
 
+@pytest.mark.asyncio
 async def test_voice_block():
     """Test Voice Block"""
     print("\n🔊 Testing Voice Block...")
@@ -117,6 +122,7 @@ async def test_voice_block():
     except Exception as e:
         log_test("voice", "tts", False, str(e))
 
+@pytest.mark.asyncio
 async def test_vector_search_block():
     """Test Vector Search Block"""
     print("\n🔍 Testing Vector Search Block...")
@@ -134,6 +140,7 @@ async def test_vector_search_block():
     except Exception as e:
         log_test("vector_search", "health", False, str(e))
 
+@pytest.mark.asyncio
 async def test_image_block():
     """Test Image Block"""
     print("\n🖼️ Testing Image Block...")
@@ -151,6 +158,7 @@ async def test_image_block():
     except Exception as e:
         log_test("image", "analyze", False, str(e))
 
+@pytest.mark.asyncio
 async def test_translate_block():
     """Test Translate Block"""
     print("\n🌐 Testing Translate Block...")
@@ -168,6 +176,7 @@ async def test_translate_block():
     except Exception as e:
         log_test("translate", "translate", False, str(e))
 
+@pytest.mark.asyncio
 async def test_code_block():
     """Test Code Block"""
     print("\n💻 Testing Code Block...")
@@ -185,6 +194,7 @@ async def test_code_block():
     except Exception as e:
         log_test("code", "execute", False, str(e))
 
+@pytest.mark.asyncio
 async def test_web_block():
     """Test Web Block"""
     print("\n🕸️ Testing Web Block...")
@@ -202,6 +212,7 @@ async def test_web_block():
     except Exception as e:
         log_test("web", "scrape", False, str(e))
 
+@pytest.mark.asyncio
 async def test_search_block():
     """Test Search Block"""
     print("\n🔎 Testing Search Block...")
@@ -219,6 +230,7 @@ async def test_search_block():
     except Exception as e:
         log_test("search", "search", False, str(e))
 
+@pytest.mark.asyncio
 async def test_zvec_block():
     """Test Zvec Block"""
     print("\n🧮 Testing Zvec Block...")
@@ -237,6 +249,7 @@ async def test_zvec_block():
     except Exception as e:
         log_test("zvec", "zero_vector", False, str(e))
 
+@pytest.mark.asyncio
 async def test_google_drive_block():
     """Test Google Drive Block"""
     print("\n📁 Testing Google Drive Block...")
@@ -254,6 +267,7 @@ async def test_google_drive_block():
     except Exception as e:
         log_test("google_drive", "list", False, str(e))
 
+@pytest.mark.asyncio
 async def test_onedrive_block():
     """Test OneDrive Block"""
     print("\n☁️ Testing OneDrive Block...")
@@ -270,6 +284,7 @@ async def test_onedrive_block():
     except Exception as e:
         log_test("onedrive", "list", False, str(e))
 
+@pytest.mark.asyncio
 async def test_local_drive_block():
     """Test Local Drive Block"""
     print("\n💾 Testing Local Drive Block...")
@@ -287,6 +302,7 @@ async def test_local_drive_block():
     except Exception as e:
         log_test("local_drive", "list", False, str(e))
 
+@pytest.mark.asyncio
 async def test_android_drive_block():
     """Test Android Drive Block"""
     print("\n📱 Testing Android Drive Block...")
@@ -307,6 +323,7 @@ async def test_android_drive_block():
 # DOMAIN CONTAINERS (7)
 # ============================================================================
 
+@pytest.mark.asyncio
 async def test_construction_container():
     """Test Construction Container"""
     print("\n🏗️ Testing Construction Container...")
@@ -329,6 +346,7 @@ async def test_construction_container():
     except Exception as e:
         log_test("construction", "extract_measurements", False, str(e))
 
+@pytest.mark.asyncio
 async def test_medical_container():
     """Test Medical Container"""
     print("\n🏥 Testing Medical Container...")
@@ -348,6 +366,7 @@ async def test_medical_container():
     except Exception as e:
         log_test("medical", "process_dicom", False, str(e))
 
+@pytest.mark.asyncio
 async def test_legal_container():
     """Test Legal Container"""
     print("\n⚖️ Testing Legal Container...")
@@ -367,6 +386,7 @@ async def test_legal_container():
     except Exception as e:
         log_test("legal", "process_contract", False, str(e))
 
+@pytest.mark.asyncio
 async def test_finance_container():
     """Test Finance Container"""
     print("\n💰 Testing Finance Container...")
@@ -386,6 +406,7 @@ async def test_finance_container():
     except Exception as e:
         log_test("finance", "process_trades", False, str(e))
 
+@pytest.mark.asyncio
 async def test_security_container():
     """Test Security Container"""
     print("\n🔐 Testing Security Container...")
@@ -406,6 +427,7 @@ async def test_security_container():
     except Exception as e:
         log_test("security", "create_key", False, str(e))
 
+@pytest.mark.asyncio
 async def test_ai_core_container():
     """Test AI Core Container"""
     print("\n🤖 Testing AI Core Container...")
@@ -425,6 +447,7 @@ async def test_ai_core_container():
     except Exception as e:
         log_test("ai_core", "leaderboard", False, str(e))
 
+@pytest.mark.asyncio
 async def test_store_container():
     """Test Store Container"""
     print("\n🏪 Testing Store Container...")
@@ -448,6 +471,7 @@ async def test_store_container():
 # CHAIN EXECUTION
 # ============================================================================
 
+@pytest.mark.asyncio
 async def test_chain_execution():
     """Test multi-block chain execution"""
     print("\n⛓️ Testing Chain Execution...")

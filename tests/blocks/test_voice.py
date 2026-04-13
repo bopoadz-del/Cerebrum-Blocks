@@ -32,7 +32,7 @@ async def test_voice_block_execute_structure(voice_block):
 @pytest.mark.asyncio
 async def test_voice_block_metadata(voice_block):
     """Test Voice block metadata."""
-    assert voice_block.config.name == "voice"
+    assert voice_block.name == "voice"
     assert voice_block.config.version == "1.0"
     assert "text" in voice_block.config.supported_outputs
     assert "audio" in voice_block.config.supported_outputs

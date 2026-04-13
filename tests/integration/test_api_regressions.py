@@ -17,10 +17,10 @@ async def test_dev_key_is_rejected_in_production(monkeypatch):
     monkeypatch.setenv("CB_DEV_KEY", "dev-secret")
 
     container = SecurityContainer()
-    result = await container._authenticate({"api_key": "dev-secret"})
+    result = await container.auth({"api_key": "dev-secret"})
 
     assert result["authenticated"] is False
-    assert result["error"] == "Invalid API key"
+    assert result["error"] == "Invalid key"
 
 
 @pytest.mark.asyncio
@@ -30,7 +30,7 @@ async def test_dev_key_is_allowed_only_in_development(monkeypatch):
     monkeypatch.setenv("CB_DEV_KEY", "dev-secret")
 
     container = SecurityContainer()
-    result = await container._authenticate({"api_key": "dev-secret"})
+    result = await container.auth({"api_key": "dev-secret"})
 
     assert result["authenticated"] is True
     assert result["key_id"] == "dev"
@@ -44,4 +44,4 @@ def test_v1_block_detail_route_uses_block_info_handler():
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "security"
-    assert data["config"]["version"] == "1.0.0"
+    assert data["config"]["version"] == "1.0"

@@ -32,7 +32,7 @@ async def test_android_drive_block_execute_structure(android_drive_block):
 @pytest.mark.asyncio
 async def test_android_drive_block_metadata(android_drive_block):
     """Test Android Drive block metadata."""
-    assert android_drive_block.config.name == "android_drive"
+    assert android_drive_block.name == "android_drive"
     assert android_drive_block.config.version == "1.0"
     assert "uri" in android_drive_block.config.supported_outputs
     assert "metadata" in android_drive_block.config.supported_outputs

@@ -37,11 +37,14 @@ class CodeBlock(UniversalBlock):
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Execute or generate code"""
         code = input_data if isinstance(input_data, str) else str(input_data)
-        language = (params or {}).get("language", "python")
+        params = params or {}
+        language = params.get("language", "python")
+        operation = params.get("operation", "execute")
         
         return {
             "status": "success",
             "language": language,
+            "operation": operation,
             "output": f"[Executed {language} code]",
             "execution_time_ms": 150
         }

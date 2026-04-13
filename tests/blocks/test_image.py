@@ -38,7 +38,7 @@ async def test_image_block_execute_structure(image_block):
 @pytest.mark.asyncio
 async def test_image_block_metadata(image_block):
     """Test Image block metadata."""
-    assert image_block.config.name == "image"
+    assert image_block.name == "image"
     assert image_block.config.version == "1.0"
     assert "description" in image_block.config.supported_outputs
     assert "image" in image_block.config.supported_outputs

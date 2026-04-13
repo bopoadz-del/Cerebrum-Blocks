@@ -34,7 +34,7 @@ async def test_google_drive_block_execute_structure(google_drive_block):
 @pytest.mark.asyncio
 async def test_google_drive_block_metadata(google_drive_block):
     """Test Google Drive block metadata."""
-    assert google_drive_block.config.name == "google_drive"
+    assert google_drive_block.name == "google_drive"
     assert google_drive_block.config.version == "1.0"
     assert "file_id" in google_drive_block.config.supported_outputs
     assert "metadata" in google_drive_block.config.supported_outputs

@@ -33,7 +33,7 @@ async def test_search_block_execute_structure(search_block):
 @pytest.mark.asyncio
 async def test_search_block_metadata(search_block):
     """Test Search block metadata."""
-    assert search_block.config.name == "search"
+    assert search_block.name == "search"
     assert search_block.config.version == "1.0"
     assert "results" in search_block.config.supported_outputs
     assert search_block.config.requires_api_key == True

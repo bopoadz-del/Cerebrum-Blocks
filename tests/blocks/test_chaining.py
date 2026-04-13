@@ -118,7 +118,7 @@ async def test_standardized_response_format():
             result = await block.execute(input_data, params)
             
             missing_keys = [key for key in required_keys if key not in result]
-            assert not missing_keys, f"{block.config.name} missing keys: {missing_keys}"
+            assert not missing_keys, f"{block.name} missing keys: {missing_keys}"
             
             # Type checks
             assert isinstance(result["block"], str)
@@ -129,4 +129,4 @@ async def test_standardized_response_format():
             assert isinstance(result["metadata"], dict)
             assert isinstance(result["processing_time_ms"], int)
             
-            print(f"✅ {block.config.name} v{block.config.version} - standardized format OK")
+            print(f"✅ {block.name} v{block.config.version} - standardized format OK")

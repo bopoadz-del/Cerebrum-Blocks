@@ -34,7 +34,7 @@ async def test_onedrive_block_execute_structure(onedrive_block):
 @pytest.mark.asyncio
 async def test_onedrive_block_metadata(onedrive_block):
     """Test OneDrive block metadata."""
-    assert onedrive_block.config.name == "onedrive"
+    assert onedrive_block.name == "onedrive"
     assert onedrive_block.config.version == "1.0"
     assert "file_id" in onedrive_block.config.supported_outputs
     assert "metadata" in onedrive_block.config.supported_outputs

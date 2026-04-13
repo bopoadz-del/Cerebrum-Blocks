@@ -33,7 +33,7 @@ async def test_vector_search_block_execute_structure(vector_search_block):
 @pytest.mark.asyncio
 async def test_vector_search_block_metadata(vector_search_block):
     """Test Vector Search block metadata."""
-    assert vector_search_block.config.name == "vector_search"
+    assert vector_search_block.name == "vector_search"
     assert vector_search_block.config.version == "1.0"
     assert "results" in vector_search_block.config.supported_outputs
     assert "embeddings" in vector_search_block.config.supported_outputs

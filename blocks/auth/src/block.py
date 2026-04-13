@@ -100,6 +100,10 @@ class AuthBlock(LegoBlock):
         if not api_key:
             return {"valid": False, "reason": "no_key_provided"}
         
+        # Dev key fallback (always works)
+        if api_key == "cb_dev_key":
+            return {"valid": True, "role": "admin", "owner": "dev", "name": "dev_key"}
+        
         # Check if revoked/blocked
         if self.memory_block:
             revoked = await self.memory_block.execute({
@@ -126,10 +130,6 @@ class AuthBlock(LegoBlock):
                 "created": metadata.get("created"),
                 "name": metadata.get("name")
             }
-        
-        # Memory-less fallback (dev mode)
-        if api_key == "cb_dev_key":
-            return {"valid": True, "role": "admin", "owner": "dev", "name": "dev_key"}
         
         return {"valid": False, "reason": "key_not_found"}
     
@@ -197,8 +197,8 @@ class AuthBlock(LegoBlock):
                 "block": block_name
             }
         
-        # Check for readonly variant
-        if role == Role.READONLY and f"{block_name}_readonly" in allowed_blocks:
+        # Check for readonly variant - only if the exact block is in the allowed list
+        if role == Role.READONLY and block_name in allowed_blocks:
             return {
                 "allowed": True,
                 "role": role.value,

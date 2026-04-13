@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 # Import blocks
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.blocks import BLOCK_REGISTRY, get_all_blocks
+from app.core.universal_base import UniversalContainer
 
 # Import HAL for container initialization
 try:
@@ -181,6 +182,16 @@ def health():
     }
 
 
+@app.get("/stats")
+def stats():
+    """Platform stats."""
+    return {
+        "blocks": [name for name in BLOCK_REGISTRY.keys() if not name.startswith("container_")],
+        "total_blocks": len(BLOCK_REGISTRY),
+        "version": "2.0.0"
+    }
+
+
 @app.get("/v1/health")
 def health_v1():
     """Health check for Render (v1 API)."""
@@ -198,7 +209,7 @@ def list_blocks():
     blocks = []
     for name, block_class in get_all_blocks().items():
         # Skip containers - they belong to Block Store
-        if name.startswith("container_"):
+        if issubclass(block_class, UniversalContainer):
             continue
         try:
             if name not in block_instances:

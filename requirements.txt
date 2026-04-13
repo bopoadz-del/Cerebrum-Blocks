@@ -13,9 +13,9 @@ httpx>=0.25.0
 # Image Processing
 pillow>=10.1.0
 
-# Vector Search (ChromaDB) - Core feature
-chromadb>=0.4.18
-sentence-transformers>=2.2.2
+# Vector Search (ChromaDB) - Optional heavy ML stack
+# chromadb>=0.4.18
+# sentence-transformers>=2.2.2
 numpy>=1.24.0
 
 # OCR (Optional - install for OCR support)

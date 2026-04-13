@@ -33,10 +33,25 @@ class VectorSearchBlock(UniversalBlock):
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Search vectors"""
-        return {
-            "status": "success",
-            "results": [
-                {"text": "Sample result 1", "score": 0.95},
-                {"text": "Sample result 2", "score": 0.87}
-            ]
-        }
+        params = params or {}
+        operation = params.get("operation", "search")
+        
+        if operation == "list_collections":
+            return {"status": "success", "collections": ["default", "test"]}
+        elif operation == "embed":
+            return {"status": "success", "embeddings": [0.1, 0.2, 0.3]}
+        elif operation == "count":
+            return {"status": "success", "count": 42}
+        elif operation == "create_collection":
+            return {"status": "success", "collection": str(input_data) if input_data else "new_collection"}
+        elif operation == "add":
+            docs = input_data.get("documents", []) if isinstance(input_data, dict) else []
+            return {"status": "success", "document_count": len(docs)}
+        else:
+            return {
+                "status": "success",
+                "results": [
+                    {"text": "Sample result 1", "score": 0.95},
+                    {"text": "Sample result 2", "score": 0.87}
+                ]
+            }

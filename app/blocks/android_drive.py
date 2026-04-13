@@ -33,8 +33,19 @@ class AndroidDriveBlock(UniversalBlock):
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Access Android device storage"""
-        return {
-            "status": "success",
-            "files": [],
-            "message": "Android Drive integration ready"
-        }
+        params = params or {}
+        operation = params.get("operation", "list")
+        
+        if operation == "get_paths":
+            return {
+                "status": "success",
+                "operation": "get_paths",
+                "paths": ["/storage/emulated/0/Documents", "/storage/emulated/0/Download"]
+            }
+        else:
+            return {
+                "status": "success",
+                "operation": "list",
+                "files": [],
+                "message": "Android Drive integration ready"
+            }

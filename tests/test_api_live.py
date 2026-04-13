@@ -1,3 +1,4 @@
+import pytest
 """
 Live API Tests - Test the deployed Render instance
 """
@@ -21,6 +22,7 @@ def log(endpoint, test, passed, error=None):
         "endpoint": endpoint, "test": test, "error": error
     })
 
+@pytest.mark.asyncio
 async def test_health():
     """Test health endpoint"""
     print("\n🩺 Testing /health...")
@@ -37,6 +39,7 @@ async def test_health():
         except Exception as e:
             log("health", "connect", False, str(e))
 
+@pytest.mark.asyncio
 async def test_blocks_list():
     """Test blocks list endpoint"""
     print("\n📋 Testing /blocks...")
@@ -59,6 +62,7 @@ async def test_blocks_list():
         except Exception as e:
             log("blocks", "connect", False, str(e))
 
+@pytest.mark.asyncio
 async def test_execute_construction():
     """Test construction block execution"""
     print("\n🏗️ Testing /execute (construction)...")
@@ -83,6 +87,7 @@ async def test_execute_construction():
         except Exception as e:
             log("execute", "construction", False, str(e))
 
+@pytest.mark.asyncio
 async def test_execute_security():
     """Test security block execution"""
     print("\n🔐 Testing /execute (security)...")
@@ -108,6 +113,7 @@ async def test_execute_security():
         except Exception as e:
             log("execute", "security_create_key", False, str(e))
 
+@pytest.mark.asyncio
 async def test_execute_ai_core():
     """Test AI core block execution"""
     print("\n🤖 Testing /execute (ai_core)...")
@@ -133,6 +139,7 @@ async def test_execute_ai_core():
         except Exception as e:
             log("execute", "ai_core_leaderboard", False, str(e))
 
+@pytest.mark.asyncio
 async def test_chain_execution():
     """Test chain execution"""
     print("\n⛓️ Testing /chain...")

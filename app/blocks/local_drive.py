@@ -35,14 +35,29 @@ class LocalDriveBlock(UniversalBlock):
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """List, read, or write local files"""
-        path = input_data if isinstance(input_data, str) else "./"
+        params = params or {}
+        operation = params.get("operation", "list")
+        path = input_data if isinstance(input_data, str) else params.get("folder_path", "./")
         
         try:
-            files = os.listdir(path) if os.path.isdir(path) else []
-            return {
-                "status": "success",
-                "path": path,
-                "files": files[:20]  # Limit results
-            }
+            if operation == "write":
+                file_path = params.get("file_path", "/tmp/test.txt")
+                content = params.get("content", "")
+                with open(file_path, "w") as f:
+                    f.write(content)
+                return {"status": "success", "operation": "write", "file_path": file_path, "bytes_written": len(content)}
+            elif operation == "read":
+                file_path = params.get("file_path", path)
+                with open(file_path, "r") as f:
+                    content = f.read()
+                return {"status": "success", "operation": "read", "file_path": file_path, "content": content}
+            else:
+                files = os.listdir(path) if os.path.isdir(path) else []
+                return {
+                    "status": "success",
+                    "operation": "list",
+                    "path": path,
+                    "files": files[:20]  # Limit results
+                }
         except Exception as e:
             return {"status": "error", "error": str(e)}

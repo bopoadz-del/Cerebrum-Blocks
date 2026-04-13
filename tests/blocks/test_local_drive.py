@@ -34,7 +34,7 @@ async def test_local_drive_block_execute_structure(local_drive_block):
 @pytest.mark.asyncio
 async def test_local_drive_block_metadata(local_drive_block):
     """Test Local Drive block metadata."""
-    assert local_drive_block.config.name == "local_drive"
+    assert local_drive_block.name == "local_drive"
     assert local_drive_block.config.version == "1.0"
     assert "file_path" in local_drive_block.config.supported_outputs
     assert "metadata" in local_drive_block.config.supported_outputs
@@ -58,11 +58,12 @@ async def test_local_drive_block_list(local_drive_block):
 async def test_local_drive_block_write_and_read(local_drive_block):
     """Test Local Drive block write and read operations."""
     # Write a file
+    test_path = "/tmp/test_write.txt"
     write_result = await local_drive_block.execute(
         None,
         {
             "operation": "write",
-            "file_path": "/test_write.txt",
+            "file_path": test_path,
             "content": "Hello from test!"
         }
     )
@@ -73,7 +74,7 @@ async def test_local_drive_block_write_and_read(local_drive_block):
     # Read the file
     read_result = await local_drive_block.execute(
         None,
-        {"operation": "read", "file_path": "/test_write.txt"}
+        {"operation": "read", "file_path": test_path}
     )
     
     assert read_result["block"] == "local_drive"

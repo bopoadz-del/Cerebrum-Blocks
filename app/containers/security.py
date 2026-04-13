@@ -70,7 +70,7 @@ class SecurityContainer(UniversalContainer):
         dev_key = os.environ.get("CB_DEV_KEY", "")
         env = os.environ.get("ENV", "production")
         if api_key == dev_key and env != "production":
-            return {"authenticated": True, "role": "admin", "warning": "Dev key"}
+            return {"authenticated": True, "role": "admin", "key_id": "dev", "warning": "Dev key"}
         
         if api_key in self.api_keys:
             return {"authenticated": True, **self.api_keys[api_key]}

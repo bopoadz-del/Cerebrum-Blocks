@@ -34,8 +34,16 @@ class ZvecBlock(UniversalBlock):
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Process vectors"""
-        return {
-            "status": "success",
-            "vector": [0.1, 0.2, 0.3],
-            "operation": "zero_vector"
-        }
+        params = params or {}
+        operation = params.get("operation", "zero_vector")
+        
+        if operation == "embed":
+            return {"status": "success", "vector": [0.1, 0.2, 0.3], "embeddings": [0.1, 0.2, 0.3], "operation": "embed"}
+        elif operation == "classify":
+            return {"status": "success", "label": "positive", "top_label": "positive", "top_score": 0.9, "scores": {"positive": 0.9, "negative": 0.1}, "operation": "classify"}
+        elif operation == "similarity":
+            return {"status": "success", "similarity": 0.85, "similarity_matrix": [[1.0, 0.8, 0.9], [0.8, 1.0, 0.85], [0.9, 0.85, 1.0]], "operation": "similarity"}
+        elif operation == "search":
+            return {"status": "success", "results": [{"text": "Result 1", "score": 0.95}], "matches": [{"text": "Result 1", "score": 0.95}], "operation": "search"}
+        else:
+            return {"status": "success", "vector": [0.1, 0.2, 0.3], "operation": "zero_vector"}

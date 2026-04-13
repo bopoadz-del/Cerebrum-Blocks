@@ -7,10 +7,12 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import pytest
 from blocks.memory.src.block import MemoryBlock
 from blocks.monitoring.src.block import MonitoringBlock
 
 
+@pytest.mark.asyncio
 async def test_memory_block():
     """Test Memory Block functionality."""
     print("\n" + "="*60)
@@ -92,6 +94,7 @@ async def test_memory_block():
     return True
 
 
+@pytest.mark.asyncio
 async def test_monitoring_block():
     """Test Monitoring Block functionality."""
     print("\n" + "="*60)

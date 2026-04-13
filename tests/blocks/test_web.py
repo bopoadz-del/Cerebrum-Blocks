@@ -32,7 +32,7 @@ async def test_web_block_execute_structure(web_block):
 @pytest.mark.asyncio
 async def test_web_block_metadata(web_block):
     """Test Web block metadata."""
-    assert web_block.config.name == "web"
+    assert web_block.name == "web"
     assert web_block.config.version == "1.0"
     assert "content" in web_block.config.supported_outputs
     assert "data" in web_block.config.supported_outputs
