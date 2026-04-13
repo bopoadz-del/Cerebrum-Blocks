@@ -124,37 +124,45 @@
     <div class="modal-overlay" id="driveModal" onclick="if(event.target===this)hideDriveModal()">
         <div class="modal">
             <h3>Connect a Drive</h3>
-            <div class="drive-option" onclick="connectDrive('google_drive')">
-                <span class="icon">📁</span>
+            <div class="drive-option" onclick="browseLocalFiles()">
+                <span class="icon">💻</span>
                 <div>
-                    <div class="name">Google Drive</div>
-                    <div class="desc">Connect Google cloud storage</div>
-                </div>
-            </div>
-            <div class="drive-option" onclick="connectDrive('onedrive')">
-                <span class="icon">☁️</span>
-                <div>
-                    <div class="name">OneDrive</div>
-                    <div class="desc">Connect Microsoft cloud storage</div>
+                    <div class="name">My Device Files</div>
+                    <div class="desc">Pick files from this computer</div>
                 </div>
             </div>
             <div class="drive-option" onclick="connectDrive('local_drive')">
-                <span class="icon">💾</span>
+                <span class="icon">🖥️</span>
                 <div>
-                    <div class="name">Local Drive</div>
-                    <div class="desc">Browse local filesystem</div>
+                    <div class="name">Server Files</div>
+                    <div class="desc">Browse files on the server VM</div>
                 </div>
             </div>
-            <div class="drive-option" onclick="connectDrive('android_drive')">
+            <div class="drive-option disabled" style="opacity:0.5;cursor:not-allowed;" title="Configure OAuth in settings first">
+                <span class="icon">📁</span>
+                <div>
+                    <div class="name">Google Drive <span style="color:#888;font-size:10px;">(needs setup)</span></div>
+                    <div class="desc">Requires OAuth credentials</div>
+                </div>
+            </div>
+            <div class="drive-option disabled" style="opacity:0.5;cursor:not-allowed;" title="Configure OAuth in settings first">
+                <span class="icon">☁️</span>
+                <div>
+                    <div class="name">OneDrive <span style="color:#888;font-size:10px;">(needs setup)</span></div>
+                    <div class="desc">Requires Microsoft auth token</div>
+                </div>
+            </div>
+            <div class="drive-option disabled" style="opacity:0.5;cursor:not-allowed;" title="ADB or USB connection required">
                 <span class="icon">📱</span>
                 <div>
-                    <div class="name">Android Drive</div>
-                    <div class="desc">Connect Android device storage</div>
+                    <div class="name">Android Drive <span style="color:#888;font-size:10px;">(needs setup)</span></div>
+                    <div class="desc">Requires ADB/USB connection</div>
                 </div>
             </div>
             <button class="modal-close" onclick="hideDriveModal()">Cancel</button>
         </div>
     </div>
+    <input type="file" id="localFilePicker" style="display:none" multiple webkitdirectory onchange="handleLocalFiles(this)">
 
 <script>
 // API Configuration - Auto-detect environment
@@ -190,6 +198,71 @@ function showDriveModal() {
 
 function hideDriveModal() {
     document.getElementById('driveModal').classList.remove('active');
+}
+
+function browseLocalFiles() {
+    hideDriveModal();
+    document.getElementById('localFilePicker').click();
+}
+
+async function handleLocalFiles(input) {
+    const files = Array.from(input.files || []);
+    if (files.length === 0) return;
+    
+    showIndicator(true);
+    addMessage(`Selected ${files.length} files from this device...`, 'system');
+    
+    try {
+        const fileNames = files.map(f => f.name);
+        const folderName = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : 'My Device Files';
+        
+        // ZVec index
+        let zvecResult = null;
+        const zvecRes = await fetch(`${API_BASE}/v1/execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                block: 'zvec',
+                input: fileNames.join('\n'),
+                params: { operation: 'embed' }
+            })
+        });
+        if (zvecRes.ok) {
+            zvecResult = await zvecRes.json();
+        }
+        
+        // Store actual File objects for later use
+        const driveId = 'my_device_' + Date.now();
+        connectedDrives[driveId] = {
+            name: folderName,
+            icon: '💻',
+            files: fileNames,
+            fileObjects: files,
+            indexed: !!zvecResult,
+            path: './',
+            isLocal: true
+        };
+        
+        renderDrives();
+        
+        const outcomeHtml = `
+            <div class="outcome-item">
+                <div class="outcome-label">Connected</div>
+                <div class="outcome-value" style="font-size: 16px;">${folderName}</div>
+                <div style="color: #888; font-size: 12px; margin-top: 4px;">${files.length} local files</div>
+                ${zvecResult ? '<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">✅ ZVec indexed</div>' : ''}
+            </div>
+        `;
+        setOutcomes(outcomeHtml);
+        addMessage(`Loaded ${files.length} files from your device. Ready to chat about them.`, 'assistant');
+        
+    } catch (err) {
+        console.error('Local files error:', err);
+        addMessage(`Error indexing files: ${err.message}`, 'error');
+    }
+    
+    showIndicator(false);
+    input.value = '';
 }
 
 async function connectDrive(driveType) {
@@ -327,10 +400,25 @@ function clearAllDrives() {
 }
 
 async function selectFile(driveKey, fileName) {
-    addMessage(`Selected file from ${driveKey}: ${fileName}`, 'user');
+    addMessage(`Selected file: ${fileName}`, 'user');
     showIndicator(true);
     
     try {
+        const drive = connectedDrives[driveKey];
+        let fileContent = '';
+        
+        // If it's a local device drive, read the actual File object
+        if (drive.isLocal && drive.fileObjects) {
+            const fileObj = drive.fileObjects.find(f => f.name === fileName);
+            if (fileObj) {
+                fileContent = await readFileContent(fileObj);
+                // Trim very large files
+                if (fileContent.length > 5000) {
+                    fileContent = fileContent.substring(0, 5000) + '\n\n... [truncated] ...';
+                }
+            }
+        }
+        
         // Use zvec search to find related files
         const zvecRes = await fetch(`${API_BASE}/v1/execute`, {
             method: 'POST',
@@ -340,7 +428,7 @@ async function selectFile(driveKey, fileName) {
                 input: fileName,
                 params: { 
                     operation: 'search', 
-                    corpus: connectedDrives[driveKey].files.filter(f => typeof f === 'string'),
+                    corpus: drive.files.filter(f => typeof f === 'string'),
                     top_k: 3 
                 }
             })
@@ -356,8 +444,14 @@ async function selectFile(driveKey, fileName) {
             <div class="outcome-item">
                 <div class="outcome-label">Selected File</div>
                 <div class="outcome-value" style="font-size: 14px;">${fileName}</div>
-                <div style="color: #888; font-size: 12px; margin-top: 4px;">From ${connectedDrives[driveKey].name}</div>
+                <div style="color: #888; font-size: 12px; margin-top: 4px;">From ${drive.name}</div>
             </div>
+            ${fileContent ? `
+            <div class="outcome-item">
+                <div class="outcome-label">Preview</div>
+                <div class="raw-output" style="max-height: 200px; margin-top: 8px;">${escapeHtml(fileContent)}</div>
+            </div>
+            ` : ''}
             ${related.length > 0 ? `
             <div class="outcome-item">
                 <div class="outcome-label">Related Files (ZVec)</div>
@@ -368,13 +462,24 @@ async function selectFile(driveKey, fileName) {
             ` : ''}
         `);
         
-        addMessage(`File loaded from ${connectedDrives[driveKey].name}. ${related.length > 0 ? `Found ${related.length} related files via ZVec.` : ''}`, 'assistant');
+        // If we have content, also send a system context so chat knows about it
+        if (fileContent) {
+            addMessage(`Loaded "${fileName}" from ${drive.name}. You can now ask questions about it.`, 'assistant');
+        } else {
+            addMessage(`File loaded from ${drive.name}. ${related.length > 0 ? `Found ${related.length} related files via ZVec.` : ''}`, 'assistant');
+        }
         
     } catch (err) {
         addMessage(`Error loading file: ${err.message}`, 'error');
     }
     
     showIndicator(false);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 async function sendMessage() {
