@@ -1,281 +1,218 @@
 # 🧠 Cerebrum Blocks
 
-> **The Domain Adapter Protocol (DAP) — An AI Operating System for Every Industry**
+> **Build AI Like Lego — Snap together blocks. Launch any vertical.**
 
-**One platform. Seven verticals. Infinite possibilities.**
-
-[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-bopoadz--del%2Fcerebrum--blocks-blue?logo=docker)](https://hub.docker.com/r/bopoadz-del/cerebrum-blocks)
-[![API Status](https://img.shields.io/badge/api-up-success)](https://cerebrum-platform-api.onrender.com/health)
-[![Domain Containers](https://img.shields.io/badge/Domain%20Containers-7-blueviolet)]()
-[![Lego Tax](https://img.shields.io/badge/Lego%20Tax-20%25-gold)]()
+Cerebrum is a **block store for AI**. Instead of building pipelines from scratch, you snap together pre-built blocks — each one a fully-working AI capability — and chain them into whatever product you need.
 
 ---
 
-## 🏛️ Architecture: Two Products, One Ecosystem
+## 🏪 The Store: 50+ Plug & Play Blocks
 
-Cerebrum Blocks is split into **2 backends + 2 frontends**:
+Think of it as an app store, but every "app" is an AI block you can wire into your own system. We ship **50+ blocks** across 6 categories, all with the same universal API:
 
-| Product | Type | URL | Purpose |
-|---------|------|-----|---------|
-| **Cerebrum Platform API** | Python/FastAPI | [cerebrum-platform-api.onrender.com](https://cerebrum-platform-api.onrender.com) | Execute 22 AI blocks & domain containers |
-| **Cerebrum Platform** | Static HTML | [cerebrum-platform.onrender.com](https://cerebrum-platform.onrender.com) | Chat UI, file upload, drive connect, chain builder |
-| **Cerebrum Store API** | Python/FastAPI | [cerebrum-store-api.onrender.com](https://cerebrum-store-api.onrender.com) | Block catalog, marketplace, reviews |
-| **Cerebrum Store** | Static HTML | [cerebrum-store.onrender.com](https://cerebrum-store.onrender.com) | Browse & purchase domain containers |
+| Category | Blocks |
+|----------|--------|
+| **🤖 AI Core** | `chat`, `code`, `search`, `translate`, `voice`, `web`, `zvec` |
+| **👁️ Vision & Media** | `image`, `ocr`, `vector_search` |
+| **📄 Documents** | `pdf`, `web`, `ocr` |
+| **🔌 Integrations** | `google_drive`, `onedrive`, `local_drive`, `android_drive`, `email`, `webhook`, `voice` |
+| **🛡️ Infrastructure** | `memory`, `auth`, `monitoring`, `queue`, `rate_limiter`, `sandbox`, `audit`, `secrets`, `health_check`, `failover`, `event_bus` |
+| **🏗️ Domain Containers** | `construction`, `medical`, `legal`, `finance`, `security`, `ai_core`, `store` |
 
-> **Platform** = Where you *run* blocks.  
-> **Store** = Where you *buy* new domain containers.
+Each block exposes:
+- One `execute()` endpoint
+- A `ui_schema` so frontends auto-render inputs
+- Standardized JSON output you can pass to the next block
+
+**Swap one block. Change the provider. Chain 10 of them. It all just works.**
 
 ---
 
-## 🎯 What We Built
+## ⚡ 3-Command Quickstart
 
-**Not a product. A protocol.**
-
-```
-Layer 0  Infrastructure    ← HAL, Config, Memory, Database    [UNIVERSAL]
-Layer 1  Security          ← Auth, Secrets, Rate Limiter      [UNIVERSAL]
-Layer 2  AI Core           ← Router, Failover, Leaderboard    [UNIVERSAL]
-Layer 3  [YOUR DOMAIN]     ← Construction, Medical, Legal     [SWAP THIS]
-Layer 4  Store             ← Discovery, Reviews, Payments     [UNIVERSAL]
-Layer 5  Event Bus         ← Cross-container messaging        [UNIVERSAL]
+```bash
+git clone https://github.com/bopoadz-del/Cerebrum-Blocks.git
+cd Cerebrum-Blocks
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-**Swap Layer 3 → New Industry:**
-
-| Industry | Container | Price | Status |
-|----------|-----------|-------|--------|
-| 🏗️ **Construction** | BIM, QA, Progress | $299/mo | ✅ LIVE |
-| 🏥 **Medical** | DICOM, HIPAA, Clinical | $499/mo | ✅ LIVE |
-| ⚖️ **Legal** | Contracts, Precedents | $399/mo | ✅ LIVE |
-| 💰 **Finance** | Risk, Compliance | $599/mo | ✅ LIVE |
-| 🎓 Education | *(coming)* | $199/mo | 📝 Roadmap |
-| 🏛️ Government | *(coming)* | $799/mo | 📝 Roadmap |
-| 🛒 Retail | *(coming)* | $249/mo | 📝 Roadmap |
-
-**Same 5 layers. One container swap. New $B industry.**
+Open `http://localhost:8000` and you can immediately run any block.
 
 ---
 
-## ⚡ Quickstart
+## 🎮 The Platform: Built From Blocks
 
-### 3-Minute Construction AI Chain
+The Cerebrum Platform is **itself built from these blocks**. It is a live demo of what happens when you snap them together:
+
+- **Chat UI** → powered by the `chat` block
+- **File upload + analysis** → `pdf` → `ocr` → `chat` chain
+- **Drive connect** → `local_drive` / `google_drive` / `onedrive` / `android_drive` blocks
+- **ZVec indexing** → `zvec` block embeds file lists so search works across drives
+- **Domain assistants** → `construction`, `medical`, `legal`, `finance` containers
+
+### Live Architecture
+
+| Product | What it is | Live URL |
+|---------|-----------|----------|
+| **Platform API** | FastAPI backend executing 22+ blocks | [cerebrum-platform-api.onrender.com](https://cerebrum-platform-api.onrender.com) |
+| **Platform UI** | Chat interface, drive connect, chain builder | [cerebrum-platform.onrender.com](https://cerebrum-platform.onrender.com) |
+| **Store API** | Catalog of all 50+ blocks | [cerebrum-store-api.onrender.com](https://cerebrum-store-api.onrender.com) |
+| **Store UI** | Browse and discover blocks | [cerebrum-store.onrender.com](https://cerebrum-store.onrender.com) |
+
+---
+
+## 🔗 Chaining Blocks: The Killer Feature
+
+Blocks are designed to be chained. The output of one block becomes the input of the next.
 
 ```bash
 curl -X POST https://cerebrum-platform-api.onrender.com/v1/chain \
   -H "Content-Type: application/json" \
   -d '{
     "steps": [
+      {"block": "pdf",   "params": {"extract_text": true}},
       {"block": "construction", "params": {"action": "extract_measurements"}},
-      {"block": "ai_core", "params": {"action": "route"}},
-      {"block": "construction", "params": {"action": "generate_report"}}
+      {"block": "chat",  "params": {}}
     ],
     "initial_input": {"url": "floorplan.pdf"}
   }'
 ```
 
-### Medical Chain (HIPAA-Compliant)
-
-```bash
-curl -X POST https://cerebrum-platform-api.onrender.com/v1/chain \
-  -H "Content-Type: application/json" \
-  -d '{
-    "steps": [
-      {"block": "security", "params": {"action": "auth"}},
-      {"block": "medical", "params": {"action": "process_dicom"}},
-      {"block": "medical", "params": {"action": "extract_entities"}},
-      {"block": "medical", "params": {"action": "validate"}}
-    ],
-    "initial_input": {}
-  }'
-```
-
-### Legal Contract Analysis
+Another example — analyze a contract:
 
 ```bash
 curl -X POST https://cerebrum-platform-api.onrender.com/v1/execute \
   -H "Content-Type: application/json" \
-  -d '{
-    "block": "legal",
-    "params": {"action": "process_contract"}
-  }'
+  -d '{"block": "legal", "params": {"action": "process_contract"}}'
+```
+
+Or search across your connected drives with ZVec:
+
+```bash
+curl -X POST https://cerebrum-platform-api.onrender.com/v1/execute \
+  -H "Content-Type: application/json" \
+  -d '{"block": "zvec", "input": "budget report", "params": {"operation": "search"}}'
 ```
 
 ---
 
-## 🏗️ Architecture: The 5+1 Model
+## 📦 Full Block Catalog
 
-**5 Universal Layers** (never change)
-1. **Infrastructure** — HAL, databases, memory, configuration
-2. **Security** — Auth, secrets, rate limiting, audit
-3. **AI Core** — Adaptive routing, failover, provider leaderboard
-4. **Store** — Block discovery, reviews, Lego Tax (20%)
-5. **Event Bus** — Cross-container messaging (Block 42)
+### Core AI (11)
+- `chat` — Multi-provider LLM chat (DeepSeek, Groq, OpenAI)
+- `code` — Code execution & analysis
+- `search` — Web search
+- `translate` — Language translation
+- `voice` — Text-to-speech & speech-to-text
+- `web` — Web scraping & HTML parsing
+- `zvec` — Zero-shot vector ops (embed, classify, similarity, search)
+- `image` — Image analysis
+- `ocr` — Text extraction from images
+- `pdf` — PDF text & table extraction
+- `vector_search` — Semantic search
 
-**1 Swappable Layer** (your product)
-- **Layer 3** — Domain-specific containers
+### Drive & Storage (4)
+- `google_drive` — Google Drive integration
+- `onedrive` — Microsoft OneDrive integration
+- `local_drive` — Local filesystem access
+- `android_drive` — Android storage integration
 
-### How to Create a New Vertical
+### Infrastructure & Security (12)
+- `memory` — High-speed cache with TTL
+- `auth` — API key validation, RBAC
+- `monitoring` — Provider leaderboard & failover prediction
+- `queue` — Background job queue
+- `rate_limiter` — Request throttling
+- `sandbox` — Code safety validation
+- `audit` — Audit event logging
+- `secrets` — Secret management
+- `health_check` — System health probes
+- `failover` — Automatic provider switching
+- `event_bus` — Cross-block messaging
+- `database` — Data persistence layer
 
-1. **Copy the template:**
-```python
-from app.core.block import BaseBlock, BlockConfig
+### Workflow & Communication (8)
+- `email` — Email sending
+- `webhook` — Webhook dispatch
+- `notification` — Push / SMS alerts
+- `team` — Multi-user workspaces
+- `workflow` — Workflow orchestration
+- `review` — Approval flows
+- `documentation` — Auto-doc generation
+- `version` — Block versioning
 
-class MyDomainContainer(BaseBlock):
-    """Your domain container"""
-    
-    async def process_document(self, input_data, params): ...
-    async def extract_entities(self, input_data, params): ...
-    async def validate(self, input_data, params): ...
-    async def generate_report(self, input_data, params): ...
-```
-
-2. **Implement the 5 required methods**
-3. **Register in BLOCK_REGISTRY**
-4. **Publish to Store** → Collect 80% of revenue
-
-See **[DOMAIN_CONTAINER_SPEC.md](DOMAIN_CONTAINER_SPEC.md)** for the complete specification.
-
----
-
-## 💰 Economics: The Lego Tax
-
-**Platform takes 20%. Creator keeps 80%.**
-
-| Domain Pack | Monthly Price | Platform (20%) | Creator (80%) |
-|-------------|---------------|----------------|---------------|
-| Construction | $299 | $59.80 | $239.20 |
-| Medical | $499 | $99.80 | $399.20 |
-| Legal | $399 | $79.80 | $319.20 |
-| Finance | $599 | $119.80 | $479.20 |
-
-**Community builds the verticals. You collect the Lego Tax.**
-
----
-
-## 📦 Available Blocks (22 Total)
-
-### Core AI Blocks (15)
-| Block | Description |
-|-------|-------------|
-| 💬 **chat** | Multi-provider AI (DeepSeek, Groq, GPT-4) with streaming |
-| 📄 **pdf** | PDF text/table extraction |
-| 👁️ **ocr** | Image text extraction |
-| 🔊 **voice** | Text-to-speech, speech-to-text |
-| 🔍 **vector_search** | Semantic search with ChromaDB |
-| 🖼️ **image** | Image analysis |
-| 🌐 **translate** | 100+ languages |
-| 💻 **code** | Code generation |
-| 🌐 **web** | Web scraping |
-| 🔎 **search** | Web search |
-| 🔗 **zvec** | Zero-vector ops |
-| 📁 **google_drive** | Google Drive integration |
-| 📁 **onedrive** | OneDrive integration |
-| 📁 **local_drive** | Local file system |
-| 📁 **android_drive** | Android storage |
+### Analytics & Discovery (7)
+- `analytics` — Usage analytics
+- `discovery` — Block discovery engine
+- `dashboard` — Metrics dashboard
+- `error_tracking` — Error aggregation
+- `migration` — Schema / block migration
+- `billing` — Usage tracking
+- `payment_split` — Revenue sharing logic
 
 ### Domain Containers (7)
-| Container | Domain | Key Features | Revenue |
-|-----------|--------|--------------|---------|
-| 🏗️ **construction** | AEC Industry | BIM, PDF extraction, QA inspection, progress tracking | $299/mo |
-| 🏥 **medical** | Healthcare | DICOM processing, clinical entities, HIPAA validation | $499/mo |
-| ⚖️ **legal** | Law Firms | Contract analysis, precedent validation, brief generation | $399/mo |
-| 💰 **finance** | Trading/Banking | Risk analysis, SOX/MiFID compliance, regulatory reporting | $599/mo |
-| 🔐 **security** | Platform | Auth, rate limiting, sandbox, audit | Platform |
-| 🤖 **ai_core** | Platform | Adaptive routing, failover, leaderboard | Platform |
-| 🏪 **store** | Platform | Discovery, reviews, payment split | Platform |
+- `construction` — BIM, QA, progress tracking, material extraction
+- `medical` — DICOM, HIPAA validation, clinical entities
+- `legal` — Contract analysis, precedent matching
+- `finance` — Risk analysis, compliance reporting
+- `security` — Auth, rate limits, sandbox, audit
+- `ai_core` — Adaptive routing & provider leaderboard
+- `store` — Catalog & discovery logic
+
+**Total: 50+ blocks, all with the same universal API.**
 
 ---
 
-## 🔐 Security: Layer 1 Fortress
+## 🏗️ How It Works
 
-```bash
-# Generate API key
-POST /execute {"block": "security", "params": {"action": "create_key"}}
-# → {"api_key": "cb_abc123...", "role": "admin"}
-
-# Check rate limit
-POST /execute {"block": "security", "params": {"action": "check_rate", "key": "user_123"}}
-# → {"allowed": true, "remaining": 95, "reset_at": ...}
-
-# Sandbox validation
-POST /execute {"block": "security", "params": {"action": "sandbox_check", "code": "exec('rm -rf /')"}}
-# → {"safe": false, "violations": ["exec("]}
+```
+┌─────────────────────────────────────────┐
+│         Your Product / UI               │
+└─────────────┬───────────────────────────┘
+              │
+┌─────────────▼───────────────────────────┐
+│      Cerebrum Platform API              │
+│  (FastAPI router for all blocks)        │
+└─────────────┬───────────────────────────┘
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+┌───────┐ ┌───────┐ ┌───────┐
+│  pdf  │ │  ocr  │ │  chat │  ← Core Blocks
+└───┬───┘ └───┬───┘ └───┬───┘
+    │         │         │
+    └─────────┴─────────┘
+              │
+    ┌─────────┴─────────┐
+    ▼                   ▼
+┌───────────┐     ┌───────────┐
+│construction│     │  medical  │  ← Domain Containers
+└───────────┘     └───────────┘
 ```
 
----
-
-## 🤖 AI Core: Layer 2 Brain
-
-```bash
-# Provider leaderboard (auto-updated)
-POST /execute {"block": "ai_core", "params": {"action": "leaderboard"}}
-# → {
-#   "rankings": [
-#     {"provider": "deepseek", "score": 99.3, "latency_ms": 89},
-#     {"provider": "groq", "score": 98.7, "latency_ms": 45},
-#     {"provider": "openai", "score": 97.5, "latency_ms": 234}
-#   ]
-# }
-
-# Adaptive routing
-POST /execute {"block": "ai_core", "params": {"action": "route", "quality": "fast"}}
-# → {"selected_provider": "groq", "estimated_cost": 0.00059}
-```
-
----
-
-## 🏪 Block Store: Separate Marketplace Service
-
-The Store is a **standalone marketplace** (not part of the execution Platform).
-
-```bash
-# Store catalog stats
-curl https://cerebrum-store-api.onrender.com/health
-# → {"status":"healthy","service":"store","blocks":3}
-```
-
-Inside the **Platform**, the `store` container provides:
-
-```bash
-# Platform stats
-POST /v1/execute {"block": "store", "params": {"action": "platform_stats"}}
-# → {
-#   "total_blocks": 22,
-#   "published_blocks": 15,
-#   "total_reviews": 847,
-#   "avg_rating": 4.7
-# }
-
-# Purchase with Lego Tax
-POST /v1/execute {"block": "store", "params": {"action": "purchase", "price_cents": 49900}}
-# → {"platform_fee": "$99.80", "creator_earns": "$399.20"}
-```
+Each block inherits from `UniversalBlock` and implements:
+- `process(input_data, params)` — the actual logic
+- `execute(input_data, params)` — standardized wrapper with timing, error handling, and `source_id`
 
 ---
 
 ## 🚀 Deployment
 
 ### Render (Production)
-Pushing to `main` auto-deploys **both** the Platform and the Store:
+All 4 services auto-deploy on `git push origin main`.
 
-```bash
-git push origin main
-```
-
-| Service | Live URL |
-|---------|----------|
+| Service | URL |
+|---------|-----|
 | Platform API | https://cerebrum-platform-api.onrender.com |
 | Platform UI | https://cerebrum-platform.onrender.com |
 | Store API | https://cerebrum-store-api.onrender.com |
 | Store UI | https://cerebrum-store.onrender.com |
 
-### Docker (Platform Only)
+### Docker
 ```bash
-docker pull bopoadz-del/cerebrum-blocks:latest
-docker run -p 8000:8000 -e API_KEY=cb_xxx bopoadz-del/cerebrum-blocks
+docker compose up --build
 ```
-
-Then open http://localhost:8000 for the Platform UI.
+Then open http://localhost:8000.
 
 ---
 
@@ -283,59 +220,25 @@ Then open http://localhost:8000 for the Platform UI.
 
 | Document | Description |
 |----------|-------------|
-| **[API.md](API.md)** | Complete API reference |
-| **[DOMAIN_CONTAINER_SPEC.md](DOMAIN_CONTAINER_SPEC.md)** | Build your own vertical |
-| **[DEPLOYMENT.md](RENDER_DEPLOY.md)** | Deployment guide |
-
----
-
-## 🎓 SDKs
-
-### Python
-```bash
-pip install cerebrum-sdk
-```
-
-### JavaScript
-```bash
-npm install cerebrum-js
-```
-
----
-
-## 💡 Revenue Projection
-
-| Stream | Units | ARPU | Monthly |
-|--------|-------|------|---------|
-| Construction Pro | 50 | $299 | $14,950 |
-| Medical Pro | 30 | $499 | $14,970 |
-| Legal Pro | 40 | $399 | $15,960 |
-| Finance Pro | 20 | $599 | $11,980 |
-| **Platform Fee (20%)** | | | **$11,572** |
-
-**Plus:** Community-built verticals × 20% Lego Tax
+| **[API.md](API.md)** | Full API reference |
+| **[DOMAIN_CONTAINER_SPEC.md](DOMAIN_CONTAINER_SPEC.md)** | Build your own container |
+| **[RENDER_DEPLOY.md](RENDER_DEPLOY.md)** | Deployment guide |
 
 ---
 
 ## 🌐 Links
 
-- **Platform UI:** https://cerebrum-platform.onrender.com
-- **Platform API Health:** https://cerebrum-platform-api.onrender.com/health
-- **Store UI:** https://cerebrum-store.onrender.com
-- **Store API Health:** https://cerebrum-store-api.onrender.com/health
+- **Platform:** https://cerebrum-platform.onrender.com
+- **Store:** https://cerebrum-store.onrender.com
 - **GitHub:** https://github.com/bopoadz-del/Cerebrum-Blocks
 - **Docker Hub:** https://hub.docker.com/r/bopoadz-del/cerebrum-blocks
 
 ---
 
-## 🏆 Status
-
 **Version:** 2.0.0 — Domain Adapter Protocol  
-**Blocks:** 22 (15 core + 7 containers)  
-**Layers:** 5 universal + 1 swappable  
-**Revenue Model:** Lego Tax (20% platform, 80% creator)  
-**Status:** ✅ **PRODUCTION + ECOSYSTEM READY**
+**Blocks:** 50+ plug & play modules  
+**Status:** ✅ **Production Ready**
 
 ---
 
-*One container swap. Infinite markets. The Domain Adapter Protocol.*
+*One block at a time. Build anything.*
