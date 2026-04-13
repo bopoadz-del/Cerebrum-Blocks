@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.containers.security import SecurityContainer
 
@@ -126,7 +126,7 @@ async def publish_block(block_data: dict):
             "passed": True,
             "hash": validation.get("code_hash"),
             "lines": validation.get("lines_of_code"),
-            "scanned_at": datetime.utcnow().isoformat()
+            "scanned_at": datetime.now(timezone.utc).isoformat()
         }
         
         # Log successful submission
@@ -168,7 +168,7 @@ async def update_block(block_id: str, block_data: dict):
             "passed": True,
             "hash": validation.get("code_hash"),
             "lines": validation.get("lines_of_code"),
-            "scanned_at": datetime.utcnow().isoformat()
+            "scanned_at": datetime.now(timezone.utc).isoformat()
         }
     
     return await update_block_in_catalog(block_id, block_data)

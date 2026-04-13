@@ -7,7 +7,7 @@ import time
 import json
 import hashlib
 from typing import Any, Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -251,7 +251,7 @@ def health():
         "status": "healthy",
         "blocks_loaded": len(block_instances),
         "blocks_available": len(BLOCK_REGISTRY),
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -272,7 +272,7 @@ def health_v1():
         "status": "healthy",
         "blocks_loaded": len(block_instances),
         "blocks_available": len(BLOCK_REGISTRY),
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 

@@ -465,7 +465,7 @@ class SecurityContainer(UniversalContainer):
         """Log all block submissions for security review"""
         from datetime import datetime
         audit_record = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "block_name": block_name,
             "submitter": submitter,
             "validation_passed": validation_result.get("safe"),
