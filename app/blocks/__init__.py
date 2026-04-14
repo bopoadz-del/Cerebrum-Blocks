@@ -26,6 +26,10 @@ from .orchestrator import OrchestratorBlock
 from .traffic_manager import TrafficManagerBlock
 from .event_bus import EventBusBlock
 from .context_broker import ContextBrokerBlock
+from .llm_enhancer import LLMEnhancerBlock
+from .cache_manager import CacheManagerBlock
+from .async_processor import AsyncProcessorBlock
+from .file_hasher import FileHasherBlock
 
 # Domain Containers
 from app.containers import (
@@ -62,6 +66,10 @@ BLOCK_REGISTRY = {
     "traffic_manager": TrafficManagerBlock,
     "event_bus": EventBusBlock,
     "context_broker": ContextBrokerBlock,
+    "llm_enhancer": LLMEnhancerBlock,
+    "cache_manager": CacheManagerBlock,
+    "async_processor": AsyncProcessorBlock,
+    "file_hasher": FileHasherBlock,
     # Domain Containers
     "construction": ConstructionContainer,
     "medical": MedicalContainer,
@@ -93,6 +101,7 @@ __all__ = [
     "GoogleDriveBlock", "OneDriveBlock", "LocalDriveBlock", "AndroidDriveBlock",
     # Infrastructure
     "OrchestratorBlock", "TrafficManagerBlock", "EventBusBlock", "ContextBrokerBlock",
+    "LLMEnhancerBlock", "CacheManagerBlock", "AsyncProcessorBlock", "FileHasherBlock",
     # Containers
     "ConstructionContainer", "MedicalContainer", "LegalContainer", "FinanceContainer",
     "SecurityContainer", "AICoreContainer", "StoreContainer",
