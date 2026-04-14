@@ -4358,7 +4358,8 @@ Total Extension of Time Sought: {total_delay} days
     async def intelligent_workflow(self, input_data: Any, params: Dict) -> Dict:
         """Smart orchestrator - auto-detects user intent and chains actions"""
         user_goal = params.get("goal") or params.get("prompt", "process document")
-        file_path = input_data.get("file_path") or input_data.get("url")
+        data = input_data if isinstance(input_data, dict) else {}
+        file_path = data.get("file_path") or data.get("url")
         
         chain_steps = self._build_intelligent_chain(user_goal, file_path)
         results = []
@@ -4373,7 +4374,7 @@ Total Extension of Time Sought: {total_delay} days
                     "status": result.get("status"),
                     "key_findings": self._extract_key_findings(result)
                 })
-                current_data = {**current_data, "previous_result": result}
+                current_data = {**(current_data if isinstance(current_data, dict) else {}), "previous_result": result}
         
         next_action = self._suggest_next_action(results, user_goal)
         
