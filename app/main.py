@@ -9,7 +9,7 @@ import hashlib
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException, Request, UploadFile, File
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.blocks import BLOCK_REGISTRY, get_all_blocks
 from app.core.universal_base import UniversalContainer
+from app.core.auth import require_api_key
 
 # Import HAL for container initialization
 try:
@@ -37,9 +38,18 @@ except Exception as e:
 def _get_cors_origins() -> List[str]:
     """Resolve CORS origins from environment with explicit defaults."""
     raw_origins = os.getenv("CORS_ORIGINS", "").strip()
-    
-    # Allow all origins for now - restricts via API key
-    return ["*"]
+    if raw_origins:
+        return [o.strip() for o in raw_origins.split(",") if o.strip()]
+    # Safe defaults - no wildcard
+    return [
+        "https://cerebrum-platform.onrender.com",
+        "https://cerebrum-platform-api.onrender.com",
+        "https://cerebrum-store.onrender.com",
+        "https://cerebrum-store-api.onrender.com",
+        "http://localhost:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:8000",
+    ]
 
 def _create_block_instance(block_class):
     """Create block instance with proper arguments"""
@@ -76,16 +86,7 @@ CORS_ORIGINS = _get_cors_origins()
 # Add CORS middleware with explicit settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "*",
-        "https://cerebrum-platform.onrender.com",
-        "https://cerebrum-platform-j1zs.onrender.com",
-        "https://cerebrum-store.onrender.com",
-        "https://cerebrum-store-j1zs.onrender.com",
-        "http://localhost:8000",
-        "http://localhost:3000",
-        "http://127.0.0.1:8000",
-    ],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*", "Content-Type", "Authorization", "X-Requested-With"],
     allow_credentials=False,
@@ -96,11 +97,12 @@ app.add_middleware(
 @app.options("/{path:path}")
 async def options_handler(request: Request, path: str):
     """Handle CORS preflight requests"""
-    origin = request.headers.get("origin", "*")
+    origin = request.headers.get("origin", "")
+    allowed_origin = origin if origin in CORS_ORIGINS else (CORS_ORIGINS[0] if CORS_ORIGINS else "")
     return JSONResponse(
         content={"status": "ok"},
         headers={
-            "Access-Control-Allow-Origin": origin if origin else "*",
+            "Access-Control-Allow-Origin": allowed_origin,
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
             "Access-Control-Allow-Headers": "*",
             "Access-Control-Max-Age": "86400",
@@ -114,11 +116,12 @@ async def add_cors_headers(request: Request, call_next):
     origin = request.headers.get("origin", "*")
     
     # Handle preflight directly in middleware too
+    allowed_origin = origin if origin in CORS_ORIGINS else (CORS_ORIGINS[0] if CORS_ORIGINS else "")
     if request.method == "OPTIONS":
         return JSONResponse(
             content={"status": "ok"},
             headers={
-                "Access-Control-Allow-Origin": origin if origin else "*",
+                "Access-Control-Allow-Origin": allowed_origin,
                 "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
                 "Access-Control-Allow-Headers": "*",
                 "Access-Control-Max-Age": "86400",
@@ -134,7 +137,7 @@ async def add_cors_headers(request: Request, call_next):
             status_code=500
         )
     
-    response.headers["Access-Control-Allow-Origin"] = origin if origin else "*"
+    response.headers["Access-Control-Allow-Origin"] = allowed_origin
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
     response.headers["Access-Control-Allow-Headers"] = "*"
     response.headers["Access-Control-Max-Age"] = "86400"
@@ -344,7 +347,7 @@ def get_block_info(block_name: str):
 # -------------------- EXECUTE --------------------
 
 @app.post("/execute")
-async def execute(request: ExecuteRequest):
+async def execute(request: ExecuteRequest, auth: dict = Depends(require_api_key)):
     """Execute a single block."""
     block_name = request.block
     
@@ -370,7 +373,7 @@ async def execute(request: ExecuteRequest):
 # -------------------- CHAIN --------------------
 
 @app.post("/chain")
-async def chain_execute(request: ChainRequest):
+async def chain_execute(request: ChainRequest, auth: dict = Depends(require_api_key)):
     """Execute a chain of blocks via OrchestratorBlock."""
     if "orchestrator" not in BLOCK_REGISTRY:
         raise HTTPException(500, "Orchestrator block not available")
@@ -401,7 +404,7 @@ async def chain_execute(request: ChainRequest):
 # -------------------- CHAT --------------------
 
 @app.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, auth: dict = Depends(require_api_key)):
     """Simple chat endpoint."""
     if "chat" not in BLOCK_REGISTRY:
         raise HTTPException(500, "Chat block not available")
@@ -426,7 +429,7 @@ async def chat(request: ChatRequest):
 
 
 @app.post("/chat/stream")
-async def chat_stream(request: ChatRequest):
+async def chat_stream(request: ChatRequest, auth: dict = Depends(require_api_key)):
     """Streaming chat endpoint."""
     if "chat" not in BLOCK_REGISTRY:
         raise HTTPException(500, "Chat block not available")
@@ -486,43 +489,68 @@ def get_block_v1(block_name: str):
 
 
 @app.post("/v1/execute")
-async def execute_v1(request: ExecuteRequest):
+async def execute_v1(request: ExecuteRequest, auth: dict = Depends(require_api_key)):
     """Execute a single block (v1 API)."""
     return await execute(request)
 
 
 @app.post("/v1/chain")
-async def chain_execute_v1(request: ChainRequest):
+async def chain_execute_v1(request: ChainRequest, auth: dict = Depends(require_api_key)):
     """Execute a chain of blocks (v1 API)."""
     return await chain_execute(request)
 
 
 @app.post("/v1/chat")
-async def chat_v1(request: ChatRequest):
+async def chat_v1(request: ChatRequest, auth: dict = Depends(require_api_key)):
     """Simple chat endpoint (v1 API)."""
     return await chat(request)
 
 
 @app.post("/v1/chat/stream")
-async def chat_stream_v1(request: ChatRequest):
+async def chat_stream_v1(request: ChatRequest, auth: dict = Depends(require_api_key)):
     """Streaming chat endpoint (v1 API)."""
     return await chat_stream(request)
 
 
+MAX_UPLOAD_SIZE = int(os.getenv("MAX_UPLOAD_SIZE", "10485760"))  # 10MB
+ALLOWED_UPLOAD_EXTENSIONS = {
+    ".pdf", ".jpg", ".jpeg", ".png", ".gif", ".webp",
+    ".txt", ".md", ".csv", ".json", ".xml",
+    ".mp3", ".mp4", ".wav", ".webm",
+    ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"
+}
+
 @app.post("/v1/upload")
-async def upload_v1(file: UploadFile = File(...)):
+async def upload_v1(file: UploadFile = File(...), auth: dict = Depends(require_api_key)):
     """File upload endpoint (v1 API).
     
-    Accepts any file and stores it. Returns URL for processing.
+    Accepts validated files and stores them. Returns URL for processing.
     """
     import uuid
     import os
     import shutil
     
     try:
+        # Validate file size
+        file.file.seek(0, 2)
+        file_size = file.file.tell()
+        file.file.seek(0)
+        if file_size > MAX_UPLOAD_SIZE:
+            raise HTTPException(status_code=413, detail=f"File too large. Max size: {MAX_UPLOAD_SIZE} bytes")
+        
+        # Validate and sanitize filename
+        original_name = (file.filename or "unknown").strip()
+        if not original_name or original_name in (".", ".."):
+            raise HTTPException(status_code=400, detail="Invalid filename")
+        
+        # Prevent path traversal
+        original_name = os.path.basename(original_name.replace("\\", "/"))
+        _, ext = os.path.splitext(original_name.lower())
+        if ext not in ALLOWED_UPLOAD_EXTENSIONS:
+            raise HTTPException(status_code=400, detail=f"File type '{ext}' not allowed")
+        
         # Generate unique filename
         file_id = str(uuid.uuid4())[:8]
-        original_name = file.filename or "unknown"
         filename = f"{file_id}_{original_name}"
         filepath = os.path.join(DATA_DIR, filename)
         
@@ -530,19 +558,19 @@ async def upload_v1(file: UploadFile = File(...)):
         with open(filepath, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        file_size = os.path.getsize(filepath)
-        
         # Return URL for processing
-        base_url = os.getenv("API_BASE_URL", "https://ssdppg.onrender.com")
+        base_url = os.getenv("API_BASE_URL", "https://cerebrum-platform-api.onrender.com")
         return {
             "url": f"{base_url}/static/{filename}",
             "filename": original_name,
             "stored_as": filename,
             "size": file_size
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Upload failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Upload failed")
 
 
 # -------------------- ERROR HANDLERS --------------------
@@ -557,9 +585,12 @@ async def not_found(request, exc):
 
 @app.exception_handler(500)
 async def server_error(request, exc):
+    import uuid
+    error_id = str(uuid.uuid4())[:8]
+    logger.exception(f"Internal server error [{error_id}]: {exc}")
     return JSONResponse(
         status_code=500,
-        content={"error": "Server error", "detail": str(exc)}
+        content={"error": "Internal server error", "error_id": error_id}
     )
 
 
