@@ -158,22 +158,102 @@ class ConstructionContainer(UniversalContainer):
         return any(k in data or k in p for k in ["file_path", "content", "filename", "file", "url"])
 
     # CORE DOCUMENT PROCESSING
+    async def _get_or_create_cache_key(self, file_path: str, doc_type: str) -> str:
+        from app.blocks import BLOCK_REGISTRY
+        hasher_block = BLOCK_REGISTRY.get("file_hasher")
+        if hasher_block and os.path.exists(file_path):
+            try:
+                hasher_instance = hasher_block()
+                hash_result = await hasher_instance.execute(
+                    {"file_path": file_path}, {"action": "hash_file"}
+                )
+                if hash_result.get("status") == "success":
+                    return f"construction:doc:{doc_type}:{hash_result.get('sha256', '')}"
+            except Exception:
+                pass
+        if os.path.exists(file_path):
+            return f"construction:doc:{doc_type}:{os.path.getmtime(file_path)}:{os.path.getsize(file_path)}"
+        import hashlib
+        path_hash = hashlib.md5(str(file_path).encode()).hexdigest()
+        return f"construction:doc:{doc_type}:missing:{path_hash}"
+
     async def process_document(self, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
         file_path = data.get("file_path") or p.get("file_path")
         url = data.get("url") or p.get("url")
         doc_type = p.get("doc_type", "auto")
-        
+
         if not file_path and url:
             file_path = await self._download_file(url)
-        
+
         if not file_path:
             return {"status": "error", "error": "No file provided"}
-        
+
         if doc_type == "auto":
             doc_type = await self._classify_document(file_path)
-        
+
+        cache_key = await self._get_or_create_cache_key(file_path, doc_type)
+
+        from app.blocks import BLOCK_REGISTRY
+        cache_block = BLOCK_REGISTRY.get("cache_manager")
+        if cache_block:
+            try:
+                cache_instance = cache_block()
+                cached = await cache_instance.execute(
+                    {"key": cache_key}, {"action": "get", "key": cache_key}
+                )
+                if cached.get("cached") and cached.get("value") is not None:
+                    cached_value = cached["value"]
+                    if isinstance(cached_value, dict):
+                        cached_value["_source"] = "cache"
+                        cached_value["_cache_key"] = cache_key
+                    return cached_value
+            except Exception:
+                pass
+
+        file_size = 0
+        hasher_block = BLOCK_REGISTRY.get("file_hasher")
+        if hasher_block:
+            try:
+                hasher_instance = hasher_block()
+                hash_result = await hasher_instance.execute(
+                    {"file_path": file_path}, {"action": "metadata"}
+                )
+                if hash_result.get("status") == "success":
+                    file_size = hash_result.get("size", 0)
+            except Exception:
+                pass
+
+        if file_size > 10 * 1024 * 1024:
+            async_block = BLOCK_REGISTRY.get("async_processor")
+            if async_block:
+                try:
+                    async_instance = async_block()
+                    task_payload = {
+                        "task_name": "block:construction.process_document",
+                        "file_path": file_path,
+                        "doc_type": doc_type,
+                        "data": data,
+                        "params": p,
+                    }
+                    queued = await async_instance.execute(
+                        task_payload,
+                        {
+                            "action": "submit",
+                            "task_name": "block:construction.process_document",
+                        },
+                    )
+                    return {
+                        "status": "queued",
+                        "_source": "async_queue",
+                        "_cache_key": cache_key,
+                        "file_size": file_size,
+                        "queued": queued,
+                    }
+                except Exception:
+                    pass
+
         processors = {
             "drawing": self._process_drawing,
             "specification": self.process_specification_full,
@@ -186,10 +266,40 @@ class ConstructionContainer(UniversalContainer):
             "change_order": self.change_order_impact,
             "safety_audit": self.safety_compliance_audit,
         }
-        
+
         processor = processors.get(doc_type, self._process_drawing)
-        return await processor(input_data, p)
-    
+        result = await processor(input_data, p)
+
+        llm_block = BLOCK_REGISTRY.get("llm_enhancer")
+        if llm_block and isinstance(result, dict) and result.get("status") == "success":
+            try:
+                llm_instance = llm_block()
+                enhanced = await llm_instance.execute(
+                    {"text": json.dumps(result)},
+                    {
+                        "action": "structure_json",
+                        "schema": "structured construction document data",
+                    },
+                )
+                if enhanced.get("status") == "success":
+                    result["llm_enhanced"] = enhanced.get("structured") or enhanced
+            except Exception:
+                pass
+
+        if cache_block:
+            try:
+                cache_instance = cache_block()
+                await cache_instance.execute(
+                    result, {"action": "set", "key": cache_key, "ttl": 7200}
+                )
+            except Exception:
+                pass
+
+        if isinstance(result, dict):
+            result["_cache_key"] = cache_key
+            result["_source"] = "processor"
+        return result
+
     async def _classify_document(self, file_path: str) -> str:
         name = Path(file_path).name.lower()
         if any(x in name for x in [".ifc", ".bim", "model"]):
@@ -4820,4 +4930,43 @@ Total Extension of Time Sought: {total_delay} days
             return {"status": "error", "error": f"Unknown action: {action}"}
         
         return await handler(input_data, params)
+
+    def get_actions(self) -> Dict[str, Any]:
+        return {
+            "process_document": self.process_document,
+            "qa_qc_inspection": self.qa_qc_inspection,
+            "extract_quantities": self.extract_quantities,
+            "estimate_costs": self.estimate_costs,
+            "progress_tracker": self.progress_tracker,
+            "bim_analysis": self.bim_analysis,
+            "parse_primavera_schedule": self.parse_primavera_schedule,
+            "process_contract": self.process_contract,
+            "process_specification_full": self.process_specification_full,
+            "change_order_impact": self.change_order_impact,
+            "rfi_generator": self.rfi_generator,
+            "safety_compliance_audit": self.safety_compliance_audit,
+            "carbon_footprint_calculator": self.carbon_footprint_calculator,
+            "procurement_list_generator": self.procurement_list_generator,
+            "as_built_deviation_report": self.as_built_deviation_report,
+            "warranty_maintenance_schedule": self.warranty_maintenance_schedule,
+            "risk_register_auto_populate": self.risk_register_auto_populate,
+            "submittal_log_generator": self.submittal_log_generator,
+            "payment_certificate": self.payment_certificate,
+            "bim_clash_detection": self.bim_clash_detection,
+            "daily_site_report": self.daily_site_report,
+            "value_engineering": self.value_engineering,
+            "commissioning_checklist": self.commissioning_checklist,
+            "resource_histogram": self.resource_histogram,
+            "claims_builder": self.claims_builder,
+            "tender_bid_analysis": self.tender_bid_analysis,
+            "variation_order_manager": self.variation_order_manager,
+            "forensic_delay_analysis": self.forensic_delay_analysis,
+            "cash_flow_forecast": self.cash_flow_forecast,
+            "procurement_optimizer": self.procurement_optimizer,
+            "esg_sustainability_report": self.esg_sustainability_report,
+            "om_manual_generator": self.om_manual_generator,
+            "digital_twin_sync": self.digital_twin_sync,
+            "intelligent_workflow": self.intelligent_workflow,
+            "health_check": self.health_check,
+        }
 

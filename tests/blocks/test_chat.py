@@ -41,7 +41,7 @@ async def test_chat_block_execute_structure(chat_block):
 async def test_chat_block_metadata(chat_block):
     """Test Chat block metadata."""
     assert chat_block.name == "chat"
-    assert chat_block.config.version == "1.3"
+    assert chat_block.config.version == "1.4"
     assert "text" in chat_block.config.supported_outputs
     assert "stream" in chat_block.config.supported_outputs
     assert chat_block.config.requires_api_key == True
