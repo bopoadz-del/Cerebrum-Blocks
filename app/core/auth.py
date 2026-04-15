@@ -41,29 +41,40 @@ class APIKeyAuth:
                 "created_at": time.time()
             }
         
+        # Dev key fallback — matches AuthBlock behavior and frontend default
+        keys["cb_dev_key"] = {
+            "user": "dev",
+            "tier": "unlimited",
+            "rate_limit": float('inf'),
+            "created_at": time.time()
+        }
+        
         return keys
     
     def validate_key(self, credentials: Optional[HTTPAuthorizationCredentials]) -> Dict[str, Any]:
         """Validate an API key."""
-        # If no keys configured, allow all (development mode)
-        if not self._keys:
+        # Determine if we're in production mode (real keys configured)
+        has_production_keys = any(k != "cb_dev_key" for k in self._keys)
+
+        # If no production keys configured, allow all (development mode)
+        if not has_production_keys:
             return {"user": "dev", "tier": "unlimited", "valid": True}
-        
+
         if not credentials:
             raise HTTPException(status_code=401, detail="API key required. Get one at https://cerebrumblocks.com")
-        
+
         key = credentials.credentials
         if key not in self._keys:
             raise HTTPException(status_code=401, detail="Invalid API key")
-        
+
         key_data = self._keys[key].copy()
         key_data["valid"] = True
-        
+
         # Check rate limit
         self._track_usage(key)
         if self._is_rate_limited(key, key_data.get("rate_limit", 100)):
             raise HTTPException(status_code=429, detail="Rate limit exceeded. Upgrade at https://cerebrumblocks.com")
-        
+
         return key_data
     
     def _track_usage(self, key: str):
