@@ -9,13 +9,19 @@ router = APIRouter()
 @router.get("/", response_class=FileResponse)
 async def root():
     """Serve Block Store UI."""
-    return FileResponse("app/static/index.html")
+    return FileResponse(
+        "app/static/index.html",
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"}
+    )
 
 
 @router.get("/landing", response_class=FileResponse)
 async def landing():
     """Serve legacy landing page."""
-    return FileResponse("app/static/landing/index.html")
+    return FileResponse(
+        "app/static/landing/index.html",
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"}
+    )
 
 
 @router.get("/api")
