@@ -11,6 +11,7 @@ class UniversalAPI {
     try {
       const response = await fetch(`${this.base}${endpoint}`, {
         method: "POST",
+        mode: "cors",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${this.key}`
@@ -34,6 +35,7 @@ class UniversalAPI {
     try {
       const response = await fetch(`${this.base}${endpoint}`, {
         method: "DELETE",
+        mode: "cors",
         headers: {
           "Authorization": `Bearer ${this.key}`
         }
@@ -54,6 +56,7 @@ class UniversalAPI {
   raw(endpoint, body = {}) {
     return fetch(`${this.base}${endpoint}`, {
       method: "POST",
+      mode: "cors",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${this.key}`
