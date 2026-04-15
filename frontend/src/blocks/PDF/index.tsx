@@ -1,5 +1,6 @@
 // PDF-UI-Block - PDF text and table extraction
 import { useState } from 'react';
+import { apiCall } from '../../api';
 
 interface PDFBlockProps {
   apiKey: string;
@@ -12,21 +13,11 @@ export const PDFBlock: React.FC<PDFBlockProps> = ({ apiKey, onExtract }) => {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
   const extract = async () => {
     if (!filePath) return;
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/v1/pdf/extract`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({ file_path: filePath, extract: extractType })
-      });
-      const data = await response.json();
+      const data = await apiCall('/v1/pdf/extract', { file_path: filePath, extract: extractType });
       setResult(data);
       onExtract?.(data);
     } catch (error) {

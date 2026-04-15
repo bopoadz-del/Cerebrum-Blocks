@@ -3,6 +3,7 @@
 // <HALBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
+import { apiCall } from '../../api';
 
 interface HALBlockProps {
   apiKey: string;
@@ -32,21 +33,12 @@ export const HALBlock: React.FC<HALBlockProps> = ({ apiKey }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
   const detectProfile = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${API_BASE}/v1/hal/profile`, {
-        headers: { 'Authorization': `Bearer ${apiKey}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setProfile(data);
-      } else {
-        setError('Failed to detect hardware profile');
-      }
+      const data = await apiCall('/v1/hal/profile', {});
+      setProfile(data);
     } catch (err) {
       setError('Error connecting to HAL service');
     } finally {

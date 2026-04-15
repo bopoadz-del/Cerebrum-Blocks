@@ -3,6 +3,7 @@
 // <BillingBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
+import { apiCall } from '../../api';
 
 interface BillingBlockProps {
   apiKey: string;
@@ -31,23 +32,13 @@ export const BillingBlock: React.FC<BillingBlockProps> = ({ apiKey }) => {
   const [blockUsage, setBlockUsage] = useState<BlockUsage[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
   const fetchBillingData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/v1/execute`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          block: 'billing',
-          action: 'get_usage'
-        })
+      const data = await apiCall('/v1/execute', {
+        block: 'billing',
+        action: 'get_usage'
       });
-      const data = await response.json();
       setStats(data.usage || null);
       setBlockUsage(data.by_block || []);
     } catch (error) {

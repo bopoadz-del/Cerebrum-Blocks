@@ -7,7 +7,7 @@ from app.containers.security import SecurityContainer
 from app.main import app
 
 
-client = TestClient(app)
+client = TestClient(app, headers={"Authorization": "Bearer cb_dev_key"})
 
 
 @pytest.mark.asyncio

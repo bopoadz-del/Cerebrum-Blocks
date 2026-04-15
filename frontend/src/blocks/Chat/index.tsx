@@ -3,6 +3,7 @@
 // <ChatBlock apiKey="cb_key" provider="deepseek" />
 
 import { useState, useRef, useEffect } from 'react';
+import { apiCall } from '../../api';
 
 interface ChatBlockProps {
   apiKey: string;
@@ -119,16 +120,7 @@ export const ChatBlock: React.FC<ChatBlockProps> = ({
           }
         }
       } else {
-        const response = await fetch(`${API_BASE}/v1/chat`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({ message: input, model: provider, stream: false })
-        });
-        
-        const data = await response.json();
+        const data = await apiCall('/v1/chat', { message: input, model: provider, stream: false });
         setMessages(prev => [...prev, { 
           role: 'assistant', 
           content: data.text || data.error || 'Error'

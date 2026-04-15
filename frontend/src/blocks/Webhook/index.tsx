@@ -3,6 +3,7 @@
 // <WebhookBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
+import { apiCall } from '../../api';
 
 interface WebhookBlockProps {
   apiKey: string;
@@ -35,19 +36,11 @@ export const WebhookBlock: React.FC<WebhookBlockProps> = ({ apiKey }) => {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch(`${API_BASE}/v1/execute`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          block: 'webhook',
-          action: 'list_events',
-          limit: 20
-        })
+      const data = await apiCall('/v1/execute', {
+        block: 'webhook',
+        action: 'list_events',
+        limit: 20
       });
-      const data = await response.json();
       setEvents(data.events || []);
     } catch (error) {
       console.error('Failed to fetch events');
@@ -66,21 +59,13 @@ export const WebhookBlock: React.FC<WebhookBlockProps> = ({ apiKey }) => {
     if (!url.trim()) return;
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/v1/execute`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          block: 'webhook',
-          action: 'send',
-          url: url,
-          event: eventType,
-          payload: JSON.parse(payload || '{}')
-        })
+      const data = await apiCall('/v1/execute', {
+        block: 'webhook',
+        action: 'send',
+        url: url,
+        event: eventType,
+        payload: JSON.parse(payload || '{}')
       });
-      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
     } catch (error) {
       setResult('Error: ' + (error as Error).message);

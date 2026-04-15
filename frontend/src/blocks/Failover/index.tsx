@@ -1,5 +1,6 @@
 // Failover-UI-Block - System health dashboard
 import { useState, useEffect } from 'react';
+import { apiCall } from '../../api';
 
 interface FailoverBlockProps {
   apiKey: string;
@@ -7,13 +8,10 @@ interface FailoverBlockProps {
 
 export const FailoverBlock: React.FC<FailoverBlockProps> = ({ apiKey }) => {
   const [status, setStatus] = useState<any>(null);
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const response = await fetch(`${API_BASE}/v1/health`);
-        const data = await response.json();
+        const data = await apiCall('/v1/health', {});
         setStatus(data);
       } catch (e) {
         console.error('Failed to fetch status');

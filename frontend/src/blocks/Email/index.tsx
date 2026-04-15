@@ -3,6 +3,7 @@
 // <EmailBlock apiKey="cb_key" />
 
 import { useState } from 'react';
+import { apiCall } from '../../api';
 
 interface EmailBlockProps {
   apiKey: string;
@@ -17,28 +18,18 @@ export const EmailBlock: React.FC<EmailBlockProps> = ({ apiKey }) => {
   const [loading, setLoading] = useState(false);
   const [emails, setEmails] = useState<any[]>([]);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
   const sendEmail = async () => {
     if (!to.trim() || !subject.trim() || !body.trim()) return;
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/v1/execute`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          block: 'email',
-          action: 'send',
-          to: to,
-          subject: subject,
-          body: body,
-          html: false
-        })
+      const data = await apiCall('/v1/execute', {
+        block: 'email',
+        action: 'send',
+        to: to,
+        subject: subject,
+        body: body,
+        html: false
       });
-      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
       if (data.sent) {
         setTo('');
@@ -55,19 +46,11 @@ export const EmailBlock: React.FC<EmailBlockProps> = ({ apiKey }) => {
   const receiveEmails = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/v1/execute`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          block: 'email',
-          action: 'receive',
-          limit: 10
-        })
+      const data = await apiCall('/v1/execute', {
+        block: 'email',
+        action: 'receive',
+        limit: 10
       });
-      const data = await response.json();
       setEmails(data.emails || []);
       setResult(JSON.stringify(data, null, 2));
     } catch (error) {

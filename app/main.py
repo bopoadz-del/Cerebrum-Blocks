@@ -33,23 +33,6 @@ from app.routers import (
 )
 
 
-def _get_cors_origins() -> List[str]:
-    """Resolve CORS origins from environment with explicit defaults."""
-    raw_origins = os.getenv("CORS_ORIGINS", "").strip()
-    if raw_origins:
-        return [o.strip() for o in raw_origins.split(",") if o.strip()]
-    # Safe defaults - no wildcard
-    return [
-        "https://cerebrum-platform.onrender.com",
-        "https://cerebrum-platform-api.onrender.com",
-        "https://cerebrum-store.onrender.com",
-        "https://cerebrum-store-api.onrender.com",
-        "http://localhost:8000",
-        "http://localhost:3000",
-        "http://127.0.0.1:8000",
-    ]
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize all blocks eagerly at startup to avoid race conditions."""
@@ -65,52 +48,21 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-CORS_ORIGINS = _get_cors_origins()
+from fastapi.middleware.cors import CORSMiddleware
 
-# Add CORS middleware with explicit settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["*", "Content-Type", "Authorization", "X-Requested-With"],
-    allow_credentials=False,
-    max_age=86400,  # Cache preflight for 24 hours
+    allow_origins=[
+        "https://cerebrum-platform.onrender.com",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"]
 )
-
-
-# Robust CORS middleware — must run BEFORE any other middleware
-@app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
-    """Add CORS headers to every response, including errors"""
-    origin = request.headers.get("origin", "")
-    allowed_origin = origin if origin in CORS_ORIGINS else (CORS_ORIGINS[0] if CORS_ORIGINS else "")
-
-    if request.method == "OPTIONS":
-        return JSONResponse(
-            content={"status": "ok"},
-            headers={
-                "Access-Control-Allow-Origin": allowed_origin,
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-                "Access-Control-Allow-Headers": "*",
-                "Access-Control-Max-Age": "86400",
-            }
-        )
-
-    try:
-        response = await call_next(request)
-    except Exception as exc:
-        logger.exception("Request failed, returning CORS-enabled error")
-        response = JSONResponse(
-            content={"detail": "Internal Server Error"},
-            status_code=500
-        )
-
-    response.headers["Access-Control-Allow-Origin"] = allowed_origin
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Access-Control-Max-Age"] = "86400"
-
-    return response
 
 
 # File upload security middleware

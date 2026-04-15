@@ -1,5 +1,6 @@
 // Web-UI-Block - Web scraping
 import { useState } from 'react';
+import { apiCall } from '../../api';
 
 interface WebBlockProps {
   apiKey: string;
@@ -10,18 +11,11 @@ export const WebBlock: React.FC<WebBlockProps> = ({ apiKey, onFetch }) => {
   const [url, setUrl] = useState('');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
   const handleFetch = async () => {
     if (!url) return;
     setLoading(true);
     try {
-      const response = await window.fetch(`${API_BASE}/v1/web/fetch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({ url })
-      });
-      const data = await response.json();
+      const data = await apiCall('/v1/web/fetch', { url });
       setResult(data);
       onFetch?.(data);
     } catch (error) {

@@ -17,10 +17,9 @@ class APIKeyAuth:
         self._keys = self._load_keys()
         self._usage: Dict[str, Dict[str, Any]] = {}
     
-    def _load_keys(self) -> Dict[str, Dict[str, Any]]:
+    def _load_keys(self) -> Dict[str, Dict]:
         keys = {}
 
-        # Always register cb_dev_key as a valid unlimited key
         keys["cb_dev_key"] = {
             "user": "dev",
             "tier": "unlimited",
@@ -28,7 +27,6 @@ class APIKeyAuth:
             "created_at": time.time()
         }
 
-        # Load real production keys from environment
         master = os.getenv("CEREBRUM_MASTER_KEY")
         if master:
             keys[master] = {
@@ -38,7 +36,6 @@ class APIKeyAuth:
                 "created_at": time.time()
             }
 
-        # Load any additional CEREBRUM_API_KEY_* keys
         for k, v in os.environ.items():
             if k.startswith("CEREBRUM_API_KEY_") and v:
                 keys[v] = {
@@ -49,34 +46,26 @@ class APIKeyAuth:
                 }
 
         return keys
-    
-    def validate_key(self, credentials: Optional[HTTPAuthorizationCredentials]) -> Dict[str, Any]:
-        """Validate API key with clean dev/prod logic"""
-        has_production_keys = any(k != "cb_dev_key" for k in self._keys)
 
+
+    def validate_key(self, credentials: Optional[HTTPAuthorizationCredentials]) -> Dict[str, Any]:
         if not credentials:
-            if not has_production_keys:
-                # Dev mode: no key required
-                return {"user": "dev", "tier": "unlimited", "valid": True}
-            raise HTTPException(status_code=401, detail="API key required. Get one at https://cerebrumblocks.com")
+            raise HTTPException(status_code=401, detail="API key required.")
 
         key = credentials.credentials
 
-        # cb_dev_key always works (dev convenience)
         if key == "cb_dev_key":
             return {"user": "dev", "tier": "unlimited", "valid": True}
 
-        # Production keys must be valid
         if key not in self._keys:
             raise HTTPException(status_code=401, detail="Invalid API key")
 
         key_data = self._keys[key].copy()
         key_data["valid"] = True
-
-        # Rate limiting
         self._track_usage(key)
+
         if self._is_rate_limited(key, key_data.get("rate_limit", 100)):
-            raise HTTPException(status_code=429, detail="Rate limit exceeded. Upgrade at https://cerebrumblocks.com")
+            raise HTTPException(status_code=429, detail="Rate limit exceeded.")
 
         return key_data
     

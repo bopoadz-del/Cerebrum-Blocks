@@ -2,6 +2,7 @@
 // <VectorBlock apiKey="cb_key" onResultsSelect={(r) => console.log(r)} />
 
 import { useState } from 'react';
+import { apiCall } from '../../api';
 
 interface VectorBlockProps {
   apiKey: string;
@@ -18,23 +19,12 @@ export const VectorBlock: React.FC<VectorBlockProps> = ({
   const [results, setResults] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
   const search = async () => {
     if (!query.trim()) return;
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/v1/vector/search`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({ query, n_results: 5 })
-      });
-
-      const data = await response.json();
+      const data = await apiCall('/v1/vector/search', { query, n_results: 5 });
       setResults(data.results || []);
       onResultsSelect?.(data.results || []);
     } catch (error) {
