@@ -4,7 +4,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 API_KEY=$(cat "$SCRIPT_DIR/api-key")
-SERVICE_ID="srv-d651qphr0fns73c50ohg"
+SERVICE_ID="srv-d7dd87n7f7vs73es12kg"
 
 # Colors
 RED='\033[0;31m'
