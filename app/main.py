@@ -48,21 +48,49 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-from fastapi.middleware.cors import CORSMiddleware
+# CORS Origins - explicit list for cerebrum-platform frontend
+CORS_ORIGINS = [
+    "https://cerebrum-platform.onrender.com",
+    "https://cerebrum-platform-j1zs.onrender.com",
+    "https://cerebrum-store.onrender.com",
+    "https://cerebrum-store-j1zs.onrender.com",
+    "http://localhost:8000",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+]
 
+# Add CORS middleware with explicit settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://cerebrum-platform.onrender.com",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173"
-    ],
+    allow_origins=CORS_ORIGINS,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*", "Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"]
+    max_age=86400,  # Cache preflight for 24 hours
 )
+
+# Add explicit CORS headers middleware - ensures headers are always present on all responses
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    """Add CORS headers to all responses - ensures headers are always present"""
+    response = await call_next(request)
+    
+    origin = request.headers.get("origin")
+    # Mirror the origin if it's in our allowed list, otherwise use the first allowed origin
+    if origin and origin in CORS_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+    else:
+        response.headers["Access-Control-Allow-Origin"] = CORS_ORIGINS[0]
+    
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    response.headers["Access-Control-Allow-Headers"] = "*, Content-Type, Authorization, X-Requested-With, Accept, Origin"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Max-Age"] = "86400"
+    
+    return response
 
 
 # File upload security middleware
@@ -109,43 +137,40 @@ async def file_upload_security_middleware(request: Request, call_next):
     return await call_next(request)
 
 
+# Handle OPTIONS requests globally - ensure preflight works for all routes
+@app.options("/{path:path}")
+async def options_handler(request: Request, path: str):
+    """Handle CORS preflight requests for all paths"""
+    origin = request.headers.get("origin", CORS_ORIGINS[0])
+    # Validate origin is in our allowed list
+    if origin not in CORS_ORIGINS:
+        origin = CORS_ORIGINS[0]
+    
+    return JSONResponse(
+        content={"status": "ok"},
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+            "Access-Control-Allow-Headers": "*, Content-Type, Authorization, X-Requested-With, Accept, Origin",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
+
+
+# Include all routers
+app.include_router(blocks.router, prefix="/v1")
+app.include_router(execute.router, prefix="/v1")
+app.include_router(chain.router, prefix="/v1")
+app.include_router(chat.router, prefix="/v1")
+app.include_router(upload.router, prefix="/v1")
+app.include_router(auth.router, prefix="/v1")
+app.include_router(memory.router, prefix="/v1")
+app.include_router(monitoring.router, prefix="/v1")
+app.include_router(health.router)
+app.include_router(static.router)
+app.include_router(debug.router, prefix="/v1")
+
+
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
-# Include routers
-app.include_router(static.router)
-app.include_router(health.router)
-app.include_router(blocks.router)
-app.include_router(execute.router)
-app.include_router(chain.router)
-app.include_router(chat.router)
-app.include_router(upload.router)
-app.include_router(monitoring.router)
-app.include_router(memory.router)
-app.include_router(auth.router)
-app.include_router(debug.router)
-
-
-# Error handlers
-@app.exception_handler(404)
-async def not_found(request, exc):
-    return JSONResponse(
-        status_code=404,
-        content={"error": "Not found", "path": str(request.url)}
-    )
-
-
-@app.exception_handler(500)
-async def server_error(request, exc):
-    import uuid
-    error_id = str(uuid.uuid4())[:8]
-    logger.exception("Internal server error [%s]: %s", error_id, exc)
-    return JSONResponse(
-        status_code=500,
-        content={"error": "Internal server error", "error_id": error_id}
-    )
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
