@@ -2,7 +2,7 @@
 // <QueueBlock apiKey="cb_key" jobId="xxx" onComplete={(r) => console.log(r)} />
 
 import { useState, useEffect } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface QueueBlockProps {
   apiKey: string;
@@ -26,12 +26,12 @@ export const QueueBlock: React.FC<QueueBlockProps> = ({
 
     const checkStatus = async () => {
       try {
-        const data = await apiCall('/v1/queue/status', { action: 'status', job_id: jobId });
+        const data = await API.call('/v1/queue/status', { action: 'status', job_id: jobId });
         setStatus(data.status || 'unknown');
         
         // Get result if completed
         if (data.status === 'COMPLETED' || data.status === 'completed') {
-          const resultData = await apiCall('/v1/queue/result', { action: 'result', job_id: jobId });
+          const resultData = await API.call('/v1/queue/result', { action: 'result', job_id: jobId });
           setResult(resultData.result);
           onComplete?.(resultData.result);
         }

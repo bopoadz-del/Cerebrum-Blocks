@@ -3,7 +3,7 @@
 // <HALBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface HALBlockProps {
   apiKey: string;
@@ -37,7 +37,7 @@ export const HALBlock: React.FC<HALBlockProps> = ({ apiKey }) => {
     setLoading(true);
     setError('');
     try {
-      const data = await apiCall('/v1/hal/profile', {});
+      const data = await API.call('/v1/hal/profile', {});
       setProfile(data);
     } catch (err) {
       setError('Error connecting to HAL service');

@@ -3,7 +3,7 @@
 // <WorkflowBlock apiKey="cb_key" />
 
 import { useState } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface WorkflowBlockProps {
   apiKey: string;
@@ -56,7 +56,7 @@ export const WorkflowBlock: React.FC<WorkflowBlockProps> = ({ apiKey }) => {
     if (steps.length === 0) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/chain', {
+      const data = await API.call('/v1/chain', {
         name: workflowName,
         steps: steps
       });

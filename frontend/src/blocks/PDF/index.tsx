@@ -1,6 +1,6 @@
 // PDF-UI-Block - PDF text and table extraction
 import { useState } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface PDFBlockProps {
   apiKey: string;
@@ -17,7 +17,7 @@ export const PDFBlock: React.FC<PDFBlockProps> = ({ apiKey, onExtract }) => {
     if (!filePath) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/pdf/extract', { file_path: filePath, extract: extractType });
+      const data = await API.call('/v1/pdf/extract', { file_path: filePath, extract: extractType });
       setResult(data);
       onExtract?.(data);
     } catch (error) {

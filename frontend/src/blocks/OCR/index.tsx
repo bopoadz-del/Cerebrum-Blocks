@@ -1,6 +1,6 @@
 // OCR-UI-Block - Image text extraction
 import { useState } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface OCRBlockProps {
   apiKey: string;
@@ -15,7 +15,7 @@ export const OCRBlock: React.FC<OCRBlockProps> = ({ apiKey, onExtract }) => {
     if (!imagePath) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/ocr', { image: imagePath, lang: 'eng' });
+      const data = await API.call('/v1/ocr', { image: imagePath, lang: 'eng' });
       setResult(data);
       onExtract?.(data);
     } catch (error) {

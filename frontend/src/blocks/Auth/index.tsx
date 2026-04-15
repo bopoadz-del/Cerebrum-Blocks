@@ -3,7 +3,7 @@
 // <AuthBlock apiKey="cb_admin_key" />
 
 import { useState, useEffect } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface AuthBlockProps {
   apiKey: string;
@@ -24,11 +24,11 @@ export const AuthBlock: React.FC<AuthBlockProps> = ({ apiKey }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 
   const fetchKeys = async () => {
     try {
-      const data = await apiCall('/v1/auth/keys', {});
+      const data = await API.call('/v1/auth/keys', {});
       setKeys(data.keys || []);
     } catch (error) {
       console.error('Failed to fetch keys');
@@ -43,7 +43,7 @@ export const AuthBlock: React.FC<AuthBlockProps> = ({ apiKey }) => {
     if (!newKeyName.trim()) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/auth/keys', { name: newKeyName, role: newKeyRole });
+      const data = await API.call('/v1/auth/keys', { name: newKeyName, role: newKeyRole });
       setMessage(`Created: ${data.api_key}`);
       setNewKeyName('');
       fetchKeys();
@@ -56,10 +56,7 @@ export const AuthBlock: React.FC<AuthBlockProps> = ({ apiKey }) => {
 
   const deleteKey = async (keyToDelete: string) => {
     try {
-      await fetch(`${API_BASE}/v1/auth/keys/${keyToDelete}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${apiKey}` }
-      });
+      await API.del(`/v1/auth/keys/${keyToDelete}`);
       fetchKeys();
     } catch (error) {
       console.error('Failed to delete key');

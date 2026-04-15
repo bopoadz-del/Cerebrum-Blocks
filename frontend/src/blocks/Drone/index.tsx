@@ -2,7 +2,7 @@
 // <DroneBlock apiKey="cb_key" projectId="project_01" />
 
 import { useState } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface DroneBlockProps {
   apiKey: string;
@@ -25,7 +25,7 @@ export const DroneBlock: React.FC<DroneBlockProps> = ({
     if (!videoPath) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/drone/process', { 
+      const data = await API.call('/v1/drone/process', { 
         action: 'process_video',
         project_id: projectId,
         video_path: videoPath,
@@ -44,7 +44,7 @@ export const DroneBlock: React.FC<DroneBlockProps> = ({
   const detectDefects = async () => {
     setLoading(true);
     try {
-      const data = await apiCall('/v1/drone/defects', { 
+      const data = await API.call('/v1/drone/defects', { 
         action: 'detect_defects',
         image_paths: [`flights/${flightDate}/frame_001.jpg`],
         types: ['concrete_crack', 'masonry_alignment']
@@ -60,7 +60,7 @@ export const DroneBlock: React.FC<DroneBlockProps> = ({
 
   const checkProgress = async () => {
     try {
-      const data = await apiCall('/v1/drone/progress', { 
+      const data = await API.call('/v1/drone/progress', { 
         action: 'compare_to_bim',
         project_id: projectId,
         flight_date: flightDate

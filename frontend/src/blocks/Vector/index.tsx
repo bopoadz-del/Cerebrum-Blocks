@@ -2,7 +2,7 @@
 // <VectorBlock apiKey="cb_key" onResultsSelect={(r) => console.log(r)} />
 
 import { useState } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface VectorBlockProps {
   apiKey: string;
@@ -24,7 +24,7 @@ export const VectorBlock: React.FC<VectorBlockProps> = ({
     setLoading(true);
 
     try {
-      const data = await apiCall('/v1/vector/search', { query, n_results: 5 });
+      const data = await API.call('/v1/vector/search', { query, n_results: 5 });
       setResults(data.results || []);
       onResultsSelect?.(data.results || []);
     } catch (error) {

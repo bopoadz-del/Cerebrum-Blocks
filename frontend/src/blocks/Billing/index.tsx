@@ -3,7 +3,7 @@
 // <BillingBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface BillingBlockProps {
   apiKey: string;
@@ -35,7 +35,7 @@ export const BillingBlock: React.FC<BillingBlockProps> = ({ apiKey }) => {
   const fetchBillingData = async () => {
     setLoading(true);
     try {
-      const data = await apiCall('/v1/execute', {
+      const data = await API.call('/v1/execute', {
         block: 'billing',
         action: 'get_usage'
       });

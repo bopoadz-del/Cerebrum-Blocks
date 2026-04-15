@@ -3,7 +3,7 @@
 // <WebhookBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface WebhookBlockProps {
   apiKey: string;
@@ -36,7 +36,7 @@ export const WebhookBlock: React.FC<WebhookBlockProps> = ({ apiKey }) => {
 
   const fetchEvents = async () => {
     try {
-      const data = await apiCall('/v1/execute', {
+      const data = await API.call('/v1/execute', {
         block: 'webhook',
         action: 'list_events',
         limit: 20
@@ -59,7 +59,7 @@ export const WebhookBlock: React.FC<WebhookBlockProps> = ({ apiKey }) => {
     if (!url.trim()) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/execute', {
+      const data = await API.call('/v1/execute', {
         block: 'webhook',
         action: 'send',
         url: url,

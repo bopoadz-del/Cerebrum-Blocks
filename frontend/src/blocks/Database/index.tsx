@@ -3,7 +3,7 @@
 // <DatabaseBlock apiKey="cb_key" />
 
 import { useState } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface DatabaseBlockProps {
   apiKey: string;
@@ -20,7 +20,7 @@ export const DatabaseBlock: React.FC<DatabaseBlockProps> = ({ apiKey }) => {
   const executeOperation = async () => {
     setLoading(true);
     try {
-      const responseData = await apiCall('/v1/execute', {
+      const responseData = await API.call('/v1/execute', {
         block: 'database',
         action: operation,
         table: table,

@@ -3,7 +3,7 @@
 // <MemoryBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface MemoryBlockProps {
   apiKey: string;
@@ -28,7 +28,7 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
 
   const fetchStats = async () => {
     try {
-      const data = await apiCall('/v1/memory/stats', {});
+      const data = await API.call('/v1/memory/stats', {});
       setStats(data);
     } catch (error) {
       console.error('Failed to fetch stats');
@@ -45,7 +45,7 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
     if (!cacheKey.trim() || !cacheValue.trim()) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/memory/set', { 
+      const data = await API.call('/v1/memory/set', { 
         key: cacheKey, 
         value: cacheValue,
         ttl: parseInt(ttl) || 60
@@ -63,7 +63,7 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
     if (!cacheKey.trim()) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/memory/get', { key: cacheKey });
+      const data = await API.call('/v1/memory/get', { key: cacheKey });
       setResult(JSON.stringify(data, null, 2));
       if (data.value) {
         setCacheValue(typeof data.value === 'string' ? data.value : JSON.stringify(data.value));
@@ -79,7 +79,7 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
     if (!cacheKey.trim()) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/memory/delete', { key: cacheKey });
+      const data = await API.call('/v1/memory/delete', { key: cacheKey });
       setResult(JSON.stringify(data, null, 2));
       fetchStats();
     } catch (error) {

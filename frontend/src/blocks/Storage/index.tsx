@@ -2,7 +2,7 @@
 // <StorageBlock apiKey="cb_key" onFileSelect={(f) => console.log(f)} />
 
 import { useState, useEffect } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface StorageBlockProps {
   apiKey: string;
@@ -22,7 +22,7 @@ export const StorageBlock: React.FC<StorageBlockProps> = ({
   const listFiles = async (path: string) => {
     setLoading(true);
     try {
-      const data = await apiCall('/v1/storage/list', { operation: 'list', path });
+      const data = await API.call('/v1/storage/list', { operation: 'list', path });
       setFiles(data.files || []);
       setCurrentPath(path);
     } catch (error) {

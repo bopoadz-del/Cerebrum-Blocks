@@ -3,7 +3,7 @@
 // <MonitoringBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface MonitoringBlockProps {
   apiKey: string;
@@ -32,11 +32,11 @@ export const MonitoringBlock: React.FC<MonitoringBlockProps> = ({ apiKey }) => {
     setLoading(true);
     try {
       // Fetch leaderboard
-      const lbData = await apiCall('/v1/leaderboard', {});
+      const lbData = await API.call('/v1/leaderboard', {});
       setLeaderboard(lbData.leaderboard || []);
 
       // Fetch health
-      const healthData = await apiCall('/v1/system/health', {});
+      const healthData = await API.call('/v1/system/health', {});
       setHealth(healthData);
     } catch (error) {
       console.error('Failed to fetch monitoring data');

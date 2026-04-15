@@ -3,7 +3,8 @@
 // <ChatBlock apiKey="cb_key" provider="deepseek" />
 
 import { useState, useRef, useEffect } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
+
 
 interface ChatBlockProps {
   apiKey: string;
@@ -24,7 +25,7 @@ export const ChatBlock: React.FC<ChatBlockProps> = ({
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -44,17 +45,10 @@ export const ChatBlock: React.FC<ChatBlockProps> = ({
 
     try {
       if (streaming) {
-        const response = await fetch(`${API_BASE}/v1/chat/stream`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({ 
-            prompt: input, 
-            model: provider,
-            session_id: 'default'
-          })
+        const response = await API.raw('/v1/chat/stream', {
+          prompt: input,
+          model: provider,
+          session_id: 'default'
         });
 
         if (!response.ok) {
@@ -120,7 +114,7 @@ export const ChatBlock: React.FC<ChatBlockProps> = ({
           }
         }
       } else {
-        const data = await apiCall('/v1/chat', { message: input, model: provider, stream: false });
+        const data = await API.call('/v1/chat', { message: input, model: provider, stream: false });
         setMessages(prev => [...prev, { 
           role: 'assistant', 
           content: data.text || data.error || 'Error'

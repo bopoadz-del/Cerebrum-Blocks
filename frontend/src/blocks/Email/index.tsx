@@ -3,7 +3,7 @@
 // <EmailBlock apiKey="cb_key" />
 
 import { useState } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface EmailBlockProps {
   apiKey: string;
@@ -22,7 +22,7 @@ export const EmailBlock: React.FC<EmailBlockProps> = ({ apiKey }) => {
     if (!to.trim() || !subject.trim() || !body.trim()) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/execute', {
+      const data = await API.call('/v1/execute', {
         block: 'email',
         action: 'send',
         to: to,
@@ -46,7 +46,7 @@ export const EmailBlock: React.FC<EmailBlockProps> = ({ apiKey }) => {
   const receiveEmails = async () => {
     setLoading(true);
     try {
-      const data = await apiCall('/v1/execute', {
+      const data = await API.call('/v1/execute', {
         block: 'email',
         action: 'receive',
         limit: 10

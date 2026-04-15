@@ -1,6 +1,6 @@
 // Web-UI-Block - Web scraping
 import { useState } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface WebBlockProps {
   apiKey: string;
@@ -15,7 +15,7 @@ export const WebBlock: React.FC<WebBlockProps> = ({ apiKey, onFetch }) => {
     if (!url) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/web/fetch', { url });
+      const data = await API.call('/v1/web/fetch', { url });
       setResult(data);
       onFetch?.(data);
     } catch (error) {

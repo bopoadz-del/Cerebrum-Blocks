@@ -1,6 +1,6 @@
 // Zvec-UI-Block - Zero-shot embeddings
 import { useState } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface ZvecBlockProps {
   apiKey: string;
@@ -15,7 +15,7 @@ export const ZvecBlock: React.FC<ZvecBlockProps> = ({ apiKey }) => {
     if (!text1 || !text2) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/zvec/similarity', { text1, text2, operation: 'similarity' });
+      const data = await API.call('/v1/zvec/similarity', { text1, text2, operation: 'similarity' });
       setSimilarity(data.similarity);
     } catch (error) {
       console.error('Zvec failed:', error);

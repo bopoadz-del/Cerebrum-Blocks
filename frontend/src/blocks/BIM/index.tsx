@@ -2,7 +2,7 @@
 // <BIMBlock apiKey="cb_key" projectId="project_01" />
 
 import { useState } from 'react';
-import { apiCall } from '../../api';
+import { API } from '../../api';
 
 interface BIMBlockProps {
   apiKey: string;
@@ -23,7 +23,7 @@ export const BIMBlock: React.FC<BIMBlockProps> = ({
   const loadIFC = async () => {
     setLoading(true);
     try {
-      const data = await apiCall('/v1/bim/load', { 
+      const data = await API.call('/v1/bim/load', { 
         action: 'load_ifc',
         project_id: projectId,
         ifc_path: `projects/${projectId}/model.ifc`
@@ -40,7 +40,7 @@ export const BIMBlock: React.FC<BIMBlockProps> = ({
     if (!query.trim()) return;
     setLoading(true);
     try {
-      const data = await apiCall('/v1/bim/query', { 
+      const data = await API.call('/v1/bim/query', { 
         action: 'query_elements',
         project_id: projectId,
         query
@@ -55,7 +55,7 @@ export const BIMBlock: React.FC<BIMBlockProps> = ({
 
   const checkProgress = async () => {
     try {
-      const data = await apiCall('/v1/bim/progress', { 
+      const data = await API.call('/v1/bim/progress', { 
         action: 'get_progress',
         project_id: projectId,
         completed: []
