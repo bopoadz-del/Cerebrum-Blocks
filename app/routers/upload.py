@@ -4,7 +4,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
-from app.core.auth import require_api_key
+from app.dependencies import require_api_key
 
 router = APIRouter()
 

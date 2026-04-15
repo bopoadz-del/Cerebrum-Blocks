@@ -18,59 +18,62 @@ class APIKeyAuth:
         self._usage: Dict[str, Dict[str, Any]] = {}
     
     def _load_keys(self) -> Dict[str, Dict[str, Any]]:
-        """Load API keys from environment."""
         keys = {}
-        # Format: CEREBRUM_API_KEY_user1=sk-xxx
-        for key, value in os.environ.items():
-            if key.startswith("CEREBRUM_API_KEY_"):
-                user = key.replace("CEREBRUM_API_KEY_", "").lower()
-                keys[value] = {
-                    "user": user,
-                    "tier": "free",
-                    "rate_limit": 100,  # requests per hour
-                    "created_at": time.time()
-                }
-        
-        # Also support a master key for admin
-        master_key = os.getenv("CEREBRUM_MASTER_KEY")
-        if master_key:
-            keys[master_key] = {
-                "user": "admin",
-                "tier": "unlimited",
-                "rate_limit": float('inf'),
-                "created_at": time.time()
-            }
-        
-        # Dev key fallback — matches AuthBlock behavior and frontend default
+
+        # Always register cb_dev_key as a valid unlimited key
         keys["cb_dev_key"] = {
             "user": "dev",
             "tier": "unlimited",
             "rate_limit": float('inf'),
             "created_at": time.time()
         }
-        
+
+        # Load real production keys from environment
+        master = os.getenv("CEREBRUM_MASTER_KEY")
+        if master:
+            keys[master] = {
+                "user": "master",
+                "tier": "unlimited",
+                "rate_limit": float('inf'),
+                "created_at": time.time()
+            }
+
+        # Load any additional CEREBRUM_API_KEY_* keys
+        for k, v in os.environ.items():
+            if k.startswith("CEREBRUM_API_KEY_") and v:
+                keys[v] = {
+                    "user": k.replace("CEREBRUM_API_KEY_", "").lower(),
+                    "tier": "standard",
+                    "rate_limit": 1000,
+                    "created_at": time.time()
+                }
+
         return keys
     
     def validate_key(self, credentials: Optional[HTTPAuthorizationCredentials]) -> Dict[str, Any]:
-        """Validate an API key."""
-        # Determine if we're in production mode (real keys configured)
+        """Validate API key with clean dev/prod logic"""
         has_production_keys = any(k != "cb_dev_key" for k in self._keys)
 
-        # If no production keys configured, allow all (development mode)
-        if not has_production_keys:
-            return {"user": "dev", "tier": "unlimited", "valid": True}
-
         if not credentials:
+            if not has_production_keys:
+                # Dev mode: no key required
+                return {"user": "dev", "tier": "unlimited", "valid": True}
             raise HTTPException(status_code=401, detail="API key required. Get one at https://cerebrumblocks.com")
 
         key = credentials.credentials
+
+        # cb_dev_key always works (dev convenience)
+        if key == "cb_dev_key":
+            return {"user": "dev", "tier": "unlimited", "valid": True}
+
+        # Production keys must be valid
         if key not in self._keys:
             raise HTTPException(status_code=401, detail="Invalid API key")
 
         key_data = self._keys[key].copy()
         key_data["valid"] = True
 
-        # Check rate limit
+        # Rate limiting
         self._track_usage(key)
         if self._is_rate_limited(key, key_data.get("rate_limit", 100)):
             raise HTTPException(status_code=429, detail="Rate limit exceeded. Upgrade at https://cerebrumblocks.com")
@@ -120,9 +123,3 @@ class APIKeyAuth:
 
 # Global auth instance
 auth = APIKeyAuth()
-
-
-async def require_api_key(request: Request) -> Dict[str, Any]:
-    """Dependency to require API key on endpoints."""
-    credentials = await auth.security(request)
-    return auth.validate_key(credentials)

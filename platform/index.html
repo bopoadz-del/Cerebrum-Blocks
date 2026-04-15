@@ -172,6 +172,28 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 
 console.log('API_BASE:', API_BASE);
 
+const API_KEY = 'cb_dev_key';
+
+const apiCall = async (endpoint, body, isFormData = false) => {
+    const headers = { 'Authorization': `Bearer ${API_KEY}` };
+    if (!isFormData) {
+        headers['Content-Type'] = 'application/json';
+    }
+    
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST',
+        headers,
+        body: isFormData ? body : JSON.stringify(body)
+    });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    
+    return response.json();
+};
+
 // Connected drives state
 const connectedDrives = {};
 
@@ -251,17 +273,14 @@ async function handleLocalFiles(input) {
         
         // ZVec index
         let zvecResult = null;
-        const zvecRes = await fetch(`${API_BASE}/v1/execute`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+        try {
+            zvecResult = await apiCall('/v1/execute', {
                 block: 'zvec',
                 input: fileNames.join('\n'),
                 params: { operation: 'embed' }
-            })
-        });
-        if (zvecRes.ok) {
-            zvecResult = await zvecRes.json();
+            });
+        } catch (e) {
+            console.error('ZVec index failed:', e);
         }
         
         // Store actual File objects for later use
@@ -313,20 +332,10 @@ async function connectDrive(driveType) {
     
     try {
         // Step 1: List files from drive
-        const listRes = await fetch(`${API_BASE}/v1/execute`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                block: driveType,
-                params: { operation: 'list', folder_path: './' }
-            })
+        const listData = await apiCall('/v1/execute', {
+            block: driveType,
+            params: { operation: 'list', folder_path: './' }
         });
-        
-        if (!listRes.ok) {
-            throw new Error(`HTTP ${listRes.status}: ${await listRes.text()}`);
-        }
-        
-        const listData = await listRes.json();
         console.log(`${driveType} list:`, listData);
         
         let files = [];
@@ -343,17 +352,14 @@ async function connectDrive(driveType) {
         // Step 2: ZVec index the file list
         let zvecResult = null;
         if (files.length > 0) {
-            const zvecRes = await fetch(`${API_BASE}/v1/execute`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            try {
+                zvecResult = await apiCall('/v1/execute', {
                     block: 'zvec',
                     input: files.join('\n'),
                     params: { operation: 'embed' }
-                })
-            });
-            if (zvecRes.ok) {
-                zvecResult = await zvecRes.json();
+                });
+            } catch (e) {
+                console.error('ZVec index failed:', e);
             }
         }
         
@@ -461,10 +467,9 @@ async function selectFile(driveKey, fileName) {
         }
         
         // Use zvec search to find related files
-        const zvecRes = await fetch(`${API_BASE}/v1/execute`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+        let related = [];
+        try {
+            const zvecData = await apiCall('/v1/execute', {
                 block: 'zvec',
                 input: fileName,
                 params: { 
@@ -472,13 +477,10 @@ async function selectFile(driveKey, fileName) {
                     corpus: drive.files.filter(f => typeof f === 'string'),
                     top_k: 3 
                 }
-            })
-        });
-        
-        let related = [];
-        if (zvecRes.ok) {
-            const zvecData = await zvecRes.json();
+            });
             related = zvecData.result?.results || [];
+        } catch (e) {
+            console.error('ZVec search failed:', e);
         }
         
         setOutcomes(`
@@ -541,20 +543,10 @@ async function sendMessage() {
     showIndicator(true);
     
     try {
-        const res = await fetch(`${API_BASE}/v1/chain`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                steps: [{block: 'chat', params: {}}], 
-                initial_input: text 
-            })
+        const data = await apiCall('/v1/chain', { 
+            steps: [{block: 'chat', params: {}}], 
+            initial_input: text 
         });
-        
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${await res.text()}`);
-        }
-        
-        const data = await res.json();
         
         if (data.success) {
             const output = data.final_output;
@@ -585,16 +577,7 @@ async function handleFile(input) {
         const form = new FormData();
         form.append('file', file);
         
-        const uploadRes = await fetch(`${API_BASE}/v1/upload`, { 
-            method: 'POST', 
-            body: form 
-        });
-        
-        if (!uploadRes.ok) {
-            throw new Error(`Upload failed: HTTP ${uploadRes.status}`);
-        }
-        
-        const uploadData = await uploadRes.json();
+        const uploadData = await apiCall('/v1/upload', form, true);
         console.log('Upload response:', uploadData);
         
         setOutcomes(`
@@ -607,20 +590,10 @@ async function handleFile(input) {
         
         const fileContent = await readFileContent(file);
         
-        const analysisRes = await fetch(`${API_BASE}/v1/chain`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                steps: [{block: 'chat', params: {}}], 
-                initial_input: `Analyze this file content and extract key information:\n\nFile: ${file.name}\nSize: ${(file.size / 1024).toFixed(1)} KB\n\nContent:\n${fileContent.substring(0, 3000)}` 
-            })
+        const analysisData = await apiCall('/v1/chain', { 
+            steps: [{block: 'chat', params: {}}], 
+            initial_input: `Analyze this file content and extract key information:\n\nFile: ${file.name}\nSize: ${(file.size / 1024).toFixed(1)} KB\n\nContent:\n${fileContent.substring(0, 3000)}` 
         });
-        
-        if (!analysisRes.ok) {
-            throw new Error(`Analysis failed: HTTP ${analysisRes.status}`);
-        }
-        
-        const analysisData = await analysisRes.json();
         const output = analysisData.final_output;
         const analysisText = typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
         

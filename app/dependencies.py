@@ -5,9 +5,13 @@ import inspect
 import logging
 import os
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+
+from fastapi import Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.blocks import BLOCK_REGISTRY
+from app.core.auth import auth as auth_manager
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +118,16 @@ except Exception as e:
     AUTH_AVAILABLE = False
     get_auth_block = None  # type: ignore[assignment]
     logger.warning("Auth block not available: %s", e)
+
+
+security = HTTPBearer(auto_error=False)
+
+
+async def require_api_key(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+) -> Dict[str, Any]:
+    """Require valid API key for protected endpoints"""
+    return auth_manager.validate_key(credentials)
 
 
 async def init_blocks():

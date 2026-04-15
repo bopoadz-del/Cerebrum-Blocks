@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.blocks import BLOCK_REGISTRY
-from app.core.auth import require_api_key
+from app.dependencies import require_api_key
 from app.dependencies import block_instances
 
 router = APIRouter()

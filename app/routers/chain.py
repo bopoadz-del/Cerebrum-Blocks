@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app.blocks import BLOCK_REGISTRY
-from app.core.auth import require_api_key
+from app.dependencies import require_api_key
 from app.dependencies import block_instances, _create_block_instance
 
 router = APIRouter()
