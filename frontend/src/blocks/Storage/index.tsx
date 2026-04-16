@@ -2,7 +2,6 @@
 // <StorageBlock apiKey="cb_key" onFileSelect={(f) => console.log(f)} />
 
 import { useState, useEffect } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface StorageBlockProps {
   apiKey: string;
@@ -15,19 +14,29 @@ export const StorageBlock: React.FC<StorageBlockProps> = ({
   onFileSelect,
   basePath = ''
 }) => {
-  const client = new CerebrumClient(apiKey);
   const [files, setFiles] = useState<any[]>([]);
   const [currentPath, setCurrentPath] = useState(basePath);
   const [loading, setLoading] = useState(false);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const listFiles = async (path: string) => {
     setLoading(true);
     try {
-      const data = await client.execute('storage', null, { operation: 'list', path });
+      const response = await fetch(`${API_BASE}/v1/storage/list`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ operation: 'list', path })
+      });
+
+      const data = await response.json();
       setFiles(data.files || []);
       setCurrentPath(path);
-    } catch (err: any) {
-      console.error('Storage list failed:', err);
+    } catch (error) {
+      console.error('Storage list failed:', error);
     } finally {
       setLoading(false);
     }
@@ -47,7 +56,7 @@ export const StorageBlock: React.FC<StorageBlockProps> = ({
         justifyContent: 'space-between'
       }}>
         <span>📁 {currentPath || '/'}</span>
-        <button onClick={() => listFiles(currentPath)} disabled={loading}>🔄</button>
+        <button onClick={() => listFiles(currentPath)}>🔄</button>
       </div>
       
       <div className="storage-content" style={{ padding: '10px' }}>

@@ -3,14 +3,12 @@
 // <DatabaseBlock apiKey="cb_key" />
 
 import { useState } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface DatabaseBlockProps {
   apiKey: string;
 }
 
 export const DatabaseBlock: React.FC<DatabaseBlockProps> = ({ apiKey }) => {
-  const client = new CerebrumClient(apiKey);
   const [operation, setOperation] = useState('query');
   const [table, setTable] = useState('users');
   const [query, setQuery] = useState('SELECT * FROM users LIMIT 10');
@@ -18,18 +16,29 @@ export const DatabaseBlock: React.FC<DatabaseBlockProps> = ({ apiKey }) => {
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const executeOperation = async () => {
     setLoading(true);
     try {
-      const params: any = { action: operation, table, query };
-      if (data && (operation === 'insert' || operation === 'update')) {
-        params.data = JSON.parse(data);
-      }
-      const responseData = await client.execute('database', null, params);
+      const response = await fetch(`${API_BASE}/v1/execute`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          block: 'database',
+          action: operation,
+          table: table,
+          query: query,
+          data: data ? JSON.parse(data) : undefined
+        })
+      });
+      const responseData = await response.json();
       setResult(JSON.stringify(responseData, null, 2));
-    } catch (err: any) {
-      setResult('Error: ' + (err.message || 'Request failed'));
-      console.error(err);
+    } catch (error) {
+      setResult('Error: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }

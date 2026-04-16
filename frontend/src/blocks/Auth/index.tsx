@@ -3,7 +3,6 @@
 // <AuthBlock apiKey="cb_admin_key" />
 
 import { useState, useEffect } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface AuthBlockProps {
   apiKey: string;
@@ -18,20 +17,25 @@ interface ApiKey {
 }
 
 export const AuthBlock: React.FC<AuthBlockProps> = ({ apiKey }) => {
-  const client = new CerebrumClient(apiKey);
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyRole, setNewKeyRole] = useState('basic');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const fetchKeys = async () => {
     try {
-      const data = await client.listKeys();
-      setKeys(data.keys || []);
-    } catch (err: any) {
-      setMessage(err.message || 'Failed to fetch keys');
-      console.error('Failed to fetch keys', err);
+      const response = await fetch(`${API_BASE}/v1/auth/keys`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setKeys(data.keys || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch keys');
     }
   };
 
@@ -43,13 +47,24 @@ export const AuthBlock: React.FC<AuthBlockProps> = ({ apiKey }) => {
     if (!newKeyName.trim()) return;
     setLoading(true);
     try {
-      const data = await client.createKey(newKeyName, newKeyRole);
-      setMessage(`Created: ${data.api_key || data.key}`);
-      setNewKeyName('');
-      fetchKeys();
-    } catch (err: any) {
-      setMessage(err.message || 'Error creating key');
-      console.error('Error creating key', err);
+      const response = await fetch(`${API_BASE}/v1/auth/keys`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ name: newKeyName, role: newKeyRole })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage(`Created: ${data.api_key}`);
+        setNewKeyName('');
+        fetchKeys();
+      } else {
+        setMessage(data.error || 'Failed to create key');
+      }
+    } catch (error) {
+      setMessage('Error creating key');
     } finally {
       setLoading(false);
     }
@@ -57,11 +72,13 @@ export const AuthBlock: React.FC<AuthBlockProps> = ({ apiKey }) => {
 
   const deleteKey = async (keyToDelete: string) => {
     try {
-      await client.deleteKey(keyToDelete);
+      await fetch(`${API_BASE}/v1/auth/keys/${keyToDelete}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
       fetchKeys();
-    } catch (err: any) {
-      setMessage(err.message || 'Failed to delete key');
-      console.error('Failed to delete key', err);
+    } catch (error) {
+      console.error('Failed to delete key');
     }
   };
 

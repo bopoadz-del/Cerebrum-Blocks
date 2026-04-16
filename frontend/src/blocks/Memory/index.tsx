@@ -3,7 +3,6 @@
 // <MemoryBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface MemoryBlockProps {
   apiKey: string;
@@ -19,7 +18,6 @@ interface CacheStats {
 }
 
 export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
-  const client = new CerebrumClient(apiKey);
   const [stats, setStats] = useState<CacheStats | null>(null);
   const [cacheKey, setCacheKey] = useState('');
   const [cacheValue, setCacheValue] = useState('');
@@ -27,12 +25,19 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const fetchStats = async () => {
     try {
-      const data = await client.memoryStats();
-      setStats(data);
-    } catch (err: any) {
-      console.error('Failed to fetch stats', err);
+      const response = await fetch(`${API_BASE}/v1/memory/stats`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch stats');
     }
   };
 
@@ -46,12 +51,23 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
     if (!cacheKey.trim() || !cacheValue.trim()) return;
     setLoading(true);
     try {
-      const data = await client.memorySet(cacheKey, cacheValue, parseInt(ttl) || 60);
+      const response = await fetch(`${API_BASE}/v1/memory/set`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ 
+          key: cacheKey, 
+          value: cacheValue,
+          ttl: parseInt(ttl) || 60
+        })
+      });
+      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
       fetchStats();
-    } catch (err: any) {
-      setResult('Error: ' + (err.message || 'Request failed'));
-      console.error(err);
+    } catch (error) {
+      setResult('Error setting cache');
     } finally {
       setLoading(false);
     }
@@ -61,14 +77,21 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
     if (!cacheKey.trim()) return;
     setLoading(true);
     try {
-      const data = await client.memoryGet(cacheKey);
+      const response = await fetch(`${API_BASE}/v1/memory/get`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ key: cacheKey })
+      });
+      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
       if (data.value) {
         setCacheValue(typeof data.value === 'string' ? data.value : JSON.stringify(data.value));
       }
-    } catch (err: any) {
-      setResult('Error: ' + (err.message || 'Request failed'));
-      console.error(err);
+    } catch (error) {
+      setResult('Error getting cache');
     } finally {
       setLoading(false);
     }
@@ -78,26 +101,19 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
     if (!cacheKey.trim()) return;
     setLoading(true);
     try {
-      const data = await client.memoryDelete(cacheKey);
+      const response = await fetch(`${API_BASE}/v1/memory/delete`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ key: cacheKey })
+      });
+      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
       fetchStats();
-    } catch (err: any) {
-      setResult('Error: ' + (err.message || 'Request failed'));
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const flushCache = async () => {
-    setLoading(true);
-    try {
-      const data = await client.memoryFlush();
-      setResult(JSON.stringify(data, null, 2));
-      fetchStats();
-    } catch (err: any) {
-      setResult('Error: ' + (err.message || 'Request failed'));
-      console.error(err);
+    } catch (error) {
+      setResult('Error deleting cache');
     } finally {
       setLoading(false);
     }
@@ -160,7 +176,7 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
           rows={3}
           style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd', marginBottom: '10px', boxSizing: 'border-box' }}
         />
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
           <button
             onClick={setCache}
             disabled={loading}
@@ -202,20 +218,6 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
             }}
           >
             Delete
-          </button>
-          <button
-            onClick={flushCache}
-            disabled={loading}
-            style={{
-              padding: '8px 16px',
-              background: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer'
-            }}
-          >
-            Flush
           </button>
         </div>
       </div>

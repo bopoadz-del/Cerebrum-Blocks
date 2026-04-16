@@ -3,14 +3,12 @@
 // <EmailBlock apiKey="cb_key" />
 
 import { useState } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface EmailBlockProps {
   apiKey: string;
 }
 
 export const EmailBlock: React.FC<EmailBlockProps> = ({ apiKey }) => {
-  const client = new CerebrumClient(apiKey);
   const [mode, setMode] = useState<'send' | 'receive'>('send');
   const [to, setTo] = useState('');
   const [subject, setSubject] = useState('');
@@ -19,26 +17,36 @@ export const EmailBlock: React.FC<EmailBlockProps> = ({ apiKey }) => {
   const [loading, setLoading] = useState(false);
   const [emails, setEmails] = useState<any[]>([]);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const sendEmail = async () => {
     if (!to.trim() || !subject.trim() || !body.trim()) return;
     setLoading(true);
     try {
-      const data = await client.execute('email', null, {
-        action: 'send',
-        to,
-        subject,
-        body,
-        html: false
+      const response = await fetch(`${API_BASE}/v1/execute`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          block: 'email',
+          action: 'send',
+          to: to,
+          subject: subject,
+          body: body,
+          html: false
+        })
       });
+      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
       if (data.sent) {
         setTo('');
         setSubject('');
         setBody('');
       }
-    } catch (err: any) {
-      setResult('Error: ' + (err.message || 'Request failed'));
-      console.error(err);
+    } catch (error) {
+      setResult('Error: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -47,15 +55,23 @@ export const EmailBlock: React.FC<EmailBlockProps> = ({ apiKey }) => {
   const receiveEmails = async () => {
     setLoading(true);
     try {
-      const data = await client.execute('email', null, {
-        action: 'receive',
-        limit: 10
+      const response = await fetch(`${API_BASE}/v1/execute`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          block: 'email',
+          action: 'receive',
+          limit: 10
+        })
       });
+      const data = await response.json();
       setEmails(data.emails || []);
       setResult(JSON.stringify(data, null, 2));
-    } catch (err: any) {
-      setResult('Error: ' + (err.message || 'Request failed'));
-      console.error(err);
+    } catch (error) {
+      setResult('Error: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }

@@ -2,7 +2,6 @@
 // <QueueBlock apiKey="cb_key" jobId="xxx" onComplete={(r) => console.log(r)} />
 
 import { useState, useEffect } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface QueueBlockProps {
   apiKey: string;
@@ -17,23 +16,43 @@ export const QueueBlock: React.FC<QueueBlockProps> = ({
   onComplete,
   pollInterval = 2000
 }) => {
-  const client = new CerebrumClient(apiKey);
   const [status, setStatus] = useState<string>('idle');
+  const [progress, setProgress] = useState<number>(0);
   const [result, setResult] = useState<any>(null);
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     if (!jobId) return;
 
     const checkStatus = async () => {
       try {
-        const data = await client.execute('queue', null, { action: 'status', job_id: jobId });
-        setStatus(data?.result?.status || data?.status || 'unknown');
+        const response = await fetch(`${API_BASE}/v1/queue/status`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({ action: 'status', job_id: jobId })
+        });
+
+        const data = await response.json();
+        setStatus(data.status || 'unknown');
         
         // Get result if completed
-        if (data?.result?.status === 'COMPLETED' || data?.result?.status === 'completed' || data?.status === 'completed') {
-          const resultData = await client.execute('queue', null, { action: 'result', job_id: jobId });
-          setResult(resultData?.result);
-          onComplete?.(resultData?.result);
+        if (data.status === 'COMPLETED' || data.status === 'completed') {
+          const resultRes = await fetch(`${API_BASE}/v1/queue/result`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({ action: 'result', job_id: jobId })
+          });
+          
+          const resultData = await resultRes.json();
+          setResult(resultData.result);
+          onComplete?.(resultData.result);
         }
       } catch (error) {
         console.error('Queue status check failed:', error);
@@ -44,7 +63,7 @@ export const QueueBlock: React.FC<QueueBlockProps> = ({
     const interval = setInterval(checkStatus, pollInterval);
     
     return () => clearInterval(interval);
-  }, [jobId, pollInterval, onComplete]);
+  }, [jobId]);
 
   if (!jobId) return null;
 
@@ -74,7 +93,7 @@ export const QueueBlock: React.FC<QueueBlockProps> = ({
           overflow: 'hidden'
         }}>
           <div style={{
-            width: '50%',
+            width: `${progress}%`,
             height: '100%',
             background: '#007bff',
             transition: 'width 0.3s'

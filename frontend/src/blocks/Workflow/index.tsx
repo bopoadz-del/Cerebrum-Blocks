@@ -3,7 +3,6 @@
 // <WorkflowBlock apiKey="cb_key" />
 
 import { useState } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface WorkflowBlockProps {
   apiKey: string;
@@ -27,7 +26,6 @@ const availableBlocks = [
 ];
 
 export const WorkflowBlock: React.FC<WorkflowBlockProps> = ({ apiKey }) => {
-  const client = new CerebrumClient(apiKey);
   const [workflowName, setWorkflowName] = useState('My Workflow');
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [result, setResult] = useState('');
@@ -37,6 +35,8 @@ export const WorkflowBlock: React.FC<WorkflowBlockProps> = ({ apiKey }) => {
   const [selectedBlock, setSelectedBlock] = useState('chat');
   const [selectedAction, setSelectedAction] = useState('complete');
   const [stepParams, setStepParams] = useState('{}');
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   const addStep = () => {
     const newStep: WorkflowStep = {
@@ -57,11 +57,21 @@ export const WorkflowBlock: React.FC<WorkflowBlockProps> = ({ apiKey }) => {
     if (steps.length === 0) return;
     setLoading(true);
     try {
-      const data = await client.chain(steps.map(s => ({ block: s.block, params: { ...s.params, action: s.action } })));
+      const response = await fetch(`${API_BASE}/v1/chain`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          name: workflowName,
+          steps: steps
+        })
+      });
+      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
-    } catch (err: any) {
-      setResult('Error: ' + (err.message || 'Request failed'));
-      console.error(err);
+    } catch (error) {
+      setResult('Error: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }

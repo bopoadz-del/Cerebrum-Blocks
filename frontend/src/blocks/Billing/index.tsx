@@ -3,7 +3,6 @@
 // <BillingBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface BillingBlockProps {
   apiKey: string;
@@ -28,25 +27,31 @@ interface BlockUsage {
 }
 
 export const BillingBlock: React.FC<BillingBlockProps> = ({ apiKey }) => {
-  const client = new CerebrumClient(apiKey);
   const [stats, setStats] = useState<UsageStats | null>(null);
   const [blockUsage, setBlockUsage] = useState<BlockUsage[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   const fetchBillingData = async () => {
     setLoading(true);
-    setError('');
     try {
-      const [usageRes, blockRes] = await Promise.all([
-        client.execute('billing', null, { action: 'get_usage' }),
-        client.execute('billing', null, { action: 'get_block_usage' })
-      ]);
-      setStats(usageRes.usage || usageRes || null);
-      setBlockUsage(blockRes.by_block || blockRes.block_usage || blockRes || []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch billing data');
-      console.error('Failed to fetch billing data', err);
+      const response = await fetch(`${API_BASE}/v1/execute`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          block: 'billing',
+          action: 'get_usage'
+        })
+      });
+      const data = await response.json();
+      setStats(data.usage || null);
+      setBlockUsage(data.by_block || []);
+    } catch (error) {
+      console.error('Failed to fetch billing data');
     } finally {
       setLoading(false);
     }
@@ -57,7 +62,7 @@ export const BillingBlock: React.FC<BillingBlockProps> = ({ apiKey }) => {
   }, [apiKey]);
 
   const getUsagePercent = () => {
-    if (!stats?.quota) return 0;
+    if (!stats) return 0;
     return Math.min((stats.quota.used / stats.quota.limit) * 100, 100);
   };
 
@@ -90,19 +95,13 @@ export const BillingBlock: React.FC<BillingBlockProps> = ({ apiKey }) => {
         </button>
       </div>
 
-      {error && (
-        <div style={{ padding: '8px', background: '#f8d7da', borderRadius: '4px', fontSize: '12px', marginBottom: '10px' }}>
-          {error}
-        </div>
-      )}
-
       {stats ? (
         <>
           {/* Quota Progress */}
           <div style={{ marginBottom: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '5px' }}>
               <span>Monthly Quota</span>
-              <span>{(stats.quota?.used ?? 0).toLocaleString()} / {(stats.quota?.limit ?? 0).toLocaleString()}</span>
+              <span>{stats.quota.used.toLocaleString()} / {stats.quota.limit.toLocaleString()}</span>
             </div>
             <div style={{ height: '8px', background: '#e9ecef', borderRadius: '4px', overflow: 'hidden' }}>
               <div style={{
@@ -114,7 +113,7 @@ export const BillingBlock: React.FC<BillingBlockProps> = ({ apiKey }) => {
               }} />
             </div>
             <div style={{ fontSize: '11px', color: '#666', marginTop: '5px' }}>
-              {(stats.quota?.remaining ?? 0).toLocaleString()} requests remaining
+              {stats.quota.remaining.toLocaleString()} requests remaining
             </div>
           </div>
 
@@ -127,25 +126,25 @@ export const BillingBlock: React.FC<BillingBlockProps> = ({ apiKey }) => {
           }}>
             <div style={{ padding: '12px', background: '#e3f2fd', borderRadius: '4px', textAlign: 'center' }}>
               <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1976d2' }}>
-                {(stats.requests_today ?? 0).toLocaleString()}
+                {stats.requests_today.toLocaleString()}
               </div>
               <div style={{ fontSize: '11px', color: '#666' }}>Requests Today</div>
             </div>
             <div style={{ padding: '12px', background: '#f3e5f5', borderRadius: '4px', textAlign: 'center' }}>
               <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#7b1fa2' }}>
-                {(stats.requests_this_month ?? 0).toLocaleString()}
+                {stats.requests_this_month.toLocaleString()}
               </div>
               <div style={{ fontSize: '11px', color: '#666' }}>This Month</div>
             </div>
             <div style={{ padding: '12px', background: '#e8f5e9', borderRadius: '4px', textAlign: 'center' }}>
               <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#388e3c' }}>
-                {(stats.tokens_used ?? 0).toLocaleString()}
+                {stats.tokens_used.toLocaleString()}
               </div>
               <div style={{ fontSize: '11px', color: '#666' }}>Tokens Used</div>
             </div>
             <div style={{ padding: '12px', background: '#fff3e0', borderRadius: '4px', textAlign: 'center' }}>
               <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#f57c00' }}>
-                ${(stats.estimated_cost ?? 0).toFixed(2)}
+                ${stats.estimated_cost.toFixed(2)}
               </div>
               <div style={{ fontSize: '11px', color: '#666' }}>Est. Cost</div>
             </div>
@@ -168,10 +167,10 @@ export const BillingBlock: React.FC<BillingBlockProps> = ({ apiKey }) => {
                     background: idx % 2 === 0 ? '#f8f9fa' : 'white',
                     fontSize: '12px'
                   }}>
-                    <span style={{ textTransform: 'capitalize' }}>{(item as any).block || item.block}</span>
+                    <span style={{ textTransform: 'capitalize' }}>{item.block}</span>
                     <div style={{ display: 'flex', gap: '15px', color: '#666' }}>
-                      <span>{(item.requests ?? 0).toLocaleString()} req</span>
-                      <span>{(item.tokens ?? 0).toLocaleString()} tokens</span>
+                      <span>{item.requests.toLocaleString()} req</span>
+                      <span>{item.tokens.toLocaleString()} tokens</span>
                     </div>
                   </div>
                 ))

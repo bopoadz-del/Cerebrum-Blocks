@@ -3,7 +3,6 @@
 // <WebhookBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface WebhookBlockProps {
   apiKey: string;
@@ -18,7 +17,6 @@ interface WebhookEvent {
 }
 
 export const WebhookBlock: React.FC<WebhookBlockProps> = ({ apiKey }) => {
-  const client = new CerebrumClient(apiKey);
   const [mode, setMode] = useState<'incoming' | 'outgoing'>('incoming');
   const [events, setEvents] = useState<WebhookEvent[]>([]);
   const [url, setUrl] = useState('');
@@ -37,10 +35,22 @@ export const WebhookBlock: React.FC<WebhookBlockProps> = ({ apiKey }) => {
 
   const fetchEvents = async () => {
     try {
-      const data = await client.execute('webhook', null, { action: 'list_events', limit: 20 });
+      const response = await fetch(`${API_BASE}/v1/execute`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          block: 'webhook',
+          action: 'list_events',
+          limit: 20
+        })
+      });
+      const data = await response.json();
       setEvents(data.events || []);
-    } catch (err: any) {
-      console.error('Failed to fetch events', err);
+    } catch (error) {
+      console.error('Failed to fetch events');
     }
   };
 
@@ -56,16 +66,24 @@ export const WebhookBlock: React.FC<WebhookBlockProps> = ({ apiKey }) => {
     if (!url.trim()) return;
     setLoading(true);
     try {
-      const data = await client.execute('webhook', null, {
-        action: 'send',
-        url,
-        event: eventType,
-        payload: JSON.parse(payload || '{}')
+      const response = await fetch(`${API_BASE}/v1/execute`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          block: 'webhook',
+          action: 'send',
+          url: url,
+          event: eventType,
+          payload: JSON.parse(payload || '{}')
+        })
       });
+      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
-    } catch (err: any) {
-      setResult('Error: ' + (err.message || 'Request failed'));
-      console.error(err);
+    } catch (error) {
+      setResult('Error: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }

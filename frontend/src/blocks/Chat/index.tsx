@@ -3,7 +3,6 @@
 // <ChatBlock apiKey="cb_key" provider="deepseek" />
 
 import { useState, useRef, useEffect } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface ChatBlockProps {
   apiKey: string;
@@ -16,15 +15,15 @@ interface ChatBlockProps {
 export const ChatBlock: React.FC<ChatBlockProps> = ({ 
   apiKey, 
   provider = 'deepseek',
-  model,
   streaming = true,
   maxHeight = '500px'
 }) => {
-  const client = new CerebrumClient(apiKey);
   const [messages, setMessages] = useState<Array<{role: string, content: string}>>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -42,11 +41,22 @@ export const ChatBlock: React.FC<ChatBlockProps> = ({
     setInput('');
     setLoading(true);
 
-    const chatModel = model || provider;
-
     try {
       if (streaming) {
-        const response = await client.chatStream(input, chatModel);
+        // Streaming response
+        const response = await fetch(`${API_BASE}/v1/chat/stream`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({ 
+            message: input, 
+            provider,
+            stream: true 
+          })
+        });
+
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();
         let assistantContent = '';
@@ -61,44 +71,43 @@ export const ChatBlock: React.FC<ChatBlockProps> = ({
           const lines = chunk.split('\n');
           
           for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.type === 'end') continue;
-              if (parsed.type === 'error') {
-                assistantContent += '\n[Error]';
-                setMessages(prev => {
-                  const newMessages = [...prev];
-                  newMessages[newMessages.length - 1].content = assistantContent;
-                  return newMessages;
-                });
-                continue;
-              }
-              const content = parsed.content || parsed.token || parsed.delta?.content || parsed.message || '';
-              if (content) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices?.[0]?.delta?.content || '';
                 assistantContent += content;
                 setMessages(prev => {
                   const newMessages = [...prev];
                   newMessages[newMessages.length - 1].content = assistantContent;
                   return newMessages;
                 });
-              }
-            } catch {}
+              } catch {}
+            }
           }
         }
       } else {
-        const data = await client.chat(input, chatModel, false);
+        // Non-streaming
+        const response = await fetch(`${API_BASE}/v1/chat`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({ message: input, provider, stream: false })
+        });
+        
+        const data = await response.json();
         setMessages(prev => [...prev, { 
           role: 'assistant', 
-          content: data.text || data.message || data.error || 'Error'
+          content: data.text || data.error || 'Error'
         }]);
       }
-    } catch (error: any) {
+    } catch (error) {
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: 'Error: ' + (error.message || 'Failed to connect to Chat-Block')
+        content: 'Error: Failed to connect to Chat-Block'
       }]);
     } finally {
       setLoading(false);

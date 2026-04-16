@@ -1,6 +1,5 @@
 // OCR-UI-Block - Image text extraction
 import { useState } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface OCRBlockProps {
   apiKey: string;
@@ -8,20 +7,25 @@ interface OCRBlockProps {
 }
 
 export const OCRBlock: React.FC<OCRBlockProps> = ({ apiKey, onExtract }) => {
-  const client = new CerebrumClient(apiKey);
   const [imagePath, setImagePath] = useState('');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   const extract = async () => {
     if (!imagePath) return;
     setLoading(true);
     try {
-      const data = await client.execute('ocr', null, { image: imagePath, lang: 'eng' });
+      const response = await fetch(`${API_BASE}/v1/ocr`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ image: imagePath, lang: 'eng' })
+      });
+      const data = await response.json();
       setResult(data);
       onExtract?.(data);
-    } catch (err: any) {
-      console.error('OCR failed:', err);
+    } catch (error) {
+      console.error('OCR failed:', error);
     } finally {
       setLoading(false);
     }

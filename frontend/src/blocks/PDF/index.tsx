@@ -1,6 +1,5 @@
 // PDF-UI-Block - PDF text and table extraction
 import { useState } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface PDFBlockProps {
   apiKey: string;
@@ -8,21 +7,30 @@ interface PDFBlockProps {
 }
 
 export const PDFBlock: React.FC<PDFBlockProps> = ({ apiKey, onExtract }) => {
-  const client = new CerebrumClient(apiKey);
   const [filePath, setFilePath] = useState('');
   const [extractType, setExtractType] = useState<'text' | 'tables' | 'metadata'>('text');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const extract = async () => {
     if (!filePath) return;
     setLoading(true);
     try {
-      const data = await client.execute('pdf', null, { file_path: filePath, extract: extractType });
+      const response = await fetch(`${API_BASE}/v1/pdf/extract`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ file_path: filePath, extract: extractType })
+      });
+      const data = await response.json();
       setResult(data);
       onExtract?.(data);
-    } catch (err: any) {
-      console.error('PDF extraction failed:', err);
+    } catch (error) {
+      console.error('PDF extraction failed:', error);
     } finally {
       setLoading(false);
     }

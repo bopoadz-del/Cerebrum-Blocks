@@ -2,7 +2,6 @@
 // <BIMBlock apiKey="cb_key" projectId="project_01" />
 
 import { useState } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface BIMBlockProps {
   apiKey: string;
@@ -15,23 +14,33 @@ export const BIMBlock: React.FC<BIMBlockProps> = ({
   projectId,
   onElementSelect
 }) => {
-  const client = new CerebrumClient(apiKey);
   const [elements, setElements] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<any>(null);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const loadIFC = async () => {
     setLoading(true);
     try {
-      const data = await client.execute('bim', null, {
-        action: 'load_ifc',
-        project_id: projectId,
-        ifc_path: `projects/${projectId}/model.ifc`
+      const response = await fetch(`${API_BASE}/v1/bim/load`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ 
+          action: 'load_ifc',
+          project_id: projectId,
+          ifc_path: `projects/${projectId}/model.ifc`
+        })
       });
+
+      const data = await response.json();
       setElements(data.elements || []);
-    } catch (err: any) {
-      console.error('BIM load failed:', err);
+    } catch (error) {
+      console.error('BIM load failed:', error);
     } finally {
       setLoading(false);
     }
@@ -41,14 +50,23 @@ export const BIMBlock: React.FC<BIMBlockProps> = ({
     if (!query.trim()) return;
     setLoading(true);
     try {
-      const data = await client.execute('bim', null, {
-        action: 'query_elements',
-        project_id: projectId,
-        query
+      const response = await fetch(`${API_BASE}/v1/bim/query`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ 
+          action: 'query_elements',
+          project_id: projectId,
+          query
+        })
       });
+
+      const data = await response.json();
       setElements(data.matches || []);
-    } catch (err: any) {
-      console.error('BIM query failed:', err);
+    } catch (error) {
+      console.error('BIM query failed:', error);
     } finally {
       setLoading(false);
     }
@@ -56,14 +74,23 @@ export const BIMBlock: React.FC<BIMBlockProps> = ({
 
   const checkProgress = async () => {
     try {
-      const data = await client.execute('bim', null, {
-        action: 'get_progress',
-        project_id: projectId,
-        completed: []
+      const response = await fetch(`${API_BASE}/v1/bim/progress`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ 
+          action: 'get_progress',
+          project_id: projectId,
+          completed: []
+        })
       });
+
+      const data = await response.json();
       setProgress(data);
-    } catch (err: any) {
-      console.error('Progress check failed:', err);
+    } catch (error) {
+      console.error('Progress check failed:', error);
     }
   };
 

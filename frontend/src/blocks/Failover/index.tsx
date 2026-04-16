@@ -1,19 +1,19 @@
 // Failover-UI-Block - System health dashboard
 import { useState, useEffect } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface FailoverBlockProps {
   apiKey: string;
 }
 
 export const FailoverBlock: React.FC<FailoverBlockProps> = ({ apiKey }) => {
-  const client = new CerebrumClient(apiKey);
   const [status, setStatus] = useState<any>(null);
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const data = await client.systemHealth();
+        const response = await fetch(`${API_BASE}/v1/health`);
+        const data = await response.json();
         setStatus(data);
       } catch (e) {
         console.error('Failed to fetch status');
@@ -29,7 +29,7 @@ export const FailoverBlock: React.FC<FailoverBlockProps> = ({ apiKey }) => {
   return (
     <div style={{ padding: '10px' }}>
       <div style={{ marginBottom: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
-        <strong>System Health:</strong> {status.overall_status || status.status}
+        <strong>System Health:</strong> {status.status}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
         {Object.entries(status.blocks || {}).map(([name, block]: [string, any]) => (

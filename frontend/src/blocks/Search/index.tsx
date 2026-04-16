@@ -1,6 +1,5 @@
 // Search-UI-Block - Web search
 import { useState } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface SearchBlockProps {
   apiKey: string;
@@ -8,20 +7,25 @@ interface SearchBlockProps {
 }
 
 export const SearchBlock: React.FC<SearchBlockProps> = ({ apiKey, onResult }) => {
-  const client = new CerebrumClient(apiKey);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   const search = async () => {
     if (!query) return;
     setLoading(true);
     try {
-      const data = await client.execute('search', null, { query, n_results: 5 });
+      const response = await fetch(`${API_BASE}/v1/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ query, n_results: 5 })
+      });
+      const data = await response.json();
       setResults(data.results || []);
       onResult?.(data.results || []);
-    } catch (err: any) {
-      console.error('Search failed:', err);
+    } catch (error) {
+      console.error('Search failed:', error);
     } finally {
       setLoading(false);
     }

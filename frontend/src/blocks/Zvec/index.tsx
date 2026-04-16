@@ -1,26 +1,30 @@
 // Zvec-UI-Block - Zero-shot embeddings
 import { useState } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface ZvecBlockProps {
   apiKey: string;
 }
 
 export const ZvecBlock: React.FC<ZvecBlockProps> = ({ apiKey }) => {
-  const client = new CerebrumClient(apiKey);
   const [text1, setText1] = useState('');
   const [text2, setText2] = useState('');
   const [similarity, setSimilarity] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   const compare = async () => {
     if (!text1 || !text2) return;
     setLoading(true);
     try {
-      const data = await client.execute('zvec', null, { text1, text2, operation: 'similarity' });
+      const response = await fetch(`${API_BASE}/v1/zvec/similarity`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ text1, text2, operation: 'similarity' })
+      });
+      const data = await response.json();
       setSimilarity(data.similarity);
-    } catch (err: any) {
-      console.error('Zvec failed:', err);
+    } catch (error) {
+      console.error('Zvec failed:', error);
     } finally {
       setLoading(false);
     }

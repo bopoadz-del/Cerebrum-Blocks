@@ -3,7 +3,6 @@
 // <MonitoringBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
-import { CerebrumClient } from '../../api/client';
 
 interface MonitoringBlockProps {
   apiKey: string;
@@ -24,31 +23,34 @@ interface SystemHealth {
 }
 
 export const MonitoringBlock: React.FC<MonitoringBlockProps> = ({ apiKey }) => {
-  const client = new CerebrumClient(apiKey);
   const [leaderboard, setLeaderboard] = useState<Provider[]>([]);
   const [health, setHealth] = useState<SystemHealth | null>(null);
-  const [recommend, setRecommend] = useState<any>(null);
-  const [predict, setPredict] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   const fetchData = async () => {
     setLoading(true);
-    setError('');
     try {
-      const [lbData, healthData, recData, predData] = await Promise.all([
-        client.leaderboard(),
-        client.systemHealth(),
-        client.recommend().catch(() => null),
-        client.predict().catch(() => null)
-      ]);
-      setLeaderboard(lbData.leaderboard || []);
-      setHealth(healthData);
-      setRecommend(recData);
-      setPredict(predData);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch monitoring data');
-      console.error('Failed to fetch monitoring data', err);
+      // Fetch leaderboard
+      const lbResponse = await fetch(`${API_BASE}/v1/leaderboard`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      if (lbResponse.ok) {
+        const lbData = await lbResponse.json();
+        setLeaderboard(lbData.leaderboard || []);
+      }
+
+      // Fetch health
+      const healthResponse = await fetch(`${API_BASE}/v1/system/health`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      if (healthResponse.ok) {
+        const healthData = await healthResponse.json();
+        setHealth(healthData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch monitoring data');
     } finally {
       setLoading(false);
     }
@@ -76,12 +78,6 @@ export const MonitoringBlock: React.FC<MonitoringBlockProps> = ({ apiKey }) => {
 
   return (
     <div style={{ padding: '15px' }}>
-      {error && (
-        <div style={{ padding: '8px', background: '#f8d7da', borderRadius: '4px', fontSize: '12px', marginBottom: '10px' }}>
-          {error}
-        </div>
-      )}
-
       {/* System Health */}
       {health && (
         <div style={{ marginBottom: '20px' }}>
@@ -114,28 +110,6 @@ export const MonitoringBlock: React.FC<MonitoringBlockProps> = ({ apiKey }) => {
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Recommend & Predict */}
-      {(recommend || predict) && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-          {recommend && (
-            <div style={{ padding: '10px', background: '#e3f2fd', borderRadius: '4px', fontSize: '12px' }}>
-              <strong>Recommend</strong>
-              <pre style={{ margin: '5px 0 0 0', fontSize: '11px', overflow: 'auto', maxHeight: '80px' }}>
-                {JSON.stringify(recommend, null, 2)}
-              </pre>
-            </div>
-          )}
-          {predict && (
-            <div style={{ padding: '10px', background: '#f3e5f5', borderRadius: '4px', fontSize: '12px' }}>
-              <strong>Predict</strong>
-              <pre style={{ margin: '5px 0 0 0', fontSize: '11px', overflow: 'auto', maxHeight: '80px' }}>
-                {JSON.stringify(predict, null, 2)}
-              </pre>
-            </div>
-          )}
         </div>
       )}
 
