@@ -433,6 +433,68 @@ class ConstructionContainer(UniversalContainer):
                 return {"status": "error", "error": f"Image OCR failed: {str(e)}"}
         return {"status": "error", "error": "OCR block not available for image processing"}
 
+    def _extract_drawing_number(self, filename: str) -> str:
+        import re
+        m = re.search(r'[A-Z]{1,3}[-_]?\d{3,6}', filename, re.IGNORECASE)
+        return m.group(0).upper() if m else ""
+
+    def _extract_revision(self, filename: str) -> str:
+        import re
+        m = re.search(r'[Rr][Ee]?[Vv]?\s*([A-Z0-9])', filename)
+        return m.group(1).upper() if m else ""
+
+    def _extract_measurements_advanced(self, raw_text: str, text_dict: Dict) -> List[Dict]:
+        return []
+
+    def _extract_tables_advanced(self, page) -> List[Dict]:
+        return []
+
+    def _extract_annotations(self, page) -> List[Dict]:
+        return []
+
+    def _extract_specs_advanced(self, raw_text: str) -> List[Dict]:
+        return []
+
+    def _detect_disciplines(self, raw_text: str) -> List[str]:
+        disciplines = []
+        raw = raw_text.lower()
+        if any(k in raw for k in ["structural", "rebar", "concrete", "foundation"]):
+            disciplines.append("Structural")
+        if any(k in raw for k in ["architectural", "elevation", "finish", "floor plan"]):
+            disciplines.append("Architectural")
+        if any(k in raw for k in ["mechanical", "hvac", "duct", "air"]):
+            disciplines.append("Mechanical")
+        if any(k in raw for k in ["electrical", "lighting", "power", "circuit"]):
+            disciplines.append("Electrical")
+        if any(k in raw for k in ["plumbing", "pipe", "drain", "water"]):
+            disciplines.append("Plumbing")
+        if not disciplines:
+            disciplines.append("General")
+        return disciplines
+
+    def _extract_title_block(self, sheet_data: Dict) -> Dict:
+        return {}
+
+    def _extract_scale(self, raw_text: str) -> Optional[str]:
+        import re
+        m = re.search(r'(\d+\s*[:/]\s*\d+)', raw_text)
+        return m.group(1) if m else None
+
+    def _calculate_quantities(self, measurements: List[Dict]) -> Dict:
+        return {}
+
+    def _estimate_costs(self, quantities: Dict) -> Dict:
+        return {}
+
+    def _estimate_carbon(self, quantities: Dict) -> Dict:
+        return {}
+
+    def _calculate_confidence(self, result: Dict) -> Dict:
+        return {"overall": 0.7}
+
+    async def _detect_risks_from_drawing(self, result: Dict) -> List[Dict]:
+        return []
+
     # CONTRACT MANAGEMENT
     async def process_contract(self, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
