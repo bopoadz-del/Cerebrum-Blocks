@@ -252,6 +252,39 @@ function parseChainOutput(data) {
     return typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
 }
 
+const EXTRACT_PROMPT = (fileName, content) =>
+    `Extract all data from this document. List every item, table row, quantity, measurement, specification, date, name, and value exactly as it appears. Do not summarize — output the raw extracted information.\n\nFile: ${fileName}\n\nContent:\n${content.substring(0, 4000)}`;
+
+async function extractAndPresent(fileName, rawContent, drive) {
+    setActiveFileContext(fileName, rawContent, drive.name);
+
+    // Show raw extracted content immediately
+    document.getElementById('outcomes').innerHTML += `
+        <div class="outcome-item">
+            <div class="outcome-label">Extracted Content</div>
+            <div class="raw-output" style="max-height: 300px; margin-top: 8px; font-size: 12px;">${escapeHtml(rawContent.substring(0, 3000))}${rawContent.length > 3000 ? '\n... [truncated]' : ''}</div>
+        </div>
+        <div class="outcome-item" id="file-analysis-result">
+            <div class="outcome-label">Structured Extraction</div>
+            <div style="color: #888; font-size: 12px;">Extracting data...</div>
+        </div>`;
+
+    try {
+        const analysisData = await client.chain([{ block: 'chat', params: {} }], EXTRACT_PROMPT(fileName, rawContent));
+        const extractedText = parseChainOutput(analysisData) || 'No data extracted';
+        const el = document.getElementById('file-analysis-result');
+        if (el) {
+            el.innerHTML = `
+                <div class="outcome-label">Structured Extraction</div>
+                <div style="color: #ccc; font-size: 13px; margin-top: 8px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(extractedText)}</div>`;
+        }
+        addMessage(extractedText, 'assistant');
+    } catch (e) {
+        const el = document.getElementById('file-analysis-result');
+        if (el) el.remove();
+    }
+}
+
 // Connected drives state
 const connectedDrives = {};
 
@@ -540,65 +573,37 @@ async function selectDriveFile(driveId, fileName) {
         `);
         
         if (fileContent) {
-            setActiveFileContext(fileName, fileContent, drive.name);
+            // Text file: show content + extract data
+            await extractAndPresent(fileName, fileContent, drive);
 
-            // Append analysis placeholder
-            document.getElementById('outcomes').innerHTML += `
-                <div class="outcome-item" id="file-analysis-result">
-                    <div class="outcome-label">AI Analysis</div>
-                    <div style="color: #888; font-size: 12px;">Analyzing...</div>
-                </div>`;
-
-            try {
-                const steps = buildChainSteps(fileName);
-                const prompt = `Analyze this file and summarize what it contains:\n\nFile: ${fileName}\nSource: ${drive.name}\n\nContent:\n${fileContent.substring(0, 3000)}`;
-                const analysisData = await client.chain(steps, prompt);
-                const analysisText = parseChainOutput(analysisData) || 'No analysis returned';
-                const el = document.getElementById('file-analysis-result');
-                if (el) {
-                    el.innerHTML = `
-                        <div class="outcome-label">AI Analysis</div>
-                        <div style="color: #ccc; font-size: 13px; margin-top: 8px; line-height: 1.5;">
-                            ${escapeHtml(analysisText.substring(0, 500))}${analysisText.length > 500 ? '...' : ''}
-                        </div>`;
-                }
-                addMessage(analysisText, 'assistant');
-            } catch (e) {
-                const el = document.getElementById('file-analysis-result');
-                if (el) el.remove();
-                addMessage(`Loaded "${fileName}" from ${drive.name}. You can now ask questions about it.`, 'assistant');
-            }
         } else if (drive.isLocal && drive.fileObjects) {
-            // Binary file (PDF/image): upload then chain
+            // PDF or image: upload, run extraction block, show raw text, then chat-extract
             const fileObj = drive.fileObjects.find(f => f.name === fileName);
             if (fileObj) {
-                const steps = buildChainSteps(fileName);
-                if (steps.length > 1) {
+                const ext = (fileName.split('.').pop() || '').toLowerCase();
+                const extractBlock = ext === 'pdf' ? 'pdf' : ['jpg','jpeg','png','gif','webp','bmp','tiff'].includes(ext) ? 'ocr' : null;
+
+                if (extractBlock) {
                     document.getElementById('outcomes').innerHTML += `
-                        <div class="outcome-item" id="file-analysis-result">
-                            <div class="outcome-label">AI Analysis</div>
-                            <div style="color: #888; font-size: 12px;">Uploading and parsing (${steps.map(s=>s.block).join(' → ')})...</div>
+                        <div class="outcome-item" id="file-extract-status">
+                            <div class="outcome-label">Extraction</div>
+                            <div style="color: #888; font-size: 12px;">Uploading and running ${extractBlock}...</div>
                         </div>`;
                     try {
                         const form = new FormData();
                         form.append('file', fileObj);
                         const uploadData = await client.upload(form);
-                        const analysisData = await client.chain(steps, uploadData.file_path);
-                        const analysisText = parseChainOutput(analysisData) || 'No analysis returned';
-                        setActiveFileContext(fileName, analysisText, drive.name);
-                        const el = document.getElementById('file-analysis-result');
-                        if (el) {
-                            el.innerHTML = `
-                                <div class="outcome-label">AI Analysis</div>
-                                <div style="color: #ccc; font-size: 13px; margin-top: 8px; line-height: 1.5;">
-                                    ${escapeHtml(analysisText.substring(0, 500))}${analysisText.length > 500 ? '...' : ''}
-                                </div>`;
+                        const extractData = await client.execute(extractBlock, uploadData.file_path, {});
+                        const rawText = extractData.result?.text || extractData.result?.content || '';
+                        document.getElementById('file-extract-status')?.remove();
+                        if (rawText) {
+                            await extractAndPresent(fileName, rawText, drive);
+                        } else {
+                            addMessage(`${extractBlock} returned no content for "${fileName}".`, 'error');
                         }
-                        addMessage(analysisText, 'assistant');
                     } catch (e) {
-                        const el = document.getElementById('file-analysis-result');
-                        if (el) el.remove();
-                        addMessage(`Could not process "${fileName}": ${e.message}`, 'error');
+                        document.getElementById('file-extract-status')?.remove();
+                        addMessage(`Extraction failed for "${fileName}": ${e.message}`, 'error');
                     }
                 } else {
                     addMessage(`File loaded from ${drive.name}. ${related.length > 0 ? `Found ${related.length} related files via ZVec.` : ''}`, 'assistant');
@@ -667,58 +672,42 @@ async function handleFile(input) {
         
         const uploadData = await client.upload(form);
 
-        const steps = buildChainSteps(file.name);
         setOutcomes(`
             <div class="outcome-item">
                 <div class="outcome-label">File Uploaded</div>
                 <div class="outcome-value" style="font-size: 14px;">${uploadData.filename}</div>
-                <div style="color: #888; font-size: 12px; margin-top: 4px;">${(file.size / 1024).toFixed(1)} KB · chain: ${steps.map(s=>s.block).join(' → ')}</div>
+                <div style="color: #888; font-size: 12px; margin-top: 4px;">${(file.size / 1024).toFixed(1)} KB</div>
             </div>
-            <p style="color: #666; font-size: 12px;">Analyzing...</p>
         `);
 
-        let chainInput;
-        let fileContent = '';
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
 
         if (isTextFile(file.name)) {
-            fileContent = await readFileContent(file);
-            const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
-            setActiveFileContext(file.name, trimmed, 'Upload');
-            chainInput = `Analyze this file and extract key information:\n\nFile: ${file.name}\nSize: ${(file.size / 1024).toFixed(1)} KB\n\nContent:\n${trimmed.substring(0, 3000)}`;
+            // Text file: read and extract directly
+            const rawContent = await readFileContent(file);
+            const trimmed = rawContent.length > 5000 ? rawContent.substring(0, 5000) + '\n\n... [truncated] ...' : rawContent;
+            await extractAndPresent(file.name, trimmed, { name: 'Upload' });
+
+        } else if (ext === 'pdf' || ['jpg','jpeg','png','gif','webp','bmp','tiff'].includes(ext)) {
+            // PDF/image: run extraction block on server file, then extract data
+            const extractBlock = ext === 'pdf' ? 'pdf' : 'ocr';
+            document.getElementById('outcomes').innerHTML += `
+                <div class="outcome-item" id="file-extract-status">
+                    <div class="outcome-label">Extraction</div>
+                    <div style="color: #888; font-size: 12px;">Running ${extractBlock}...</div>
+                </div>`;
+            const extractData = await client.execute(extractBlock, uploadData.file_path, {});
+            const rawText = extractData.result?.text || extractData.result?.content || '';
+            document.getElementById('file-extract-status')?.remove();
+            if (rawText) {
+                await extractAndPresent(file.name, rawText, { name: 'Upload' });
+            } else {
+                addMessage(`${extractBlock} returned no content for "${file.name}".`, 'error');
+            }
+
         } else {
-            // PDF/image: pass the server path so pdf/ocr blocks can process it
-            setActiveFileContext(file.name, `[${file.name} — processed via ${steps[0].block}]`, 'Upload');
-            chainInput = uploadData.file_path;
+            addMessage(`Uploaded "${file.name}". File type not supported for automatic extraction.`, 'assistant');
         }
-
-        const analysisData = await client.chain(steps, chainInput);
-        const output = parseChainOutput(analysisData) || 'No analysis returned';
-
-        const textForSearch = fileContent || output;
-        let quantitiesHtml = '';
-        if (textForSearch.toLowerCase().includes('concrete') || textForSearch.toLowerCase().includes('steel')) {
-            quantitiesHtml = `
-                <div class="outcome-item">
-                    <div class="outcome-label">Detected Construction Data</div>
-                    <div style="color: #ccc; font-size: 12px; margin-top: 8px;">Review the analysis for quantities and specs.</div>
-                </div>
-            `;
-        }
-
-        setOutcomes(`
-            <div class="outcome-item">
-                <div class="outcome-label">File Uploaded</div>
-                <div class="outcome-value" style="font-size: 14px;">${uploadData.filename}</div>
-                <div style="color: #888; font-size: 12px; margin-top: 4px;">${(file.size / 1024).toFixed(1)} KB · ${steps.map(s=>s.block).join(' → ')}</div>
-            </div>
-            ${quantitiesHtml}
-            <div class="outcome-item">
-                <div class="outcome-label">Analysis</div>
-                <div class="raw-output" style="margin-top: 8px;">${escapeHtml(output)}</div>
-            </div>
-        `);
-
-        addMessage(output, 'assistant');
         
     } catch (err) {
         console.error('File analysis error:', err);
