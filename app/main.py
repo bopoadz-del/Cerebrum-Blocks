@@ -110,7 +110,7 @@ async def file_upload_security_middleware(request: Request, call_next):
 
         # Rebuild request with original body
         async def receive():
-            return {"type": "http.request", "body": body}
+            return {"type": "http.request", "body": body, "more_body": False}
 
         request = Request(request.scope, receive, request._send)
 
