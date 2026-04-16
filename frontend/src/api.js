@@ -78,8 +78,32 @@ class UniversalAPI {
     return this.call("/v1/execute", { block, params });
   }
 
-  upload(fileData) {
-    return this.call("/v1/upload", fileData);
+  async upload(file) {
+    // File upload requires FormData, not JSON
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    try {
+      const response = await fetch(`${this.base}/v1/upload`, {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Authorization": `Bearer ${this.key}`
+          // Note: Don't set Content-Type for FormData - browser sets it with boundary
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Upload failed:", error);
+      throw error;
+    }
   }
 }
 
