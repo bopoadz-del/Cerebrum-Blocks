@@ -49,6 +49,7 @@ app = FastAPI(
 CORS_ORIGINS = [
     "https://cerebrum-platform.onrender.com",
     "https://cerebrum-platform-j1zs.onrender.com",
+    "https://cerebrum-platform-frontend-fork.onrender.com",
     "https://cerebrum-store.onrender.com",
     "https://cerebrum-store-j1zs.onrender.com",
     "http://localhost:8000",
