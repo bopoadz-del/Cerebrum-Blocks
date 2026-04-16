@@ -168,9 +168,9 @@
 // ─────────────────────────────────────────────────────────────
 // UNIVERSAL ADAPTER CLIENT
 // ─────────────────────────────────────────────────────────────
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8000'
-    : 'https://cerebrum-platform-api.onrender.com';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:8000' 
+    : 'https://cerebrum-platform-api-fork.onrender.com';
 
 const API_KEY = 'cb_dev_key';
 
@@ -198,27 +198,22 @@ class CerebrumClient {
         return response.json();
     }
 
-    // Universal Block Execution ── ALL blocks go through /v1/execute
     execute(block, input = null, params = {}) {
         return this._request('POST', '/v1/execute', { block, input, params });
     }
 
-    // Chain execution
     chain(steps, initialInput = null) {
         return this._request('POST', '/v1/chain', { steps, initial_input: initialInput });
     }
 
-    // Direct chat endpoint
     chat(message, model = 'deepseek-chat') {
         return this._request('POST', '/v1/chat', { message, model, stream: false });
     }
 
-    // File upload
     upload(formData) {
         return this._request('POST', '/v1/upload', formData, true);
     }
 
-    // Health check
     async health() {
         const r = await fetch(`${this.base}/health`, { mode: 'cors' });
         if (!r.ok) throw new Error(`Health check failed: ${r.status}`);
@@ -231,58 +226,57 @@ const client = new CerebrumClient();
 // ─────────────────────────────────────────────────────────────
 // CHAIN HELPERS
 // ─────────────────────────────────────────────────────────────
-const TEXT_EXTS = new Set(['txt','md','csv','json','xml','html','htm','js','ts','py','java','c','cpp','h','css','yaml','yml','ini','log','sh','sql','tsx','jsx']);
+const TEXT_EXTS = new Set(['txt','md','csv','json','xml','html','htm','js','ts','py','java','c','cpp','h','css','yaml','yml','ini','log','sh','sql','tsx','jsx','sh','bat']);
+const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','webp','bmp','tiff','tif']);
+
+function getExt(name) {
+    return (name.split('.').pop() || '').toLowerCase();
+}
 
 function isTextFile(name) {
-    return TEXT_EXTS.has((name.split('.').pop() || '').toLowerCase());
+    return TEXT_EXTS.has(getExt(name));
 }
 
-function buildChainSteps(name) {
-    const ext = (name.split('.').pop() || '').toLowerCase();
-    if (ext === 'pdf') return [{ block: 'pdf', params: {} }, { block: 'chat', params: {} }];
-    if (['jpg','jpeg','png','gif','webp','bmp','tiff'].includes(ext))
-        return [{ block: 'ocr', params: {} }, { block: 'chat', params: {} }];
-    return [{ block: 'chat', params: {} }];
+function isImageFile(name) {
+    return IMAGE_EXTS.has(getExt(name));
 }
 
-function parseChainOutput(data) {
-    const output = data.final_output;
-    if (!output) return null;
-    if (typeof output === 'object' && output?.status === 'error') return `Error: ${output.error || 'Chain step failed'}`;
-    return typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
+function isPdfFile(name) {
+    return getExt(name) === 'pdf';
 }
 
-const EXTRACT_PROMPT = (fileName, content) =>
-    `Extract all data from this document. List every item, table row, quantity, measurement, specification, date, name, and value exactly as it appears. Do not summarize — output the raw extracted information.\n\nFile: ${fileName}\n\nContent:\n${content.substring(0, 4000)}`;
+function getFileKind(name) {
+    if (isTextFile(name)) return 'text';
+    if (isPdfFile(name)) return 'pdf';
+    if (isImageFile(name)) return 'image';
+    return 'binary';
+}
 
-async function extractAndPresent(fileName, rawContent, drive) {
-    setActiveFileContext(fileName, rawContent, drive.name);
-
-    // Show raw extracted content immediately
-    document.getElementById('outcomes').innerHTML += `
-        <div class="outcome-item">
-            <div class="outcome-label">Extracted Content</div>
-            <div class="raw-output" style="max-height: 300px; margin-top: 8px; font-size: 12px;">${escapeHtml(rawContent.substring(0, 3000))}${rawContent.length > 3000 ? '\n... [truncated]' : ''}</div>
-        </div>
-        <div class="outcome-item" id="file-analysis-result">
-            <div class="outcome-label">Structured Extraction</div>
-            <div style="color: #888; font-size: 12px;">Extracting data...</div>
-        </div>`;
-
-    try {
-        const analysisData = await client.chain([{ block: 'chat', params: {} }], EXTRACT_PROMPT(fileName, rawContent));
-        const extractedText = parseChainOutput(analysisData) || 'No data extracted';
-        const el = document.getElementById('file-analysis-result');
-        if (el) {
-            el.innerHTML = `
-                <div class="outcome-label">Structured Extraction</div>
-                <div style="color: #ccc; font-size: 13px; margin-top: 8px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(extractedText)}</div>`;
+async function runChain(label, steps, onProgress) {
+    // steps: [{block, input, params, label}]
+    // input can be a static value or a function(prevOutput) => value
+    let context = null;
+    const results = [];
+    for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const stepLabel = step.label || `${step.block}`;
+        onProgress(i, stepLabel, 'running');
+        
+        let stepInput = step.input;
+        if (typeof stepInput === 'function') {
+            stepInput = stepInput(context, results);
         }
-        addMessage(extractedText, 'assistant');
-    } catch (e) {
-        const el = document.getElementById('file-analysis-result');
-        if (el) el.remove();
+        
+        const result = await client.execute(step.block, stepInput, step.params || {});
+        context = result.result || result;
+        results.push({ step: i, block: step.block, result: context });
+        onProgress(i, stepLabel, 'done');
+        
+        if (context && typeof context === 'object' && context.status === 'error') {
+            throw new Error(context.error || `Step ${stepLabel} failed`);
+        }
     }
+    return { finalOutput: context, results };
 }
 
 // Connected drives state
@@ -404,12 +398,15 @@ async function handleLocalFiles(input) {
         const fileNames = files.map(f => f.name);
         const folderName = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : 'My Device Files';
         
-        // ZVec index via Universal Adapter
+        // Only index text-like files for ZVec (limit to first 200 to avoid overload)
+        const indexableNames = fileNames.filter(n => isTextFile(n) || isPdfFile(n)).slice(0, 200);
         let zvecResult = null;
-        try {
-            zvecResult = await client.execute('zvec', fileNames.join('\n'), { operation: 'embed' });
-        } catch (e) {
-            console.error('ZVec index failed:', e);
+        if (indexableNames.length > 0) {
+            try {
+                zvecResult = await client.execute('zvec', indexableNames.join('\n'), { operation: 'embed' });
+            } catch (e) {
+                console.error('ZVec index failed:', e);
+            }
         }
         
         const driveId = 'my_device_' + Date.now();
@@ -426,10 +423,12 @@ async function handleLocalFiles(input) {
         renderDrives();
         
         const firstFileObj = files[0];
-        if (firstFileObj) {
+        if (firstFileObj && isTextFile(firstFileObj.name)) {
             const firstContent = await readFileContent(firstFileObj);
             const trimmed = firstContent.length > 5000 ? firstContent.substring(0, 5000) + '\n\n... [truncated] ...' : firstContent;
             setActiveFileContext(firstFileObj.name, trimmed, folderName);
+        } else if (firstFileObj) {
+            setActiveFileContext(firstFileObj.name, `[${getFileKind(firstFileObj.name).toUpperCase()} file — select it to run extraction chain]`, folderName);
         }
         
         const outcomeHtml = `
@@ -437,7 +436,7 @@ async function handleLocalFiles(input) {
                 <div class="outcome-label">Connected</div>
                 <div class="outcome-value" style="font-size: 16px;">${folderName}</div>
                 <div style="color: #888; font-size: 12px; margin-top: 4px;">${files.length} local files</div>
-                ${zvecResult ? '<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">✅ ZVec indexed</div>' : ''}
+                ${zvecResult ? `<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">✅ ZVec indexed ${indexableNames.length} files</div>` : ''}
             </div>
         `;
         setOutcomes(outcomeHtml);
@@ -458,7 +457,6 @@ async function connectDrive(driveType) {
     addMessage(`Connecting to ${driveType.replace('_', ' ')}...`, 'system');
     
     try {
-        // Step 1: List files from drive via Universal Adapter
         const listData = await client.execute(driveType, null, { operation: 'list', folder_path: './' });
         console.log(`${driveType} list:`, listData);
         
@@ -473,11 +471,11 @@ async function connectDrive(driveType) {
             }
         }
         
-        // Step 2: ZVec index the file list
         let zvecResult = null;
-        if (files.length > 0) {
+        const indexableNames = files.filter(n => typeof n === 'string' && (isTextFile(n) || isPdfFile(n))).slice(0, 200);
+        if (indexableNames.length > 0) {
             try {
-                zvecResult = await client.execute('zvec', files.join('\n'), { operation: 'embed' });
+                zvecResult = await client.execute('zvec', indexableNames.join('\n'), { operation: 'embed' });
             } catch (e) {
                 console.error('ZVec index failed:', e);
             }
@@ -498,7 +496,7 @@ async function connectDrive(driveType) {
                 <div class="outcome-label">Connected</div>
                 <div class="outcome-value" style="font-size: 16px;">${driveType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
                 <div style="color: #888; font-size: 12px; margin-top: 4px;">${files.length} files found</div>
-                ${zvecResult ? '<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">✅ ZVec indexed</div>' : ''}
+                ${zvecResult ? `<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">✅ ZVec indexed ${indexableNames.length} files</div>` : ''}
             </div>
         `;
         setOutcomes(outcomeHtml);
@@ -518,34 +516,113 @@ async function selectDriveFile(driveId, fileName) {
     if (!drive) return;
     
     try {
-        let fileContent = '';
+        const kind = getFileKind(fileName);
+        let analysisText = '';
+        let previewHtml = '';
+        let chainSummary = '';
         
-        if (!drive.isLocal) {
-            // Read remote file via Universal Adapter
-            const readData = await client.execute(driveId.includes('google') ? 'google_drive' : driveId.includes('one') ? 'onedrive' : driveId.includes('android') ? 'android_drive' : 'local_drive', null, { operation: 'read', file_path: fileName });
-            fileContent = readData.result?.content || readData.result?.text || '';
-            if (fileContent.length > 5000) {
-                fileContent = fileContent.substring(0, 5000) + '\n\n... [truncated] ...';
-            }
-        } else if (drive.fileObjects) {
+        if (drive.isLocal && drive.fileObjects) {
             const fileObj = drive.fileObjects.find(f => f.name === fileName);
-            if (fileObj) {
-                fileContent = await readFileContent(fileObj);
-                if (fileContent.length > 5000) {
-                    fileContent = fileContent.substring(0, 5000) + '\n\n... [truncated] ...';
-                }
+            if (!fileObj) {
+                addMessage(`File not found in local objects: ${fileName}`, 'error');
+                showIndicator(false);
+                return;
+            }
+            
+            if (kind === 'text') {
+                const fileContent = await readFileContent(fileObj);
+                const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
+                setActiveFileContext(fileName, trimmed, drive.name);
+                previewHtml = `<div class="raw-output" style="max-height: 200px; margin-top: 8px;">${escapeHtml(trimmed)}</div>`;
+                
+                const result = await runChain(fileName, [
+                    { block: 'chat', input: `Analyze this file and summarize what it contains:\n\nFile: ${fileName}\nSource: ${drive.name}\n\nContent:\n${trimmed.substring(0, 3000)}`, params: {}, label: 'chat' }
+                ], (idx, label, status) => {});
+                analysisText = result.finalOutput?.text || String(result.finalOutput);
+                chainSummary = 'chat';
+            } else if (kind === 'pdf' || kind === 'image') {
+                setOutcomes(`
+                    <div class="outcome-item">
+                        <div class="outcome-label">Selected File</div>
+                        <div class="outcome-value" style="font-size: 14px;">${fileName}</div>
+                        <div style="color: #888; font-size: 12px; margin-top: 4px;">From ${drive.name}</div>
+                    </div>
+                    <div class="outcome-item">
+                        <div class="outcome-label">Processing Chain</div>
+                        <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → construction → chat' : 'ocr → construction → chat'}</div>
+                    </div>
+                `);
+                
+                const form = new FormData();
+                form.append('file', fileObj);
+                const uploadData = await client.upload(form);
+                const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
+                const extractBlock = kind === 'pdf' ? 'pdf' : 'ocr';
+                
+                const result = await runChain(fileName, [
+                    { block: extractBlock, input: { action: 'extract_text', file_path: filePath }, params: {}, label: extractBlock },
+                    { block: 'construction', input: { file_path: filePath }, params: { action: 'process_document', doc_type: 'auto' }, label: 'construction' },
+                    { block: 'chat', input: (prev, allResults) => {
+                        const extracted = allResults[0]?.result?.text || '';
+                        const construction = allResults[1]?.result;
+                        const constructionSummary = typeof construction === 'object' 
+                            ? JSON.stringify(construction, null, 2).substring(0, 2000)
+                            : String(construction).substring(0, 2000);
+                        return `You are a construction AI assistant. Analyze this ${kind.toUpperCase()} for the user.\n\nFile: ${fileName}\nSource: ${drive.name}\n\n=== EXTRACTED CONTENT ===\n${extracted.substring(0, 2000)}\n\n=== CONSTRUCTION ANALYSIS ===\n${constructionSummary}\n\nPlease provide a clear, concise summary including key quantities, materials, risks, and any actionable insights. Format the answer for chat.`;
+                    }, params: {}, label: 'chat' }
+                ], (idx, label, status) => {});
+                
+                analysisText = result.finalOutput?.text || String(result.finalOutput);
+                const extracted = result.results[0]?.result?.text || '';
+                const constructionResult = result.results[1]?.result;
+                setActiveFileContext(fileName, `${extracted.substring(0, 3000)}\n\n[Construction Analysis]\n${typeof constructionResult === 'object' ? JSON.stringify(constructionResult, null, 2) : constructionResult}`.substring(0, 5000), drive.name);
+                previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Extracted ${extracted.length} chars → construction container → deepseek</div>`;
+                chainSummary = `${extractBlock} → construction → chat`;
+            } else {
+                previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Binary file — preview not available</div>`;
+                setActiveFileContext(fileName, '[Binary file]', drive.name);
+                analysisText = `Loaded "${fileName}" from ${drive.name}. This is a binary file; chat using the filename only.`;
+            }
+        } else {
+            // Remote drive
+            const readData = await client.execute(driveId.includes('google') ? 'google_drive' : driveId.includes('one') ? 'onedrive' : driveId.includes('android') ? 'android_drive' : 'local_drive', null, { operation: 'read', file_path: fileName });
+            const fileContent = readData.result?.content || readData.result?.text || '';
+            
+            if (fileContent && kind !== 'binary') {
+                const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
+                setActiveFileContext(fileName, trimmed, drive.name);
+                previewHtml = `<div class="raw-output" style="max-height: 200px; margin-top: 8px;">${escapeHtml(trimmed)}</div>`;
+                
+                const result = await runChain(fileName, [
+                    { block: 'chat', input: `Analyze this file and summarize what it contains:\n\nFile: ${fileName}\nSource: ${drive.name}\n\nContent:\n${trimmed.substring(0, 3000)}`, params: {}, label: 'chat' }
+                ], (idx, label, status) => {});
+                analysisText = result.finalOutput?.text || String(result.finalOutput);
+                chainSummary = 'chat';
+            } else {
+                previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Binary or empty file from remote drive</div>`;
+                setActiveFileContext(fileName, '[Binary file from remote drive]', drive.name);
+                analysisText = `Loaded "${fileName}" from ${drive.name}. Content preview not available for this file type from remote drives.`;
             }
         }
         
-        // Use zvec search to find related files
-        let related = [];
+        let relatedHtml = '';
         try {
             const zvecData = await client.execute('zvec', fileName, { 
                 operation: 'search', 
                 corpus: drive.files.filter(f => typeof f === 'string'),
                 top_k: 3 
             });
-            related = zvecData.result?.results || [];
+            const related = zvecData.result?.results || [];
+            if (related.length > 0) {
+                relatedHtml = `
+                    <div class="outcome-item">
+                        <div class="outcome-label">Related Files (ZVec)</div>
+                        <div style="color: #ccc; font-size: 12px; margin-top: 8px;">
+                            ${related.map(r => `<div style="margin-bottom:4px;">• ${r.text || r} ${r.score ? `(${Math.round(r.score*100)}%)` : ''}</div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
         } catch (e) {
             console.error('ZVec search failed:', e);
         }
@@ -555,70 +632,29 @@ async function selectDriveFile(driveId, fileName) {
                 <div class="outcome-label">Selected File</div>
                 <div class="outcome-value" style="font-size: 14px;">${fileName}</div>
                 <div style="color: #888; font-size: 12px; margin-top: 4px;">From ${drive.name}</div>
+                ${chainSummary ? `<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">🔗 ${chainSummary}</div>` : ''}
             </div>
-            ${fileContent ? `
+            ${previewHtml ? `
             <div class="outcome-item">
                 <div class="outcome-label">Preview</div>
-                <div class="raw-output" style="max-height: 200px; margin-top: 8px;">${escapeHtml(fileContent)}</div>
+                ${previewHtml}
             </div>
             ` : ''}
-            ${related.length > 0 ? `
+            ${analysisText ? `
             <div class="outcome-item">
-                <div class="outcome-label">Related Files (ZVec)</div>
-                <div style="color: #ccc; font-size: 12px; margin-top: 8px;">
-                    ${related.map(r => `<div style="margin-bottom:4px;">• ${r.text || r} ${r.score ? `(${Math.round(r.score*100)}%)` : ''}</div>`).join('')}
-                </div>
+                <div class="outcome-label">AI Analysis</div>
+                <div style="color: #ccc; font-size: 13px; margin-top: 8px; line-height: 1.5;">${escapeHtml(analysisText.substring(0, 500))}${analysisText.length > 500 ? '...' : ''}</div>
             </div>
             ` : ''}
+            ${relatedHtml}
         `);
         
-        if (fileContent) {
-            // Text file: show content + extract data
-            await extractAndPresent(fileName, fileContent, drive);
-
-        } else if (drive.isLocal && drive.fileObjects) {
-            // PDF or image: upload, run extraction block, show raw text, then chat-extract
-            const fileObj = drive.fileObjects.find(f => f.name === fileName);
-            if (fileObj) {
-                const ext = (fileName.split('.').pop() || '').toLowerCase();
-                const extractBlock = ext === 'pdf' ? 'pdf' : ['jpg','jpeg','png','gif','webp','bmp','tiff'].includes(ext) ? 'ocr' : null;
-
-                if (extractBlock) {
-                    document.getElementById('outcomes').innerHTML += `
-                        <div class="outcome-item" id="file-extract-status">
-                            <div class="outcome-label">Extraction</div>
-                            <div style="color: #888; font-size: 12px;">Uploading and running ${extractBlock}...</div>
-                        </div>`;
-                    try {
-                        const form = new FormData();
-                        form.append('file', fileObj);
-                        const uploadData = await client.upload(form);
-                        const extractData = await client.execute(extractBlock, uploadData.file_path, {});
-                        const rawText = extractData.result?.text || extractData.result?.content || '';
-                        document.getElementById('file-extract-status')?.remove();
-                        if (rawText) {
-                            await extractAndPresent(fileName, rawText, drive);
-                        } else {
-                            addMessage(`${extractBlock} returned no content for "${fileName}".`, 'error');
-                        }
-                    } catch (e) {
-                        document.getElementById('file-extract-status')?.remove();
-                        addMessage(`Extraction failed for "${fileName}": ${e.message}`, 'error');
-                    }
-                } else {
-                    addMessage(`File loaded from ${drive.name}. ${related.length > 0 ? `Found ${related.length} related files via ZVec.` : ''}`, 'assistant');
-                }
-            } else {
-                addMessage(`File loaded from ${drive.name}. ${related.length > 0 ? `Found ${related.length} related files via ZVec.` : ''}`, 'assistant');
-            }
-        } else {
-            addMessage(`File loaded from ${drive.name}. ${related.length > 0 ? `Found ${related.length} related files via ZVec.` : ''}`, 'assistant');
-        }
-
+        addMessage(analysisText || `Loaded "${fileName}" from ${drive.name}.`, 'assistant');
+        
     } catch (err) {
         addMessage(`Error loading file: ${err.message}`, 'error');
     }
-
+    
     showIndicator(false);
 }
 
@@ -633,7 +669,6 @@ async function sendMessage() {
     let text = input.value.trim();
     if (!text) return;
     
-    // Inject active file context into the prompt
     if (activeFileContext && activeFileContext.content) {
         text = `I am asking about the file "${activeFileContext.name}" from ${activeFileContext.driveName}.\n\nHere is the file content:\n---\n${activeFileContext.content}\n---\n\nMy question: ${text}`;
     }
@@ -645,7 +680,6 @@ async function sendMessage() {
     showIndicator(true);
     
     try {
-        // Use direct /v1/chat for simple chat (most efficient)
         const data = await client.chat(text);
         addMessage(data.text || data.result?.text || JSON.stringify(data), 'assistant');
     } catch (err) {
@@ -669,45 +703,99 @@ async function handleFile(input) {
     try {
         const form = new FormData();
         form.append('file', file);
-        
         const uploadData = await client.upload(form);
-
+        const kind = getFileKind(file.name);
+        const sizeKb = (file.size / 1024).toFixed(1);
+        
+        let analysisText = '';
+        let chainLabel = '';
+        let previewHtml = '';
+        
+        if (kind === 'text') {
+            const fileContent = await readFileContent(file);
+            const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
+            setActiveFileContext(file.name, trimmed, 'Upload');
+            previewHtml = `<div class="raw-output" style="max-height: 200px; margin-top: 8px;">${escapeHtml(trimmed)}</div>`;
+            chainLabel = 'chat';
+            
+            const result = await runChain(file.name, [
+                { block: 'chat', input: `Analyze this file and extract key information:\n\nFile: ${file.name}\nSize: ${sizeKb} KB\n\nContent:\n${trimmed.substring(0, 3000)}`, params: {}, label: 'chat' }
+            ], (idx, label, status) => {});
+            analysisText = result.finalOutput?.text || String(result.finalOutput);
+        } else if (kind === 'pdf' || kind === 'image') {
+            setOutcomes(`
+                <div class="outcome-item">
+                    <div class="outcome-label">File Uploaded</div>
+                    <div class="outcome-value" style="font-size: 14px;">${uploadData.filename}</div>
+                    <div style="color: #888; font-size: 12px; margin-top: 4px;">${sizeKb} KB</div>
+                </div>
+                <div class="outcome-item">
+                    <div class="outcome-label">Processing Chain</div>
+                    <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → construction → chat' : 'ocr → construction → chat'}</div>
+                </div>
+            `);
+            
+            const extractBlock = kind === 'pdf' ? 'pdf' : 'ocr';
+            chainLabel = `${extractBlock} → construction → chat`;
+            const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
+            
+            const result = await runChain(file.name, [
+                { block: extractBlock, input: { action: 'extract_text', file_path: filePath }, params: {}, label: extractBlock },
+                { block: 'construction', input: { file_path: filePath }, params: { action: 'process_document', doc_type: 'auto' }, label: 'construction' },
+                { block: 'chat', input: (prev, allResults) => {
+                    const extracted = allResults[0]?.result?.text || '';
+                    const construction = allResults[1]?.result;
+                    const constructionSummary = typeof construction === 'object' 
+                        ? JSON.stringify(construction, null, 2).substring(0, 2000)
+                        : String(construction).substring(0, 2000);
+                    return `You are a construction AI assistant. Analyze this ${kind.toUpperCase()} for the user.\n\nFile: ${file.name}\nSize: ${sizeKb} KB\n\n=== EXTRACTED CONTENT ===\n${extracted.substring(0, 2000)}\n\n=== CONSTRUCTION ANALYSIS ===\n${constructionSummary}\n\nPlease provide a clear, concise summary including key quantities, materials, risks, and any actionable insights. Format the answer for chat.`;
+                }, params: {}, label: 'chat' }
+            ], (idx, label, status) => {});
+            
+            analysisText = result.finalOutput?.text || String(result.finalOutput);
+            const extracted = result.results[0]?.result?.text || '';
+            const constructionResult = result.results[1]?.result;
+            setActiveFileContext(file.name, `${extracted.substring(0, 3000)}\n\n[Construction Analysis]\n${typeof constructionResult === 'object' ? JSON.stringify(constructionResult, null, 2) : constructionResult}`.substring(0, 5000), 'Upload');
+            previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Extracted ${extracted.length} chars → construction container → deepseek</div>`;
+        } else {
+            setActiveFileContext(file.name, `[Binary file — ${kind}]`, 'Upload');
+            chainLabel = 'none';
+            previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Binary file — no text preview available</div>`;
+            analysisText = `Uploaded "${file.name}" (${sizeKb} KB). This is a binary file; I can only answer questions based on the filename.`;
+        }
+        
+        let quantitiesHtml = '';
+        const textForSearch = (activeFileContext?.content || analysisText || '');
+        if (textForSearch.toLowerCase().includes('concrete') || textForSearch.toLowerCase().includes('steel')) {
+            quantitiesHtml = `
+                <div class="outcome-item">
+                    <div class="outcome-label">Detected Construction Data</div>
+                    <div style="color: #ccc; font-size: 12px; margin-top: 8px;">Review the analysis for quantities and specs.</div>
+                </div>
+            `;
+        }
+        
         setOutcomes(`
             <div class="outcome-item">
                 <div class="outcome-label">File Uploaded</div>
                 <div class="outcome-value" style="font-size: 14px;">${uploadData.filename}</div>
-                <div style="color: #888; font-size: 12px; margin-top: 4px;">${(file.size / 1024).toFixed(1)} KB</div>
+                <div style="color: #888; font-size: 12px; margin-top: 4px;">${sizeKb} KB</div>
+                ${chainLabel !== 'none' ? `<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">🔗 ${chainLabel}</div>` : ''}
+            </div>
+            ${previewHtml ? `
+            <div class="outcome-item">
+                <div class="outcome-label">Preview</div>
+                ${previewHtml}
+            </div>
+            ` : ''}
+            ${quantitiesHtml}
+            <div class="outcome-item">
+                <div class="outcome-label">Analysis</div>
+                <div class="raw-output" style="margin-top: 8px;">${escapeHtml(analysisText)}</div>
             </div>
         `);
-
-        const ext = (file.name.split('.').pop() || '').toLowerCase();
-
-        if (isTextFile(file.name)) {
-            // Text file: read and extract directly
-            const rawContent = await readFileContent(file);
-            const trimmed = rawContent.length > 5000 ? rawContent.substring(0, 5000) + '\n\n... [truncated] ...' : rawContent;
-            await extractAndPresent(file.name, trimmed, { name: 'Upload' });
-
-        } else if (ext === 'pdf' || ['jpg','jpeg','png','gif','webp','bmp','tiff'].includes(ext)) {
-            // PDF/image: run extraction block on server file, then extract data
-            const extractBlock = ext === 'pdf' ? 'pdf' : 'ocr';
-            document.getElementById('outcomes').innerHTML += `
-                <div class="outcome-item" id="file-extract-status">
-                    <div class="outcome-label">Extraction</div>
-                    <div style="color: #888; font-size: 12px;">Running ${extractBlock}...</div>
-                </div>`;
-            const extractData = await client.execute(extractBlock, uploadData.file_path, {});
-            const rawText = extractData.result?.text || extractData.result?.content || '';
-            document.getElementById('file-extract-status')?.remove();
-            if (rawText) {
-                await extractAndPresent(file.name, rawText, { name: 'Upload' });
-            } else {
-                addMessage(`${extractBlock} returned no content for "${file.name}".`, 'error');
-            }
-
-        } else {
-            addMessage(`Uploaded "${file.name}". File type not supported for automatic extraction.`, 'assistant');
-        }
+        
+        addMessage(analysisText, 'assistant');
         
     } catch (err) {
         console.error('File analysis error:', err);

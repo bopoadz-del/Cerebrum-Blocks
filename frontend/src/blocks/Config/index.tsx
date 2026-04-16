@@ -1,7 +1,7 @@
 // Config-UI-Block - Settings and configuration
 import { useState } from 'react';
 
-export const ConfigBlock: React.FC<{ apiKey: string }> = ({ apiKey }) => {
+export const ConfigBlock: React.FC<{ apiKey: string }> = () => {
   const [settings, setSettings] = useState({
     defaultProvider: 'deepseek',
     maxTokens: 2048,

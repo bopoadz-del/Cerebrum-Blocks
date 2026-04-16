@@ -268,7 +268,8 @@ class ConstructionContainer(UniversalContainer):
         }
 
         processor = processors.get(doc_type, self._process_drawing)
-        result = await processor(input_data, p)
+        p["file_path"] = file_path
+        result = await processor(file_path, p)
 
         llm_block = BLOCK_REGISTRY.get("llm_enhancer")
         if llm_block and isinstance(result, dict) and result.get("status") == "success":
@@ -323,7 +324,7 @@ class ConstructionContainer(UniversalContainer):
             import fitz
             doc = fitz.open(file_path)
         except Exception as e:
-            return {"status": "error", "error": f"Could not open file: {str(e)}", "file": file_path}
+            return {"status": "error", "error": f"[DRAWING_V2] Could not open file: {str(e)}", "file": file_path}
         
         result = {
             "status": "success",

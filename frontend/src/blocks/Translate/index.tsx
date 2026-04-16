@@ -1,15 +1,25 @@
 // Translate-UI-Block
 import { useState } from 'react';
+import { CerebrumClient } from '../../api/client';
 
 export const TranslateBlock: React.FC<{ apiKey: string }> = ({ apiKey }) => {
+  const client = new CerebrumClient(apiKey);
   const [text, setText] = useState('');
   const [target, setTarget] = useState('en');
   const [result, setResult] = useState('');
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const [loading, setLoading] = useState(false);
 
   const translate = async () => {
-    // Placeholder
-    setResult(`[Translated to ${target}]: ${text}`);
+    if (!text) return;
+    setLoading(true);
+    try {
+      const data = await client.execute('translate', text, { target_lang: target });
+      setResult(data?.result?.translation || data?.result?.text || JSON.stringify(data, null, 2));
+    } catch (err: any) {
+      setResult('Error: ' + (err.message || 'Request failed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -24,7 +34,7 @@ export const TranslateBlock: React.FC<{ apiKey: string }> = ({ apiKey }) => {
           <option value="zh">Chinese</option>
           <option value="ar">Arabic</option>
         </select>
-        <button onClick={translate} style={{ padding: '8px 16px' }}>🌐 Translate</button>
+        <button onClick={translate} disabled={loading} style={{ padding: '8px 16px' }}>{loading ? '...' : '🌐 Translate'}</button>
       </div>
       {result && <div style={{ marginTop: '10px', padding: '10px', background: '#e8f5e9', borderRadius: '4px' }}>{result}</div>}
     </div>

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { API } from './api/client';
 import { 
   // AI Blocks
   ChatBlock, VectorBlock, StorageBlock, QueueBlock,
@@ -16,6 +17,10 @@ import {
 
 function App() {
   const API_KEY = 'cb_dev_key';
+
+  useEffect(() => {
+    API.setKey(API_KEY);
+  }, []);
   const [activeJob] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'ai' | 'infrastructure' | 'integration' | 'storage'>('ai');
