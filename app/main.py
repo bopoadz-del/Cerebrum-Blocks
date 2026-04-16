@@ -46,7 +46,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-CORS_ORIGINS = [
+_default_cors = [
     "https://cerebrum-platform.onrender.com",
     "https://cerebrum-platform-j1zs.onrender.com",
     "https://cerebrum-platform-frontend-fork.onrender.com",
@@ -58,6 +58,12 @@ CORS_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
+]
+
+CORS_ORIGINS = _default_cors + [
+    o.strip()
+    for o in os.getenv("CORS_ORIGINS", "").split(",")
+    if o.strip()
 ]
 
 # Single CORS layer — FastAPI echoes Access-Control-Request-Headers, no literal * sent
