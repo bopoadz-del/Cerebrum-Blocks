@@ -17,7 +17,12 @@ ALLOWED_UPLOAD_EXTENSIONS = {
 }
 
 DATA_DIR = os.getenv("DATA_DIR", "./data")
-os.makedirs(DATA_DIR, exist_ok=True)
+try:
+    os.makedirs(DATA_DIR, exist_ok=True)
+except PermissionError:
+    # Fallback to temp dir if DATA_DIR is not writable (e.g. Render without disk)
+    import tempfile
+    DATA_DIR = tempfile.gettempdir()
 
 
 @router.post("/upload")
