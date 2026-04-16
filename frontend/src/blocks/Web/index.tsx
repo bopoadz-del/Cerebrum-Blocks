@@ -1,6 +1,5 @@
 // Web-UI-Block - Web scraping
 import { useState } from 'react';
-import { API } from '../../api';
 
 interface WebBlockProps {
   apiKey: string;
@@ -11,11 +10,18 @@ export const WebBlock: React.FC<WebBlockProps> = ({ apiKey, onFetch }) => {
   const [url, setUrl] = useState('');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const handleFetch = async () => {
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+  const fetch = async () => {
     if (!url) return;
     setLoading(true);
     try {
-      const data = await API.call('/v1/web/fetch', { url });
+      const response = await fetch(`${API_BASE}/v1/web/fetch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ url })
+      });
+      const data = await response.json();
       setResult(data);
       onFetch?.(data);
     } catch (error) {
@@ -29,7 +35,7 @@ export const WebBlock: React.FC<WebBlockProps> = ({ apiKey, onFetch }) => {
     <div style={{ padding: '10px' }}>
       <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
         <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" style={{ flex: 1, padding: '8px' }} />
-        <button onClick={handleFetch} disabled={loading} style={{ padding: '8px 16px' }}>{loading ? '...' : '🕸️ Fetch'}</button>
+        <button onClick={fetch} disabled={loading} style={{ padding: '8px 16px' }}>{loading ? '...' : '🕸️ Fetch'}</button>
       </div>
       {result?.content && (
         <div style={{ padding: '10px', background: '#f5f5f5', borderRadius: '4px', fontSize: '12px', maxHeight: '200px', overflow: 'auto' }}>

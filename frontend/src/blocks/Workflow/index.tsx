@@ -3,7 +3,6 @@
 // <WorkflowBlock apiKey="cb_key" />
 
 import { useState } from 'react';
-import { API } from '../../api';
 
 interface WorkflowBlockProps {
   apiKey: string;
@@ -37,6 +36,8 @@ export const WorkflowBlock: React.FC<WorkflowBlockProps> = ({ apiKey }) => {
   const [selectedAction, setSelectedAction] = useState('complete');
   const [stepParams, setStepParams] = useState('{}');
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const addStep = () => {
     const newStep: WorkflowStep = {
       id: `step_${steps.length + 1}`,
@@ -56,10 +57,18 @@ export const WorkflowBlock: React.FC<WorkflowBlockProps> = ({ apiKey }) => {
     if (steps.length === 0) return;
     setLoading(true);
     try {
-      const data = await API.call('/v1/chain', {
-        name: workflowName,
-        steps: steps
+      const response = await fetch(`${API_BASE}/v1/chain`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          name: workflowName,
+          steps: steps
+        })
       });
+      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
     } catch (error) {
       setResult('Error: ' + (error as Error).message);

@@ -3,7 +3,6 @@
 // <MemoryBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
-import { API } from '../../api';
 
 interface MemoryBlockProps {
   apiKey: string;
@@ -26,10 +25,17 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const fetchStats = async () => {
     try {
-      const data = await API.call('/v1/memory/stats', {});
-      setStats(data);
+      const response = await fetch(`${API_BASE}/v1/memory/stats`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
     } catch (error) {
       console.error('Failed to fetch stats');
     }
@@ -45,11 +51,19 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
     if (!cacheKey.trim() || !cacheValue.trim()) return;
     setLoading(true);
     try {
-      const data = await API.call('/v1/memory/set', { 
-        key: cacheKey, 
-        value: cacheValue,
-        ttl: parseInt(ttl) || 60
+      const response = await fetch(`${API_BASE}/v1/memory/set`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ 
+          key: cacheKey, 
+          value: cacheValue,
+          ttl: parseInt(ttl) || 60
+        })
       });
+      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
       fetchStats();
     } catch (error) {
@@ -63,7 +77,15 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
     if (!cacheKey.trim()) return;
     setLoading(true);
     try {
-      const data = await API.call('/v1/memory/get', { key: cacheKey });
+      const response = await fetch(`${API_BASE}/v1/memory/get`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ key: cacheKey })
+      });
+      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
       if (data.value) {
         setCacheValue(typeof data.value === 'string' ? data.value : JSON.stringify(data.value));
@@ -79,7 +101,15 @@ export const MemoryBlock: React.FC<MemoryBlockProps> = ({ apiKey }) => {
     if (!cacheKey.trim()) return;
     setLoading(true);
     try {
-      const data = await API.call('/v1/memory/delete', { key: cacheKey });
+      const response = await fetch(`${API_BASE}/v1/memory/delete`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ key: cacheKey })
+      });
+      const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
       fetchStats();
     } catch (error) {

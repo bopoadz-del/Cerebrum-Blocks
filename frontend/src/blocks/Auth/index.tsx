@@ -3,7 +3,6 @@
 // <AuthBlock apiKey="cb_admin_key" />
 
 import { useState, useEffect } from 'react';
-import { API } from '../../api';
 
 interface AuthBlockProps {
   apiKey: string;
@@ -24,12 +23,17 @@ export const AuthBlock: React.FC<AuthBlockProps> = ({ apiKey }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   const fetchKeys = async () => {
     try {
-      const data = await API.call('/v1/auth/keys', {});
-      setKeys(data.keys || []);
+      const response = await fetch(`${API_BASE}/v1/auth/keys`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setKeys(data.keys || []);
+      }
     } catch (error) {
       console.error('Failed to fetch keys');
     }
@@ -43,10 +47,22 @@ export const AuthBlock: React.FC<AuthBlockProps> = ({ apiKey }) => {
     if (!newKeyName.trim()) return;
     setLoading(true);
     try {
-      const data = await API.call('/v1/auth/keys', { name: newKeyName, role: newKeyRole });
-      setMessage(`Created: ${data.api_key}`);
-      setNewKeyName('');
-      fetchKeys();
+      const response = await fetch(`${API_BASE}/v1/auth/keys`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ name: newKeyName, role: newKeyRole })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage(`Created: ${data.api_key}`);
+        setNewKeyName('');
+        fetchKeys();
+      } else {
+        setMessage(data.error || 'Failed to create key');
+      }
     } catch (error) {
       setMessage('Error creating key');
     } finally {
@@ -56,7 +72,10 @@ export const AuthBlock: React.FC<AuthBlockProps> = ({ apiKey }) => {
 
   const deleteKey = async (keyToDelete: string) => {
     try {
-      await API.del(`/v1/auth/keys/${keyToDelete}`);
+      await fetch(`${API_BASE}/v1/auth/keys/${keyToDelete}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
       fetchKeys();
     } catch (error) {
       console.error('Failed to delete key');

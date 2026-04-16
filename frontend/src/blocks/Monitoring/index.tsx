@@ -3,7 +3,6 @@
 // <MonitoringBlock apiKey="cb_key" />
 
 import { useState, useEffect } from 'react';
-import { API } from '../../api';
 
 interface MonitoringBlockProps {
   apiKey: string;
@@ -28,16 +27,28 @@ export const MonitoringBlock: React.FC<MonitoringBlockProps> = ({ apiKey }) => {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const fetchData = async () => {
     setLoading(true);
     try {
       // Fetch leaderboard
-      const lbData = await API.call('/v1/leaderboard', {});
-      setLeaderboard(lbData.leaderboard || []);
+      const lbResponse = await fetch(`${API_BASE}/v1/leaderboard`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      if (lbResponse.ok) {
+        const lbData = await lbResponse.json();
+        setLeaderboard(lbData.leaderboard || []);
+      }
 
       // Fetch health
-      const healthData = await API.call('/v1/system/health', {});
-      setHealth(healthData);
+      const healthResponse = await fetch(`${API_BASE}/v1/system/health`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      if (healthResponse.ok) {
+        const healthData = await healthResponse.json();
+        setHealth(healthData);
+      }
     } catch (error) {
       console.error('Failed to fetch monitoring data');
     } finally {

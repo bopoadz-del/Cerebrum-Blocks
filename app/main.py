@@ -62,35 +62,15 @@ CORS_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-# Add CORS middleware with explicit settings
+# CORS middleware — FastAPI echoes Access-Control-Request-Headers so no literal * is sent
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["*", "Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
     allow_credentials=True,
-    max_age=86400,  # Cache preflight for 24 hours
+    max_age=86400,
 )
-
-# Add explicit CORS headers middleware - ensures headers are always present on all responses
-@app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
-    """Add CORS headers to all responses - ensures headers are always present"""
-    response = await call_next(request)
-    
-    origin = request.headers.get("origin")
-    # Mirror the origin if it's in our allowed list, otherwise use the first allowed origin
-    if origin and origin in CORS_ORIGINS:
-        response.headers["Access-Control-Allow-Origin"] = origin
-    else:
-        response.headers["Access-Control-Allow-Origin"] = CORS_ORIGINS[0]
-    
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-    response.headers["Access-Control-Allow-Headers"] = "*, Content-Type, Authorization, X-Requested-With, Accept, Origin"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Max-Age"] = "86400"
-    
-    return response
 
 
 # File upload security middleware

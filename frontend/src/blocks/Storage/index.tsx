@@ -2,7 +2,6 @@
 // <StorageBlock apiKey="cb_key" onFileSelect={(f) => console.log(f)} />
 
 import { useState, useEffect } from 'react';
-import { API } from '../../api';
 
 interface StorageBlockProps {
   apiKey: string;
@@ -19,10 +18,21 @@ export const StorageBlock: React.FC<StorageBlockProps> = ({
   const [currentPath, setCurrentPath] = useState(basePath);
   const [loading, setLoading] = useState(false);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const listFiles = async (path: string) => {
     setLoading(true);
     try {
-      const data = await API.call('/v1/storage/list', { operation: 'list', path });
+      const response = await fetch(`${API_BASE}/v1/storage/list`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ operation: 'list', path })
+      });
+
+      const data = await response.json();
       setFiles(data.files || []);
       setCurrentPath(path);
     } catch (error) {
