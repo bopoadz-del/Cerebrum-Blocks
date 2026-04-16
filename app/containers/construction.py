@@ -324,7 +324,7 @@ class ConstructionContainer(UniversalContainer):
             import fitz
             doc = fitz.open(file_path)
         except Exception as e:
-            return {"status": "error", "error": f"Could not open file: {str(e)}", "file": file_path}
+            return {"status": "error", "error": f"[DRAWING_V2] Could not open file: {str(e)}", "file": file_path}
         
         result = {
             "status": "success",
