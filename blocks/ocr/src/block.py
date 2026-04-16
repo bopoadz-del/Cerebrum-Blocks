@@ -43,8 +43,16 @@ class OCRBlock(LegoBlock):
     async def _extract_text(self, data: Dict) -> Dict:
         """Extract text from image"""
         image_bytes = data.get("image_bytes") or data.get("image")
+        file_path = data.get("file_path")
         engine = data.get("engine", self.default_engine)
         lang = data.get("language", "en")
+        
+        if not image_bytes and file_path:
+            with open(file_path, "rb") as f:
+                image_bytes = f.read()
+        
+        if not image_bytes:
+            return {"error": "No image bytes or file_path provided"}
         
         if engine == "tesseract":
             return await self._tesseract_ocr(image_bytes, lang)
