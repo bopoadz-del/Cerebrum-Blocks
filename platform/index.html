@@ -165,35 +165,68 @@
     <input type="file" id="localFilePicker" style="display:none" multiple webkitdirectory onchange="handleLocalFiles(this)">
 
 <script>
-// API Configuration - Auto-detect environment
+// ─────────────────────────────────────────────────────────────
+// UNIVERSAL ADAPTER CLIENT
+// ─────────────────────────────────────────────────────────────
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
     ? 'http://localhost:8000' 
-    : 'https://cerebrum-platform-api.onrender.com';
-
-console.log('API_BASE:', API_BASE);
+    : 'https://cerebrum-platform-api-fork.onrender.com';
 
 const API_KEY = 'cb_dev_key';
 
-const apiCall = async (endpoint, body, isFormData = false) => {
-    const headers = { 'Authorization': `Bearer ${API_KEY}` };
-    if (!isFormData) {
-        headers['Content-Type'] = 'application/json';
+class CerebrumClient {
+    constructor(baseUrl = API_BASE, apiKey = API_KEY) {
+        this.base = baseUrl.replace(/\/$/, '');
+        this.key = apiKey;
     }
-    
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-        method: 'POST',
-        mode: 'cors',
-        headers,
-        body: isFormData ? body : JSON.stringify(body)
-    });
-    
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+
+    async _request(method, path, body = null, isFormData = false) {
+        const url = `${this.base}${path}`;
+        const headers = { 'Authorization': `Bearer ${this.key}` };
+        if (body && !isFormData) {
+            headers['Content-Type'] = 'application/json';
+        }
+        const opts = { method, mode: 'cors', headers };
+        if (body) opts.body = isFormData ? body : JSON.stringify(body);
+        
+        const response = await fetch(url, opts);
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`HTTP ${response.status}: ${text}`);
+        }
+        if (response.status === 204) return undefined;
+        return response.json();
     }
-    
-    return response.json();
-};
+
+    // Universal Block Execution ── ALL blocks go through /v1/execute
+    execute(block, input = null, params = {}) {
+        return this._request('POST', '/v1/execute', { block, input, params });
+    }
+
+    // Chain execution
+    chain(steps, initialInput = null) {
+        return this._request('POST', '/v1/chain', { steps, initial_input: initialInput });
+    }
+
+    // Direct chat endpoint
+    chat(message, model = 'deepseek-chat') {
+        return this._request('POST', '/v1/chat', { message, model, stream: false });
+    }
+
+    // File upload
+    upload(formData) {
+        return this._request('POST', '/v1/upload', formData, true);
+    }
+
+    // Health check
+    async health() {
+        const r = await fetch(`${this.base}/health`, { mode: 'cors' });
+        if (!r.ok) throw new Error(`Health check failed: ${r.status}`);
+        return r.json();
+    }
+}
+
+const client = new CerebrumClient();
 
 // Connected drives state
 const connectedDrives = {};
@@ -203,49 +236,73 @@ let activeFileContext = null;
 
 function setActiveFileContext(name, content, driveName) {
     activeFileContext = { name, content, driveName };
-    updateFileContextBadge();
 }
 
 function clearActiveFileContext() {
     activeFileContext = null;
-    updateFileContextBadge();
 }
 
-function updateFileContextBadge() {
-    let badge = document.getElementById('fileContextBadge');
-    if (!activeFileContext) {
-        if (badge) badge.style.display = 'none';
-        return;
-    }
-    if (!badge) {
-        badge = document.createElement('div');
-        badge.id = 'fileContextBadge';
-        badge.style.cssText = 'display:flex;align-items:center;gap:6px;padding:6px 10px;background:#8b5cf620;border:1px solid #8b5cf6;border-radius:6px;color:#8b5cf6;font-size:12px;margin-bottom:8px;';
-        const inputArea = document.querySelector('.input-area');
-        inputArea.insertBefore(badge, inputArea.firstChild);
-    }
-    badge.innerHTML = `📄 Active: ${activeFileContext.name} <span style="cursor:pointer;color:#fff;" onclick="clearActiveFileContext();event.stopPropagation();">✕</span>`;
-    badge.style.display = 'flex';
-}
-
-function addMessage(text, role) {
-    const div = document.createElement('div');
-    div.className = `msg ${role}`;
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    bubble.textContent = text;
-    div.appendChild(bubble);
-    document.getElementById('messages').appendChild(div);
-    div.scrollIntoView({ behavior: 'smooth' });
-}
-
-function showIndicator(show) {
-    const indicator = document.getElementById('chainIndicator');
-    indicator.classList.toggle('active', show);
+function addMessage(text, role = 'assistant') {
+    const messages = document.getElementById('messages');
+    const msg = document.createElement('div');
+    msg.className = `msg ${role}`;
+    msg.innerHTML = `<div class="bubble"></div>`;
+    msg.querySelector('.bubble').textContent = text;
+    messages.appendChild(msg);
+    messages.scrollTop = messages.scrollHeight;
 }
 
 function setOutcomes(html) {
     document.getElementById('outcomes').innerHTML = html;
+}
+
+function showIndicator(active) {
+    document.getElementById('chainIndicator').classList.toggle('active', active);
+}
+
+function resetChat() {
+    document.getElementById('messages').innerHTML = `
+        <div class="msg assistant">
+            <div class="bubble">Hello! Upload a file, connect a drive, or type a message to get started.</div>
+        </div>
+    `;
+    setOutcomes('');
+    clearActiveFileContext();
+}
+
+function renderDrives() {
+    const list = document.getElementById('drivesList');
+    if (Object.keys(connectedDrives).length === 0) {
+        list.innerHTML = '<div style="color: #555; font-size: 12px; padding: 8px;">No drives connected</div>';
+        return;
+    }
+    
+    list.innerHTML = Object.entries(connectedDrives).map(([id, drive]) => `
+        <div class="drive-project">
+            <div class="drive-header" onclick="toggleDrive('${id}')">
+                <span class="icon">${drive.icon}</span>
+                <span>${drive.name}</span>
+                <span class="toggle">▶</span>
+            </div>
+            <div class="drive-files" id="drive-files-${id}">
+                ${drive.files.length === 0 ? '<div class="drive-empty">No files found</div>' : ''}
+                ${drive.files.map((f, i) => `
+                    <div class="drive-file" onclick="selectDriveFile('${id}', '${typeof f === 'string' ? f.replace(/'/g, "\\'") : f.name?.replace(/'/g, "\\'") || ''}')">
+                        <span>📄</span>
+                        <span>${typeof f === 'string' ? f : (f.name || f)}</span>
+                        ${drive.indexed ? '<span class="zvec-badge">Z</span>' : ''}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function toggleDrive(id) {
+    const el = document.getElementById(`drive-files-${id}`);
+    const header = el.previousElementSibling;
+    el.classList.toggle('expanded');
+    header.classList.toggle('expanded');
 }
 
 function showDriveModal() {
@@ -257,34 +314,47 @@ function hideDriveModal() {
 }
 
 function browseLocalFiles() {
-    hideDriveModal();
     document.getElementById('localFilePicker').click();
 }
 
+function clearAllDrives() {
+    Object.keys(connectedDrives).forEach(k => delete connectedDrives[k]);
+    renderDrives();
+    addMessage('All drives disconnected.', 'system');
+}
+
+async function readFileContent(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = reject;
+        if (file.type.startsWith('image/')) {
+            resolve('[Image file - content extracted on server]');
+        } else {
+            reader.readAsText(file);
+        }
+    });
+}
+
 async function handleLocalFiles(input) {
-    const files = Array.from(input.files || []);
+    const files = Array.from(input.files);
     if (files.length === 0) return;
     
     showIndicator(true);
-    addMessage(`Selected ${files.length} files from this device...`, 'system');
+    addMessage(`Loading ${files.length} local files...`, 'system');
     
     try {
         const fileNames = files.map(f => f.name);
         const folderName = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : 'My Device Files';
         
-        // ZVec index
+        // ZVec index via Universal Adapter
         let zvecResult = null;
         try {
-            zvecResult = await apiCall('/v1/execute', {
-                block: 'zvec',
-                input: fileNames.join('\n'),
-                params: { operation: 'embed' }
-            });
+            zvecResult = await client.execute('zvec', fileNames.join('\n'), { operation: 'embed' });
         } catch (e) {
             console.error('ZVec index failed:', e);
         }
         
-        // Store actual File objects for later use
         const driveId = 'my_device_' + Date.now();
         connectedDrives[driveId] = {
             name: folderName,
@@ -298,7 +368,6 @@ async function handleLocalFiles(input) {
         
         renderDrives();
         
-        // Auto-select first file for chat context
         const firstFileObj = files[0];
         if (firstFileObj) {
             const firstContent = await readFileContent(firstFileObj);
@@ -332,11 +401,8 @@ async function connectDrive(driveType) {
     addMessage(`Connecting to ${driveType.replace('_', ' ')}...`, 'system');
     
     try {
-        // Step 1: List files from drive
-        const listData = await apiCall('/v1/execute', {
-            block: driveType,
-            params: { operation: 'list', folder_path: './' }
-        });
+        // Step 1: List files from drive via Universal Adapter
+        const listData = await client.execute(driveType, null, { operation: 'list', folder_path: './' });
         console.log(`${driveType} list:`, listData);
         
         let files = [];
@@ -354,23 +420,18 @@ async function connectDrive(driveType) {
         let zvecResult = null;
         if (files.length > 0) {
             try {
-                zvecResult = await apiCall('/v1/execute', {
-                    block: 'zvec',
-                    input: files.join('\n'),
-                    params: { operation: 'embed' }
-                });
+                zvecResult = await client.execute('zvec', files.join('\n'), { operation: 'embed' });
             } catch (e) {
                 console.error('ZVec index failed:', e);
             }
         }
         
-        // Save drive state
         connectedDrives[driveType] = {
             name: driveType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            icon: getDriveIcon(driveType),
+            icon: driveType.includes('google') ? '📁' : driveType.includes('one') ? '☁️' : driveType.includes('android') ? '📱' : '🖥️',
             files: files,
             indexed: !!zvecResult,
-            path: listData.result?.path || './'
+            path: './'
         };
         
         renderDrives();
@@ -378,89 +439,41 @@ async function connectDrive(driveType) {
         const outcomeHtml = `
             <div class="outcome-item">
                 <div class="outcome-label">Connected</div>
-                <div class="outcome-value" style="font-size: 16px;">${connectedDrives[driveType].name}</div>
+                <div class="outcome-value" style="font-size: 16px;">${driveType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
                 <div style="color: #888; font-size: 12px; margin-top: 4px;">${files.length} files found</div>
                 ${zvecResult ? '<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">✅ ZVec indexed</div>' : ''}
             </div>
         `;
         setOutcomes(outcomeHtml);
-        addMessage(`Connected to ${connectedDrives[driveType].name} — ${files.length} files loaded.`, 'assistant');
+        addMessage(`Connected to ${driveType.replace('_', ' ')}. ${files.length} files available.`, 'assistant');
         
     } catch (err) {
         console.error('Drive connect error:', err);
-        addMessage(`Error connecting to ${driveType}: ${err.message}`, 'error');
-        setOutcomes(`<p style="color: #ff6666;">Error: ${err.message}</p>`);
+        addMessage(`Could not connect to ${driveType}: ${err.message}`, 'error');
     }
     
     showIndicator(false);
 }
 
-function getDriveIcon(type) {
-    const icons = {
-        google_drive: '📁',
-        onedrive: '☁️',
-        local_drive: '💾',
-        android_drive: '📱'
-    };
-    return icons[type] || '💿';
-}
-
-function renderDrives() {
-    const container = document.getElementById('drivesList');
-    if (Object.keys(connectedDrives).length === 0) {
-        container.innerHTML = '<div class="drive-empty">No drives connected yet</div>';
-        return;
-    }
-    
-    container.innerHTML = Object.entries(connectedDrives).map(([key, drive]) => `
-        <div class="drive-project">
-            <div class="drive-header" onclick="toggleDrive('${key}')" id="drive-header-${key}">
-                <span class="icon">${drive.icon}</span>
-                <span>${drive.name}</span>
-                <span class="toggle">▶</span>
-            </div>
-            <div class="drive-files" id="drive-files-${key}">
-                ${drive.files.length === 0 
-                    ? '<div class="drive-empty">No files found</div>' 
-                    : drive.files.map(f => `
-                        <div class="drive-file" onclick="selectFile('${key}', '${typeof f === 'string' ? f.replace(/'/g, "\\'") : JSON.stringify(f).replace(/'/g, "\\'")}')">
-                            <span>${typeof f === 'string' ? f : (f.name || f.text || JSON.stringify(f))}</span>
-                            ${drive.indexed ? '<span class="zvec-badge">zvec</span>' : ''}
-                        </div>
-                    `).join('')
-                }
-            </div>
-        </div>
-    `).join('');
-}
-
-function toggleDrive(key) {
-    const header = document.getElementById(`drive-header-${key}`);
-    const files = document.getElementById(`drive-files-${key}`);
-    header.classList.toggle('expanded');
-    files.classList.toggle('expanded');
-}
-
-function clearAllDrives() {
-    Object.keys(connectedDrives).forEach(k => delete connectedDrives[k]);
-    renderDrives();
-    addMessage('All drives disconnected.', 'system');
-}
-
-async function selectFile(driveKey, fileName) {
-    addMessage(`Selected file: ${fileName}`, 'user');
+async function selectDriveFile(driveId, fileName) {
     showIndicator(true);
+    const drive = connectedDrives[driveId];
+    if (!drive) return;
     
     try {
-        const drive = connectedDrives[driveKey];
         let fileContent = '';
         
-        // If it's a local device drive, read the actual File object
-        if (drive.isLocal && drive.fileObjects) {
+        if (!drive.isLocal) {
+            // Read remote file via Universal Adapter
+            const readData = await client.execute(driveId.includes('google') ? 'google_drive' : driveId.includes('one') ? 'onedrive' : driveId.includes('android') ? 'android_drive' : 'local_drive', null, { operation: 'read', file_path: fileName });
+            fileContent = readData.result?.content || readData.result?.text || '';
+            if (fileContent.length > 5000) {
+                fileContent = fileContent.substring(0, 5000) + '\n\n... [truncated] ...';
+            }
+        } else if (drive.fileObjects) {
             const fileObj = drive.fileObjects.find(f => f.name === fileName);
             if (fileObj) {
                 fileContent = await readFileContent(fileObj);
-                // Trim very large files
                 if (fileContent.length > 5000) {
                     fileContent = fileContent.substring(0, 5000) + '\n\n... [truncated] ...';
                 }
@@ -470,14 +483,10 @@ async function selectFile(driveKey, fileName) {
         // Use zvec search to find related files
         let related = [];
         try {
-            const zvecData = await apiCall('/v1/execute', {
-                block: 'zvec',
-                input: fileName,
-                params: { 
-                    operation: 'search', 
-                    corpus: drive.files.filter(f => typeof f === 'string'),
-                    top_k: 3 
-                }
+            const zvecData = await client.execute('zvec', fileName, { 
+                operation: 'search', 
+                corpus: drive.files.filter(f => typeof f === 'string'),
+                top_k: 3 
             });
             related = zvecData.result?.results || [];
         } catch (e) {
@@ -506,7 +515,6 @@ async function selectFile(driveKey, fileName) {
             ` : ''}
         `);
         
-        // Set active file context for subsequent chat messages
         if (fileContent) {
             setActiveFileContext(fileName, fileContent, drive.name);
             addMessage(`Loaded "${fileName}" from ${drive.name}. You can now ask questions about it.`, 'assistant');
@@ -544,18 +552,9 @@ async function sendMessage() {
     showIndicator(true);
     
     try {
-        const data = await apiCall('/v1/chain', { 
-            steps: [{block: 'chat', params: {}}], 
-            initial_input: text 
-        });
-        
-        if (data.success) {
-            const output = data.final_output;
-            const text = typeof output === 'object' ? (output.text || JSON.stringify(output)) : String(output);
-            addMessage(text, 'assistant');
-        } else {
-            addMessage(`Error: ${data.results?.[0]?.error || 'Unknown error'}`, 'error');
-        }
+        // Use direct /v1/chat for simple chat (most efficient)
+        const data = await client.chat(text);
+        addMessage(data.text || data.result?.text || JSON.stringify(data), 'assistant');
     } catch (err) {
         console.error('Chat error:', err);
         addMessage(`Error: ${err.message}. Make sure the API server is running.`, 'error');
@@ -578,7 +577,7 @@ async function handleFile(input) {
         const form = new FormData();
         form.append('file', file);
         
-        const uploadData = await apiCall('/v1/upload', form, true);
+        const uploadData = await client.upload(form);
         console.log('Upload response:', uploadData);
         
         setOutcomes(`
@@ -591,12 +590,8 @@ async function handleFile(input) {
         
         const fileContent = await readFileContent(file);
         
-        const analysisData = await apiCall('/v1/chain', { 
-            steps: [{block: 'chat', params: {}}], 
-            initial_input: `Analyze this file content and extract key information:\n\nFile: ${file.name}\nSize: ${(file.size / 1024).toFixed(1)} KB\n\nContent:\n${fileContent.substring(0, 3000)}` 
-        });
-        const output = analysisData.final_output;
-        const analysisText = typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
+        const analysisData = await client.execute('chat', `Analyze this file content and extract key information:\n\nFile: ${file.name}\nSize: ${(file.size / 1024).toFixed(1)} KB\n\nContent:\n${fileContent.substring(0, 3000)}`, {});
+        const output = analysisData.result?.text || analysisData.result?.output || JSON.stringify(analysisData, null, 2);
         
         // Set active context for uploaded file
         const trimmedContent = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
@@ -607,77 +602,34 @@ async function handleFile(input) {
             quantitiesHtml = `
                 <div class="outcome-item">
                     <div class="outcome-label">Detected Construction Data</div>
-                    <div style="color: #888; font-size: 12px; margin-top: 8px;">
-                        ${extractQuantities(fileContent)}
-                    </div>
+                    <div style="color: #ccc; font-size: 12px; margin-top: 8px;">Review the analysis for quantities and specs.</div>
                 </div>
             `;
         }
         
         setOutcomes(`
             <div class="outcome-item">
-                <div class="outcome-label">File</div>
+                <div class="outcome-label">File Uploaded</div>
                 <div class="outcome-value" style="font-size: 14px;">${uploadData.filename}</div>
-                <div style="color: #666; font-size: 11px; margin-top: 4px;">${(uploadData.size / 1024).toFixed(1)} KB</div>
+                <div style="color: #888; font-size: 12px; margin-top: 4px;">${(file.size / 1024).toFixed(1)} KB</div>
             </div>
-            ${quantitiesHtml}
             <div class="outcome-item">
                 <div class="outcome-label">Analysis</div>
-                <div style="color: #ccc; font-size: 13px; margin-top: 8px; line-height: 1.5;">
-                    ${analysisText.substring(0, 500)}${analysisText.length > 500 ? '...' : ''}
-                </div>
+                <div class="raw-output" style="margin-top: 8px;">${escapeHtml(output)}</div>
             </div>
+            ${quantitiesHtml}
         `);
         
-        addMessage('Analysis complete. See results panel →', 'assistant');
+        addMessage(`Analyzed ${file.name}. Key information is in the results panel.`, 'assistant');
         
     } catch (err) {
-        console.error('File handling error:', err);
-        addMessage(`Error: ${err.message}`, 'error');
-        setOutcomes(`<p style="color: #ff6666;">Error: ${err.message}</p>`);
+        console.error('File analysis error:', err);
+        addMessage(`Error analyzing file: ${err.message}`, 'error');
     }
     
     document.getElementById('sendBtn').disabled = false;
     showIndicator(false);
     input.value = '';
-}
-
-function readFileContent(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.onerror = (e) => reject(new Error('Failed to read file'));
-        reader.readAsText(file);
-    });
-}
-
-function extractQuantities(text) {
-    const quantities = [];
-    const patterns = [
-        { regex: /(\d+[\d,]*)\s*(?:cubic meters?|m³|cbm)/gi, label: 'Concrete', unit: 'm³' },
-        { regex: /(\d+[\d,]*)\s*(?:metric tons?|tons?|kg)/gi, label: 'Steel', unit: 'kg' },
-        { regex: /(\d+[\d,]*)\s*(?:square meters?|m²|sqm)/gi, label: 'Area', unit: 'm²' },
-    ];
-    
-    patterns.forEach(({ regex, label, unit }) => {
-        const matches = text.match(regex);
-        if (matches) {
-            quantities.push(`${label}: ${matches[0]}`);
-        }
-    });
-    
-    return quantities.length > 0 ? quantities.join('<br>') : 'No standard quantities detected';
-}
-
-function resetChat() {
-    document.getElementById('messages').innerHTML = `
-        <div class="msg assistant">
-            <div class="bubble">Hello! Upload a file, connect a drive, or type a message to get started.</div>
-        </div>
-    `;
-    setOutcomes('');
-    document.getElementById('textInput').value = '';
-    clearActiveFileContext();
 }
 
 // Auto-resize textarea
@@ -687,8 +639,7 @@ document.getElementById('textInput').addEventListener('input', function() {
 });
 
 // Check API health on load
-fetch(`${API_BASE}/health`)
-    .then(r => r.json())
+client.health()
     .then(data => {
         console.log('API Health:', data);
         addMessage(`✅ Connected to API (${data.blocks_available} blocks available)`, 'system');
