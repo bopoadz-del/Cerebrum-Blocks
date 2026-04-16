@@ -137,39 +137,18 @@ async def file_upload_security_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# Handle OPTIONS requests globally - ensure preflight works for all routes
-@app.options("/{path:path}")
-async def options_handler(request: Request, path: str):
-    """Handle CORS preflight requests for all paths"""
-    origin = request.headers.get("origin", CORS_ORIGINS[0])
-    # Validate origin is in our allowed list
-    if origin not in CORS_ORIGINS:
-        origin = CORS_ORIGINS[0]
-    
-    return JSONResponse(
-        content={"status": "ok"},
-        headers={
-            "Access-Control-Allow-Origin": origin,
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-            "Access-Control-Allow-Headers": "*, Content-Type, Authorization, X-Requested-With, Accept, Origin",
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Max-Age": "86400",
-        }
-    )
-
-
 # Include all routers
-app.include_router(blocks.router, prefix="/v1")
-app.include_router(execute.router, prefix="/v1")
-app.include_router(chain.router, prefix="/v1")
-app.include_router(chat.router, prefix="/v1")
-app.include_router(upload.router, prefix="/v1")
-app.include_router(auth.router, prefix="/v1")
-app.include_router(memory.router, prefix="/v1")
-app.include_router(monitoring.router, prefix="/v1")
+app.include_router(blocks.router)
+app.include_router(execute.router)
+app.include_router(chain.router)
+app.include_router(chat.router)
+app.include_router(upload.router)
+app.include_router(auth.router)
+app.include_router(memory.router)
+app.include_router(monitoring.router)
 app.include_router(health.router)
 app.include_router(static.router)
-app.include_router(debug.router, prefix="/v1")
+app.include_router(debug.router)
 
 
 # Mount static files

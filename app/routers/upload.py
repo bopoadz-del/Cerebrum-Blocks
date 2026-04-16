@@ -66,3 +66,9 @@ async def upload_v1(file: UploadFile = File(...), auth: dict = Depends(require_a
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Upload failed")
+
+
+@router.post("/v1/upload")
+async def upload_v1_endpoint(file: UploadFile = File(...), auth: dict = Depends(require_api_key)):
+    """File upload endpoint (v1 API alias)."""
+    return await upload_v1(file, auth)
