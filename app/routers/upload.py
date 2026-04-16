@@ -20,7 +20,7 @@ DATA_DIR = os.getenv("DATA_DIR", "./data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 
-@router.post("/v1/upload")
+@router.post("/upload")
 async def upload_v1(file: UploadFile = File(...), auth: dict = Depends(require_api_key)):
     """File upload endpoint (v1 API).
 
