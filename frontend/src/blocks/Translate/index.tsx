@@ -10,14 +10,13 @@ export const TranslateBlock: React.FC<{ apiKey: string }> = ({ apiKey }) => {
   const [loading, setLoading] = useState(false);
 
   const translate = async () => {
-    if (!text.trim()) return;
+    if (!text) return;
     setLoading(true);
     try {
       const data = await client.execute('translate', text, { target_lang: target });
-      setResult(JSON.stringify(data, null, 2));
+      setResult(data?.result?.translation || data?.result?.text || JSON.stringify(data, null, 2));
     } catch (err: any) {
       setResult('Error: ' + (err.message || 'Request failed'));
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -37,7 +36,7 @@ export const TranslateBlock: React.FC<{ apiKey: string }> = ({ apiKey }) => {
         </select>
         <button onClick={translate} disabled={loading} style={{ padding: '8px 16px' }}>{loading ? '...' : '🌐 Translate'}</button>
       </div>
-      {result && <pre style={{ marginTop: '10px', padding: '10px', background: '#1e1e1e', color: '#d4d4d4', borderRadius: '4px', fontSize: '12px', overflow: 'auto', maxHeight: '200px' }}>{result}</pre>}
+      {result && <div style={{ marginTop: '10px', padding: '10px', background: '#e8f5e9', borderRadius: '4px' }}>{result}</div>}
     </div>
   );
 };

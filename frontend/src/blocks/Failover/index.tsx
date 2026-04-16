@@ -15,21 +15,21 @@ export const FailoverBlock: React.FC<FailoverBlockProps> = ({ apiKey }) => {
       try {
         const data = await client.systemHealth();
         setStatus(data);
-      } catch (e: any) {
-        console.error('Failed to fetch status', e);
+      } catch (e) {
+        console.error('Failed to fetch status');
       }
     };
     fetchStatus();
     const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
-  }, [apiKey]);
+  }, []);
 
   if (!status) return <div>Loading...</div>;
 
   return (
     <div style={{ padding: '10px' }}>
       <div style={{ marginBottom: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
-        <strong>System Health:</strong> {status.status}
+        <strong>System Health:</strong> {status.overall_status || status.status}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
         {Object.entries(status.blocks || {}).map(([name, block]: [string, any]) => (

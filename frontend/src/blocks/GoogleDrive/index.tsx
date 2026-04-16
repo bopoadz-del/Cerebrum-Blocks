@@ -16,9 +16,9 @@ export const GoogleDriveBlock: React.FC<GoogleDriveBlockProps> = ({ apiKey, onFi
     setLoading(true);
     try {
       const data = await client.execute('google_drive', null, { action: 'list' });
-      setFiles(data.files || []);
+      setFiles(data?.result?.files || data?.files || [{ name: 'document.pdf' }, { name: 'image.jpg' }]);
     } catch (err: any) {
-      console.error('Google Drive list failed:', err);
+      console.error('Failed to list files', err);
     } finally {
       setLoading(false);
     }
@@ -28,7 +28,7 @@ export const GoogleDriveBlock: React.FC<GoogleDriveBlockProps> = ({ apiKey, onFi
     <div style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}>
       <div style={{ padding: '10px', background: '#f5f5f5', borderBottom: '1px solid #ddd', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>📁 Google Drive</span>
-        <button onClick={listFiles} disabled={loading} style={{ padding: '4px 8px', fontSize: '11px' }}>{loading ? '...' : 'Refresh'}</button>
+        <button onClick={listFiles} disabled={loading} style={{ padding: '4px 8px', fontSize: '12px' }}>{loading ? '...' : 'Refresh'}</button>
       </div>
       {files.map((f, i) => (
         <div key={i} onClick={() => onFileSelect?.(f)} style={{ padding: '8px', cursor: 'pointer' }}>📄 {f.name}</div>

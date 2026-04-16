@@ -13,15 +13,16 @@ export const WebBlock: React.FC<WebBlockProps> = ({ apiKey, onFetch }) => {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchPage = async () => {
+  const doFetch = async () => {
     if (!url) return;
     setLoading(true);
     try {
       const data = await client.execute('web', null, { url });
       setResult(data);
       onFetch?.(data);
-    } catch (err: any) {
-      console.error('Web fetch failed:', err);
+    } catch (error: any) {
+      console.error('Web fetch failed:', error);
+      setResult({ error: error.message || 'Request failed' });
     } finally {
       setLoading(false);
     }
@@ -31,12 +32,17 @@ export const WebBlock: React.FC<WebBlockProps> = ({ apiKey, onFetch }) => {
     <div style={{ padding: '10px' }}>
       <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
         <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" style={{ flex: 1, padding: '8px' }} />
-        <button onClick={fetchPage} disabled={loading} style={{ padding: '8px 16px' }}>{loading ? '...' : '🕸️ Fetch'}</button>
+        <button onClick={doFetch} disabled={loading} style={{ padding: '8px 16px' }}>{loading ? '...' : '🕸️ Fetch'}</button>
       </div>
-      {result?.content && (
+      {result?.result?.content && (
         <div style={{ padding: '10px', background: '#f5f5f5', borderRadius: '4px', fontSize: '12px', maxHeight: '200px', overflow: 'auto' }}>
-          Status: {result.status}<br/>
-          {result.content.substring(0, 1000)}...
+          Status: {result.result.status}<br/>
+          {result.result.content.substring(0, 1000)}...
+        </div>
+      )}
+      {result?.error && (
+        <div style={{ padding: '10px', background: '#ffebee', borderRadius: '4px', fontSize: '12px' }}>
+          Error: {result.error}
         </div>
       )}
     </div>

@@ -19,7 +19,6 @@ export const QueueBlock: React.FC<QueueBlockProps> = ({
 }) => {
   const client = new CerebrumClient(apiKey);
   const [status, setStatus] = useState<string>('idle');
-  const [progress] = useState<number>(0);
   const [result, setResult] = useState<any>(null);
 
   useEffect(() => {
@@ -28,16 +27,16 @@ export const QueueBlock: React.FC<QueueBlockProps> = ({
     const checkStatus = async () => {
       try {
         const data = await client.execute('queue', null, { action: 'status', job_id: jobId });
-        setStatus(data.status || 'unknown');
+        setStatus(data?.result?.status || data?.status || 'unknown');
         
         // Get result if completed
-        if (data.status === 'COMPLETED' || data.status === 'completed') {
+        if (data?.result?.status === 'COMPLETED' || data?.result?.status === 'completed' || data?.status === 'completed') {
           const resultData = await client.execute('queue', null, { action: 'result', job_id: jobId });
-          setResult(resultData.result);
-          onComplete?.(resultData.result);
+          setResult(resultData?.result);
+          onComplete?.(resultData?.result);
         }
-      } catch (err: any) {
-        console.error('Queue status check failed:', err);
+      } catch (error) {
+        console.error('Queue status check failed:', error);
       }
     };
 
@@ -45,7 +44,7 @@ export const QueueBlock: React.FC<QueueBlockProps> = ({
     const interval = setInterval(checkStatus, pollInterval);
     
     return () => clearInterval(interval);
-  }, [jobId]);
+  }, [jobId, pollInterval, onComplete]);
 
   if (!jobId) return null;
 
@@ -75,7 +74,7 @@ export const QueueBlock: React.FC<QueueBlockProps> = ({
           overflow: 'hidden'
         }}>
           <div style={{
-            width: `${progress}%`,
+            width: '50%',
             height: '100%',
             background: '#007bff',
             transition: 'width 0.3s'

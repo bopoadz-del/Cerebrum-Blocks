@@ -13,10 +13,9 @@ export const CodeBlock: React.FC<{ apiKey: string }> = ({ apiKey }) => {
     setLoading(true);
     try {
       const data = await client.execute('code', code, { language });
-      setOutput(JSON.stringify(data, null, 2));
+      setOutput(data?.result?.output || data?.result?.text || JSON.stringify(data, null, 2));
     } catch (err: any) {
       setOutput('Error: ' + (err.message || 'Request failed'));
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -32,8 +31,8 @@ export const CodeBlock: React.FC<{ apiKey: string }> = ({ apiKey }) => {
         </select>
       </div>
       <textarea value={code} onChange={(e) => setCode(e.target.value)} style={{ width: '100%', height: '100px', padding: '8px', fontFamily: 'monospace', fontSize: '12px', marginBottom: '5px' }} />
-      <button onClick={run} disabled={loading} style={{ padding: '8px 16px', marginBottom: '10px' }}>{loading ? 'Running...' : '▶️ Run'}</button>
-      {output && <pre style={{ padding: '10px', background: '#1e1e1e', color: '#d4d4d4', borderRadius: '4px', fontSize: '12px', overflow: 'auto', maxHeight: '200px' }}>{output}</pre>}
+      <button onClick={run} disabled={loading} style={{ padding: '8px 16px', marginBottom: '10px' }}>{loading ? '...' : '▶️ Run'}</button>
+      {output && <pre style={{ padding: '10px', background: '#1e1e1e', color: '#d4d4d4', borderRadius: '4px', fontSize: '12px' }}>{output}</pre>}
     </div>
   );
 };
