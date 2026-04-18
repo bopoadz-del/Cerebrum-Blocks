@@ -31,7 +31,11 @@ class EventBusBlock(UniversalBlock):
         "output": {
             "type": "json",
             "fields": []
-        }
+        },
+        "quick_actions": [
+            {"icon": "📢", "label": "Publish Event", "prompt": '{"action":"publish","topic":"chat.response","payload":{}}'},
+            {"icon": "📋", "label": "List Topics", "prompt": '{"action":"list_topics"}'}
+        ]
     }
 
     def __init__(self, hal_block=None, config=None):

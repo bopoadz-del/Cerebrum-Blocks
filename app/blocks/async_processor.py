@@ -35,7 +35,11 @@ class AsyncProcessorBlock(UniversalBlock):
             "fields": [
                 {"name": "job_id", "type": "text", "label": "Job ID"}
             ]
-        }
+        },
+        "quick_actions": [
+            {"icon": "🚀", "label": "Dispatch Job", "prompt": '{"action":"dispatch","task":"process_pdf","args":{}}'},
+            {"icon": "🔍", "label": "Check Status", "prompt": '{"action":"status","job_id":"your-job-id"}'}
+        ]
     }
 
     def __init__(self, hal_block=None, config=None):

@@ -37,7 +37,12 @@ class OCRBlock(UniversalBlock):
                 {"name": "text", "type": "text", "label": "Extracted Text"},
                 {"name": "confidence", "type": "percentage", "label": "Confidence"}
             ]
-        }
+        },
+        "quick_actions": [
+            {"icon": "🔍", "label": "Extract Text", "prompt": "Extract all text from this image"},
+            {"icon": "🔢", "label": "Extract Numbers", "prompt": "Extract all numbers and measurements from this image"},
+            {"icon": "📋", "label": "Full OCR", "prompt": "Perform full OCR and return structured content"}
+        ]
     }
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:

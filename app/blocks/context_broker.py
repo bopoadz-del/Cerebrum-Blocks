@@ -33,7 +33,11 @@ class ContextBrokerBlock(UniversalBlock):
                 {"name": "chat_history", "type": "json", "label": "Chat History"},
                 {"name": "construction_data", "type": "json", "label": "Construction Data"}
             ]
-        }
+        },
+        "quick_actions": [
+            {"icon": "🧠", "label": "Get Context", "prompt": '{"action":"get_context","session_id":"user_123"}'},
+            {"icon": "💾", "label": "Save Context", "prompt": '{"action":"set_context","session_id":"user_123","data":{}}'}
+        ]
     }
 
     def __init__(self, hal_block=None, config=None):
