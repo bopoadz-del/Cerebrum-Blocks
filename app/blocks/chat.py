@@ -56,8 +56,7 @@ class ChatBlock(UniversalBlock):
         else:
             message = str(input_data)
 
-        # Get API key from environment or use hardcoded fallback
-        api_key = os.getenv("DEEPSEEK_API_KEY") or "sk-62229915230e448b82ea08550d11fa86"
+        api_key = os.getenv("DEEPSEEK_API_KEY")
         if not api_key:
             return {
                 "status": "error",
