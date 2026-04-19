@@ -44,7 +44,7 @@ services:
         value: production
     healthCheckPath: /health
 
-  # CLAUDE TELEGRAM BOT
+  # CLAUDE TELEGRAM BOT — Full Claude Code agent, clones repo on startup
   - type: worker
     name: claude-telegram-bot
     env: python
@@ -57,10 +57,12 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: GITHUB_TOKEN
+        sync: false
       - key: WORK_DIR
-        value: /app
+        value: /workspace
       - key: HISTORY_DIR
-        value: /data/history
+        value: /tmp/history
 
   # STORE FRONTEND
   - type: web
