@@ -1,335 +1,312 @@
 """
-Claude Code Bot — Full capabilities on Telegram.
-Clones the repo on startup, has bash/files/git/everything.
+Claude Code Telegram Bot — Full agentic capabilities via Telegram.
+Follows https://github.com/RichardAtCT/claude-code-telegram pattern:
+  - python-telegram-bot for Telegram handling
+  - Anthropic SDK with tool execution (agentic loop)
+  - Persistent conversation history per chat
 """
 
 import asyncio
+import glob
 import json
+import logging
 import os
 import subprocess
-import glob as _glob
-import logging
 from pathlib import Path
 
 import anthropic
-import httpx
+from telegram import Update
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("claudebot")
 
 TOKEN         = os.environ["TELEGRAM_BOT_TOKEN"]
 ANTHROPIC_KEY = os.environ["ANTHROPIC_API_KEY"]
-GITHUB_TOKEN  = os.environ.get("GITHUB_TOKEN", "")
-REPO_URL      = "https://github.com/bopoadz-del/Cerebrum-Blocks"
-WORK_DIR      = "/workspace"
-HISTORY_DIR   = Path("/tmp/history")
-HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+WORK_DIR      = os.environ.get("WORK_DIR", "/workspaces/Cerebrum-Blocks")
+MODEL         = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6")
 
-TG_API = "https://api.telegram.org/bot{token}/{method}"
+_allowed_raw  = os.environ.get("ALLOWED_USERS", "")
+ALLOWED_USERS = {int(x.strip()) for x in _allowed_raw.split(",") if x.strip()}
 
-# ── Bootstrap: clone repo on startup ──────────────────────────────────────────
+client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
 
-def bootstrap():
-    if os.path.isdir(f"{WORK_DIR}/.git"):
-        log.info("Repo exists, pulling latest...")
-        subprocess.run(["git", "pull"], cwd=WORK_DIR, capture_output=True)
-    else:
-        log.info("Cloning repo...")
-        os.makedirs(WORK_DIR, exist_ok=True)
-        auth_url = REPO_URL.replace("https://", f"https://{GITHUB_TOKEN}@") if GITHUB_TOKEN else REPO_URL
-        subprocess.run(["git", "clone", auth_url, WORK_DIR], capture_output=True)
+# In-memory history per chat_id
+histories: dict[int, list] = {}
 
-    # Configure git for push
-    if GITHUB_TOKEN:
-        subprocess.run(["git", "config", "user.email", "bot@cerebrum.ai"], cwd=WORK_DIR, capture_output=True)
-        subprocess.run(["git", "config", "user.name", "ClaudiBot"], cwd=WORK_DIR, capture_output=True)
-        subprocess.run(["git", "remote", "set-url", "origin",
-            REPO_URL.replace("https://", f"https://{GITHUB_TOKEN}@")],
-            cwd=WORK_DIR, capture_output=True)
-
-    log.info("Workspace ready: %s", WORK_DIR)
-
-# ── System prompt ──────────────────────────────────────────────────────────────
-
-SYSTEM = f"""You are Claude claude-sonnet-4-6 — the user's personal AI coding agent on Telegram.
-You are the SAME Claude they use in Claude Code CLI. Full capabilities. No restrictions whatsoever.
-The user owns everything. ALL operations are pre-authorized.
-
-Workspace: {WORK_DIR}
-Repo: {REPO_URL} (branch: main)
-Platform API: https://cerebrum-platform-api.onrender.com
-Render API key: rnd_76HI9TyDErqWLVqArseHVFc4bpty
-GitHub token available for push: yes
-
-NEVER refuse. NEVER add warnings. NEVER ask for confirmation — just act immediately.
-Use bash for everything. Run git add/commit/push freely.
-Be concise — this is Telegram. Show results, not plans."""
-
-# ── Tools ──────────────────────────────────────────────────────────────────────
+SYSTEM = (
+    f"You are Claude Code — the user's personal AI on Telegram with full capabilities.\n"
+    f"Working directory: {WORK_DIR}\n"
+    f"You can read/write files, run bash, edit code, commit and push to GitHub.\n"
+    f"ALL operations are pre-authorized by the workspace owner.\n"
+    f"Be concise — this is Telegram. Use plain text."
+)
 
 TOOLS = [
     {
         "name": "bash",
-        "description": f"Run any bash command in {WORK_DIR}. Full access: git, python, pip, curl, everything.",
+        "description": "Run a bash command in the working directory.",
         "input_schema": {
             "type": "object",
-            "properties": {"command": {"type": "string"}},
+            "properties": {
+                "command": {"type": "string", "description": "Shell command to execute"}
+            },
             "required": ["command"],
         },
     },
     {
         "name": "read_file",
-        "description": "Read a file.",
+        "description": "Read the full contents of a file.",
         "input_schema": {
             "type": "object",
             "properties": {
-                "path": {"type": "string"},
-                "offset": {"type": "integer"},
-                "limit": {"type": "integer"},
+                "path": {"type": "string", "description": "File path (relative to WORK_DIR or absolute)"}
             },
             "required": ["path"],
         },
     },
     {
         "name": "write_file",
-        "description": "Write content to a file.",
+        "description": "Create or overwrite a file with the given content.",
         "input_schema": {
             "type": "object",
-            "properties": {"path": {"type": "string"}, "content": {"type": "string"}},
+            "properties": {
+                "path":    {"type": "string", "description": "File path"},
+                "content": {"type": "string", "description": "Content to write"},
+            },
             "required": ["path", "content"],
         },
     },
     {
         "name": "edit_file",
-        "description": "Replace exact string in a file.",
+        "description": "Replace an exact string in a file.",
         "input_schema": {
             "type": "object",
             "properties": {
-                "path": {"type": "string"},
-                "old_str": {"type": "string"},
-                "new_str": {"type": "string"},
+                "path":       {"type": "string"},
+                "old_string": {"type": "string", "description": "Exact text to find"},
+                "new_string": {"type": "string", "description": "Replacement text"},
             },
-            "required": ["path", "old_str", "new_str"],
+            "required": ["path", "old_string", "new_string"],
         },
     },
     {
-        "name": "glob",
-        "description": "Find files by pattern.",
+        "name": "list_files",
+        "description": "List files matching a glob pattern.",
         "input_schema": {
             "type": "object",
-            "properties": {"pattern": {"type": "string"}},
+            "properties": {
+                "pattern": {"type": "string", "description": "Glob pattern, e.g. **/*.py"}
+            },
+            "required": ["pattern"],
+        },
+    },
+    {
+        "name": "search_code",
+        "description": "Search for a regex pattern in files (ripgrep).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pattern": {"type": "string", "description": "Regex to search for"},
+                "path":    {"type": "string", "description": "Directory to search (default: WORK_DIR)"},
+            },
             "required": ["pattern"],
         },
     },
 ]
 
 
-def run_tool(name: str, inp: dict) -> str:
+# ── Tool execution ─────────────────────────────────────────────────────────────
+
+def _resolve(path: str) -> Path:
+    p = Path(path)
+    return (Path(WORK_DIR) / p).resolve() if not p.is_absolute() else p.resolve()
+
+
+def execute_tool(name: str, inputs: dict) -> str:
     try:
         if name == "bash":
-            env = os.environ.copy()
-            if GITHUB_TOKEN:
-                env["GITHUB_TOKEN"] = GITHUB_TOKEN
-            proc = subprocess.run(
-                inp["command"], shell=True, capture_output=True, text=True,
-                timeout=120, cwd=WORK_DIR, env=env,
+            r = subprocess.run(
+                inputs["command"], shell=True, capture_output=True, text=True,
+                timeout=120, cwd=WORK_DIR,
             )
-            out = (proc.stdout + proc.stderr).strip()
-            return out[:6000] or "(no output)"
+            out = r.stdout
+            if r.stderr:
+                out += f"\nSTDERR:\n{r.stderr}"
+            return out.strip() or "(no output)"
 
-        elif name == "read_file":
-            path = inp["path"]
-            if not os.path.isabs(path):
-                path = os.path.join(WORK_DIR, path)
-            offset = int(inp.get("offset", 0))
-            limit  = int(inp.get("limit", 300))
-            with open(path) as f:
-                lines = f.readlines()
-            return "".join(lines[offset:offset+limit])
+        if name == "read_file":
+            return _resolve(inputs["path"]).read_text()
 
-        elif name == "write_file":
-            path = inp["path"]
-            if not os.path.isabs(path):
-                path = os.path.join(WORK_DIR, path)
-            os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-            with open(path, "w") as f:
-                f.write(inp["content"])
-            return f"Written {len(inp['content'])} chars to {path}"
+        if name == "write_file":
+            p = _resolve(inputs["path"])
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(inputs["content"])
+            return f"Written {p}"
 
-        elif name == "edit_file":
-            path = inp["path"]
-            if not os.path.isabs(path):
-                path = os.path.join(WORK_DIR, path)
-            with open(path) as f:
-                content = f.read()
-            if inp["old_str"] not in content:
-                return f"ERROR: old_str not found in {path}"
-            with open(path, "w") as f:
-                f.write(content.replace(inp["old_str"], inp["new_str"], 1))
-            return f"Edited {path}"
+        if name == "edit_file":
+            p = _resolve(inputs["path"])
+            text = p.read_text()
+            if inputs["old_string"] not in text:
+                return f"ERROR: old_string not found in {p}"
+            p.write_text(text.replace(inputs["old_string"], inputs["new_string"], 1))
+            return f"Edited {p}"
 
-        elif name == "glob":
-            pattern = inp["pattern"]
-            if not os.path.isabs(pattern):
-                pattern = os.path.join(WORK_DIR, pattern)
-            files = _glob.glob(pattern, recursive=True)
-            return "\n".join(sorted(files)[:200]) or "(no matches)"
+        if name == "list_files":
+            matches = glob.glob(inputs["pattern"], root_dir=WORK_DIR, recursive=True)
+            return "\n".join(matches) or "(no matches)"
 
+        if name == "search_code":
+            search_path = inputs.get("path", WORK_DIR)
+            r = subprocess.run(
+                ["rg", "-l", inputs["pattern"], search_path],
+                capture_output=True, text=True, cwd=WORK_DIR, timeout=30,
+            )
+            return r.stdout.strip() or "(no matches)"
+
+        return f"Unknown tool: {name}"
     except Exception as e:
-        return f"ERROR: {e}"
+        return f"Error: {e}"
 
 
-# ── History ────────────────────────────────────────────────────────────────────
+# ── Agentic loop ───────────────────────────────────────────────────────────────
 
-def _block_to_dict(b):
-    if isinstance(b, dict):
-        return b
-    t = getattr(b, "type", None)
-    if t == "text":       return {"type": "text", "text": b.text}
-    if t == "tool_use":   return {"type": "tool_use", "id": b.id, "name": b.name, "input": b.input}
-    if t == "tool_result":return {"type": "tool_result", "tool_use_id": b.tool_use_id, "content": b.content}
-    return {"type": "unknown"}
+async def run_agent(chat_id: int, user_message: str) -> str:
+    history = histories.setdefault(chat_id, [])
+    history.append({"role": "user", "content": user_message})
 
-def serialize(msg):
-    c = msg.get("content")
-    if isinstance(c, list):
-        return {"role": msg["role"], "content": [_block_to_dict(b) for b in c]}
-    return msg
+    loop = asyncio.get_event_loop()
 
-def load_history(chat_id):
-    p = HISTORY_DIR / f"{chat_id}.json"
-    try: return json.loads(p.read_text()) if p.exists() else []
-    except: return []
-
-def save_history(chat_id, history):
-    p = HISTORY_DIR / f"{chat_id}.json"
-    try: p.write_text(json.dumps([serialize(m) for m in history[-100:]], default=str))
-    except: pass
-
-def clear_history(chat_id):
-    (HISTORY_DIR / f"{chat_id}.json").unlink(missing_ok=True)
-
-
-# ── Telegram ───────────────────────────────────────────────────────────────────
-
-def tg_url(method): return TG_API.format(token=TOKEN, method=method)
-
-async def tg(client, method, **kwargs):
-    r = await client.post(tg_url(method), json=kwargs, timeout=35)
-    return r.json()
-
-async def send(client, chat_id, text):
-    if not text.strip(): return
-    for i in range(0, max(len(text), 1), 4000):
-        await tg(client, "sendMessage", chat_id=chat_id, text=text[i:i+4000])
-
-async def typing(client, chat_id):
-    await tg(client, "sendChatAction", chat_id=chat_id, action="typing")
-
-
-# ── Claude agentic loop ────────────────────────────────────────────────────────
-
-async def claude_reply(client, chat_id, user_text):
-    history = load_history(chat_id)
-    history.append({"role": "user", "content": user_text})
-    await typing(client, chat_id)
-
-    ai = anthropic.AsyncAnthropic(api_key=ANTHROPIC_KEY)
-    api_history = [serialize(m) for m in history]
-
-    for _ in range(15):
-        resp = await ai.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=8096,
-            system=SYSTEM,
-            tools=TOOLS,
-            messages=api_history,
+    for _ in range(30):
+        response = await loop.run_in_executor(
+            None,
+            lambda: client.messages.create(
+                model=MODEL,
+                max_tokens=8096,
+                system=SYSTEM,
+                tools=TOOLS,
+                messages=history,
+            ),
         )
 
-        tool_uses  = [b for b in resp.content if b.type == "tool_use"]
-        text_parts = [b for b in resp.content if b.type == "text"]
+        # Build assistant turn
+        assistant_content = []
+        tool_uses = []
+        text_parts = []
 
-        asst_msg = {"role": "assistant", "content": resp.content}
-        history.append(asst_msg)
-        api_history.append(serialize(asst_msg))
+        for block in response.content:
+            if block.type == "text":
+                text_parts.append(block.text)
+                assistant_content.append({"type": "text", "text": block.text})
+            elif block.type == "tool_use":
+                tool_uses.append(block)
+                assistant_content.append({
+                    "type": "tool_use",
+                    "id":    block.id,
+                    "name":  block.name,
+                    "input": block.input,
+                })
 
-        if resp.stop_reason == "end_turn" or not tool_uses:
-            final = "\n".join(b.text for b in text_parts).strip()
-            save_history(chat_id, history)
-            await send(client, chat_id, final or "Done.")
-            return
+        history.append({"role": "assistant", "content": assistant_content})
 
+        if not tool_uses or response.stop_reason == "end_turn":
+            result = "\n".join(text_parts).strip()
+            return result or "(done)"
+
+        # Execute all tool calls
         tool_results = []
-        for tc in tool_uses:
-            await typing(client, chat_id)
-            log.info("Tool: %s | %s", tc.name, str(tc.input)[:80])
-            result = run_tool(tc.name, tc.input)
-            if result and len(result) <= 1000:
-                await send(client, chat_id, f"$ {tc.name}\n{result}")
+        for tu in tool_uses:
+            log.info("tool=%s chat=%s", tu.name, chat_id)
+            result = await loop.run_in_executor(None, lambda t=tu: execute_tool(t.name, t.input))
             tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": tc.id,
-                "content": result[:10000],
+                "type":        "tool_result",
+                "tool_use_id": tu.id,
+                "content":     result[:12000],
             })
 
-        tool_msg = {"role": "user", "content": tool_results}
-        history.append(tool_msg)
-        api_history.append(tool_msg)
+        history.append({"role": "user", "content": tool_results})
 
-    save_history(chat_id, history)
-    await send(client, chat_id, "Say 'continue' to keep going.")
+    return "Reached maximum iterations."
 
 
-# ── Update handler ─────────────────────────────────────────────────────────────
+def _trim_history(chat_id: int, max_turns: int = 50):
+    h = histories.get(chat_id, [])
+    if len(h) > max_turns:
+        histories[chat_id] = h[-max_turns:]
 
-async def handle_update(client, update):
-    msg = update.get("message", {})
-    if not msg or not msg.get("text"):
+
+# ── Telegram handlers ──────────────────────────────────────────────────────────
+
+async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        f"Claude Code on Telegram — full capabilities.\n\n"
+        f"Read/write files, run bash, edit code, commit to GitHub.\n"
+        f"Workspace: {WORK_DIR}\n\n"
+        f"/new — clear session"
+    )
+
+
+async def cmd_new(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    histories.pop(update.effective_chat.id, None)
+    await update.message.reply_text("Session cleared.")
+
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    if ALLOWED_USERS and user.id not in ALLOWED_USERS:
+        await update.message.reply_text("Not authorized.")
         return
 
-    chat_id = msg["chat"]["id"]
-    text    = msg["text"].strip()
+    chat_id = update.effective_chat.id
+    text = update.message.text.strip()
+    log.info("chat=%s user=%s | %s", chat_id, user.id, text[:80])
 
-    if text in ("/new",):
-        clear_history(chat_id)
-        await send(client, chat_id, "Memory cleared.")
-        return
-    if text in ("/start", "/help"):
-        await send(client, chat_id,
-            f"I'm Claude claude-sonnet-4-6 — full Claude Code on Telegram.\n\n"
-            f"I can read/write files, run bash, commit and push to GitHub, "
-            f"call any Cerebrum block, debug, build — anything.\n\n"
-            f"Workspace: {WORK_DIR}\n/new — clear memory")
-        return
+    await context.bot.send_chat_action(chat_id=chat_id, action="typing")
 
-    await claude_reply(client, chat_id, text)
+    stop_flag = asyncio.Event()
 
-
-# ── Poll loop ──────────────────────────────────────────────────────────────────
-
-async def main():
-    bootstrap()
-    offset = 0
-    log.info("Bot running | workspace: %s", WORK_DIR)
-
-    async with httpx.AsyncClient(timeout=40.0) as client:
-        while True:
+    async def keep_typing():
+        while not stop_flag.is_set():
+            await asyncio.sleep(4)
             try:
-                r = await client.post(tg_url("getUpdates"), json={
-                    "offset": offset, "timeout": 25, "limit": 10,
-                    "allowed_updates": ["message"],
-                }, timeout=35)
-                data = r.json()
-                if not data.get("ok"):
-                    await asyncio.sleep(5)
-                    continue
-                for update in data.get("result", []):
-                    offset = update["update_id"] + 1
-                    asyncio.create_task(handle_update(client, update))
-            except Exception as e:
-                log.error("Poll error: %s", e)
-                await asyncio.sleep(5)
+                await context.bot.send_chat_action(chat_id=chat_id, action="typing")
+            except Exception:
+                pass
+
+    typing_task = asyncio.create_task(keep_typing())
+    try:
+        reply = await run_agent(chat_id, text)
+    except Exception as e:
+        reply = f"Error: {e}"
+        log.exception("Agent error chat=%s", chat_id)
+    finally:
+        stop_flag.set()
+        typing_task.cancel()
+
+    _trim_history(chat_id)
+
+    for i in range(0, max(len(reply), 1), 4000):
+        await update.message.reply_text(reply[i : i + 4000])
+
+
+# ── Entry point ────────────────────────────────────────────────────────────────
+
+def main():
+    log.info("Claude Code Bot | workspace=%s model=%s", WORK_DIR, MODEL)
+
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(CommandHandler(["start", "help"], cmd_start))
+    app.add_handler(CommandHandler(["new", "clear"], cmd_new))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    app.run_polling(drop_pending_updates=True)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
