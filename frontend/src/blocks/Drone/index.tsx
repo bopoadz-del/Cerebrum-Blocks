@@ -2,7 +2,6 @@
 // <DroneBlock apiKey="cb_key" projectId="project_01" />
 
 import { useState } from 'react';
-import { API } from '../../api';
 
 interface DroneBlockProps {
   apiKey: string;
@@ -21,18 +20,29 @@ export const DroneBlock: React.FC<DroneBlockProps> = ({
   const [defects, setDefects] = useState<any[]>([]);
   const [progress, setProgress] = useState<any>(null);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const processVideo = async () => {
     if (!videoPath) return;
     setLoading(true);
     try {
-      const data = await API.call('/v1/drone/process', { 
-        action: 'process_video',
-        project_id: projectId,
-        video_path: videoPath,
-        flight_date: flightDate,
-        area_polygons: [],
-        altitude: 80
+      const response = await fetch(`${API_BASE}/v1/drone/process`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ 
+          action: 'process_video',
+          project_id: projectId,
+          video_path: videoPath,
+          flight_date: flightDate,
+          area_polygons: [],
+          altitude: 80
+        })
       });
+
+      const data = await response.json();
       console.log('Processed:', data);
     } catch (error) {
       console.error('Drone process failed:', error);
@@ -44,11 +54,20 @@ export const DroneBlock: React.FC<DroneBlockProps> = ({
   const detectDefects = async () => {
     setLoading(true);
     try {
-      const data = await API.call('/v1/drone/defects', { 
-        action: 'detect_defects',
-        image_paths: [`flights/${flightDate}/frame_001.jpg`],
-        types: ['concrete_crack', 'masonry_alignment']
+      const response = await fetch(`${API_BASE}/v1/drone/defects`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ 
+          action: 'detect_defects',
+          image_paths: [`flights/${flightDate}/frame_001.jpg`],
+          types: ['concrete_crack', 'masonry_alignment']
+        })
       });
+
+      const data = await response.json();
       setDefects(data.defects || []);
       data.defects?.forEach((d: any) => onDefectFound?.(d));
     } catch (error) {
@@ -60,11 +79,20 @@ export const DroneBlock: React.FC<DroneBlockProps> = ({
 
   const checkProgress = async () => {
     try {
-      const data = await API.call('/v1/drone/progress', { 
-        action: 'compare_to_bim',
-        project_id: projectId,
-        flight_date: flightDate
+      const response = await fetch(`${API_BASE}/v1/drone/progress`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ 
+          action: 'compare_to_bim',
+          project_id: projectId,
+          flight_date: flightDate
+        })
       });
+
+      const data = await response.json();
       setProgress(data);
     } catch (error) {
       console.error('Progress check failed:', error);

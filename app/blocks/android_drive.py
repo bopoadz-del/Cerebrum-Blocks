@@ -9,6 +9,7 @@ class AndroidDriveBlock(UniversalBlock):
     
     name = "android_drive"
     version = "1.0"
+    description = "Android device storage access via ADB or REST bridge"
     layer = 4
     tags = ["integration", "storage", "mobile"]
     requires = []

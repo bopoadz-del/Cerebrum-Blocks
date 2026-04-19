@@ -3,7 +3,6 @@
 // <DatabaseBlock apiKey="cb_key" />
 
 import { useState } from 'react';
-import { API } from '../../api';
 
 interface DatabaseBlockProps {
   apiKey: string;
@@ -17,16 +16,26 @@ export const DatabaseBlock: React.FC<DatabaseBlockProps> = ({ apiKey }) => {
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const executeOperation = async () => {
     setLoading(true);
     try {
-      const responseData = await API.call('/v1/execute', {
-        block: 'database',
-        action: operation,
-        table: table,
-        query: query,
-        data: data ? JSON.parse(data) : undefined
+      const response = await fetch(`${API_BASE}/v1/execute`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          block: 'database',
+          action: operation,
+          table: table,
+          query: query,
+          data: data ? JSON.parse(data) : undefined
+        })
       });
+      const responseData = await response.json();
       setResult(JSON.stringify(responseData, null, 2));
     } catch (error) {
       setResult('Error: ' + (error as Error).message);

@@ -88,6 +88,8 @@ class AuthBlock(LegoBlock):
             )
         elif action == "revoke_key":
             return await self._revoke_key(input_data.get("api_key"))
+        elif action == "rotate_key":
+            return await self._rotate_key(input_data.get("api_key"))
         elif action == "get_usage":
             return await self._get_usage(input_data.get("api_key"))
         elif action == "list_keys":
@@ -260,8 +262,10 @@ class AuthBlock(LegoBlock):
             "message": "Save this key - it won't be shown again"
         }
     
-    async def _revoke_key(self, api_key: str) -> Dict:
+    async def _revoke_key(self, api_key: Optional[str]) -> Dict:
         """Revoke an API key"""
+        if not api_key:
+            return {"revoked": False, "reason": "no_key_provided"}
         if not self.memory_block:
             return {"revoked": False, "reason": "no_memory_backend"}
         
@@ -281,8 +285,10 @@ class AuthBlock(LegoBlock):
         
         return {"revoked": True, "api_key": api_key[:8] + "..."}
     
-    async def _get_usage(self, api_key: str) -> Dict:
+    async def _get_usage(self, api_key: Optional[str]) -> Dict:
         """Get usage statistics for a key"""
+        if not api_key:
+            return {"error": "no_key_provided"}
         if not self.memory_block:
             return {"usage": "untracked"}
         
@@ -294,14 +300,15 @@ class AuthBlock(LegoBlock):
             "current_hour_requests": "tracked_in_memory"
         }
     
-    async def _list_keys(self, owner: str) -> Dict:
+    async def _list_keys(self, owner: Optional[str]) -> Dict:
         """List all keys for an owner"""
         if not self.memory_block:
             return {"keys": []}
         
+        target_owner = owner or "system"
         owner_data = await self.memory_block.execute({
             "action": "get",
-            "key": f"auth:owner:{owner}"
+            "key": f"auth:owner:{target_owner}"
         })
         
         if not owner_data.get("hit"):
@@ -318,6 +325,7 @@ class AuthBlock(LegoBlock):
             if metadata.get("hit"):
                 m = metadata.get("value", {})
                 key_details.append({
+                    "key": key,
                     "name": m.get("name"),
                     "role": m.get("role"),
                     "created": m.get("created"),
@@ -325,6 +333,41 @@ class AuthBlock(LegoBlock):
                 })
         
         return {"keys": key_details, "count": len(key_details)}
+    
+    async def _rotate_key(self, api_key: Optional[str]) -> Dict:
+        """Rotate an API key: revoke old and create new with same metadata"""
+        if not api_key:
+            return {"error": "no_key_provided"}
+        if not self.memory_block:
+            return {"error": "no_memory_backend"}
+        
+        # Get old metadata
+        old_data = await self.memory_block.execute({
+            "action": "get",
+            "key": f"auth:keys:{api_key}"
+        })
+        
+        if not old_data.get("hit"):
+            return {"error": "key_not_found"}
+        
+        metadata = old_data.get("value", {})
+        
+        # Revoke old
+        await self._revoke_key(api_key)
+        
+        # Create new with same metadata
+        new_key = await self.create_api_key(
+            metadata.get("name", "rotated"),
+            Role(metadata.get("role", "basic")),
+            metadata.get("owner")
+        )
+        
+        return {
+            "rotated": True,
+            "old_key": api_key[:8] + "...",
+            "new_api_key": new_key.get("api_key"),
+            "message": "Save this key - it won't be shown again"
+        }
     
     def health(self) -> Dict:
         h = super().health()

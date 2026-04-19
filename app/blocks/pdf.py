@@ -32,7 +32,12 @@ class PDFBlock(UniversalBlock):
                 {"name": "text", "type": "text", "label": "Text"},
                 {"name": "pages", "type": "number", "label": "Pages"}
             ]
-        }
+        },
+        "quick_actions": [
+            {"icon": "📄", "label": "Extract Text", "prompt": "Extract all text from this PDF"},
+            {"icon": "📊", "label": "Extract Tables", "prompt": "Extract all tables from this PDF as structured data"},
+            {"icon": "📝", "label": "Summarize", "prompt": "Summarize the key points of this document"}
+        ]
     }
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:

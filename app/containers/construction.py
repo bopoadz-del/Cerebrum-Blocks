@@ -53,7 +53,17 @@ class ConstructionContainer(UniversalContainer):
     description = "Complete AEC suite: BIM, QA/QC, scheduling, contracts, specs, safety, carbon, procurement, risk"
     layer = 3
     tags = ["domain", "container", "aec", "construction", "bim"]
-    requires = ["pdf", "ocr", "image"]
+    requires = [
+        "pdf", "ocr", "image",
+        # Week 1
+        "boq_processor", "spec_analyzer", "sympy_reasoning",
+        # Week 2
+        "drawing_qto", "primavera_parser", "smart_orchestrator",
+        # Week 3
+        "jetson_gateway", "formula_executor", "bim_extractor",
+        # Week 4
+        "learning_engine", "historical_benchmark", "recommendation_template",
+    ]
     
     default_config = {
         "confidence_threshold": 0.85,
@@ -268,7 +278,8 @@ class ConstructionContainer(UniversalContainer):
         }
 
         processor = processors.get(doc_type, self._process_drawing)
-        result = await processor(input_data, p)
+        p["file_path"] = file_path
+        result = await processor(file_path, p)
 
         llm_block = BLOCK_REGISTRY.get("llm_enhancer")
         if llm_block and isinstance(result, dict) and result.get("status") == "success":
@@ -323,7 +334,7 @@ class ConstructionContainer(UniversalContainer):
             import fitz
             doc = fitz.open(file_path)
         except Exception as e:
-            return {"status": "error", "error": f"Could not open file: {str(e)}", "file": file_path}
+            return {"status": "error", "error": f"[DRAWING_V2] Could not open file: {str(e)}", "file": file_path}
         
         result = {
             "status": "success",
@@ -431,6 +442,68 @@ class ConstructionContainer(UniversalContainer):
             except Exception as e:
                 return {"status": "error", "error": f"Image OCR failed: {str(e)}"}
         return {"status": "error", "error": "OCR block not available for image processing"}
+
+    def _extract_drawing_number(self, filename: str) -> str:
+        import re
+        m = re.search(r'[A-Z]{1,3}[-_]?\d{3,6}', filename, re.IGNORECASE)
+        return m.group(0).upper() if m else ""
+
+    def _extract_revision(self, filename: str) -> str:
+        import re
+        m = re.search(r'[Rr][Ee]?[Vv]?\s*([A-Z0-9])', filename)
+        return m.group(1).upper() if m else ""
+
+    def _extract_measurements_advanced(self, raw_text: str, text_dict: Dict) -> List[Dict]:
+        return []
+
+    def _extract_tables_advanced(self, page) -> List[Dict]:
+        return []
+
+    def _extract_annotations(self, page) -> List[Dict]:
+        return []
+
+    def _extract_specs_advanced(self, raw_text: str) -> List[Dict]:
+        return []
+
+    def _detect_disciplines(self, raw_text: str) -> List[str]:
+        disciplines = []
+        raw = raw_text.lower()
+        if any(k in raw for k in ["structural", "rebar", "concrete", "foundation"]):
+            disciplines.append("Structural")
+        if any(k in raw for k in ["architectural", "elevation", "finish", "floor plan"]):
+            disciplines.append("Architectural")
+        if any(k in raw for k in ["mechanical", "hvac", "duct", "air"]):
+            disciplines.append("Mechanical")
+        if any(k in raw for k in ["electrical", "lighting", "power", "circuit"]):
+            disciplines.append("Electrical")
+        if any(k in raw for k in ["plumbing", "pipe", "drain", "water"]):
+            disciplines.append("Plumbing")
+        if not disciplines:
+            disciplines.append("General")
+        return disciplines
+
+    def _extract_title_block(self, sheet_data: Dict) -> Dict:
+        return {}
+
+    def _extract_scale(self, raw_text: str) -> Optional[str]:
+        import re
+        m = re.search(r'(\d+\s*[:/]\s*\d+)', raw_text)
+        return m.group(1) if m else None
+
+    def _calculate_quantities(self, measurements: List[Dict]) -> Dict:
+        return {}
+
+    def _estimate_costs(self, quantities: Dict) -> Dict:
+        return {}
+
+    def _estimate_carbon(self, quantities: Dict) -> Dict:
+        return {}
+
+    def _calculate_confidence(self, result: Dict) -> Dict:
+        return {"overall": 0.7}
+
+    async def _detect_risks_from_drawing(self, result: Dict) -> List[Dict]:
+        return []
 
     # CONTRACT MANAGEMENT
     async def process_contract(self, input_data: Any, params: Dict) -> Dict:
@@ -4879,6 +4952,106 @@ Total Extension of Time Sought: {total_delay} days
             "raw": doc_result if params.get("include_raw") else None
         }
 
+    # ── Week-1 Intelligence Blocks ──────────────────────────────────────────
+
+    async def boq_process(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to BOQProcessorBlock: parse Excel/CSV BOQs."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("boq_processor")
+        if not block_cls:
+            return {"status": "error", "error": "boq_processor block not registered"}
+        return await block_cls().process(input_data, params)
+
+    async def spec_analyze(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to SpecAnalyzerBlock: extract grades, materials, compliance."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("spec_analyzer")
+        if not block_cls:
+            return {"status": "error", "error": "spec_analyzer block not registered"}
+        return await block_cls().process(input_data, params)
+
+    async def sympy_reason(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to SymPyReasoningBlock: variance analysis + recommendations."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("sympy_reasoning")
+        if not block_cls:
+            return {"status": "error", "error": "sympy_reasoning block not registered"}
+        return await block_cls().process(input_data, params)
+
+    async def drawing_qto(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to DrawingQTOBlock: DXF quantity take-off."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("drawing_qto")
+        if not block_cls:
+            return {"status": "error", "error": "drawing_qto block not registered"}
+        return await block_cls().process(input_data, params)
+
+    async def primavera_parse(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to PrimaveraParserBlock: parse .xer schedule files."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("primavera_parser")
+        if not block_cls:
+            return {"status": "error", "error": "primavera_parser block not registered"}
+        return await block_cls().process(input_data, params)
+
+    async def orchestrate(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to SmartOrchestratorBlock: keyword → action routing."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("smart_orchestrator")
+        if not block_cls:
+            return {"status": "error", "error": "smart_orchestrator block not registered"}
+        return await block_cls().process(input_data, params)
+
+    async def jetson_dispatch(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to JetsonGatewayBlock: edge dispatch."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("jetson_gateway")
+        if not block_cls:
+            return {"status": "error", "error": "jetson_gateway block not registered"}
+        return await block_cls().process(input_data, params)
+
+    async def formula_execute(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to FormulaExecutorBlock: chat-to-code formula execution."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("formula_executor")
+        if not block_cls:
+            return {"status": "error", "error": "formula_executor block not registered"}
+        return await block_cls().process(input_data, params)
+
+    async def bim_extract(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to BIMExtractorBlock: IFC element + quantity extraction."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("bim_extractor")
+        if not block_cls:
+            return {"status": "error", "error": "bim_extractor block not registered"}
+        return await block_cls().process(input_data, params)
+
+    async def learn(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to LearningEngineBlock: record corrections + promote tiers."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("learning_engine")
+        if not block_cls:
+            return {"status": "error", "error": "learning_engine block not registered"}
+        return await block_cls().process(input_data, params)
+
+    async def benchmark_lookup(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to HistoricalBenchmarkBlock: RS Means cost lookup."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("historical_benchmark")
+        if not block_cls:
+            return {"status": "error", "error": "historical_benchmark block not registered"}
+        return await block_cls().process(input_data, params)
+
+    async def recommend(self, input_data: Any, params: Dict) -> Dict:
+        """Delegate to RecommendationTemplateBlock: rule-based recommendations."""
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("recommendation_template")
+        if not block_cls:
+            return {"status": "error", "error": "recommendation_template block not registered"}
+        return await block_cls().process(input_data, params)
+
+    # ────────────────────────────────────────────────────────────────────────
+
     async def route(self, action: str, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
@@ -4923,12 +5096,28 @@ Total Extension of Time Sought: {total_delay} days
             "digital_twin_sync": self.digital_twin_sync,
             "intelligent_workflow": self.intelligent_workflow,
             "health_check": self.health_check,
+            # Week-1 Intelligence Blocks
+            "boq_process": self.boq_process,
+            "spec_analyze": self.spec_analyze,
+            "sympy_reason": self.sympy_reason,
+            # Week-2 Domain Blocks
+            "drawing_qto": self.drawing_qto,
+            "primavera_parse": self.primavera_parse,
+            "orchestrate": self.orchestrate,
+            # Week-3 Intelligence Blocks
+            "jetson_dispatch": self.jetson_dispatch,
+            "formula_execute": self.formula_execute,
+            "bim_extract": self.bim_extract,
+            # Week-4 Intelligence Blocks
+            "learn": self.learn,
+            "benchmark_lookup": self.benchmark_lookup,
+            "recommend": self.recommend,
         }
-        
+
         handler = handlers.get(action)
         if not handler:
             return {"status": "error", "error": f"Unknown action: {action}"}
-        
+
         return await handler(input_data, params)
 
     def get_actions(self) -> Dict[str, Any]:
@@ -4968,5 +5157,21 @@ Total Extension of Time Sought: {total_delay} days
             "digital_twin_sync": self.digital_twin_sync,
             "intelligent_workflow": self.intelligent_workflow,
             "health_check": self.health_check,
+            # Week-1 Intelligence Blocks
+            "boq_process": self.boq_process,
+            "spec_analyze": self.spec_analyze,
+            "sympy_reason": self.sympy_reason,
+            # Week-2 Domain Blocks
+            "drawing_qto": self.drawing_qto,
+            "primavera_parse": self.primavera_parse,
+            "orchestrate": self.orchestrate,
+            # Week-3 Intelligence Blocks
+            "jetson_dispatch": self.jetson_dispatch,
+            "formula_execute": self.formula_execute,
+            "bim_extract": self.bim_extract,
+            # Week-4 Intelligence Blocks
+            "learn": self.learn,
+            "benchmark_lookup": self.benchmark_lookup,
+            "recommend": self.recommend,
         }
 

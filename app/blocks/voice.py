@@ -9,6 +9,7 @@ class VoiceBlock(UniversalBlock):
     
     name = "voice"
     version = "1.0"
+    description = "Text-to-speech and speech-to-text using ElevenLabs / Whisper"
     layer = 3
     tags = ["domain", "audio", "tts", "stt"]
     requires = []

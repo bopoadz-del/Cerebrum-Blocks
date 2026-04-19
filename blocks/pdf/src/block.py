@@ -36,9 +36,17 @@ class PDFBlock(LegoBlock):
     async def _extract_text(self, data: Dict) -> Dict:
         """Extract text from PDF"""
         pdf_bytes = data.get("pdf_bytes") or data.get("file")
+        file_path = data.get("file_path")
         
         try:
             import PyPDF2
+            
+            if not pdf_bytes and file_path:
+                with open(file_path, "rb") as f:
+                    pdf_bytes = f.read()
+            
+            if not pdf_bytes:
+                return {"error": "No PDF bytes or file_path provided"}
             
             pdf_file = io.BytesIO(pdf_bytes)
             reader = PyPDF2.PdfReader(pdf_file)

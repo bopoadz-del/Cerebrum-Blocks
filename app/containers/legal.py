@@ -15,7 +15,30 @@ class LegalContainer(UniversalContainer):
     layer = 3
     tags = ["domain", "container", "legal", "contracts"]
     requires = ["pdf", "ocr"]
-    
+
+    ui_schema = {
+        "input": {
+            "type": "file",
+            "accept": [".pdf", ".docx", ".txt"],
+            "placeholder": "Upload contract, brief, or legal document...",
+            "multiline": False
+        },
+        "output": {
+            "type": "json",
+            "fields": [
+                {"name": "parties", "type": "json", "label": "Parties"},
+                {"name": "compliance_score", "type": "percentage", "label": "Compliance"},
+                {"name": "risk_level", "type": "text", "label": "Risk Level"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "📜", "label": "Analyze Contract", "prompt": "Analyze this contract: extract parties, dates, obligations, and risk clauses"},
+            {"icon": "⚖️", "label": "Validate Compliance", "prompt": "Check this document for legal compliance and flag violations"},
+            {"icon": "🔍", "label": "Extract Entities", "prompt": "Extract all legal entities, clauses, and key terms"},
+            {"icon": "📄", "label": "Generate Summary", "prompt": "Generate an executive summary of this legal document"}
+        ]
+    }
+
     def _looks_like_file(self, input_data: Any, params: Dict) -> bool:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}

@@ -9,6 +9,7 @@ class WebBlock(UniversalBlock):
     
     name = "web"
     version = "1.0"
+    description = "Web scraping and structured HTML content extraction"
     layer = 3
     tags = ["domain", "web", "scraping"]
     requires = []

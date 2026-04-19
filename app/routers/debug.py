@@ -14,3 +14,9 @@ def debug_env():
         "environment": os.getenv("ENV", "unknown"),
         "data_dir": os.getenv("DATA_DIR", "not_set")
     }
+
+
+@router.get("/v1/debug/env")
+def debug_env_v1():
+    """Debug endpoint (v1 alias)."""
+    return debug_env()

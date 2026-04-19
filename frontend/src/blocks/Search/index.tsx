@@ -1,6 +1,5 @@
 // Search-UI-Block - Web search
 import { useState } from 'react';
-import { API } from '../../api';
 
 interface SearchBlockProps {
   apiKey: string;
@@ -11,11 +10,18 @@ export const SearchBlock: React.FC<SearchBlockProps> = ({ apiKey, onResult }) =>
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const search = async () => {
     if (!query) return;
     setLoading(true);
     try {
-      const data = await API.call('/v1/search', { query, n_results: 5 });
+      const response = await fetch(`${API_BASE}/v1/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ query, n_results: 5 })
+      });
+      const data = await response.json();
       setResults(data.results || []);
       onResult?.(data.results || []);
     } catch (error) {

@@ -1,10 +1,8 @@
 """Cerebrum Blocks - Simple Block Execution API."""
 
-import json
 import logging
 import os
 from contextlib import asynccontextmanager
-from typing import List
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,6 +29,7 @@ from app.routers import (
     static,
     upload,
 )
+from app.routers import telegram as telegram_router
 
 
 @asynccontextmanager
@@ -48,10 +47,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS Origins - explicit list for cerebrum-platform frontend
-CORS_ORIGINS = [
+_default_cors = [
     "https://cerebrum-platform.onrender.com",
     "https://cerebrum-platform-j1zs.onrender.com",
+    "https://cerebrum-platform-frontend-fork.onrender.com",
     "https://cerebrum-store.onrender.com",
     "https://cerebrum-store-j1zs.onrender.com",
     "http://localhost:8000",
@@ -62,58 +61,43 @@ CORS_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-# Add CORS middleware with explicit settings
+CORS_ORIGINS = _default_cors + [
+    o.strip()
+    for o in os.getenv("CORS_ORIGINS", "").split(",")
+    if o.strip()
+]
+
+# Single CORS layer — FastAPI echoes Access-Control-Request-Headers, no literal * sent
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["*", "Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
     allow_credentials=True,
-    max_age=86400,  # Cache preflight for 24 hours
+    max_age=86400,
 )
 
-# Add explicit CORS headers middleware - ensures headers are always present on all responses
-@app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
-    """Add CORS headers to all responses - ensures headers are always present"""
-    response = await call_next(request)
-    
-    origin = request.headers.get("origin")
-    # Mirror the origin if it's in our allowed list, otherwise use the first allowed origin
-    if origin and origin in CORS_ORIGINS:
-        response.headers["Access-Control-Allow-Origin"] = origin
-    else:
-        response.headers["Access-Control-Allow-Origin"] = CORS_ORIGINS[0]
-    
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-    response.headers["Access-Control-Allow-Headers"] = "*, Content-Type, Authorization, X-Requested-With, Accept, Origin"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Max-Age"] = "86400"
-    
-    return response
 
-
-# File upload security middleware
+# File upload security — only intercepts actual upload paths, never chat/chain
 @app.middleware("http")
 async def file_upload_security_middleware(request: Request, call_next):
-    """Auto-validate file uploads on /ingest and /upload endpoints"""
     path = request.url.path.lower()
 
-    if any(x in path for x in ["/ingest", "/upload", "/process-file", "/chain"]):
+    if "/upload" in path:
         body = await request.body()
 
         try:
+            import json
             data = json.loads(body) if body else {}
         except Exception:
             data = {}
 
-        # Check if file-related
-        if any(k in str(data) for k in ["file_path", "content", "filename", "file"]):
-            if "security" not in block_instances:
-                block_instances["security"] = _create_block_instance(BLOCK_REGISTRY["security"])
-            security = block_instances["security"]
-            if security:
-                try:
+        if any(k in str(data) for k in ["file_path", "filename", "file"]):
+            try:
+                if "security" not in block_instances:
+                    block_instances["security"] = _create_block_instance(BLOCK_REGISTRY["security"])
+                security = block_instances.get("security")
+                if security:
                     validation = await security.validate_file(data, {})
                     if not validation.get("safe"):
                         return JSONResponse(
@@ -122,54 +106,33 @@ async def file_upload_security_middleware(request: Request, call_next):
                                 "status": "error",
                                 "error": "Security validation failed",
                                 "details": validation.get("error"),
-                                "violation": validation.get("violation")
-                            }
+                                "violation": validation.get("violation"),
+                            },
                         )
-                except Exception:
-                    pass
+            except Exception:
+                pass
 
-        # Rebuild request with original body
         async def receive():
-            return {"type": "http.request", "body": body}
+            return {"type": "http.request", "body": body, "more_body": False}
 
         request = Request(request.scope, receive, request._send)
 
     return await call_next(request)
 
 
-# Handle OPTIONS requests globally - ensure preflight works for all routes
-@app.options("/{path:path}")
-async def options_handler(request: Request, path: str):
-    """Handle CORS preflight requests for all paths"""
-    origin = request.headers.get("origin", CORS_ORIGINS[0])
-    # Validate origin is in our allowed list
-    if origin not in CORS_ORIGINS:
-        origin = CORS_ORIGINS[0]
-    
-    return JSONResponse(
-        content={"status": "ok"},
-        headers={
-            "Access-Control-Allow-Origin": origin,
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-            "Access-Control-Allow-Headers": "*, Content-Type, Authorization, X-Requested-With, Accept, Origin",
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Max-Age": "86400",
-        }
-    )
-
-
 # Include all routers
-app.include_router(blocks.router, prefix="/v1")
-app.include_router(execute.router, prefix="/v1")
-app.include_router(chain.router, prefix="/v1")
-app.include_router(chat.router, prefix="/v1")
-app.include_router(upload.router, prefix="/v1")
-app.include_router(auth.router, prefix="/v1")
-app.include_router(memory.router, prefix="/v1")
-app.include_router(monitoring.router, prefix="/v1")
+app.include_router(blocks.router)
+app.include_router(execute.router)
+app.include_router(chain.router)
+app.include_router(chat.router)
+app.include_router(upload.router)
+app.include_router(auth.router)
+app.include_router(memory.router)
+app.include_router(monitoring.router)
 app.include_router(health.router)
 app.include_router(static.router)
-app.include_router(debug.router, prefix="/v1")
+app.include_router(debug.router)
+app.include_router(telegram_router.router)
 
 
 # Mount static files

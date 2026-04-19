@@ -17,7 +17,12 @@ ALLOWED_UPLOAD_EXTENSIONS = {
 }
 
 DATA_DIR = os.getenv("DATA_DIR", "./data")
-os.makedirs(DATA_DIR, exist_ok=True)
+try:
+    os.makedirs(DATA_DIR, exist_ok=True)
+except PermissionError:
+    # Fallback to temp dir if DATA_DIR is not writable (e.g. Render without disk)
+    import tempfile
+    DATA_DIR = tempfile.gettempdir()
 
 
 @router.post("/upload")
@@ -54,15 +59,22 @@ async def upload_v1(file: UploadFile = File(...), auth: dict = Depends(require_a
         with open(filepath, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Return URL for processing
+        # Return URL and server path for chain processing
         base_url = os.getenv("API_BASE_URL", "https://cerebrum-platform-api.onrender.com")
         return {
             "url": f"{base_url}/static/{filename}",
             "filename": original_name,
             "stored_as": filename,
+            "file_path": filepath,
             "size": file_size
         }
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Upload failed")
+
+
+@router.post("/v1/upload")
+async def upload_v1_endpoint(file: UploadFile = File(...), auth: dict = Depends(require_api_key)):
+    """File upload endpoint (v1 API alias)."""
+    return await upload_v1(file, auth)

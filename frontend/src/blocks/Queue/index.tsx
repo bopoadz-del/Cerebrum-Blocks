@@ -2,7 +2,6 @@
 // <QueueBlock apiKey="cb_key" jobId="xxx" onComplete={(r) => console.log(r)} />
 
 import { useState, useEffect } from 'react';
-import { API } from '../../api';
 
 interface QueueBlockProps {
   apiKey: string;
@@ -21,17 +20,37 @@ export const QueueBlock: React.FC<QueueBlockProps> = ({
   const [progress, setProgress] = useState<number>(0);
   const [result, setResult] = useState<any>(null);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   useEffect(() => {
     if (!jobId) return;
 
     const checkStatus = async () => {
       try {
-        const data = await API.call('/v1/queue/status', { action: 'status', job_id: jobId });
+        const response = await fetch(`${API_BASE}/v1/queue/status`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({ action: 'status', job_id: jobId })
+        });
+
+        const data = await response.json();
         setStatus(data.status || 'unknown');
         
         // Get result if completed
         if (data.status === 'COMPLETED' || data.status === 'completed') {
-          const resultData = await API.call('/v1/queue/result', { action: 'result', job_id: jobId });
+          const resultRes = await fetch(`${API_BASE}/v1/queue/result`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({ action: 'result', job_id: jobId })
+          });
+          
+          const resultData = await resultRes.json();
           setResult(resultData.result);
           onComplete?.(resultData.result);
         }

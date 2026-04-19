@@ -444,43 +444,95 @@ function clearAllDrives() {
     addMessage('All drives disconnected.', 'system');
 }
 
+// Determine chain steps based on file type
+function buildChainSteps(fileName) {
+    const ext = (fileName.split('.').pop() || '').toLowerCase();
+    if (ext === 'pdf') {
+        return [{ block: 'pdf', params: {} }, { block: 'chat', params: {} }];
+    }
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff'].includes(ext)) {
+        return [{ block: 'ocr', params: {} }, { block: 'chat', params: {} }];
+    }
+    return [{ block: 'chat', params: {} }];
+}
+
+const TEXT_EXTS = new Set(['txt','md','csv','json','xml','html','htm','js','ts','py','java','c','cpp','h','css','yaml','yml','ini','log','sh','sql','tsx','jsx']);
+
+function isTextFile(fileName) {
+    const ext = (fileName.split('.').pop() || '').toLowerCase();
+    return TEXT_EXTS.has(ext);
+}
+
+async function runChainAnalysis(fileName, chainInput, steps, drive) {
+    document.getElementById('outcomes').innerHTML += `
+        <div class="outcome-item" id="file-analysis-result">
+            <div class="outcome-label">AI Analysis</div>
+            <div style="color: #888; font-size: 12px;">Analyzing (${steps.map(s=>s.block).join(' → ')})...</div>
+        </div>`;
+    try {
+        const analysisData = await apiCall('/v1/chain', {
+            steps,
+            initial_input: chainInput
+        });
+        const output = analysisData.final_output;
+        let analysisText;
+        if (typeof output === 'object' && output?.status === 'error') {
+            analysisText = `Error: ${output.error || 'Analysis failed'}`;
+        } else {
+            analysisText = typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
+        }
+        const el = document.getElementById('file-analysis-result');
+        if (el) {
+            el.innerHTML = `
+                <div class="outcome-label">AI Analysis</div>
+                <div style="color: #ccc; font-size: 13px; margin-top: 8px; line-height: 1.5;">
+                    ${escapeHtml(analysisText.substring(0, 500))}${analysisText.length > 500 ? '...' : ''}
+                </div>`;
+        }
+        addMessage(analysisText, 'assistant');
+    } catch (e) {
+        const el = document.getElementById('file-analysis-result');
+        if (el) el.remove();
+        addMessage(`Loaded "${fileName}" from ${drive.name}. You can now ask questions about it.`, 'assistant');
+    }
+}
+
 async function selectFile(driveKey, fileName) {
     addMessage(`Selected file: ${fileName}`, 'user');
     showIndicator(true);
-    
+
     try {
         const drive = connectedDrives[driveKey];
         let fileContent = '';
-        
-        // If it's a local device drive, read the actual File object
+        let fileObj = null;
+
         if (drive.isLocal && drive.fileObjects) {
-            const fileObj = drive.fileObjects.find(f => f.name === fileName);
-            if (fileObj) {
+            fileObj = drive.fileObjects.find(f => f.name === fileName);
+            if (fileObj && isTextFile(fileName)) {
                 fileContent = await readFileContent(fileObj);
-                // Trim very large files
                 if (fileContent.length > 5000) {
                     fileContent = fileContent.substring(0, 5000) + '\n\n... [truncated] ...';
                 }
             }
         }
-        
+
         // Use zvec search to find related files
         let related = [];
         try {
             const zvecData = await apiCall('/v1/execute', {
                 block: 'zvec',
                 input: fileName,
-                params: { 
-                    operation: 'search', 
+                params: {
+                    operation: 'search',
                     corpus: drive.files.filter(f => typeof f === 'string'),
-                    top_k: 3 
+                    top_k: 3
                 }
             });
             related = zvecData.result?.results || [];
         } catch (e) {
             console.error('ZVec search failed:', e);
         }
-        
+
         setOutcomes(`
             <div class="outcome-item">
                 <div class="outcome-label">Selected File</div>
@@ -502,11 +554,27 @@ async function selectFile(driveKey, fileName) {
             </div>
             ` : ''}
         `);
-        
-        // Set active file context for subsequent chat messages
+
+        const steps = buildChainSteps(fileName);
+
         if (fileContent) {
+            // Text file: set context, run chat chain with content
             setActiveFileContext(fileName, fileContent, drive.name);
-            addMessage(`Loaded "${fileName}" from ${drive.name}. You can now ask questions about it.`, 'assistant');
+            const prompt = `Analyze this file and summarize what it contains:\n\nFile: ${fileName}\nSource: ${drive.name}\n\nContent:\n${fileContent.substring(0, 3000)}`;
+            await runChainAnalysis(fileName, prompt, steps, drive);
+
+        } else if (fileObj && steps.length > 1) {
+            // Binary file (PDF/image): upload it first, then chain with server path
+            try {
+                const form = new FormData();
+                form.append('file', fileObj);
+                const uploadData = await apiCall('/v1/upload', form, true);
+                setActiveFileContext(fileName, `[${fileName} — uploaded for processing]`, drive.name);
+                await runChainAnalysis(fileName, uploadData.file_path, steps, drive);
+            } catch (e) {
+                addMessage(`Could not upload "${fileName}" for processing: ${e.message}`, 'error');
+            }
+
         } else {
             addMessage(`File loaded from ${drive.name}. ${related.length > 0 ? `Found ${related.length} related files via ZVec.` : ''}`, 'assistant');
         }
@@ -548,10 +616,14 @@ async function sendMessage() {
         
         if (data.success) {
             const output = data.final_output;
-            const text = typeof output === 'object' ? (output.text || JSON.stringify(output)) : String(output);
-            addMessage(text, 'assistant');
+            if (typeof output === 'object' && output?.status === 'error') {
+                addMessage(`Error: ${output.error || 'Chain step failed'}`, 'error');
+            } else {
+                const text = typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
+                addMessage(text, 'assistant');
+            }
         } else {
-            addMessage(`Error: ${data.results?.[0]?.error || 'Unknown error'}`, 'error');
+            addMessage(`Error: ${data.results?.[0]?.result?.error || data.results?.[0]?.error || 'Chain failed'}`, 'error');
         }
     } catch (err) {
         console.error('Chat error:', err);
@@ -576,57 +648,72 @@ async function handleFile(input) {
         form.append('file', file);
         
         const uploadData = await apiCall('/v1/upload', form, true);
-        console.log('Upload response:', uploadData);
-        
+
         setOutcomes(`
             <div class="outcome-item">
                 <div class="outcome-label">File Uploaded</div>
                 <div class="outcome-value" style="font-size: 14px;">${uploadData.filename}</div>
+                <div style="color: #666; font-size: 11px; margin-top: 4px;">${(uploadData.size / 1024).toFixed(1)} KB</div>
             </div>
-            <p style="color: #666; font-size: 12px;">Analyzing content...</p>
+            <div id="file-analysis-result" class="outcome-item">
+                <div class="outcome-label">AI Analysis</div>
+                <div style="color: #888; font-size: 12px;">Analyzing...</div>
+            </div>
         `);
-        
-        const fileContent = await readFileContent(file);
-        
-        const analysisData = await apiCall('/v1/chain', { 
-            steps: [{block: 'chat', params: {}}], 
-            initial_input: `Analyze this file content and extract key information:\n\nFile: ${file.name}\nSize: ${(file.size / 1024).toFixed(1)} KB\n\nContent:\n${fileContent.substring(0, 3000)}` 
-        });
+
+        const steps = buildChainSteps(file.name);
+        let chainInput;
+        let fileContent = '';
+
+        if (isTextFile(file.name)) {
+            fileContent = await readFileContent(file);
+            const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
+            setActiveFileContext(file.name, trimmed, 'Upload');
+            chainInput = `Analyze this file and extract key information:\n\nFile: ${file.name}\nSize: ${(file.size / 1024).toFixed(1)} KB\n\nContent:\n${trimmed.substring(0, 3000)}`;
+        } else {
+            // PDF/image: pass the server-side path so pdf/ocr blocks can read it
+            setActiveFileContext(file.name, `[${file.name} — processed via ${steps[0].block}]`, 'Upload');
+            chainInput = uploadData.file_path;
+        }
+
+        const analysisData = await apiCall('/v1/chain', { steps, initial_input: chainInput });
         const output = analysisData.final_output;
-        const analysisText = typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
-        
-        // Set active context for uploaded file
-        const trimmedContent = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
-        setActiveFileContext(file.name, trimmedContent, 'Upload');
-        
+        let analysisText;
+        if (typeof output === 'object' && output?.status === 'error') {
+            analysisText = `Error: ${output.error || 'Analysis failed'}`;
+        } else {
+            analysisText = typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
+        }
+
         let quantitiesHtml = '';
-        if (fileContent.toLowerCase().includes('concrete') || fileContent.toLowerCase().includes('steel')) {
+        const textForSearch = fileContent || analysisText;
+        if (textForSearch.toLowerCase().includes('concrete') || textForSearch.toLowerCase().includes('steel')) {
             quantitiesHtml = `
                 <div class="outcome-item">
                     <div class="outcome-label">Detected Construction Data</div>
                     <div style="color: #888; font-size: 12px; margin-top: 8px;">
-                        ${extractQuantities(fileContent)}
+                        ${extractQuantities(textForSearch)}
                     </div>
                 </div>
             `;
         }
-        
+
         setOutcomes(`
             <div class="outcome-item">
                 <div class="outcome-label">File</div>
                 <div class="outcome-value" style="font-size: 14px;">${uploadData.filename}</div>
-                <div style="color: #666; font-size: 11px; margin-top: 4px;">${(uploadData.size / 1024).toFixed(1)} KB</div>
+                <div style="color: #666; font-size: 11px; margin-top: 4px;">${(uploadData.size / 1024).toFixed(1)} KB · ${steps.map(s=>s.block).join(' → ')}</div>
             </div>
             ${quantitiesHtml}
             <div class="outcome-item">
-                <div class="outcome-label">Analysis</div>
+                <div class="outcome-label">AI Analysis</div>
                 <div style="color: #ccc; font-size: 13px; margin-top: 8px; line-height: 1.5;">
-                    ${analysisText.substring(0, 500)}${analysisText.length > 500 ? '...' : ''}
+                    ${escapeHtml(analysisText.substring(0, 500))}${analysisText.length > 500 ? '...' : ''}
                 </div>
             </div>
         `);
-        
-        addMessage('Analysis complete. See results panel →', 'assistant');
+
+        addMessage(analysisText, 'assistant');
         
     } catch (err) {
         console.error('File handling error:', err);
