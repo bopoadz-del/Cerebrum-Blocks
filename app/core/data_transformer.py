@@ -384,7 +384,7 @@ class DataTransformer:
             target_type in self._transformers[source_block]
         )
     
-    def transform(self, data: Any, target_type: str, source_block: str = None) -> Dict[str, Any]:
+    def transform(self, data: Any, target_type: str, source_block: str = None, field_mapping: dict = None) -> tuple:
         """
         Transform data to target type.
         
@@ -392,19 +392,29 @@ class DataTransformer:
             data: Input data (can be raw block output or wrapped result)
             target_type: Target type name (e.g., "TextContent")
             source_block: Optional source block hint for selecting transformer
+            field_mapping: Optional field mapping dict (orchestrator compat)
             
         Returns:
-            Transformed data matching target type schema
+            Tuple of (transformed_data, operation_name)
         """
         # If data is None or empty, return empty target type
         if data is None:
-            return self._empty_of_type(target_type)
+            return self._empty_of_type(target_type), "empty"
         
         # Extract data from UniversalBlock result wrapper if present
         if isinstance(data, dict) and "result" in data:
             inner_data = data["result"]
         else:
             inner_data = data
+        
+        # Apply field mapping if provided (before type transform)
+        if field_mapping and isinstance(inner_data, dict):
+            mapped = {}
+            for target_field, source_field in field_mapping.items():
+                if source_field in inner_data:
+                    mapped[target_field] = inner_data[source_field]
+            if mapped:
+                inner_data = {**inner_data, **mapped}
         
         # Try to infer source block from data if not provided
         if source_block is None and isinstance(inner_data, dict):
@@ -413,15 +423,15 @@ class DataTransformer:
         # Try specific transformer
         if source_block and self.can_transform(source_block, target_type):
             transformer = self._transformers[source_block][target_type]
-            return transformer(data)
+            return transformer(data), f"{source_block}_to_{target_type}"
         
         # Try generic transformation based on target type
         generic_result = self._generic_transform(inner_data, target_type)
         if generic_result:
-            return generic_result
+            return generic_result, f"generic_{target_type}"
         
         # Return best-effort result
-        return self._best_effort_transform(inner_data, target_type)
+        return self._best_effort_transform(inner_data, target_type), "best_effort"
     
     def _infer_source_block(self, data: Dict) -> Optional[str]:
         """Infer source block from data content."""
@@ -541,6 +551,17 @@ class DataTransformer:
             block: list(types.keys()) 
             for block, types in self._transformers.items()
         }
+    
+    @staticmethod
+    def _apply_field_mapping(data: Dict, mapping: Dict[str, str]) -> Dict:
+        """Apply field mapping to data (used by orchestrator)."""
+        if not mapping or not isinstance(data, dict):
+            return data
+        result = dict(data)
+        for target_field, source_field in mapping.items():
+            if source_field in data:
+                result[target_field] = data[source_field]
+        return result
 
 
 # Global transformer instance
@@ -552,17 +573,13 @@ def get_transformer() -> DataTransformer:
     return transformer
 
 
-def transform(data: Any, target_type: str, source_block: str = None) -> Dict[str, Any]:
+def transform(data: Any, target_type: str, source_block: str = None, field_mapping: dict = None) -> tuple:
     """
     Convenience function to transform data to target type.
     
-    Example:
-        pdf_result = await pdf_block.execute("/path/to.pdf", {})
-        text_content = transform(pdf_result, "TextContent")
-        # Now pass text_content to chat block
-        chat_result = await chat_block.execute(text_content["text"], {})
+    Returns tuple of (transformed_data, operation_name).
     """
-    return transformer.transform(data, target_type, source_block)
+    return transformer.transform(data, target_type, source_block, field_mapping)
 
 
 # ========================================================================
