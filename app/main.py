@@ -5,7 +5,6 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -44,36 +43,6 @@ app = FastAPI(
     version="2.0.0",
     docs_url="/docs",
     lifespan=lifespan,
-)
-
-_default_cors = [
-    "https://cerebrum-platform.onrender.com",
-    "https://cerebrum-platform-j1zs.onrender.com",
-    "https://cerebrum-platform-frontend-fork.onrender.com",
-    "https://cerebrum-store.onrender.com",
-    "https://cerebrum-store-j1zs.onrender.com",
-    "http://localhost:8000",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:8000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-]
-
-CORS_ORIGINS = _default_cors + [
-    o.strip()
-    for o in os.getenv("CORS_ORIGINS", "").split(",")
-    if o.strip()
-]
-
-# Single CORS layer — FastAPI echoes Access-Control-Request-Headers, no literal * sent
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
-    allow_credentials=True,
-    max_age=86400,
 )
 
 
