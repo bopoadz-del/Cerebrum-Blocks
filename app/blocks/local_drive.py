@@ -10,6 +10,7 @@ class LocalDriveBlock(UniversalBlock):
     
     name = "local_drive"
     version = "1.0"
+    description = "Local filesystem access: list, read, write files"
     layer = 4
     tags = ["integration", "storage", "local"]
     requires = []

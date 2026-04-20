@@ -9,6 +9,7 @@ class ImageBlock(UniversalBlock):
     
     name = "image"
     version = "1.0"
+    description = "Image analysis and visual understanding using vision APIs"
     layer = 3
     tags = ["domain", "vision", "image"]
     requires = []

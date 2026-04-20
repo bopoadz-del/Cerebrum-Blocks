@@ -15,7 +15,29 @@ class MedicalContainer(UniversalContainer):
     layer = 3
     tags = ["domain", "container", "healthcare", "hipaa"]
     requires = ["pdf", "ocr"]
-    
+
+    ui_schema = {
+        "input": {
+            "type": "file",
+            "accept": [".pdf", ".dcm", ".jpg", ".png"],
+            "placeholder": "Upload medical record, DICOM, or clinical document...",
+            "multiline": False
+        },
+        "output": {
+            "type": "json",
+            "fields": [
+                {"name": "entities", "type": "json", "label": "Clinical Entities"},
+                {"name": "compliance_score", "type": "percentage", "label": "HIPAA Score"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "🏥", "label": "Extract Entities", "prompt": "Extract all clinical entities, symptoms, diagnoses, and medications"},
+            {"icon": "🔒", "label": "HIPAA Validate", "prompt": "Validate this document for HIPAA compliance"},
+            {"icon": "📋", "label": "Generate Report", "prompt": "Generate a structured clinical report from this data"},
+            {"icon": "🖼️", "label": "Process DICOM", "prompt": "Process and anonymize this DICOM medical image"}
+        ]
+    }
+
     def _looks_like_file(self, input_data: Any, params: Dict) -> bool:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}

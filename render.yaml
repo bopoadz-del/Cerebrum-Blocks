@@ -44,6 +44,26 @@ services:
         value: production
     healthCheckPath: /health
 
+  # CLAUDE TELEGRAM BOT — Full Claude Code agent, clones repo on startup
+  - type: worker
+    name: claude-telegram-bot
+    env: python
+    plan: starter
+    rootDir: claudebot
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: WORK_DIR
+        value: /workspace
+      - key: HISTORY_DIR
+        value: /tmp/history
+
   # STORE FRONTEND
   - type: web
     name: cerebrum-store

@@ -9,6 +9,7 @@ class CodeBlock(UniversalBlock):
     
     name = "code"
     version = "1.0"
+    description = "Code generation, execution, and analysis across multiple languages"
     layer = 3
     tags = ["domain", "code", "execution"]
     requires = []

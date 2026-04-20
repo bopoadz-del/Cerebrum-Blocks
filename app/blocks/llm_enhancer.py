@@ -33,7 +33,12 @@ class LLMEnhancerBlock(UniversalBlock):
             "fields": [
                 {"name": "structured_data", "type": "json", "label": "Structured Output"}
             ]
-        }
+        },
+        "quick_actions": [
+            {"icon": "🔎", "label": "Extract Data", "prompt": "Extract all structured data from this text"},
+            {"icon": "📝", "label": "Summarize", "prompt": "Summarize the key information"},
+            {"icon": "🏷️", "label": "Classify", "prompt": "Classify and label the type of this content"}
+        ]
     }
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:

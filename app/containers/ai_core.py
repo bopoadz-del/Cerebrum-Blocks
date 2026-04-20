@@ -16,7 +16,28 @@ class AICoreContainer(UniversalContainer):
     layer = 2  # AI Core
     tags = ["ai", "core", "container", "routing"]
     requires = []
-    
+
+    ui_schema = {
+        "input": {
+            "type": "json",
+            "accept": None,
+            "placeholder": '{"action": "route", "quality": "fast"}',
+            "multiline": False
+        },
+        "output": {
+            "type": "json",
+            "fields": [
+                {"name": "rankings", "type": "json", "label": "Provider Rankings"},
+                {"name": "top_provider", "type": "text", "label": "Best Provider"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "🏆", "label": "Leaderboard", "prompt": '{"action":"leaderboard"}'},
+            {"icon": "🚀", "label": "Best Route", "prompt": '{"action":"route","quality":"fast"}'},
+            {"icon": "⚡", "label": "Failover Status", "prompt": '{"action":"failover_status"}'}
+        ]
+    }
+
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)
         self.providers = ["deepseek", "groq", "openai"]

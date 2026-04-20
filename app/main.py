@@ -28,6 +28,7 @@ from app.routers import (
     static,
     upload,
 )
+from app.routers import telegram as telegram_router
 
 
 @asynccontextmanager
@@ -100,6 +101,7 @@ app.include_router(monitoring.router)
 app.include_router(health.router)
 app.include_router(static.router)
 app.include_router(debug.router)
+app.include_router(telegram_router.router)
 
 
 # Mount static files

@@ -9,6 +9,7 @@ class TranslateBlock(UniversalBlock):
     
     name = "translate"
     version = "1.0"
+    description = "Multi-language text translation with auto-detection"
     layer = 3
     tags = ["domain", "nlp", "translation"]
     requires = []

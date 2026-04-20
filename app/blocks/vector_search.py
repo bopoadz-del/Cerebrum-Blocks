@@ -9,6 +9,7 @@ class VectorSearchBlock(UniversalBlock):
     
     name = "vector_search"
     version = "1.0"
+    description = "Semantic vector search and retrieval using ChromaDB embeddings"
     layer = 2  # AI Core
     tags = ["ai", "core", "vector", "search"]
     requires = []

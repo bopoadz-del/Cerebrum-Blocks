@@ -9,6 +9,7 @@ class ZvecBlock(UniversalBlock):
     
     name = "zvec"
     version = "1.0"
+    description = "Zero-shot vector operations: embed, classify, search, similarity"
     layer = 2  # AI Core
     tags = ["ai", "core", "vector", "zero-shot"]
     requires = []

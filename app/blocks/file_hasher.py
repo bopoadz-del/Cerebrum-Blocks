@@ -36,7 +36,11 @@ class FileHasherBlock(UniversalBlock):
                 {"name": "sha256", "type": "text", "label": "SHA256"},
                 {"name": "md5", "type": "text", "label": "MD5"}
             ]
-        }
+        },
+        "quick_actions": [
+            {"icon": "#️⃣", "label": "Hash File", "prompt": "/path/to/file.pdf"},
+            {"icon": "✅", "label": "Verify Hash", "prompt": '{"action":"verify","file_path":"/path/to/file","expected_hash":"abc123"}'}
+        ]
     }
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:

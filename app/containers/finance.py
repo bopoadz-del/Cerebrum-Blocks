@@ -15,7 +15,30 @@ class FinanceContainer(UniversalContainer):
     layer = 3
     tags = ["domain", "container", "finance", "risk"]
     requires = ["pdf", "search"]
-    
+
+    ui_schema = {
+        "input": {
+            "type": "file",
+            "accept": [".pdf", ".csv", ".xlsx", ".json"],
+            "placeholder": "Upload financial report, trade data, or regulatory filing...",
+            "multiline": False
+        },
+        "output": {
+            "type": "table",
+            "fields": [
+                {"name": "var_95_1d", "type": "number", "unit": "USD", "label": "VaR 95% 1D"},
+                {"name": "compliance_score", "type": "percentage", "label": "Compliance"},
+                {"name": "risk_level", "type": "text", "label": "Risk Level"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "📊", "label": "Risk Analysis", "prompt": "Perform VaR and risk factor analysis on this financial data"},
+            {"icon": "✅", "label": "Compliance Check", "prompt": "Check this filing for Basel III / MiFID II compliance"},
+            {"icon": "💹", "label": "Process Trades", "prompt": "Process and summarize trade data by currency and notional"},
+            {"icon": "📋", "label": "Generate Report", "prompt": "Generate a regulatory risk report from this data"}
+        ]
+    }
+
     async def route(self, action: str, input_data: Any, params: Dict) -> Dict:
         if action == "process_trades":
             return await self.process_trades(input_data, params)

@@ -89,7 +89,11 @@ class OrchestratorBlock(UniversalBlock):
                 {"name": "final_output", "type": "json", "label": "Output"},
                 {"name": "type_conversions", "type": "json", "label": "Conversions"}
             ]
-        }
+        },
+        "quick_actions": [
+            {"icon": "⛓️", "label": "Run Chain", "prompt": '{"steps":[{"block":"chat","params":{}}],"initial_input":"Hello"}'},
+            {"icon": "📊", "label": "Chain Status", "prompt": "Get status of current chain execution"}
+        ]
     }
 
     def __init__(self, hal_block=None, config=None):

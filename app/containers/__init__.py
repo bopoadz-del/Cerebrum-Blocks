@@ -7,6 +7,9 @@ from .finance import FinanceContainer
 from .security import SecurityContainer
 from .ai_core import AICoreContainer
 from .store import StoreContainer
+from .libraries import LibrariesContainer
+from .ml import MLContainer
+from .reasoning_engine import ReasoningEngineContainer
 
 __all__ = [
     "ConstructionContainer",
@@ -16,4 +19,7 @@ __all__ = [
     "SecurityContainer",
     "AICoreContainer",
     "StoreContainer",
+    "LibrariesContainer",
+    "MLContainer",
+    "ReasoningEngineContainer",
 ]

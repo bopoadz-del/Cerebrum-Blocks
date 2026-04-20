@@ -9,6 +9,7 @@ class GoogleDriveBlock(UniversalBlock):
     
     name = "google_drive"
     version = "1.0"
+    description = "Google Drive file listing, reading, and writing"
     layer = 4  # Integration
     tags = ["integration", "storage", "cloud"]
     requires = ["auth"]

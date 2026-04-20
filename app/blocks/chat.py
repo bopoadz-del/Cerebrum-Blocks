@@ -63,17 +63,18 @@ class ChatBlock(TypedBlock):
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Process chat request"""
         params = params or {}
-        
-        # Normalize input to string
-        if isinstance(input_data, str):
-            message = input_data
-        elif isinstance(input_data, dict):
-            message = input_data.get("text") or input_data.get("message") or str(input_data)
+        if isinstance(input_data, dict):
+            # Accept output from upstream chain steps (pdf, ocr, etc.)
+            message = (
+                input_data.get("text") or
+                input_data.get("content") or
+                input_data.get("extracted_text") or
+                str(input_data)
+            )
         else:
             message = str(input_data)
 
-        # Get API key from environment or use hardcoded fallback
-        api_key = os.getenv("DEEPSEEK_API_KEY") or "sk-62229915230e448b82ea08550d11fa86"
+        api_key = os.getenv("DEEPSEEK_API_KEY")
         if not api_key:
             return {
                 "status": "error",

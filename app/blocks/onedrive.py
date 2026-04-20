@@ -9,6 +9,7 @@ class OneDriveBlock(UniversalBlock):
     
     name = "onedrive"
     version = "1.0"
+    description = "Microsoft OneDrive file listing, reading, and writing"
     layer = 4
     tags = ["integration", "storage", "cloud"]
     requires = ["auth"]

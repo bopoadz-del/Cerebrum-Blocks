@@ -34,7 +34,12 @@ class CacheManagerBlock(UniversalBlock):
             "fields": [
                 {"name": "value", "type": "json", "label": "Cached Value"}
             ]
-        }
+        },
+        "quick_actions": [
+            {"icon": "📥", "label": "Get Value", "prompt": '{"action":"get","key":"my-key"}'},
+            {"icon": "📤", "label": "Set Value", "prompt": '{"action":"set","key":"my-key","value":"my-value","ttl":3600}'},
+            {"icon": "🗑️", "label": "Clear Cache", "prompt": '{"action":"clear"}'}
+        ]
     }
 
     def __init__(self, hal_block=None, config=None):

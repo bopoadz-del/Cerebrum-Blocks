@@ -18,7 +18,29 @@ class StoreContainer(UniversalContainer):
     requires = []
     
     PLATFORM_FEE = 0.20  # 20% Lego Tax
-    
+
+    ui_schema = {
+        "input": {
+            "type": "text",
+            "accept": None,
+            "placeholder": "Search blocks or describe what you want to build...",
+            "multiline": False
+        },
+        "output": {
+            "type": "json",
+            "fields": [
+                {"name": "blocks", "type": "json", "label": "Blocks Found"},
+                {"name": "total", "type": "number", "label": "Total Results"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "🔍", "label": "Discover Blocks", "prompt": '{"action":"discover","tag":"ai"}'},
+            {"icon": "📦", "label": "Publish Block", "prompt": '{"action":"publish","name":"my-block","price_cents":0}'},
+            {"icon": "📊", "label": "Platform Stats", "prompt": '{"action":"platform_stats"}'},
+            {"icon": "⭐", "label": "Top Rated", "prompt": '{"action":"discover","sort":"rating","limit":10}'}
+        ]
+    }
+
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)
         self.blocks = {}

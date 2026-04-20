@@ -18,7 +18,30 @@ class SecurityContainer(UniversalContainer):
     layer = 1  # Security layer
     tags = ["security", "container", "auth"]
     requires = []
-    
+
+    ui_schema = {
+        "input": {
+            "type": "json",
+            "accept": None,
+            "placeholder": '{"action": "auth", "api_key": "cb_..."}',
+            "multiline": False
+        },
+        "output": {
+            "type": "json",
+            "fields": [
+                {"name": "valid", "type": "boolean", "label": "Valid"},
+                {"name": "role", "type": "text", "label": "Role"},
+                {"name": "safe", "type": "boolean", "label": "Safe"}
+            ]
+        },
+        "quick_actions": [
+            {"icon": "🔑", "label": "Create Key", "prompt": '{"action":"create_key","owner":"my_app","role":"user"}'},
+            {"icon": "🔐", "label": "Authenticate", "prompt": '{"action":"auth","api_key":"cb_..."}'},
+            {"icon": "🛡️", "label": "Rate Check", "prompt": '{"action":"check_rate","key":"user_123","limit":100}'},
+            {"icon": "📋", "label": "Audit Log", "prompt": '{"action":"audit","event":"login","user":"user_123"}'}
+        ]
+    }
+
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)
         self.api_keys = {}

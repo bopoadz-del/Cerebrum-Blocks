@@ -35,7 +35,11 @@ class TrafficManagerBlock(UniversalBlock):
         "output": {
             "type": "json",
             "fields": []
-        }
+        },
+        "quick_actions": [
+            {"icon": "🚦", "label": "Route Request", "prompt": '{"source":"chat","target":"pdf","payload":{}}'},
+            {"icon": "⚡", "label": "Circuit Status", "prompt": "Get circuit breaker status for all blocks"}
+        ]
     }
 
     def __init__(self, hal_block=None, config=None):

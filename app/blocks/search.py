@@ -9,6 +9,7 @@ class SearchBlock(UniversalBlock):
     
     name = "search"
     version = "1.0"
+    description = "Real-time web search using Serper API"
     layer = 3
     tags = ["domain", "search", "web"]
     requires = []

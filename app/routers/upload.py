@@ -59,7 +59,7 @@ async def upload_v1(file: UploadFile = File(...), auth: dict = Depends(require_a
         with open(filepath, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Return URL for processing
+        # Return URL and server path for chain processing
         base_url = os.getenv("API_BASE_URL", "https://cerebrum-platform-api.onrender.com")
         return {
             "url": f"{base_url}/static/{filename}",
