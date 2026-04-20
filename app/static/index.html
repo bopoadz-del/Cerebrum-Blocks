@@ -227,6 +227,8 @@ const client = new CerebrumClient();
 // ─────────────────────────────────────────────────────────────
 const TEXT_EXTS = new Set(['txt','md','csv','json','xml','html','htm','js','ts','py','java','c','cpp','h','css','yaml','yml','ini','log','sh','sql','tsx','jsx','sh','bat']);
 const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','webp','bmp','tiff','tif']);
+const DOCX_EXTS = new Set(['docx','doc']);
+const XLSX_EXTS = new Set(['xlsx','xls']);
 
 function getExt(name) {
     return (name.split('.').pop() || '').toLowerCase();
@@ -244,10 +246,20 @@ function isPdfFile(name) {
     return getExt(name) === 'pdf';
 }
 
+function isDocxFile(name) {
+    return DOCX_EXTS.has(getExt(name));
+}
+
+function isXlsxFile(name) {
+    return XLSX_EXTS.has(getExt(name));
+}
+
 function getFileKind(name) {
     if (isTextFile(name)) return 'text';
     if (isPdfFile(name)) return 'pdf';
     if (isImageFile(name)) return 'image';
+    if (isDocxFile(name)) return 'docx';
+    if (isXlsxFile(name)) return 'xlsx';
     return 'binary';
 }
 
@@ -533,7 +545,7 @@ async function selectDriveFile(driveId, fileName) {
                 ], (idx, label, status) => {});
                 analysisText = result.finalOutput?.text || String(result.finalOutput);
                 chainSummary = 'chat';
-            } else if (kind === 'pdf' || kind === 'image') {
+            } else if (kind === 'pdf' || kind === 'image' || kind === 'docx' || kind === 'xlsx') {
                 setOutcomes(`
                     <div class="outcome-item">
                         <div class="outcome-label">Selected File</div>
@@ -542,7 +554,7 @@ async function selectDriveFile(driveId, fileName) {
                     </div>
                     <div class="outcome-item">
                         <div class="outcome-label">Processing Chain</div>
-                        <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → construction → chat' : 'ocr → construction → chat'}</div>
+                        <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → construction → chat' : kind === 'docx' || kind === 'xlsx' ? 'doc → construction → chat' : 'ocr → construction → chat'}</div>
                     </div>
                 `);
                 
@@ -550,7 +562,7 @@ async function selectDriveFile(driveId, fileName) {
                 form.append('file', fileObj);
                 const uploadData = await client.upload(form);
                 const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
-                const extractBlock = kind === 'pdf' ? 'pdf' : 'ocr';
+                const extractBlock = kind === 'pdf' ? 'pdf' : kind === 'docx' || kind === 'xlsx' ? 'pdf' : 'ocr';
                 
                 const result = await runChain(fileName, [
                     { block: extractBlock, input: { action: 'extract_text', file_path: filePath }, params: {}, label: extractBlock },
@@ -718,7 +730,7 @@ async function handleFile(input) {
                 { block: 'chat', input: `Analyze this file and extract key information:\n\nFile: ${file.name}\nSize: ${sizeKb} KB\n\nContent:\n${trimmed.substring(0, 3000)}`, params: {}, label: 'chat' }
             ], (idx, label, status) => {});
             analysisText = result.finalOutput?.text || String(result.finalOutput);
-        } else if (kind === 'pdf' || kind === 'image') {
+        } else if (kind === 'pdf' || kind === 'image' || kind === 'docx' || kind === 'xlsx') {
             setOutcomes(`
                 <div class="outcome-item">
                     <div class="outcome-label">File Uploaded</div>
@@ -727,11 +739,11 @@ async function handleFile(input) {
                 </div>
                 <div class="outcome-item">
                     <div class="outcome-label">Processing Chain</div>
-                    <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → construction → chat' : 'ocr → construction → chat'}</div>
+                    <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → construction → chat' : kind === 'docx' || kind === 'xlsx' ? 'doc → construction → chat' : 'ocr → construction → chat'}</div>
                 </div>
             `);
             
-            const extractBlock = kind === 'pdf' ? 'pdf' : 'ocr';
+            const extractBlock = kind === 'pdf' ? 'pdf' : kind === 'docx' || kind === 'xlsx' ? 'pdf' : 'ocr';
             chainLabel = `${extractBlock} → construction → chat`;
             const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
             
