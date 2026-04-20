@@ -61,7 +61,7 @@ class OCRBlock(TypedBlock):
     }
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        """Extract text from image with preprocessing"""
+        """Extract text from image (or PDF) with preprocessing"""
         params = params or {}
         
         image_path = self._get_image_path(input_data)
@@ -74,24 +74,31 @@ class OCRBlock(TypedBlock):
         preprocess = params.get("preprocess", self.config.get("preprocess", True))
         languages = params.get("languages", self.config.get("languages", ["en"]))
         
-        # Preprocess image if enabled
-        if preprocess:
-            image_path = self._preprocess_image(image_path)
+        # Detect if input is a PDF and convert pages to images
+        page_images = self._prepare_images(image_path, preprocess)
+        if not page_images:
+            return {"status": "error", "text": "", "confidence": 0, "error": "Could not process input file"}
         
         # Try EasyOCR (pure Python, no system deps)
         try:
             import easyocr
             reader = easyocr.Reader(languages, gpu=False)
-            results = reader.readtext(image_path)
             
-            if not results:
+            all_texts = []
+            all_confs = []
+            for page_img_path in page_images:
+                results = reader.readtext(page_img_path)
+                texts = [r[1] for r in results if r[1].strip()]
+                confs = [r[2] for r in results]
+                if texts:
+                    all_texts.extend(texts)
+                    all_confs.extend(confs)
+            
+            if not all_texts:
                 return {"status": "success", "text": "", "confidence": 0, "message": "No text detected"}
             
-            texts = [r[1] for r in results if r[1].strip()]
-            confs = [r[2] for r in results]
-            
-            full_text = "\n".join(texts)
-            avg_conf = sum(confs) / len(confs) if confs else 0
+            full_text = "\n".join(all_texts)
+            avg_conf = sum(all_confs) / len(all_confs) if all_confs else 0
             
             return {
                 "status": "success",
@@ -99,7 +106,8 @@ class OCRBlock(TypedBlock):
                 "confidence": round(avg_conf, 2),
                 "word_count": len(full_text.split()),
                 "engine": "easyocr",
-                "preprocessed": preprocess
+                "preprocessed": preprocess,
+                "pages": len(page_images)
             }
             
         except ImportError:
@@ -114,6 +122,44 @@ class OCRBlock(TypedBlock):
         elif isinstance(input_data, dict):
             return input_data.get("file_path") or input_data.get("path") or input_data.get("url")
         return None
+    
+    def _prepare_images(self, file_path: str, preprocess: bool = True) -> list:
+        """Convert input to a list of image file paths (handles PDFs and images)."""
+        from PIL import Image
+        
+        is_pdf = file_path.lower().endswith(".pdf")
+        if not is_pdf:
+            # Try to open as image; if it fails, try as PDF via PyMuPDF
+            try:
+                Image.open(file_path)
+                # It's a valid image
+                if preprocess:
+                    return [self._preprocess_image(file_path)]
+                return [file_path]
+            except Exception:
+                is_pdf = True
+        
+        if is_pdf:
+            try:
+                import fitz  # PyMuPDF
+                doc = fitz.open(file_path)
+                images = []
+                for page_num in range(len(doc)):
+                    page = doc.load_page(page_num)
+                    pix = page.get_pixmap(dpi=200)
+                    img_path = tempfile.mktemp(suffix=f"_page{page_num + 1}.png")
+                    pix.save(img_path)
+                    if preprocess:
+                        img_path = self._preprocess_image(img_path)
+                    images.append(img_path)
+                doc.close()
+                return images
+            except ImportError:
+                return []
+            except Exception:
+                return []
+        
+        return []
     
     def _preprocess_image(self, image_path: str) -> str:
         """Enhance image for better OCR quality"""
