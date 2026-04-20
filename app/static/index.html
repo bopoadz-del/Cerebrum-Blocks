@@ -554,10 +554,14 @@ async function selectDriveFile(driveId, fileName) {
                 
                 const result = await runChain(fileName, [
                     { block: extractBlock, input: { action: 'extract_text', file_path: filePath }, params: {}, label: extractBlock },
-                    { block: 'construction', input: { file_path: filePath }, params: { action: 'process_document', doc_type: 'auto' }, label: 'construction' },
+                    { block: 'construction', input: (prev, allResults) => {
+                        // Pass extracted text from step 1 to avoid re-processing
+                        const ocrText = allResults[0]?.text || '';
+                        return { file_path: filePath, extracted_text: ocrText, action: 'process_document', doc_type: 'auto' };
+                    }, params: {}, label: 'construction' },
                     { block: 'chat', input: (prev, allResults) => {
-                        const extracted = allResults[0]?.result?.text || '';
-                        const construction = allResults[1]?.result;
+                        const extracted = allResults[0]?.text || '';
+                        const construction = allResults[1];
                         const constructionSummary = typeof construction === 'object' 
                             ? JSON.stringify(construction, null, 2).substring(0, 2000)
                             : String(construction).substring(0, 2000);
@@ -566,8 +570,8 @@ async function selectDriveFile(driveId, fileName) {
                 ], (idx, label, status) => {});
                 
                 analysisText = result.finalOutput?.text || String(result.finalOutput);
-                const extracted = result.results[0]?.result?.text || '';
-                const constructionResult = result.results[1]?.result;
+                const extracted = result.results[0]?.text || '';
+                const constructionResult = result.results[1];
                 setActiveFileContext(fileName, `${extracted.substring(0, 3000)}\n\n[Construction Analysis]\n${typeof constructionResult === 'object' ? JSON.stringify(constructionResult, null, 2) : constructionResult}`.substring(0, 5000), drive.name);
                 previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Extracted ${extracted.length} chars → construction container → deepseek</div>`;
                 chainSummary = `${extractBlock} → construction → chat`;
@@ -733,10 +737,13 @@ async function handleFile(input) {
             
             const result = await runChain(file.name, [
                 { block: extractBlock, input: { action: 'extract_text', file_path: filePath }, params: {}, label: extractBlock },
-                { block: 'construction', input: { file_path: filePath }, params: { action: 'process_document', doc_type: 'auto' }, label: 'construction' },
+                { block: 'construction', input: (prev, allResults) => {
+                    const ocrText = allResults[0]?.text || '';
+                    return { file_path: filePath, extracted_text: ocrText, action: 'process_document', doc_type: 'auto' };
+                }, params: {}, label: 'construction' },
                 { block: 'chat', input: (prev, allResults) => {
-                    const extracted = allResults[0]?.result?.text || '';
-                    const construction = allResults[1]?.result;
+                    const extracted = allResults[0]?.text || '';
+                    const construction = allResults[1];
                     const constructionSummary = typeof construction === 'object' 
                         ? JSON.stringify(construction, null, 2).substring(0, 2000)
                         : String(construction).substring(0, 2000);
@@ -745,8 +752,8 @@ async function handleFile(input) {
             ], (idx, label, status) => {});
             
             analysisText = result.finalOutput?.text || String(result.finalOutput);
-            const extracted = result.results[0]?.result?.text || '';
-            const constructionResult = result.results[1]?.result;
+            const extracted = result.results[0]?.text || '';
+            const constructionResult = result.results[1];
             setActiveFileContext(file.name, `${extracted.substring(0, 3000)}\n\n[Construction Analysis]\n${typeof constructionResult === 'object' ? JSON.stringify(constructionResult, null, 2) : constructionResult}`.substring(0, 5000), 'Upload');
             previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Extracted ${extracted.length} chars → construction container → deepseek</div>`;
         } else {

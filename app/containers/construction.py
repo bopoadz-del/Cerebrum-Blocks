@@ -320,6 +320,9 @@ class ConstructionContainer(UniversalContainer):
         return "drawing"
 
     async def _process_drawing(self, file_path: str, params: Dict) -> Dict:
+        # Use pre-extracted text if provided from chain
+        pre_extracted_text = params.get("extracted_text", "")
+        
         try:
             import fitz
             doc = fitz.open(file_path)
@@ -342,12 +345,13 @@ class ConstructionContainer(UniversalContainer):
             "scale": None,
             "title_block": {},
             "bom_items": [],
-            "confidence": {}
+            "confidence": {},
+            "used_pre_extracted_text": bool(pre_extracted_text)  # Flag to indicate source
         }
         
         for page_num in range(len(doc)):
             page = doc[page_num]
-            sheet_data = self._process_drawing_page(page, page_num)
+            sheet_data = self._process_drawing_page(page, page_num, pre_extracted_text if page_num == 0 else "")
             result["sheets"].append(sheet_data)
             result["measurements"].extend(sheet_data["measurements"])
             result["tables"].extend(sheet_data["tables"])
@@ -368,13 +372,19 @@ class ConstructionContainer(UniversalContainer):
         doc.close()
         return result
     
-    def _process_drawing_page(self, page, page_num: int) -> Dict:
-        text_dict = page.get_text("dict")
-        raw_text = page.get_text()
+    def _process_drawing_page(self, page, page_num: int, pre_extracted_text: str = "") -> Dict:
+        # Use pre-extracted text if available, otherwise extract from page
+        if pre_extracted_text:
+            raw_text = pre_extracted_text[:8000]  # Use provided text
+            text_dict = None  # No dict structure available from pre-extracted
+        else:
+            text_dict = page.get_text("dict")
+            raw_text = page.get_text()[:8000]
+        
         return {
             "page_number": page_num + 1,
             "raw_text": raw_text[:8000],
-            "measurements": self._extract_measurements_advanced(raw_text, text_dict),
+            "measurements": self._extract_measurements_advanced(raw_text, text_dict or {}),
             "tables": self._extract_tables_advanced(page),
             "annotations": self._extract_annotations(page),
             "specs": self._extract_specs_advanced(raw_text),
