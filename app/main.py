@@ -1,7 +1,19 @@
 """Cerebrum Blocks - Simple Block Execution API."""
 
-import logging
 import os
+import sys
+
+# Force fresh bytecode on Render deployments (clear stale __pycache__)
+for root, dirs, files in os.walk(os.path.dirname(os.path.abspath(__file__))):
+    for d in dirs:
+        if d == "__pycache__":
+            try:
+                import shutil
+                shutil.rmtree(os.path.join(root, d))
+            except Exception:
+                pass
+
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
