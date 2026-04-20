@@ -128,8 +128,10 @@ class OrchestratorBlock(UniversalBlock):
 
     def _get_block_type_info(self, block: Any) -> tuple[str, str]:
         """Get input and output types from a block"""
-        # Check if block has typed schema (new TypedBlock pattern)
-        if hasattr(block, 'input_schema') and block.input_schema and hasattr(block.input_schema, 'content_type'):
+        # Prefer explicit type declarations from TypedBlock
+        if hasattr(block, 'accepted_input_types') and block.accepted_input_types:
+            input_type = block.accepted_input_types[0]
+        elif hasattr(block, 'input_schema') and block.input_schema and hasattr(block.input_schema, 'content_type'):
             input_type = block.input_schema.content_type.value
         elif hasattr(block, 'get_input_type'):
             input_type = block.get_input_type()
@@ -137,7 +139,9 @@ class OrchestratorBlock(UniversalBlock):
             # Infer from ui_schema or default
             input_type = self._infer_input_type(block)
         
-        if hasattr(block, 'output_schema') and block.output_schema and hasattr(block.output_schema, 'content_type'):
+        if hasattr(block, 'produced_output_types') and block.produced_output_types:
+            output_type = block.produced_output_types[0]
+        elif hasattr(block, 'output_schema') and block.output_schema and hasattr(block.output_schema, 'content_type'):
             output_type = block.output_schema.content_type.value
         elif hasattr(block, 'get_output_type'):
             output_type = block.get_output_type()

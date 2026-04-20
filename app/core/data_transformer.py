@@ -622,8 +622,8 @@ def are_compatible(source_type: str, target_type: str) -> bool:
         return True
     if source_type == "TextContent" and target_type in [DataTransformer.TEXT, DataTransformer.JSON]:
         return True
-    # ConstructionAnalysis can transform to TextContent
-    if target_type == "TextContent" and source_type == "ConstructionAnalysis":
+    # ConstructionAnalysis can transform to TextContent or Text
+    if target_type in ["TextContent", DataTransformer.TEXT] and source_type == "ConstructionAnalysis":
         return True
     return False
 
