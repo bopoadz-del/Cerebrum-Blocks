@@ -247,6 +247,16 @@ class OrchestratorBlock(UniversalBlock):
             # Validate type compatibility with previous step
             if i > 0 and prev_output_type != DataTransformer.UNKNOWN:
                 compatible = DataTransformer.are_compatible(prev_output_type, input_type)
+                # Fallback: case-insensitive + known cross-type compatibilities
+                if not compatible:
+                    s = (prev_output_type or "").lower()
+                    t = (input_type or "").lower()
+                    if s == t:
+                        compatible = True
+                    elif s == "pdf" and t == "image":
+                        compatible = True
+                    elif s == "file" and t in ["pdf", "image", "pdfcontent", "imagecontent", "filecontent"]:
+                        compatible = True
                 if not compatible:
                     prev_block = steps[i-1].get("block", "initial")
                     validation_errors.append(TypeValidationError(
@@ -346,6 +356,16 @@ class OrchestratorBlock(UniversalBlock):
             
             if current_type != step.input_type and current_type != DataTransformer.UNKNOWN:
                 compatible = DataTransformer.are_compatible(current_type, step.input_type)
+                # Fallback: case-insensitive + known cross-type compatibilities
+                if not compatible:
+                    s = (current_type or "").lower()
+                    t = (step.input_type or "").lower()
+                    if s == t:
+                        compatible = True
+                    elif s == "pdf" and t == "image":
+                        compatible = True
+                    elif s == "file" and t in ["pdf", "image", "pdfcontent", "imagecontent", "filecontent"]:
+                        compatible = True
                 # Special case: file path dicts are valid input for PDF/image/file blocks
                 if not compatible and current_type == DataTransformer.FILE:
                     if step.input_type in ["PDFContent", "ImageContent", "FileContent"]:
