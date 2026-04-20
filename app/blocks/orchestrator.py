@@ -354,7 +354,8 @@ class OrchestratorBlock(UniversalBlock):
             # Auto-adapt input to block's expected format
             context = adapt_input(context, step.block)
             
-            if current_type != step.input_type and current_type != DataTransformer.UNKNOWN:
+            # Skip runtime type check for step 0 (initial input is caller-provided)
+            if step.index > 0 and current_type != step.input_type and current_type != DataTransformer.UNKNOWN:
                 compatible = DataTransformer.are_compatible(current_type, step.input_type)
                 # Fallback: case-insensitive + known cross-type compatibilities
                 if not compatible:
