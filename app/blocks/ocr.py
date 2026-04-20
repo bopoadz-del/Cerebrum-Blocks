@@ -79,13 +79,16 @@ class OCRBlock(TypedBlock):
         if not page_images:
             return {"status": "error", "text": "", "confidence": 0, "error": "Could not process input file"}
         
-        # Try EasyOCR (pure Python, no system deps)
+        # Try EasyOCR first, fallback to pytesseract
+        all_texts = []
+        all_confs = []
+        engine_used = None
+        
         try:
             import easyocr
             reader = easyocr.Reader(languages, gpu=False)
+            engine_used = "easyocr"
             
-            all_texts = []
-            all_confs = []
             for page_img_path in page_images:
                 results = reader.readtext(page_img_path)
                 texts = [r[1] for r in results if r[1].strip()]
@@ -93,27 +96,39 @@ class OCRBlock(TypedBlock):
                 if texts:
                     all_texts.extend(texts)
                     all_confs.extend(confs)
-            
-            if not all_texts:
-                return {"status": "success", "text": "", "confidence": 0, "message": "No text detected"}
-            
-            full_text = "\n".join(all_texts)
-            avg_conf = sum(all_confs) / len(all_confs) if all_confs else 0
-            
-            return {
-                "status": "success",
-                "text": full_text,
-                "confidence": round(avg_conf, 2),
-                "word_count": len(full_text.split()),
-                "engine": "easyocr",
-                "preprocessed": preprocess,
-                "pages": len(page_images)
-            }
-            
         except ImportError:
-            return {"status": "error", "text": "", "confidence": 0, "error": "EasyOCR not installed"}
+            # Fallback to pytesseract
+            try:
+                import pytesseract
+                from PIL import Image
+                engine_used = "pytesseract"
+                
+                for page_img_path in page_images:
+                    img = Image.open(page_img_path)
+                    text = pytesseract.image_to_string(img)
+                    if text.strip():
+                        all_texts.append(text.strip())
+                        all_confs.append(0.85)  # pytesseract doesn't give per-line confidence easily
+            except ImportError:
+                return {"status": "error", "text": "", "confidence": 0, "error": "No OCR engine installed (easyocr or pytesseract)"}
         except Exception as e:
             return {"status": "error", "text": "", "confidence": 0, "error": f"OCR failed: {str(e)}"}
+        
+        if not all_texts:
+            return {"status": "success", "text": "", "confidence": 0, "message": "No text detected"}
+        
+        full_text = "\n".join(all_texts)
+        avg_conf = sum(all_confs) / len(all_confs) if all_confs else 0
+        
+        return {
+            "status": "success",
+            "text": full_text,
+            "confidence": round(avg_conf, 2),
+            "word_count": len(full_text.split()),
+            "engine": engine_used or "unknown",
+            "preprocessed": preprocess,
+            "pages": len(page_images)
+        }
     
     def _get_image_path(self, input_data: Any) -> str:
         """Extract image path from input"""
