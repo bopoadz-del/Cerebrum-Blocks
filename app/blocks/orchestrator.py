@@ -345,7 +345,12 @@ class OrchestratorBlock(UniversalBlock):
             context = adapt_input(context, step.block)
             
             if current_type != step.input_type and current_type != DataTransformer.UNKNOWN:
-                if DataTransformer.are_compatible(current_type, step.input_type):
+                compatible = DataTransformer.are_compatible(current_type, step.input_type)
+                # Special case: file path dicts are valid input for PDF/image/file blocks
+                if not compatible and current_type == DataTransformer.FILE:
+                    if step.input_type in ["PDFContent", "ImageContent", "FileContent"]:
+                        compatible = True
+                if compatible:
                     context, conversion_op = DataTransformer.transform(
                         context, 
                         step.input_type,
