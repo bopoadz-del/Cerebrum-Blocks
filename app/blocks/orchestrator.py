@@ -366,8 +366,9 @@ class OrchestratorBlock(UniversalBlock):
             if step.input_mapping and isinstance(context, dict):
                 context = DataTransformer._apply_field_mapping(context, step.input_mapping)
 
-            # Execute block
-            result = await step.block.execute(context, step.params)
+            # Normalize parameter routing: merge step input into params for blocks that expect params
+            merged_params = {**(step.params or {}), **(context if isinstance(context, dict) else {})}
+            result = await step.block.execute(context, merged_params)
 
             results.append({
                 "step": step.index,
