@@ -3,7 +3,7 @@
 from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass
 from app.core.universal_base import UniversalBlock
-from app.core.data_transformer import DataTransformer
+from app.core.data_transformer import DataTransformer, transform as _transform_data
 from app.core.input_adapter import adapt_input
 
 
@@ -351,7 +351,7 @@ class OrchestratorBlock(UniversalBlock):
                     if step.input_type in ["PDFContent", "ImageContent", "FileContent"]:
                         compatible = True
                 if compatible:
-                    context, conversion_op = DataTransformer.transform(
+                    context, conversion_op = _transform_data(
                         context, 
                         step.input_type,
                         field_mapping=step.input_mapping

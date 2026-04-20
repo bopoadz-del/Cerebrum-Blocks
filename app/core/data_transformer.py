@@ -573,16 +573,13 @@ def get_transformer() -> DataTransformer:
     return transformer
 
 
-# Save original instance method before we overwrite it with the static wrapper
-_original_transform = DataTransformer.transform
-
 def transform(data: Any, target_type: str, source_block: str = None, field_mapping: dict = None) -> tuple:
     """
     Convenience function to transform data to target type.
     
     Returns tuple of (transformed_data, operation_name).
     """
-    return _original_transform(transformer, data, target_type, source_block, field_mapping)
+    return transformer.transform(data, target_type, source_block, field_mapping)
 
 
 # ========================================================================
@@ -639,7 +636,6 @@ def are_compatible(source_type: str, target_type: str) -> bool:
 # Attach static methods to class for Orchestrator compatibility
 DataTransformer.detect_type = staticmethod(detect_type)
 DataTransformer.are_compatible = staticmethod(are_compatible)
-DataTransformer.transform = staticmethod(transform)
 
 
 # Export
