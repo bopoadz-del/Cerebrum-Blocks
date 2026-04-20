@@ -573,13 +573,16 @@ def get_transformer() -> DataTransformer:
     return transformer
 
 
+# Save original instance method before we overwrite it with the static wrapper
+_original_transform = DataTransformer.transform
+
 def transform(data: Any, target_type: str, source_block: str = None, field_mapping: dict = None) -> tuple:
     """
     Convenience function to transform data to target type.
     
     Returns tuple of (transformed_data, operation_name).
     """
-    return transformer.transform(data, target_type, source_block, field_mapping)
+    return _original_transform(transformer, data, target_type, source_block, field_mapping)
 
 
 # ========================================================================
