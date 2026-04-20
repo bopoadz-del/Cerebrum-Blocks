@@ -622,6 +622,11 @@ def are_compatible(source_type: str, target_type: str) -> bool:
         return True
     if source_type == "TextContent" and target_type in [DataTransformer.TEXT, DataTransformer.JSON]:
         return True
+    # File path dicts can transform to PDFContent or ImageContent
+    if target_type == "PDFContent" and source_type == DataTransformer.FILE:
+        return True
+    if target_type == "ImageContent" and source_type == DataTransformer.FILE:
+        return True
     # ConstructionAnalysis can transform to TextContent or Text
     if target_type in ["TextContent", DataTransformer.TEXT] and source_type == "ConstructionAnalysis":
         return True
