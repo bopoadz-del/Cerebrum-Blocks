@@ -69,13 +69,16 @@ class PDFBlock(TypedBlock):
         
         if url:
             import httpx
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, timeout=30)
-                response.raise_for_status()
-                suffix = ".pdf" if ".pdf" in url.lower() else ".tmp"
-                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as f:
-                    f.write(response.content)
-                    input_data = f.name
+            try:
+                async with httpx.AsyncClient(follow_redirects=True) as client:
+                    response = await client.get(url, timeout=30)
+                    response.raise_for_status()
+                    suffix = ".pdf" if ".pdf" in url.lower() else ".tmp"
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as f:
+                        f.write(response.content)
+                        input_data = f.name
+            except Exception as e:
+                return {"status": "error", "text": "", "pages": 0, "error": f"Download failed: {str(e)}"}
         
         # Get PDF path
         pdf_path = self._get_pdf_path(input_data)
@@ -83,7 +86,7 @@ class PDFBlock(TypedBlock):
             return {"status": "error", "text": "", "pages": 0, "error": "No PDF provided"}
         
         if not os.path.exists(pdf_path):
-            return {"status": "error", "text": "", "pages": 0, "error": f"[URL_FIX] File not found: {pdf_path}"}
+            return {"status": "error", "text": "", "pages": 0, "error": f"File not found: {pdf_path}"}
         
         # Extract using PyMuPDF
         try:
