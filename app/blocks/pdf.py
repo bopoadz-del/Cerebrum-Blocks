@@ -83,7 +83,7 @@ class PDFBlock(TypedBlock):
             return {"status": "error", "text": "", "pages": 0, "error": "No PDF provided"}
         
         if not os.path.exists(pdf_path):
-            return {"status": "error", "text": "", "pages": 0, "error": f"File not found: {pdf_path}"}
+            return {"status": "error", "text": "", "pages": 0, "error": f"[URL_FIX] File not found: {pdf_path}"}
         
         # Extract using PyMuPDF
         try:
