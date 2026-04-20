@@ -105,7 +105,8 @@ class PDFBlock(TypedBlock):
                 "status": "success",
                 "text": text[:20000],  # Limit output
                 "pages": pages,
-                "filename": os.path.basename(pdf_path)
+                "filename": os.path.basename(pdf_path),
+                "file_path": pdf_path
             }
             
         except ImportError:
