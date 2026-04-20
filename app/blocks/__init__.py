@@ -72,9 +72,21 @@ BLOCK_REGISTRY = {
     "construction": ConstructionContainer,
 }
 
+def get_block(name: str):
+    """Get a block class by name"""
+    return BLOCK_REGISTRY.get(name)
+
+
+def get_all_blocks():
+    """Get all registered blocks"""
+    return BLOCK_REGISTRY
+
+
 __all__ = [
     "UniversalBlock",
     "UniversalContainer", 
     "TypedBlock",
     "BLOCK_REGISTRY",
+    "get_block",
+    "get_all_blocks",
 ]

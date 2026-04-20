@@ -3,7 +3,7 @@
 from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass
 from app.core.universal_base import UniversalBlock
-from app.core.data_transformer import DataTransformer
+from app.core.data_transformer import DataTransformer, transform as _transform_data
 from app.core.input_adapter import adapt_input
 
 
@@ -128,8 +128,10 @@ class OrchestratorBlock(UniversalBlock):
 
     def _get_block_type_info(self, block: Any) -> tuple[str, str]:
         """Get input and output types from a block"""
-        # Check if block has typed schema (new TypedBlock pattern)
-        if hasattr(block, 'input_schema') and block.input_schema:
+        # Prefer explicit type declarations from TypedBlock
+        if hasattr(block, 'accepted_input_types') and block.accepted_input_types:
+            input_type = block.accepted_input_types[0]
+        elif hasattr(block, 'input_schema') and block.input_schema and hasattr(block.input_schema, 'content_type'):
             input_type = block.input_schema.content_type.value
         elif hasattr(block, 'get_input_type'):
             input_type = block.get_input_type()
@@ -137,7 +139,9 @@ class OrchestratorBlock(UniversalBlock):
             # Infer from ui_schema or default
             input_type = self._infer_input_type(block)
         
-        if hasattr(block, 'output_schema') and block.output_schema:
+        if hasattr(block, 'produced_output_types') and block.produced_output_types:
+            output_type = block.produced_output_types[0]
+        elif hasattr(block, 'output_schema') and block.output_schema and hasattr(block.output_schema, 'content_type'):
             output_type = block.output_schema.content_type.value
         elif hasattr(block, 'get_output_type'):
             output_type = block.get_output_type()
@@ -243,6 +247,16 @@ class OrchestratorBlock(UniversalBlock):
             # Validate type compatibility with previous step
             if i > 0 and prev_output_type != DataTransformer.UNKNOWN:
                 compatible = DataTransformer.are_compatible(prev_output_type, input_type)
+                # Fallback: case-insensitive + known cross-type compatibilities
+                if not compatible:
+                    s = (prev_output_type or "").lower()
+                    t = (input_type or "").lower()
+                    if s == t:
+                        compatible = True
+                    elif s == "pdf" and t == "image":
+                        compatible = True
+                    elif s == "file" and t in ["pdf", "image", "pdfcontent", "imagecontent", "filecontent"]:
+                        compatible = True
                 if not compatible:
                     prev_block = steps[i-1].get("block", "initial")
                     validation_errors.append(TypeValidationError(
@@ -340,9 +354,29 @@ class OrchestratorBlock(UniversalBlock):
             # Auto-adapt input to block's expected format
             context = adapt_input(context, step.block)
             
-            if current_type != step.input_type and current_type != DataTransformer.UNKNOWN:
-                if DataTransformer.are_compatible(current_type, step.input_type):
-                    context, conversion_op = DataTransformer.transform(
+            # Skip runtime type check for step 0 (initial input is caller-provided)
+            if step.index > 0 and current_type != step.input_type and current_type != DataTransformer.UNKNOWN:
+                compatible = DataTransformer.are_compatible(current_type, step.input_type)
+                # Fallback: case-insensitive + known cross-type compatibilities
+                if not compatible:
+                    s = (current_type or "").lower()
+                    t = (step.input_type or "").lower()
+                    if s == t:
+                        compatible = True
+                    elif s == "pdf" and t == "image":
+                        compatible = True
+                    elif s == "file" and t in ["pdf", "image", "pdfcontent", "imagecontent", "filecontent"]:
+                        compatible = True
+                    elif s == "json" and t in ["file", "pdf", "image"]:
+                        # URL/file_path/path dicts are file inputs, not generic JSON
+                        if isinstance(context, dict) and any(k in context for k in ("url", "file_path", "path")):
+                            compatible = True
+                # Special case: file path dicts are valid input for PDF/image/file blocks
+                if not compatible and current_type == DataTransformer.FILE:
+                    if step.input_type in ["PDFContent", "ImageContent", "FileContent"]:
+                        compatible = True
+                if compatible:
+                    context, conversion_op = _transform_data(
                         context, 
                         step.input_type,
                         field_mapping=step.input_mapping

@@ -1,6 +1,7 @@
 """PDF Block - Extract text from PDF files with Typed Schema"""
 
 import os
+import tempfile
 from typing import Any, Dict
 from app.core.typed_block import TypedBlock, Schema, ContentType
 
@@ -59,13 +60,30 @@ class PDFBlock(TypedBlock):
         """Extract text from PDF"""
         params = params or {}
         
+        # If input is a URL, download it first
+        url = None
+        if isinstance(input_data, dict):
+            url = input_data.get("url")
+        elif isinstance(input_data, str) and input_data.startswith("http"):
+            url = input_data
+        
+        if url:
+            import httpx
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, timeout=30)
+                response.raise_for_status()
+                suffix = ".pdf" if ".pdf" in url.lower() else ".tmp"
+                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as f:
+                    f.write(response.content)
+                    input_data = f.name
+        
         # Get PDF path
         pdf_path = self._get_pdf_path(input_data)
         if not pdf_path:
             return {"status": "error", "text": "", "pages": 0, "error": "No PDF provided"}
         
         if not os.path.exists(pdf_path):
-            return {"status": "error", "text": "", "pages": 0, "error": f"File not found: {pdf_path}"}
+            return {"status": "error", "text": "", "pages": 0, "error": f"[URL_FIX] File not found: {pdf_path}"}
         
         # Extract using PyMuPDF
         try:
