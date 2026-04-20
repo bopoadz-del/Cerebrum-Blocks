@@ -58,7 +58,12 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .file-preview { max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 8px; }
         .raw-output { background: #0f0f0f; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px; margin-top: 12px; font-family: monospace; font-size: 12px; color: #888; overflow-x: auto; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
-        /* Drive Connect Modal */
+        /* Error display */
+        .validation-error { background: #3a1a1a; border: 1px solid #5a2a2a; border-radius: 8px; padding: 12px; margin-top: 8px; }
+        .validation-error h4 { color: #ff6666; font-size: 13px; margin-bottom: 8px; }
+        .validation-error ul { color: #cc8888; font-size: 12px; margin-left: 16px; }
+        .validation-error li { margin-bottom: 4px; }
+        /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
         .modal { background: #151515; border: 1px solid #333; border-radius: 12px; padding: 24px; width: 320px; }
@@ -70,6 +75,12 @@
         .drive-option .desc { font-size: 11px; color: #666; }
         .modal-close { width: 100%; margin-top: 8px; padding: 10px; background: transparent; border: 1px solid #333; color: #999; border-radius: 6px; cursor: pointer; }
         .modal-close:hover { border-color: #666; color: #fff; }
+        /* Type conversion badge */
+        .type-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px; }
+        .type-badge.pdf { background: #8b5cf620; color: #8b5cf6; }
+        .type-badge.text { background: #22c55e20; color: #22c55e; }
+        .type-badge.image { background: #f59e0b20; color: #f59e0b; }
+        .type-badge.converted { background: #3b82f620; color: #3b82f6; }
     </style>
 </head>
 <body>
@@ -169,7 +180,6 @@
 // UNIVERSAL ADAPTER CLIENT - Same Origin (No CORS)
 // ─────────────────────────────────────────────────────────────
 const API_BASE = '';  // Same origin - relative paths
-
 const API_KEY = 'cb_dev_key';
 
 class CerebrumClient {
@@ -184,17 +194,17 @@ class CerebrumClient {
         if (body && !isFormData) {
             headers['Content-Type'] = 'application/json';
         }
-        // NO mode: 'cors' - same origin only
         const opts = { method, headers };
         if (body) opts.body = isFormData ? body : JSON.stringify(body);
         
         const response = await fetch(url, opts);
+        const responseData = await response.json().catch(() => null);
+        
         if (!response.ok) {
-            const text = await response.text();
-            throw new Error(`HTTP ${response.status}: ${text}`);
+            const errorText = responseData ? JSON.stringify(responseData) : await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
-        if (response.status === 204) return undefined;
-        return response.json();
+        return responseData;
     }
 
     execute(block, input = null, params = {}) {
@@ -214,7 +224,7 @@ class CerebrumClient {
     }
 
     async health() {
-        const r = await fetch(`${this.base}/health`);  // NO mode: 'cors'
+        const r = await fetch(`${this.base}/health`);
         if (!r.ok) throw new Error(`Health check failed: ${r.status}`);
         return r.json();
     }
@@ -234,25 +244,11 @@ function getExt(name) {
     return (name.split('.').pop() || '').toLowerCase();
 }
 
-function isTextFile(name) {
-    return TEXT_EXTS.has(getExt(name));
-}
-
-function isImageFile(name) {
-    return IMAGE_EXTS.has(getExt(name));
-}
-
-function isPdfFile(name) {
-    return getExt(name) === 'pdf';
-}
-
-function isDocxFile(name) {
-    return DOCX_EXTS.has(getExt(name));
-}
-
-function isXlsxFile(name) {
-    return XLSX_EXTS.has(getExt(name));
-}
+function isTextFile(name) { return TEXT_EXTS.has(getExt(name)); }
+function isImageFile(name) { return IMAGE_EXTS.has(getExt(name)); }
+function isPdfFile(name) { return getExt(name) === 'pdf'; }
+function isDocxFile(name) { return DOCX_EXTS.has(getExt(name)); }
+function isXlsxFile(name) { return XLSX_EXTS.has(getExt(name)); }
 
 function getFileKind(name) {
     if (isTextFile(name)) return 'text';
@@ -263,29 +259,84 @@ function getFileKind(name) {
     return 'binary';
 }
 
+function getTypeBadge(kind) {
+    const badges = {
+        'pdf': '<span class="type-badge pdf">PDF</span>',
+        'text': '<span class="type-badge text">TEXT</span>',
+        'image': '<span class="type-badge image">IMG</span>',
+    };
+    return badges[kind] || '';
+}
+
+/**
+ * Run a chain using the server-side /v1/chain endpoint
+ * This provides full type validation and automatic conversion
+ */
 async function runChain(label, steps, onProgress) {
-    let context = null;
-    const results = [];
-    for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-        const stepLabel = step.label || `${step.block}`;
-        onProgress(i, stepLabel, 'running');
+    onProgress(-1, 'validation', 'running');
+    
+    // Convert steps to server format
+    const serverSteps = steps.map((step, i) => ({
+        block: step.block,
+        params: step.params || {},
+        input_mapping: step.input_mapping || null,
+        label: step.label || step.block
+    }));
+    
+    try {
+        const result = await client.chain(serverSteps, null);
         
-        let stepInput = step.input;
-        if (typeof stepInput === 'function') {
-            stepInput = stepInput(context, results);
+        // Handle validation failure (before execution)
+        if (result.status === 'validation_failed') {
+            const errorHtml = formatValidationErrors(result.validation_errors);
+            throw new Error(`Chain validation failed:\n${errorHtml}`);
         }
         
-        const result = await client.execute(step.block, stepInput, step.params || {});
-        context = result.result || result;
-        results.push({ step: i, block: step.block, result: context });
-        onProgress(i, stepLabel, 'done');
-        
-        if (context && typeof context === 'object' && context.status === 'error') {
-            throw new Error(context.error || `Step ${stepLabel} failed`);
+        // Handle execution error
+        if (result.status === 'error') {
+            throw new Error(result.error || `Step ${result.step || '?'} failed`);
         }
+        
+        // Simulate progress for each completed step
+        if (result.results) {
+            for (let i = 0; i < result.results.length; i++) {
+                onProgress(i, steps[i]?.label || steps[i]?.block, 'done');
+            }
+        }
+        
+        return {
+            finalOutput: result.final_output,
+            results: result.results,
+            typeConversions: result.type_conversions || [],
+            stepsExecuted: result.steps_executed
+        };
+    } catch (error) {
+        // Check if it's a validation error with HTML
+        if (error.message.includes('Chain validation failed')) {
+            throw error;  // Pass through with HTML
+        }
+        throw new Error(`Chain execution failed: ${error.message}`);
     }
-    return { finalOutput: context, results };
+}
+
+function formatValidationErrors(errors) {
+    if (!errors || errors.length === 0) return '';
+    
+    return `
+<div class="validation-error">
+    <h4>Type Mismatch Detected</h4>
+    <ul>
+        ${errors.map(e => `<li><strong>Step ${e.step}</strong>: ${e.message}</li>`).join('')}
+    </ul>
+</div>`;
+}
+
+function formatTypeConversions(conversions) {
+    if (!conversions || conversions.length === 0) return '';
+    
+    return conversions.map(c => 
+        `<span class="type-badge converted" title="Step ${c.step}: ${c.from} → ${c.to} (${c.operation})">↻</span>`
+    ).join('');
 }
 
 const connectedDrives = {};
@@ -304,7 +355,14 @@ function addMessage(text, role = 'assistant') {
     const msg = document.createElement('div');
     msg.className = `msg ${role}`;
     msg.innerHTML = `<div class="bubble"></div>`;
-    msg.querySelector('.bubble').textContent = text;
+    
+    // Handle HTML in error messages
+    if (role === 'error' && text.includes('<div')) {
+        msg.querySelector('.bubble').innerHTML = text;
+    } else {
+        msg.querySelector('.bubble').textContent = text;
+    }
+    
     messages.appendChild(msg);
     messages.scrollTop = messages.scrollHeight;
 }
@@ -525,6 +583,7 @@ async function selectDriveFile(driveId, fileName) {
         let analysisText = '';
         let previewHtml = '';
         let chainSummary = '';
+        let typeConversions = [];
         
         if (drive.isLocal && drive.fileObjects) {
             const fileObj = drive.fileObjects.find(f => f.name === fileName);
@@ -541,9 +600,12 @@ async function selectDriveFile(driveId, fileName) {
                 previewHtml = `<div class="raw-output" style="max-height: 200px; margin-top: 8px;">${escapeHtml(trimmed)}</div>`;
                 
                 const result = await runChain(fileName, [
-                    { block: 'chat', input: `Analyze this file and summarize what it contains:\n\nFile: ${fileName}\nSource: ${drive.name}\n\nContent:\n${trimmed.substring(0, 3000)}`, params: {}, label: 'chat' }
+                    { block: 'chat', params: {}, label: 'chat' }
                 ], (idx, label, status) => {});
-                analysisText = result.finalOutput?.text || String(result.finalOutput);
+                
+                // Send chat with context
+                const chatResult = await client.chat(`Analyze this file and summarize what it contains:\n\nFile: ${fileName}\nSource: ${drive.name}\n\nContent:\n${trimmed.substring(0, 3000)}`);
+                analysisText = chatResult.text || String(chatResult);
                 chainSummary = 'chat';
             } else if (kind === 'pdf' || kind === 'image' || kind === 'docx' || kind === 'xlsx') {
                 setOutcomes(`
@@ -554,7 +616,7 @@ async function selectDriveFile(driveId, fileName) {
                     </div>
                     <div class="outcome-item">
                         <div class="outcome-label">Processing Chain</div>
-                        <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → construction → chat' : kind === 'docx' || kind === 'xlsx' ? 'doc → construction → chat' : 'ocr → construction → chat'}</div>
+                        <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → chat' : kind === 'docx' || kind === 'xlsx' ? 'doc → chat' : 'ocr → chat'}</div>
                     </div>
                 `);
                 
@@ -564,29 +626,29 @@ async function selectDriveFile(driveId, fileName) {
                 const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
                 const extractBlock = kind === 'pdf' ? 'pdf' : kind === 'docx' || kind === 'xlsx' ? 'pdf' : 'ocr';
                 
-                const result = await runChain(fileName, [
-                    { block: extractBlock, input: { action: 'extract_text', file_path: filePath }, params: {}, label: extractBlock },
-                    { block: 'construction', input: (prev, allResults) => {
-                        // Pass extracted text from step 1 to avoid re-processing
-                        const ocrText = allResults[0]?.text || '';
-                        return { file_path: filePath, extracted_text: ocrText, action: 'process_document', doc_type: 'auto' };
-                    }, params: {}, label: 'construction' },
-                    { block: 'chat', input: (prev, allResults) => {
-                        const extracted = allResults[0]?.text || '';
-                        const construction = allResults[1];
-                        const constructionSummary = typeof construction === 'object' 
-                            ? JSON.stringify(construction, null, 2).substring(0, 2000)
-                            : String(construction).substring(0, 2000);
-                        return `You are a construction AI assistant. Analyze this ${kind.toUpperCase()} for the user.\n\nFile: ${fileName}\nSource: ${drive.name}\n\n=== EXTRACTED CONTENT ===\n${extracted.substring(0, 2000)}\n\n=== CONSTRUCTION ANALYSIS ===\n${constructionSummary}\n\nPlease provide a clear, concise summary including key quantities, materials, risks, and any actionable insights. Format the answer for chat.`;
-                    }, params: {}, label: 'chat' }
-                ], (idx, label, status) => {});
+                // Build chain steps with proper input/output typing
+                const chainSteps = [
+                    { 
+                        block: extractBlock, 
+                        params: { file_path: filePath },
+                        label: extractBlock 
+                    },
+                    { 
+                        block: 'chat', 
+                        params: {},
+                        label: 'chat'
+                    }
+                ];
+                
+                const result = await runChain(fileName, chainSteps, (idx, label, status) => {});
                 
                 analysisText = result.finalOutput?.text || String(result.finalOutput);
-                const extracted = result.results[0]?.text || '';
-                const constructionResult = result.results[1];
-                setActiveFileContext(fileName, `${extracted.substring(0, 3000)}\n\n[Construction Analysis]\n${typeof constructionResult === 'object' ? JSON.stringify(constructionResult, null, 2) : constructionResult}`.substring(0, 5000), drive.name);
-                previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Extracted ${extracted.length} chars → construction container → deepseek</div>`;
-                chainSummary = `${extractBlock} → construction → chat`;
+                const extracted = result.results?.[0]?.result?.result?.text || '';
+                typeConversions = result.typeConversions || [];
+                
+                setActiveFileContext(fileName, extracted.substring(0, 5000), drive.name);
+                previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Extracted ${extracted.length} chars ${formatTypeConversions(typeConversions)}</div>`;
+                chainSummary = `${extractBlock} → chat`;
             } else {
                 previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Binary file — preview not available</div>`;
                 setActiveFileContext(fileName, '[Binary file]', drive.name);
@@ -601,10 +663,8 @@ async function selectDriveFile(driveId, fileName) {
                 setActiveFileContext(fileName, trimmed, drive.name);
                 previewHtml = `<div class="raw-output" style="max-height: 200px; margin-top: 8px;">${escapeHtml(trimmed)}</div>`;
                 
-                const result = await runChain(fileName, [
-                    { block: 'chat', input: `Analyze this file and summarize what it contains:\n\nFile: ${fileName}\nSource: ${drive.name}\n\nContent:\n${trimmed.substring(0, 3000)}`, params: {}, label: 'chat' }
-                ], (idx, label, status) => {});
-                analysisText = result.finalOutput?.text || String(result.finalOutput);
+                const chatResult = await client.chat(`Analyze this file and summarize what it contains:\n\nFile: ${fileName}\nSource: ${drive.name}\n\nContent:\n${trimmed.substring(0, 3000)}`);
+                analysisText = chatResult.text || String(chatResult);
                 chainSummary = 'chat';
             } else {
                 previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Binary or empty file from remote drive</div>`;
@@ -718,6 +778,7 @@ async function handleFile(input) {
         let analysisText = '';
         let chainLabel = '';
         let previewHtml = '';
+        let typeConversions = [];
         
         if (kind === 'text') {
             const fileContent = await readFileContent(file);
@@ -726,10 +787,8 @@ async function handleFile(input) {
             previewHtml = `<div class="raw-output" style="max-height: 200px; margin-top: 8px;">${escapeHtml(trimmed)}</div>`;
             chainLabel = 'chat';
             
-            const result = await runChain(file.name, [
-                { block: 'chat', input: `Analyze this file and extract key information:\n\nFile: ${file.name}\nSize: ${sizeKb} KB\n\nContent:\n${trimmed.substring(0, 3000)}`, params: {}, label: 'chat' }
-            ], (idx, label, status) => {});
-            analysisText = result.finalOutput?.text || String(result.finalOutput);
+            const chatResult = await client.chat(`Analyze this file and extract key information:\n\nFile: ${file.name}\nSize: ${sizeKb} KB\n\nContent:\n${trimmed.substring(0, 3000)}`);
+            analysisText = chatResult.text || String(chatResult);
         } else if (kind === 'pdf' || kind === 'image' || kind === 'docx' || kind === 'xlsx') {
             setOutcomes(`
                 <div class="outcome-item">
@@ -739,35 +798,36 @@ async function handleFile(input) {
                 </div>
                 <div class="outcome-item">
                     <div class="outcome-label">Processing Chain</div>
-                    <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → construction → chat' : kind === 'docx' || kind === 'xlsx' ? 'doc → construction → chat' : 'ocr → construction → chat'}</div>
+                    <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → chat' : kind === 'docx' || kind === 'xlsx' ? 'doc → chat' : 'ocr → chat'}</div>
                 </div>
             `);
             
             const extractBlock = kind === 'pdf' ? 'pdf' : kind === 'docx' || kind === 'xlsx' ? 'pdf' : 'ocr';
-            chainLabel = `${extractBlock} → construction → chat`;
+            chainLabel = `${extractBlock} → chat`;
             const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
             
-            const result = await runChain(file.name, [
-                { block: extractBlock, input: { action: 'extract_text', file_path: filePath }, params: {}, label: extractBlock },
-                { block: 'construction', input: (prev, allResults) => {
-                    const ocrText = allResults[0]?.text || '';
-                    return { file_path: filePath, extracted_text: ocrText, action: 'process_document', doc_type: 'auto' };
-                }, params: {}, label: 'construction' },
-                { block: 'chat', input: (prev, allResults) => {
-                    const extracted = allResults[0]?.text || '';
-                    const construction = allResults[1];
-                    const constructionSummary = typeof construction === 'object' 
-                        ? JSON.stringify(construction, null, 2).substring(0, 2000)
-                        : String(construction).substring(0, 2000);
-                    return `You are a construction AI assistant. Analyze this ${kind.toUpperCase()} for the user.\n\nFile: ${file.name}\nSize: ${sizeKb} KB\n\n=== EXTRACTED CONTENT ===\n${extracted.substring(0, 2000)}\n\n=== CONSTRUCTION ANALYSIS ===\n${constructionSummary}\n\nPlease provide a clear, concise summary including key quantities, materials, risks, and any actionable insights. Format the answer for chat.`;
-                }, params: {}, label: 'chat' }
-            ], (idx, label, status) => {});
+            // Build typed chain steps
+            const chainSteps = [
+                { 
+                    block: extractBlock, 
+                    params: { file_path: filePath },
+                    label: extractBlock 
+                },
+                { 
+                    block: 'chat', 
+                    params: {},
+                    label: 'chat'
+                }
+            ];
+            
+            const result = await runChain(file.name, chainSteps, (idx, label, status) => {});
             
             analysisText = result.finalOutput?.text || String(result.finalOutput);
-            const extracted = result.results[0]?.text || '';
-            const constructionResult = result.results[1];
-            setActiveFileContext(file.name, `${extracted.substring(0, 3000)}\n\n[Construction Analysis]\n${typeof constructionResult === 'object' ? JSON.stringify(constructionResult, null, 2) : constructionResult}`.substring(0, 5000), 'Upload');
-            previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Extracted ${extracted.length} chars → construction container → deepseek</div>`;
+            const extracted = result.results?.[0]?.result?.result?.text || '';
+            typeConversions = result.typeConversions || [];
+            
+            setActiveFileContext(file.name, extracted.substring(0, 5000), 'Upload');
+            previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Extracted ${extracted.length} chars ${formatTypeConversions(typeConversions)}</div>`;
         } else {
             setActiveFileContext(file.name, `[Binary file — ${kind}]`, 'Upload');
             chainLabel = 'none';

@@ -1,22 +1,77 @@
-"""Orchestrator Block - The Chain Master"""
+"""Orchestrator Block - The Chain Master with Type Validation"""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Callable
+from dataclasses import dataclass
 from app.core.universal_base import UniversalBlock
+from app.core.data_transformer import DataTransformer
+
+
+@dataclass
+class ChainStep:
+    """Validated chain step with type information"""
+    index: int
+    block_name: str
+    block: Any
+    input_type: str
+    output_type: str
+    params: Dict
+    input_mapping: Optional[Dict[str, str]] = None
+    
+    def to_dict(self) -> Dict:
+        return {
+            "index": self.index,
+            "block": self.block_name,
+            "input_type": self.input_type,
+            "output_type": self.output_type,
+            "params": self.params,
+            "input_mapping": self.input_mapping
+        }
+
+
+@dataclass
+class TypeValidationError:
+    """Type mismatch between steps"""
+    step_index: int
+    from_block: str
+    to_block: str
+    expected_type: str
+    actual_type: str
+    message: str
+    
+    def to_dict(self) -> Dict:
+        return {
+            "step": self.step_index,
+            "from": self.from_block,
+            "to": self.to_block,
+            "expected": self.expected_type,
+            "actual": self.actual_type,
+            "message": self.message
+        }
 
 
 class OrchestratorBlock(UniversalBlock):
-    """Execute chains of blocks with automatic context passing and memory persistence."""
+    """Execute chains of blocks with automatic type validation and conversion.
+    
+    Key features:
+    1. Type validation between steps - checks if step N-1 output matches step N input
+    2. DataTransformer converts compatible but different formats automatically
+    3. Fail-fast with clear error messages showing exactly what's wrong
+    4. Execution graph built upfront - validates entire chain before any execution
+    5. Standardized context passing with input_mapping support
+    """
 
     name = "orchestrator"
-    version = "1.0.0"
-    description = "Chain execution engine for block sequences"
+    version = "2.0.0"
+    description = "Chain execution engine with type validation"
     layer = 2
-    tags = ["ai", "core", "orchestrator", "chain"]
+    tags = ["ai", "core", "orchestrator", "chain", "typed"]
     requires = ["memory", "traffic_manager"]
 
     default_config = {
         "max_steps": 50,
-        "persist_steps": True
+        "persist_steps": True,
+        "fail_fast": True,
+        "auto_convert": True
     }
 
     ui_schema = {
@@ -30,7 +85,8 @@ class OrchestratorBlock(UniversalBlock):
             "type": "json",
             "fields": [
                 {"name": "steps_executed", "type": "number", "label": "Steps"},
-                {"name": "final_output", "type": "json", "label": "Output"}
+                {"name": "final_output", "type": "json", "label": "Output"},
+                {"name": "type_conversions", "type": "json", "label": "Conversions"}
             ]
         }
     }
@@ -41,6 +97,7 @@ class OrchestratorBlock(UniversalBlock):
         self._instance_cache = {}
         self._create_block_fn = None
         self._memory_fn = None
+        self._progress_callback: Optional[Callable] = None
 
     def set_platform(self, registry, instance_cache, create_block_fn, memory_fn=None):
         """Wire platform services from main.py"""
@@ -49,104 +106,69 @@ class OrchestratorBlock(UniversalBlock):
         self._create_block_fn = create_block_fn
         self._memory_fn = memory_fn
 
-    async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        params = params or {}
-        steps = params.get("steps", [])
-        if not steps and isinstance(input_data, dict):
-            steps = input_data.get("steps", [])
+    def set_progress_callback(self, callback: Callable):
+        """Set callback for progress updates"""
+        self._progress_callback = callback
 
-        if not steps:
-            return {"status": "error", "error": "No steps provided for chain execution"}
-
-        max_steps = params.get("max_steps", self.config.get("max_steps", 50))
-        if len(steps) > max_steps:
-            return {"status": "error", "error": f"Chain exceeds max_steps ({max_steps})"}
-
-        context = input_data
-        results = []
-
-        for i, step in enumerate(steps):
-            block_name = step.get("block")
-            step_params = step.get("params", {})
-
-            if not block_name:
-                return {"status": "error", "error": f"Step {i}: missing block name", "partial_results": results}
-
-            # Check traffic manager if wired
-            traffic = self.get_dep("traffic_manager")
-            if traffic:
-                route_result = await traffic.process(
-                    {"source": self.name, "target": block_name, "payload": context},
-                    {"operation": "route"}
-                )
-                if isinstance(route_result, dict) and route_result.get("status") == "queued":
-                    return {
-                        "status": "queued",
-                        "step": i,
-                        "block": block_name,
-                        "job_id": route_result.get("job_id"),
-                        "partial_results": results
-                    }
-                if isinstance(route_result, dict) and route_result.get("error"):
-                    return {
-                        "status": "error",
-                        "step": i,
-                        "block": block_name,
-                        "error": route_result["error"],
-                        "partial_results": results
-                    }
-
-            # Resolve block instance
-            block = await self._resolve_block(block_name)
-            if not block:
-                return {
-                    "status": "error",
-                    "error": f"Step {i}: Block '{block_name}' not found",
-                    "available": list(self._registry.keys()) if self._registry else [],
-                    "partial_results": results
-                }
-
-            # Skip containers
-            if hasattr(block, "name") and block.name.startswith("container_"):
-                return {
-                    "status": "error",
-                    "error": f"Step {i}: Container '{block_name}' cannot be executed in a chain",
-                    "partial_results": results
-                }
-            if block_name.startswith("container_"):
-                return {
-                    "status": "error",
-                    "error": f"Step {i}: Container '{block_name}' cannot be executed in a chain",
-                    "partial_results": results
-                }
-
-            # Execute block
-            result = await block.execute(context, step_params)
-
-            results.append({
-                "step": i,
-                "block": block_name,
-                "success": result.get("status") != "error",
-                "result": result
+    def _report_progress(self, step_index: int, step_label: str, status: str, 
+                         details: Dict = None):
+        """Report step progress"""
+        if self._progress_callback:
+            self._progress_callback({
+                "step": step_index,
+                "label": step_label,
+                "status": status,
+                "details": details or {}
             })
 
-            # Pass output to next step
-            context = result.get("result", result)
-
-            # Persist to memory
-            if self.config.get("persist_steps", True):
-                await self._persist_step(i, block_name, context)
-
-            # Stop on error unless continue_on_error is set
-            if result.get("status") == "error" and not params.get("continue_on_error"):
-                break
-
-        return {
-            "status": "success",
-            "steps_executed": len(results),
-            "final_output": context,
-            "results": results
+    def _get_block_type_info(self, block: Any) -> tuple[str, str]:
+        """Get input and output types from a block"""
+        # Check if block has typed schema (new TypedBlock pattern)
+        if hasattr(block, 'input_schema') and block.input_schema:
+            input_type = block.input_schema.content_type.value
+        elif hasattr(block, 'get_input_type'):
+            input_type = block.get_input_type()
+        else:
+            # Infer from ui_schema or default
+            input_type = self._infer_input_type(block)
+        
+        if hasattr(block, 'output_schema') and block.output_schema:
+            output_type = block.output_schema.content_type.value
+        elif hasattr(block, 'get_output_type'):
+            output_type = block.get_output_type()
+        else:
+            output_type = self._infer_output_type(block)
+        
+        return input_type, output_type
+    
+    def _infer_input_type(self, block: Any) -> str:
+        """Infer input type from block ui_schema"""
+        ui = getattr(block, 'ui_schema', {})
+        input_spec = ui.get('input', {})
+        input_type = input_spec.get('type', 'text')
+        
+        type_mapping = {
+            'file': DataTransformer.FILE,
+            'text': DataTransformer.TEXT,
+            'json': DataTransformer.JSON,
+            'image': DataTransformer.IMAGE,
+            'pdf': DataTransformer.PDF,
         }
+        return type_mapping.get(input_type, DataTransformer.UNKNOWN)
+    
+    def _infer_output_type(self, block: Any) -> str:
+        """Infer output type from block ui_schema"""
+        ui = getattr(block, 'ui_schema', {})
+        output_spec = ui.get('output', {})
+        output_type = output_spec.get('type', 'json')
+        
+        type_mapping = {
+            'text': DataTransformer.TEXT,
+            'json': DataTransformer.JSON,
+            'table': DataTransformer.TABLE,
+            'image': DataTransformer.IMAGE,
+        }
+        return type_mapping.get(output_type, DataTransformer.UNKNOWN)
 
     async def _resolve_block(self, block_name: str):
         """Get or create block instance."""
@@ -157,6 +179,243 @@ class OrchestratorBlock(UniversalBlock):
             self._instance_cache[block_name] = instance
             return instance
         return None
+
+    async def build_execution_graph(self, steps: List[Dict], initial_input: Any = None) -> tuple[List[ChainStep], List[TypeValidationError]]:
+        """Build execution plan and validate entire chain upfront.
+        
+        Returns:
+            (validated_steps, validation_errors)
+            If errors exist, chain should not be executed.
+        """
+        validated_steps = []
+        validation_errors = []
+        prev_output_type = DataTransformer.detect_type(initial_input) if initial_input else DataTransformer.UNKNOWN
+        
+        for i, step_config in enumerate(steps):
+            block_name = step_config.get("block")
+            step_params = step_config.get("params", {})
+            input_mapping = step_config.get("input_mapping")
+            
+            if not block_name:
+                validation_errors.append(TypeValidationError(
+                    step_index=i,
+                    from_block=steps[i-1].get("block", "initial") if i > 0 else "initial",
+                    to_block="unknown",
+                    expected_type="any",
+                    actual_type="none",
+                    message=f"Step {i}: Missing block name"
+                ))
+                continue
+            
+            # Resolve block
+            block = await self._resolve_block(block_name)
+            if not block:
+                validation_errors.append(TypeValidationError(
+                    step_index=i,
+                    from_block=steps[i-1].get("block", "initial") if i > 0 else "initial",
+                    to_block=block_name,
+                    expected_type="any",
+                    actual_type="none",
+                    message=f"Step {i}: Block '{block_name}' not found"
+                ))
+                continue
+            
+            # Skip containers
+            if block_name.startswith("container_"):
+                validation_errors.append(TypeValidationError(
+                    step_index=i,
+                    from_block=steps[i-1].get("block", "initial") if i > 0 else "initial",
+                    to_block=block_name,
+                    expected_type="any",
+                    actual_type="container",
+                    message=f"Step {i}: Container '{block_name}' cannot be executed in a chain"
+                ))
+                continue
+            
+            # Get type info
+            input_type, output_type = self._get_block_type_info(block)
+            
+            # Validate type compatibility with previous step
+            if i > 0 and prev_output_type != DataTransformer.UNKNOWN:
+                compatible = DataTransformer.are_compatible(prev_output_type, input_type)
+                if not compatible:
+                    prev_block = steps[i-1].get("block", "initial")
+                    validation_errors.append(TypeValidationError(
+                        step_index=i,
+                        from_block=prev_block,
+                        to_block=block_name,
+                        expected_type=input_type,
+                        actual_type=prev_output_type,
+                        message=f"Step {i} ({block_name}) expects {input_type} but step {i-1} ({prev_block}) produces {prev_output_type}"
+                    ))
+            
+            # Create validated step
+            chain_step = ChainStep(
+                index=i,
+                block_name=block_name,
+                block=block,
+                input_type=input_type,
+                output_type=output_type,
+                params=step_params,
+                input_mapping=input_mapping
+            )
+            validated_steps.append(chain_step)
+            
+            # Update for next iteration
+            prev_output_type = output_type
+        
+        return validated_steps, validation_errors
+
+    async def process(self, input_data: Any, params: Dict = None) -> Dict:
+        """Execute chain with type validation and conversion."""
+        params = params or {}
+        steps = params.get("steps", [])
+        
+        if not steps and isinstance(input_data, dict):
+            steps = input_data.get("steps", [])
+            input_data = input_data.get("initial_input", input_data)
+
+        if not steps:
+            return {"status": "error", "error": "No steps provided for chain execution"}
+
+        max_steps = params.get("max_steps", self.config.get("max_steps", 50))
+        if len(steps) > max_steps:
+            return {"status": "error", "error": f"Chain exceeds max_steps ({max_steps})"}
+
+        # Build execution graph and validate upfront
+        self._report_progress(-1, "validation", "running", {"message": "Validating chain types..."})
+        validated_steps, validation_errors = await self.build_execution_graph(steps, input_data)
+        
+        if validation_errors and self.config.get("fail_fast", True):
+            error_messages = [e.message for e in validation_errors]
+            return {
+                "status": "error",
+                "error": "Chain validation failed",
+                "validation_errors": [e.to_dict() for e in validation_errors],
+                "details": "Fix the type mismatches above before executing the chain"
+            }
+
+        self._report_progress(-1, "validation", "done", {"steps_validated": len(validated_steps)})
+
+        # Execute chain
+        context = input_data
+        results = []
+        type_conversions = []
+
+        for step in validated_steps:
+            self._report_progress(step.index, step.block_name, "running")
+            
+            # Check traffic manager if wired
+            traffic = self.get_dep("traffic_manager")
+            if traffic:
+                route_result = await traffic.process(
+                    {"source": self.name, "target": step.block_name, "payload": context},
+                    {"operation": "route"}
+                )
+                if isinstance(route_result, dict) and route_result.get("status") == "queued":
+                    return {
+                        "status": "queued",
+                        "step": step.index,
+                        "block": step.block_name,
+                        "job_id": route_result.get("job_id"),
+                        "partial_results": results
+                    }
+                if isinstance(route_result, dict) and route_result.get("error"):
+                    return {
+                        "status": "error",
+                        "step": step.index,
+                        "block": step.block_name,
+                        "error": route_result["error"],
+                        "partial_results": results
+                    }
+
+            # Transform input if needed (type conversion + field mapping)
+            current_type = DataTransformer.detect_type(context)
+            if current_type != step.input_type and current_type != DataTransformer.UNKNOWN:
+                if DataTransformer.are_compatible(current_type, step.input_type):
+                    context, conversion_op = DataTransformer.transform(
+                        context, 
+                        step.input_type,
+                        field_mapping=step.input_mapping
+                    )
+                    if conversion_op != "no_change":
+                        type_conversions.append({
+                            "step": step.index,
+                            "block": step.block_name,
+                            "from": current_type,
+                            "to": step.input_type,
+                            "operation": conversion_op
+                        })
+                else:
+                    # Type mismatch - fail or warn
+                    if self.config.get("fail_fast", True):
+                        return {
+                            "status": "error",
+                            "step": step.index,
+                            "block": step.block_name,
+                            "error": f"Type mismatch: {step.block_name} expects {step.input_type} but received {current_type}",
+                            "partial_results": results
+                        }
+            
+            # Apply field mapping if no type conversion happened
+            if step.input_mapping and isinstance(context, dict):
+                context = DataTransformer._apply_field_mapping(context, step.input_mapping)
+
+            # Execute block
+            result = await step.block.execute(context, step.params)
+
+            results.append({
+                "step": step.index,
+                "block": step.block_name,
+                "success": result.get("status") != "error",
+                "result": result
+            })
+
+            # Extract typed output for next step
+            context = self._extract_output(step.block, result)
+            
+            self._report_progress(step.index, step.block_name, "done", {
+                "success": result.get("status") != "error"
+            })
+
+            # Persist to memory
+            if self.config.get("persist_steps", True):
+                await self._persist_step(step.index, step.block_name, context)
+
+            # Stop on error unless continue_on_error is set
+            if result.get("status") == "error" and not params.get("continue_on_error"):
+                break
+
+        return {
+            "status": "success",
+            "steps_executed": len(results),
+            "final_output": context,
+            "results": results,
+            "type_conversions": type_conversions,
+            "validation_passed": len(validation_errors) == 0
+        }
+
+    def _extract_output(self, block: Any, result: Dict) -> Any:
+        """Extract typed output from execution result."""
+        # If block has extract_output method (TypedBlock)
+        if hasattr(block, 'extract_output'):
+            return block.extract_output(result)
+        
+        # Otherwise use smart extraction
+        if not isinstance(result, dict):
+            return result
+        
+        # Get inner result
+        inner = result.get("result", result)
+        
+        # Remove metadata keys
+        if isinstance(inner, dict):
+            metadata_keys = {'block', 'request_id', 'status', 'confidence', 
+                           'source_id', 'metadata', 'processing_time_ms'}
+            cleaned = {k: v for k, v in inner.items() if k not in metadata_keys}
+            return cleaned if cleaned else inner
+        
+        return inner
 
     async def _persist_step(self, step_index: int, block_name: str, context: Any):
         """Persist chain step to memory."""

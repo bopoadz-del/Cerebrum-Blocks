@@ -1,20 +1,20 @@
-"""OCR Block - Extract text from images with preprocessing"""
+"""OCR Block - Extract text from images with Typed Schema"""
 
 import os
 import io
 import tempfile
 from typing import Any, Dict
-from app.core.universal_base import UniversalBlock
+from app.core.typed_block import TypedBlock, Schema, ContentType
 
 
-class OCRBlock(UniversalBlock):
-    """Optical Character Recognition from images with quality enhancement"""
+class OCRBlock(TypedBlock):
+    """Optical Character Recognition from images with typed I/O"""
     
     name = "ocr"
-    version = "1.1"
+    version = "2.0.0"
     description = "Extract text from images using OCR with preprocessing"
     layer = 3
-    tags = ["domain", "vision", "ocr", "documents"]
+    tags = ["domain", "vision", "ocr", "documents", "typed"]
     requires = []
     
     default_config = {
@@ -23,6 +23,21 @@ class OCRBlock(UniversalBlock):
         "deskew": False,
         "contrast_factor": 1.5
     }
+    
+    # Type schemas for chain validation
+    input_schema = Schema(
+        content_type=ContentType.IMAGE,
+        required_fields=["file_path"],
+        optional_fields=["path", "url"],
+        format_hints={"accept": [".jpg", ".jpeg", ".png", ".webp"]}
+    )
+    
+    output_schema = Schema(
+        content_type=ContentType.TEXT,
+        required_fields=["text"],
+        optional_fields=["confidence", "word_count", "engine", "preprocessed", "status"],
+        format_hints={}
+    )
     
     ui_schema = {
         "input": {

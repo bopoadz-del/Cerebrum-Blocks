@@ -1,23 +1,38 @@
-"""PDF Block - Extract text from PDF files"""
+"""PDF Block - Extract text from PDF files with Typed Schema"""
 
 import os
 from typing import Any, Dict
-from app.core.universal_base import UniversalBlock
+from app.core.typed_block import TypedBlock, Schema, ContentType
 
 
-class PDFBlock(UniversalBlock):
-    """Extract text from PDF files"""
+class PDFBlock(TypedBlock):
+    """Extract text from PDF files with typed output"""
     
     name = "pdf"
-    version = "1.2"
+    version = "2.0.0"
     description = "Extract text from PDF files"
     layer = 3
-    tags = ["domain", "documents", "pdf"]
+    tags = ["domain", "documents", "pdf", "typed"]
     requires = []
     
     default_config = {
         "extract_tables": True
     }
+    
+    # Type schemas for chain validation
+    input_schema = Schema(
+        content_type=ContentType.FILE,
+        required_fields=["file_path"],
+        optional_fields=["path", "url"],
+        format_hints={"accept": [".pdf"]}
+    )
+    
+    output_schema = Schema(
+        content_type=ContentType.PDF,
+        required_fields=["text"],
+        optional_fields=["pages", "filename", "status"],
+        format_hints={"max_chars": 20000}
+    )
     
     ui_schema = {
         "input": {
