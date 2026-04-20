@@ -636,6 +636,7 @@ def are_compatible(source_type: str, target_type: str) -> bool:
 # Attach static methods to class for Orchestrator compatibility
 DataTransformer.detect_type = staticmethod(detect_type)
 DataTransformer.are_compatible = staticmethod(are_compatible)
+DataTransformer.transform = staticmethod(transform)
 
 
 # Export
