@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass
 from app.core.universal_base import UniversalBlock
 from app.core.data_transformer import DataTransformer
+from app.core.input_adapter import adapt_input
 
 
 @dataclass
@@ -331,6 +332,10 @@ class OrchestratorBlock(UniversalBlock):
 
             # Transform input if needed (type conversion + field mapping)
             current_type = DataTransformer.detect_type(context)
+            
+            # Auto-adapt input to block's expected format
+            context = adapt_input(context, step.block)
+            
             if current_type != step.input_type and current_type != DataTransformer.UNKNOWN:
                 if DataTransformer.are_compatible(current_type, step.input_type):
                     context, conversion_op = DataTransformer.transform(

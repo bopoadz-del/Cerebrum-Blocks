@@ -363,6 +363,10 @@ class TypedBlock(UniversalBlock):
             merged = {**params, **input_data}
             input_data = merged
         
+        # Auto-adapt input to expected format (strings → dicts, etc.)
+        from app.core.input_adapter import adapt_input
+        input_data = adapt_input(input_data, self)
+        
         # Validate input if schema defined
         if self.input_schema:
             input_validation = self.validate_input(input_data)

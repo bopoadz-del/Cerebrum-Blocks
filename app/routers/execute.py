@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from app.blocks import BLOCK_REGISTRY
 from app.dependencies import require_api_key
 from app.dependencies import block_instances, _create_block_instance
+from app.core.input_adapter import adapt_input
 
 router = APIRouter()
 
@@ -33,7 +34,11 @@ async def execute(request: ExecuteRequest, auth: dict = Depends(require_api_key)
             block_instances[block_name] = _create_block_instance(BLOCK_REGISTRY[block_name])
 
         block = block_instances[block_name]
-        result = await block.execute(request.input, request.params or {})
+        
+        # Adapt input to what block expects
+        adapted_input = adapt_input(request.input, block)
+        
+        result = await block.execute(adapted_input, request.params or {})
         return result
 
     except Exception as e:

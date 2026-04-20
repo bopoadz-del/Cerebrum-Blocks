@@ -24,6 +24,9 @@ class ChatBlock(TypedBlock):
     }
 
     # Type schemas for chain validation
+    accepted_input_types = ["Text", "TextContent", "ChatMessage"]
+    produced_output_types = ["Text", "TextContent", "ChatMessage"]
+
     input_schema = Schema(
         content_type=ContentType.TEXT,
         required_fields=[],  # Can be string or {text: ...}
