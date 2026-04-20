@@ -1,20 +1,25 @@
-"""OCR Block - Extract text from images with Typed Schema"""
+"""OCR Block v2 - Extract text from images using TypedBlock
+
+This is the v2 implementation using the TypedBlock system with schema validation.
+"""
 
 import os
 import io
 import tempfile
 from typing import Any, Dict
-from app.core.typed_block import TypedBlock, Schema, ContentType
+
+from app.core.typed_block import TypedBlock
+from app.core.schema_registry import TextContent
 
 
-class OCRBlock(TypedBlock):
-    """Optical Character Recognition from images with typed I/O"""
+class OCRBlockV2(TypedBlock):
+    """Optical Character Recognition from images - v2 with schema support"""
     
-    name = "ocr"
-    version = "2.0.0"
-    description = "Extract text from images using OCR with preprocessing"
+    name = "ocr_v2"
+    version = "2.0"
+    description = "Extract text from images using OCR with typed output"
     layer = 3
-    tags = ["domain", "vision", "ocr", "documents", "typed"]
+    tags = ["domain", "vision", "ocr", "documents", "v2"]
     requires = []
     
     default_config = {
@@ -24,20 +29,29 @@ class OCRBlock(TypedBlock):
         "contrast_factor": 1.5
     }
     
-    # Type schemas for chain validation
-    input_schema = Schema(
-        content_type=ContentType.IMAGE,
-        required_fields=["file_path"],
-        optional_fields=["path", "url"],
-        format_hints={"accept": [".jpg", ".jpeg", ".png", ".webp"]}
-    )
+    # Input: image path or dict with image info
+    input_schema = {
+        "type": "object",
+        "properties": {
+            "file_path": {"type": "string"},
+            "path": {"type": "string"},
+            "url": {"type": "string"},
+            "image_path": {"type": "string"}
+        },
+        "anyOf": [
+            {"required": ["file_path"]},
+            {"required": ["path"]},
+            {"required": ["url"]},
+            {"required": ["image_path"]}
+        ]
+    }
     
-    output_schema = Schema(
-        content_type=ContentType.TEXT,
-        required_fields=["text"],
-        optional_fields=["confidence", "word_count", "engine", "preprocessed", "status"],
-        format_hints={}
-    )
+    # Output: TextContent schema
+    output_schema = TextContent
+    
+    # Type declarations for orchestrator
+    accepted_input_types = ["ImageContent", "FileContent"]
+    produced_output_types = ["TextContent"]
     
     ui_schema = {
         "input": {
@@ -52,24 +66,19 @@ class OCRBlock(TypedBlock):
                 {"name": "text", "type": "text", "label": "Extracted Text"},
                 {"name": "confidence", "type": "percentage", "label": "Confidence"}
             ]
-        },
-        "quick_actions": [
-            {"icon": "🔍", "label": "Extract Text", "prompt": "Extract all text from this image"},
-            {"icon": "🔢", "label": "Extract Numbers", "prompt": "Extract all numbers and measurements from this image"},
-            {"icon": "📋", "label": "Full OCR", "prompt": "Perform full OCR and return structured content"}
-        ]
+        }
     }
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        """Extract text from image with preprocessing"""
+        """Extract text from image and return TextContent format"""
         params = params or {}
         
         image_path = self._get_image_path(input_data)
         if not image_path:
-            return {"status": "error", "text": "", "confidence": 0, "error": "No image provided"}
+            return self._error_response("No image provided")
         
         if not os.path.exists(image_path):
-            return {"status": "error", "text": "", "confidence": 0, "error": f"File not found: {image_path}"}
+            return self._error_response(f"File not found: {image_path}")
         
         preprocess = params.get("preprocess", self.config.get("preprocess", True))
         languages = params.get("languages", self.config.get("languages", ["en"]))
@@ -85,7 +94,17 @@ class OCRBlock(TypedBlock):
             results = reader.readtext(image_path)
             
             if not results:
-                return {"status": "success", "text": "", "confidence": 0, "message": "No text detected"}
+                return {
+                    "text": "",
+                    "source": "ocr",
+                    "confidence": 0,
+                    "metadata": {
+                        "message": "No text detected",
+                        "word_count": 0,
+                        "engine": "easyocr",
+                        "preprocessed": preprocess
+                    }
+                }
             
             texts = [r[1] for r in results if r[1].strip()]
             confs = [r[2] for r in results]
@@ -93,26 +112,33 @@ class OCRBlock(TypedBlock):
             full_text = "\n".join(texts)
             avg_conf = sum(confs) / len(confs) if confs else 0
             
+            # Return TextContent format
             return {
-                "status": "success",
                 "text": full_text,
+                "source": "ocr",
                 "confidence": round(avg_conf, 2),
-                "word_count": len(full_text.split()),
-                "engine": "easyocr",
-                "preprocessed": preprocess
+                "metadata": {
+                    "word_count": len(full_text.split()),
+                    "engine": "easyocr",
+                    "preprocessed": preprocess,
+                    "extracted_at": self._timestamp()
+                }
             }
             
         except ImportError:
-            return {"status": "error", "text": "", "confidence": 0, "error": "EasyOCR not installed"}
+            return self._error_response("EasyOCR not installed")
         except Exception as e:
-            return {"status": "error", "text": "", "confidence": 0, "error": f"OCR failed: {str(e)}"}
+            return self._error_response(f"OCR failed: {str(e)}")
     
     def _get_image_path(self, input_data: Any) -> str:
         """Extract image path from input"""
         if isinstance(input_data, str):
             return input_data
         elif isinstance(input_data, dict):
-            return input_data.get("file_path") or input_data.get("path") or input_data.get("url")
+            return (input_data.get("file_path") or 
+                    input_data.get("path") or 
+                    input_data.get("url") or 
+                    input_data.get("image_path"))
         return None
     
     def _preprocess_image(self, image_path: str) -> str:
@@ -147,7 +173,6 @@ class OCRBlock(TypedBlock):
         gray = gray.filter(ImageFilter.MedianFilter(size=3))
         
         # Adaptive thresholding: if image is low-contrast, apply point operation
-        # to increase separation between text and background
         stat = gray.getextrema()
         if stat and (stat[1] - stat[0]) < 100:
             # Low dynamic range — apply threshold
@@ -158,3 +183,20 @@ class OCRBlock(TypedBlock):
         os.close(fd)
         gray.save(temp_path, "PNG")
         return temp_path
+    
+    def _error_response(self, message: str) -> Dict:
+        """Return standardized error response"""
+        return {
+            "text": "",
+            "source": "ocr",
+            "confidence": 0,
+            "metadata": {
+                "error": message,
+                "extracted_at": self._timestamp()
+            }
+        }
+    
+    def _timestamp(self) -> str:
+        """Get current ISO timestamp"""
+        from datetime import datetime, timezone
+        return datetime.now(timezone.utc).isoformat()

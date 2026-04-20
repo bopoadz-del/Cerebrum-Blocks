@@ -1,20 +1,20 @@
-"""Chat Block - AI Chat with DeepSeek API"""
+"""Chat Block - AI Chat with DeepSeek API and Typed Schema"""
 
 import json
 import os
 import httpx
 from typing import Any, Dict, Optional
-from app.core.universal_base import UniversalBlock
+from app.core.typed_block import TypedBlock, Schema, ContentType
 
 
-class ChatBlock(UniversalBlock):
-    """AI chat completions with DeepSeek API"""
+class ChatBlock(TypedBlock):
+    """AI chat completions with DeepSeek API and typed I/O"""
 
     name = "chat"
-    version = "1.4"
+    version = "2.0.0"
     description = "AI chat completions with DeepSeek API"
     layer = 2
-    tags = ["ai", "core", "llm", "chat"]
+    tags = ["ai", "core", "llm", "chat", "typed"]
     requires = []
 
     default_config = {
@@ -22,6 +22,24 @@ class ChatBlock(UniversalBlock):
         "max_tokens": 2048,
         "temperature": 0.7
     }
+
+    # Type schemas for chain validation
+    accepted_input_types = ["Text", "TextContent", "ChatMessage"]
+    produced_output_types = ["Text", "TextContent", "ChatMessage"]
+
+    input_schema = Schema(
+        content_type=ContentType.TEXT,
+        required_fields=[],  # Can be string or {text: ...}
+        optional_fields=["text", "message", "context"],
+        format_hints={"max_length": 100000}
+    )
+
+    output_schema = Schema(
+        content_type=ContentType.TEXT,
+        required_fields=["text"],
+        optional_fields=["provider", "model", "tokens", "status"],
+        format_hints={}
+    )
 
     ui_schema = {
         "input": {

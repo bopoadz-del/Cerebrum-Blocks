@@ -88,80 +88,45 @@ class ConstructionContainer(UniversalContainer):
             ]
         },
         "quick_actions": [
-            {"icon": "📄", "label": "Analyze Floorplan", "prompt": "Analyze this PDF floorplan and calculate material costs"},
-            {"icon": "📐", "label": "Extract Measurements", "prompt": "Extract all measurements from this drawing"},
-            {"icon": "✅", "label": "Check Compliance", "prompt": "Check this blueprint for Saudi building code compliance"},
-            {"icon": "🏗️", "label": "BIM Analysis", "prompt": "Analyze this BIM model for clashes and quantities"}
+            {"icon": "📐", "label": "Measure Drawing", "prompt": "Extract all measurements from this drawing"},
+            {"icon": "📊", "label": "Calculate Quantities", "prompt": "Calculate BOQ from this drawing"},
+            {"icon": "⚠️", "label": "Check Compliance", "prompt": "Check this against Saudi building codes"},
+            {"icon": "🌱", "label": "Carbon Estimate", "prompt": "Estimate embodied carbon for this project"},
+            {"icon": "📅", "label": "Analyze Schedule", "prompt": "Analyze this Primavera schedule for risks"}
         ]
     }
-    
-    def __init__(self, hal_block=None, config: Dict = None):
-        super().__init__(hal_block, config)
-        self._load_cost_database()
-        self._load_csi_masterformat()
-        self._load_safety_codes()
-        self._load_carbon_factors()
-    
-    def _load_cost_database(self):
-        self.cost_db = {
-            "concrete_c30": {"unit": "m³", "rate": 1250, "labor_factor": 0.4},
-            "concrete_c40": {"unit": "m³", "rate": 1450, "labor_factor": 0.4},
-            "rebar": {"unit": "kg", "rate": 3.2, "labor_factor": 0.6},
-            "formwork": {"unit": "m²", "rate": 48, "labor_factor": 0.7},
-            "block_work": {"unit": "m²", "rate": 95, "labor_factor": 0.5},
-            "plaster": {"unit": "m²", "rate": 35, "labor_factor": 0.6},
-            "paint": {"unit": "m²", "rate": 15, "labor_factor": 0.5},
-            "flooring_tile": {"unit": "m²", "rate": 180, "labor_factor": 0.4},
-            "ceiling_gypsum": {"unit": "m²", "rate": 75, "labor_factor": 0.5},
-            "steel_structural": {"unit": "kg", "rate": 4.5, "labor_factor": 0.5},
-            "glass_curtain": {"unit": "m²", "rate": 450, "labor_factor": 0.3},
-            "insulation": {"unit": "m²", "rate": 28, "labor_factor": 0.4},
-            "electrical_rough": {"unit": "m²", "rate": 65, "labor_factor": 0.5},
-            "plumbing_rough": {"unit": "m²", "rate": 85, "labor_factor": 0.5},
-            "hvac_duct": {"unit": "m²", "rate": 120, "labor_factor": 0.4},
+
+    # ─────────────────────────────────────────────────────────────────
+    # ROUTING TABLE
+    # ─────────────────────────────────────────────────────────────────
+    async def route(self, action: str, input_data: Any, params: Dict) -> Dict:
+        routes = {
+            "process_document": self.process_document,
+            "extract_quantities": self.extract_quantities,
+            "analyze_spec": self.analyze_spec_section,
+            "cost_estimate": self.generate_cost_estimate,
+            "schedule_risk": self.analyze_schedule_risk,
+            "contract_review": self.review_contract_clause,
+            "safety_audit": self.safety_compliance_audit,
+            "carbon_report": self.generate_carbon_report,
+            "procurement": self.procurement_analysis,
+            "status": self._status,
         }
-    
-    def _load_csi_masterformat(self):
-        self.csi_divisions = {
-            "01": "General Requirements", "02": "Existing Conditions", "03": "Concrete",
-            "04": "Masonry", "05": "Metals", "06": "Wood, Plastics, Composites",
-            "07": "Thermal & Moisture", "08": "Openings", "09": "Finishes",
-            "10": "Specialties", "11": "Equipment", "12": "Furnishings",
-            "13": "Special Construction", "14": "Conveying", "21": "Fire Suppression",
-            "22": "Plumbing", "23": "HVAC", "25": "Integrated Automation",
-            "26": "Electrical", "27": "Communications", "28": "Electronic Safety",
-            "31": "Earthwork", "32": "Exterior Improvements", "33": "Utilities"
-        }
-    
-    def _load_safety_codes(self):
-        self.safety_codes = {
-            "osha_1926": "Construction Standards",
-            "osha_1910": "General Industry",
-            "iso_45001": "Occupational Health & Safety",
-            "ansi_z10": "Safety Management",
-            "nfpa_70e": "Electrical Safety",
-            "ansi_a10": "Construction Safety",
-        }
-    
-    def _load_carbon_factors(self):
-        self.carbon_factors = {
-            "concrete_c30": 350,
-            "concrete_c40": 420,
-            "steel_rebar": 2.5,
-            "steel_structural": 2.8,
-            "aluminum": 12.7,
-            "glass": 25.0,
-            "timber_softwood": -0.9,
-            "timber_hardwood": -1.2,
-            "brick": 220,
-            "block_concrete": 180,
-            "insulation_mineral": 25,
-            "insulation_eps": 35,
-            "paint": 5.2,
-            "ceramic_tile": 18,
-            "carpet": 45,
+        handler = routes.get(action, self._status)
+        return await handler(input_data, params)
+
+    async def _status(self, input_data: Any, params: Dict) -> Dict:
+        return {
+            "status": "success",
+            "container": self.name,
+            "version": self.version,
+            "actions_available": list(self.route.__code__.co_consts[1].keys()) if hasattr(self.route.__code__, 'co_consts') else []
         }
 
+    # ─────────────────────────────────────────────────────────────────
+    # DOCUMENT PROCESSING
+    # ─────────────────────────────────────────────────────────────────
+    
     def _looks_like_file(self, input_data: Any, params: Dict) -> bool:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
@@ -315,21 +280,29 @@ class ConstructionContainer(UniversalContainer):
         name = Path(file_path).name.lower()
         if any(x in name for x in [".ifc", ".bim", "model"]):
             return "bim"
-        if any(x in name for x in ["photo", "site", "img", ".jpg", ".png"]):
-            return "image"
-        if any(x in name for x in ["schedule", ".xer", ".xml", "primavera", "msp"]):
+        if any(x in name for x in [".xer", ".xml", "schedule", "primavera", "p6"]):
             return "schedule"
-        if any(x in name for x in ["bom", "bill", "material"]):
-            return "bom"
-        if any(x in name for x in ["spec", "specification"]):
-            return "specification"
-        if any(x in name for x in ["contract", "agreement", "subcontract"]):
+        if any(x in name for x in ["contract", "agreement", "terms", "conditions", "legal"]):
             return "contract"
-        if any(x in name for x in ["report", "rpt", "inspection"]):
+        if any(x in name for x in ["spec", "specification", "masterformat", "csi"]):
+            return "specification"
+        if any(x in name for x in ["bom", "bill", "materials", "takeoff", "quantity"]):
+            return "bom"
+        if any(x in name for x in ["report", "inspection", "test", "certificate"]):
             return "report"
+        if any(x in name for x in [".jpg", ".png", ".jpeg", "photo", "site", "image"]):
+            return "image"
+        if any(x in name for x in ["change order", "variation", "vo", "co", "claim"]):
+            return "change_order"
+        if any(x in name for x in ["safety", "audit", "inspection", "hazard"]):
+            return "safety_audit"
         return "drawing"
 
+    # DRAWING PROCESSING
     async def _process_drawing(self, file_path: str, params: Dict) -> Dict:
+        # Use pre-extracted text if provided from chain
+        pre_extracted_text = params.get("extracted_text", "")
+        
         try:
             import fitz
             doc = fitz.open(file_path)
@@ -352,12 +325,13 @@ class ConstructionContainer(UniversalContainer):
             "scale": None,
             "title_block": {},
             "bom_items": [],
-            "confidence": {}
+            "confidence": {},
+            "used_pre_extracted_text": bool(pre_extracted_text)  # Flag to indicate source
         }
         
         for page_num in range(len(doc)):
             page = doc[page_num]
-            sheet_data = self._process_drawing_page(page, page_num)
+            sheet_data = self._process_drawing_page(page, page_num, pre_extracted_text if page_num == 0 else "")
             result["sheets"].append(sheet_data)
             result["measurements"].extend(sheet_data["measurements"])
             result["tables"].extend(sheet_data["tables"])
@@ -378,13 +352,19 @@ class ConstructionContainer(UniversalContainer):
         doc.close()
         return result
     
-    def _process_drawing_page(self, page, page_num: int) -> Dict:
-        text_dict = page.get_text("dict")
-        raw_text = page.get_text()
+    def _process_drawing_page(self, page, page_num: int, pre_extracted_text: str = "") -> Dict:
+        # Use pre-extracted text if available, otherwise extract from page
+        if pre_extracted_text:
+            raw_text = pre_extracted_text[:8000]  # Use provided text
+            text_dict = None  # No dict structure available from pre-extracted
+        else:
+            text_dict = page.get_text("dict")
+            raw_text = page.get_text()[:8000]
+        
         return {
             "page_number": page_num + 1,
             "raw_text": raw_text[:8000],
-            "measurements": self._extract_measurements_advanced(raw_text, text_dict),
+            "measurements": self._extract_measurements_advanced(raw_text, text_dict or {}),
             "tables": self._extract_tables_advanced(page),
             "annotations": self._extract_annotations(page),
             "specs": self._extract_specs_advanced(raw_text),
@@ -407,6 +387,20 @@ class ConstructionContainer(UniversalContainer):
         p = params or {}
         file_path = data.get("file_path") or p.get("file_path")
         return await self._process_image(file_path, p)
+    
+    def _extract_drawing_number(self, filename: str) -> str:
+        """Extract drawing number from filename (e.g., 'A-101-plan.pdf' -> 'A-101')."""
+        import re
+        # Look for patterns like A-101, ARCH-001, C-501, etc.
+        match = re.search(r'([A-Z]+-?\d{3,})', filename.upper())
+        return match.group(1) if match else "Unknown"
+    
+    def _extract_revision(self, filename: str) -> str:
+        """Extract revision from filename (e.g., 'plan-rev-A.pdf' -> 'A')."""
+        import re
+        # Look for rev patterns
+        match = re.search(r'[Rr][Ee][Vv][-_]?(\w)', filename)
+        return match.group(1) if match else "A"
     
     async def _download_file(self, url: str) -> str:
         import uuid
@@ -529,35 +523,20 @@ class ConstructionContainer(UniversalContainer):
             "payment_terms": r'(?:payment|pay|invoice)[\s\w]{0,50}(?:term|schedule|milestone|certificate)',
             "liquidated_damages": r'(?:liquidated damages|ld|delay damages)[\s\w]{0,100}(?:rate|amount|per day)',
             "retention": r'(?:retention|retainage)[\s\w]{0,50}(?:percent|percentage|amount|release)',
-            "variation_clause": r'(?:variation|change order|modification)[\s\w]{0,100}(?:procedure|valuation|approval)',
-            "force_majeure": r'(?:force majeure|act of god|unforeseeable)[\s\w]{0,200}(?:delay|extension|notice)',
-            "termination": r'(?:terminat|default|breach)[\s\w]{0,200}(?:clause|condition|notice period|consequence)',
-            "indemnity": r'(?:indemnif|hold harmless|defend)[\s\w]{0,100}(?:clause|obligation|insurance)',
-            "dispute_resolution": r'(?:dispute|arbitration|mediation|adjudication)[\s\w]{0,100}(?:clause|procedure|board)',
-            "time_extensions": r'(?:extension of time|eot|delay|prolongation)[\s\w]{0,150}(?:clause|entitlement|procedure)',
-            "subcontracting": r'(?:subcontract|sub-let|nominated|domestic)[\s\w]{0,100}(?:approval|liability|payment)',
-            "insurance": r'(?:insurance|policy|cover)[\s\w]{0,150}(requirement|amount|professional|all risk)',
-            "safety_obligation": r'(?:safety|health|hse|osha)[\s\w]{0,100}(?:obligation|responsibility|compliance)',
-            "environmental": r'(?:environmental|sustainability|green|eco)[\s\w]{0,100}(?:requirement|compliance|standard)',
+            "insurance": r'(?:insurance|indemnif)[\s\w]{0,100}(?:required|shall|must|coverage)',
+            "termination": r'(?:terminat|cancel|end)[\s\w]{0,100}(?:notice|for cause|convenience)',
+            "force_majeure": r'(?:force majeure|unforeseen|beyond control|delay event)[\s\w]{0,100}(?:excus|reliev|not liable)',
+            "dispute_resolution": r'(?:dispute|arbitration|mediation|adjudication)[\s\w]{0,100}(?:shall|must|proceed)',
         }
         
         extracted_clauses = {}
-        for clause_type, pattern in clause_patterns.items():
+        for clause_name, pattern in clause_patterns.items():
             matches = list(re.finditer(pattern, full_text, re.IGNORECASE))
-            if matches:
-                contexts = []
-                for match in matches[:3]:
-                    start = max(0, match.start() - 200)
-                    end = min(len(full_text), match.end() + 200)
-                    contexts.append(full_text[start:end].strip())
-                extracted_clauses[clause_type] = {
-                    "found": True,
-                    "count": len(matches),
-                    "contexts": contexts,
-                    "risk_level": self._assess_clause_risk(clause_type, contexts)
-                }
-            else:
-                extracted_clauses[clause_type] = {"found": False, "risk_level": "unknown"}
+            extracted_clauses[clause_name] = {
+                "found": len(matches) > 0,
+                "count": len(matches),
+                "examples": [m.group(0)[:200] for m in matches[:3]]
+            }
         
         obligations = self._extract_obligations(full_text)
         contract_risks = self._assess_contract_risks(extracted_clauses, contract_type)
@@ -609,20 +588,16 @@ class ConstructionContainer(UniversalContainer):
             return "risk"
         if any(w in text.lower() for w in ["payment", "invoice", "cost"]):
             return "financial"
+        if any(w in text.lower() for w in ["quality", "defect", "warranty", "guarantee"]):
+            return "quality"
+        if any(w in text.lower() for w in ["time", "schedule", "milestone", "delay", "completion"]):
+            return "schedule"
         return "general"
     
     def _assess_obligation_priority(self, text: str) -> str:
-        if any(w in text.lower() for w in ["shall", "must", "obligation"]):
+        if any(w in text.lower() for w in ["shall", "must", "required", "mandatory"]):
             return "high"
-        return "medium"
-    
-    def _assess_clause_risk(self, clause_type: str, contexts: List[str]) -> str:
-        high_risk_keywords = ["penalty", "unlimited", "sole discretion", "no limit", "absolute", "waiver of rights"]
-        medium_risk_keywords = ["notice", "approval required", "consent", "binding"]
-        combined = " ".join(contexts).lower()
-        if any(kw in combined for kw in high_risk_keywords):
-            return "high"
-        elif any(kw in combined for kw in medium_risk_keywords):
+        if any(w in text.lower() for w in ["will", "agrees to", "responsible for"]):
             return "medium"
         return "low"
     
@@ -633,32 +608,25 @@ class ConstructionContainer(UniversalContainer):
         recommendations = []
         
         if not clauses.get("payment_terms", {}).get("found"):
-            score -= 15
-            critical.append("Payment terms not clearly defined")
-            recommendations.append("Add detailed payment schedule with milestones")
-        if not clauses.get("liquidated_damages", {}).get("found"):
-            score -= 10
-            warnings.append("No liquidated damages clause")
-        if clauses.get("liquidated_damages", {}).get("risk_level") == "high":
             score -= 20
-            critical.append("High/Uncapped liquidated damages")
-            recommendations.append("Negotiate cap on liquidated damages")
+            critical.append("Payment terms not clearly defined")
+            recommendations.append("Add explicit payment schedule with milestones")
+        if not clauses.get("liquidated_damages", {}).get("found"):
+            score -= 15
+            warnings.append("No liquidated damages clause")
+            recommendations.append("Consider adding LDs for late completion protection")
+        if not clauses.get("termination", {}).get("found"):
+            score -= 10
+            warnings.append("Termination clause missing or unclear")
         if not clauses.get("force_majeure", {}).get("found"):
             score -= 10
             warnings.append("No force majeure clause")
-            recommendations.append("Add force majeure clause")
-        if not clauses.get("variation_clause", {}).get("found"):
-            score -= 15
-            critical.append("No variation/change order procedure")
-            recommendations.append("Define change order valuation and approval process")
-        if clauses.get("termination", {}).get("risk_level") == "high":
-            score -= 15
-            critical.append("Unbalanced termination clause")
+            recommendations.append("Add force majeure for unforeseen delays (weather, pandemic, etc.)")
         if not clauses.get("dispute_resolution", {}).get("found"):
-            score -= 5
-            warnings.append("No dispute resolution mechanism defined")
+            score -= 10
+            warnings.append("No dispute resolution mechanism")
         
-        risk_level = "low" if score >= 80 else "medium" if score >= 60 else "high"
+        risk_level = "low" if score > 80 else "medium" if score > 60 else "high"
         return {"score": max(0, score), "level": risk_level, "critical": critical, "warnings": warnings, "recommendations": recommendations}
     
     def _extract_financial_terms(self, text: str) -> Dict:
@@ -711,22 +679,24 @@ class ConstructionContainer(UniversalContainer):
         if schedule_data.get("status") == "error":
             return schedule_data
         
-        cpm_results = self._calculate_critical_path(schedule_data)
+        cpm_results = self._calculate_cpm(schedule_data)
+        
         delay_analysis = None
         if baseline_file:
-            baseline_data = self._parse_xer_file(baseline_file) if baseline_file.endswith('.xer') else self._parse_xml_schedule(baseline_file)
-            delay_analysis = self._analyze_delays(schedule_data, baseline_data)
+            if Path(baseline_file).suffix.lower() == '.xer':
+                baseline_data = self._parse_xer_file(baseline_file)
+            else:
+                baseline_data = self._parse_xml_schedule(baseline_file)
+            if baseline_data.get("status") != "error":
+                delay_analysis = self._analyze_delays(schedule_data, baseline_data)
         
         schedule_risks = self._analyze_schedule_risks(cpm_results)
-        recovery_options = []
-        if delay_analysis and delay_analysis.get("total_delay_days", 0) > 0:
-            recovery_options = self._generate_recovery_options(delay_analysis, cpm_results)
+        recovery_options = self._generate_recovery_options(delay_analysis, cpm_results) if delay_analysis else []
         
         return {
             "status": "success",
-            "action": "primavera_analysis",
+            "action": "schedule_analysis",
             "file_name": Path(file_path).name,
-            "project_name": schedule_data.get("project_name"),
             "analysis_date": analysis_date,
             "summary": {
                 "total_activities": len(schedule_data.get("activities", [])),
@@ -779,34 +749,30 @@ class ConstructionContainer(UniversalContainer):
             structured_activities = []
             for act in activities:
                 structured_activities.append({
-                    "id": act.get('task_id'),
-                    "name": act.get('task_name'),
-                    "duration": float(act.get('target_dur', 0) or 0),
-                    "start": act.get('target_start'),
-                    "finish": act.get('target_end'),
-                    "early_start": act.get('early_start'),
-                    "early_finish": act.get('early_end'),
-                    "late_start": act.get('late_start'),
-                    "late_finish": act.get('late_end'),
-                    "total_float": float(act.get('total_float', 0) or 0),
-                    "free_float": float(act.get('free_float', 0) or 0),
-                    "percent_complete": float(act.get('complete_pct', 0) or 0),
-                    "critical": act.get('total_float', '0') == '0',
-                    "wbs": act.get('wbs_id'),
-                    "resources": []
+                    "id": act.get("task_id", ""),
+                    "name": act.get("task_name", ""),
+                    "start": act.get("act_start_date", act.get("early_start_date", "")),
+                    "finish": act.get("act_end_date", act.get("early_end_date", "")),
+                    "duration": act.get("target_drtn_hr_cnt", 0),
+                    "total_float": float(act.get("total_float_hr_cnt", 0)) / 8,
+                    "free_float": float(act.get("free_float_hr_cnt", 0)) / 8,
+                    "percent_complete": float(act.get("act_work_qty", 0)) / max(1, float(act.get("target_work_qty", 1))) * 100,
+                    "wbs": act.get("wbs_id", ""),
+                    "predecessors": [r.get("pred_task_id") for r in relationships if r.get("task_id") == act.get("task_id")],
+                    "successors": [r.get("task_id") for r in relationships if r.get("pred_task_id") == act.get("task_id")],
                 })
             
             return {
                 "status": "success",
-                "project_name": project_info.get('proj_short_name', 'Unknown'),
-                "data_date": project_info.get('last_recalc_date'),
-                "activities": structured_activities,
-                "relationships": self._parse_relationships(relationships),
-                "calendars": sections.get('CALENDAR', []),
-                "resources": sections.get('RSRC', [])
+                "file_type": "xer",
+                "project_id": project_info.get("proj_id", ""),
+                "project_name": project_info.get("proj_short_name", ""),
+                "data_date": project_info.get("last_recalc_date", ""),
+                "activities": structured_activities
             }
+            
         except Exception as e:
-            return {"status": "error", "error": f"XER parsing failed: {str(e)}"}
+            return {"status": "error", "error": f"XER parse failed: {str(e)}"}
     
     def _parse_xml_schedule(self, file_path: str) -> Dict:
         try:
@@ -814,61 +780,50 @@ class ConstructionContainer(UniversalContainer):
             tree = ET.parse(file_path)
             root = tree.getroot()
             
-            if 'Project' in root.tag:
-                return self._parse_mspdi_xml(root)
-            else:
-                activities = []
-                for activity in root.findall('.//Activity'):
-                    activities.append({
-                        "id": activity.findtext('Id', ''),
-                        "name": activity.findtext('Name', ''),
-                        "duration": float(activity.findtext('OriginalDuration', 0) or 0),
-                        "start": activity.findtext('StartDate', ''),
-                        "finish": activity.findtext('FinishDate', ''),
-                        "total_float": float(activity.findtext('TotalFloat', 0) or 0),
-                        "critical": activity.findtext('Critical') == '1',
-                        "percent_complete": float(activity.findtext('PercentComplete', 0) or 0)
-                    })
-                return {
-                    "status": "success",
-                    "project_name": root.findtext('.//Name', 'Unknown'),
-                    "activities": activities
+            activities = []
+            for activity in root.findall('.//Activity') if root else []:
+                act_data = {
+                    "id": activity.findtext('ID', ''),
+                    "name": activity.findtext('Name', ''),
+                    "start": activity.findtext('Start', ''),
+                    "finish": activity.findtext('Finish', ''),
+                    "duration": activity.findtext('Duration', 0),
+                    "total_float": activity.findtext('TotalFloat', 0),
+                    "percent_complete": activity.findtext('PercentComplete', 0)
                 }
+                activities.append(act_data)
+            
+            return {
+                "status": "success",
+                "file_type": "xml",
+                "activities": activities
+            }
         except Exception as e:
-            return {"status": "error", "error": f"XML parsing failed: {str(e)}"}
+            return {"status": "error", "error": f"XML parse failed: {str(e)}"}
     
-    def _parse_mspdi_xml(self, root) -> Dict:
-        ns = {'m': 'http://schemas.microsoft.com/project'}
-        activities = []
-        for task in root.findall('.//m:Task', ns):
-            activities.append({
-                "id": task.findtext('.//m:UID', '', ns),
-                "name": task.findtext('.//m:Name', '', ns),
-                "duration": 0,
-                "start": task.findtext('.//m:Start', '', ns),
-                "finish": task.findtext('.//m:Finish', '', ns),
-                "total_float": 0,
-                "critical": False,
-                "percent_complete": float(task.findtext('.//m:PercentComplete', '0', ns) or 0)
-            })
-        return {"status": "success", "project_name": "MSP Project", "activities": activities}
-    
-    def _parse_relationships(self, relationships: List[Dict]) -> List[Dict]:
-        return [{"predecessor": r.get('pred_task_id'), "successor": r.get('task_id'), "type": r.get('pred_type')} for r in relationships]
-    
-    def _calculate_critical_path(self, schedule_data: Dict) -> Dict:
-        activities = {a["id"]: a for a in schedule_data.get("activities", [])}
-        critical_activities = [a for a in activities.values() if a.get("critical") or a.get("total_float", 999) <= 0]
-        critical_activities.sort(key=lambda x: x.get("early_start", '') or '')
+    def _calculate_cpm(self, schedule_data: Dict) -> Dict:
+        activities = schedule_data.get("activities", [])
         
+        if not activities:
+            return {"critical_path": [], "project_duration_days": 0, "average_float": 0}
+        
+        critical_activities = [a for a in activities if a.get("total_float", 999) <= 0.1]
+        
+        if not critical_activities:
+            min_float = min((a.get("total_float", 999) for a in activities), default=0)
+            critical_activities = [a for a in activities if a.get("total_float", 999) <= min_float + 0.1]
+        
+        duration = 0
         if critical_activities:
-            start = critical_activities[0].get("early_start")
-            finish = critical_activities[-1].get("early_finish")
-            duration = self._calculate_duration_days(start, finish) if start and finish else 0
-        else:
-            duration = 0
+            try:
+                start_dates = [datetime.fromisoformat(a.get("start", "").replace('Z', '+00:00')) for a in critical_activities if a.get("start")]
+                finish_dates = [datetime.fromisoformat(a.get("finish", "").replace('Z', '+00:00')) for a in critical_activities if a.get("finish")]
+                if start_dates and finish_dates:
+                    duration = (max(finish_dates) - min(start_dates)).days
+            except Exception:
+                duration = sum(a.get("duration", 0) for a in critical_activities) / 8
         
-        floats = [a.get("total_float", 0) for a in schedule_data.get("activities", [])]
+        floats = [a.get("total_float", 0) for a in activities if a.get("total_float", 999) < 999]
         avg_float = sum(floats) / len(floats) if floats else 0
         near_critical = [a for a in schedule_data.get("activities", []) if 0 < a.get("total_float", 999) < 5]
         
@@ -949,25 +904,25 @@ class ConstructionContainer(UniversalContainer):
             risks.append(self._create_risk_item("schedule", "Schedule has minimal overall float", "high", "high", "Negotiate extensions, reduce scope, or add resources", "Float analysis"))
         return risks
     
-    def _generate_recovery_options(self, delay_analysis: Dict, cpm: Dict) -> List[Dict]:
+    def _generate_recovery_options(self, delay_analysis: Optional[Dict], cpm_results: Dict) -> List[Dict]:
+        if not delay_analysis:
+            return []
+        
         total_delay = delay_analysis.get("total_delay_days", 0)
-        critical_path = cpm.get("critical_path_activities", [])
+        if total_delay <= 0:
+            return []
+        
         options = []
-        
-        crashable = [a for a in critical_path if a.get("percent_complete", 0) < 50]
-        if crashable:
-            potential_savings = len(crashable) * 2
-            options.append({
-                "strategy": "Crashing",
-                "description": f"Add resources to {len(crashable)} incomplete critical activities",
-                "potential_savings_days": min(potential_savings, total_delay),
-                "cost_impact": "High",
-                "feasibility": "Medium"
-            })
-        
         options.append({
-            "strategy": "Fast-Tracking",
-            "description": "Perform critical activities in parallel where possible",
+            "strategy": "Crash Critical Path",
+            "description": "Add resources to critical activities",
+            "potential_savings_days": total_delay * 0.5,
+            "cost_impact": "High",
+            "feasibility": "Medium"
+        })
+        options.append({
+            "strategy": "Fast Track",
+            "description": "Overlap sequential activities",
             "potential_savings_days": total_delay * 0.3,
             "cost_impact": "Medium",
             "feasibility": "Medium"
@@ -1034,481 +989,286 @@ class ConstructionContainer(UniversalContainer):
                 full_text += page.get_text()
             doc.close()
         except Exception as e:
-            return {"status": "error", "error": f"Could not read spec: {str(e)}"}
+            return {"status": "error", "error": f"Could not read spec file: {str(e)}"}
         
-        divisions = self._parse_csi_divisions(full_text)
-        sections = self._parse_spec_sections(full_text)
-        submittals = self._extract_submittals(full_text)
-        performance = self._extract_performance_criteria(full_text)
-        warranties = self._extract_warranty_requirements(full_text)
-        testing = self._extract_testing_requirements(full_text)
+        divisions = {i: [] for i in range(1, 50)}
+        current_division = None
+        lines = full_text.split('\n')
         
-        if division_filter:
-            sections = [s for s in sections if s.get("division") == division_filter]
-            submittals = [s for s in submittals if s.get("division") == division_filter]
+        for line in lines:
+            division_match = re.match(r'^(\d{2})\s{3,}', line)
+            if division_match:
+                div_num = int(division_match.group(1))
+                if 1 <= div_num <= 49:
+                    current_division = div_num
+                    divisions[current_division].append(line.strip())
+            elif current_division and line.strip():
+                divisions[current_division].append(line.strip())
+        
+        detected_divisions = [i for i, content in divisions.items() if content]
+        
+        spec_items = []
+        for div_num, content in divisions.items():
+            if not content:
+                continue
+            if division_filter and str(div_num) != str(division_filter):
+                continue
+            full_content = '\n'.join(content)
+            materials = self._extract_materials(full_content)
+            methods = self._extract_methods(full_content)
+            testing = self._extract_testing_requirements(full_content)
+            qa_qc = self._extract_qaqc(full_content)
+            
+            spec_items.append(SpecItem(
+                category=f"Division {div_num:02d}",
+                key="content",
+                value=f"{len(content)} paragraphs",
+                section="general",
+                confidence=0.9
+            ))
         
         return {
             "status": "success",
             "action": "specification_analysis",
             "file_name": Path(file_path).name,
-            "project_specifications": {
-                "total_divisions": len(divisions),
-                "total_sections": len(sections),
-                "divisions_found": divisions
-            },
-            "sections": sections[:50] if not p.get("full_details") else sections,
-            "submittals": {
-                "total_required": len(submittals),
-                "shop_drawings": len([s for s in submittals if "shop" in s["type"].lower()]),
-                "samples": len([s for s in submittals if "sample" in s["type"].lower()]),
-                "list": submittals[:30]
-            },
-            "performance_criteria": performance,
-            "warranty_requirements": warranties,
-            "testing_requirements": testing,
-            "summary": f"Found {len(sections)} sections, {len(submittals)} submittals required"
+            "divisions_found": detected_divisions,
+            "division_filter_applied": division_filter,
+            "total_sections_analyzed": len(spec_items),
+            "spec_items": [asdict(item) for item in spec_items],
+            "materials_referenced": materials if 'materials' in dir() else [],
+            "methods_specified": methods if 'methods' in dir() else [],
+            "testing_requirements": testing if 'testing' in dir() else [],
+            "qa_qc_requirements": qa_qc if 'qa_qc' in dir() else []
         }
     
-    def _parse_csi_divisions(self, text: str) -> List[Dict]:
-        divisions_found = []
-        for code, name in self.csi_divisions.items():
-            pattern = rf'\b(?:Section\s*)?{code}\s*(?:\d{{2,}})?\s*(?:-|–)?\s*{name}'
-            if re.search(pattern, text, re.IGNORECASE):
-                section_count = len(re.findall(rf'\b{code}\d{{2,}}\b', text))
-                divisions_found.append({"code": code, "name": name, "section_count": section_count})
-        return sorted(divisions_found, key=lambda x: x["code"])
+    async def analyze_spec_section(self, input_data: Any, params: Dict) -> Dict:
+        return await self.process_specification_full(input_data, params)
     
-    def _parse_spec_sections(self, text: str) -> List[Dict]:
-        sections = []
-        section_pattern = r'(?:SECTION|DIVISION)?\s*(\d{2})\s*(\d{2})\s*(\d{2})?\s*(?:-|–)?\s*([^\n]+)'
-        for match in re.finditer(section_pattern, text, re.IGNORECASE):
-            division = match.group(1)
-            section = match.group(2)
-            subsection = match.group(3) or "00"
-            title = match.group(4).strip()
-            start_pos = match.end()
-            next_match = re.search(section_pattern, text[start_pos:], re.IGNORECASE)
-            end_pos = start_pos + next_match.start() if next_match else len(text)
-            content = text[start_pos:end_pos]
-            sections.append({
-                "number": f"{division}{section}{subsection}",
-                "division": division,
-                "title": title,
-                "key_requirements": self._extract_key_reqs(content)
-            })
-        return sections
+    def _extract_materials(self, text: str) -> List[str]:
+        materials = []
+        material_keywords = ["concrete", "steel", "rebar", "brick", "block", "glass", "aluminum", "timber", "insulation", "membrane"]
+        for kw in material_keywords:
+            if kw in text.lower():
+                materials.append(kw)
+        return materials
     
-    def _extract_key_reqs(self, content: str) -> List[str]:
-        reqs = []
-        for match in re.finditer(r'(?:shall|must|required|shall be)[^.]{0,100}\.', content, re.IGNORECASE):
-            reqs.append(match.group(0).strip())
-        return reqs[:5]
+    def _extract_methods(self, text: str) -> List[str]:
+        return []
     
-    def _extract_submittals(self, text: str) -> List[Dict]:
-        submittals = []
-        submittal_patterns = [
-            (r'(?:shop drawing|working drawing)s?[:\s]*([^;.]*)', "shop_drawing"),
-            (r'(?:product data|cut sheet|technical data)[:\s]*([^;.]*)', "product_data"),
-            (r'(?:sample|mock.?up)[:\s]*([^;.]*)', "sample"),
-            (r'(?:certificate|test report|mix design)[:\s]*([^;.]*)', "certificate"),
-        ]
-        for pattern, sub_type in submittal_patterns:
-            for match in re.finditer(pattern, text, re.IGNORECASE):
-                submittals.append({
-                    "type": sub_type,
-                    "description": match.group(1).strip() if match.groups() else match.group(0),
-                    "division": self._infer_division_from_context(match.start(), text)
-                })
-        return submittals
+    def _extract_testing_requirements(self, text: str) -> List[str]:
+        requirements = []
+        if re.search(r'\btest\b|\bsample\b|\blab\b', text, re.IGNORECASE):
+            requirements.append("Testing requirements found")
+        return requirements
     
-    def _infer_division_from_context(self, position: int, text: str) -> str:
-        before = text[:position]
-        match = re.search(r'\b(\d{2})\d{2,}\b', before)
-        return match.group(1) if match else "unknown"
-    
-    def _extract_performance_criteria(self, text: str) -> List[Dict]:
-        criteria = []
-        patterns = [
-            (r'(?:compressive strength|fc[\'′]?)\s*(?:of|≥|>=)?\s*(\d+\s*MPa|[^\s,;]*)', "strength"),
-            (r'(?:fire rating|FRL|fire resistance)\s*(?:of|≥)?\s*(\d+[/\d]*\s*min|[^\s,;]*)', "fire"),
-            (r'(?:thermal resistance|R-?value|U-?value)\s*(?:of|≤|<=)?\s*(\d+\.?\d*[^\s,;]*)', "thermal"),
-            (r'(?:sound rating|STC|NRC|Rw)\s*(?:of|≥)?\s*(\d+[^\s,;]*)', "acoustic"),
-            (r'(?:wind load|pressure)\s*(?:of|≥)?\s*(\d+\s*(?:Pa|kPa|psf|mph)?[^\s,;]*)', "structural"),
-        ]
-        for pattern, perf_type in patterns:
-            for match in re.finditer(pattern, text, re.IGNORECASE):
-                criteria.append({
-                    "type": perf_type,
-                    "requirement": match.group(0),
-                    "value": match.group(1) if match.groups() else "unspecified",
-                    "section": self._infer_division_from_context(match.start(), text)
-                })
-        return criteria
-    
-    def _extract_warranty_requirements(self, text: str) -> List[Dict]:
-        warranties = []
-        for match in re.finditer(r'(?:warranty|guarantee)\s*(?:period)?\s*(\d+)\s*(?:years?|yrs?)', text, re.IGNORECASE):
-            warranties.append({"years": int(match.group(1)), "context": match.group(0)})
-        return warranties
-    
-    def _extract_testing_requirements(self, text: str) -> List[Dict]:
-        tests = []
-        for match in re.finditer(r'(?:test|inspect)\s*[^.]{0,50}(?:ASTM|BS|ISO|ACI)\s*[A-Z0-9\-]+', text, re.IGNORECASE):
-            tests.append({"requirement": match.group(0)})
-        return tests
+    def _extract_qaqc(self, text: str) -> List[str]:
+        qa = []
+        if re.search(r'\binspection\b|\bwitness\b|\bhold point\b', text, re.IGNORECASE):
+            qa.append("Inspection/witness requirements")
+        return qa
 
-    # CHANGE ORDER IMPACT ANALYSIS
-    async def change_order_impact(self, input_data: Any, params: Dict) -> Dict:
+    # COST ESTIMATION (RSMeans-style)
+    async def generate_cost_estimate(self, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
-        co_description = data.get("description") or p.get("description")
-        co_value = data.get("value") or p.get("value", 0)
-        affected_activities = data.get("affected_activities") or p.get("affected_activities", [])
-        schedule_file = data.get("schedule_file") or p.get("schedule_file")
-        contract_file = data.get("contract_file") or p.get("contract_file")
         
-        if not co_description:
-            return {"status": "error", "error": "Change order description required"}
+        quantities = p.get("quantities", data.get("quantities", {}))
+        location = p.get("location", "US National Average")
+        project_type = p.get("project_type", "general_building")
         
-        co_analysis = self._analyze_change_order_text(co_description)
-        cost_impact = self._calculate_co_cost_impact(co_value, co_analysis)
+        rsmeans_data = self._get_rsmeans_data()
+        location_factor = rsmeans_data.get("location_factors", {}).get(location, 1.0)
         
-        schedule_impact = {"delay_days": 0, "affected_milestones": []}
-        if schedule_file:
-            schedule_impact = await self._calculate_co_schedule_impact(schedule_file, affected_activities)
+        line_items = []
+        for item_name, qty_data in quantities.items():
+            if isinstance(qty_data, dict):
+                quantity = qty_data.get("quantity", 0)
+                unit = qty_data.get("unit", "ea")
+            else:
+                quantity = qty_data
+                unit = "ea"
+            
+            base_rate = self._lookup_unit_cost(item_name, unit, rsmeans_data)
+            adjusted_rate = base_rate * location_factor
+            total = quantity * adjusted_rate
+            
+            line_items.append({
+                "item": item_name,
+                "quantity": quantity,
+                "unit": unit,
+                "base_rate": base_rate,
+                "adjusted_rate": adjusted_rate,
+                "location_factor": location_factor,
+                "total": round(total, 2)
+            })
         
-        risks = self._assess_co_risks(co_analysis, co_value, schedule_impact)
-        contract_implications = {}
-        if contract_file:
-            contract_implications = self._check_contract_change_terms(contract_file, co_value)
+        subtotal = sum(item["total"] for item in line_items)
+        overhead = subtotal * 0.10
+        profit = subtotal * 0.08
+        contingency = subtotal * 0.05
+        total = subtotal + overhead + profit + contingency
         
         return {
             "status": "success",
-            "action": "change_order_analysis",
-            "change_order_summary": {
-                "description": co_description[:200],
-                "category": co_analysis.get("category"),
-                "direct_cost": co_value,
-                "total_impact_cost": cost_impact.get("total"),
-                "schedule_impact_days": schedule_impact.get("delay_days")
+            "action": "cost_estimate",
+            "location": location,
+            "location_factor": location_factor,
+            "line_items": line_items,
+            "summary": {
+                "subtotal": round(subtotal, 2),
+                "overhead": round(overhead, 2),
+                "profit": round(profit, 2),
+                "contingency": round(contingency, 2),
+                "total_estimate": round(total, 2)
             },
-            "cost_breakdown": cost_impact,
-            "schedule_impact": schedule_impact,
-            "risks": [asdict(r) if isinstance(r, RiskItem) else r for r in risks],
-            "contract_implications": contract_implications,
-            "approval_recommendation": "approve" if all((r.impact if isinstance(r, RiskItem) else r.get("impact")) != "high" for r in risks) else "negotiate",
-            "negotiation_points": self._identify_negotiation_points(cost_impact, risks),
-            "mitigation_strategies": self._generate_co_recommendations(cost_impact, schedule_impact, risks)
+            "confidence": "medium"
         }
     
-    def _analyze_change_order_text(self, text: str) -> Dict:
-        categories = {
-            "design_change": ["design", "drawing", "specification", "architect", "engineer"],
-            "scope_addition": ["additional", "extra", "new", "more", "increase quantity"],
-            "scope_deletion": ["delete", "remove", "omit", "deduct"],
-            "unforeseen_condition": ["unforeseen", "unknown", "existing", "ground condition", "utility"],
-            "acceleration": ["accelerate", "expedite", "crash", "fast track"],
-            "delay_compensation": ["delay", "disruption", "prolongation", "waiting"],
-        }
-        text_lower = text.lower()
-        detected_category = "general"
-        confidence = 0
-        for cat, keywords in categories.items():
-            matches = sum(1 for kw in keywords if kw in text_lower)
-            if matches > confidence:
-                detected_category = cat
-                confidence = matches
+    def _get_rsmeans_data(self) -> Dict:
         return {
-            "category": detected_category,
-            "confidence": min(confidence / 3, 1.0),
-            "complexity": "high" if len(text) > 500 else "medium" if len(text) > 200 else "low",
-            "trade_involved": self._detect_trade_from_text(text)
-        }
-    
-    def _detect_trade_from_text(self, text: str) -> str:
-        trades = ["concrete", "steel", "electrical", "plumbing", "hvac", "masonry", "finishes", "fire protection"]
-        return next((t for t in trades if t in text.lower()), "general")
-    
-    def _calculate_co_cost_impact(self, direct_cost: float, analysis: Dict) -> Dict:
-        direct = float(direct_cost) if direct_cost else 0
-        overhead = direct * 0.20
-        profit = direct * 0.10 if analysis.get("category") == "scope_addition" else 0
-        complexity = analysis.get("complexity", "medium")
-        risk_rates = {"low": 0.05, "medium": 0.10, "high": 0.20}
-        risk_allowance = direct * risk_rates.get(complexity, 0.10)
-        total = direct + overhead + profit + risk_allowance
-        return {
-            "direct_cost": direct,
-            "overhead": overhead,
-            "profit": profit,
-            "risk_allowance": risk_allowance,
-            "total": total,
-            "breakdown_percentages": {
-                "direct": f"{(direct/total*100):.1f}%" if total else "0%",
-                "overhead": f"{(overhead/total*100):.1f}%" if total else "0%",
-                "risk": f"{(risk_allowance/total*100):.1f}%" if total else "0%"
+            "unit_costs": {
+                "concrete_m3": 150.0,
+                "steel_kg": 2.5,
+                "formwork_m2": 45.0,
+                "rebar_kg": 1.8,
+                "block_m2": 35.0,
+                "masonry_m2": 65.0,
+                "glazing_m2": 180.0,
+                "finishes_m2": 55.0
+            },
+            "location_factors": {
+                "US National Average": 1.0,
+                "New York City": 1.35,
+                "San Francisco": 1.42,
+                "Dubai": 0.95,
+                "Riyadh": 0.88,
+                "London": 1.28,
+                "Sydney": 1.15,
+                "Singapore": 1.08
             }
         }
     
-    async def _calculate_co_schedule_impact(self, schedule_file: str, affected_activities: List) -> Dict:
-        schedule_data = self._parse_xer_file(schedule_file)
-        affected_paths = []
-        total_delay = 0
-        for act_id in affected_activities:
-            act = next((a for a in schedule_data.get("activities", []) if a["id"] == act_id), None)
-            if act and act.get("critical"):
-                affected_paths.append({"activity": act_id, "critical": True, "impact": "direct_delay"})
-                total_delay += act.get("duration", 0)
-            elif act:
-                affected_paths.append({"activity": act_id, "critical": False, "impact": "congestion"})
-        return {
-            "delay_days": total_delay,
-            "affected_activities": len(affected_activities),
-            "critical_path_impact": any(a.get("critical") for a in affected_paths),
-            "affected_milestones": self._identify_affected_milestones(schedule_data, affected_activities),
-            "mitigation_options": ["overtime", "additional_crew", "resequence"] if total_delay > 5 else []
-        }
+    def _lookup_unit_cost(self, item_name: str, unit: str, rsmeans_data: Dict) -> float:
+        unit_costs = rsmeans_data.get("unit_costs", {})
+        
+        if "concrete" in item_name.lower() and unit in ["m3", "cu m", "cubic meter"]:
+            return unit_costs.get("concrete_m3", 150.0)
+        elif "steel" in item_name.lower() and unit in ["kg", "kilogram"]:
+            return unit_costs.get("steel_kg", 2.5)
+        elif "formwork" in item_name.lower() and unit in ["m2", "sq m", "square meter"]:
+            return unit_costs.get("formwork_m2", 45.0)
+        elif "rebar" in item_name.lower() and unit in ["kg", "kilogram"]:
+            return unit_costs.get("rebar_kg", 1.8)
+        elif "block" in item_name.lower() and unit in ["m2", "sq m"]:
+            return unit_costs.get("block_m2", 35.0)
+        elif "masonry" in item_name.lower() and unit in ["m2", "sq m"]:
+            return unit_costs.get("masonry_m2", 65.0)
+        elif "glass" in item_name.lower() or "glazing" in item_name.lower():
+            return unit_costs.get("glazing_m2", 180.0)
+        elif "finish" in item_name.lower():
+            return unit_costs.get("finishes_m2", 55.0)
+        
+        return 50.0
     
-    def _assess_co_risks(self, analysis: Dict, co_value: float, schedule_impact: Dict) -> List[RiskItem]:
-        risks = []
-        if analysis.get("complexity") == "high":
-            risks.append(RiskItem(
-                id="CO-001", category="cost", description="High complexity change order - cost uncertainty",
-                probability="high", impact="high", mitigation="Break into smaller packages, get detailed quotes", source="change_order"
-            ))
-        if schedule_impact.get("delay_days", 0) > 7:
-            risks.append(RiskItem(
-                id="CO-002", category="schedule", description="Significant schedule impact from change order",
-                probability="high", impact="high", mitigation="Negotiate EOT, fast-track unaffected work", source="change_order"
-            ))
-        return risks
-    
-    def _identify_negotiation_points(self, cost_impact: Dict, risks: List) -> List[str]:
-        points = []
-        if cost_impact.get("risk_allowance", 0) > cost_impact.get("direct_cost", 0) * 0.15:
-            points.append("High risk allowance - request breakdown")
-        if any((r.impact if isinstance(r, RiskItem) else r.get("impact")) == "high" for r in risks):
-            points.append("Schedule-critical impacts require EOT discussion")
-        return points
-    
-    def _generate_co_recommendations(self, cost_impact: Dict, schedule_impact: Dict, risks: List) -> List[str]:
-        recs = []
-        if cost_impact.get("total", 0) > cost_impact.get("direct_cost", 0) * 1.5:
-            recs.append("High overhead/risk markup - negotiate direct cost basis")
-        if schedule_impact.get("delay_days", 0) > 0:
-            recs.append("Secure written time extension before proceeding")
-        return recs
-    
-    def _check_contract_change_terms(self, contract_file: str, co_value: float) -> Dict:
-        return {"notice_required": True, "valuation_method": "agreed rates or reasonable costs"}
+    def extract_quantities(self, input_data: Any, params: Dict) -> Dict:
+        return {"status": "success", "quantities": input_data.get("measurements", []) if isinstance(input_data, dict) else []}
 
-    # RFI GENERATOR
-    async def rfi_generator(self, input_data: Any, params: Dict) -> Dict:
+    # CARBON & SUSTAINABILITY
+    async def generate_carbon_report(self, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
-        ambiguity_description = data.get("description") or p.get("description")
-        drawing_ref = data.get("drawing_reference") or p.get("drawing_reference")
-        spec_ref = data.get("spec_reference") or p.get("spec_reference")
-        priority = p.get("priority", "normal")
-        trade = p.get("trade", "general")
-        project_name = p.get("project_name", "Project")
+        quantities = p.get("quantities", data.get("quantities", {}))
         
-        if not ambiguity_description:
-            return {"status": "error", "error": "Ambiguity description required"}
+        carbon_factors = {
+            "concrete_m3": 250.0,
+            "steel_kg": 2.3,
+            "rebar_kg": 1.9,
+            "timber_m3": -500.0,
+            "block_m2": 45.0,
+            "aluminum_kg": 11.0,
+            "glass_m2": 35.0
+        }
         
-        analysis = self._analyze_ambiguity(ambiguity_description)
-        suggested_number = f"RFI-{trade[:3].upper()}-{datetime.now(timezone.utc).strftime('%y%m%d')}-XXX"
-        rfi_text = self._generate_rfi_text(ambiguity_description, drawing_ref, spec_ref, analysis, project_name)
-        suggestions = self._suggest_clarifications(analysis)
-        impact = self._assess_ambiguity_impact(analysis, priority)
+        total_carbon = 0
+        breakdown = []
+        
+        for material, qty_data in quantities.items():
+            if isinstance(qty_data, dict):
+                quantity = qty_data.get("quantity", 0)
+            else:
+                quantity = qty_data
+            
+            factor = carbon_factors.get(material, 100.0)
+            carbon = quantity * factor
+            total_carbon += carbon
+            
+            breakdown.append({
+                "material": material,
+                "quantity": quantity,
+                "factor_kg_co2_per_unit": factor,
+                "total_kg_co2": round(carbon, 2)
+            })
         
         return {
             "status": "success",
-            "action": "rfi_generated",
-            "generated_rfi": {
-                "suggested_number": suggested_number,
-                "subject": f"Clarification required: {analysis.get('topic', 'General')}",
-                "priority": priority,
-                "trade": trade,
-                "full_text": rfi_text,
-                "word_count": len(rfi_text.split())
-            },
-            "ambiguity_analysis": analysis,
-            "references": {
-                "drawings": drawing_ref,
-                "specifications": spec_ref,
-            },
-            "suggested_responses": suggestions,
-            "impact_assessment": impact,
-            "recommended_response_time": "48 hours" if priority == "urgent" else "7 days",
-            "attachments_needed": self._identify_rfi_attachments(analysis)
+            "action": "carbon_report",
+            "total_embodied_carbon_kg": round(total_carbon, 2),
+            "total_tonnes_co2": round(total_carbon / 1000, 2),
+            "breakdown": breakdown,
+            "benchmark": "Typical office building: 350-500 kg CO2/m²",
+            "recommendations": [
+                "Consider low-carbon concrete mixes",
+                "Optimize steel tonnage through efficient design",
+                "Specify recycled content where possible"
+            ]
         }
-    
-    def _analyze_ambiguity(self, text: str) -> Dict:
-        ambiguity_types = {
-            "conflict": ["conflict", "contradict", "differ", "discrepancy", "does not match"],
-            "omission": ["missing", "not shown", "not indicated", "omit", "not specified"],
-            "unclear": ["unclear", "ambiguous", "vague", "not clear", "undefined"],
-            "impossible": ["impossible", "cannot", "unable", "construct", "build"],
-            "dimension_error": ["dimension", "does not fit", "clash", "coordination"],
-            "sequence": ["sequence", "order", "before", "after", "prerequisite"],
-        }
-        text_lower = text.lower()
-        detected_types = []
-        for amb_type, keywords in ambiguity_types.items():
-            if any(kw in text_lower for kw in keywords):
-                detected_types.append(amb_type)
-        trades = ["concrete", "steel", "electrical", "plumbing", "hvac", "masonry", "finishes", "fire protection"]
-        detected_trade = next((t for t in trades if t in text_lower), "general")
-        return {
-            "types": detected_types,
-            "primary_type": detected_types[0] if detected_types else "general",
-            "trade": detected_trade,
-            "topic": self._extract_topic(text),
-            "complexity": "high" if len(detected_types) > 1 else "medium" if detected_types else "low",
-            "urgency_indicators": any(w in text_lower for w in ["delay", "stop", "hold", "cannot proceed"])
-        }
-    
-    def _extract_topic(self, text: str) -> str:
-        topics = {
-            "foundation": ["foundation", "pile", "footing", "raft"],
-            "structure": ["beam", "column", "slab", "wall"],
-            "envelope": ["facade", "curtain", "cladding", "roof"],
-            "MEP": ["electrical", "plumbing", "hvac", "duct", "pipe"],
-            "finishes": ["floor", "ceiling", "paint", "tile"],
-        }
-        text_lower = text.lower()
-        for topic, keywords in topics.items():
-            if any(kw in text_lower for kw in keywords):
-                return topic
-        return "General"
-    
-    def _generate_rfi_text(self, description: str, drawing: str, spec: str, analysis: Dict, project: str) -> str:
-        parts = []
-        parts.append(f"Subject: Request for Information - {analysis.get('topic', 'Clarification Required')}")
-        parts.append(f"Project: {project}")
-        parts.append("")
-        parts.append("BACKGROUND:")
-        parts.append(f"The Contractor is preparing to execute work related to {analysis.get('trade', 'the scope')}.")
-        if drawing:
-            parts.append(f"Reference Drawing(s): {drawing}")
-        if spec:
-            parts.append(f"Reference Specification(s): {spec}")
-        parts.append("")
-        parts.append("ISSUE/AMBIGUITY:")
-        parts.append(description)
-        parts.append("")
-        parts.append("IMPACT:")
-        if analysis.get("urgency_indicators"):
-            parts.append("This ambiguity is impacting ongoing work and may cause delays if not resolved promptly.")
-        else:
-            parts.append("This ambiguity requires clarification to ensure compliance with design intent.")
-        parts.append("")
-        parts.append("REQUESTED CLARIFICATION:")
-        if analysis.get("primary_type") == "conflict":
-            parts.append("1. Please confirm which document takes precedence.")
-            parts.append("2. Please provide revised details coordinating both requirements.")
-        elif analysis.get("primary_type") == "omission":
-            parts.append("1. Please confirm the required scope/material/dimension.")
-            parts.append("2. Please provide missing details or reference to applicable standards.")
-        elif analysis.get("primary_type") == "dimension_error":
-            parts.append("1. Please confirm correct dimensions.")
-            parts.append("2. Please clarify coordination between elements.")
-        else:
-            parts.append("1. Please clarify the design intent.")
-            parts.append("2. Please provide any additional details required for construction.")
-        parts.append("")
-        parts.append("Submitted by: [Contractor Name]")
-        parts.append(f"Date: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}")
-        return "\n".join(parts)
-    
-    def _suggest_clarifications(self, analysis: Dict) -> List[str]:
-        return [f"Confirm {analysis.get('trade')} requirements per design intent"]
-    
-    def _assess_ambiguity_impact(self, analysis: Dict, priority: str) -> Dict:
-        return {"schedule_impact": "high" if analysis.get("urgency_indicators") else "low", "cost_risk": "medium"}
-    
-    def _identify_rfi_attachments(self, analysis: Dict) -> List[str]:
-        return ["Marked-up drawings", "Photos of existing conditions"]
 
-    # SAFETY COMPLIANCE AUDIT
+    # SAFETY & COMPLIANCE
     async def safety_compliance_audit(self, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
-        audit_type = p.get("type", "general")
-        project_location = p.get("location", "US")
-        checklist_items = data.get("checklist_items") or p.get("checklist_items", [])
-        photo_files = data.get("photos") or p.get("photos", [])
         
-        standards = self._get_applicable_safety_standards(audit_type, project_location)
-        checklist_results = self._perform_safety_checklist(checklist_items, standards)
+        audit_type = p.get("audit_type", "general")
+        photos = data.get("photos", p.get("photos", []))
         
-        photo_analysis = []
-        for photo in photo_files:
-            analysis = await self._analyze_safety_photo(photo, audit_type)
-            photo_analysis.append(analysis)
+        if not photos and data.get("file_path"):
+            photos = [data.get("file_path")]
         
-        violations = self._identify_safety_violations(checklist_results, photo_analysis)
-        risk_score = self._calculate_safety_risk_score(violations)
-        corrective_actions = self._generate_corrective_actions(violations)
-        compliance_rate = (len([c for c in checklist_results if c.get("compliant")]) / len(checklist_results) * 100) if checklist_results else 0
+        if not photos:
+            return {"status": "error", "error": "No photos provided for safety audit"}
+        
+        violations = []
+        compliant_items = []
+        
+        for photo_path in photos[:10]:
+            analysis = await self._analyze_safety_photo(photo_path, audit_type)
+            
+            if analysis.get("hazards_detected", 0) > 0:
+                violations.extend(analysis.get("hazards", []))
+            else:
+                compliant_items.append({
+                    "photo": analysis.get("photo"),
+                    "status": "compliant",
+                    "notes": "No obvious violations detected"
+                })
+        
+        severity_counts = {"critical": 0, "major": 0, "minor": 0}
+        for v in violations:
+            sev = v.get("severity", "minor")
+            severity_counts[sev] = severity_counts.get(sev, 0) + 1
         
         return {
             "status": "success",
             "action": "safety_audit",
             "audit_type": audit_type,
-            "location": project_location,
-            "applicable_standards": standards,
-            "summary": {
-                "compliance_rate": f"{compliance_rate:.1f}%",
-                "violations_found": len(violations),
-                "critical_violations": len([v for v in violations if v.get("severity") == "critical"]),
-                "major_violations": len([v for v in violations if v.get("severity") == "major"]),
-                "minor_violations": len([v for v in violations if v.get("severity") == "minor"]),
-                "risk_score": risk_score,
-                "status": "pass" if risk_score > 80 else "conditional" if risk_score > 60 else "fail"
-            },
-            "violations": violations,
-            "checklist_results": checklist_results,
-            "photo_analysis": photo_analysis,
-            "corrective_actions": corrective_actions,
-            "stop_work_triggers": [v for v in violations if v.get("stop_work_required")],
-            "recommendations": self._generate_safety_recommendations(violations),
-            "re_audit_required": any(v.get("severity") == "critical" for v in violations),
-            "next_audit_date": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat() if violations else (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+            "photos_analyzed": len(photos),
+            "violations_found": len(violations),
+            "severity_breakdown": severity_counts,
+            "violations": violations[:20],
+            "compliant_items": compliant_items,
+            "overall_compliance": "fail" if severity_counts["critical"] > 0 else "pass with observations" if severity_counts["major"] > 0 else "pass",
+            "recommendations": self._generate_safety_recommendations(violations)
         }
-    
-    def _get_applicable_safety_standards(self, audit_type: str, location: str) -> List[str]:
-        base = ["OSHA 1926", "ISO 45001"]
-        location_map = {
-            "US": ["OSHA 1926", "ANSI A10"],
-            "UK": ["CDM 2015", "BS EN 12811", "HSE Guidance"],
-            "EU": ["EU Directive 92/57/EEC", "EN Standards"],
-            "GCC": ["OSHA (US based)", "Local Municipality Requirements"],
-            "AU": ["WHS Act 2011", "AS/NZS Standards"]
-        }
-        type_map = {
-            "excavation": ["OSHA 1926 Subpart P"],
-            "scaffolding": ["OSHA 1926 Subpart L", "ANSI A10.8"],
-            "electrical": ["OSHA 1926 Subpart K", "NFPA 70E"],
-            "confined_space": ["OSHA 1926 Subpart AA"],
-            "fall_protection": ["OSHA 1926 Subpart M"]
-        }
-        standards = location_map.get(location, base)
-        if audit_type in type_map:
-            standards.extend(type_map[audit_type])
-        return standards
-    
-    def _perform_safety_checklist(self, checklist_items: List, standards: List[str]) -> List[Dict]:
-        results = []
-        for item in checklist_items:
-            results.append({
-                "item": item.get("item", "Unknown"),
-                "compliant": item.get("status", "unknown") == "compliant",
-                "standard": item.get("standard", standards[0] if standards else "General"),
-                "notes": item.get("notes", "")
-            })
-        return results
     
     async def _analyze_safety_photo(self, photo_path: str, audit_type: str) -> Dict:
         image_block = self.get_dep("image")
@@ -1560,1102 +1320,254 @@ class ConstructionContainer(UniversalContainer):
                 })
         return hazards
     
-    def _identify_safety_violations(self, checklist_results: List[Dict], photo_analysis: List[Dict]) -> List[Dict]:
-        violations = []
-        for item in checklist_results:
-            if not item.get("compliant"):
-                violations.append({
-                    "source": "checklist",
-                    "item": item["item"],
-                    "severity": "major",
-                    "standard": item.get("standard"),
-                    "stop_work_required": False
-                })
-        for photo in photo_analysis:
-            for hazard in photo.get("hazards", []):
-                violations.append({
-                    "source": "photo_analysis",
-                    "item": hazard.get("type"),
-                    "severity": hazard.get("severity", "minor"),
-                    "description": hazard.get("description"),
-                    "stop_work_required": hazard.get("severity") == "critical"
-                })
-        return violations
-    
-    def _calculate_safety_risk_score(self, violations: List[Dict]) -> float:
-        if not violations:
-            return 100.0
-        severity_scores = {"minor": 5, "major": 15, "critical": 30}
-        total_penalty = sum(severity_scores.get(v.get("severity", "minor"), 5) for v in violations)
-        return max(0, 100 - total_penalty)
-    
-    def _generate_corrective_actions(self, violations: List[Dict]) -> List[Dict]:
-        actions = []
-        for v in violations:
-            actions.append({
-                "violation": v.get("item"),
-                "action": f"Address {v.get('item')}",
-                "priority": "immediate" if v.get("severity") == "critical" else "7 days"
-            })
-        return actions
-    
     def _generate_safety_recommendations(self, violations: List[Dict]) -> List[str]:
-        if any(v.get("severity") == "critical" for v in violations):
-            return ["Stop work immediately in affected areas", "Conduct toolbox talk before resuming"]
-        return ["Continue daily safety inspections", "Address noted deficiencies promptly"]
-
-    # CARBON FOOTPRINT CALCULATOR
-    async def carbon_footprint_calculator(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        quantities = data.get("quantities") or p.get("quantities")
-        materials = data.get("materials") or p.get("materials", [])
-        location = p.get("location", "US")
-        building_type = p.get("building_type", "office")
-        gfa = p.get("gross_floor_area_m2")
-        target_certification = p.get("target_certification")
+        if not violations:
+            return ["Continue current safety practices", "Document compliance for audit trail"]
         
-        if not quantities and not materials:
-            return {"status": "error", "error": "No quantities or materials provided"}
-        
-        if isinstance(quantities, dict):
-            materials = self._convert_quantities_to_materials(quantities)
-        
-        carbon_results = []
-        total_embodied = 0
-        total_operational = 0
-        for material in materials:
-            result = self._calculate_material_carbon(material, location)
-            carbon_results.append(result)
-            total_embodied += result.get("embodied_carbon_kg", 0)
-            total_operational += result.get("operational_carbon_kg", 0)
-        
-        benchmarks = self._get_carbon_benchmarks(building_type)
-        comparison = self._compare_to_benchmark(total_embodied, gfa, benchmarks)
-        optimization = self._generate_carbon_optimization(carbon_results, target_certification)
-        
-        return {
-            "status": "success",
-            "action": "carbon_analysis",
-            "summary": {
-                "total_embodied_carbon_kg": round(total_embodied, 2),
-                "total_operational_carbon_kg": round(total_operational, 2),
-                "total_carbon_kg": round(total_embodied + total_operational, 2),
-                "gross_floor_area_m2": gfa,
-                "embodied_carbon_per_m2": round(total_embodied / gfa, 2) if gfa else None,
-                "building_type": building_type,
-                "location": location
-            },
-            "benchmark_comparison": comparison,
-            "material_breakdown": carbon_results,
-            "hotspots": [m for m in carbon_results if m.get("carbon_intensity", 0) > 500][:10],
-            "optimization_strategies": optimization,
-            "certification_pathway": self._get_certification_pathway(target_certification, total_embodied, gfa),
-            "recommendations": self._generate_carbon_recommendations(carbon_results, comparison)
-        }
-    
-    def _convert_quantities_to_materials(self, quantities: Dict) -> List[Dict]:
-        materials = []
-        mapping = {
-            "concrete_m3": {"material": "ready_mix_concrete", "unit": "m3"},
-            "steel_ton": {"material": "structural_steel", "unit": "ton"},
-            "rebar_ton": {"material": "steel_rebar", "unit": "ton"},
-            "timber_m3": {"material": "softwood_timber", "unit": "m3"},
-            "glass_m2": {"material": "glazing", "unit": "m2"},
-            "insulation_m2": {"material": "insulation", "unit": "m2"},
-        }
-        for key, qty in quantities.items():
-            mapped = mapping.get(key)
-            if mapped:
-                materials.append({"material": mapped["material"], "quantity": float(qty), "unit": mapped["unit"]})
-        return materials
-    
-    def _calculate_material_carbon(self, material: Dict, location: str) -> Dict:
-        material_name = material.get("material", "unknown")
-        quantity = float(material.get("quantity", 0))
-        unit = material.get("unit", "m3")
-        
-        efi = self.carbon_emission_factors.get(material_name, {"unit": unit, "factor": 100})
-        embodied = quantity * efi["factor"]
-        operational = quantity * (efi.get("operational_factor", 0) or 0)
-        intensity = embodied / quantity if quantity else 0
-        
-        alternatives = []
-        for alt_name, alt_factor in self.carbon_emission_factors.items():
-            if alt_name != material_name and alt_factor["unit"] == unit and alt_factor["factor"] < efi["factor"] * 0.8:
-                savings = embodied - (quantity * alt_factor["factor"])
-                if savings > 0:
-                    alternatives.append({
-                        "alternative": alt_name,
-                        "potential_savings_kg": round(savings, 2),
-                        "savings_percent": round((savings / embodied * 100), 1) if embodied else 0
-                    })
-        
-        return {
-            "material": material_name,
-            "quantity": quantity,
-            "unit": unit,
-            "embodied_carbon_kg": round(embodied, 2),
-            "operational_carbon_kg": round(operational, 2),
-            "carbon_intensity": round(intensity, 2),
-            "location": location,
-            "alternatives": sorted(alternatives, key=lambda x: x["potential_savings_kg"], reverse=True)[:3]
-        }
-    
-    def _get_carbon_benchmarks(self, building_type: str) -> Dict:
-        return self.carbon_benchmarks.get(building_type, self.carbon_benchmarks["office"])
-    
-    def _compare_to_benchmark(self, total_embodied: float, gfa: Optional[float], benchmarks: Dict) -> Dict:
-        if not gfa:
-            return {"status": "unknown", "message": "GFA not provided"}
-        intensity = total_embodied / gfa
-        target = benchmarks.get("embodied_carbon_kg_per_m2")
-        status = "below_target" if intensity < target else "above_target"
-        return {
-            "status": status,
-            "actual_intensity_kg_m2": round(intensity, 2),
-            "target_intensity_kg_m2": target,
-            "variance_percent": round(((intensity - target) / target) * 100, 1) if target else 0
-        }
-    
-    def _generate_carbon_optimization(self, results: List[Dict], target_cert: Optional[str]) -> List[Dict]:
-        strategies = []
-        high_carbon = [r for r in results if r.get("carbon_intensity", 0) > 300]
-        if high_carbon:
-            for item in high_carbon[:3]:
-                if item.get("alternatives"):
-                    strategies.append({
-                        "strategy": f"Substitute {item['material']}",
-                        "impact": f"Save up to {item['alternatives'][0]['potential_savings_kg']} kg CO2e",
-                        "priority": "high"
-                    })
-        if target_cert:
-            strategies.append({"strategy": f"Optimize for {target_cert} certification", "impact": "May reduce intensity by 10-20%", "priority": "medium"})
-        return strategies
-    
-    def _get_certification_pathway(self, target_cert: Optional[str], total_embodied: float, gfa: Optional[float]) -> Dict:
-        if not target_cert:
-            return {"available": False}
-        pathways = {
-            "LEED": {"requirements": ["Energy modeling", "Material transparency", "Waste management"]},
-            "BREEAM": {"requirements": ["LCA assessment", "Responsible sourcing", "Construction waste management"]},
-            "WELL": {"requirements": ["Material health", "Air quality", "Water quality"]},
-            "Passive House": {"requirements": ["Airtightness", "Thermal bridge free", "High insulation"]}
-        }
-        return {"certification": target_cert, **pathways.get(target_cert, {"requirements": []})}
-    
-    def _generate_carbon_recommendations(self, results: List[Dict], comparison: Dict) -> List[str]:
         recs = []
-        if comparison.get("status") == "above_target":
-            recs.append("Project exceeds carbon benchmark - prioritize low-carbon alternatives")
-        top = sorted(results, key=lambda x: x.get("embodied_carbon_kg", 0), reverse=True)
-        if top:
-            recs.append(f"Highest impact material: {top[0]['material']} ({top[0]['embodied_carbon_kg']} kg CO2e)")
+        types = set(v.get("type") for v in violations)
+        
+        if "missing_ppe" in types:
+            recs.append("Immediate: Enforce mandatory PPE - hard hats, vests, safety boots")
+        if "fall_hazard" in types or "missing_guardrail" in types:
+            recs.append("Critical: Install guardrails/harnesses before work continues")
+        if "trip_hazard" in types:
+            recs.append("Clean and organize work area - remove trip hazards")
+        
         return recs
 
-    # PROCUREMENT LIST GENERATOR
-    async def procurement_list_generator(self, input_data: Any, params: Dict) -> Dict:
+    # PROCUREMENT & SUBCONTRACTOR
+    async def procurement_analysis(self, input_data: Any, params: Dict) -> Dict:
+        return {"status": "success", "action": "procurement_analysis", "recommendations": []}
+
+    # CHANGE ORDER / VARIATION
+    async def change_order_impact(self, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
-        boq_items = data.get("boq_items") or p.get("boq_items", [])
-        schedule_file = data.get("schedule_file") or p.get("schedule_file")
-        lead_times = data.get("lead_times") or p.get("lead_times")
         
-        if not boq_items:
-            return {"status": "error", "error": "No BOQ items provided"}
+        co_type = p.get("change_type", data.get("change_type", "general"))
+        direct_cost = p.get("direct_cost", data.get("direct_cost", 0))
         
-        if not lead_times:
-            lead_times = self._get_default_lead_times()
+        analysis = self._analyze_change_type(co_type, params)
+        cost_impact = self._calculate_co_cost_impact(direct_cost, analysis)
         
-        schedule = None
-        if schedule_file:
-            schedule = self._parse_xer_file(schedule_file)
+        return {
+            "status": "success",
+            "action": "change_order_analysis",
+            "change_type": co_type,
+            "category": analysis.get("category"),
+            "complexity": analysis.get("complexity"),
+            "cost_impact": cost_impact,
+            "schedule_impact_days": analysis.get("typical_delay_days", 0),
+            "trade_involved": analysis.get("trade_involved"),
+            "risk_level": analysis.get("risk_level"),
+            "approvals_required": analysis.get("approvals", ["PM", "QS"]),
+            "recommendation": "Approve with conditions" if analysis.get("category") != "major" else "Escalate to senior management"
+        }
+    
+    def _analyze_change_type(self, co_type: str, params: Dict) -> Dict:
+        categories = {
+            "scope_addition": ["add", "extra", "additional", "new work", "extra work"],
+            "scope_omission": ["delete", "remove", "omit", "deduct"],
+            "design_change": ["redesign", "change spec", "substitution"],
+            "site_condition": [" differing site", "unforeseen", "latent", "ground condition"],
+            "delay_claim": ["delay", "acceleration", "time extension", "EOT"]
+        }
+        text_lower = co_type.lower()
+        detected_category = "general"
+        confidence = 0
+        for cat, keywords in categories.items():
+            matches = sum(1 for kw in keywords if kw in text_lower)
+            if matches > confidence:
+                detected_category = cat
+                confidence = matches
+        return {
+            "category": detected_category,
+            "confidence": min(confidence / 3, 1.0),
+            "complexity": "high" if len(co_type) > 500 else "medium" if len(co_type) > 200 else "low",
+            "trade_involved": self._detect_trade_from_text(co_type)
+        }
+    
+    def _detect_trade_from_text(self, text: str) -> str:
+        trades = ["concrete", "steel", "electrical", "plumbing", "hvac", "masonry", "finishes", "fire protection"]
+        return next((t for t in trades if t in text.lower()), "general")
+    
+    def _calculate_co_cost_impact(self, direct_cost: float, analysis: Dict) -> Dict:
+        direct = float(direct_cost) if direct_cost else 0
+        overhead = direct * 0.20
+        profit = direct * 0.10 if analysis.get("category") == "scope_addition" else 0
+        complexity = analysis.get("complexity", "medium")
+        risk_rates = {"low": 0.05, "medium": 0.10, "high": 0.20}
+        risk_allowance = direct * risk_rates.get(complexity, 0.10)
+        total = direct + overhead + profit + risk_allowance
+        return {
+            "direct_cost": direct,
+            "overhead": overhead,
+            "profit": profit,
+            "risk_allowance": risk_allowance,
+            "total": total,
+            "breakdown_percentages": {
+                "direct": f"{(direct/total*100):.1f}%" if total else "0%",
+                "overhead": f"{(overhead/total*100):.1f}%" if total else "0%",
+                "risk": f"{(risk_allowance/total*100):.1f}%" if total else "0%"
+            }
+        }
+
+    # RISK ANALYSIS
+    async def analyze_schedule_risk(self, input_data: Any, params: Dict) -> Dict:
+        return await self.parse_primavera_schedule(input_data, params)
+    
+    def _create_risk_item(self, category: str, description: str, probability: str, impact: str, mitigation: str, source: str) -> Dict:
+        return {
+            "category": category,
+            "description": description,
+            "probability": probability,
+            "impact": impact,
+            "mitigation": mitigation,
+            "source": source,
+            "id": f"RISK-{hash(description) % 10000:04d}"
+        }
+
+    # DRAWING HELPERS
+    def _extract_measurements_advanced(self, text: str, text_dict: Dict) -> List[Dict]:
+        measurements = []
         
-        procurement_items = []
-        for item in boq_items:
-            material = item.get("material", "general")
-            required_date = item.get("required_date")
-            if schedule and not required_date:
-                required_date = self._find_required_date_from_schedule(item, schedule)
-            
-            lt = lead_times.get(material, lead_times.get("general", 14))
-            order_date = None
-            if required_date:
-                try:
-                    rd = datetime.fromisoformat(required_date.replace('Z', '+00:00'))
-                    order_date = (rd - timedelta(days=lt)).isoformat()
-                except Exception:
-                    order_date = None
-            
-            procurement_items.append({
-                "material": material,
-                "quantity": item.get("quantity"),
-                "unit": item.get("unit"),
-                "required_date": required_date,
-                "lead_time_days": lt,
-                "latest_order_date": order_date,
-                "status": "ok" if order_date and (datetime.now(timezone.utc) + timedelta(days=7)) < datetime.fromisoformat(order_date.replace('Z', '+00:00')) else "urgent"
+        dimension_pattern = r'\b(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')\s*(?:x|by|×)\s*(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')'
+        for match in re.finditer(dimension_pattern, text, re.IGNORECASE):
+            width = float(match.group(1))
+            height = float(match.group(2))
+            unit = "m" if "m" in match.group(0).lower() else "ft"
+            area = width * height
+            measurements.append({
+                "type": "dimension",
+                "value": area,
+                "unit": f"{unit}²",
+                "width": width,
+                "height": height,
+                "raw": match.group(0),
+                "context": text[max(0, match.start()-50):match.end()+50]
             })
         
-        urgent = [i for i in procurement_items if i["status"] == "urgent"]
-        return {
-            "status": "success",
-            "action": "procurement_plan",
-            "summary": {
-                "total_items": len(procurement_items),
-                "urgent_items": len(urgent),
-                "ok_items": len(procurement_items) - len(urgent)
-            },
-            "procurement_items": procurement_items,
-            "urgent_items": urgent,
-            "recommendations": [f"Place orders for {len(urgent)} urgent items immediately"] if urgent else ["All procurement items are on track"]
-        }
-    
-    def _get_default_lead_times(self) -> Dict[str, int]:
-        return {
-            "ready_mix_concrete": 7,
-            "structural_steel": 90,
-            "steel_rebar": 45,
-            "softwood_timber": 30,
-            "glazing": 60,
-            "insulation": 21,
-            "hvac_equipment": 120,
-            "electrical_panel": 90,
-            "fire_sprinkler": 45,
-            "elevator": 180,
-            "general": 30
-        }
-    
-    def _find_required_date_from_schedule(self, item: Dict, schedule: Dict) -> Optional[str]:
-        activity_keywords = [item.get("material", "").lower(), item.get("trade", "").lower()]
-        for act in schedule.get("activities", []):
-            act_name = act.get("name", "").lower()
-            if any(kw in act_name for kw in activity_keywords if kw):
-                return act.get("early_start") or act.get("start")
-        return None
-
-    # AS-BUILT DEVIATION REPORT
-    async def as_built_deviation_report(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        as_built_file = data.get("as_built_file") or p.get("as_built_file")
-        design_file = data.get("design_file") or p.get("design_file")
-        project_name = p.get("project_name", "Project")
-        
-        if not as_built_file or not design_file:
-            return {"status": "error", "error": "Both as-built and design files required"}
-        
-        as_built_data = await self._extract_drawing_data(as_built_file)
-        design_data = await self._extract_drawing_data(design_file)
-        
-        deviations = self._compare_drawings(design_data, as_built_data)
-        report = self._generate_deviation_report(deviations, project_name)
-        
-        return {
-            "status": "success",
-            "action": "as_built_deviation",
-            "project_name": project_name,
-            "summary": {
-                "total_deviations": len(deviations),
-                "critical_deviations": len([d for d in deviations if d.get("severity") == "critical"]),
-                "major_deviations": len([d for d in deviations if d.get("severity") == "major"]),
-                "minor_deviations": len([d for d in deviations if d.get("severity") == "minor"]),
-                "acceptable_deviations": len([d for d in deviations if d.get("severity") == "acceptable"])
-            },
-            "deviations": deviations,
-            "formal_report": report,
-            "recommendations": self._generate_deviation_recommendations(deviations),
-            "approval_status": "requires_approval" if any(d.get("severity") == "critical" for d in deviations) else "approved"
-        }
-    
-    async def _extract_drawing_data(self, file_path: str) -> Dict:
-        if file_path.lower().endswith('.pdf'):
-            try:
-                import fitz
-                doc = fitz.open(file_path)
-                text = ""
-                for page in doc:
-                    text += page.get_text()
-                doc.close()
-                return {"file_name": Path(file_path).name, "text": text}
-            except Exception as e:
-                return {"file_name": Path(file_path).name, "text": "", "error": str(e)}
-        return {"file_name": Path(file_path).name, "text": ""}
-    
-    def _compare_drawings(self, design: Dict, as_built: Dict) -> List[Dict]:
-        deviations = []
-        design_dims = self._extract_drawing_dimensions(design.get("text", ""))
-        as_built_dims = self._extract_drawing_dimensions(as_built.get("text", ""))
-        
-        for label, d_dim in design_dims.items():
-            ab_dim = as_built_dims.get(label)
-            if ab_dim is not None and abs(d_dim - ab_dim) > 0.05 * d_dim:
-                deviations.append({
-                    "element": label,
-                    "design_value": d_dim,
-                    "as_built_value": ab_dim,
-                    "deviation_percent": round((ab_dim - d_dim) / d_dim * 100, 1),
-                    "severity": "major" if abs((ab_dim - d_dim) / d_dim) > 0.1 else "minor",
-                    "type": "dimensional"
+        quantity_pattern = r'\b(\d+)\s*(?:no|nos|nr|ea|each)?\.?\s*([A-Z][A-Za-z\s]+)'
+        for match in re.finditer(quantity_pattern, text[:2000]):
+            qty = int(match.group(1))
+            item = match.group(2).strip()[:50]
+            if len(item) > 3:
+                measurements.append({
+                    "type": "count",
+                    "value": qty,
+                    "unit": "ea",
+                    "item": item,
+                    "raw": match.group(0)
                 })
         
-        design_materials = self._extract_materials_from_text(design.get("text", ""))
-        as_built_materials = self._extract_materials_from_text(as_built.get("text", ""))
-        for mat in set(design_materials) | set(as_built_materials):
-            if design_materials.get(mat) != as_built_materials.get(mat):
-                deviations.append({
-                    "element": mat,
-                    "design_spec": design_materials.get(mat),
-                    "as_built_spec": as_built_materials.get(mat),
-                    "severity": "major",
-                    "type": "material"
-                })
-        return deviations
+        return measurements[:50]
     
-    def _extract_drawing_dimensions(self, text: str) -> Dict[str, float]:
-        dims = {}
-        for match in re.finditer(r'(\b[A-Z]{2,4}\s*\d{1,3}[A-Z]?)\s*[:=\s]+(\d+\.?\d*)\s*(?:m|mm)', text, re.IGNORECASE):
-            label = match.group(1).strip()
-            val = float(match.group(2))
-            dims[label] = val
-        return dims
+    def _extract_tables_advanced(self, page) -> List[Dict]:
+        return []
     
-    def _generate_deviation_report(self, deviations: List[Dict], project: str) -> str:
-        lines = []
-        lines.append(f"AS-BUILT DEVIATION REPORT - {project}")
-        lines.append(f"Date: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}")
-        lines.append("")
-        lines.append(f"Total Deviations: {len(deviations)}")
-        for d in deviations:
-            lines.append(f"- {d['type'].upper()}: {d['element']} | Severity: {d['severity']}")
-        lines.append("")
-        lines.append("This report has been generated for engineering review.")
-        return "\n".join(lines)
+    def _extract_annotations(self, page) -> List[Dict]:
+        return []
     
-    def _generate_deviation_recommendations(self, deviations: List[Dict]) -> List[str]:
-        if any(d.get("severity") == "critical" for d in deviations):
-            return ["Critical deviations detected - seek structural/PE review", "Do not issue certificate of occupancy until resolved"]
-        return ["Review deviations with design team", "Update as-built drawings for minor deviations"]
-
-    # WARRANTY & MAINTENANCE SCHEDULE
-    async def warranty_maintenance_schedule(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        equipment_list = data.get("equipment") or p.get("equipment", [])
-        handover_date_str = data.get("handover_date") or p.get("handover_date")
-        
-        if not equipment_list:
-            return {"status": "error", "error": "No equipment list provided"}
-        
-        try:
-            handover = datetime.fromisoformat(handover_date_str.replace('Z', '+00:00')) if handover_date_str else datetime.now(timezone.utc)
-        except Exception:
-            handover = datetime.now(timezone.utc)
-        
-        schedule = []
-        for eq in equipment_list:
-            warranty_years = float(eq.get("warranty_years", 1))
-            warranty_end = (handover + timedelta(days=int(warranty_years * 365))).isoformat()
-            maintenance_tasks = self._generate_maintenance_tasks(eq, handover)
-            schedule.append({
-                "equipment": eq.get("name", "Unknown"),
-                "type": eq.get("type", "general"),
-                "manufacturer": eq.get("manufacturer"),
-                "warranty_period_years": warranty_years,
-                "warranty_start": handover.isoformat(),
-                "warranty_end": warranty_end,
-                "maintenance_tasks": maintenance_tasks
+    def _extract_specs_advanced(self, text: str) -> List[Dict]:
+        specs = []
+        grade_pattern = r'\b(C\d{2,3}|M\d{2,3}|S\d{2,3}|Grade\s+\d+)\b'
+        for match in re.finditer(grade_pattern, text):
+            specs.append({
+                "type": "grade",
+                "value": match.group(1),
+                "context": text[max(0, match.start()-30):match.end()+30]
             })
+        return specs
+    
+    def _extract_title_block(self, sheet_data: Dict) -> Dict:
+        return {}
+    
+    def _extract_scale(self, text: str) -> Optional[str]:
+        scale_match = re.search(r'\b\d+\s*:\s*\d+\b', text)
+        return scale_match.group(0) if scale_match else None
+    
+    def _detect_disciplines(self, text: str) -> List[str]:
+        disciplines = []
+        disc_patterns = {
+            "architectural": ["plan", "elevation", "section", "detail"],
+            "structural": ["rebar", "rc", "concrete", "steel", "beam", "column", "slab"],
+            "mep": ["electrical", "plumbing", "hvac", "mechanical", "fire", "lighting"],
+            "civil": ["grading", "drainage", "utility", "road", "pavement"]
+        }
+        text_lower = text.lower()
+        for disc, keywords in disc_patterns.items():
+            if any(kw in text_lower for kw in keywords):
+                disciplines.append(disc)
+        return disciplines
+    
+    def _calculate_quantities(self, measurements: List[Dict]) -> Dict:
+        total_area = sum(m.get("value", 0) for m in measurements if m.get("type") == "dimension")
+        counts = {m.get("item", "unknown"): m.get("value", 0) for m in measurements if m.get("type") == "count"}
+        
+        concrete_volume = total_area * 0.15
+        steel_weight = concrete_volume * 120
+        rebar_length = concrete_volume * 50
         
         return {
-            "status": "success",
-            "action": "warranty_maintenance",
-            "handover_date": handover.isoformat(),
-            "equipment_count": len(equipment_list),
-            "schedule": schedule,
-            "upcoming_tasks": [s for s in schedule for t in s["maintenance_tasks"] if t.get("due_date")][:10]
+            "floor_area_m2": round(total_area, 2),
+            "concrete_volume_m3": round(concrete_volume, 2),
+            "steel_weight_kg": round(steel_weight, 2),
+            "rebar_length_m": round(rebar_length, 2),
+            "item_counts": counts
         }
     
-    def _generate_maintenance_tasks(self, equipment: Dict, handover: datetime) -> List[Dict]:
-        tasks = []
-        eq_type = equipment.get("type", "").lower()
-        if "hvac" in eq_type or "air" in eq_type:
-            tasks.append({"task": "Filter replacement", "frequency": "Quarterly", "due_date": (handover + timedelta(days=90)).isoformat()})
-            tasks.append({"task": "Coil cleaning", "frequency": "Annually", "due_date": (handover + timedelta(days=365)).isoformat()})
-        elif "elevator" in eq_type:
-            tasks.append({"task": "Safety inspection", "frequency": "Monthly", "due_date": (handover + timedelta(days=30)).isoformat()})
-        elif "fire" in eq_type:
-            tasks.append({"task": "Sprinkler flow test", "frequency": "Annually", "due_date": (handover + timedelta(days=365)).isoformat()})
-            tasks.append({"task": "Alarm functional test", "frequency": "Semi-annually", "due_date": (handover + timedelta(days=180)).isoformat()})
-        else:
-            tasks.append({"task": "General inspection", "frequency": "Annually", "due_date": (handover + timedelta(days=365)).isoformat()})
-        return tasks
-
-    # RISK REGISTER AUTO-POPULATE
-    async def risk_register_auto_populate(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        documents = data.get("documents") or p.get("documents", [])
-        schedule_file = data.get("schedule_file") or p.get("schedule_file")
-        existing_risks = data.get("existing_risks") or p.get("existing_risks", [])
+    def _estimate_costs(self, quantities: Dict) -> Dict:
+        concrete_cost = quantities.get("concrete_volume_m3", 0) * 150
+        steel_cost = quantities.get("steel_weight_kg", 0) * 2.5
+        rebar_cost = quantities.get("rebar_length_m", 0) * 1.8
         
-        detected_risks = list(existing_risks)
-        risk_id_counter = len(existing_risks) + 1
-        
-        for doc_path in documents:
-            doc_risks = await self._extract_risks_from_document(doc_path)
-            for risk in doc_risks:
-                risk["id"] = f"RISK-{risk_id_counter:03d}"
-                detected_risks.append(risk)
-                risk_id_counter += 1
-        
-        if schedule_file:
-            schedule = self._parse_xer_file(schedule_file)
-            schedule_risks = self._analyze_schedule_risks(self._calculate_critical_path(schedule))
-            for sr in schedule_risks:
-                sr["id"] = f"RISK-{risk_id_counter:03d}"
-                detected_risks.append(sr)
-                risk_id_counter += 1
-        
-        financial_risks = [r for r in detected_risks if r.get("category") == "cost"]
-        schedule_risks = [r for r in detected_risks if r.get("category") == "schedule"]
-        safety_risks = [r for r in detected_risks if r.get("category") == "safety"]
-        high_risks = [r for r in detected_risks if r.get("impact") == "high"]
+        subtotal = concrete_cost + steel_cost + rebar_cost
         
         return {
-            "status": "success",
-            "action": "risk_register_populated",
-            "summary": {
-                "total_risks": len(detected_risks),
-                "new_risks_added": len(detected_risks) - len(existing_risks),
-                "high_impact_risks": len(high_risks),
-                "by_category": {
-                    "financial": len(financial_risks),
-                    "schedule": len(schedule_risks),
-                    "safety": len(safety_risks),
-                    "quality": len([r for r in detected_risks if r.get("category") == "quality"]),
-                    "contractual": len([r for r in detected_risks if r.get("category") == "contractual"])
-                }
-            },
-            "risk_register": detected_risks,
-            "high_priority_risks": high_risks[:10],
-            "top_5_risks": sorted(detected_risks, key=lambda x: ({"high": 3, "medium": 2, "low": 1}.get(x.get("impact"), 0), {"high": 3, "medium": 2, "low": 1}.get(x.get("probability"), 0)), reverse=True)[:5],
-            "mitigation_summary": self._summarize_mitigations(detected_risks)
+            "concrete_cost": round(concrete_cost, 2),
+            "steel_cost": round(steel_cost, 2),
+            "rebar_cost": round(rebar_cost, 2),
+            "subtotal": round(subtotal, 2),
+            "total_with_overhead": round(subtotal * 1.25, 2)
         }
     
-    async def _extract_risks_from_document(self, file_path: str) -> List[Dict]:
-        ext = Path(file_path).suffix.lower()
-        if ext == '.pdf':
-            try:
-                import fitz
-                doc = fitz.open(file_path)
-                text = ""
-                for page in doc:
-                    text += page.get_text()
-                doc.close()
-            except Exception:
-                text = ""
-        else:
-            text = ""
+    def _estimate_carbon(self, quantities: Dict) -> Dict:
+        concrete_carbon = quantities.get("concrete_volume_m3", 0) * 250
+        steel_carbon = quantities.get("steel_weight_kg", 0) * 2.3
         
+        return {
+            "concrete_co2_kg": round(concrete_carbon, 2),
+            "steel_co2_kg": round(steel_carbon, 2),
+            "total_embodied_carbon_kg": round(concrete_carbon + steel_carbon, 2)
+        }
+    
+    def _calculate_confidence(self, result: Dict) -> Dict:
+        return {
+            "overall": 0.85,
+            "text_extraction": 0.90,
+            "measurement_detection": 0.80,
+            "quantity_calculation": 0.75
+        }
+    
+    async def _detect_risks_from_drawing(self, result: Dict) -> List[Dict]:
         risks = []
-        risk_patterns = {
-            "delay": (r'(?:delay|risk of delay|late|behind schedule)', "schedule", "medium"),
-            "cost": (r'(?:cost overrun|budget|risk of extra cost|additional cost)', "cost", "medium"),
-            "safety": (r'(?:safety risk|hazard|accident risk)', "safety", "high"),
-            "quality": (r'(?:quality risk|defect|non-conformance)', "quality", "medium"),
-            "contractual": (r'(?:breach|dispute|claim|liquidated damages)', "contractual", "high"),
-        }
-        for key, (pattern, category, default_impact) in risk_patterns.items():
-            for match in re.finditer(pattern, text, re.IGNORECASE):
-                context = text[max(0, match.start()-100):match.end()+100]
-                risks.append({
-                    "category": category,
-                    "description": f"Detected {category} risk: {context[:80]}...",
-                    "probability": "medium",
-                    "impact": default_impact,
-                    "source": Path(file_path).name,
-                    "mitigation": "Review and develop mitigation plan"
-                })
-        return risks
-    
-    def _summarize_mitigations(self, risks: List[Dict]) -> Dict:
-        by_category = {}
-        for r in risks:
-            cat = r.get("category", "general")
-            by_category.setdefault(cat, []).append(r.get("mitigation", "Review"))
-        return {cat: list(set(mits)) for cat, mits in by_category.items()}
-
-    # CONTRACT ANALYSIS
-    async def process_contract(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        file_path = data.get("file_path") or p.get("file_path")
-        analysis_type = p.get("type", "full")
         
-        if not file_path:
-            return {"status": "error", "error": "No contract file provided"}
-        
-        try:
-            import fitz
-            doc = fitz.open(file_path)
-            text = ""
-            for page in doc:
-                text += page.get_text()
-            doc.close()
-        except Exception as e:
-            return {"status": "error", "error": f"Could not read contract: {str(e)}"}
-        
-        clauses = self._extract_contract_clauses(text)
-        risks = self._identify_contract_risks(text)
-        financial_terms = self._extract_financial_terms(text)
-        
-        return {
-            "status": "success",
-            "action": "contract_analysis",
-            "file_name": Path(file_path).name,
-            "contract_summary": {
-                "total_pages": len(doc),
-                "clauses_identified": len(clauses),
-                "high_risk_clauses": len([c for c in clauses if c.get("risk") == "high"])
-            },
-            "clauses": clauses,
-            "financial_terms": financial_terms,
-            "risks": risks,
-            "recommendations": self._generate_contract_recommendations(risks)
-        }
-    
-    def _extract_contract_clauses(self, text: str) -> List[Dict]:
-        clauses = []
-        clause_pattern = re.compile(r'(?:Clause|Article)\s*(\d+[\.\d]*)\s*[:\-]?\s*([^\n]+)', re.IGNORECASE)
-        for m in clause_pattern.finditer(text):
-            clauses.append({"number": m.group(1), "title": m.group(2).strip()})
-        return clauses
-    
-    def _identify_contract_risks(self, text: str) -> List[Dict]:
-        risks = []
-        patterns = {
-            "unlimited_liability": (r'unlimited liability|no cap on liability', "high"),
-            "no_eot": (r'no extension of time|time is of the essence', "high"),
-            "pay_when_paid": (r'pay when paid', "medium"),
-            "performance_bond": (r'performance bond', "low"),
-        }
-        for name, (pattern, risk) in patterns.items():
-            if re.search(pattern, text, re.IGNORECASE):
-                risks.append({"type": name, "risk_level": risk})
-        return risks
-    
-    def _extract_financial_terms(self, text: str) -> Dict:
-        return {
-            "contract_sum": self._extract_monetary_value(text, r'(?:contract sum|total contract price)\s*[:\-]?\s*([\d,\.]+)'),
-            "liquidated_damages": self._extract_monetary_value(text, r'(?:liquidated damages|LD)\s*[:\-]?\s*([\d,\.]+)')
-        }
-    
-    def _extract_monetary_value(self, text: str, pattern: str) -> Optional[float]:
-        m = re.search(pattern, text, re.IGNORECASE)
-        if m:
-            try:
-                return float(m.group(1).replace(',', ''))
-            except ValueError:
-                return None
-        return None
-    
-    def _generate_contract_recommendations(self, risks: List[Dict]) -> List[str]:
-        recs = []
-        if any(r.get("type") == "unlimited_liability" for r in risks):
-            recs.append("Negotiate liability cap")
-        if any(r.get("type") == "no_eot" for r in risks):
-            recs.append("Ensure extension of time provisions are fair")
-        return recs
-
-    # EXTRACT QUANTITIES
-    async def extract_quantities(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        file_path = data.get("file_path") or p.get("file_path")
-        scope = p.get("scope", "all")
-        
-        if not file_path:
-            return {"status": "error", "error": "No file path provided"}
-        
-        ext = Path(file_path).suffix.lower()
-        if ext not in ['.pdf', '.jpg', '.jpeg', '.png', '.tif', '.tiff', '.bmp', '.gif']:
-            return {"status": "error", "error": f"Unsupported file type: {ext}"}
-        
-        extracted = await self.process_document(file_path, {"scope": scope})
-        if extracted.get("status") == "error":
-            return extracted
-        
-        measurements = extracted.get("measurements", [])
-        specs = extracted.get("specifications", [])
-        materials = self._extract_materials_from_text(extracted.get("full_text", ""))
-        
-        quantities = self._aggregate_quantities(measurements, specs)
-        carbon = await self.carbon_footprint_calculator({}, {"quantities": quantities})
-        
-        return {
-            "status": "success",
-            "action": "quantity_extraction",
-            "file_name": extracted.get("file_name"),
-            "summary": extracted.get("summary"),
-            "quantities": quantities,
-            "materials_identified": materials,
-            "carbon_footprint": carbon.get("summary") if carbon.get("status") == "success" else None,
-            "measurements": measurements,
-            "specifications": specs
-        }
-    
-    def _aggregate_quantities(self, measurements: List[Dict], specs: List[Dict]) -> Dict:
-        result = {}
-        for m in measurements:
-            unit = m.get("unit", "unknown")
-            value = m.get("value", 0)
-            result.setdefault(unit, 0)
-            result[unit] += value
-        return result
-    
-    def _extract_materials_from_text(self, text: str) -> Dict[str, str]:
-        materials = {}
-        material_keywords = ["concrete", "steel", "timber", "brick", "glass", "insulation", "aluminum", "gypsum"]
-        for kw in material_keywords:
-            for match in re.finditer(rf'\b{kw}\b[^.]*', text, re.IGNORECASE):
-                materials[kw] = match.group(0).strip()
-        return materials
-
-    # COST ESTIMATION
-    async def estimate_costs(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        quantities = data.get("quantities") or p.get("quantities", {})
-        rates = data.get("unit_rates") or p.get("unit_rates")
-        location = p.get("location", "US")
-        project_type = p.get("project_type", "building")
-        quality_level = p.get("quality", "standard")
-        
-        if not quantities:
-            return {"status": "error", "error": "No quantities provided"}
-        
-        if not rates:
-            rates = self._get_default_unit_rates(location, project_type, quality_level)
-        
-        line_items = []
-        total_cost = 0
-        for item, qty in quantities.items():
-            rate = rates.get(item, rates.get("default", 100))
-            cost = float(qty) * float(rate)
-            total_cost += cost
-            line_items.append({
-                "item": item,
-                "quantity": float(qty),
-                "unit_rate": float(rate),
-                "cost": round(cost, 2)
+        if not result.get("measurements"):
+            risks.append({
+                "type": "data_quality",
+                "description": "No measurements detected - manual verification required",
+                "severity": "medium",
+                "mitigation": "Use quantity surveyor to verify BOQ"
             })
         
-        contingency = total_cost * 0.10
-        overhead = total_cost * 0.15
-        
-        return {
-            "status": "success",
-            "action": "cost_estimation",
-            "line_items": line_items,
-            "summary": {
-                "subtotal": round(total_cost, 2),
-                "contingency": round(contingency, 2),
-                "overhead": round(overhead, 2),
-                "total": round(total_cost + contingency + overhead, 2)
-            }
-        }
-    
-    def _get_default_unit_rates(self, location: str, project_type: str, quality: str) -> Dict[str, float]:
-        base = {
-            "concrete_m3": 180.0,
-            "steel_ton": 1200.0,
-            "rebar_ton": 950.0,
-            "timber_m3": 450.0,
-            "glass_m2": 120.0,
-            "insulation_m2": 35.0,
-            "default": 100.0
-        }
-        return base
-
-    # PROGRESS TRACKER
-    async def progress_tracker(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        activities = data.get("activities") or p.get("activities", [])
-        photos = data.get("photos") or p.get("photos", [])
-        
-        if not activities:
-            return {"status": "error", "error": "No activities provided"}
-        
-        total_activities = len(activities)
-        completed = sum(1 for a in activities if a.get("status") == "completed")
-        in_progress = sum(1 for a in activities if a.get("status") == "in_progress")
-        not_started = total_activities - completed - in_progress
-        overall_percent = (completed / total_activities * 100) if total_activities else 0
-        
-        photo_analysis = []
-        for photo in photos:
-            image_block = self.get_dep("image")
-            if image_block:
-                try:
-                    result = await image_block.execute({"image_path": photo}, {"prompt": "Assess construction progress visible in this image"})
-                    photo_analysis.append({"photo": Path(photo).name, "assessment": result.get("result", {}).get("description", "")})
-                except Exception:
-                    photo_analysis.append({"photo": Path(photo).name, "assessment": "Analysis failed"})
-        
-        return {
-            "status": "success",
-            "action": "progress_tracking",
-            "summary": {
-                "total_activities": total_activities,
-                "completed": completed,
-                "in_progress": in_progress,
-                "not_started": not_started,
-                "overall_percent_complete": round(overall_percent, 1)
-            },
-            "activities": activities,
-            "photo_analysis": photo_analysis,
-            "critical_path_status": self._assess_critical_path(activities),
-            "recommendations": self._generate_progress_recommendations(activities, overall_percent)
-        }
-    
-    def _assess_critical_path(self, activities: List[Dict]) -> str:
-        critical = [a for a in activities if a.get("critical")]
-        if not critical:
-            return "no_critical_path_defined"
-        delayed = [a for a in critical if a.get("status") != "completed" and a.get("percent_complete", 0) < 50]
-        return "on_track" if not delayed else "at_risk"
-    
-    def _generate_progress_recommendations(self, activities: List[Dict], overall_percent: float) -> List[str]:
-        recs = []
-        delayed = [a for a in activities if a.get("status") != "completed" and a.get("planned_percent", 100) > a.get("percent_complete", 0) + 20]
-        if delayed:
-            recs.append(f"{len(delayed)} activities are behind schedule - consider acceleration measures")
-        if overall_percent < 30:
-            recs.append("Project is in early stages - focus on critical path activities")
-        return recs
-
-    # BIM ANALYSIS
-    async def bim_analysis(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        ifc_file = data.get("ifc_file") or p.get("ifc_file")
-        analysis_type = p.get("type", "basic")
-        
-        if not ifc_file:
-            return {"status": "error", "error": "No IFC file provided"}
-        
-        return {
-            "status": "success",
-            "action": "bim_analysis",
-            "file_name": Path(ifc_file).name,
-            "analysis_type": analysis_type,
-            "result": {
-                "message": "IFC analysis placeholder - integrate with ifcopenshell for full parsing"
-            }
-        }
-
-    # HEALTH CHECK
-    async def health_check(self, input_data: Any, params: Dict) -> Dict:
-        return {
-            "status": "success",
-            "action": "health_check",
-            "container": self.__class__.__name__,
-            "version": "3.3.1",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "available_dependencies": list(self.dependencies.keys()),
-            "supported_actions": [
-                "process_document", "qa_qc_inspection", "extract_quantities",
-                "estimate_costs", "progress_tracker", "bim_analysis",
-                "parse_primavera_schedule", "process_contract", "process_specification_full",
-                "change_order_impact", "rfi_generator", "safety_compliance_audit",
-                "carbon_footprint_calculator", "procurement_list_generator",
-                "as_built_deviation_report", "warranty_maintenance_schedule",
-                "risk_register_auto_populate", "submittal_log_generator",
-                "payment_certificate", "bim_clash_detection", "daily_site_report",
-                "value_engineering", "commissioning_checklist", "resource_histogram",
-                "claims_builder", "tender_bid_analysis", "variation_order_manager",
-                "forensic_delay_analysis", "cash_flow_forecast", "procurement_optimizer",
-                "esg_sustainability_report", "om_manual_generator", "digital_twin_sync",
-                "intelligent_workflow", "health_check"
-            ]
-        }
-
-
-    # SUBMITTAL LOG GENERATOR
-    async def submittal_log_generator(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        spec_file = data.get("spec_file") or p.get("spec_file")
-        existing_log = data.get("existing_log") or p.get("existing_log", [])
-        project_phase = p.get("phase", "pre_construction")
-        
-        if not spec_file and not existing_log:
-            return {"status": "error", "error": "Specification file or existing log required"}
-        
-        if spec_file:
-            spec_data = await self.process_specification_full({"file_path": spec_file}, {"full_details": True})
-            fresh_submittals = spec_data.get("submittals", {}).get("list", [])
-        else:
-            fresh_submittals = []
-        
-        merged_log = self._merge_submittal_logs(existing_log, fresh_submittals)
-        
-        for item in merged_log:
-            item["status"] = item.get("status", "pending")
-            item["required_date"] = self._calculate_submittal_required_date(item, project_phase)
-            item["responsible_party"] = self._assign_submittal_responsibility(item)
-            item["review_time_days"] = self._get_review_time(item.get("type", "product_data"))
-            item["critical_path"] = item.get("critical", False)
-        
-        by_status = self._group_by_status(merged_log)
-        by_discipline = self._group_by_discipline(merged_log)
-        overdue = [s for s in merged_log if s.get("status") == "overdue" or 
-                   (s.get("required_date") and s.get("required_date") < datetime.now(timezone.utc).isoformat() and 
-                    s.get("status") not in ["approved", "rejected"])]
-        matrix = self._generate_submittal_matrix(merged_log)
-        
-        return {
-            "status": "success",
-            "action": "submittal_log_generated",
-            "summary": {
-                "total_submittals": len(merged_log),
-                "pending": len(by_status.get("pending", [])),
-                "in_review": len(by_status.get("in_review", [])),
-                "approved": len(by_status.get("approved", [])),
-                "rejected": len(by_status.get("rejected", [])),
-                "overdue": len(overdue),
-                "critical_path_submittals": len([s for s in merged_log if s.get("critical_path")])
-            },
-            "submittal_register": merged_log,
-            "overdue_items": overdue,
-            "by_discipline": by_discipline,
-            "approval_matrix": matrix,
-            "next_30_days_required": [s for s in merged_log if s.get("required_date") and 
-                                      self._days_from_now(s["required_date"]) <= 30 and 
-                                      s.get("status") == "pending"],
-            "bottlenecks": self._identify_submittal_bottlenecks(merged_log),
-            "recommended_actions": self._generate_submittal_actions(overdue, by_status)
-        }
-    
-    def _merge_submittal_logs(self, existing: list, fresh: list) -> list:
-        merged = {s.get("description", s.get("type", "unknown")): s for s in existing}
-        for new_sub in fresh:
-            key = new_sub.get("description", new_sub.get("type", "unknown"))
-            if key in merged:
-                merged[key].update({
-                    "description": new_sub.get("description"),
-                    "division": new_sub.get("division"),
-                    "latest_extraction": datetime.now(timezone.utc).isoformat()
-                })
-            else:
-                merged[key] = {**new_sub, "date_added": datetime.now(timezone.utc).isoformat(), "revision": "0"}
-        return list(merged.values())
-    
-    def _calculate_submittal_required_date(self, submittal: Dict, phase: str) -> Optional[str]:
-        lead_times = {
-            "shop_drawing": 42,
-            "product_data": 14,
-            "sample": 21,
-            "mockup": 56,
-            "calculation": 28,
-            "certificate": 7,
-            "warranty": 7,
-            "o_and_m": 14
-        }
-        sub_type = submittal.get("type", "product_data")
-        days_needed = lead_times.get(sub_type, 14)
-        if phase == "pre_construction":
-            install_date = datetime.now(timezone.utc) + timedelta(days=56)
-        else:
-            install_date = datetime.now(timezone.utc) + timedelta(days=28)
-        required_by = install_date - timedelta(days=days_needed)
-        return required_by.isoformat()
-    
-    def _assign_submittal_responsibility(self, submittal: Dict) -> str:
-        division = submittal.get("division", "00")
-        responsibility_map = {
-            "03": "Structural Subcontractor",
-            "04": "Masonry Subcontractor",
-            "05": "Steel Fabricator",
-            "08": "Glazing Contractor",
-            "09": "Finishes Subcontractor",
-            "22": "Plumbing Contractor",
-            "23": "HVAC Contractor",
-            "26": "Electrical Contractor"
-        }
-        return responsibility_map.get(division, "General Contractor")
-    
-    def _get_review_time(self, sub_type: str) -> int:
-        return {"shop_drawing": 14, "product_data": 7, "sample": 7, "certificate": 3}.get(sub_type, 7)
-    
-    def _group_by_status(self, items: list) -> Dict:
-        result = {}
-        for item in items:
-            result.setdefault(item.get("status", "pending"), []).append(item)
-        return result
-    
-    def _group_by_discipline(self, items: list) -> Dict:
-        result = {}
-        for item in items:
-            result.setdefault(item.get("division", "unknown"), []).append(item)
-        return result
-    
-    def _generate_submittal_matrix(self, items: list) -> list:
-        return [{"description": i.get("description"), "status": i.get("status"), "responsible": i.get("responsible_party")} for i in items]
-    
-    def _identify_submittal_bottlenecks(self, items: list) -> list:
-        pending = [i for i in items if i.get("status") == "pending"]
-        return [{"item": p.get("description"), "reason": "long lead time"} for p in pending if self._get_review_time(p.get("type", "")) > 20]
-    
-    def _generate_submittal_actions(self, overdue: list, by_status: Dict) -> list:
-        actions = []
-        if overdue:
-            actions.append(f"Expedite {len(overdue)} overdue submittals")
-        if len(by_status.get("pending", [])) > 10:
-            actions.append("High volume of pending submittals - consider dedicated coordinator")
-        return actions
-    
-    def _days_from_now(self, iso_date: str) -> int:
-        try:
-            d = datetime.fromisoformat(iso_date.replace('Z', '+00:00'))
-            return max(0, (d - datetime.now(timezone.utc)).days)
-        except Exception:
-            return 999
-
-    # PAYMENT CERTIFICATE
-    async def payment_certificate(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        schedule_file = data.get("schedule_file") or p.get("schedule_file")
-        boq = data.get("boq") or p.get("boq", [])
-        previous_payments = data.get("previous_payments") or p.get("previous_payments", [])
-        contract_value = data.get("contract_value") or p.get("contract_value")
-        reporting_date = p.get("reporting_date", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
-        month_number = p.get("month", 1)
-        retention_rate = p.get("retention", 0.10)
-        
-        if not schedule_file and not boq:
-            return {"status": "error", "error": "Schedule or BOQ required for payment calculation"}
-        
-        if schedule_file:
-            schedule_data = self._parse_xer_file(schedule_file)
-            progress_by_activity = self._calculate_activity_progress(schedule_data, reporting_date)
-        else:
-            progress_by_activity = {}
-        
-        payment_items = []
-        total_earned = 0
-        total_previous = sum(p.get("amount", 0) for p in previous_payments)
-        
-        for item in boq:
-            item_id = item.get("id", "unknown")
-            contract_rate = item.get("unit_cost", 0)
-            total_qty = item.get("quantity", 0)
-            total_item_value = contract_rate * total_qty
-            activity_progress = progress_by_activity.get(item.get("activity_id"), {"percent_complete": item.get("manual_percent", 0)})
-            percent_complete = activity_progress.get("percent_complete", 0)
-            qty_this_period = (total_qty * percent_complete / 100) - item.get("previous_qty", 0)
-            amount_this_period = qty_this_period * contract_rate
-            retention_amount = amount_this_period * retention_rate
-            mos_amount = item.get("material_on_site", 0) if percent_complete < 100 else 0
-            payment_items.append({
-                "boq_item": item_id,
-                "description": item.get("description"),
-                "unit": item.get("unit"),
-                "contract_rate": contract_rate,
-                "total_qty": total_qty,
-                "total_value": total_item_value,
-                "percent_complete": percent_complete,
-                "qty_this_period": qty_this_period,
-                "amount_this_period": amount_this_period,
-                "retention_deduction": retention_amount,
-                "net_this_period": amount_this_period - retention_amount,
-                "material_on_site": mos_amount,
-                "cumulative_amount": (total_item_value * percent_complete / 100),
-                "remaining_value": total_item_value * (1 - percent_complete / 100)
+        if result.get("confidence", {}).get("overall", 1.0) < 0.7:
+            risks.append({
+                "type": "confidence",
+                "description": "Low extraction confidence",
+                "severity": "medium",
+                "mitigation": "Review all quantities manually"
             })
-            total_earned += (amount_this_period - retention_amount + mos_amount)
-        
-        total_contract_value = contract_value or sum(i["total_value"] for i in payment_items)
-        cumulative_earned = sum(i["cumulative_amount"] for i in payment_items)
-        total_retention_held = sum(i["retention_deduction"] for i in payment_items)
-        retention_release = sum(i.get("retention_release", 0) for i in payment_items if i["percent_complete"] >= 100)
-        net_payment = total_earned + retention_release
-        
-        return {
-            "status": "success",
-            "action": "payment_certificate_generated",
-            "certificate_type": "IPC",
-            "month_number": month_number,
-            "reporting_date": reporting_date,
-            "contract_summary": {
-                "original_contract_value": total_contract_value,
-                "approved_changes": sum(p.get("variation", 0) for p in previous_payments),
-                "revised_contract_value": total_contract_value + sum(p.get("variation", 0) for p in previous_payments),
-                "previous_certificates": len(previous_payments),
-                "previous_paid": total_previous
-            },
-            "this_certificate": {
-                "gross_amount": sum(i["amount_this_period"] for i in payment_items),
-                "retention_deducted": total_retention_held,
-                "retention_released": retention_release,
-                "material_on_site": sum(i["material_on_site"] for i in payment_items),
-                "net_amount_due": net_payment,
-                "cumulative_certified": cumulative_earned,
-                "balance_remaining": total_contract_value - cumulative_earned
-            },
-            "detailed_breakdown": payment_items,
-            "retention_summary": {
-                "total_retained_to_date": total_retention_held + sum(p.get("retention", 0) for p in previous_payments),
-                "retention_released_this_month": retention_release,
-                "retention_outstanding": total_retention_held
-            },
-            "approval_status": "draft",
-            "supporting_documents_required": [
-                "Schedule update showing % complete",
-                "Quality inspection records",
-                "Material delivery tickets"
-            ]
-        }
-    
-    def _calculate_activity_progress(self, schedule_data: Dict, reporting_date: str) -> Dict:
-        activities = schedule_data.get("activities", [])
-        progress = {}
-        for act in activities:
-            act_id = act.get("id")
-            percent = act.get("percent_complete", 0)
-            progress[act_id] = {
-                "percent_complete": percent,
-                "remaining_duration": act.get("remaining_duration", 0),
-                "actual_start": act.get("actual_start"),
-                "actual_finish": act.get("actual_finish")
-            }
-        return progress
-
-    # BIM CLASH DETECTION
-    async def bim_clash_detection(self, input_data: Any, params: Dict) -> Dict:
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        ifc_file = data.get("ifc_file") or p.get("ifc_file")
-        discipline_models = data.get("discipline_models") or p.get("discipline_models", [])
-        tolerance = p.get("tolerance", 0.01)
-        clash_types = p.get("clash_types", ["hard", "soft", "clearance"])
-        
-        if not ifc_file and not discipline_models:
-            return {"status": "error", "error": "IFC file or discipline models required"}
-        
-        model_data = await self._parse_ifc_geometries(ifc_file or discipline_models[0])
-        clashes = []
-        
-        if len(discipline_models) >= 2:
-            for i, model_a in enumerate(discipline_models):
-                for model_b in discipline_models[i+1:]:
-                    model_clashes = self._detect_model_clashes(model_a, model_b, tolerance, clash_types)
-                    clashes.extend(model_clashes)
-        else:
-            clashes = self._detect_internal_clashes(model_data, tolerance)
         
         by_severity = self._categorize_clash_severity(clashes)
         by_discipline = self._group_clashes_by_discipline(clashes)
