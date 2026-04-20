@@ -616,7 +616,7 @@ async function selectDriveFile(driveId, fileName) {
                     </div>
                     <div class="outcome-item">
                         <div class="outcome-label">Processing Chain</div>
-                        <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → chat' : kind === 'docx' || kind === 'xlsx' ? 'doc → chat' : 'ocr → chat'}</div>
+                        <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf_v2 → construction_v2 → chat' : kind === 'docx' || kind === 'xlsx' ? 'pdf_v2 → construction_v2 → chat' : 'ocr_v2 → construction_v2 → chat'}</div>
                     </div>
                 `);
                 
@@ -624,14 +624,19 @@ async function selectDriveFile(driveId, fileName) {
                 form.append('file', fileObj);
                 const uploadData = await client.upload(form);
                 const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
-                const extractBlock = kind === 'pdf' ? 'pdf' : kind === 'docx' || kind === 'xlsx' ? 'pdf' : 'ocr';
+                const extractBlock = kind === 'pdf' ? 'pdf_v2' : kind === 'docx' || kind === 'xlsx' ? 'pdf_v2' : 'ocr_v2';
                 
-                // Build chain steps with proper input/output typing
+                // Build chain steps with v2 blocks
                 const chainSteps = [
                     { 
                         block: extractBlock, 
                         params: { file_path: filePath },
                         label: extractBlock 
+                    },
+                    { 
+                        block: 'construction_v2', 
+                        params: { doc_type: 'auto' },
+                        label: 'construction_v2' 
                     },
                     { 
                         block: 'chat', 
@@ -798,20 +803,25 @@ async function handleFile(input) {
                 </div>
                 <div class="outcome-item">
                     <div class="outcome-label">Processing Chain</div>
-                    <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → chat' : kind === 'docx' || kind === 'xlsx' ? 'doc → chat' : 'ocr → chat'}</div>
+                    <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf_v2 → construction_v2 → chat' : kind === 'docx' || kind === 'xlsx' ? 'pdf_v2 → construction_v2 → chat' : 'ocr_v2 → construction_v2 → chat'}</div>
                 </div>
             `);
             
-            const extractBlock = kind === 'pdf' ? 'pdf' : kind === 'docx' || kind === 'xlsx' ? 'pdf' : 'ocr';
-            chainLabel = `${extractBlock} → chat`;
+            const extractBlock = kind === 'pdf' ? 'pdf_v2' : kind === 'docx' || kind === 'xlsx' ? 'pdf_v2' : 'ocr_v2';
+            chainLabel = `${extractBlock.replace('_v2', '')} → construction_v2 → chat`;
             const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
             
-            // Build typed chain steps
+            // Build typed chain steps with v2 blocks
             const chainSteps = [
                 { 
                     block: extractBlock, 
                     params: { file_path: filePath },
                     label: extractBlock 
+                },
+                { 
+                    block: 'construction_v2', 
+                    params: { doc_type: 'auto' },
+                    label: 'construction_v2' 
                 },
                 { 
                     block: 'chat', 
