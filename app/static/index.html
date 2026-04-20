@@ -625,16 +625,24 @@ function clearAllDrives() {
     addMessage('All drives disconnected.', 'system');
 }
 
-// Determine chain steps based on file type
+// Determine chain steps based on file type (v2 blocks)
 function buildChainSteps(fileName) {
     const ext = (fileName.split('.').pop() || '').toLowerCase();
-    if (ext === 'pdf') {
-        return [{ block: 'pdf', params: {} }, { block: 'chat', params: {} }];
+    if (ext === 'pdf' || ext === 'docx' || ext === 'xlsx') {
+        return [
+            { block: 'pdf_v2', params: {}, label: 'Extract' },
+            { block: 'construction_v2', params: {}, label: 'Analyze' },
+            { block: 'chat', params: {}, label: 'Chat' }
+        ];
     }
     if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff'].includes(ext)) {
-        return [{ block: 'ocr', params: {} }, { block: 'chat', params: {} }];
+        return [
+            { block: 'ocr_v2', params: {}, label: 'OCR' },
+            { block: 'construction_v2', params: {}, label: 'Analyze' },
+            { block: 'chat', params: {}, label: 'Chat' }
+        ];
     }
-    return [{ block: 'chat', params: {} }];
+    return [{ block: 'chat', params: {}, label: 'Chat' }];
 }
 
 const TEXT_EXTS = new Set(['txt','md','csv','json','xml','html','htm','js','ts','py','java','c','cpp','h','css','yaml','yml','ini','log','sh','sql','tsx','jsx']);
@@ -648,25 +656,54 @@ async function runChainAnalysis(fileName, chainInput, steps, drive) {
     document.getElementById('outcomes').innerHTML += `
         <div class="outcome-item" id="file-analysis-result">
             <div class="outcome-label">AI Analysis</div>
-            <div style="color: #888; font-size: 12px;">Analyzing (${steps.map(s=>s.block).join(' → ')})...</div>
+            <div style="color: #888; font-size: 12px;">Analyzing (${steps.map(s=>s.label||s.block).join(' → ')})...</div>
         </div>`;
+    
     try {
-        const analysisData = await apiCall('/v1/chain', {
-            steps,
-            initial_input: chainInput
+        // Use proper runChain with progress and error handling
+        const chainResult = await runChain(fileName, steps, (idx, label, status) => {
+            const el = document.getElementById('file-analysis-result');
+            if (el && status === 'done') {
+                el.innerHTML = `
+                    <div class="outcome-label">AI Analysis</div>
+                    <div style="color: #888; font-size: 12px;">Step ${idx + 1}/${steps.length}: ${label} ✓</div>
+                `;
+            }
         });
-        const output = analysisData.final_output;
+        
+        const output = chainResult.finalOutput;
         let analysisText;
+        
         if (typeof output === 'object' && output?.status === 'error') {
             analysisText = `Error: ${output.error || 'Analysis failed'}`;
         } else {
             analysisText = typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
         }
+        
         const el = document.getElementById('file-analysis-result');
         if (el) {
             el.innerHTML = `
                 <div class="outcome-label">AI Analysis</div>
-                <div style="color: #ccc; font-size: 13px; margin-top: 8px; line-height: 1.5;">
+                <div style="color: #ccc; font-size: 13px; margin-top: 8px; line-height: 1.5;">${escapeHtml(analysisText.substring(0, 500))}${analysisText.length > 500 ? '...' : ''}</div>
+                ${chainResult.typeConversions?.length ? `<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">↻ ${chainResult.typeConversions.length} type conversions</div>` : ''}
+            `;
+        }
+        
+        // Set context for follow-up chat
+        setActiveFileContext(fileName, analysisText, drive?.name || 'upload');
+        
+    } catch (e) {
+        console.error('Chain analysis failed:', e);
+        const el = document.getElementById('file-analysis-result');
+        if (el) {
+            el.innerHTML = `
+                <div class="outcome-label">AI Analysis</div>
+                <div style="color: #ef4444; font-size: 13px; margin-top: 8px;">❌ ${escapeHtml(e.message)}</div>
+            `;
+        }
+        addMessage(`Analysis failed: ${e.message}`, 'error');
+    }
+}
                     ${escapeHtml(analysisText.substring(0, 500))}${analysisText.length > 500 ? '...' : ''}
                 </div>`;
         }
@@ -822,17 +859,24 @@ async function handleFile(input) {
     try {
         const form = new FormData();
         form.append('file', file);
-        const uploadData = await client.upload(form);
+        const uploadData = await apiCall('/v1/upload', form, true);
         const kind = getFileKind(file.name);
         const sizeKb = (file.size / 1024).toFixed(1);
         
-        const uploadData = await apiCall('/v1/upload', form, true);
-
+        // Build chain steps with proper v2 blocks
+        const steps = buildChainSteps(file.name);
+        
+        // For PDF/image files, pass file_path in first step's params
+        if (steps.length > 1 && uploadData.file_path) {
+            steps[0].params = { file_path: uploadData.file_path };
+        }
+        
         setOutcomes(`
             <div class="outcome-item">
                 <div class="outcome-label">File Uploaded</div>
                 <div class="outcome-value" style="font-size: 14px;">${uploadData.filename}</div>
-                <div style="color: #666; font-size: 11px; margin-top: 4px;">${(uploadData.size / 1024).toFixed(1)} KB</div>
+                <div style="color: #666; font-size: 11px; margin-top: 4px;">${sizeKb} KB</div>
+                <div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">🔗 ${steps.map(s => s.label || s.block).join(' → ')}</div>
             </div>
             <div id="file-analysis-result" class="outcome-item">
                 <div class="outcome-label">AI Analysis</div>
@@ -840,46 +884,23 @@ async function handleFile(input) {
             </div>
         `);
 
-        const steps = buildChainSteps(file.name);
-        let chainInput;
-        let fileContent = '';
-
-        if (isTextFile(file.name)) {
-            fileContent = await readFileContent(file);
-            const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
-            setActiveFileContext(file.name, trimmed, 'Upload');
-            chainInput = `Analyze this file and extract key information:\n\nFile: ${file.name}\nSize: ${(file.size / 1024).toFixed(1)} KB\n\nContent:\n${trimmed.substring(0, 3000)}`;
-        } else {
-            // PDF/image: pass the server-side path so pdf/ocr blocks can read it
-            setActiveFileContext(file.name, `[${file.name} — processed via ${steps[0].block}]`, 'Upload');
-            chainInput = uploadData.file_path;
-        }
-
-        const analysisData = await apiCall('/v1/chain', { steps, initial_input: chainInput });
-        const output = analysisData.final_output;
-        let analysisText;
-        if (typeof output === 'object' && output?.status === 'error') {
-            analysisText = `Error: ${output.error || 'Analysis failed'}`;
-        } else {
-            analysisText = typeof output === 'object' ? (output.text || JSON.stringify(output, null, 2)) : String(output);
-        }
-
-        let quantitiesHtml = '';
-        const textForSearch = fileContent || analysisText;
-        if (textForSearch.toLowerCase().includes('concrete') || textForSearch.toLowerCase().includes('steel')) {
-            quantitiesHtml = `
-                <div class="outcome-item">
-                    <div class="outcome-label">Detected Construction Data</div>
-                    <div style="color: #888; font-size: 12px; margin-top: 8px;">
-                        ${extractQuantities(textForSearch)}
-                    </div>
-                </div>
-            `;
-        }
-
+        // Run chain with proper error handling
+        await runChainAnalysis(file.name, null, steps, { name: 'Upload' });
+        
+    } catch (err) {
+        console.error('File upload/analysis error:', err);
+        addMessage(`Error: ${err.message}`, 'error');
         setOutcomes(`
             <div class="outcome-item">
-                <div class="outcome-label">File Uploaded</div>
+                <div class="outcome-label">Upload Failed</div>
+                <div style="color: #ef4444; font-size: 13px;">${escapeHtml(err.message)}</div>
+            </div>
+        `);
+    }
+    
+    document.getElementById('sendBtn').disabled = false;
+    showIndicator(false);
+}
                 <div class="outcome-value" style="font-size: 14px;">${uploadData.filename}</div>
                 <div style="color: #666; font-size: 11px; margin-top: 4px;">${(uploadData.size / 1024).toFixed(1)} KB · ${steps.map(s=>s.block).join(' → ')}</div>
             </div>
