@@ -366,6 +366,10 @@ class OrchestratorBlock(UniversalBlock):
                         compatible = True
                     elif s == "file" and t in ["pdf", "image", "pdfcontent", "imagecontent", "filecontent"]:
                         compatible = True
+                    elif s == "json" and t in ["file", "pdf", "image"]:
+                        # URL/file_path/path dicts are file inputs, not generic JSON
+                        if isinstance(context, dict) and any(k in context for k in ("url", "file_path", "path")):
+                            compatible = True
                 # Special case: file path dicts are valid input for PDF/image/file blocks
                 if not compatible and current_type == DataTransformer.FILE:
                     if step.input_type in ["PDFContent", "ImageContent", "FileContent"]:
