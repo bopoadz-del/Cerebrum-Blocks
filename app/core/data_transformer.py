@@ -615,6 +615,10 @@ def are_compatible(source_type: str, target_type: str) -> bool:
     """Check if two types are compatible for transformation."""
     if source_type == target_type:
         return True
+    # Case-insensitive comparison for basic types (text/Text, pdf/PDF, etc.)
+    if isinstance(source_type, str) and isinstance(target_type, str):
+        if source_type.lower() == target_type.lower():
+            return True
     if source_type == DataTransformer.UNKNOWN or target_type == DataTransformer.UNKNOWN:
         return True
     # TextContent can transform to/from various types
@@ -626,6 +630,9 @@ def are_compatible(source_type: str, target_type: str) -> bool:
     if target_type == "PDFContent" and source_type == DataTransformer.FILE:
         return True
     if target_type == "ImageContent" and source_type == DataTransformer.FILE:
+        return True
+    # PDF can be processed by OCR (many OCR engines handle PDFs)
+    if target_type.lower() == "image" and source_type.lower() == "pdf":
         return True
     # ConstructionAnalysis can transform to TextContent or Text
     if target_type in ["TextContent", DataTransformer.TEXT] and source_type == "ConstructionAnalysis":
