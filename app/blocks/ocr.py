@@ -79,38 +79,38 @@ class OCRBlock(TypedBlock):
         if not page_images:
             return {"status": "error", "text": "", "confidence": 0, "error": "Could not process input file"}
         
-        # Try EasyOCR first, fallback to pytesseract
+        # Try pytesseract first, fallback to PyMuPDF text extraction
         all_texts = []
         all_confs = []
         engine_used = None
         
         try:
-            import easyocr
-            reader = easyocr.Reader(languages, gpu=False)
-            engine_used = "easyocr"
+            import pytesseract
+            from PIL import Image
+            engine_used = "pytesseract"
             
             for page_img_path in page_images:
-                results = reader.readtext(page_img_path)
-                texts = [r[1] for r in results if r[1].strip()]
-                confs = [r[2] for r in results]
-                if texts:
-                    all_texts.extend(texts)
-                    all_confs.extend(confs)
+                img = Image.open(page_img_path)
+                text = pytesseract.image_to_string(img)
+                if text.strip():
+                    all_texts.append(text.strip())
+                    all_confs.append(0.85)
         except ImportError:
-            # Fallback to pytesseract
-            try:
-                import pytesseract
-                from PIL import Image
-                engine_used = "pytesseract"
-                
-                for page_img_path in page_images:
-                    img = Image.open(page_img_path)
-                    text = pytesseract.image_to_string(img)
-                    if text.strip():
-                        all_texts.append(text.strip())
-                        all_confs.append(0.85)  # pytesseract doesn't give per-line confidence easily
-            except ImportError:
-                return {"status": "error", "text": "", "confidence": 0, "error": "No OCR engine installed (easyocr or pytesseract)"}
+            # Fallback: extract text directly from PDF using PyMuPDF
+            # (covers text-based PDFs when tesseract is unavailable)
+            pdf_text = self._extract_pdf_text(image_path)
+            if pdf_text:
+                return {
+                    "status": "success",
+                    "text": pdf_text,
+                    "confidence": 0.95,
+                    "word_count": len(pdf_text.split()),
+                    "engine": "pymupdf_fallback",
+                    "preprocessed": False,
+                    "pages": 1,
+                    "note": "Tesseract not installed; used PyMuPDF text extraction"
+                }
+            return {"status": "error", "text": "", "confidence": 0, "error": "Tesseract not installed and no text layer found in PDF"}
         except Exception as e:
             return {"status": "error", "text": "", "confidence": 0, "error": f"OCR failed: {str(e)}"}
         
@@ -175,6 +175,19 @@ class OCRBlock(TypedBlock):
                 return []
         
         return []
+    
+    def _extract_pdf_text(self, file_path: str) -> str:
+        """Extract text from a PDF using PyMuPDF (fallback when OCR is unavailable)."""
+        try:
+            import fitz
+            doc = fitz.open(file_path)
+            text = ""
+            for page in doc:
+                text += page.get_text()
+            doc.close()
+            return text.strip()
+        except Exception:
+            return ""
     
     def _preprocess_image(self, image_path: str) -> str:
         """Enhance image for better OCR quality"""
