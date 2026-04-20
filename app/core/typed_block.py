@@ -355,6 +355,14 @@ class TypedBlock(UniversalBlock):
         request_id = str(uuid.uuid4())[:12]
         params = params or {}
         
+        # Merge params into input_data when input is null/empty (backward compat)
+        if input_data is None and params:
+            input_data = params
+        elif isinstance(input_data, dict) and isinstance(params, dict):
+            # Merge params into input, with input taking precedence
+            merged = {**params, **input_data}
+            input_data = merged
+        
         # Validate input if schema defined
         if self.input_schema:
             input_validation = self.validate_input(input_data)

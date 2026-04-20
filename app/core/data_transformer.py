@@ -7,6 +7,7 @@ This module transforms block-specific output formats to standard types:
 - Construction returns complex dict → wrap properly
 """
 
+import json
 from typing import Any, Dict, List, Optional, Callable, Union
 from .schema_registry import (
     TextContent,
@@ -38,6 +39,15 @@ class DataTransformer:
     _instance = None
     _transformers: Dict[str, Dict[str, Callable]] = {}
     
+    # Type constants for Orchestrator compatibility
+    UNKNOWN = "Unknown"
+    TEXT = "Text"
+    JSON = "JSON"
+    FILE = "File"
+    PDF = "PDF"
+    IMAGE = "Image"
+    TABLE = "Table"
+    
     def __new__(cls):
         """Singleton pattern."""
         if cls._instance is None:
@@ -49,10 +59,12 @@ class DataTransformer:
         """Register all default transformers."""
         # PDFBlock output → various types
         self.register("pdf", "TextContent", self._pdf_to_text)
+        self.register("pdf_v2", "TextContent", self._pdf_to_text)
         self.register("pdf", "PDFContent", self._pdf_to_pdf_content)
         
         # OCRBlock output → various types
         self.register("ocr", "TextContent", self._ocr_to_text)
+        self.register("ocr_v2", "TextContent", self._ocr_to_text)
         
         # ChatBlock output → various types
         self.register("chat", "TextContent", self._chat_to_text)
@@ -82,6 +94,78 @@ class DataTransformer:
         
         # Code blocks
         self.register("code", "CodeResult", self._code_to_result)
+        
+        # Construction blocks
+        self.register("construction_v2", "TextContent", self._construction_to_text)
+        self.register("construction", "TextContent", self._construction_to_text)
+    
+    # ========================================================================
+    # CONSTRUCTION TRANSFORMERS
+    # ========================================================================
+    
+    def _construction_to_text(self, data: Dict) -> Dict:
+        """Transform ConstructionAnalysis output to TextContent for chat block."""
+        # Handle UniversalBlock wrapped result
+        if "result" in data:
+            data = data["result"]
+        
+        # Extract the most relevant text from construction analysis
+        text_parts = []
+        
+        # Add summary if available
+        if "summary" in data:
+            text_parts.append(f"Summary: {data['summary']}")
+        
+        # Add measurements
+        if "measurements" in data and data["measurements"]:
+            text_parts.append(f"Measurements found: {len(data['measurements'])}")
+            for m in data["measurements"][:10]:
+                if isinstance(m, dict):
+                    text_parts.append(f"  - {m.get('type', 'unknown')}: {m.get('value', 0)} {m.get('unit', '')}")
+        
+        # Add quantities
+        if "quantities" in data and data["quantities"]:
+            text_parts.append(f"Quantities: {json.dumps(data['quantities'], indent=2)[:500]}")
+        
+        # Add specifications
+        if "specifications" in data and data["specifications"]:
+            text_parts.append(f"Specifications found: {len(data['specifications'])}")
+        
+        # Add detected disciplines
+        if "detected_disciplines" in data and data["detected_disciplines"]:
+            text_parts.append(f"Disciplines: {', '.join(data['detected_disciplines'])}")
+        
+        # Add cost estimate
+        if "cost_estimate" in data and data["cost_estimate"]:
+            ce = data["cost_estimate"]
+            text_parts.append(f"Estimated cost: {ce.get('total_with_overhead', 'N/A')}")
+        
+        # Add carbon estimate
+        if "carbon_estimate" in data and data["carbon_estimate"]:
+            ce = data["carbon_estimate"]
+            text_parts.append(f"Embodied carbon: {ce.get('total_embodied_carbon_kg', 'N/A')} kg CO2")
+        
+        # Add raw text if nothing else
+        if not text_parts and "raw_text" in data:
+            text_parts.append(data["raw_text"][:2000])
+        
+        # Add file name info
+        if "file_name" in data:
+            text_parts.insert(0, f"File: {data['file_name']}")
+        
+        combined_text = "\n\n".join(text_parts) if text_parts else "Construction analysis completed."
+        
+        return {
+            "text": combined_text,
+            "source": "construction",
+            "metadata": {
+                "file_name": data.get("file_name", ""),
+                "doc_type": data.get("doc_type", ""),
+                "confidence": data.get("confidence", {}),
+                "total_pages": data.get("total_pages", 0),
+                "original_data": {k: v for k, v in data.items() if k != "original_data"}
+            }
+        }
     
     # ========================================================================
     # TRANSFORMER METHODS
@@ -479,6 +563,57 @@ def transform(data: Any, target_type: str, source_block: str = None) -> Dict[str
         chat_result = await chat_block.execute(text_content["text"], {})
     """
     return transformer.transform(data, target_type, source_block)
+
+
+# ========================================================================
+# STATIC METHODS FOR ORCHESTRATOR COMPATIBILITY
+# ========================================================================
+
+def detect_type(data: Any) -> str:
+    """Detect the type of data."""
+    if data is None:
+        return DataTransformer.UNKNOWN
+    if isinstance(data, str):
+        return DataTransformer.TEXT
+    if isinstance(data, dict):
+        # Check for block-specific fields
+        if "pages" in data and "filename" in data:
+            return DataTransformer.PDF
+        if "confidence" in data and "word_count" in data:
+            return DataTransformer.TEXT  # OCR output
+        if "model" in data and "provider" in data:
+            return DataTransformer.TEXT  # Chat output
+        if "file_path" in data or "path" in data:
+            return DataTransformer.FILE
+        if "image_data" in data or "image_url" in data:
+            return DataTransformer.IMAGE
+        if "measurements" in data or "quantities" in data:
+            return "ConstructionAnalysis"
+        if "text" in data:
+            return DataTransformer.TEXT
+    return DataTransformer.JSON
+
+
+def are_compatible(source_type: str, target_type: str) -> bool:
+    """Check if two types are compatible for transformation."""
+    if source_type == target_type:
+        return True
+    if source_type == DataTransformer.UNKNOWN or target_type == DataTransformer.UNKNOWN:
+        return True
+    # TextContent can transform to/from various types
+    if target_type == "TextContent" and source_type in [DataTransformer.TEXT, DataTransformer.PDF, "ConstructionAnalysis"]:
+        return True
+    if source_type == "TextContent" and target_type in [DataTransformer.TEXT, DataTransformer.JSON]:
+        return True
+    # ConstructionAnalysis can transform to TextContent
+    if target_type == "TextContent" and source_type == "ConstructionAnalysis":
+        return True
+    return False
+
+
+# Attach static methods to class for Orchestrator compatibility
+DataTransformer.detect_type = staticmethod(detect_type)
+DataTransformer.are_compatible = staticmethod(are_compatible)
 
 
 # Export
