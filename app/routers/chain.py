@@ -50,7 +50,7 @@ async def chain_execute(request: ChainRequest, auth: dict = Depends(require_api_
         orchestrator = block_instances["orchestrator"]
         
         # Convert steps to dict format expected by orchestrator
-        steps = [step.dict(exclude_unset=True) for step in request.steps]
+        steps = [step.model_dump(exclude_unset=True) for step in request.steps]
         
         orch_result = await orchestrator.execute(
             request.initial_input,
