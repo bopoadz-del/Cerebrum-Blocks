@@ -95,6 +95,51 @@ PARALLEL_GROUPS: Dict[str, List[str]] = {
 }
 
 
+# Action → deliverable type (for skill hint lookup)
+ACTION_DELIVERABLE_MAP: Dict[str, str] = {
+    "boq_process": "xlsx",
+    "extract_quantities": "xlsx",
+    "estimate_costs": "xlsx",
+    "tender_bid_analysis": "xlsx",
+    "procurement_list_generator": "xlsx",
+    "procurement_optimizer": "xlsx",
+    "payment_certificate": "xlsx",
+    "cash_flow_forecast": "xlsx",
+    "process_document": "pdf",
+    "daily_site_report": "pdf",
+    "submittal_log_generator": "pdf",
+    "as_built_deviation_report": "pdf",
+    "warranty_maintenance_schedule": "pdf",
+    "om_manual_generator": "pdf",
+    "process_contract": "docx",
+    "change_order_impact": "docx",
+    "variation_order_manager": "docx",
+    "claims_builder": "docx",
+    "rfi_generator": "docx",
+    "bim_analysis": "ifc-xlsx",
+    "bim_extractor": "ifc-xlsx",
+    "bim_clash_detection": "pdf",
+    "digital_twin_sync": "ifc-xlsx",
+    "qa_qc_inspection": "image-pdf",
+    "commissioning_checklist": "pdf",
+    "spec_analyze": "pdf",
+    "process_specification_full": "pdf",
+    "drawing_qto": "xlsx",
+    "parse_primavera_schedule": "xlsx",
+    "progress_tracker": "xlsx",
+    "resource_histogram": "xlsx",
+    "forensic_delay_analysis": "xlsx",
+    "safety_compliance_audit": "pdf",
+    "risk_register_auto_populate": "xlsx",
+    "carbon_footprint_calculator": "xlsx",
+    "esg_sustainability_report": "pdf",
+    "value_engineering": "xlsx",
+    "sympy_reason": "xlsx",
+    "intelligent_workflow": "webapp",
+    "health_check": "backend",
+}
+
+
 class SmartOrchestratorBlock(UniversalBlock):
     name = "smart_orchestrator"
     version = "1.0.0"
@@ -108,6 +153,14 @@ class SmartOrchestratorBlock(UniversalBlock):
         "confidence_threshold": 0.3,
         "fallback_agent": "intelligent_workflow",
     }
+
+    def __init__(self, hal_block=None, config=None):
+        super().__init__(hal_block, config)
+        self._skills_block = None
+
+    def wire_skills(self, skills_block):
+        """Wire the skills block for hint enrichment."""
+        self._skills_block = skills_block
 
     ui_schema = {
         "input": {
@@ -160,6 +213,30 @@ class SmartOrchestratorBlock(UniversalBlock):
             action_queue = [fallback]
             parallel_flag = False
 
+        # ── Skill hint enrichment ──────────────────────────────────────────
+        skill_hints = {}
+        if self._skills_block and action_queue:
+            primary_action = action_queue[0]
+            deliverable = ACTION_DELIVERABLE_MAP.get(primary_action)
+            if deliverable:
+                try:
+                    hints_result = await self._skills_block.execute(
+                        deliverable, {"action": "hints", "deliverable": deliverable}
+                    )
+                    if hints_result.get("status") == "success":
+                        skill_hints = {
+                            "deliverable": deliverable,
+                            "hints": hints_result,
+                        }
+                    # Also fetch validation rules
+                    val_result = await self._skills_block.execute(
+                        deliverable, {"action": "validation", "deliverable": deliverable}
+                    )
+                    if val_result.get("status") == "success":
+                        skill_hints["validation"] = val_result
+                except Exception:
+                    pass
+
         return {
             "status": "success",
             "action_queue": action_queue,
@@ -169,6 +246,7 @@ class SmartOrchestratorBlock(UniversalBlock):
             "matched_actions": matched[:max_actions],
             "file_type_hint": file_type,
             "session_context": session_context,
+            "skill_hints": skill_hints,
         }
 
     def _match_actions(self, message: str, file_type: Optional[str]) -> List[Dict]:

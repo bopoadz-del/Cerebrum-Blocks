@@ -25,6 +25,7 @@ from app.routers import (
     health,
     memory,
     monitoring,
+    skills,
     static,
     upload,
 )
@@ -101,6 +102,7 @@ app.include_router(monitoring.router)
 app.include_router(health.router)
 app.include_router(static.router)
 app.include_router(debug.router)
+app.include_router(skills.router)
 app.include_router(telegram_router.router)
 
 

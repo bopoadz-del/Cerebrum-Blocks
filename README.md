@@ -216,6 +216,42 @@ Then open http://localhost:8000.
 
 ---
 
+## 🔌 MCP Server
+
+Cerebrum Blocks exposes all 50+ blocks as **MCP (Model Context Protocol)** tools. Any MCP-compatible client (Claude Desktop, Cursor, Windsurf, Kimi CLI, etc.) can call your blocks natively.
+
+### Quick Start
+
+```bash
+# stdio transport (default)
+python -m app.mcp_server
+
+# SSE (HTTP) transport
+python -m app.mcp_server --transport sse --port 8001
+```
+
+### Claude Desktop Config
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "cerebrum": {
+      "command": "python",
+      "args": ["-m", "app.mcp_server"],
+      "cwd": "/path/to/Cerebrum-Blocks"
+    }
+  }
+}
+```
+
+### Available Tools
+
+Every block becomes a tool (e.g., `cerebrum-chat`, `cerebrum-pdf`, `cerebrum-construction`). A meta `cerebrum-chain` tool is also provided for sequential block execution.
+
+---
+
 ## 📚 Documentation
 
 | Document | Description |

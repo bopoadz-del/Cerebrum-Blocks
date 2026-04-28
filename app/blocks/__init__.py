@@ -36,6 +36,7 @@ from .spec_analyzer import SpecAnalyzerBlock
 from .drawing_qto import DrawingQTOBlock
 from .primavera_parser import PrimaveraParserBlock
 from .smart_orchestrator import SmartOrchestratorBlock
+from .skills import SkillsBlock
 
 # Intelligence Blocks (Week 3)
 from .jetson_gateway import JetsonGatewayBlock
@@ -116,6 +117,7 @@ BLOCK_REGISTRY = {
     "drawing_qto": DrawingQTOBlock,
     "primavera_parser": PrimaveraParserBlock,
     "smart_orchestrator": SmartOrchestratorBlock,
+    "skills": SkillsBlock,
     # Intelligence (Week 3)
     "jetson_gateway": JetsonGatewayBlock,
     "formula_executor": FormulaExecutorBlock,
@@ -191,6 +193,7 @@ __all__ = [
     # Construction Intelligence (all weeks)
     "SymPyReasoningBlock", "BOQProcessorBlock", "SpecAnalyzerBlock",
     "DrawingQTOBlock", "PrimaveraParserBlock", "SmartOrchestratorBlock",
+    "SkillsBlock",
     "JetsonGatewayBlock", "FormulaExecutorBlock", "BIMExtractorBlock",
     "LearningEngineBlock", "HistoricalBenchmarkBlock", "RecommendationTemplateBlock",
     # ML Engine + Containers
