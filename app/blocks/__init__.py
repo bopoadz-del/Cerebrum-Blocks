@@ -33,6 +33,9 @@ from .traffic_manager import TrafficManagerBlock
 from .event_bus import EventBusBlock
 from .context_broker import ContextBrokerBlock
 
+# Document Engine
+from .document_engine import DocumentEngineBlock
+
 # Containers
 from app.containers import ConstructionContainer
 
@@ -67,6 +70,9 @@ BLOCK_REGISTRY = {
     "traffic_manager": TrafficManagerBlock,
     "event_bus": EventBusBlock,
     "context_broker": ContextBrokerBlock,
+    
+    # Document Engine
+    "document_engine": DocumentEngineBlock,
     
     # Containers
     "construction": ConstructionContainer,
