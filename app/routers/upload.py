@@ -6,7 +6,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from app.dependencies import require_api_key
+from app.dependencies import require_api_key, block_instances, _create_block_instance
+from app.blocks import BLOCK_REGISTRY
 
 router = APIRouter()
 
@@ -203,6 +204,83 @@ async def ingest(
         raise HTTPException(status_code=500, detail=f"Ingest pipeline failed: {str(e)}")
     finally:
         # Cleanup temp files
+        for tmp in temp_files:
+            try:
+                if os.path.exists(tmp):
+                    os.remove(tmp)
+            except Exception:
+                pass
+
+
+@router.post("/ingest-via-block")
+async def ingest_via_block(
+    pdf: Optional[UploadFile] = File(None, description="PDF document"),
+    docx: Optional[UploadFile] = File(None, description="Word document"),
+    xlsx: Optional[UploadFile] = File(None, description="Excel file"),
+    output_format: str = "json",
+    auth: dict = Depends(require_api_key),
+):
+    """Document Engine via platform block registry (dependencies auto-wired).
+
+    Same pipeline as /ingest but routes through BLOCK_REGISTRY so platform
+    blocks (pdf, ocr) are resolved and injected automatically.
+    """
+    saved_paths = {}
+    temp_files = []
+
+    try:
+        for file_obj, key in [(pdf, "pdf"), (docx, "docx"), (xlsx, "xlsx")]:
+            if file_obj is None:
+                continue
+            original_name = (file_obj.filename or "unknown").strip()
+            _, ext = os.path.splitext(original_name.lower())
+            if ext not in (".pdf", ".docx", ".xlsx", ".doc", ".xls"):
+                raise HTTPException(400, f"File type '{ext}' not supported")
+            file_id = str(uuid.uuid4())[:8]
+            filename = f"{file_id}_{original_name}"
+            filepath = os.path.join(DATA_DIR, filename)
+            with open(filepath, "wb") as buffer:
+                shutil.copyfileobj(file_obj.file, buffer)
+            saved_paths[key] = filepath
+            temp_files.append(filepath)
+
+        if not saved_paths:
+            raise HTTPException(400, "No valid files provided")
+
+        # Resolve or create the document_engine block instance
+        if "document_engine" not in block_instances:
+            block_instances["document_engine"] = _create_block_instance(BLOCK_REGISTRY["document_engine"])
+
+        block = block_instances["document_engine"]
+        result = await block.process({
+            "pdf_path": saved_paths.get("pdf"),
+            "docx_path": saved_paths.get("docx"),
+            "xlsx_path": saved_paths.get("xlsx"),
+        }, {"output_format": output_format})
+
+        if result.get("status") == "error":
+            raise HTTPException(500, result.get("error", "Document engine failed"))
+
+        if output_format == "yaml":
+            from fastapi.responses import PlainTextResponse
+            import yaml as yaml_lib
+            return PlainTextResponse(
+                content=yaml_lib.dump(result, sort_keys=False, allow_unicode=True),
+                media_type="application/x-yaml",
+            )
+
+        return {
+            "status": "success",
+            "documents_parsed": result.get("documents_parsed", 0),
+            "platform_blocks_used": result.get("platform_blocks_used", []),
+            "output": result,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ingest via block failed: {str(e)}")
+    finally:
         for tmp in temp_files:
             try:
                 if os.path.exists(tmp):

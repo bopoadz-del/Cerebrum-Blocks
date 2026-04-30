@@ -2,10 +2,14 @@
 
 Exposes the document_engine block to the Cerebrum platform via:
   POST /execute { "block": "document_engine", "input": { "pdf_path": "..." } }
+
+Integrates with platform blocks:
+  - pdf  : PDF text extraction (PyMuPDF)
+  - ocr  : Image / scanned PDF OCR fallback
 """
 
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from app.core.universal_base import UniversalBlock
 
 
@@ -22,12 +26,14 @@ class DocumentEngineBlock(UniversalBlock):
     description = "Parse → Reason → Map pipeline for technical document intelligence"
     layer = 3
     tags = ["domain", "construction", "documents", "reasoning", "scheduling"]
-    requires = ["pdf"]
+    requires = ["pdf", "ocr"]
 
     default_config = {
         "extract_tables": True,
         "extract_glossary": True,
         "output_format": "yaml",
+        "use_platform_pdf": True,
+        "use_platform_ocr": True,
     }
 
     ui_schema = {
@@ -56,6 +62,45 @@ class DocumentEngineBlock(UniversalBlock):
         ],
     }
 
+    def set_platform(self, registry, instance_cache, create_block_fn, memory_fn=None):
+        """Wire platform services from dependencies."""
+        self._registry = registry
+        self._instance_cache = instance_cache
+        self._create_block_fn = create_block_fn
+        self._memory_fn = memory_fn
+
+    def _get_platform_block(self, name: str):
+        """Resolve a platform block instance (lazy)."""
+        # 1. Check already-instantiated cache
+        if name in self._instance_cache:
+            return self._instance_cache[name]
+        # 2. Instantiate via factory
+        if name in self._registry:
+            instance = self._create_block_fn(self._registry[name])
+            self._instance_cache[name] = instance
+            return instance
+        return None
+
+    async def _parse_with_platform_pdf(self, file_path: str) -> Optional[str]:
+        """Use platform PDF block for text extraction."""
+        pdf_block = self._get_platform_block("pdf")
+        if pdf_block is None:
+            return None
+        result = await pdf_block.process({"file_path": file_path})
+        if result.get("status") == "success":
+            return result.get("text", "")
+        return None
+
+    async def _parse_with_platform_ocr(self, file_path: str) -> Optional[str]:
+        """Use platform OCR block for image/scanned PDF fallback."""
+        ocr_block = self._get_platform_block("ocr")
+        if ocr_block is None:
+            return None
+        result = await ocr_block.process({"file_path": file_path})
+        if result.get("status") == "success":
+            return result.get("text", "")
+        return None
+
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Main entry point — run the 3-layer pipeline."""
         params = params or {}
@@ -74,11 +119,17 @@ class DocumentEngineBlock(UniversalBlock):
             from blocks.document_engine.main import parse_all
             from blocks.document_engine.reasoner import DocumentReasoner
             from blocks.document_engine.mapper import DocumentMapper
+            from blocks.document_engine.parsers.pdf_parser import PDFParser
+            from blocks.document_engine.parsers.docx_parser import DOCXParser
+            from blocks.document_engine.parsers.xlsx_parser import XLSXParser
             import yaml
 
-            # Find config relative to project root (2 levels up from app/blocks/)
+            # Load config
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
             config_path = os.path.join(project_root, "blocks", "document_engine", "config.yaml")
+            if not os.path.exists(config_path):
+                config_path = os.path.join(os.path.dirname(__file__), "..", "..", "blocks", "document_engine", "config.yaml")
+                config_path = os.path.abspath(config_path)
 
             if os.path.exists(config_path):
                 with open(config_path, "r") as f:
@@ -87,20 +138,55 @@ class DocumentEngineBlock(UniversalBlock):
             else:
                 config = {}
 
-            # Layer 1: Parse
-            documents = parse_all(file_paths, config)
+            # ------------------------------------------------------------------
+            # Layer 1: Parse — use platform blocks when available, fallback to own parsers
+            # ------------------------------------------------------------------
+            documents = []
 
+            # PDF → platform pdf block → fallback to own PDFParser
+            if file_paths.get("pdf"):
+                pdf_text = None
+                if self.config.get("use_platform_pdf", True):
+                    pdf_text = await self._parse_with_platform_pdf(file_paths["pdf"])
+
+                if pdf_text is not None:
+                    from blocks.document_engine.parsers.pdf_parser import PDFDocument
+                    doc = PDFDocument(source=file_paths["pdf"], text=pdf_text)
+                    documents.append(doc)
+                else:
+                    parser = PDFParser(config)
+                    documents.append(parser.parse(file_paths["pdf"]))
+
+            # DOCX → own parser (no platform block available)
+            if file_paths.get("docx"):
+                parser = DOCXParser(config)
+                documents.append(parser.parse(file_paths["docx"]))
+
+            # XLSX → own parser (no platform block available)
+            if file_paths.get("xlsx"):
+                parser = XLSXParser(config)
+                documents.append(parser.parse(file_paths["xlsx"]))
+
+            # ------------------------------------------------------------------
             # Layer 2: Reason
+            # ------------------------------------------------------------------
             reasoner = DocumentReasoner(config)
             reasoned = reasoner.reason(documents)
 
+            # ------------------------------------------------------------------
             # Layer 3: Map
+            # ------------------------------------------------------------------
             mapper = DocumentMapper(config)
             structured = mapper.map_to_structured(reasoned)
 
             result = structured.to_dict()
             result["status"] = "success"
             result["documents_parsed"] = len(documents)
+            result["platform_blocks_used"] = []
+            if self.config.get("use_platform_pdf") and any(
+                d.source == file_paths.get("pdf") for d in documents if hasattr(d, "source")
+            ):
+                result["platform_blocks_used"].append("pdf")
             return result
 
         except Exception as e:
