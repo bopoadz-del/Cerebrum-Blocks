@@ -76,8 +76,9 @@ class DocumentEngineBlock(UniversalBlock):
             from blocks.document_engine.mapper import DocumentMapper
             import yaml
 
-            block_dir = os.path.dirname(os.path.dirname(__file__))
-            config_path = os.path.join(block_dir, "blocks", "document_engine", "config.yaml")
+            # Find config relative to project root (2 levels up from app/blocks/)
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            config_path = os.path.join(project_root, "blocks", "document_engine", "config.yaml")
 
             if os.path.exists(config_path):
                 with open(config_path, "r") as f:
