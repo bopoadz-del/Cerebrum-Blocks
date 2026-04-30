@@ -62,28 +62,9 @@ class DocumentEngineBlock(UniversalBlock):
         ],
     }
 
-    def set_platform(self, registry, instance_cache, create_block_fn, memory_fn=None):
-        """Wire platform services from dependencies."""
-        self._registry = registry
-        self._instance_cache = instance_cache
-        self._create_block_fn = create_block_fn
-        self._memory_fn = memory_fn
-
-    def _get_platform_block(self, name: str):
-        """Resolve a platform block instance (lazy)."""
-        # 1. Check already-instantiated cache
-        if name in self._instance_cache:
-            return self._instance_cache[name]
-        # 2. Instantiate via factory
-        if name in self._registry:
-            instance = self._create_block_fn(self._registry[name])
-            self._instance_cache[name] = instance
-            return instance
-        return None
-
     async def _parse_with_platform_pdf(self, file_path: str) -> Optional[str]:
-        """Use platform PDF block for text extraction."""
-        pdf_block = self._get_platform_block("pdf")
+        """Use platform PDF block for text extraction (universal connector)."""
+        pdf_block = self.get_dep("pdf")
         if pdf_block is None:
             return None
         result = await pdf_block.process({"file_path": file_path})
@@ -92,8 +73,8 @@ class DocumentEngineBlock(UniversalBlock):
         return None
 
     async def _parse_with_platform_ocr(self, file_path: str) -> Optional[str]:
-        """Use platform OCR block for image/scanned PDF fallback."""
-        ocr_block = self._get_platform_block("ocr")
+        """Use platform OCR block for image/scanned PDF fallback (universal connector)."""
+        ocr_block = self.get_dep("ocr")
         if ocr_block is None:
             return None
         result = await ocr_block.process({"file_path": file_path})
@@ -183,10 +164,10 @@ class DocumentEngineBlock(UniversalBlock):
             result["status"] = "success"
             result["documents_parsed"] = len(documents)
             result["platform_blocks_used"] = []
-            if self.config.get("use_platform_pdf") and any(
-                d.source == file_paths.get("pdf") for d in documents if hasattr(d, "source")
-            ):
+            if self.config.get("use_platform_pdf") and self.get_dep("pdf"):
                 result["platform_blocks_used"].append("pdf")
+            if self.config.get("use_platform_ocr") and self.get_dep("ocr"):
+                result["platform_blocks_used"].append("ocr")
             return result
 
         except Exception as e:

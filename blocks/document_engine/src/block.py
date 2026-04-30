@@ -39,9 +39,19 @@ class DocumentEngineBlock(LegoBlock):
         self._engine_config: Dict[str, Any] = {}
 
     async def initialize(self) -> bool:
-        """Load config.yaml relative to the block root."""
+        """Load config via dependency injection or fallback to file."""
         try:
             import yaml
+            # 1. Try universal connector — config block injected by assembler
+            config_block = self.get_dependency("config")
+            if config_block and hasattr(config_block, "config"):
+                self._engine_config = config_block.config.get("document_engine", {})
+                if self._engine_config:
+                    self._config_loaded = True
+                    self.initialized = True
+                    return True
+
+            # 2. Fallback: load from file
             cfg_path = Path(__file__).parent.parent / self.config.get("config_path", "config.yaml")
             if cfg_path.exists():
                 with open(cfg_path, "r") as f:
