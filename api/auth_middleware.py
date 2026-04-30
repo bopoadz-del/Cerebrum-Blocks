@@ -4,15 +4,19 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 security = HTTPBearer()
 
 async def get_current_user(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Extract and validate API key from Authorization header"""
+    """Extract and validate API key from Authorization header.
+    
+    Never grants admin access by default. If auth block is unavailable,
+    reject the request with 503.
+    """
     blocks = request.app.state.blocks
     api_key = credentials.credentials
     
     # Validate key
     auth = blocks.get("auth")
     if not auth:
-        # No auth block = dev mode, allow all
-        return {"role": "admin", "api_key": api_key}
+        # No auth block = service unavailable, NOT dev mode
+        raise HTTPException(status_code=503, detail="Auth service unavailable")
     
     validation = await auth.execute({
         "action": "validate",
@@ -53,7 +57,7 @@ async def check_block_permission(request: Request, user: dict, block_name: str):
     auth = blocks.get("auth")
     
     if not auth:
-        return True  # Dev mode
+        raise HTTPException(status_code=503, detail="Auth service unavailable")
     
     permission = await auth.execute({
         "action": "check_permission",

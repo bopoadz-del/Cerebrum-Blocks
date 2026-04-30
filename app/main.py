@@ -109,6 +109,10 @@ app.include_router(memory.router)
 app.include_router(monitoring.router)
 app.include_router(health.router)
 app.include_router(static.router)
-app.include_router(debug.router)
+# Debug routes — only in non-production environments
+env = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()
+if env in {"dev", "development", "local", "test", "testing"}:
+    app.include_router(debug.router)
+
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
