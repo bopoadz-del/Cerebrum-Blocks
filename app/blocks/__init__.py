@@ -36,6 +36,9 @@ from .context_broker import ContextBrokerBlock
 # Document Engine
 from .document_engine import DocumentEngineBlock
 
+# Construction Intelligence Blocks
+from .historical_benchmark import HistoricalBenchmarkBlock
+
 # Containers
 from app.containers import ConstructionContainer
 
@@ -73,7 +76,10 @@ BLOCK_REGISTRY = {
     
     # Document Engine
     "document_engine": DocumentEngineBlock,
-    
+
+    # Construction Intelligence Blocks
+    "historical_benchmark": HistoricalBenchmarkBlock,
+
     # Containers
     "construction": ConstructionContainer,
 }

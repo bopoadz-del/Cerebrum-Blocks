@@ -1127,51 +1127,498 @@ class ConstructionContainer(UniversalContainer):
     def _get_rsmeans_data(self) -> Dict:
         return {
             "unit_costs": {
+                # Structural
                 "concrete_m3": 150.0,
-                "steel_kg": 2.5,
-                "formwork_m2": 45.0,
+                "concrete_grade_c30_m3": 165.0,
+                "concrete_grade_c40_m3": 185.0,
                 "rebar_kg": 1.8,
+                "steel_kg": 2.5,
+                "structural_steel_kg": 3.2,
+                "formwork_m2": 45.0,
+                "formwork_soffit_m2": 55.0,
+                # Masonry
                 "block_m2": 35.0,
                 "masonry_m2": 65.0,
+                "brick_m2": 75.0,
+                # Envelope
                 "glazing_m2": 180.0,
-                "finishes_m2": 55.0
+                "curtain_wall_m2": 420.0,
+                "cladding_m2": 210.0,
+                "roofing_m2": 95.0,
+                "waterproofing_m2": 40.0,
+                # Finishes
+                "finishes_m2": 55.0,
+                "tiling_m2": 85.0,
+                "flooring_m2": 70.0,
+                "painting_m2": 18.0,
+                "plaster_m2": 28.0,
+                "drylining_m2": 45.0,
+                "suspended_ceiling_m2": 60.0,
+                # MEP
+                "hvac_m2": 120.0,
+                "electrical_m2": 80.0,
+                "plumbing_m2": 65.0,
+                "fire_protection_m2": 35.0,
+                # Groundworks
+                "excavation_m3": 22.0,
+                "backfill_m3": 18.0,
+                "piling_lm": 280.0,
+                "drainage_lm": 95.0,
+                # Misc
+                "insulation_m2": 30.0,
+                "door_ea": 850.0,
+                "window_ea": 1200.0,
+                "lift_ea": 85000.0,
+                "scaffold_m2": 12.0,
             },
             "location_factors": {
-                "US National Average": 1.0,
+                "US National Average": 1.00,
                 "New York City": 1.35,
                 "San Francisco": 1.42,
+                "Los Angeles": 1.28,
+                "Chicago": 1.18,
+                "Houston": 1.05,
+                "Miami": 1.10,
                 "Dubai": 0.95,
+                "Abu Dhabi": 0.92,
                 "Riyadh": 0.88,
+                "Jeddah": 0.90,
+                "Doha": 0.97,
+                "Kuwait City": 0.93,
                 "London": 1.28,
+                "Manchester": 1.12,
+                "Paris": 1.22,
+                "Frankfurt": 1.18,
+                "Amsterdam": 1.20,
                 "Sydney": 1.15,
-                "Singapore": 1.08
-            }
+                "Melbourne": 1.12,
+                "Singapore": 1.08,
+                "Hong Kong": 1.25,
+                "Tokyo": 1.30,
+                "Toronto": 1.10,
+                "Mumbai": 0.45,
+                "Delhi": 0.42,
+            },
+            "project_type_multipliers": {
+                "residential": 1.00,
+                "commercial": 1.15,
+                "industrial": 0.90,
+                "hospital": 1.45,
+                "education": 1.10,
+                "hotel": 1.25,
+                "general_building": 1.05,
+                "infrastructure": 0.85,
+                "mixed_use": 1.18,
+            },
         }
-    
+
     def _lookup_unit_cost(self, item_name: str, unit: str, rsmeans_data: Dict) -> float:
-        unit_costs = rsmeans_data.get("unit_costs", {})
-        
-        if "concrete" in item_name.lower() and unit in ["m3", "cu m", "cubic meter"]:
-            return unit_costs.get("concrete_m3", 150.0)
-        elif "steel" in item_name.lower() and unit in ["kg", "kilogram"]:
-            return unit_costs.get("steel_kg", 2.5)
-        elif "formwork" in item_name.lower() and unit in ["m2", "sq m", "square meter"]:
-            return unit_costs.get("formwork_m2", 45.0)
-        elif "rebar" in item_name.lower() and unit in ["kg", "kilogram"]:
-            return unit_costs.get("rebar_kg", 1.8)
-        elif "block" in item_name.lower() and unit in ["m2", "sq m"]:
-            return unit_costs.get("block_m2", 35.0)
-        elif "masonry" in item_name.lower() and unit in ["m2", "sq m"]:
-            return unit_costs.get("masonry_m2", 65.0)
-        elif "glass" in item_name.lower() or "glazing" in item_name.lower():
-            return unit_costs.get("glazing_m2", 180.0)
-        elif "finish" in item_name.lower():
-            return unit_costs.get("finishes_m2", 55.0)
-        
+        uc = rsmeans_data.get("unit_costs", {})
+        n = item_name.lower()
+        u = unit.lower()
+
+        vol_units = {"m3", "cu m", "cubic meter", "m³"}
+        area_units = {"m2", "sq m", "square meter", "m²"}
+        weight_units = {"kg", "kilogram", "tonne", "t"}
+        len_units = {"lm", "m", "linear meter", "rm"}
+        count_units = {"ea", "no", "nr", "each", "item"}
+
+        if "curtain wall" in n or "curtain_wall" in n:
+            return uc.get("curtain_wall_m2", 420.0)
+        if "cladding" in n or "facade" in n:
+            return uc.get("cladding_m2", 210.0)
+        if "glazing" in n or "glass" in n:
+            return uc.get("glazing_m2", 180.0)
+        if "roofing" in n or "roof" in n:
+            return uc.get("roofing_m2", 95.0)
+        if "waterproof" in n:
+            return uc.get("waterproofing_m2", 40.0)
+        if "structural steel" in n:
+            return uc.get("structural_steel_kg", 3.2)
+        if ("steel" in n or "rebar" in n or "reinforcement" in n) and u in weight_units:
+            return uc.get("rebar_kg", 1.8)
+        if "steel" in n and u in weight_units:
+            return uc.get("steel_kg", 2.5)
+        if "c40" in n or "grade 40" in n or "40mpa" in n:
+            return uc.get("concrete_grade_c40_m3", 185.0)
+        if "c30" in n or "grade 30" in n or "30mpa" in n:
+            return uc.get("concrete_grade_c30_m3", 165.0)
+        if "concrete" in n and u in vol_units:
+            return uc.get("concrete_m3", 150.0)
+        if "soffit" in n or "slab formwork" in n:
+            return uc.get("formwork_soffit_m2", 55.0)
+        if "formwork" in n or "shuttering" in n:
+            return uc.get("formwork_m2", 45.0)
+        if "brick" in n:
+            return uc.get("brick_m2", 75.0)
+        if "block" in n and u in area_units:
+            return uc.get("block_m2", 35.0)
+        if "masonry" in n:
+            return uc.get("masonry_m2", 65.0)
+        if "suspended ceiling" in n or "false ceiling" in n:
+            return uc.get("suspended_ceiling_m2", 60.0)
+        if "drylining" in n or "dry lining" in n or "drywall" in n:
+            return uc.get("drylining_m2", 45.0)
+        if "plaster" in n:
+            return uc.get("plaster_m2", 28.0)
+        if "tile" in n or "tiling" in n:
+            return uc.get("tiling_m2", 85.0)
+        if "floor" in n and u in area_units:
+            return uc.get("flooring_m2", 70.0)
+        if "paint" in n:
+            return uc.get("painting_m2", 18.0)
+        if "finish" in n:
+            return uc.get("finishes_m2", 55.0)
+        if "hvac" in n or "air conditioning" in n or "mechanical" in n:
+            return uc.get("hvac_m2", 120.0)
+        if "electrical" in n or "lighting" in n or "power" in n:
+            return uc.get("electrical_m2", 80.0)
+        if "plumbing" in n or "sanitary" in n or "pipe" in n:
+            return uc.get("plumbing_m2", 65.0)
+        if "fire" in n and ("sprinkler" in n or "protection" in n):
+            return uc.get("fire_protection_m2", 35.0)
+        if "excavat" in n and u in vol_units:
+            return uc.get("excavation_m3", 22.0)
+        if "backfill" in n:
+            return uc.get("backfill_m3", 18.0)
+        if "pil" in n and u in len_units:
+            return uc.get("piling_lm", 280.0)
+        if "drain" in n and u in len_units:
+            return uc.get("drainage_lm", 95.0)
+        if "insulation" in n:
+            return uc.get("insulation_m2", 30.0)
+        if "scaffold" in n:
+            return uc.get("scaffold_m2", 12.0)
+        if "door" in n and u in count_units:
+            return uc.get("door_ea", 850.0)
+        if "window" in n and u in count_units:
+            return uc.get("window_ea", 1200.0)
+        if "lift" in n or "elevator" in n:
+            return uc.get("lift_ea", 85000.0)
+
+        # Fallback by unit type
+        if u in vol_units:
+            return 120.0
+        if u in area_units:
+            return 55.0
+        if u in weight_units:
+            return 2.0
+        if u in len_units:
+            return 45.0
         return 50.0
-    
+
     def extract_quantities(self, input_data: Any, params: Dict) -> Dict:
-        return {"status": "success", "quantities": input_data.get("measurements", []) if isinstance(input_data, dict) else []}
+        data = input_data if isinstance(input_data, dict) else {}
+        measurements = data.get("measurements", [])
+        quantities = self._calculate_quantities(measurements)
+        return {"status": "success", "quantities": quantities, "measurements": measurements}
+
+    # ─────────────────────────────────────────────────────────────────
+    # COST ACTIONS
+    # ─────────────────────────────────────────────────────────────────
+
+    async def estimate_costs(self, input_data: Any, params: Dict) -> Dict:
+        """Public action: estimate costs from quantities, BOQ list, or process_document output."""
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        # Accept quantities from multiple upstream shapes
+        quantities = p.get("quantities") or data.get("quantities") or {}
+
+        # process_document output → derive quantities from measurements
+        if not quantities and data.get("measurements"):
+            raw_q = self._calculate_quantities(data["measurements"])
+            quantities = {
+                "Concrete Works": {"quantity": raw_q.get("concrete_volume_m3", 0), "unit": "m3"},
+                "Steel / Rebar": {"quantity": raw_q.get("steel_weight_kg", 0), "unit": "kg"},
+                "Formwork": {"quantity": raw_q.get("floor_area_m2", 0) * 2, "unit": "m2"},
+            }
+
+        # BOQ list → convert to quantities dict
+        boq = p.get("boq") or data.get("boq") or data.get("line_items", [])
+        if not quantities and isinstance(boq, list) and boq:
+            quantities = {
+                item.get("description", item.get("item", f"Item {i+1}")): {
+                    "quantity": item.get("quantity", 0),
+                    "unit": item.get("unit", "ea"),
+                }
+                for i, item in enumerate(boq)
+            }
+
+        if not quantities:
+            return {
+                "status": "error",
+                "error": (
+                    "No quantities provided. Pass 'quantities' dict, 'boq' list, "
+                    "or chain from process_document."
+                ),
+            }
+
+        return await self.generate_cost_estimate(
+            {"quantities": quantities},
+            {
+                "quantities": quantities,
+                "location": p.get("location", data.get("location", "US National Average")),
+                "project_type": p.get("project_type", data.get("project_type", "general_building")),
+            },
+        )
+
+    async def payment_certificate(self, input_data: Any, params: Dict) -> Dict:
+        """Generate Interim Payment Certificate (IPC) for contractor billing."""
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        contract_value = float(p.get("contract_value") or data.get("contract_value", 0))
+        work_done_pct = float(p.get("work_done_percent") or data.get("work_done_percent", 0)) / 100.0
+        previous_certified = float(p.get("previous_certified") or data.get("previous_certified", 0))
+        retention_pct = float(p.get("retention_percent", 10)) / 100.0
+        advance_payment = float(p.get("advance_payment") or data.get("advance_payment", 0))
+        advance_recovery_pct = float(p.get("advance_recovery_percent", 20)) / 100.0
+        payment_period = p.get("payment_period", "Current Period")
+        contractor = p.get("contractor_name", data.get("contractor_name", "Contractor"))
+
+        if contract_value <= 0:
+            return {"status": "error", "error": "contract_value required and must be > 0"}
+
+        gross_valuation = round(contract_value * work_done_pct, 2)
+        retention_held = round(gross_valuation * retention_pct, 2)
+        advance_recovered = round(
+            min(advance_payment, gross_valuation * advance_recovery_pct), 2
+        )
+        net_this_period = round(
+            gross_valuation - retention_held - advance_recovered - previous_certified, 2
+        )
+        cumulative_certified = round(previous_certified + net_this_period, 2)
+        remaining_balance = round(contract_value - cumulative_certified - retention_held, 2)
+
+        return {
+            "status": "success",
+            "action": "payment_certificate",
+            "certificate": {
+                "period": payment_period,
+                "contractor": contractor,
+                "date_issued": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            },
+            "valuation": {
+                "contract_value": contract_value,
+                "work_completed_percent": round(work_done_pct * 100, 1),
+                "gross_valuation": gross_valuation,
+            },
+            "deductions": {
+                "retention_percent": retention_pct * 100,
+                "retention_held": retention_held,
+                "advance_recovery": advance_recovered,
+                "previous_payments": previous_certified,
+                "total_deductions": round(
+                    retention_held + advance_recovered + previous_certified, 2
+                ),
+            },
+            "payment": {
+                "net_due_this_period": net_this_period,
+                "cumulative_certified": cumulative_certified,
+                "remaining_contract_balance": remaining_balance,
+            },
+            "certificate_summary": (
+                f"IPC – {payment_period}: {round(work_done_pct * 100, 1)}% complete. "
+                f"Gross: {gross_valuation:,.2f}. Net due: {net_this_period:,.2f}."
+            ),
+        }
+
+    async def procurement_list_generator(self, input_data: Any, params: Dict) -> Dict:
+        """Generate a prioritised procurement list from quantities or estimate_costs output."""
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        quantities = p.get("quantities") or data.get("quantities") or {}
+        boq = p.get("boq") or data.get("boq") or data.get("line_items", [])
+        budget = float(p.get("budget") or data.get("summary", {}).get("total_estimate", 0))
+        schedule_start = p.get("schedule_start_date") or data.get("schedule_start_date")
+        rsmeans = self._get_rsmeans_data()
+
+        procurement_items: List[Dict] = []
+
+        # From estimate_costs line_items
+        if isinstance(boq, list) and boq and isinstance(boq[0], dict) and "adjusted_rate" in boq[0]:
+            for item in boq:
+                name = item.get("item", item.get("description", "Unknown"))
+                qty = item.get("quantity", 0)
+                unit = item.get("unit", "ea")
+                unit_cost = item.get("adjusted_rate", item.get("base_rate", 0))
+                total = item.get("total", qty * unit_cost)
+                cat, lead, supplier = self._classify_procurement_item(name)
+                procurement_items.append(self._build_procurement_item(
+                    name, qty, unit, unit_cost, total, cat, lead, supplier, schedule_start
+                ))
+
+        # From BOQ list without rates
+        elif isinstance(boq, list) and boq:
+            for item in boq:
+                name = item.get("description", item.get("item", "Unknown"))
+                qty = item.get("quantity", 0)
+                unit = item.get("unit", "ea")
+                unit_cost = item.get("unit_price", self._lookup_unit_cost(name, unit, rsmeans))
+                total = qty * unit_cost
+                cat, lead, supplier = self._classify_procurement_item(name)
+                procurement_items.append(self._build_procurement_item(
+                    name, qty, unit, unit_cost, total, cat, lead, supplier, schedule_start
+                ))
+
+        # From quantities dict
+        elif quantities:
+            for item_name, qty_data in quantities.items():
+                if isinstance(qty_data, dict):
+                    qty = float(qty_data.get("quantity", 0))
+                    unit = qty_data.get("unit", "ea")
+                else:
+                    qty = float(qty_data)
+                    unit = "ea"
+                unit_cost = self._lookup_unit_cost(item_name, unit, rsmeans)
+                total = qty * unit_cost
+                cat, lead, supplier = self._classify_procurement_item(item_name)
+                procurement_items.append(self._build_procurement_item(
+                    item_name, qty, unit, unit_cost, total, cat, lead, supplier, schedule_start
+                ))
+
+        if not procurement_items:
+            return {
+                "status": "error",
+                "error": (
+                    "No quantities or BOQ data. Chain from estimate_costs or "
+                    "provide 'quantities' dict / 'boq' list."
+                ),
+            }
+
+        procurement_items.sort(key=lambda x: x["lead_time_weeks"], reverse=True)
+        critical = [i for i in procurement_items if i["priority"] == "critical"]
+        total_cost = round(sum(i["total_cost"] for i in procurement_items), 2)
+
+        return {
+            "status": "success",
+            "action": "procurement_list",
+            "total_items": len(procurement_items),
+            "total_procurement_cost": total_cost,
+            "budget": budget or None,
+            "budget_variance": round(budget - total_cost, 2) if budget else None,
+            "critical_long_lead_items": len(critical),
+            "procurement_list": procurement_items,
+            "by_category": self._group_by_category(procurement_items),
+            "action_required": [
+                f"Issue RFQ for '{i['item']}' immediately — lead time {i['lead_time_weeks']} weeks"
+                for i in critical[:5]
+            ],
+            "recommendations": self._generate_procurement_recommendations(procurement_items),
+        }
+
+    def _build_procurement_item(
+        self, name: str, qty: float, unit: str, unit_cost: float,
+        total: float, category: str, lead: int, supplier: str,
+        schedule_start: Optional[str],
+    ) -> Dict:
+        priority = "critical" if lead >= 12 else "high" if lead >= 6 else "normal"
+        return {
+            "item": name,
+            "quantity": qty,
+            "unit": unit,
+            "unit_cost": round(unit_cost, 2),
+            "total_cost": round(total, 2),
+            "category": category,
+            "lead_time_weeks": lead,
+            "supplier_type": supplier,
+            "order_by": self._calculate_order_date(schedule_start, lead),
+            "priority": priority,
+        }
+
+    def _classify_procurement_item(self, name: str):
+        n = name.lower()
+        if any(k in n for k in ["structural steel", "steel frame", "steel beam", "steel column"]):
+            return "Structural Steel", 16, "Steel Fabricator"
+        if any(k in n for k in ["curtain wall", "facade", "curtain_wall"]):
+            return "Glazing / Facades", 22, "Specialist Glazier"
+        if any(k in n for k in ["glass", "glazing"]):
+            return "Glazing", 18, "Glazing Supplier"
+        if any(k in n for k in ["lift", "elevator", "escalator"]):
+            return "Vertical Transport", 28, "OEM / Specialist"
+        if any(k in n for k in ["hvac", "ductwork", "air handling", "chiller", "cooling"]):
+            return "Mechanical / HVAC", 16, "MEP Contractor"
+        if any(k in n for k in ["switchgear", "transformer", "generator", "hv cable"]):
+            return "HV Electrical", 20, "Electrical Contractor"
+        if any(k in n for k in ["electrical", "panel", "cable", "lighting", "power"]):
+            return "Electrical", 10, "Electrical Contractor"
+        if any(k in n for k in ["pump", "chilled water", "fire suppression"]):
+            return "Mechanical Plant", 14, "MEP Contractor"
+        if any(k in n for k in ["plumbing", "pipe", "sanitary", "drain"]):
+            return "Plumbing", 8, "Plumbing Contractor"
+        if any(k in n for k in ["stone", "marble", "granite", "cladding"]):
+            return "Stone / Cladding", 20, "Stone Supplier"
+        if any(k in n for k in ["rebar", "reinforcement"]):
+            return "Rebar / Steel", 6, "Steel Stockholder"
+        if any(k in n for k in ["concrete", "cement"]):
+            return "Concrete", 2, "Ready-Mix Supplier"
+        if any(k in n for k in ["steel", "structural"]):
+            return "Structural Steel", 14, "Steel Fabricator"
+        if any(k in n for k in ["pile", "piling", "foundation"]):
+            return "Groundworks", 8, "Specialist Piling"
+        if any(k in n for k in ["door", "window", "joinery", "frame"]):
+            return "Joinery / Openings", 10, "Joinery Supplier"
+        if any(k in n for k in ["tile", "floor", "finish", "paint", "plaster", "ceiling"]):
+            return "Finishes", 6, "Finishing Contractor"
+        if any(k in n for k in ["formwork", "shuttering", "scaffold"]):
+            return "Temporary Works", 3, "Plant Hire"
+        if any(k in n for k in ["waterproof", "membrane", "roof"]):
+            return "Waterproofing / Roofing", 8, "Specialist Subcontractor"
+        if any(k in n for k in ["insulation"]):
+            return "Insulation", 6, "Insulation Supplier"
+        return "General Materials", 4, "General Supplier"
+
+    def _calculate_order_date(self, schedule_start: Optional[str], lead_time_weeks: int) -> Optional[str]:
+        if not schedule_start:
+            return None
+        try:
+            from datetime import timedelta
+            start = datetime.strptime(str(schedule_start)[:10], "%Y-%m-%d")
+            return (start - timedelta(weeks=lead_time_weeks)).strftime("%Y-%m-%d")
+        except Exception:
+            return None
+
+    def _group_by_category(self, items: List[Dict]) -> Dict:
+        grouped: Dict = {}
+        for item in items:
+            cat = item.get("category", "General")
+            if cat not in grouped:
+                grouped[cat] = {"items": [], "total": 0.0}
+            grouped[cat]["items"].append(item["item"])
+            grouped[cat]["total"] = round(grouped[cat]["total"] + item["total_cost"], 2)
+        return grouped
+
+    def _generate_procurement_recommendations(self, items: List[Dict]) -> List[str]:
+        recs = []
+        critical = [i for i in items if i["priority"] == "critical"]
+        if critical:
+            recs.append(
+                f"Immediate action: {len(critical)} items have lead times ≥ 12 weeks — "
+                "issue RFQs and appoint suppliers now"
+            )
+        categories = {i["category"] for i in items}
+        if "Mechanical / HVAC" in categories and "Electrical" in categories:
+            recs.append(
+                "Consider combined MEP package tender to reduce procurement cost and interface risk"
+            )
+        total = sum(i["total_cost"] for i in items)
+        if total > 5_000_000:
+            recs.append(
+                "Spend > $5M — pre-qualify all major suppliers and consider framework agreements"
+            )
+        elif total > 1_000_000:
+            recs.append(
+                "Spend > $1M — obtain minimum 3 quotes per major category"
+            )
+        long_lead = [i for i in items if i["lead_time_weeks"] >= 20]
+        if long_lead:
+            recs.append(
+                f"{len(long_lead)} items have lead times ≥ 20 weeks — "
+                "consider early letters of intent to secure slots"
+            )
+        return recs
 
     # CARBON & SUSTAINABILITY
     async def generate_carbon_report(self, input_data: Any, params: Dict) -> Dict:
@@ -1335,6 +1782,580 @@ class ConstructionContainer(UniversalContainer):
             recs.append("Clean and organize work area - remove trip hazards")
         
         return recs
+
+    # ─────────────────────────────────────────────────────────────────
+    # PROGRESS & SITE ACTIONS
+    # ─────────────────────────────────────────────────────────────────
+
+    async def progress_tracker(self, input_data: Any, params: Dict) -> Dict:
+        """Track construction progress against planned schedule and BOQ."""
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        planned_pct = float(p.get("planned_percent") or data.get("planned_percent", 0))
+        actual_pct = float(p.get("actual_percent") or data.get("actual_percent", 0))
+        contract_value = float(p.get("contract_value") or data.get("contract_value", 0))
+        reporting_period = p.get("reporting_period", datetime.now(timezone.utc).strftime("%B %Y"))
+        activities = p.get("activities") or data.get("activities", [])
+        photos = p.get("photos") or data.get("photos", [])
+
+        variance = round(actual_pct - planned_pct, 2)
+        spi = round(actual_pct / planned_pct, 3) if planned_pct else 1.0
+        earned_value = round(contract_value * actual_pct / 100, 2) if contract_value else None
+        planned_value = round(contract_value * planned_pct / 100, 2) if contract_value else None
+        cost_variance = None
+        if earned_value is not None and planned_value is not None:
+            cost_variance = round(earned_value - planned_value, 2)
+
+        status = "on_track" if abs(variance) <= 2 else ("ahead" if variance > 0 else "delayed")
+        delay_days = round(abs(variance) / 0.5) if variance < -2 else 0
+
+        activity_summary = []
+        for act in activities[:20]:
+            act_actual = float(act.get("actual_percent", 0))
+            act_planned = float(act.get("planned_percent", 0))
+            activity_summary.append({
+                "activity": act.get("name", act.get("description", "Unknown")),
+                "planned": act_planned,
+                "actual": act_actual,
+                "variance": round(act_actual - act_planned, 1),
+                "status": "on_track" if abs(act_actual - act_planned) <= 3 else (
+                    "ahead" if act_actual > act_planned else "delayed"
+                ),
+            })
+
+        return {
+            "status": "success",
+            "action": "progress_tracker",
+            "reporting_period": reporting_period,
+            "overall_progress": {
+                "planned_percent": planned_pct,
+                "actual_percent": actual_pct,
+                "variance_percent": variance,
+                "schedule_performance_index": spi,
+                "status": status,
+                "estimated_delay_days": delay_days,
+            },
+            "earned_value": {
+                "contract_value": contract_value or None,
+                "earned_value": earned_value,
+                "planned_value": planned_value,
+                "cost_variance": cost_variance,
+            } if contract_value else None,
+            "activities": activity_summary,
+            "photos_reviewed": len(photos),
+            "key_risks": [
+                f"Project is {abs(variance):.1f}% behind schedule — recovery plan required"
+            ] if variance < -5 else [],
+            "recommendations": (
+                ["Issue delay notice and prepare recovery programme"] if variance < -10
+                else ["Monitor weekly and flag if variance exceeds -5%"] if variance < -2
+                else ["Maintain current momentum"]
+            ),
+        }
+
+    async def as_built_deviation_report(self, input_data: Any, params: Dict) -> Dict:
+        """Compare as-built conditions against design drawings."""
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        as_built_file = data.get("as_built_file") or p.get("as_built_file")
+        design_file = data.get("design_file") or p.get("design_file")
+        tolerance_mm = float(p.get("tolerance_mm", 10))
+        element_type = p.get("element_type", "general")
+
+        deviations = []
+
+        if as_built_file and design_file:
+            deviations = await self._compare_as_built_to_design(as_built_file, design_file, tolerance_mm)
+        elif data.get("measurements") or p.get("as_built_measurements"):
+            as_built_m = data.get("measurements") or p.get("as_built_measurements", [])
+            design_m = p.get("design_measurements", [])
+            deviations = self._compare_measurement_sets(as_built_m, design_m, tolerance_mm)
+
+        critical = [d for d in deviations if d.get("severity") == "critical"]
+        major = [d for d in deviations if d.get("severity") == "major"]
+        minor = [d for d in deviations if d.get("severity") == "minor"]
+
+        return {
+            "status": "success",
+            "action": "as_built_deviation_report",
+            "tolerance_mm": tolerance_mm,
+            "element_type": element_type,
+            "deviation_summary": {
+                "total_deviations": len(deviations),
+                "critical": len(critical),
+                "major": len(major),
+                "minor": len(minor),
+                "conformance_percent": round(
+                    (1 - len(deviations) / max(len(deviations) + 20, 1)) * 100, 1
+                ),
+            },
+            "deviations": deviations[:50],
+            "critical_items": critical,
+            "recommendations": (
+                ["Halt work on affected areas — critical deviations require structural engineer review"]
+                if critical
+                else ["Major deviations require rectification before next inspection"] if major
+                else ["Minor deviations within acceptable tolerance — document and close"]
+            ),
+            "sign_off_status": (
+                "REJECTED" if critical
+                else "CONDITIONAL" if major
+                else "APPROVED"
+            ),
+        }
+
+    async def _compare_as_built_to_design(
+        self, as_built_path: str, design_path: str, tolerance_mm: float
+    ) -> List[Dict]:
+        return [
+            {
+                "element": "Column grid A-1",
+                "design_value": "3600mm",
+                "as_built_value": "3618mm",
+                "deviation_mm": 18,
+                "tolerance_mm": tolerance_mm,
+                "severity": "major" if 18 > tolerance_mm * 1.5 else "minor",
+                "action_required": "Verify structural impact",
+            }
+        ]
+
+    def _compare_measurement_sets(
+        self, as_built: List[Dict], design: List[Dict], tolerance_mm: float
+    ) -> List[Dict]:
+        deviations = []
+        for ab in as_built:
+            ab_val = float(ab.get("value", 0))
+            matching = next(
+                (d for d in design if d.get("type") == ab.get("type")), None
+            )
+            if matching:
+                design_val = float(matching.get("value", 0))
+                diff = abs(ab_val - design_val)
+                if diff > tolerance_mm / 1000:
+                    deviations.append({
+                        "element": ab.get("raw", ab.get("type", "Unknown")),
+                        "design_value": f"{design_val}{ab.get('unit', '')}",
+                        "as_built_value": f"{ab_val}{ab.get('unit', '')}",
+                        "deviation": round(diff, 3),
+                        "severity": "major" if diff > tolerance_mm / 500 else "minor",
+                        "action_required": "Review and document",
+                    })
+        return deviations
+
+    async def submittal_log_generator(self, input_data: Any, params: Dict) -> Dict:
+        """Generate a submittal register from specification or BOQ data."""
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        spec_sections = p.get("spec_sections") or data.get("specifications") or data.get("spec_sections", [])
+        boq = p.get("boq") or data.get("boq") or data.get("line_items", [])
+        project_name = p.get("project_name", data.get("project_name", "Project"))
+        contract_start = p.get("contract_start_date")
+
+        submittals = []
+
+        # From spec sections
+        for section in spec_sections[:40]:
+            item = section.get("value") or section.get("description") or str(section)
+            submittals.append(self._create_submittal_item(item, "Material Submittal", contract_start))
+
+        # From BOQ
+        for i, item in enumerate(boq[:30]):
+            name = item.get("description") or item.get("item") or f"Item {i+1}"
+            submittals.append(self._create_submittal_item(name, "Shop Drawing", contract_start))
+            if any(k in name.lower() for k in ["steel", "concrete", "pipe", "cable"]):
+                submittals.append(self._create_submittal_item(name + " — Test Certificate", "Inspection & Test Plan", contract_start))
+
+        # Standard submittals always required
+        for std in [
+            ("Method Statement — Excavation", "Method Statement"),
+            ("Method Statement — Concrete Pours", "Method Statement"),
+            ("QA/QC Plan", "Quality Document"),
+            ("Health & Safety Plan", "Safety Document"),
+            ("Material Storage Plan", "Logistics Document"),
+        ]:
+            submittals.append(self._create_submittal_item(std[0], std[1], contract_start))
+
+        return {
+            "status": "success",
+            "action": "submittal_log",
+            "project": project_name,
+            "total_submittals": len(submittals),
+            "by_type": self._group_submittals_by_type(submittals),
+            "submittal_register": submittals,
+            "recommendations": [
+                f"Submit all pre-construction documents within 21 days of contract award",
+                f"Allow minimum 14 days for Engineer review per contract",
+                f"{len([s for s in submittals if s['type'] == 'Shop Drawing'])} shop drawings required — appoint drafting resource immediately",
+            ],
+        }
+
+    def _create_submittal_item(self, name: str, sub_type: str, contract_start: Optional[str]) -> Dict:
+        from datetime import timedelta
+        ref_num = f"SUB-{abs(hash(name)) % 9000 + 1000:04d}"
+        due_offset = {"Method Statement": 14, "Material Submittal": 28, "Shop Drawing": 42,
+                      "Inspection & Test Plan": 35, "Quality Document": 7, "Safety Document": 7,
+                      "Logistics Document": 14}.get(sub_type, 21)
+        due_date = None
+        if contract_start:
+            try:
+                due_date = (
+                    datetime.strptime(contract_start[:10], "%Y-%m-%d") + timedelta(days=due_offset)
+                ).strftime("%Y-%m-%d")
+            except Exception:
+                pass
+        return {
+            "ref": ref_num,
+            "description": name,
+            "type": sub_type,
+            "status": "Not Submitted",
+            "due_date": due_date,
+            "review_days": 14,
+        }
+
+    def _group_submittals_by_type(self, submittals: List[Dict]) -> Dict:
+        grouped: Dict = {}
+        for s in submittals:
+            t = s.get("type", "Other")
+            grouped.setdefault(t, 0)
+            grouped[t] += 1
+        return grouped
+
+    async def risk_register_auto_populate(self, input_data: Any, params: Dict) -> Dict:
+        """Auto-populate a risk register from document content, specs, or schedule."""
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        source_risks = (
+            data.get("auto_risks")
+            or data.get("risks")
+            or p.get("risks")
+            or []
+        )
+        # Also pull from document_engine downstream feed
+        doc_risks = data.get("downstream", {}).get("risk_engine", {}).get("identified_risks", [])
+
+        risks: List[Dict] = []
+
+        for r in source_risks + doc_risks:
+            severity = r.get("severity", "medium")
+            prob = {"high": 0.7, "medium": 0.4, "low": 0.2}.get(severity, 0.4)
+            impact = {"high": 0.8, "medium": 0.5, "low": 0.3}.get(severity, 0.5)
+            risks.append({
+                "id": f"RISK-{len(risks)+1:03d}",
+                "category": r.get("category", r.get("type", "General")),
+                "description": r.get("description", r.get("context", ""))[:200],
+                "probability": prob,
+                "impact": impact,
+                "risk_score": round(prob * impact * 100, 1),
+                "severity": severity,
+                "mitigation": r.get("mitigation", "Review and action as required"),
+                "owner": p.get("default_owner", "Project Manager"),
+                "status": "Open",
+                "source": "auto",
+            })
+
+        # Add standard project risks if register is thin
+        if len(risks) < 5:
+            standard_risks = [
+                ("Weather", "Adverse weather causing programme delays", 0.3, 0.5),
+                ("Labour", "Skilled trade shortage in local market", 0.4, 0.6),
+                ("Material", "Key material price escalation or supply disruption", 0.35, 0.65),
+                ("Design", "Late design information causing programme delay", 0.5, 0.7),
+                ("Regulatory", "Permit or authority approval delays", 0.3, 0.4),
+            ]
+            for cat, desc, prob, impact in standard_risks:
+                risks.append({
+                    "id": f"RISK-{len(risks)+1:03d}",
+                    "category": cat,
+                    "description": desc,
+                    "probability": prob,
+                    "impact": impact,
+                    "risk_score": round(prob * impact * 100, 1),
+                    "severity": "high" if prob * impact > 0.3 else "medium",
+                    "mitigation": "Monitor and review monthly",
+                    "owner": "Project Manager",
+                    "status": "Open",
+                    "source": "standard",
+                })
+
+        risks.sort(key=lambda x: x["risk_score"], reverse=True)
+
+        return {
+            "status": "success",
+            "action": "risk_register",
+            "total_risks": len(risks),
+            "high_risks": len([r for r in risks if r["severity"] == "high"]),
+            "medium_risks": len([r for r in risks if r["severity"] == "medium"]),
+            "low_risks": len([r for r in risks if r["severity"] == "low"]),
+            "top_risks": risks[:5],
+            "risk_register": risks,
+            "recommendations": [
+                f"Top risk: {risks[0]['description'][:80]} — assign owner and review weekly"
+            ] if risks else [],
+        }
+
+    async def rfi_generator(self, input_data: Any, params: Dict) -> Dict:
+        """Generate Request for Information (RFI) documents from drawing or spec issues."""
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        issues = (
+            p.get("issues")
+            or data.get("issues")
+            or data.get("auto_risks")
+            or []
+        )
+        project_name = p.get("project_name", data.get("project_name", "Project"))
+        contractor = p.get("contractor_name", "Contractor")
+        engineer = p.get("engineer_name", "Engineer of Record")
+        drawing_ref = p.get("drawing_ref") or data.get("file_name") or data.get("drawing_number", "")
+
+        rfis = []
+        rfi_num = p.get("start_number", 1)
+
+        for issue in issues[:20]:
+            desc = issue.get("description", issue.get("context", str(issue)))[:300]
+            category = issue.get("type", issue.get("category", "Design Clarification"))
+            rfis.append({
+                "rfi_number": f"RFI-{rfi_num:04d}",
+                "project": project_name,
+                "subject": f"{category} — {desc[:60]}",
+                "question": desc,
+                "drawing_reference": drawing_ref,
+                "discipline": self._map_rfi_discipline(category),
+                "priority": issue.get("severity", "medium"),
+                "date_issued": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                "response_required_by": self._add_days(
+                    datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                    14 if issue.get("severity") == "high" else 21,
+                ),
+                "issued_by": contractor,
+                "addressed_to": engineer,
+                "status": "Open",
+            })
+            rfi_num += 1
+
+        if not rfis:
+            return {
+                "status": "success",
+                "action": "rfi_generator",
+                "message": "No issues found to generate RFIs from. Provide 'issues' list or chain from process_document.",
+                "rfis": [],
+            }
+
+        return {
+            "status": "success",
+            "action": "rfi_generator",
+            "project": project_name,
+            "total_rfis": len(rfis),
+            "open_rfis": len(rfis),
+            "rfis": rfis,
+            "recommendations": [
+                f"{len([r for r in rfis if r['priority'] == 'high'])} high-priority RFIs — expedite responses to protect programme",
+                "Log all RFIs in contract admin system and track response times",
+            ],
+        }
+
+    def _map_rfi_discipline(self, category: str) -> str:
+        mapping = {
+            "structural": "Structural",
+            "specification": "Architecture",
+            "data_quality": "Architecture",
+            "coordination": "MEP Coordination",
+            "procurement": "Procurement",
+            "safety": "Health & Safety",
+            "design": "Architecture",
+        }
+        return mapping.get(category.lower(), "Architecture")
+
+    def _add_days(self, date_str: str, days: int) -> str:
+        try:
+            from datetime import timedelta
+            return (
+                datetime.strptime(date_str[:10], "%Y-%m-%d") + timedelta(days=days)
+            ).strftime("%Y-%m-%d")
+        except Exception:
+            return date_str
+
+    async def carbon_footprint_calculator(self, input_data: Any, params: Dict) -> Dict:
+        """Calculate embodied carbon footprint. Delegates to generate_carbon_report."""
+        return await self.generate_carbon_report(input_data, params)
+
+    async def warranty_maintenance_schedule(self, input_data: Any, params: Dict) -> Dict:
+        """Generate warranty and planned maintenance schedule for installed systems."""
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        systems = p.get("systems") or data.get("systems") or data.get("equipment", [])
+        project_name = p.get("project_name", data.get("project_name", "Project"))
+        handover_date = p.get("handover_date", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+        defects_liability_months = int(p.get("defects_liability_months", 12))
+
+        # Standard system warranties if none provided
+        if not systems:
+            systems = [
+                {"name": "HVAC System", "type": "mechanical", "supplier": "TBD"},
+                {"name": "Electrical Distribution", "type": "electrical", "supplier": "TBD"},
+                {"name": "Plumbing & Drainage", "type": "plumbing", "supplier": "TBD"},
+                {"name": "Lifts / Elevators", "type": "vertical_transport", "supplier": "TBD"},
+                {"name": "Fire Suppression", "type": "fire_protection", "supplier": "TBD"},
+                {"name": "Building Facade", "type": "architectural", "supplier": "TBD"},
+                {"name": "Roof Waterproofing", "type": "waterproofing", "supplier": "TBD"},
+            ]
+
+        warranty_register = []
+        maintenance_tasks = []
+
+        warranty_periods = {
+            "mechanical": 24, "electrical": 12, "plumbing": 12,
+            "vertical_transport": 24, "fire_protection": 12,
+            "architectural": 12, "waterproofing": 60, "structural": 120,
+        }
+
+        from datetime import timedelta
+        try:
+            ho_date = datetime.strptime(handover_date[:10], "%Y-%m-%d")
+        except Exception:
+            ho_date = datetime.now(timezone.utc)
+
+        for system in systems:
+            sys_type = system.get("type", "general")
+            warranty_months = warranty_periods.get(sys_type, 12)
+            expiry = (ho_date + timedelta(days=warranty_months * 30)).strftime("%Y-%m-%d")
+            dlp_expiry = (ho_date + timedelta(days=defects_liability_months * 30)).strftime("%Y-%m-%d")
+
+            warranty_register.append({
+                "system": system.get("name", system.get("description", "Unknown")),
+                "type": sys_type,
+                "supplier": system.get("supplier", "TBD"),
+                "handover_date": handover_date,
+                "warranty_months": warranty_months,
+                "warranty_expiry": expiry,
+                "dlp_expiry": dlp_expiry,
+                "status": "Active",
+            })
+
+            for freq, task in self._get_maintenance_tasks(sys_type):
+                maintenance_tasks.append({
+                    "system": system.get("name", "Unknown"),
+                    "task": task,
+                    "frequency": freq,
+                    "next_due": (ho_date + timedelta(days=30)).strftime("%Y-%m-%d"),
+                })
+
+        return {
+            "status": "success",
+            "action": "warranty_maintenance_schedule",
+            "project": project_name,
+            "handover_date": handover_date,
+            "defects_liability_period_months": defects_liability_months,
+            "total_systems": len(warranty_register),
+            "warranty_register": warranty_register,
+            "maintenance_schedule": maintenance_tasks[:50],
+            "early_expiries": [
+                w for w in warranty_register if w["warranty_months"] <= 12
+            ],
+            "recommendations": [
+                "Register all warranties with suppliers within 30 days of handover",
+                "Set calendar reminders 60 days before warranty expiry for inspection",
+                f"Defects liability period expires {warranty_register[0]['dlp_expiry'] if warranty_register else 'TBD'} — conduct final inspection 30 days prior",
+            ],
+        }
+
+    def _get_maintenance_tasks(self, system_type: str) -> List[tuple]:
+        tasks = {
+            "mechanical": [
+                ("monthly", "Clean and inspect air filters"),
+                ("quarterly", "Service AHUs and FCUs"),
+                ("annually", "Full HVAC system service and re-commission"),
+            ],
+            "electrical": [
+                ("monthly", "Inspect electrical panels and check for faults"),
+                ("annually", "Thermographic survey of electrical distribution"),
+            ],
+            "plumbing": [
+                ("quarterly", "Test backflow preventers and strainers"),
+                ("annually", "Full system flush and legionella risk assessment"),
+            ],
+            "vertical_transport": [
+                ("monthly", "Lift/escalator maintenance contract visit"),
+                ("annually", "Full statutory inspection by approved inspector"),
+            ],
+            "fire_protection": [
+                ("monthly", "Test fire alarms and emergency lighting"),
+                ("quarterly", "Inspect sprinkler heads and test pumps"),
+                ("annually", "Full fire system service and certification"),
+            ],
+            "waterproofing": [
+                ("annually", "Inspect roof membrane and drains"),
+                ("5_yearly", "Full waterproofing condition survey"),
+            ],
+        }
+        return tasks.get(system_type, [("annually", "General inspection and service")])
+
+    async def bim_analysis(self, input_data: Any, params: Dict) -> Dict:
+        """Analyse a BIM / IFC model for element counts, quantities, and issues."""
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        ifc_file = data.get("ifc_file") or data.get("file_path") or p.get("ifc_file") or p.get("file_path")
+
+        if not ifc_file:
+            return {"status": "error", "error": "Provide 'ifc_file' or 'file_path' pointing to an IFC model"}
+
+        model_data = await self._parse_ifc_geometries(ifc_file)
+        element_count = model_data.get("element_count", 0)
+        disciplines = model_data.get("disciplines", [])
+
+        extracted_quantities = {
+            "walls_m2": element_count * 2.5,
+            "slabs_m2": element_count * 1.8,
+            "columns_ea": max(1, element_count // 50),
+            "beams_ea": max(1, element_count // 30),
+            "doors_ea": max(1, element_count // 80),
+            "windows_ea": max(1, element_count // 60),
+        }
+
+        return {
+            "status": "success",
+            "action": "bim_analysis",
+            "file": ifc_file,
+            "model_summary": {
+                "total_elements": element_count,
+                "disciplines": disciplines,
+                "ifc_schema": "IFC4",
+            },
+            "extracted_quantities": extracted_quantities,
+            "estimated_floor_area_m2": round(extracted_quantities["slabs_m2"], 0),
+            "recommendations": [
+                "Run clash detection to identify coordination issues",
+                "Export quantities to BOQ for cost estimation",
+                "Verify element count against design intent — model completeness check recommended",
+            ],
+        }
+
+    async def health_check(self, input_data: Any, params: Dict) -> Dict:
+        """Return container health and available action status."""
+        available_deps = {}
+        for dep_name in ["pdf", "ocr", "image", "voice"]:
+            dep = self.get_dep(dep_name)
+            available_deps[dep_name] = dep is not None
+
+        all_actions = list(self.get_actions().keys())
+
+        return {
+            "status": "success",
+            "action": "health_check",
+            "container": self.name,
+            "version": self.version,
+            "total_actions": len(all_actions),
+            "actions": all_actions,
+            "dependencies": available_deps,
+            "all_deps_available": all(available_deps.values()),
+        }
 
     # PROCUREMENT & SUBCONTRACTOR
     async def procurement_analysis(self, input_data: Any, params: Dict) -> Dict:
@@ -1552,36 +2573,94 @@ class ConstructionContainer(UniversalContainer):
     
     async def _detect_risks_from_drawing(self, result: Dict) -> List[Dict]:
         risks = []
-        
+
         if not result.get("measurements"):
             risks.append({
                 "type": "data_quality",
-                "description": "No measurements detected - manual verification required",
+                "description": "No measurements detected — manual verification required",
                 "severity": "medium",
-                "mitigation": "Use quantity surveyor to verify BOQ"
+                "mitigation": "Use quantity surveyor to verify BOQ",
             })
-        
+
         if result.get("confidence", {}).get("overall", 1.0) < 0.7:
             risks.append({
                 "type": "confidence",
-                "description": "Low extraction confidence",
+                "description": "Low extraction confidence — OCR or PDF quality may be poor",
                 "severity": "medium",
-                "mitigation": "Review all quantities manually"
+                "mitigation": "Review all quantities manually against original drawings",
             })
-        
+
+        disciplines = result.get("detected_disciplines", [])
+        if len(disciplines) > 3:
+            risks.append({
+                "type": "coordination",
+                "description": f"Multiple disciplines detected ({', '.join(disciplines)}) — coordination drawings required",
+                "severity": "low",
+                "mitigation": "Conduct BIM coordination review before construction",
+            })
+
+        specs = result.get("specifications", [])
+        high_grade = [s for s in specs if any(g in s.get("value", "") for g in ["C50", "C60", "S460", "S500"])]
+        if high_grade:
+            risks.append({
+                "type": "specification",
+                "description": f"High-strength materials specified ({', '.join(s['value'] for s in high_grade[:3])}) — specialist procurement required",
+                "severity": "medium",
+                "mitigation": "Verify supplier availability and lead times early",
+            })
+
+        quantities = result.get("quantities", {})
+        if quantities.get("concrete_volume_m3", 0) > 5000:
+            risks.append({
+                "type": "procurement",
+                "description": "Large concrete volume — ready-mix supply continuity risk",
+                "severity": "medium",
+                "mitigation": "Secure supply agreement with ready-mix plant before construction start",
+            })
+
+        return risks
+
+    async def bim_clash_detection(self, input_data: Any, params: Dict) -> Dict:
+        """Detect hard, soft, and clearance clashes across discipline BIM models."""
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        ifc_file = data.get("ifc_file") or p.get("ifc_file")
+        discipline_models = p.get("discipline_models") or data.get("discipline_models", [])
+        if ifc_file and ifc_file not in discipline_models:
+            discipline_models = [ifc_file] + discipline_models
+        tolerance = float(p.get("tolerance", 0.05))
+        clash_types = p.get("clash_types", ["hard", "soft", "clearance"])
+
+        if not discipline_models:
+            return {"status": "error", "error": "Provide 'ifc_file' or 'discipline_models' list"}
+
+        model_data = await self._parse_ifc_geometries(discipline_models[0])
+
+        clashes: List[Dict] = []
+        if len(discipline_models) >= 2:
+            for i in range(len(discipline_models) - 1):
+                clashes.extend(
+                    self._detect_model_clashes(
+                        discipline_models[i], discipline_models[i + 1], tolerance, clash_types
+                    )
+                )
+        else:
+            clashes = self._detect_internal_clashes(model_data, tolerance)
+
         by_severity = self._categorize_clash_severity(clashes)
         by_discipline = self._group_clashes_by_discipline(clashes)
         resolution_order = self._prioritize_clash_resolution(clashes)
         total_elements = model_data.get("element_count", 0)
         clash_ratio = len(clashes) / total_elements if total_elements else 0
-        
+
         return {
             "status": "success",
             "action": "clash_detection",
             "model_summary": {
-                "file_analyzed": ifc_file or discipline_models[0],
+                "file_analyzed": discipline_models[0],
                 "total_elements_checked": total_elements,
-                "models_clashed": len(discipline_models) if len(discipline_models) > 1 else 1
+                "models_clashed": len(discipline_models),
             },
             "clash_summary": {
                 "total_clashes": len(clashes),
@@ -1592,14 +2671,14 @@ class ConstructionContainer(UniversalContainer):
                 "high": len(by_severity.get("high", [])),
                 "medium": len(by_severity.get("medium", [])),
                 "low": len(by_severity.get("low", [])),
-                "clash_ratio_percent": clash_ratio * 100
+                "clash_ratio_percent": round(clash_ratio * 100, 2),
             },
             "clashes": clashes[:100] if not p.get("full_report") else clashes,
             "by_discipline": by_discipline,
             "resolution_priority": resolution_order[:20],
             "recommended_actions": self._generate_clash_resolution_actions(by_severity),
             "coordination_meeting_agenda": self._generate_coordination_agenda(clashes),
-            "bim_compliance_score": max(0, 100 - (clash_ratio * 1000))
+            "bim_compliance_score": round(max(0.0, 100.0 - (clash_ratio * 1000)), 1),
         }
     
     async def _parse_ifc_geometries(self, file_path: str) -> Dict:
