@@ -1509,14 +1509,18 @@ class ConstructionContainer(UniversalContainer):
                 ))
 
         if not procurement_items:
-            # Use sample commercial project BOQ
-            for item, qty, unit in [
+            rsmeans = self._get_rsmeans_data()
+            schedule_start = p.get("schedule_start") or data.get("schedule_start")
+            for item_name, qty, unit in [
                 ("Concrete C30", 450, "m3"), ("Rebar reinforcement", 52000, "kg"),
                 ("Curtain wall glazing", 1200, "m2"), ("HVAC system", 3500, "m2"),
                 ("Electrical installation", 3500, "m2"), ("Structural steel", 85000, "kg"),
                 ("Passenger lift", 2, "ea"), ("External cladding", 800, "m2"),
             ]:
-                procurement_items.append(self._build_procurement_item(item, qty, unit))
+                category, lead, supplier = self._classify_procurement_item(item_name)
+                unit_cost = self._lookup_unit_cost(item_name, unit, rsmeans)
+                total = unit_cost * qty
+                procurement_items.append(self._build_procurement_item(item_name, qty, unit, unit_cost, total, category, lead, supplier, schedule_start))
 
         procurement_items.sort(key=lambda x: x["lead_time_weeks"], reverse=True)
         critical = [i for i in procurement_items if i["priority"] == "critical"]
