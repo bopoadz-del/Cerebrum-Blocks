@@ -141,7 +141,9 @@ class FormulaExecutorBlock(UniversalBlock):
         params = params or {}
         data = input_data if isinstance(input_data, dict) else {}
 
-        description = data.get("formula_description") or params.get("formula_description", "")
+        # InputAdapter wraps bare strings as {"text": "..."} — use as formula description
+        text_fallback = data.get("text") or data.get("input") or (str(input_data) if not isinstance(input_data, dict) else "")
+        description = data.get("formula_description") or params.get("formula_description") or text_fallback
         input_values = data.get("input_values", {})
         input_values.update(params.get("input_values", {}))
         formula_key = data.get("formula_key") or params.get("formula_key")

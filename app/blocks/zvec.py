@@ -55,11 +55,17 @@ class ZvecBlock(UniversalBlock):
         operation = params.get("operation", "embed")
 
         text = ""
+        _input_text_a = ""
+        _input_text_b = ""
         if isinstance(input_data, str):
             text = input_data
         elif isinstance(input_data, dict):
             text = (input_data.get("text") or input_data.get("query") or
-                    input_data.get("input") or params.get("text", ""))
+                    input_data.get("input") or "")
+            _input_text_a = input_data.get("text_a", "")
+            _input_text_b = input_data.get("text_b", "")
+            if not text:
+                text = _input_text_a or params.get("text", "")
         else:
             text = params.get("text", "")
 
@@ -92,8 +98,8 @@ class ZvecBlock(UniversalBlock):
                 }
 
             elif operation == "similarity":
-                text_a = params.get("text_a", text)
-                text_b = params.get("text_b", "")
+                text_a = params.get("text_a") or _input_text_a or text
+                text_b = params.get("text_b") or _input_text_b or ""
                 texts_list = params.get("texts", [])
 
                 if texts_list and len(texts_list) >= 2:

@@ -32,6 +32,10 @@ from .orchestrator import OrchestratorBlock
 from .traffic_manager import TrafficManagerBlock
 from .event_bus import EventBusBlock
 from .context_broker import ContextBrokerBlock
+from .cache_manager import CacheManagerBlock
+from .async_processor import AsyncProcessorBlock
+from .file_hasher import FileHasherBlock
+from .llm_enhancer import LLMEnhancerBlock
 
 # Document Engine
 from .document_engine import DocumentEngineBlock
@@ -86,6 +90,10 @@ BLOCK_REGISTRY = {
     "traffic_manager": TrafficManagerBlock,
     "event_bus": EventBusBlock,
     "context_broker": ContextBrokerBlock,
+    "cache_manager": CacheManagerBlock,
+    "async_processor": AsyncProcessorBlock,
+    "file_hasher": FileHasherBlock,
+    "llm_enhancer": LLMEnhancerBlock,
     
     # Document Engine
     "document_engine": DocumentEngineBlock,

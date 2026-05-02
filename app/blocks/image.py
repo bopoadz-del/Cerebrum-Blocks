@@ -143,6 +143,13 @@ class ImageBlock(UniversalBlock):
             file_path = input_data.get("file_path") or input_data.get("path")
             url = input_data.get("url")
             prompt = input_data.get("prompt", prompt)
+            # InputAdapter wraps bare strings as {"text": "..."} — handle URL and path from it
+            if not file_path and not url:
+                raw = input_data.get("text") or input_data.get("input") or ""
+                if raw.startswith("http"):
+                    url = raw
+                elif raw and os.path.exists(raw):
+                    file_path = raw
         else:
             return {"status": "error", "error": "Input must be a file path, URL, or {file_path, url, prompt}"}
 

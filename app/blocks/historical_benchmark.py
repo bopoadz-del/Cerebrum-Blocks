@@ -106,7 +106,7 @@ class HistoricalBenchmarkBlock(UniversalBlock):
         return self._lookup(data, params)
 
     def _lookup(self, data: Dict, params: Dict) -> Dict:
-        item = params.get("item") or data.get("item") or data.get("description", "")
+        item = params.get("item") or data.get("item") or data.get("description") or data.get("text") or data.get("input", "")
         unit = (params.get("unit") or data.get("unit", "")).lower()
         location = (params.get("location") or data.get("location", "us national average")).lower()
         project_type = (params.get("project_type") or data.get("project_type", "general_building")).lower()

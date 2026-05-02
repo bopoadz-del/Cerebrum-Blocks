@@ -64,6 +64,11 @@ class PDFBlock(TypedBlock):
         url = None
         if isinstance(input_data, dict):
             url = input_data.get("url")
+            # InputAdapter wraps bare strings as {"text": "..."} — check for URL there
+            if not url:
+                raw = input_data.get("text") or input_data.get("input") or ""
+                if raw.startswith("http"):
+                    url = raw
         elif isinstance(input_data, str) and input_data.startswith("http"):
             url = input_data
         

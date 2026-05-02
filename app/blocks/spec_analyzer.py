@@ -93,21 +93,24 @@ class SpecAnalyzerBlock(UniversalBlock):
         data = input_data if isinstance(input_data, dict) else {}
 
         file_path = data.get("file_path") or params.get("file_path")
-        if not file_path:
-            return {"status": "error", "error": "No file_path provided"}
 
-        if not os.path.exists(file_path):
-            return {"status": "error", "error": f"File not found: {file_path}"}
+        # Accept raw text directly (InputAdapter may wrap it as {"text": "..."})
+        raw_text = data.get("text") or data.get("input") or (str(input_data) if isinstance(input_data, str) else "")
 
-        try:
-            text, page_count = self._extract_text(file_path, params)
-        except ImportError:
-            return {
-                "status": "error",
-                "error": "pymupdf not installed. Run: pip install pymupdf",
-            }
-        except Exception as e:
-            return {"status": "error", "error": f"PDF extraction failed: {e}"}
+        if file_path:
+            if not os.path.exists(file_path):
+                return {"status": "error", "error": f"File not found: {file_path}"}
+            try:
+                text, page_count = self._extract_text(file_path, params)
+            except ImportError:
+                return {"status": "error", "error": "pymupdf not installed. Run: pip install pymupdf"}
+            except Exception as e:
+                return {"status": "error", "error": f"PDF extraction failed: {e}"}
+        elif raw_text:
+            text = raw_text
+            page_count = 0
+        else:
+            return {"status": "error", "error": "Provide file_path (PDF) or raw spec text as input"}
 
         grade_requirements = self._extract_grades(text)
         material_specs = self._extract_materials(text)

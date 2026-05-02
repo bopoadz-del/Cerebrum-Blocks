@@ -63,11 +63,39 @@ class OCRBlock(TypedBlock):
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Extract text from image (or PDF) with preprocessing"""
         params = params or {}
-        
+
+        # Download from URL if needed (handles bare URL strings and InputAdapter {"text": "url"} wrapping)
+        url = None
+        if isinstance(input_data, str) and input_data.startswith("http"):
+            url = input_data
+        elif isinstance(input_data, dict):
+            url = input_data.get("url")
+            if not url:
+                raw = input_data.get("text") or input_data.get("input") or ""
+                if raw.startswith("http"):
+                    url = raw
+
+        if url:
+            import httpx
+            try:
+                async with httpx.AsyncClient(follow_redirects=True) as client:
+                    response = await client.get(url, timeout=30)
+                    response.raise_for_status()
+                    ext = ".jpg"
+                    for candidate in [".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp"]:
+                        if candidate in url.lower():
+                            ext = candidate
+                            break
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as f:
+                        f.write(response.content)
+                        input_data = f.name
+            except Exception as e:
+                return {"status": "error", "text": "", "confidence": 0, "error": f"Download failed: {str(e)}"}
+
         image_path = self._get_image_path(input_data)
         if not image_path:
             return {"status": "error", "text": "", "confidence": 0, "error": "No image provided"}
-        
+
         if not os.path.exists(image_path):
             return {"status": "error", "text": "", "confidence": 0, "error": f"File not found: {image_path}"}
         
