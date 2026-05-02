@@ -40,6 +40,18 @@ from .document_engine import DocumentEngineBlock
 from .historical_benchmark import HistoricalBenchmarkBlock
 from .boq_processor import BOQProcessorBlock
 
+# Group 4: Advanced Construction Intelligence
+from .bim_extractor import BIMExtractorBlock
+from .drawing_qto import DrawingQTOBlock
+from .formula_executor import FormulaExecutorBlock
+from .jetson_gateway import JetsonGatewayBlock
+from .learning_engine import LearningEngineBlock
+from .primavera_parser import PrimaveraParserBlock
+from .recommendation_template import RecommendationTemplateBlock
+from .smart_orchestrator import SmartOrchestratorBlock
+from .spec_analyzer import SpecAnalyzerBlock
+from .sympy_reasoning import SymPyReasoningBlock
+
 # Containers
 from app.containers import ConstructionContainer
 
@@ -81,6 +93,18 @@ BLOCK_REGISTRY = {
     # Construction Intelligence Blocks
     "historical_benchmark": HistoricalBenchmarkBlock,
     "boq_processor": BOQProcessorBlock,
+
+    # Group 4: Advanced Construction Intelligence
+    "bim_extractor": BIMExtractorBlock,
+    "drawing_qto": DrawingQTOBlock,
+    "formula_executor": FormulaExecutorBlock,
+    "jetson_gateway": JetsonGatewayBlock,
+    "learning_engine": LearningEngineBlock,
+    "primavera_parser": PrimaveraParserBlock,
+    "recommendation_template": RecommendationTemplateBlock,
+    "smart_orchestrator": SmartOrchestratorBlock,
+    "spec_analyzer": SpecAnalyzerBlock,
+    "sympy_reasoning": SymPyReasoningBlock,
 
     # Containers
     "construction": ConstructionContainer,
