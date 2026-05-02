@@ -4744,6 +4744,76 @@ Total Extension of Time Sought: {total_delay} days
         }
 
 
+    async def _analyse_text_only(self, text: str, doc_type_hint: str = "auto") -> Dict:
+        """Classify and extract structured data from raw text without a file."""
+        t = text.lower()
+
+        # Detect doc type from content
+        if doc_type_hint != "auto":
+            doc_type = doc_type_hint
+        elif any(k in t for k in ["bill of quantities", "boq", "schedule of rates", "item no", "unit rate"]):
+            doc_type = "bom"
+        elif any(k in t for k in ["specification", "clause", "section", "csi", "masterformat", "div "]):
+            doc_type = "specification"
+        elif any(k in t for k in ["contract", "agreement", "clause", "liquidated damages", "retention"]):
+            doc_type = "contract"
+        elif any(k in t for k in ["programme", "schedule", "activity id", "wbs", "baseline", "primavera"]):
+            doc_type = "schedule"
+        elif any(k in t for k in ["drawing", "elevation", "section", "plan", "detail", "grid"]):
+            doc_type = "drawing"
+        else:
+            doc_type = "report"
+
+        # Extract quantities from text
+        import re
+        quantities = {}
+        patterns = [
+            (r"concrete[^\n]*?(\d[\d,\.]*)\s*m3", "concrete_m3", "m3"),
+            (r"rebar[^\n]*?(\d[\d,\.]*)\s*kg", "rebar_kg", "kg"),
+            (r"reinforcement[^\n]*?(\d[\d,\.]*)\s*kg", "rebar_kg", "kg"),
+            (r"steel[^\n]*?(\d[\d,\.]*)\s*kg", "structural_steel_kg", "kg"),
+            (r"curtain wall[^\n]*?(\d[\d,\.]*)\s*m2", "curtain_wall_m2", "m2"),
+            (r"glazing[^\n]*?(\d[\d,\.]*)\s*m2", "glazing_m2", "m2"),
+            (r"hvac[^\n]*?(\d[\d,\.]*)\s*m2", "hvac_m2", "m2"),
+            (r"electrical[^\n]*?(\d[\d,\.]*)\s*m2", "electrical_m2", "m2"),
+            (r"blockwork[^\n]*?(\d[\d,\.]*)\s*m2", "blockwork_m2", "m2"),
+            (r"formwork[^\n]*?(\d[\d,\.]*)\s*m2", "formwork_m2", "m2"),
+            (r"excavat[^\n]*?(\d[\d,\.]*)\s*m3", "excavation_m3", "m3"),
+            (r"pil[^\n]*?(\d[\d,\.]*)\s*lm", "piling_lm", "lm"),
+            (r"waterproof[^\n]*?(\d[\d,\.]*)\s*m2", "waterproofing_m2", "m2"),
+            (r"roofing[^\n]*?(\d[\d,\.]*)\s*m2", "roofing_m2", "m2"),
+            (r"tiling[^\n]*?(\d[\d,\.]*)\s*m2", "tiling_m2", "m2"),
+            (r"painting[^\n]*?(\d[\d,\.]*)\s*m2", "painting_m2", "m2"),
+            (r"plumbing[^\n]*?(\d[\d,\.]*)\s*m2", "plumbing_m2", "m2"),
+        ]
+        for pattern, key, unit in patterns:
+            m = re.search(pattern, t)
+            if m:
+                try:
+                    val = float(m.group(1).replace(",", ""))
+                    quantities[key] = {"quantity": val, "unit": unit}
+                except ValueError:
+                    pass
+
+        # Extract risks from text
+        risks = []
+        risk_keywords = ["design change", "material delay", "labour shortage", "weather", "cash flow",
+                         "subcontractor", "permit", "ground condition", "safety", "covid", "inflation"]
+        for rk in risk_keywords:
+            if rk in t:
+                risks.append({"description": rk.title(), "likelihood": "medium", "impact": "medium"})
+
+        return {
+            "status": "success",
+            "doc_type": doc_type,
+            "quantities": quantities,
+            "risks": risks,
+            "specifications": [],
+            "title": None,
+            "project": None,
+            "pages": None,
+        }
+
     async def auto_pipeline(self, input_data: Any, params: Dict) -> Dict:
         """
         Single-call intelligent pipeline.
@@ -4753,17 +4823,22 @@ Total Extension of Time Sought: {total_delay} days
         """
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
-        file_path = data.get("file_path") or p.get("file_path")
+        file_path = data.get("file_path") or p.get("file_path") or ""
         extracted_text = data.get("extracted_text") or data.get("text") or ""
 
-        if not file_path:
-            return {"status": "error", "error": "file_path required"}
+        if not file_path and not extracted_text:
+            return {"status": "error", "error": "Provide file_path or extracted_text"}
 
         # ── Step 1: domain analysis ──────────────────────────────────────────
-        doc_result = await self.process_document(
-            {"file_path": file_path, "extracted_text": extracted_text},
-            {"doc_type": p.get("doc_type", "auto"), "file_path": file_path}
-        )
+        if file_path:
+            doc_result = await self.process_document(
+                {"file_path": file_path, "extracted_text": extracted_text},
+                {"doc_type": p.get("doc_type", "auto"), "file_path": file_path}
+            )
+        else:
+            # Text-only path — classify from content, skip file IO
+            doc_type_hint = p.get("doc_type", "auto")
+            doc_result = await self._analyse_text_only(extracted_text, doc_type_hint)
 
         doc_type = doc_result.get("doc_type", "unknown")
         panels = []
