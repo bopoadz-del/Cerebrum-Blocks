@@ -1077,8 +1077,16 @@ class ConstructionContainer(UniversalContainer):
         project_type = p.get("project_type", "general_building")
         
         rsmeans_data = self._get_rsmeans_data()
-        location_factor = rsmeans_data.get("location_factors", {}).get(location, 1.0)
-        
+        loc_factors = rsmeans_data.get("location_factors", {})
+        # case-insensitive location lookup
+        loc_key = next(
+            (k for k in loc_factors if k.lower() == location.lower()),
+            next((k for k in loc_factors if location.lower() in k.lower() or k.lower() in location.lower()), None)
+        )
+        location_factor = loc_factors.get(loc_key, 1.0) if loc_key else 1.0
+
+        _UNIT_SUFFIXES = {"_m3": "m3", "_m2": "m2", "_kg": "kg", "_lm": "lm", "_ea": "ea", "_nr": "nr"}
+
         line_items = []
         for item_name, qty_data in quantities.items():
             if isinstance(qty_data, dict):
@@ -1087,7 +1095,12 @@ class ConstructionContainer(UniversalContainer):
             else:
                 quantity = qty_data
                 unit = "ea"
-            
+                # extract unit from key suffix e.g. concrete_m3 → m3
+                for suffix, u in _UNIT_SUFFIXES.items():
+                    if item_name.endswith(suffix):
+                        unit = u
+                        break
+
             base_rate = self._lookup_unit_cost(item_name, unit, rsmeans_data)
             adjusted_rate = base_rate * location_factor
             total = quantity * adjusted_rate
@@ -1371,16 +1384,22 @@ class ConstructionContainer(UniversalContainer):
         contract_value = float(p.get("contract_value") or data.get("contract_value", 0))
         work_done_pct = float(p.get("work_done_percent") or data.get("work_done_percent", 0)) / 100.0
         previous_certified = float(p.get("previous_certified") or data.get("previous_certified", 0))
-        retention_pct = float(p.get("retention_percent", 10)) / 100.0
-        advance_payment = float(p.get("advance_payment") or data.get("advance_payment", 0))
+        retention_pct = float(p.get("retention_percent", p.get("retention_rate", 10))) / 100.0
+        advance_payment = float(p.get("advance_payment") or data.get("advance_paid", 0) or data.get("advance_payment", 0))
         advance_recovery_pct = float(p.get("advance_recovery_percent", 20)) / 100.0
         payment_period = p.get("payment_period", "Current Period")
-        contractor = p.get("contractor_name", data.get("contractor_name", "Contractor"))
+        contractor = p.get("contractor_name", p.get("contractor", data.get("contractor_name", "Contractor")))
 
+        # Accept gross_valuation directly if contract_value not provided
+        direct_gross = float(p.get("gross_valuation") or data.get("gross_valuation", 0))
         if contract_value <= 0:
-            return {"status": "error", "error": "contract_value required and must be > 0"}
-
-        gross_valuation = round(contract_value * work_done_pct, 2)
+            if direct_gross > 0:
+                gross_valuation = round(direct_gross, 2)
+                contract_value = direct_gross  # estimate contract value from gross for balance calc
+            else:
+                return {"status": "error", "error": "Provide contract_value (+ work_done_percent) or gross_valuation"}
+        else:
+            gross_valuation = round(contract_value * work_done_pct, 2)
         retention_held = round(gross_valuation * retention_pct, 2)
         advance_recovered = round(
             min(advance_payment, gross_valuation * advance_recovery_pct), 2
