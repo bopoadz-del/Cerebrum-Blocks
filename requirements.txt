@@ -68,9 +68,12 @@ anthropic>=0.40.0
 # googletrans>=4.0.0
 # deepl>=1.16.0
 
-# Voice - Optional (uncomment if needed)
-# SpeechRecognition>=3.10.0
-# gTTS>=2.4.0
+# Voice
+SpeechRecognition>=3.10.0
+gTTS>=2.5.0
+
+# Translation
+deep-translator>=1.11.0
 
 # Microsoft OneDrive - Optional (uncomment if needed)
 # msal>=1.25.0
