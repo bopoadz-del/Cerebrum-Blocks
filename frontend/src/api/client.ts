@@ -15,7 +15,7 @@ export class CerebrumClient {
   private base: string;
   private key: string;
 
-  constructor(apiKey: string = "cb_dev_key", baseUrl: string = DEFAULT_BASE) {
+  constructor(apiKey: string = import.meta.env.VITE_API_KEY || "cb_dev_key", baseUrl: string = DEFAULT_BASE) {
     this.base = baseUrl.replace(/\/$/, "");
     this.key = apiKey;
   }

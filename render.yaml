@@ -14,6 +14,8 @@ services:
         value: production
       - key: DEEPSEEK_API_KEY
         value: sk-62229915230e448b82ea08550d11fa86
+      - key: CEREBRUM_API_KEY_FRONTEND
+        sync: false
     disk:
       name: data
       mountPath: /app/data
@@ -24,11 +26,14 @@ services:
   - type: web
     name: cerebrum-platform
     env: static
-    buildCommand: echo "Static HTML - no build"
-    staticPublishPath: ./platform
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
     envVars:
-      - key: API_URL
+      - key: VITE_API_URL
         value: https://cerebrum-platform-api.onrender.com
+      - key: VITE_API_KEY
+        sync: false
 
   # STORE BACKEND - Block catalog
   - type: web

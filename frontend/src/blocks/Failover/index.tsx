@@ -5,7 +5,7 @@ interface FailoverBlockProps {
   apiKey: string;
 }
 
-export const FailoverBlock: React.FC<FailoverBlockProps> = ({ apiKey }) => {
+export const FailoverBlock: React.FC<FailoverBlockProps> = ({ apiKey: _apiKey }) => {
   const [status, setStatus] = useState<any>(null);
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
