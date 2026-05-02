@@ -4033,11 +4033,19 @@ Total Extension of Time Sought: {total_delay} days
         
         if not boq:
             boq = [
-                {"description": "Concrete C30", "unit": "m3", "quantity": 450, "unit_rate": 155},
-                {"description": "Rebar reinforcement", "unit": "kg", "quantity": 52000, "unit_rate": 1.8},
-                {"description": "Curtain wall glazing", "unit": "m2", "quantity": 1200, "unit_rate": 420},
-                {"description": "HVAC system", "unit": "m2", "quantity": 3500, "unit_rate": 125},
-                {"description": "Electrical installation", "unit": "m2", "quantity": 3500, "unit_rate": 85},
+                {"id": "01", "description": "Concrete C30", "material_type": "concrete", "unit": "m3", "quantity": 450, "unit_rate": 155, "value": 69750},
+                {"id": "02", "description": "Rebar reinforcement", "material_type": "steel", "unit": "kg", "quantity": 52000, "unit_rate": 1.8, "value": 93600},
+                {"id": "03", "description": "Curtain wall glazing", "material_type": "glazing", "unit": "m2", "quantity": 1200, "unit_rate": 420, "value": 504000},
+                {"id": "04", "description": "HVAC system", "material_type": "mechanical", "unit": "m2", "quantity": 3500, "unit_rate": 125, "value": 437500},
+                {"id": "05", "description": "Electrical installation", "material_type": "electrical", "unit": "m2", "quantity": 3500, "unit_rate": 85, "value": 297500},
+            ]
+
+        if not suppliers:
+            suppliers = [
+                {"name": "Supplier A — Gulf Materials", "price_score": 82, "delivery_score": 85, "quality_score": 88, "financial_score": 90, "esg_score": 70, "support_score": 75, "lead_time": 4, "capabilities": ["concrete", "steel", "general"], "payment_terms": "net_30"},
+                {"name": "Supplier B — Emirates Building Supplies", "price_score": 78, "delivery_score": 90, "quality_score": 85, "financial_score": 85, "esg_score": 75, "support_score": 80, "lead_time": 3, "capabilities": ["concrete", "masonry", "general"], "payment_terms": "net_45"},
+                {"name": "Supplier C — Facades & Glass LLC", "price_score": 75, "delivery_score": 80, "quality_score": 92, "financial_score": 88, "esg_score": 80, "support_score": 85, "lead_time": 8, "capabilities": ["glazing", "cladding", "facades"], "payment_terms": "net_30"},
+                {"name": "Supplier D — MEP Solutions", "price_score": 80, "delivery_score": 82, "quality_score": 85, "financial_score": 83, "esg_score": 72, "support_score": 88, "lead_time": 6, "capabilities": ["mechanical", "electrical", "plumbing"], "payment_terms": "net_30"},
             ]
         
         scored_suppliers = []
@@ -4326,13 +4334,13 @@ Total Extension of Time Sought: {total_delay} days
         
         if not equipment_list:
             equipment_list = [
-                {"id": "HVAC-01", "name": "AHU-1 Air Handling Unit", "system": "HVAC", "manufacturer": "TBC", "model": "TBC", "location": "Roof Level", "warranty_years": 2},
-                {"id": "HVAC-02", "name": "Chiller Unit CHL-1", "system": "HVAC", "manufacturer": "TBC", "model": "TBC", "location": "Plant Room", "warranty_years": 2},
-                {"id": "ELEC-01", "name": "Main LV Switchboard", "system": "Electrical", "manufacturer": "TBC", "model": "TBC", "location": "Ground Floor", "warranty_years": 1},
-                {"id": "ELEC-02", "name": "Emergency Generator", "system": "Electrical", "manufacturer": "TBC", "model": "TBC", "location": "Basement", "warranty_years": 2},
-                {"id": "PLMB-01", "name": "Booster Pump Set", "system": "Plumbing", "manufacturer": "TBC", "model": "TBC", "location": "Pump Room", "warranty_years": 1},
-                {"id": "FIRE-01", "name": "Fire Alarm Panel", "system": "Fire Protection", "manufacturer": "TBC", "model": "TBC", "location": "Reception", "warranty_years": 1},
-                {"id": "LIFT-01", "name": "Passenger Lift 1", "system": "Vertical Transport", "manufacturer": "TBC", "model": "TBC", "location": "Core", "warranty_years": 2},
+                {"tag": "HVAC-01", "description": "AHU-1 Air Handling Unit", "system_type": "HVAC", "manufacturer": "TBC", "model": "TBC", "location": "Roof Level", "warranty_years": 2},
+                {"tag": "HVAC-02", "description": "Chiller Unit CHL-1", "system_type": "HVAC", "manufacturer": "TBC", "model": "TBC", "location": "Plant Room", "warranty_years": 2},
+                {"tag": "ELEC-01", "description": "Main LV Switchboard", "system_type": "Electrical", "manufacturer": "TBC", "model": "TBC", "location": "Ground Floor", "warranty_years": 1},
+                {"tag": "ELEC-02", "description": "Emergency Generator", "system_type": "Electrical", "manufacturer": "TBC", "model": "TBC", "location": "Basement", "warranty_years": 2},
+                {"tag": "PLMB-01", "description": "Booster Pump Set", "system_type": "Plumbing", "manufacturer": "TBC", "model": "TBC", "location": "Pump Room", "warranty_years": 1},
+                {"tag": "FIRE-01", "description": "Fire Alarm Panel", "system_type": "Fire Protection", "manufacturer": "TBC", "model": "TBC", "location": "Reception", "warranty_years": 1},
+                {"tag": "LIFT-01", "description": "Passenger Lift 1", "system_type": "Vertical Transport", "manufacturer": "TBC", "model": "TBC", "location": "Core", "warranty_years": 2},
             ]
         
         sections = []
@@ -4379,7 +4387,7 @@ Total Extension of Time Sought: {total_delay} days
         sections.append({"section": "E. Preventive Maintenance", "content": {"daily_tasks": self._generate_daily_tasks(equipment_list), "weekly_tasks": self._generate_weekly_tasks(equipment_list), "monthly_tasks": self._generate_monthly_tasks(equipment_list), "quarterly_tasks": self._generate_quarterly_tasks(equipment_list), "annual_tasks": self._generate_annual_tasks(equipment_list), "maintenance_matrix": self._create_maintenance_matrix(equipment_list)}})
         sections.append({"section": "F. Troubleshooting Guide", "content": self._generate_troubleshooting_guide(equipment_list)})
         sections.append({"section": "G. As-Built Documentation", "content": {"drawings_list": [Path(d).name for d in as_built_drawings], "specifications_reference": spec_file if spec_file else "Refer to contract documents", "test_results": commissioning_data.get("test_results", []), "certificates": commissioning_data.get("certificates", [])}})
-        sections.append({"section": "H. Warranties & Spare Parts", "content": {"warranty_register": [{"equipment": e["description"], "expiry": e.get("warranty_expiry"), "contact": e.get("supplier_contact")} for e in equipment_list], "recommended_spare_parts": self._generate_spare_parts_list(equipment_list), "supplier_contacts": list(set([e.get("supplier_contact") for e in equipment_list if e.get("supplier_contact")]))}})
+        sections.append({"section": "H. Warranties & Spare Parts", "content": {"warranty_register": [{"equipment": e.get("description") or e.get("name", "TBD"), "expiry": e.get("warranty_expiry"), "contact": e.get("supplier_contact")} for e in equipment_list], "recommended_spare_parts": self._generate_spare_parts_list(equipment_list), "supplier_contacts": list(set([e.get("supplier_contact") for e in equipment_list if e.get("supplier_contact")]))}})
         
         manual_metadata = {
             "document_number": f"OM-{project_name.replace(' ', '-')}-{datetime.now(timezone.utc).year}",
