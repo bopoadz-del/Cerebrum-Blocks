@@ -76,7 +76,24 @@ class OCRBlockV2(TypedBlock):
         image_path = self._get_image_path(input_data)
         if not image_path:
             return self._error_response("No image provided")
-        
+
+        if image_path.startswith("http://") or image_path.startswith("https://"):
+            import httpx, tempfile
+            try:
+                async with httpx.AsyncClient(follow_redirects=True) as client:
+                    resp = await client.get(image_path, timeout=30)
+                    resp.raise_for_status()
+                    ext = ".jpg"
+                    for candidate in [".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp"]:
+                        if candidate in image_path.lower():
+                            ext = candidate
+                            break
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as f:
+                        f.write(resp.content)
+                        image_path = f.name
+            except Exception as e:
+                return self._error_response(f"Download failed: {str(e)}")
+
         if not os.path.exists(image_path):
             return self._error_response(f"File not found: {image_path}")
         

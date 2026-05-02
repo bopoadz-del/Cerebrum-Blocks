@@ -69,11 +69,23 @@ class PDFBlockV2(TypedBlock):
         """Extract text from PDF and return TextContent format"""
         params = params or {}
         
-        # Get PDF path
+        # Download from URL if needed
         pdf_path = self._get_pdf_path(input_data)
         if not pdf_path:
             return self._error_response("No PDF provided")
-        
+
+        if pdf_path.startswith("http://") or pdf_path.startswith("https://"):
+            import httpx, tempfile
+            try:
+                async with httpx.AsyncClient(follow_redirects=True) as client:
+                    resp = await client.get(pdf_path, timeout=30)
+                    resp.raise_for_status()
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as f:
+                        f.write(resp.content)
+                        pdf_path = f.name
+            except Exception as e:
+                return self._error_response(f"Download failed: {str(e)}")
+
         if not os.path.exists(pdf_path):
             return self._error_response(f"File not found: {pdf_path}")
         
