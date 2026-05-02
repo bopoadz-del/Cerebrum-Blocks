@@ -38,6 +38,7 @@ from .document_engine import DocumentEngineBlock
 
 # Construction Intelligence Blocks
 from .historical_benchmark import HistoricalBenchmarkBlock
+from .boq_processor import BOQProcessorBlock
 
 # Containers
 from app.containers import ConstructionContainer
@@ -79,6 +80,7 @@ BLOCK_REGISTRY = {
 
     # Construction Intelligence Blocks
     "historical_benchmark": HistoricalBenchmarkBlock,
+    "boq_processor": BOQProcessorBlock,
 
     # Containers
     "construction": ConstructionContainer,
