@@ -114,12 +114,16 @@ class VectorSearchBlock(UniversalBlock):
             elif operation == "add":
                 _ensure_collection(collection)
                 docs = []
-                if isinstance(input_data, dict):
-                    docs = input_data.get("documents", [])
+                if isinstance(input_data, list):
+                    docs = input_data
+                elif isinstance(input_data, dict):
+                    # InputAdapter wraps lists as {"items": [...]}
+                    docs = (input_data.get("documents") or input_data.get("items") or
+                            input_data.get("texts") or [])
                     if isinstance(docs, str):
                         docs = [docs]
-                elif isinstance(input_data, list):
-                    docs = input_data
+                    if not docs and input_data.get("text"):
+                        docs = [input_data["text"]]
                 elif isinstance(input_data, str) and input_data:
                     docs = [input_data]
 

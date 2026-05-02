@@ -146,9 +146,27 @@ class ImageBlock(UniversalBlock):
         else:
             return {"status": "error", "error": "Input must be a file path, URL, or {file_path, url, prompt}"}
 
-        if operation == "metadata" and file_path:
+        if operation == "metadata":
             try:
-                meta = _pil_metadata(file_path)
+                if url and not file_path:
+                    import tempfile
+                    img_data, media_type = await _download_image_b64(url)
+                    raw = base64.b64decode(img_data)
+                    suffix = "." + media_type.split("/")[-1].split(";")[0]
+                    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
+                        f.write(raw)
+                        tmp = f.name
+                    try:
+                        meta = _pil_metadata(tmp)
+                    finally:
+                        try:
+                            os.unlink(tmp)
+                        except OSError:
+                            pass
+                elif file_path:
+                    meta = _pil_metadata(file_path)
+                else:
+                    return {"status": "error", "error": "Provide file_path or url for metadata"}
                 return {"status": "success", "operation": "metadata", **meta}
             except Exception as e:
                 return {"status": "error", "error": str(e)}
