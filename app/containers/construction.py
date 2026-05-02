@@ -4744,6 +4744,185 @@ Total Extension of Time Sought: {total_delay} days
         }
 
 
+    async def auto_pipeline(self, input_data: Any, params: Dict) -> Dict:
+        """
+        Single-call intelligent pipeline.
+        1. Runs process_document to understand the file.
+        2. Auto-dispatches downstream actions based on what was found.
+        3. Returns structured panels ready for UI rendering — no LLM required.
+        """
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        file_path = data.get("file_path") or p.get("file_path")
+        extracted_text = data.get("extracted_text") or data.get("text") or ""
+
+        if not file_path:
+            return {"status": "error", "error": "file_path required"}
+
+        # ── Step 1: domain analysis ──────────────────────────────────────────
+        doc_result = await self.process_document(
+            {"file_path": file_path, "extracted_text": extracted_text},
+            {"doc_type": p.get("doc_type", "auto"), "file_path": file_path}
+        )
+
+        doc_type = doc_result.get("doc_type", "unknown")
+        panels = []
+        downstream = {}
+        next_actions = []
+
+        # ── Document info panel (always) ─────────────────────────────────────
+        panels.append({
+            "type": "document_info",
+            "title": "Document",
+            "data": {
+                "file": file_path.split("/")[-1],
+                "doc_type": doc_type,
+                "status": doc_result.get("status"),
+                "pages": doc_result.get("pages"),
+                "title": doc_result.get("title") or doc_result.get("document_title"),
+                "project": doc_result.get("project_name") or doc_result.get("project"),
+            }
+        })
+
+        # ── Step 2: auto-dispatch based on detected content ──────────────────
+
+        # Quantities → cost estimate + procurement
+        quantities = (
+            doc_result.get("quantities") or
+            doc_result.get("extracted_quantities") or
+            doc_result.get("bill_of_quantities") or {}
+        )
+        if quantities:
+            panels.append({"type": "quantities", "title": "Quantities", "data": quantities})
+            try:
+                cost_result = await self.estimate_costs(
+                    {"quantities": quantities},
+                    {"location": p.get("location", "US National Average"),
+                     "project_type": p.get("project_type", "general_building")}
+                )
+                downstream["cost_estimate"] = cost_result
+                panels.append({
+                    "type": "cost_estimate",
+                    "title": "Cost Estimate",
+                    "data": cost_result.get("summary", {}),
+                    "line_items": cost_result.get("line_items", [])
+                })
+                next_actions.append({
+                    "action": "procurement_list_generator",
+                    "label": "Generate Procurement List",
+                    "reason": "Quantities and costs calculated"
+                })
+                next_actions.append({
+                    "action": "payment_certificate",
+                    "label": "Issue Payment Certificate",
+                    "reason": "Cost estimate available"
+                })
+            except Exception:
+                pass
+
+        # Risks → risk register
+        risks = doc_result.get("risks") or doc_result.get("identified_risks") or []
+        if risks or doc_type in ("contract", "drawing", "specification"):
+            try:
+                risk_result = await self.risk_register_auto_populate(
+                    {"auto_risks": risks, "project_type": p.get("project_type", "general_building")},
+                    {"location": p.get("location", "US National Average")}
+                )
+                downstream["risk_register"] = risk_result
+                panels.append({
+                    "type": "risks",
+                    "title": "Risk Register",
+                    "data": risk_result.get("risks", []),
+                    "total": risk_result.get("total_risks", 0)
+                })
+            except Exception:
+                pass
+
+        # Specifications → submittal log
+        specs = doc_result.get("specifications") or doc_result.get("spec_sections") or []
+        if specs or doc_type == "specification":
+            try:
+                submittal_result = await self.submittal_log_generator(
+                    {"specifications": specs, "file_path": file_path},
+                    {}
+                )
+                downstream["submittal_log"] = submittal_result
+                panels.append({
+                    "type": "submittals",
+                    "title": "Submittal Log",
+                    "data": submittal_result.get("submittals", []),
+                    "total": submittal_result.get("total_submittals", 0)
+                })
+            except Exception:
+                pass
+
+        # Schedule → progress tracker
+        if doc_type == "schedule":
+            try:
+                sched_result = await self.parse_primavera_schedule(
+                    {"file_path": file_path}, {}
+                )
+                downstream["schedule"] = sched_result
+                panels.append({
+                    "type": "schedule",
+                    "title": "Schedule",
+                    "data": sched_result
+                })
+                next_actions.append({
+                    "action": "progress_tracker",
+                    "label": "Track Progress",
+                    "reason": "Schedule loaded"
+                })
+            except Exception:
+                pass
+
+        # Contract → process contract details
+        if doc_type == "contract":
+            try:
+                contract_result = await self.process_contract(
+                    {"file_path": file_path, "extracted_text": extracted_text}, {}
+                )
+                downstream["contract"] = contract_result
+                panels.append({
+                    "type": "contract",
+                    "title": "Contract Analysis",
+                    "data": contract_result
+                })
+                next_actions.append({
+                    "action": "payment_certificate",
+                    "label": "Issue Payment Certificate",
+                    "reason": "Contract terms identified"
+                })
+            except Exception:
+                pass
+
+        # ── Chat context: structured text the user can follow up on ──────────
+        chat_context_parts = [f"Document: {file_path.split('/')[-1]} (type: {doc_type})"]
+        if quantities:
+            chat_context_parts.append(f"Quantities found: {list(quantities.keys())[:10]}")
+        if risks:
+            chat_context_parts.append(f"Risks identified: {len(risks)}")
+        if specs:
+            chat_context_parts.append(f"Spec sections: {len(specs)}")
+        for panel in panels:
+            if panel["type"] == "cost_estimate":
+                summary = panel.get("data", {})
+                if summary.get("total_estimate"):
+                    chat_context_parts.append(f"Total cost estimate: ${summary['total_estimate']:,.0f}")
+        if extracted_text:
+            chat_context_parts.append(f"\nExtracted text (first 3000 chars):\n{extracted_text[:3000]}")
+
+        return {
+            "status": "success",
+            "action": "auto_pipeline",
+            "doc_type": doc_type,
+            "panels": panels,
+            "downstream_actions_run": list(downstream.keys()),
+            "next_actions": next_actions,
+            "chat_context": "\n".join(chat_context_parts),
+            "raw_doc_result": doc_result,
+        }
+
     async def _process_specification(self, file_path: str, params: Dict) -> Dict:
         return {"status": "success", "doc_type": "specification", "file_name": Path(file_path).name, "specifications": []}
 
@@ -5105,6 +5284,7 @@ Total Extension of Time Sought: {total_delay} days
             "om_manual_generator": self.om_manual_generator,
             "digital_twin_sync": self.digital_twin_sync,
             "intelligent_workflow": self.intelligent_workflow,
+            "auto_pipeline": self.auto_pipeline,
             "health_check": self.health_check,
             # Week-1 Intelligence Blocks
             "boq_process": self.boq_process,
@@ -5166,6 +5346,7 @@ Total Extension of Time Sought: {total_delay} days
             "om_manual_generator": self.om_manual_generator,
             "digital_twin_sync": self.digital_twin_sync,
             "intelligent_workflow": self.intelligent_workflow,
+            "auto_pipeline": self.auto_pipeline,
             "health_check": self.health_check,
             # Week-1 Intelligence Blocks
             "boq_process": self.boq_process,

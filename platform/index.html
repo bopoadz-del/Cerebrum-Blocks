@@ -528,128 +528,104 @@ async function selectDriveFile(driveId, fileName) {
                 showIndicator(false);
                 return;
             }
-            
+            const sizeKb = (fileObj.size / 1024).toFixed(1);
+
             if (kind === 'text') {
                 const fileContent = await readFileContent(fileObj);
                 const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
                 setActiveFileContext(fileName, trimmed, drive.name);
-                previewHtml = `<div class="raw-output" style="max-height: 200px; margin-top: 8px;">${escapeHtml(trimmed)}</div>`;
-                
-                const result = await runChain(fileName, [
-                    { block: 'chat', input: `Analyze this file and summarize what it contains:\n\nFile: ${fileName}\nSource: ${drive.name}\n\nContent:\n${trimmed.substring(0, 3000)}`, params: {}, label: 'chat' }
-                ], (idx, label, status) => {});
-                analysisText = result.finalOutput?.text || String(result.finalOutput);
-                chainSummary = 'chat';
+                setOutcomes(`<div class="outcome-item">
+                    <div class="outcome-label">📄 ${fileName}</div>
+                    <div style="color:#888;font-size:12px;margin-top:4px;">${sizeKb} KB · From ${drive.name}</div>
+                    <div class="raw-output" style="max-height:200px;margin-top:8px;">${escapeHtml(trimmed.substring(0, 1000))}${trimmed.length > 1000 ? '…' : ''}</div>
+                </div>`);
+                addMessage(`"${fileName}" loaded from ${drive.name}. Ask me anything about it.`, 'assistant');
+
             } else if (kind === 'pdf' || kind === 'image') {
-                setOutcomes(`
-                    <div class="outcome-item">
-                        <div class="outcome-label">Selected File</div>
-                        <div class="outcome-value" style="font-size: 14px;">${fileName}</div>
-                        <div style="color: #888; font-size: 12px; margin-top: 4px;">From ${drive.name}</div>
-                    </div>
-                    <div class="outcome-item">
-                        <div class="outcome-label">Processing Chain</div>
-                        <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → construction → chat' : 'ocr → construction → chat'}</div>
-                    </div>
-                `);
-                
+                setOutcomes(`<div class="outcome-item"><div class="outcome-label">⚙️ Processing</div>
+                    <div style="color:#8b5cf6;font-size:12px;margin-top:4px;">Step 1/2 — uploading and extracting…</div></div>`);
+
                 const form = new FormData();
                 form.append('file', fileObj);
                 const uploadData = await client.upload(form);
                 const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
                 const extractBlock = kind === 'pdf' ? 'pdf' : 'ocr';
-                
-                const result = await runChain(fileName, [
-                    { block: extractBlock, input: { action: 'extract_text', file_path: filePath }, params: {}, label: extractBlock },
-                    { block: 'construction', input: { file_path: filePath }, params: { action: 'process_document', doc_type: 'auto' }, label: 'construction' },
-                    { block: 'chat', input: (prev, allResults) => {
-                        const extracted = allResults[0]?.result?.text || '';
-                        const construction = allResults[1]?.result;
-                        const constructionSummary = typeof construction === 'object' 
-                            ? JSON.stringify(construction, null, 2).substring(0, 2000)
-                            : String(construction).substring(0, 2000);
-                        return `You are a construction AI assistant. Analyze this ${kind.toUpperCase()} for the user.\n\nFile: ${fileName}\nSource: ${drive.name}\n\n=== EXTRACTED CONTENT ===\n${extracted.substring(0, 2000)}\n\n=== CONSTRUCTION ANALYSIS ===\n${constructionSummary}\n\nPlease provide a clear, concise summary including key quantities, materials, risks, and any actionable insights. Format the answer for chat.`;
-                    }, params: {}, label: 'chat' }
-                ], (idx, label, status) => {});
-                
-                analysisText = result.finalOutput?.text || String(result.finalOutput);
-                const extracted = result.results[0]?.result?.text || '';
-                const constructionResult = result.results[1]?.result;
-                setActiveFileContext(fileName, `${extracted.substring(0, 3000)}\n\n[Construction Analysis]\n${typeof constructionResult === 'object' ? JSON.stringify(constructionResult, null, 2) : constructionResult}`.substring(0, 5000), drive.name);
-                previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Extracted ${extracted.length} chars → construction container → deepseek</div>`;
-                chainSummary = `${extractBlock} → construction → chat`;
+
+                let extractedText = '';
+                try {
+                    const extractResult = await client.execute(extractBlock, { action: 'extract_text', file_path: filePath }, {});
+                    extractedText = extractResult.result?.text || extractResult.result?.extracted_text || '';
+                } catch(e) {}
+
+                setOutcomes(`<div class="outcome-item"><div class="outcome-label">⚙️ Processing</div>
+                    <div style="color:#8b5cf6;font-size:12px;margin-top:4px;">Step 2/2 — construction intelligence…</div></div>`);
+
+                const pipelineResult = await client.execute('construction',
+                    { file_path: filePath, extracted_text: extractedText },
+                    { action: 'auto_pipeline', doc_type: 'auto' }
+                );
+                const r = pipelineResult.result || {};
+                const chatCtx = r.chat_context || `File: ${fileName}\nSource: ${drive.name}\n\n${extractedText.substring(0, 3000)}`;
+                setActiveFileContext(fileName, chatCtx, drive.name);
+                activeFileContext.pipelineResult = { file_path: filePath, extracted_text: extractedText };
+                setOutcomes(renderPanels(r.panels || [], r.next_actions || [], fileName, sizeKb));
+                addMessage(`"${fileName}" from ${drive.name} analysed (${r.doc_type || 'document'}). Ask me anything about it.`, 'assistant');
+                chainSummary = `${extractBlock} → construction.auto_pipeline`;
+
             } else {
-                previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Binary file — preview not available</div>`;
                 setActiveFileContext(fileName, '[Binary file]', drive.name);
-                analysisText = `Loaded "${fileName}" from ${drive.name}. This is a binary file; chat using the filename only.`;
+                setOutcomes(`<div class="outcome-item">
+                    <div class="outcome-label">📦 ${fileName}</div>
+                    <div style="color:#888;font-size:12px;margin-top:4px;">Binary file from ${drive.name}</div>
+                </div>`);
+                analysisText = `Loaded "${fileName}" from ${drive.name}. Binary file — I can answer questions based on the filename only.`;
+                addMessage(analysisText, 'assistant');
             }
         } else {
-            // Remote drive
-            const readData = await client.execute(driveId.includes('google') ? 'google_drive' : driveId.includes('one') ? 'onedrive' : driveId.includes('android') ? 'android_drive' : 'local_drive', null, { operation: 'read', file_path: fileName });
+            // Remote drive — read content then run auto_pipeline for pdf/image, or set context for text
+            const readData = await client.execute(
+                driveId.includes('google') ? 'google_drive' : driveId.includes('one') ? 'onedrive' : driveId.includes('android') ? 'android_drive' : 'local_drive',
+                null, { operation: 'read', file_path: fileName }
+            );
             const fileContent = readData.result?.content || readData.result?.text || '';
-            
+
             if (fileContent && kind !== 'binary') {
                 const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
                 setActiveFileContext(fileName, trimmed, drive.name);
-                previewHtml = `<div class="raw-output" style="max-height: 200px; margin-top: 8px;">${escapeHtml(trimmed)}</div>`;
-                
-                const result = await runChain(fileName, [
-                    { block: 'chat', input: `Analyze this file and summarize what it contains:\n\nFile: ${fileName}\nSource: ${drive.name}\n\nContent:\n${trimmed.substring(0, 3000)}`, params: {}, label: 'chat' }
-                ], (idx, label, status) => {});
-                analysisText = result.finalOutput?.text || String(result.finalOutput);
-                chainSummary = 'chat';
+                setOutcomes(`<div class="outcome-item">
+                    <div class="outcome-label">📄 ${fileName}</div>
+                    <div style="color:#888;font-size:12px;margin-top:4px;">From ${drive.name}</div>
+                    <div class="raw-output" style="max-height:200px;margin-top:8px;">${escapeHtml(trimmed.substring(0, 800))}${trimmed.length > 800 ? '…' : ''}</div>
+                </div>`);
+                addMessage(`"${fileName}" loaded from ${drive.name}. Ask me anything about it.`, 'assistant');
             } else {
-                previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Binary or empty file from remote drive</div>`;
-                setActiveFileContext(fileName, '[Binary file from remote drive]', drive.name);
-                analysisText = `Loaded "${fileName}" from ${drive.name}. Content preview not available for this file type from remote drives.`;
+                setActiveFileContext(fileName, '[Remote binary file]', drive.name);
+                setOutcomes(`<div class="outcome-item">
+                    <div class="outcome-label">📦 ${fileName}</div>
+                    <div style="color:#888;font-size:12px;margin-top:4px;">Binary or empty file from ${drive.name}</div>
+                </div>`);
+                addMessage(`"${fileName}" from ${drive.name} — binary format, limited analysis available.`, 'assistant');
             }
         }
         
-        let relatedHtml = '';
+        // Append ZVec related files to whatever panels are already rendered
         try {
-            const zvecData = await client.execute('zvec', fileName, { 
-                operation: 'search', 
+            const zvecData = await client.execute('zvec', fileName, {
+                operation: 'search',
                 corpus: drive.files.filter(f => typeof f === 'string'),
-                top_k: 3 
+                top_k: 3
             });
             const related = zvecData.result?.results || [];
             if (related.length > 0) {
-                relatedHtml = `
-                    <div class="outcome-item">
-                        <div class="outcome-label">Related Files (ZVec)</div>
-                        <div style="color: #ccc; font-size: 12px; margin-top: 8px;">
-                            ${related.map(r => `<div style="margin-bottom:4px;">• ${r.text || r} ${r.score ? `(${Math.round(r.score*100)}%)` : ''}</div>`).join('')}
-                        </div>
+                const outcomeEl = document.getElementById('outcomes');
+                outcomeEl.innerHTML += `<div class="outcome-item">
+                    <div class="outcome-label">🔍 Related Files</div>
+                    <div style="color:#ccc;font-size:12px;margin-top:6px;">
+                        ${related.map(r => `<div style="margin-bottom:4px;">• ${escapeHtml(r.text || String(r))} ${r.score ? `<span style="color:#555;">(${Math.round(r.score*100)}%)</span>` : ''}</div>`).join('')}
                     </div>
-                `;
+                </div>`;
             }
-        } catch (e) {
-            console.error('ZVec search failed:', e);
-        }
-        
-        setOutcomes(`
-            <div class="outcome-item">
-                <div class="outcome-label">Selected File</div>
-                <div class="outcome-value" style="font-size: 14px;">${fileName}</div>
-                <div style="color: #888; font-size: 12px; margin-top: 4px;">From ${drive.name}</div>
-                ${chainSummary ? `<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">🔗 ${chainSummary}</div>` : ''}
-            </div>
-            ${previewHtml ? `
-            <div class="outcome-item">
-                <div class="outcome-label">Preview</div>
-                ${previewHtml}
-            </div>
-            ` : ''}
-            ${analysisText ? `
-            <div class="outcome-item">
-                <div class="outcome-label">AI Analysis</div>
-                <div style="color: #ccc; font-size: 13px; margin-top: 8px; line-height: 1.5;">${escapeHtml(analysisText.substring(0, 500))}${analysisText.length > 500 ? '...' : ''}</div>
-            </div>
-            ` : ''}
-            ${relatedHtml}
-        `);
-        
-        addMessage(analysisText || `Loaded "${fileName}" from ${drive.name}.`, 'assistant');
+        } catch (e) { /* ZVec optional */ }
         
     } catch (err) {
         addMessage(`Error loading file: ${err.message}`, 'error');
@@ -691,117 +667,192 @@ async function sendMessage() {
     showIndicator(false);
 }
 
+function renderPanels(panels, nextActions, fileName, sizeKb) {
+    const typeIcons = { document_info: '📄', quantities: '📐', cost_estimate: '💰', risks: '⚠️', submittals: '📋', schedule: '📅', contract: '📜' };
+    let html = '';
+
+    for (const panel of panels) {
+        const icon = typeIcons[panel.type] || '📌';
+        html += `<div class="outcome-item"><div class="outcome-label">${icon} ${panel.title}</div>`;
+
+        if (panel.type === 'document_info') {
+            const d = panel.data || {};
+            html += `<div style="color:#ccc;font-size:13px;margin-top:6px;">
+                <div><b>Type:</b> ${d.doc_type || 'unknown'}</div>
+                ${d.title ? `<div><b>Title:</b> ${escapeHtml(d.title)}</div>` : ''}
+                ${d.project ? `<div><b>Project:</b> ${escapeHtml(d.project)}</div>` : ''}
+                ${d.pages ? `<div><b>Pages:</b> ${d.pages}</div>` : ''}
+                <div style="color:#555;font-size:11px;margin-top:4px;">${sizeKb} KB</div>
+            </div>`;
+
+        } else if (panel.type === 'quantities') {
+            const q = panel.data || {};
+            const entries = Object.entries(q).slice(0, 12);
+            if (entries.length) {
+                html += `<table style="width:100%;font-size:12px;margin-top:6px;border-collapse:collapse;">
+                    <tr style="color:#666;border-bottom:1px solid #333;"><th style="text-align:left;padding:3px 0;">Item</th><th style="text-align:right;padding:3px 0;">Qty</th><th style="text-align:right;padding:3px 0;">Unit</th></tr>`;
+                for (const [k, v] of entries) {
+                    const qty = typeof v === 'object' ? v.quantity ?? v : v;
+                    const unit = typeof v === 'object' ? v.unit || '' : '';
+                    html += `<tr style="color:#ccc;border-bottom:1px solid #1a1a1a;"><td style="padding:3px 0;">${escapeHtml(String(k))}</td><td style="text-align:right;padding:3px 0;">${qty}</td><td style="text-align:right;padding:3px 4px;color:#888;">${unit}</td></tr>`;
+                }
+                html += `</table>`;
+                if (Object.keys(q).length > 12) html += `<div style="color:#555;font-size:11px;margin-top:4px;">+${Object.keys(q).length - 12} more items</div>`;
+            } else {
+                html += `<div style="color:#555;font-size:12px;margin-top:4px;">No quantities extracted</div>`;
+            }
+
+        } else if (panel.type === 'cost_estimate') {
+            const s = panel.data || {};
+            html += `<div style="font-size:13px;margin-top:6px;">`;
+            if (s.subtotal) html += `<div style="color:#aaa;">Subtotal: <b style="color:#fff;">$${Number(s.subtotal).toLocaleString()}</b></div>`;
+            if (s.overhead) html += `<div style="color:#aaa;">Overhead: <b style="color:#ccc;">$${Number(s.overhead).toLocaleString()}</b></div>`;
+            if (s.contingency) html += `<div style="color:#aaa;">Contingency: <b style="color:#ccc;">$${Number(s.contingency).toLocaleString()}</b></div>`;
+            if (s.total_estimate) html += `<div style="color:#8b5cf6;font-size:15px;font-weight:600;margin-top:6px;">Total: $${Number(s.total_estimate).toLocaleString()}</div>`;
+            html += `</div>`;
+
+        } else if (panel.type === 'risks') {
+            const risks = Array.isArray(panel.data) ? panel.data : [];
+            const levelColor = { high: '#ef4444', medium: '#f59e0b', low: '#22c55e', critical: '#dc2626' };
+            if (risks.length) {
+                html += `<div style="margin-top:6px;">`;
+                for (const r of risks.slice(0, 6)) {
+                    const lvl = (r.likelihood || r.level || r.severity || 'medium').toLowerCase();
+                    const col = levelColor[lvl] || '#f59e0b';
+                    html += `<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:5px;">
+                        <span style="background:${col};color:#fff;font-size:10px;padding:2px 6px;border-radius:3px;flex-shrink:0;margin-top:1px;">${lvl.toUpperCase()}</span>
+                        <span style="color:#ccc;font-size:12px;">${escapeHtml(r.description || r.risk || r.name || String(r))}</span>
+                    </div>`;
+                }
+                if (risks.length > 6) html += `<div style="color:#555;font-size:11px;">+${risks.length - 6} more risks</div>`;
+                html += `</div>`;
+            } else {
+                html += `<div style="color:#555;font-size:12px;margin-top:4px;">No risks identified</div>`;
+            }
+
+        } else if (panel.type === 'submittals') {
+            const subs = Array.isArray(panel.data) ? panel.data : [];
+            if (subs.length) {
+                html += `<div style="color:#ccc;font-size:12px;margin-top:6px;">`;
+                for (const s of subs.slice(0, 5)) {
+                    html += `<div style="margin-bottom:4px;">• ${escapeHtml(s.description || s.title || s.name || String(s))}</div>`;
+                }
+                if (subs.length > 5) html += `<div style="color:#555;">+${subs.length - 5} more submittals</div>`;
+                html += `</div>`;
+            }
+
+        } else {
+            const raw = JSON.stringify(panel.data || {}, null, 2).substring(0, 400);
+            html += `<div class="raw-output" style="margin-top:6px;font-size:11px;">${escapeHtml(raw)}</div>`;
+        }
+
+        html += `</div>`;
+    }
+
+    if (nextActions && nextActions.length) {
+        html += `<div class="outcome-item"><div class="outcome-label">🔧 Next Actions</div><div style="margin-top:6px;">`;
+        for (const a of nextActions) {
+            html += `<button onclick="triggerAction('${a.action}')" style="display:block;width:100%;text-align:left;background:#1a1a1a;border:1px solid #333;color:#8b5cf6;padding:7px 10px;border-radius:6px;cursor:pointer;margin-bottom:5px;font-size:12px;">
+                ▶ ${escapeHtml(a.label)}
+                <span style="color:#555;font-size:11px;display:block;">${escapeHtml(a.reason || '')}</span>
+            </button>`;
+        }
+        html += `</div></div>`;
+    }
+
+    return html;
+}
+
+async function triggerAction(action) {
+    if (!activeFileContext) return;
+    showIndicator(true);
+    addMessage(`Running ${action}...`, 'system');
+    try {
+        const data = await client.execute('construction', activeFileContext.pipelineResult || {}, { action });
+        addMessage(`${action} complete. Check the outcomes panel.`, 'assistant');
+        setOutcomes(renderPanels([{ type: 'raw', title: action, data: data.result }], [], activeFileContext.name, ''));
+    } catch(e) {
+        addMessage(`${action} failed: ${e.message}`, 'error');
+    }
+    showIndicator(false);
+}
+
 async function handleFile(input) {
     const file = input.files[0];
     if (!file) return;
-    
+
     addMessage(`📎 ${file.name}`, 'user');
     document.getElementById('sendBtn').disabled = true;
     showIndicator(true);
-    setOutcomes('<p style="color: #666;">Uploading...</p>');
-    
+    setOutcomes('<p style="color:#666;">Uploading and analysing…</p>');
+
     try {
         const form = new FormData();
         form.append('file', file);
         const uploadData = await client.upload(form);
         const kind = getFileKind(file.name);
         const sizeKb = (file.size / 1024).toFixed(1);
-        
-        let analysisText = '';
-        let chainLabel = '';
-        let previewHtml = '';
-        
+        const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
+
         if (kind === 'text') {
+            // Text files: read locally, set context, no chain needed
             const fileContent = await readFileContent(file);
             const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
             setActiveFileContext(file.name, trimmed, 'Upload');
-            previewHtml = `<div class="raw-output" style="max-height: 200px; margin-top: 8px;">${escapeHtml(trimmed)}</div>`;
-            chainLabel = 'chat';
-            
-            const result = await runChain(file.name, [
-                { block: 'chat', input: `Analyze this file and extract key information:\n\nFile: ${file.name}\nSize: ${sizeKb} KB\n\nContent:\n${trimmed.substring(0, 3000)}`, params: {}, label: 'chat' }
-            ], (idx, label, status) => {});
-            analysisText = result.finalOutput?.text || String(result.finalOutput);
+            setOutcomes(`<div class="outcome-item">
+                <div class="outcome-label">📄 ${file.name}</div>
+                <div style="color:#888;font-size:12px;margin-top:4px;">${sizeKb} KB · Text file loaded</div>
+                <div class="raw-output" style="max-height:200px;margin-top:8px;">${escapeHtml(trimmed.substring(0, 1000))}${trimmed.length > 1000 ? '…' : ''}</div>
+            </div>`);
+            addMessage(`"${file.name}" loaded. Ask me anything about it.`, 'assistant');
+
         } else if (kind === 'pdf' || kind === 'image') {
-            setOutcomes(`
-                <div class="outcome-item">
-                    <div class="outcome-label">File Uploaded</div>
-                    <div class="outcome-value" style="font-size: 14px;">${uploadData.filename}</div>
-                    <div style="color: #888; font-size: 12px; margin-top: 4px;">${sizeKb} KB</div>
-                </div>
-                <div class="outcome-item">
-                    <div class="outcome-label">Processing Chain</div>
-                    <div style="color: #888; font-size: 12px; margin-top: 4px;">${kind === 'pdf' ? 'pdf → construction → chat' : 'ocr → construction → chat'}</div>
-                </div>
-            `);
-            
+            // Step 1: extract text
+            setOutcomes(`<div class="outcome-item"><div class="outcome-label">⚙️ Processing</div>
+                <div style="color:#8b5cf6;font-size:12px;margin-top:4px;">Step 1/2 — extracting text…</div></div>`);
             const extractBlock = kind === 'pdf' ? 'pdf' : 'ocr';
-            chainLabel = `${extractBlock} → construction → chat`;
-            const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
-            
-            const result = await runChain(file.name, [
-                { block: extractBlock, input: { action: 'extract_text', file_path: filePath }, params: {}, label: extractBlock },
-                { block: 'construction', input: { file_path: filePath }, params: { action: 'process_document', doc_type: 'auto' }, label: 'construction' },
-                { block: 'chat', input: (prev, allResults) => {
-                    const extracted = allResults[0]?.result?.text || '';
-                    const construction = allResults[1]?.result;
-                    const constructionSummary = typeof construction === 'object' 
-                        ? JSON.stringify(construction, null, 2).substring(0, 2000)
-                        : String(construction).substring(0, 2000);
-                    return `You are a construction AI assistant. Analyze this ${kind.toUpperCase()} for the user.\n\nFile: ${file.name}\nSize: ${sizeKb} KB\n\n=== EXTRACTED CONTENT ===\n${extracted.substring(0, 2000)}\n\n=== CONSTRUCTION ANALYSIS ===\n${constructionSummary}\n\nPlease provide a clear, concise summary including key quantities, materials, risks, and any actionable insights. Format the answer for chat.`;
-                }, params: {}, label: 'chat' }
-            ], (idx, label, status) => {});
-            
-            analysisText = result.finalOutput?.text || String(result.finalOutput);
-            const extracted = result.results[0]?.result?.text || '';
-            const constructionResult = result.results[1]?.result;
-            setActiveFileContext(file.name, `${extracted.substring(0, 3000)}\n\n[Construction Analysis]\n${typeof constructionResult === 'object' ? JSON.stringify(constructionResult, null, 2) : constructionResult}`.substring(0, 5000), 'Upload');
-            previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Extracted ${extracted.length} chars → construction container → deepseek</div>`;
+            let extractedText = '';
+            try {
+                const extractResult = await client.execute(extractBlock, { action: 'extract_text', file_path: filePath }, {});
+                extractedText = extractResult.result?.text || extractResult.result?.extracted_text || '';
+            } catch(e) { /* extraction optional — pipeline continues */ }
+
+            // Step 2: auto_pipeline (domain intelligence, no DeepSeek)
+            setOutcomes(`<div class="outcome-item"><div class="outcome-label">⚙️ Processing</div>
+                <div style="color:#8b5cf6;font-size:12px;margin-top:4px;">Step 2/2 — construction intelligence…</div></div>`);
+            const pipelineResult = await client.execute('construction',
+                { file_path: filePath, extracted_text: extractedText },
+                { action: 'auto_pipeline', doc_type: 'auto' }
+            );
+            const r = pipelineResult.result || {};
+            const panels = r.panels || [];
+            const nextActions = r.next_actions || [];
+
+            // Store context for follow-up chat
+            const chatCtx = r.chat_context || `File: ${file.name}\nType: ${r.doc_type || 'unknown'}\n\n${extractedText.substring(0, 3000)}`;
+            setActiveFileContext(file.name, chatCtx, 'Upload');
+            activeFileContext.pipelineResult = { file_path: filePath, extracted_text: extractedText };
+
+            setOutcomes(renderPanels(panels, nextActions, file.name, sizeKb));
+
+            const docType = r.doc_type || 'document';
+            const actionsRun = (r.downstream_actions_run || []).join(', ') || 'none';
+            addMessage(`"${file.name}" analysed (${docType}). ${panels.length} intelligence panels generated. Actions run: ${actionsRun}. Ask me anything about it.`, 'assistant');
+
         } else {
             setActiveFileContext(file.name, `[Binary file — ${kind}]`, 'Upload');
-            chainLabel = 'none';
-            previewHtml = `<div style="color: #888; font-size: 12px; margin-top: 8px;">Binary file — no text preview available</div>`;
-            analysisText = `Uploaded "${file.name}" (${sizeKb} KB). This is a binary file; I can only answer questions based on the filename.`;
+            setOutcomes(`<div class="outcome-item">
+                <div class="outcome-label">📦 ${file.name}</div>
+                <div style="color:#888;font-size:12px;margin-top:4px;">${sizeKb} KB · Binary file — no text extraction available</div>
+            </div>`);
+            addMessage(`"${file.name}" uploaded. Binary format — I can answer questions based on the filename only.`, 'assistant');
         }
-        
-        let quantitiesHtml = '';
-        const textForSearch = (activeFileContext?.content || analysisText || '');
-        if (textForSearch.toLowerCase().includes('concrete') || textForSearch.toLowerCase().includes('steel')) {
-            quantitiesHtml = `
-                <div class="outcome-item">
-                    <div class="outcome-label">Detected Construction Data</div>
-                    <div style="color: #ccc; font-size: 12px; margin-top: 8px;">Review the analysis for quantities and specs.</div>
-                </div>
-            `;
-        }
-        
-        setOutcomes(`
-            <div class="outcome-item">
-                <div class="outcome-label">File Uploaded</div>
-                <div class="outcome-value" style="font-size: 14px;">${uploadData.filename}</div>
-                <div style="color: #888; font-size: 12px; margin-top: 4px;">${sizeKb} KB</div>
-                ${chainLabel !== 'none' ? `<div style="color: #8b5cf6; font-size: 11px; margin-top: 4px;">🔗 ${chainLabel}</div>` : ''}
-            </div>
-            ${previewHtml ? `
-            <div class="outcome-item">
-                <div class="outcome-label">Preview</div>
-                ${previewHtml}
-            </div>
-            ` : ''}
-            ${quantitiesHtml}
-            <div class="outcome-item">
-                <div class="outcome-label">Analysis</div>
-                <div class="raw-output" style="margin-top: 8px;">${escapeHtml(analysisText)}</div>
-            </div>
-        `);
-        
-        addMessage(analysisText, 'assistant');
-        
+
     } catch (err) {
         console.error('File analysis error:', err);
-        addMessage(`Error analyzing file: ${err.message}`, 'error');
+        addMessage(`Error analysing file: ${err.message}`, 'error');
     }
-    
+
     document.getElementById('sendBtn').disabled = false;
     showIndicator(false);
     input.value = '';
