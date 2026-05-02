@@ -107,25 +107,68 @@ class OCRBlock(TypedBlock):
         if not page_images:
             return {"status": "error", "text": "", "confidence": 0, "error": "Could not process input file"}
         
-        # Try pytesseract first, fallback to PyMuPDF text extraction
+        # Try pytesseract first, fallback to Claude Vision, then PyMuPDF
         all_texts = []
         all_confs = []
         engine_used = None
-        
+        tesseract_available = True
+
         try:
             import pytesseract
-            from PIL import Image
-            engine_used = "pytesseract"
-            
-            for page_img_path in page_images:
-                img = Image.open(page_img_path)
-                text = pytesseract.image_to_string(img)
-                if text.strip():
-                    all_texts.append(text.strip())
-                    all_confs.append(0.85)
-        except ImportError:
-            # Fallback: extract text directly from PDF using PyMuPDF
-            # (covers text-based PDFs when tesseract is unavailable)
+            pytesseract.get_tesseract_version()  # raises if not installed
+        except Exception:
+            tesseract_available = False
+
+        if tesseract_available:
+            try:
+                import pytesseract
+                from PIL import Image
+                engine_used = "pytesseract"
+
+                for page_img_path in page_images:
+                    img = Image.open(page_img_path)
+                    text = pytesseract.image_to_string(img)
+                    if text.strip():
+                        all_texts.append(text.strip())
+                        all_confs.append(0.85)
+            except Exception as e:
+                tesseract_available = False
+
+        if not tesseract_available:
+            # Claude Vision OCR fallback (works for images, no system deps)
+            anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+            if anthropic_key and not image_path.lower().endswith(".pdf"):
+                try:
+                    import base64, anthropic, mimetypes
+                    with open(image_path, "rb") as f:
+                        img_bytes = f.read()
+                    b64 = base64.standard_b64encode(img_bytes).decode()
+                    mime = mimetypes.guess_type(image_path)[0] or "image/jpeg"
+                    client = anthropic.Anthropic(api_key=anthropic_key)
+                    response = client.messages.create(
+                        model="claude-haiku-4-5-20251001",
+                        max_tokens=4096,
+                        messages=[{"role": "user", "content": [
+                            {"type": "image", "source": {"type": "base64", "media_type": mime, "data": b64}},
+                            {"type": "text", "text": "Extract ALL text from this image. Return only the extracted text, nothing else."}
+                        ]}],
+                    )
+                    text = response.content[0].text.strip()
+                    if text:
+                        return {
+                            "status": "success",
+                            "text": text,
+                            "confidence": 0.92,
+                            "word_count": len(text.split()),
+                            "engine": "claude_vision",
+                            "preprocessed": False,
+                            "pages": len(page_images),
+                            "note": "Tesseract not installed; used Claude Vision OCR"
+                        }
+                except Exception:
+                    pass
+
+            # Final fallback: PyMuPDF text extraction (text-layer PDFs only)
             pdf_text = self._extract_pdf_text(image_path)
             if pdf_text:
                 return {
@@ -138,10 +181,8 @@ class OCRBlock(TypedBlock):
                     "pages": 1,
                     "note": "Tesseract not installed; used PyMuPDF text extraction"
                 }
-            return {"status": "error", "text": "", "confidence": 0, "error": "Tesseract not installed and no text layer found in PDF"}
-        except Exception as e:
-            return {"status": "error", "text": "", "confidence": 0, "error": f"OCR failed: {str(e)}"}
-        
+            return {"status": "error", "text": "", "confidence": 0, "error": "Tesseract not installed; set ANTHROPIC_API_KEY for Vision OCR fallback"}
+
         if not all_texts:
             return {"status": "success", "text": "", "confidence": 0, "message": "No text detected"}
         
