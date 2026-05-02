@@ -54,13 +54,14 @@ class ZvecBlock(UniversalBlock):
         params = params or {}
         operation = params.get("operation", "embed")
 
-        text = (
-            input_data
-            if isinstance(input_data, str)
-            else params.get("text", "")
-        )
-        if isinstance(input_data, dict):
-            text = input_data.get("text", input_data.get("query", ""))
+        text = ""
+        if isinstance(input_data, str):
+            text = input_data
+        elif isinstance(input_data, dict):
+            text = (input_data.get("text") or input_data.get("query") or
+                    input_data.get("input") or params.get("text", ""))
+        else:
+            text = params.get("text", "")
 
         if not text and operation not in ("similarity", "batch_embed"):
             return {"status": "error", "error": "Text input required"}

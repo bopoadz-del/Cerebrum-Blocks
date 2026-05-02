@@ -170,13 +170,14 @@ class CodeBlock(UniversalBlock):
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
 
-        code = (
-            input_data
-            if isinstance(input_data, str)
-            else params.get("code", "")
-        )
-        if isinstance(input_data, dict):
-            code = input_data.get("code", input_data.get("text", ""))
+        code = ""
+        if isinstance(input_data, str):
+            code = input_data
+        elif isinstance(input_data, dict):
+            code = (input_data.get("code") or input_data.get("text") or
+                    input_data.get("input") or params.get("code", ""))
+        else:
+            code = params.get("code", "")
 
         language = params.get("language", "python").lower()
         operation = params.get("operation", "execute")

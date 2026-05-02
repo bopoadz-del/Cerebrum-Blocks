@@ -76,13 +76,14 @@ class WebBlock(UniversalBlock):
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
-        url = (
-            input_data
-            if isinstance(input_data, str)
-            else params.get("url", "")
-        )
-        if isinstance(input_data, dict):
-            url = input_data.get("url", "")
+        url = ""
+        if isinstance(input_data, str):
+            url = input_data
+        elif isinstance(input_data, dict):
+            url = (input_data.get("url") or input_data.get("text") or
+                   input_data.get("input") or params.get("url", ""))
+        else:
+            url = params.get("url", "")
 
         operation = params.get("operation", "fetch")  # fetch | extract_links | extract_text | html_parse
 

@@ -1,60 +1,38 @@
-"""Search Block - DuckDuckGo HTML search (no API key) + Serper fallback"""
+"""Search Block - duckduckgo-search (works from cloud) + Serper fallback"""
 
+import asyncio
 import os
 from typing import Any, Dict
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import urlparse
 
 import httpx
-from bs4 import BeautifulSoup
 
 from app.core.universal_base import UniversalBlock
 
-_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.5",
-}
-_TIMEOUT = 15.0
-_DDG_URL = "https://html.duckduckgo.com/html/"
+_TIMEOUT = 20.0
 _SERPER_URL = "https://google.serper.dev/search"
 
 
 async def _search_duckduckgo(query: str, num: int) -> list:
-    async with httpx.AsyncClient(headers=_HEADERS, timeout=_TIMEOUT, follow_redirects=True) as client:
-        resp = await client.post(_DDG_URL, data={"q": query, "b": "", "kl": "us-en"})
-        resp.raise_for_status()
+    from ddgs import DDGS
 
-    soup = BeautifulSoup(resp.text, "html.parser")
+    loop = asyncio.get_event_loop()
+
+    def _sync_search():
+        with DDGS() as ddgs:
+            return list(ddgs.text(query, max_results=num))
+
+    raw = await loop.run_in_executor(None, _sync_search)
+
     results = []
-
-    for result in soup.select(".result"):
-        # skip ads
-        if result.select_one(".badge--ad"):
-            continue
-
-        title_el = result.select_one(".result__a")
-        snippet_el = result.select_one(".result__snippet")
-        url_el = result.select_one(".result__url")
-
-        if not title_el:
-            continue
-
-        href = title_el.get("href", "")
-        # organic results have direct hrefs; skip any remaining redirects
-        if "duckduckgo.com/y.js" in href or "duckduckgo.com/l/" in href:
-            continue
-
+    for item in raw:
         results.append({
-            "title": title_el.get_text(strip=True),
-            "url": href,
-            "snippet": snippet_el.get_text(strip=True) if snippet_el else "",
-            "display_url": url_el.get_text(strip=True) if url_el else urlparse(href).netloc,
+            "title": item.get("title", ""),
+            "url": item.get("href", ""),
+            "snippet": item.get("body", ""),
+            "display_url": urlparse(item.get("href", "")).netloc,
             "source": "duckduckgo",
         })
-
-        if len(results) >= num:
-            break
-
     return results
 
 
@@ -107,13 +85,14 @@ class SearchBlock(UniversalBlock):
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
-        query = (
-            input_data
-            if isinstance(input_data, str)
-            else params.get("query", "")
-        )
-        if isinstance(input_data, dict):
-            query = input_data.get("query", input_data.get("text", ""))
+        query = ""
+        if isinstance(input_data, str):
+            query = input_data
+        elif isinstance(input_data, dict):
+            query = (input_data.get("query") or input_data.get("text") or
+                     input_data.get("input") or params.get("query", ""))
+        else:
+            query = params.get("query", "")
 
         num = min(int(params.get("num_results", 10)), 20)
 

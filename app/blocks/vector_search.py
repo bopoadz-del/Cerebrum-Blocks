@@ -79,13 +79,14 @@ class VectorSearchBlock(UniversalBlock):
         operation = params.get("operation", "search")
         collection = params.get("collection", "default")
 
-        query = (
-            input_data
-            if isinstance(input_data, str)
-            else params.get("query", "")
-        )
-        if isinstance(input_data, dict):
-            query = input_data.get("query", input_data.get("text", ""))
+        query = ""
+        if isinstance(input_data, str):
+            query = input_data
+        elif isinstance(input_data, dict):
+            query = (input_data.get("query") or input_data.get("text") or
+                     input_data.get("input") or params.get("query", ""))
+        else:
+            query = params.get("query", "")
 
         try:
             if operation == "create_collection":
