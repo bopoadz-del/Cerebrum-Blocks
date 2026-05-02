@@ -78,7 +78,10 @@ class LearningEngineBlock(UniversalBlock):
         params = params or {}
         data = input_data if isinstance(input_data, dict) else {}
 
-        operation = data.get("operation") or params.get("operation", "record_correction")
+        # Default to "status" when called with bare text (no structured correction data)
+        has_correction_data = data.get("formula_id") or data.get("correction_data") or params.get("formula_id")
+        default_op = "record_correction" if has_correction_data else "status"
+        operation = data.get("operation") or params.get("operation") or (data.get("text") or data.get("input") or "").strip() or default_op
 
         if operation == "record_correction":
             return await self._record_correction(data, params)

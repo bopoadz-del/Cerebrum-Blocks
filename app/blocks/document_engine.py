@@ -87,14 +87,18 @@ class DocumentEngineBlock(UniversalBlock):
         params = params or {}
         data = input_data if isinstance(input_data, dict) else {}
 
+        # InputAdapter may wrap bare file path as {"text": "/path/to/file.pdf"} — detect by extension
+        raw_path = data.get("text") or data.get("input") or (input_data if isinstance(input_data, str) else "")
+        raw_ext = os.path.splitext(raw_path)[1].lower() if raw_path else ""
+
         file_paths = {
-            "pdf": data.get("pdf_path") or data.get("pdf") or params.get("pdf_path"),
-            "docx": data.get("docx_path") or data.get("docx") or params.get("docx_path"),
-            "xlsx": data.get("xlsx_path") or data.get("xlsx") or params.get("xlsx_path"),
+            "pdf": data.get("pdf_path") or data.get("pdf") or params.get("pdf_path") or (raw_path if raw_ext == ".pdf" else None),
+            "docx": data.get("docx_path") or data.get("docx") or params.get("docx_path") or (raw_path if raw_ext in (".docx", ".doc") else None),
+            "xlsx": data.get("xlsx_path") or data.get("xlsx") or params.get("xlsx_path") or (raw_path if raw_ext in (".xlsx", ".xls") else None),
         }
 
         if not any(file_paths.values()):
-            return {"status": "error", "error": "No input files provided (pdf/docx/xlsx)"}
+            return {"status": "error", "error": "No input files provided (pdf/docx/xlsx). Pass file_path as pdf_path, docx_path, or xlsx_path."}
 
         try:
             from blocks.document_engine.main import parse_all

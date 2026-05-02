@@ -136,6 +136,8 @@ class SmartOrchestratorBlock(UniversalBlock):
         user_message = (
             data.get("user_message")
             or data.get("message")
+            or data.get("text")
+            or data.get("input")
             or (input_data if isinstance(input_data, str) else "")
         )
         session_context = data.get("session_context", {})

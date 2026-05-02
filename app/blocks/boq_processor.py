@@ -53,7 +53,7 @@ class BOQProcessorBlock(UniversalBlock):
         params = params or {}
         data = input_data if isinstance(input_data, dict) else {}
 
-        file_path = data.get("file_path") or params.get("file_path")
+        file_path = data.get("file_path") or params.get("file_path") or data.get("text") or data.get("input") or (input_data if isinstance(input_data, str) else "")
         if not file_path or not os.path.exists(str(file_path)):
             return self._demo_boq(params)
 
