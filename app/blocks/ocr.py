@@ -137,6 +137,7 @@ class OCRBlock(TypedBlock):
         if not tesseract_available:
             # Claude Vision OCR fallback (works for images, no system deps)
             anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+            vision_error = None
             if anthropic_key and not image_path.lower().endswith(".pdf"):
                 try:
                     import base64, anthropic, mimetypes
@@ -165,8 +166,12 @@ class OCRBlock(TypedBlock):
                             "pages": len(page_images),
                             "note": "Tesseract not installed; used Claude Vision OCR"
                         }
-                except Exception:
-                    pass
+                except Exception as e:
+                    vision_error = str(e)
+            elif not anthropic_key:
+                vision_error = "ANTHROPIC_API_KEY not set"
+            else:
+                vision_error = "PDF files not supported for Vision OCR"
 
             # Final fallback: PyMuPDF text extraction (text-layer PDFs only)
             pdf_text = self._extract_pdf_text(image_path)
@@ -181,7 +186,7 @@ class OCRBlock(TypedBlock):
                     "pages": 1,
                     "note": "Tesseract not installed; used PyMuPDF text extraction"
                 }
-            return {"status": "error", "text": "", "confidence": 0, "error": "Tesseract not installed; set ANTHROPIC_API_KEY for Vision OCR fallback"}
+            return {"status": "error", "text": "", "confidence": 0, "error": f"Tesseract not installed; Vision OCR failed: {vision_error}"}
 
         if not all_texts:
             return {"status": "success", "text": "", "confidence": 0, "message": "No text detected"}
