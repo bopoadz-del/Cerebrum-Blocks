@@ -59,6 +59,49 @@ from .sympy_reasoning import SymPyReasoningBlock
 # Containers
 from app.containers import ConstructionContainer
 
+# Phase 5: Platform Blocks (ported from blocks/ registry)
+from .adaptive_router import AdaptiveRouterBlock
+from .analytics import AnalyticsBlock
+from .audit import AuditBlock
+from .auth import AuthBlock
+from .billing import BillingBlock
+from .bim import BIMBlock
+from .config import ConfigBlock
+from .container import ContainerBlock
+from .container_ai_core import AICoreContainer
+from .container_construction import ConstructionContainer as ConstructionContainerBlock
+from .container_infrastructure import InfrastructureContainer
+from .container_platform import PlatformContainer
+from .container_security import SecurityContainer
+from .container_store import StoreContainer
+from .container_team import TeamContainer
+from .container_utility import UtilityContainer
+from .dashboard import DashboardBlock
+from .database import DatabaseBlock
+from .discovery import DiscoveryBlock
+from .documentation import DocumentationBlock
+from .email import EmailBlock
+from .error_tracking import ErrorTrackingBlock
+from .failover import FailoverBlock
+from .health_check import HealthCheckBlock
+from .memory import MemoryBlock
+from .migration import MigrationBlock
+from .monitoring import MonitoringBlock
+from .notification import NotificationBlock
+from .payment_split import PaymentSplitBlock
+from .queue import QueueBlock
+from .rate_limiter import RateLimiterBlock
+from .review import ReviewBlock
+from .sandbox import SandboxBlock
+from .secrets import SecretsBlock
+from .storage import StorageBlock
+from .team import TeamBlock
+from .validation import ValidationBlock
+from .vector import VectorBlock
+from .version import VersionBlock
+from .webhook import WebhookBlock
+from .workflow import WorkflowBlock
+
 # Unified Registry
 BLOCK_REGISTRY = {
     # Core AI (v1 - backward compatible)
@@ -73,18 +116,18 @@ BLOCK_REGISTRY = {
     "web": WebBlock,
     "search": SearchBlock,
     "zvec": ZvecBlock,
-    
+
     # Core AI (v2 - TypedBlock)
     "pdf_v2": PDFBlockV2,
     "ocr_v2": OCRBlockV2,
     "construction_v2": ConstructionBlockV2,
-    
+
     # Drive Blocks
     "google_drive": GoogleDriveBlock,
     "onedrive": OneDriveBlock,
     "local_drive": LocalDriveBlock,
     "android_drive": AndroidDriveBlock,
-    
+
     # Infrastructure
     "orchestrator": OrchestratorBlock,
     "traffic_manager": TrafficManagerBlock,
@@ -94,7 +137,7 @@ BLOCK_REGISTRY = {
     "async_processor": AsyncProcessorBlock,
     "file_hasher": FileHasherBlock,
     "llm_enhancer": LLMEnhancerBlock,
-    
+
     # Document Engine
     "document_engine": DocumentEngineBlock,
 
@@ -116,6 +159,49 @@ BLOCK_REGISTRY = {
 
     # Containers
     "construction": ConstructionContainer,
+
+    # Phase 5: Platform Blocks
+    "adaptive_router": AdaptiveRouterBlock,
+    "analytics": AnalyticsBlock,
+    "audit": AuditBlock,
+    "auth": AuthBlock,
+    "billing": BillingBlock,
+    "bim": BIMBlock,
+    "config": ConfigBlock,
+    "container": ContainerBlock,
+    "container_ai_core": AICoreContainer,
+    "container_construction": ConstructionContainerBlock,
+    "container_infrastructure": InfrastructureContainer,
+    "container_platform": PlatformContainer,
+    "container_security": SecurityContainer,
+    "container_store": StoreContainer,
+    "container_team": TeamContainer,
+    "container_utility": UtilityContainer,
+    "dashboard": DashboardBlock,
+    "database": DatabaseBlock,
+    "discovery": DiscoveryBlock,
+    "documentation": DocumentationBlock,
+    "email": EmailBlock,
+    "error_tracking": ErrorTrackingBlock,
+    "failover": FailoverBlock,
+    "health_check": HealthCheckBlock,
+    "memory": MemoryBlock,
+    "migration": MigrationBlock,
+    "monitoring": MonitoringBlock,
+    "notification": NotificationBlock,
+    "payment_split": PaymentSplitBlock,
+    "queue": QueueBlock,
+    "rate_limiter": RateLimiterBlock,
+    "review": ReviewBlock,
+    "sandbox": SandboxBlock,
+    "secrets": SecretsBlock,
+    "storage": StorageBlock,
+    "team": TeamBlock,
+    "validation": ValidationBlock,
+    "vector": VectorBlock,
+    "version": VersionBlock,
+    "webhook": WebhookBlock,
+    "workflow": WorkflowBlock,
 }
 
 def get_block(name: str):
