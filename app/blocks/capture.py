@@ -219,13 +219,20 @@ class CaptureBlock(TypedBlock):
         if isinstance(input_data, str):
             if os.path.exists(input_data):
                 return input_data
+            # Check if it looks like a file path (has extension or starts with /)
+            looks_like_path = input_data.startswith("/") or "." in os.path.basename(input_data)
+            if looks_like_path:
+                raise ValueError(f"File not found: {input_data}")
             # Assume base64
             return self._save_base64(input_data)
         elif isinstance(input_data, bytes):
             return self._save_bytes(input_data)
         elif isinstance(input_data, dict):
-            if input_data.get("file_path") and os.path.exists(input_data["file_path"]):
-                return input_data["file_path"]
+            if input_data.get("file_path"):
+                path = input_data["file_path"]
+                if os.path.exists(path):
+                    return path
+                raise ValueError(f"File not found: {path}")
             if input_data.get("bytes"):
                 return self._save_bytes(input_data["bytes"])
             if input_data.get("base64"):
@@ -235,6 +242,10 @@ class CaptureBlock(TypedBlock):
                 if isinstance(img, str):
                     if os.path.exists(img):
                         return img
+                    # Check if it looks like a file path
+                    looks_like_path = img.startswith("/") or "." in os.path.basename(img)
+                    if looks_like_path:
+                        raise ValueError(f"File not found: {img}")
                     return self._save_base64(img)
                 elif isinstance(img, bytes):
                     return self._save_bytes(img)
