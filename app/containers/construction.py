@@ -5095,33 +5095,41 @@ Total Extension of Time Sought: {total_delay} days
             doc_result.get("extracted_quantities") or
             doc_result.get("bill_of_quantities") or {}
         )
-        if quantities:
+        # Only show quantities panel when at least one value is non-zero
+        has_quantities = bool(quantities) and any(
+            (v.get("quantity", 0) if isinstance(v, dict) else v) > 0
+            for v in quantities.values()
+        )
+        if has_quantities:
             panels.append({"type": "quantities", "title": "Quantities", "data": quantities})
-            try:
-                cost_result = await self.estimate_costs(
-                    {"quantities": quantities},
-                    {"location": p.get("location", "US National Average"),
-                     "project_type": p.get("project_type", "general_building")}
-                )
-                downstream["cost_estimate"] = cost_result
+        try:
+            cost_result = await self.estimate_costs(
+                {"quantities": quantities} if has_quantities else {},
+                {"location": p.get("location", "US National Average"),
+                 "project_type": p.get("project_type", "general_building")}
+            )
+            downstream["cost_estimate"] = cost_result
+            if cost_result.get("summary", {}).get("total_estimate", 0) > 0:
                 panels.append({
                     "type": "cost_estimate",
                     "title": "Cost Estimate",
                     "data": cost_result.get("summary", {}),
                     "line_items": cost_result.get("line_items", [])
                 })
-                next_actions.append({
-                    "action": "procurement_list_generator",
-                    "label": "Generate Procurement List",
-                    "reason": "Quantities and costs calculated"
-                })
-                next_actions.append({
-                    "action": "payment_certificate",
-                    "label": "Issue Payment Certificate",
-                    "reason": "Cost estimate available"
-                })
-            except Exception:
-                pass
+        except Exception:
+            cost_result = {}
+        # Procurement button always shown after any document analysis
+        next_actions.append({
+            "action": "procurement_list_generator",
+            "label": "Generate Procurement List",
+            "reason": "Generate prioritised procurement schedule"
+        })
+        if has_quantities:
+            next_actions.append({
+                "action": "payment_certificate",
+                "label": "Issue Payment Certificate",
+                "reason": "Cost estimate available"
+            })
 
         # Risks → risk register
         risks = doc_result.get("risks") or doc_result.get("identified_risks") or []
