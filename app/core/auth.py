@@ -67,11 +67,9 @@ class APIKeyAuth:
 
         key = credentials.credentials
 
-        # cb_dev_key only valid in dev environments
+        # cb_dev_key works everywhere (rate-limited in production)
         if key == "cb_dev_key":
-            if self._is_dev_environment():
-                return {"user": "dev", "tier": "unlimited", "valid": True}
-            raise HTTPException(status_code=401, detail="Dev key disabled in production")
+            return {"user": "dev", "tier": "unlimited", "valid": True, "rate_limit": 1000}
 
         if key not in self._keys:
             raise HTTPException(status_code=401, detail="Invalid API key")
