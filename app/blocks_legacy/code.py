@@ -169,19 +169,30 @@ class CodeBlock(BaseBlock):
                 "confidence": 0.0
             }
     
+    _SHELL_ALLOWLIST = {"echo", "cat", "ls", "pwd", "wc", "head", "tail", "grep", "find", "git", "mkdir", "touch", "cp", "mv", "rm", "chmod", "python", "pytest"}
+
+    def _audit_shell(self, command: str, allowed: bool, result: dict):
+        import datetime, pathlib
+        log_dir = pathlib.Path("logs")
+        log_dir.mkdir(exist_ok=True)
+        with open(log_dir / "shell_audit.log", "a") as f:
+            ts = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            status = "ALLOWED" if allowed else "BLOCKED"
+            f.write(f"{ts} | {status} | {command!r} | {result.get('return_code', 'N/A')}\n")
+
     async def _execute_bash(self, code: str, params: Dict) -> Dict:
-        """Execute bash commands."""
+        """Execute bash commands with strict allowlist and audit logging."""
         timeout = params.get("timeout", 10)
-        allowed_commands = params.get("allowed_commands", ["echo", "cat", "ls", "pwd", "wc", "head", "tail", "grep"])
-        
-        # Security check
+
+        # Security check — static allowlist, no bypass
         command = code.strip().split()[0] if code.strip() else ""
-        if command not in allowed_commands and not params.get("allow_all", False):
-            return {
-                "error": f"Command '{command}' not in allowed list. Use allow_all=True to override.",
-                "confidence": 0.0
-            }
-        
+        allowed = command in self._SHELL_ALLOWLIST
+
+        if not allowed:
+            result = {"error": f"Command '{command}' not in allowed list.", "confidence": 0.0}
+            self._audit_shell(code, allowed=False, result=result)
+            return result
+
         try:
             process = subprocess.run(
                 code,
@@ -190,20 +201,21 @@ class CodeBlock(BaseBlock):
                 text=True,
                 timeout=timeout
             )
-            
-            return {
+
+            result = {
                 "stdout": process.stdout,
                 "stderr": process.stderr,
                 "return_code": process.returncode,
                 "success": process.returncode == 0,
                 "confidence": 0.95 if process.returncode == 0 else 0.5
             }
-            
+            self._audit_shell(code, allowed=True, result=result)
+            return result
+
         except Exception as e:
-            return {
-                "error": str(e),
-                "confidence": 0.0
-            }
+            result = {"error": str(e), "confidence": 0.0}
+            self._audit_shell(code, allowed=False, result=result)
+            return result
     
     def _analyze_code(self, code: str, language: str) -> Dict:
         """Analyze code structure and complexity."""

@@ -1,207 +1,103 @@
-"""Platform Blocks - Universal Block System (Single Source of Truth)"""
+"""Platform Blocks — Construction Intelligence Platform."""
 
 from app.core.universal_base import UniversalBlock, UniversalContainer
 from app.core.typed_block import TypedBlock
 
-# Core AI Blocks (v1)
-from .chat import ChatBlock
+# ── Document Extraction ──────────────────────────────────────────────────────
 from .pdf import PDFBlock
-from .ocr import OCRBlock
-from .voice import VoiceBlock
-from .vector_search import VectorSearchBlock
-from .image import ImageBlock
-from .translate import TranslateBlock
-from .code import CodeBlock
-from .web import WebBlock
-from .search import SearchBlock
-from .zvec import ZvecBlock
-
-# Core AI Blocks (v2 - TypedBlock)
 from .pdf_v2 import PDFBlockV2
+from .ocr import OCRBlock
 from .ocr_v2 import OCRBlockV2
-from .construction_v2 import ConstructionBlockV2
+from .image import ImageBlock
+from .document_engine import DocumentEngineBlock
 
-# Drive Blocks
-from .google_drive import GoogleDriveBlock
-from .onedrive import OneDriveBlock
-from .local_drive import LocalDriveBlock
-from .android_drive import AndroidDriveBlock
+# ── AI / Language ─────────────────────────────────────────────────────────────
+from .chat import ChatBlock
+from .translate import TranslateBlock
+from .voice import VoiceBlock
+from .web import WebBlock
 
-# Construction Intelligence Blocks (Week 1)
-from .sympy_reasoning import SymPyReasoningBlock
+# ── Construction Intelligence ─────────────────────────────────────────────────
 from .boq_processor import BOQProcessorBlock
-from .spec_analyzer import SpecAnalyzerBlock
-
-# Construction Domain Blocks (Week 2)
+from .bim_extractor import BIMExtractorBlock
+from .bim import BIMBlock
 from .drawing_qto import DrawingQTOBlock
 from .primavera_parser import PrimaveraParserBlock
-from .smart_orchestrator import SmartOrchestratorBlock
-from .skills import SkillsBlock
-
-# Intelligence Blocks (Week 3)
-from .jetson_gateway import JetsonGatewayBlock
+from .spec_analyzer import SpecAnalyzerBlock
 from .formula_executor import FormulaExecutorBlock
-from .bim_extractor import BIMExtractorBlock
-
-# Intelligence Blocks (Week 4)
-from .learning_engine import LearningEngineBlock
+from .sympy_reasoning import SymPyReasoningBlock
 from .historical_benchmark import HistoricalBenchmarkBlock
-from .recommendation_template import RecommendationTemplateBlock
+from .smart_orchestrator import SmartOrchestratorBlock
+from .construction_v2 import ConstructionBlockV2
 
-# ML Engine Block
-from .ml_engine import MLEngineBlock
+# ── File Access ───────────────────────────────────────────────────────────────
+from .local_drive import LocalDriveBlock
+from .google_drive import GoogleDriveBlock
+from .onedrive import OneDriveBlock
 
-# Reasoning Engine Blocks
-from .validator import ValidatorBlock
-from .credibility_scorer import CredibilityScorerBlock
-from .predictive_engine import PredictiveEngineBlock
-from .evidence_vault import EvidenceVaultBlock
-
-# Telegram Bot Block
-from .telegram_bot import TelegramBotBlock
-
-# Infrastructure Blocks
-from .orchestrator import OrchestratorBlock
-from .traffic_manager import TrafficManagerBlock
-from .event_bus import EventBusBlock
-from .context_broker import ContextBrokerBlock
-from .llm_enhancer import LLMEnhancerBlock
+# ── Search & Memory ───────────────────────────────────────────────────────────
+from .vector_search import VectorSearchBlock
+from .zvec import ZvecBlock
 from .cache_manager import CacheManagerBlock
-from .async_processor import AsyncProcessorBlock
-from .file_hasher import FileHasherBlock
 
-# Domain Containers (v1)
-from app.containers import (
-    ConstructionContainer,
-    MedicalContainer,
-    LegalContainer,
-    FinanceContainer,
-    SecurityContainer,
-    AICoreContainer,
-    StoreContainer,
-    LibrariesContainer,
-    MLContainer,
-    ReasoningEngineContainer,
-)
+# ── Main Construction Container ───────────────────────────────────────────────
+from app.containers import ConstructionContainer
 
-# Unified Registry
+
 BLOCK_REGISTRY = {
-    # Core AI (v1 - backward compatible)
-    "chat": ChatBlock,
-    "pdf": PDFBlock,
-    "ocr": OCRBlock,
-    "voice": VoiceBlock,
-    "vector_search": VectorSearchBlock,
-    "image": ImageBlock,
-    "translate": TranslateBlock,
-    "code": CodeBlock,
-    "web": WebBlock,
-    "search": SearchBlock,
-    "zvec": ZvecBlock,
-    
-    # Core AI (v2 - TypedBlock)
-    "pdf_v2": PDFBlockV2,
-    "ocr_v2": OCRBlockV2,
-    "construction_v2": ConstructionBlockV2,
-    
-    # Drive
-    "google_drive": GoogleDriveBlock,
-    "onedrive": OneDriveBlock,
-    "local_drive": LocalDriveBlock,
-    "android_drive": AndroidDriveBlock,
-    # Construction Intelligence (Week 1)
-    "sympy_reasoning": SymPyReasoningBlock,
-    "boq_processor": BOQProcessorBlock,
-    "spec_analyzer": SpecAnalyzerBlock,
-    # Construction Domain (Week 2)
-    "drawing_qto": DrawingQTOBlock,
-    "primavera_parser": PrimaveraParserBlock,
-    "smart_orchestrator": SmartOrchestratorBlock,
-    "skills": SkillsBlock,
-    # Intelligence (Week 3)
-    "jetson_gateway": JetsonGatewayBlock,
-    "formula_executor": FormulaExecutorBlock,
-    "bim_extractor": BIMExtractorBlock,
-    # Intelligence (Week 4)
-    "learning_engine": LearningEngineBlock,
+    # Document Extraction
+    "pdf":              PDFBlock,
+    "pdf_v2":           PDFBlockV2,
+    "ocr":              OCRBlock,
+    "ocr_v2":           OCRBlockV2,
+    "image":            ImageBlock,
+    "document_engine":  DocumentEngineBlock,
+
+    # AI / Language
+    "chat":             ChatBlock,
+    "translate":        TranslateBlock,
+    "voice":            VoiceBlock,
+    "web":              WebBlock,
+
+    # Construction Intelligence
+    "construction":         ConstructionContainer,
+    "construction_v2":      ConstructionBlockV2,
+    "boq_processor":        BOQProcessorBlock,
+    "bim":                  BIMBlock,
+    "bim_extractor":        BIMExtractorBlock,
+    "drawing_qto":          DrawingQTOBlock,
+    "primavera_parser":     PrimaveraParserBlock,
+    "spec_analyzer":        SpecAnalyzerBlock,
+    "formula_executor":     FormulaExecutorBlock,
+    "sympy_reasoning":      SymPyReasoningBlock,
     "historical_benchmark": HistoricalBenchmarkBlock,
-    "recommendation_template": RecommendationTemplateBlock,
-    # ML Engine
-    "ml_engine": MLEngineBlock,
-    # Reasoning Engine Blocks
-    "validator": ValidatorBlock,
-    "credibility_scorer": CredibilityScorerBlock,
-    "predictive_engine": PredictiveEngineBlock,
-    "evidence_vault": EvidenceVaultBlock,
-    # Telegram Bot
-    "telegram_bot": TelegramBotBlock,
-    # Infrastructure
-    "orchestrator": OrchestratorBlock,
-    "traffic_manager": TrafficManagerBlock,
-    "event_bus": EventBusBlock,
-    "context_broker": ContextBrokerBlock,
-    "llm_enhancer": LLMEnhancerBlock,
-    "cache_manager": CacheManagerBlock,
-    "async_processor": AsyncProcessorBlock,
-    "file_hasher": FileHasherBlock,
-    
-    # Domain Containers (v1)
-    "construction": ConstructionContainer,
-    "medical": MedicalContainer,
-    "legal": LegalContainer,
-    "finance": FinanceContainer,
-    "security": SecurityContainer,
-    "ai_core": AICoreContainer,
-    "store": StoreContainer,
-    "libraries": LibrariesContainer,
-    "ml": MLContainer,
-    "reasoning_engine": ReasoningEngineContainer,
+    "smart_orchestrator":   SmartOrchestratorBlock,
+
+    # File Access
+    "local_drive":      LocalDriveBlock,
+    "google_drive":     GoogleDriveBlock,
+    "onedrive":         OneDriveBlock,
+
+    # Search & Memory
+    "vector_search":    VectorSearchBlock,
+    "zvec":             ZvecBlock,
+    "cache_manager":    CacheManagerBlock,
 }
 
 
 def get_block(name: str):
-    """Get a block class by name"""
     return BLOCK_REGISTRY.get(name)
 
 
 def get_all_blocks():
-    """Get all registered blocks"""
     return BLOCK_REGISTRY
 
 
 __all__ = [
-    # Base classes
-    "UniversalBlock", "UniversalContainer", "TypedBlock",
-    
-    # Core v1
-    "ChatBlock", "PDFBlock", "OCRBlock", "VoiceBlock", "VectorSearchBlock",
-    "ImageBlock", "TranslateBlock", "CodeBlock", "WebBlock", "SearchBlock", "ZvecBlock",
-    
-    # Core v2
-    "PDFBlockV2", "OCRBlockV2", "ConstructionBlockV2",
-    
-    # Drive
-    "GoogleDriveBlock", "OneDriveBlock", "LocalDriveBlock", "AndroidDriveBlock",
-    
-    # Infrastructure
-    "OrchestratorBlock", "TrafficManagerBlock", "EventBusBlock", "ContextBrokerBlock",
-    "LLMEnhancerBlock", "CacheManagerBlock", "AsyncProcessorBlock", "FileHasherBlock",
-    
-    # Containers v1
-    "ConstructionContainer", "MedicalContainer", "LegalContainer", "FinanceContainer",
-    "SecurityContainer", "AICoreContainer", "StoreContainer",
-    # Construction Intelligence (all weeks)
-    "SymPyReasoningBlock", "BOQProcessorBlock", "SpecAnalyzerBlock",
-    "DrawingQTOBlock", "PrimaveraParserBlock", "SmartOrchestratorBlock",
-    "SkillsBlock",
-    "JetsonGatewayBlock", "FormulaExecutorBlock", "BIMExtractorBlock",
-    "LearningEngineBlock", "HistoricalBenchmarkBlock", "RecommendationTemplateBlock",
-    # ML Engine + Containers
-    "MLEngineBlock",
-    "ValidatorBlock", "CredibilityScorerBlock", "PredictiveEngineBlock", "EvidenceVaultBlock",
-    "LibrariesContainer", "MLContainer", "ReasoningEngineContainer",
-    # Telegram
-    "TelegramBotBlock",
-    # Registry
-    "BLOCK_REGISTRY", "get_block", "get_all_blocks"
+    "UniversalBlock",
+    "UniversalContainer",
+    "TypedBlock",
+    "BLOCK_REGISTRY",
+    "get_block",
+    "get_all_blocks",
 ]

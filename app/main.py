@@ -1,7 +1,19 @@
 """Cerebrum Blocks - Simple Block Execution API."""
 
-import logging
 import os
+import sys
+
+# Force fresh bytecode on Render deployments (clear stale __pycache__)
+for root, dirs, files in os.walk(os.path.dirname(os.path.abspath(__file__))):
+    for d in dirs:
+        if d == "__pycache__":
+            try:
+                import shutil
+                shutil.rmtree(os.path.join(root, d))
+            except Exception:
+                pass
+
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -30,9 +42,6 @@ from app.routers import (
     static,
     upload,
 )
-from app.routers import telegram as telegram_router
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize all blocks eagerly at startup to avoid race conditions."""
@@ -117,10 +126,10 @@ app.include_router(memory.router)
 app.include_router(monitoring.router)
 app.include_router(health.router)
 app.include_router(static.router)
-app.include_router(debug.router)
-app.include_router(skills.router)
-app.include_router(telegram_router.router)
-
+# Debug routes — only in non-production environments
+env = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()
+if env in {"dev", "development", "local", "test", "testing"}:
+    app.include_router(debug.router)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

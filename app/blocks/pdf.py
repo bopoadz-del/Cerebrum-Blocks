@@ -1,6 +1,7 @@
 """PDF Block - Extract text from PDF files with Typed Schema"""
 
 import os
+import tempfile
 from typing import Any, Dict
 from app.core.typed_block import TypedBlock, Schema, ContentType
 
@@ -59,6 +60,31 @@ class PDFBlock(TypedBlock):
         """Extract text from PDF"""
         params = params or {}
         
+        # If input is a URL, download it first
+        url = None
+        if isinstance(input_data, dict):
+            url = input_data.get("url")
+            # InputAdapter wraps bare strings as {"text": "..."} — check for URL there
+            if not url:
+                raw = input_data.get("text") or input_data.get("input") or ""
+                if raw.startswith("http"):
+                    url = raw
+        elif isinstance(input_data, str) and input_data.startswith("http"):
+            url = input_data
+        
+        if url:
+            import httpx
+            try:
+                async with httpx.AsyncClient(follow_redirects=True) as client:
+                    response = await client.get(url, timeout=30)
+                    response.raise_for_status()
+                    suffix = ".pdf" if ".pdf" in url.lower() else ".tmp"
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as f:
+                        f.write(response.content)
+                        input_data = f.name
+            except Exception as e:
+                return {"status": "error", "text": "", "pages": 0, "error": f"Download failed: {str(e)}"}
+        
         # Get PDF path
         pdf_path = self._get_pdf_path(input_data)
         if not pdf_path:
@@ -84,7 +110,8 @@ class PDFBlock(TypedBlock):
                 "status": "success",
                 "text": text[:20000],  # Limit output
                 "pages": pages,
-                "filename": os.path.basename(pdf_path)
+                "filename": os.path.basename(pdf_path),
+                "file_path": pdf_path
             }
             
         except ImportError:

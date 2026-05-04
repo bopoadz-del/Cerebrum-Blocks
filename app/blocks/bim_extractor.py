@@ -76,9 +76,9 @@ class BIMExtractorBlock(UniversalBlock):
         params = params or {}
         data = input_data if isinstance(input_data, dict) else {}
 
-        file_path = data.get("file_path") or params.get("file_path")
+        file_path = data.get("file_path") or params.get("file_path") or data.get("text") or data.get("input") or (input_data if isinstance(input_data, str) else "")
         if not file_path:
-            return {"status": "error", "error": "No file_path provided"}
+            return {"status": "error", "error": "No file_path provided — requires an IFC file"}
         if not os.path.exists(file_path):
             return {"status": "error", "error": f"File not found: {file_path}"}
         if not file_path.lower().endswith(".ifc"):

@@ -62,16 +62,16 @@ class ContextBrokerBlock(UniversalBlock):
         if not session_id and isinstance(input_data, dict):
             session_id = input_data.get("session_id")
 
-        if action == "get_context":
+        if action in ("get_context", "get"):
             return await self._get_context(session_id)
-        elif action == "set_context":
+        elif action in ("set_context", "set"):
             return await self._set_context(session_id, input_data, params)
-        elif action == "merge_context":
+        elif action in ("merge_context", "merge"):
             return await self._merge_context(session_id, input_data, params)
-        elif action == "clear_context":
+        elif action in ("clear_context", "clear"):
             return await self._clear_context(session_id)
 
-        return {"status": "error", "error": f"Unknown action: {action}"}
+        return {"status": "error", "error": f"Unknown action: {action}. Use: get_context, set_context, merge_context, clear_context"}
 
     async def _get_context(self, session_id: Optional[str]) -> Dict:
         if not session_id:
@@ -83,17 +83,9 @@ class ContextBrokerBlock(UniversalBlock):
             result = await memory.execute({"action": "get", "key": f"ctx:{session_id}:memory"})
             mem_data = result.get("value", {}) if isinstance(result, dict) else {}
 
-        # Gather from other blocks if available
-        drive_files = await self._call_block("zvec", {"action": "list", "session_id": session_id})
-        chat_history = await self._call_block("chat", {"action": "get_history", "session_id": session_id})
-        construction_data = await self._call_block("construction", {"action": "get_temp", "session_id": session_id})
-
         context = {
             "session_id": session_id,
             "memory": mem_data,
-            "drive_files": drive_files,
-            "chat_history": chat_history,
-            "construction_data": construction_data
         }
 
         return {"status": "success", "context": context}

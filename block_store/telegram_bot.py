@@ -532,12 +532,24 @@ class TelegramBotBlock(UniversalBlock):
                 return candidate
         return os.getcwd()
 
+    _SHELL_ALLOWLIST = {"echo", "cat", "ls", "pwd", "wc", "head", "tail", "grep", "find", "git", "mkdir", "touch", "cp", "mv", "rm", "chmod", "python", "pytest", "pip", "curl", "wget"}
+
+    def _audit_shell(self, name: str, cmd: str, allowed: bool, result: str = ""):
+        import datetime, pathlib
+        log_dir = pathlib.Path("logs")
+        log_dir.mkdir(exist_ok=True)
+        with open(log_dir / "shell_audit.log", "a") as f:
+            ts = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            status = "ALLOWED" if allowed else "BLOCKED"
+            f.write(f"{ts} | TELEGRAM | {status} | {name} | {cmd!r}\n")
+
     async def _execute_tool(self, name: str, inp: Dict) -> str:
         import subprocess, glob as _glob
         work_dir = self._work_dir()
         try:
             if name == "run_python":
                 code = inp["code"]
+                self._audit_shell("run_python", code[:200], allowed=True)
                 proc = subprocess.run(
                     ["python", "-c", code],
                     capture_output=True, text=True, timeout=60,
@@ -549,6 +561,11 @@ class TelegramBotBlock(UniversalBlock):
 
             elif name == "run_bash":
                 cmd = inp["command"]
+                command = cmd.strip().split()[0] if cmd.strip() else ""
+                if command not in self._SHELL_ALLOWLIST:
+                    self._audit_shell("run_bash", cmd, allowed=False)
+                    return f"[BLOCKED] Command '{command}' not in allowlist."
+                self._audit_shell("run_bash", cmd, allowed=True)
                 proc = subprocess.run(
                     cmd, shell=True, capture_output=True, text=True, timeout=60,
                     cwd=work_dir,

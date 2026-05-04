@@ -48,9 +48,28 @@ def _create_block_instance(block_class):
     return instance
 
 
+def _wire_block_dependencies(instance, block_class, name: str = None):
+    """Wire requires=[] dependencies into a platform block instance.
+
+    Mirrors UniversalAssembler.inject() for the app/blocks/ layer.
+    """
+    requires = getattr(block_class, "requires", []) or []
+    for dep_name in requires:
+        if dep_name in block_instances:
+            dep_instance = block_instances[dep_name]
+            if hasattr(instance, "wire"):
+                instance.wire(dep_name, dep_instance)
+            elif hasattr(instance, "inject"):
+                instance.inject(dep_name, dep_instance)
+            else:
+                setattr(instance, f"{dep_name}_block", dep_instance)
+
+
 def get_block_instance(block_name: str) -> Any:
     if block_name not in block_instances:
-        block_instances[block_name] = _create_block_instance(BLOCK_REGISTRY[block_name])
+        block_class = BLOCK_REGISTRY[block_name]
+        block_instances[block_name] = _create_block_instance(block_class)
+        _wire_block_dependencies(block_instances[block_name], block_class, block_name)
     return block_instances[block_name]
 
 
@@ -132,12 +151,19 @@ async def require_api_key(
 
 async def init_blocks():
     """Initialize all block instances at startup."""
+    # Pass 1: instantiate
     for name, block_class in BLOCK_REGISTRY.items():
         try:
             if name not in block_instances:
                 block_instances[name] = _create_block_instance(block_class)
         except Exception as e:
             logger.warning("Failed to initialize block %s: %s", name, e)
+
+    # Pass 2: wire dependencies (universal connectors)
+    for name, instance in block_instances.items():
+        block_class = BLOCK_REGISTRY.get(name)
+        if block_class:
+            _wire_block_dependencies(instance, block_class, name)
 
     if get_memory_block:
         get_memory_block()

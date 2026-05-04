@@ -1,14 +1,20 @@
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 
-from app.dependencies import AUTH_AVAILABLE, get_auth_block
+from app.dependencies import AUTH_AVAILABLE, get_auth_block, require_api_key
 
 router = APIRouter()
 
 
+def _require_admin(auth_result: dict):
+    """Ensure the authenticated key has admin role."""
+    if auth_result.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin role required")
+
+
 @router.post("/v1/auth/validate")
-async def validate_key(request: dict):
+async def validate_key(request: dict, auth: dict = Depends(require_api_key)):
     """Validate an API key"""
     if not AUTH_AVAILABLE:
         raise HTTPException(status_code=503, detail="Auth not available")
@@ -20,8 +26,9 @@ async def validate_key(request: dict):
 
 
 @router.post("/v1/auth/keys")
-async def create_key(request: dict):
+async def create_key(request: dict, auth: dict = Depends(require_api_key)):
     """Create a new API key (admin only)"""
+    _require_admin(auth)
     if not AUTH_AVAILABLE:
         raise HTTPException(status_code=503, detail="Auth not available")
     block = get_auth_block()
@@ -29,8 +36,9 @@ async def create_key(request: dict):
 
 
 @router.delete("/v1/auth/keys/{api_key}")
-async def delete_key(api_key: str):
-    """Delete (revoke) an API key by URL"""
+async def delete_key(api_key: str, auth: dict = Depends(require_api_key)):
+    """Delete (revoke) an API key by URL (admin only)"""
+    _require_admin(auth)
     if not AUTH_AVAILABLE:
         raise HTTPException(status_code=503, detail="Auth not available")
     block = get_auth_block()
@@ -38,8 +46,9 @@ async def delete_key(api_key: str):
 
 
 @router.get("/v1/auth/keys")
-async def list_keys(admin_key: Optional[str] = None):
+async def list_keys(admin_key: Optional[str] = None, auth: dict = Depends(require_api_key)):
     """List all API keys (admin only)"""
+    _require_admin(auth)
     if not AUTH_AVAILABLE:
         raise HTTPException(status_code=503, detail="Auth not available")
     block = get_auth_block()
@@ -47,8 +56,9 @@ async def list_keys(admin_key: Optional[str] = None):
 
 
 @router.post("/v1/auth/keys/revoke")
-async def revoke_key(request: dict):
-    """Revoke an API key"""
+async def revoke_key(request: dict, auth: dict = Depends(require_api_key)):
+    """Revoke an API key (admin only)"""
+    _require_admin(auth)
     if not AUTH_AVAILABLE:
         raise HTTPException(status_code=503, detail="Auth not available")
     block = get_auth_block()
@@ -59,8 +69,9 @@ async def revoke_key(request: dict):
 
 
 @router.post("/v1/auth/keys/rotate")
-async def rotate_key(request: dict):
-    """Rotate an API key"""
+async def rotate_key(request: dict, auth: dict = Depends(require_api_key)):
+    """Rotate an API key (admin only)"""
+    _require_admin(auth)
     if not AUTH_AVAILABLE:
         raise HTTPException(status_code=503, detail="Auth not available")
     block = get_auth_block()
@@ -71,7 +82,7 @@ async def rotate_key(request: dict):
 
 
 @router.post("/v1/auth/check")
-async def check_permission(request: dict):
+async def check_permission(request: dict, auth: dict = Depends(require_api_key)):
     """Check if key has a permission"""
     if not AUTH_AVAILABLE:
         raise HTTPException(status_code=503, detail="Auth not available")
@@ -87,7 +98,7 @@ async def check_permission(request: dict):
 
 
 @router.get("/v1/auth/usage")
-async def get_usage(key: Optional[str] = None, api_key: Optional[str] = None):
+async def get_usage(key: Optional[str] = None, api_key: Optional[str] = None, auth: dict = Depends(require_api_key)):
     """Get usage stats for a key"""
     if not AUTH_AVAILABLE:
         raise HTTPException(status_code=503, detail="Auth not available")

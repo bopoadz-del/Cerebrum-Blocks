@@ -1,217 +1,283 @@
-"""Historical Benchmark Block - RS Means / Diriyah project data lookup with PostgreSQL + in-memory fallback"""
+"""Historical Benchmark Block — RS Means-style unit cost lookups and market ranges."""
 
-import os
 from typing import Any, Dict, List, Optional
 from app.core.universal_base import UniversalBlock
 
 
-# In-memory RS Means-style benchmark data (USD, Middle East market adjusted)
-_BENCHMARK_DATA: Dict[str, Dict] = {
-    # Concrete
-    "concrete_c25": {"avg_cost": 1100, "std_dev": 120, "unit": "m³", "typical_variance": 0.11, "package": "concrete"},
-    "concrete_c30": {"avg_cost": 1250, "std_dev": 145, "unit": "m³", "typical_variance": 0.12, "package": "concrete"},
-    "concrete_c35": {"avg_cost": 1380, "std_dev": 155, "unit": "m³", "typical_variance": 0.11, "package": "concrete"},
-    "concrete_c40": {"avg_cost": 1450, "std_dev": 168, "unit": "m³", "typical_variance": 0.12, "package": "concrete"},
-    "concrete_c50": {"avg_cost": 1700, "std_dev": 190, "unit": "m³", "typical_variance": 0.11, "package": "concrete"},
-    # Rebar / Steel
-    "rebar_12mm": {"avg_cost": 2.8, "std_dev": 0.35, "unit": "kg", "typical_variance": 0.13, "package": "rebar"},
-    "rebar_16mm": {"avg_cost": 2.9, "std_dev": 0.33, "unit": "kg", "typical_variance": 0.11, "package": "rebar"},
-    "rebar_20mm": {"avg_cost": 3.1, "std_dev": 0.38, "unit": "kg", "typical_variance": 0.12, "package": "rebar"},
-    "rebar_25mm": {"avg_cost": 3.2, "std_dev": 0.40, "unit": "kg", "typical_variance": 0.13, "package": "rebar"},
-    "rebar_mixed": {"avg_cost": 3.0, "std_dev": 0.36, "unit": "kg", "typical_variance": 0.12, "package": "rebar"},
-    "structural_steel": {"avg_cost": 4.5, "std_dev": 0.55, "unit": "kg", "typical_variance": 0.12, "package": "steel"},
-    "steel_plate": {"avg_cost": 5.2, "std_dev": 0.65, "unit": "kg", "typical_variance": 0.13, "package": "steel"},
-    # Formwork
-    "formwork_slab": {"avg_cost": 42, "std_dev": 8, "unit": "m²", "typical_variance": 0.19, "package": "formwork"},
-    "formwork_wall": {"avg_cost": 52, "std_dev": 9, "unit": "m²", "typical_variance": 0.17, "package": "formwork"},
-    "formwork_column": {"avg_cost": 65, "std_dev": 12, "unit": "m²", "typical_variance": 0.18, "package": "formwork"},
-    # Masonry
-    "block_work_200mm": {"avg_cost": 88, "std_dev": 12, "unit": "m²", "typical_variance": 0.14, "package": "masonry"},
-    "block_work_100mm": {"avg_cost": 72, "std_dev": 10, "unit": "m²", "typical_variance": 0.14, "package": "masonry"},
-    "brick_facing": {"avg_cost": 145, "std_dev": 22, "unit": "m²", "typical_variance": 0.15, "package": "masonry"},
-    # Finishes
-    "plaster_internal": {"avg_cost": 32, "std_dev": 5, "unit": "m²", "typical_variance": 0.16, "package": "finishes"},
-    "paint_internal": {"avg_cost": 14, "std_dev": 2.5, "unit": "m²", "typical_variance": 0.18, "package": "finishes"},
-    "paint_external": {"avg_cost": 22, "std_dev": 4, "unit": "m²", "typical_variance": 0.18, "package": "finishes"},
-    "flooring_porcelain": {"avg_cost": 185, "std_dev": 35, "unit": "m²", "typical_variance": 0.19, "package": "finishes"},
-    "flooring_marble": {"avg_cost": 350, "std_dev": 70, "unit": "m²", "typical_variance": 0.20, "package": "finishes"},
-    "ceiling_gypsum": {"avg_cost": 72, "std_dev": 12, "unit": "m²", "typical_variance": 0.17, "package": "finishes"},
-    # Glass / Cladding
-    "glass_curtain_wall": {"avg_cost": 480, "std_dev": 85, "unit": "m²", "typical_variance": 0.18, "package": "cladding"},
-    "aluminum_cladding": {"avg_cost": 380, "std_dev": 65, "unit": "m²", "typical_variance": 0.17, "package": "cladding"},
-    "stone_cladding": {"avg_cost": 520, "std_dev": 95, "unit": "m²", "typical_variance": 0.18, "package": "cladding"},
-    # Insulation
-    "insulation_roof": {"avg_cost": 35, "std_dev": 6, "unit": "m²", "typical_variance": 0.17, "package": "waterproofing"},
-    "waterproofing_basement": {"avg_cost": 85, "std_dev": 18, "unit": "m²", "typical_variance": 0.21, "package": "waterproofing"},
-    "waterproofing_roof": {"avg_cost": 65, "std_dev": 12, "unit": "m²", "typical_variance": 0.18, "package": "waterproofing"},
-    # MEP
-    "electrical_rough": {"avg_cost": 68, "std_dev": 12, "unit": "m²", "typical_variance": 0.18, "package": "electrical"},
-    "electrical_fit_out": {"avg_cost": 95, "std_dev": 18, "unit": "m²", "typical_variance": 0.19, "package": "electrical"},
-    "plumbing_rough": {"avg_cost": 88, "std_dev": 16, "unit": "m²", "typical_variance": 0.18, "package": "plumbing"},
-    "hvac_ductwork": {"avg_cost": 125, "std_dev": 22, "unit": "m²", "typical_variance": 0.18, "package": "hvac"},
-    "fire_fighting": {"avg_cost": 55, "std_dev": 10, "unit": "m²", "typical_variance": 0.18, "package": "fire"},
-    # Earthworks
-    "excavation_bulk": {"avg_cost": 18, "std_dev": 4, "unit": "m³", "typical_variance": 0.22, "package": "earthworks"},
-    "backfill_compacted": {"avg_cost": 28, "std_dev": 6, "unit": "m³", "typical_variance": 0.21, "package": "earthworks"},
-    "piling_bored_600mm": {"avg_cost": 750, "std_dev": 120, "unit": "m", "typical_variance": 0.16, "package": "piling"},
-    "piling_bored_900mm": {"avg_cost": 1450, "std_dev": 220, "unit": "m", "typical_variance": 0.15, "package": "piling"},
-    # Diriyah / Saudi specific
-    "stone_limestone": {"avg_cost": 420, "std_dev": 75, "unit": "m²", "typical_variance": 0.18, "package": "heritage"},
-    "nadji_style_plaster": {"avg_cost": 180, "std_dev": 35, "unit": "m²", "typical_variance": 0.19, "package": "heritage"},
-    "traditional_woodwork": {"avg_cost": 2800, "std_dev": 550, "unit": "m²", "typical_variance": 0.20, "package": "heritage"},
-}
-
-
 class HistoricalBenchmarkBlock(UniversalBlock):
     name = "historical_benchmark"
-    version = "1.0.0"
-    description = "RS Means / Diriyah project data lookup: avg_cost, std_dev, variance by item and package"
-    layer = 3
-    tags = ["domain", "construction", "benchmark", "rs_means", "data", "cost"]
-    requires = []
-
-    default_config = {
-        "use_postgres": False,
-        "postgres_table": "historical_benchmarks",
-        "fuzzy_match": True,
-    }
+    version = "1.0"
+    description = "RS Means-style benchmark unit costs, cost ranges, and market data for construction items"
+    layer = 2
+    tags = ["construction", "cost", "benchmark", "rsmeans", "aec"]
 
     ui_schema = {
         "input": {
-            "type": "json",
-            "placeholder": '{"item_key": "concrete_c30", "package_type": "concrete"}',
-            "multiline": True,
+            "type": "object",
+            "placeholder": "Pass item description + location for benchmark rates",
         },
-        "output": {
-            "type": "table",
+        "params": {
             "fields": [
-                {"name": "avg_cost", "type": "number", "label": "Avg Cost"},
-                {"name": "std_dev", "type": "number", "label": "Std Dev"},
-                {"name": "typical_variance", "type": "percentage", "label": "Typical Variance"},
-                {"name": "unit", "type": "text", "label": "Unit"},
-            ],
+                {"name": "item", "type": "string", "label": "Item description"},
+                {"name": "unit", "type": "string", "label": "Unit (m2, m3, kg, ea…)"},
+                {"name": "location", "type": "string", "label": "Location / city"},
+                {"name": "project_type", "type": "string", "label": "Project type"},
+            ]
         },
-        "quick_actions": [
-            {"icon": "💰", "label": "Lookup Rate", "prompt": "What is the benchmark rate for concrete C30?"},
-            {"icon": "📦", "label": "Package Rates", "prompt": "Show all rates for the concrete package"},
-            {"icon": "📊", "label": "All Benchmarks", "prompt": "Show all available benchmark items"},
-        ],
+    }
+
+    # ------------------------------------------------------------------ #
+    # Core rate database (USD, mid-2024 baseline)
+    # ------------------------------------------------------------------ #
+    _RATES: Dict[str, Dict] = {
+        # Structural
+        "concrete_c25_m3":       {"base": 130, "low": 100, "high": 175, "unit": "m3", "trade": "Structural"},
+        "concrete_c30_m3":       {"base": 155, "low": 120, "high": 200, "unit": "m3", "trade": "Structural"},
+        "concrete_c40_m3":       {"base": 180, "low": 145, "high": 235, "unit": "m3", "trade": "Structural"},
+        "rebar_kg":              {"base": 1.90, "low": 1.40, "high": 2.60, "unit": "kg", "trade": "Structural"},
+        "structural_steel_kg":   {"base": 3.50, "low": 2.80, "high": 4.80, "unit": "kg", "trade": "Structural"},
+        "formwork_standard_m2":  {"base": 48, "low": 35, "high": 70, "unit": "m2", "trade": "Structural"},
+        "formwork_soffit_m2":    {"base": 60, "low": 45, "high": 85, "unit": "m2", "trade": "Structural"},
+        "piling_lm":             {"base": 290, "low": 200, "high": 420, "unit": "lm", "trade": "Groundworks"},
+        "excavation_m3":         {"base": 24, "low": 14, "high": 40, "unit": "m3", "trade": "Groundworks"},
+        # Masonry / Envelope
+        "blockwork_m2":          {"base": 38, "low": 28, "high": 55, "unit": "m2", "trade": "Masonry"},
+        "brickwork_m2":          {"base": 78, "low": 58, "high": 110, "unit": "m2", "trade": "Masonry"},
+        "curtain_wall_m2":       {"base": 450, "low": 280, "high": 750, "unit": "m2", "trade": "Facades"},
+        "glazing_standard_m2":   {"base": 190, "low": 130, "high": 290, "unit": "m2", "trade": "Facades"},
+        "cladding_m2":           {"base": 220, "low": 140, "high": 380, "unit": "m2", "trade": "Facades"},
+        "roofing_flat_m2":       {"base": 100, "low": 70, "high": 150, "unit": "m2", "trade": "Roofing"},
+        "waterproofing_m2":      {"base": 42, "low": 28, "high": 65, "unit": "m2", "trade": "Waterproofing"},
+        # Finishes
+        "plaster_m2":            {"base": 30, "low": 20, "high": 45, "unit": "m2", "trade": "Finishes"},
+        "drylining_m2":          {"base": 48, "low": 32, "high": 72, "unit": "m2", "trade": "Finishes"},
+        "tiling_standard_m2":    {"base": 90, "low": 60, "high": 140, "unit": "m2", "trade": "Finishes"},
+        "tiling_premium_m2":     {"base": 160, "low": 110, "high": 280, "unit": "m2", "trade": "Finishes"},
+        "flooring_screed_m2":    {"base": 35, "low": 24, "high": 52, "unit": "m2", "trade": "Finishes"},
+        "painting_m2":           {"base": 20, "low": 12, "high": 32, "unit": "m2", "trade": "Finishes"},
+        "suspended_ceiling_m2":  {"base": 65, "low": 42, "high": 100, "unit": "m2", "trade": "Finishes"},
+        "insulation_thermal_m2": {"base": 32, "low": 20, "high": 50, "unit": "m2", "trade": "Insulation"},
+        # MEP
+        "hvac_medium_m2":        {"base": 125, "low": 85, "high": 200, "unit": "m2", "trade": "Mechanical"},
+        "electrical_standard_m2":{"base": 85, "low": 55, "high": 140, "unit": "m2", "trade": "Electrical"},
+        "plumbing_standard_m2":  {"base": 68, "low": 45, "high": 110, "unit": "m2", "trade": "Plumbing"},
+        "fire_protection_m2":    {"base": 38, "low": 25, "high": 62, "unit": "m2", "trade": "Fire Protection"},
+        # Elements
+        "door_internal_ea":      {"base": 900, "low": 600, "high": 1800, "unit": "ea", "trade": "Joinery"},
+        "door_external_ea":      {"base": 2200, "low": 1400, "high": 4500, "unit": "ea", "trade": "Joinery"},
+        "window_standard_ea":    {"base": 1300, "low": 800, "high": 2600, "unit": "ea", "trade": "Joinery"},
+        "lift_passenger_ea":     {"base": 90000, "low": 60000, "high": 150000, "unit": "ea", "trade": "Vertical Transport"},
+        "scaffold_m2":           {"base": 13, "low": 8, "high": 22, "unit": "m2", "trade": "Temporary Works"},
+    }
+
+    _LOCATION_FACTORS: Dict[str, float] = {
+        "us national average": 1.00, "new york city": 1.35, "san francisco": 1.42,
+        "los angeles": 1.28, "chicago": 1.18, "houston": 1.05,
+        "dubai": 0.95, "abu dhabi": 0.92, "riyadh": 0.88, "jeddah": 0.90,
+        "doha": 0.97, "kuwait city": 0.93,
+        "london": 1.28, "manchester": 1.12, "paris": 1.22,
+        "frankfurt": 1.18, "amsterdam": 1.20,
+        "sydney": 1.15, "melbourne": 1.12,
+        "singapore": 1.08, "hong kong": 1.25, "tokyo": 1.30,
+        "toronto": 1.10, "mumbai": 0.45, "delhi": 0.42,
+    }
+
+    _PROJECT_FACTORS: Dict[str, float] = {
+        "residential": 1.00, "commercial": 1.15, "industrial": 0.90,
+        "hospital": 1.45, "education": 1.10, "hotel": 1.25,
+        "general_building": 1.05, "infrastructure": 0.85, "mixed_use": 1.18,
     }
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
         data = input_data if isinstance(input_data, dict) else {}
 
-        item_key = data.get("item_key") or params.get("item_key", "")
-        package_type = data.get("package_type") or params.get("package_type", "")
-        operation = data.get("operation") or params.get("operation", "lookup")
+        action = params.get("action", data.get("action", "lookup"))
 
-        if operation == "list_all" or item_key.strip().lower() in ("all", "list", ""):
-            return self._list_all(package_type)
+        if action == "lookup":
+            return self._lookup(data, params)
+        if action == "batch":
+            return self._batch_lookup(data, params)
+        if action == "location_factors":
+            return {"status": "success", "location_factors": self._LOCATION_FACTORS}
+        if action == "catalogue":
+            return self._get_catalogue(params)
 
-        if operation == "package" or (not item_key and package_type):
-            return self._lookup_package(package_type)
+        return self._lookup(data, params)
 
-        # Try DB first if configured
-        if self.config.get("use_postgres", False):
-            db_result = await self._lookup_postgres(item_key, package_type)
-            if db_result:
-                return {"status": "success", **db_result}
+    def _lookup(self, data: Dict, params: Dict) -> Dict:
+        item = params.get("item") or data.get("item") or data.get("description") or data.get("text") or data.get("input", "")
+        unit = (params.get("unit") or data.get("unit", "")).lower()
+        location = (params.get("location") or data.get("location", "us national average")).lower()
+        project_type = (params.get("project_type") or data.get("project_type", "general_building")).lower()
 
-        # In-memory lookup
-        result = self._lookup_memory(item_key, package_type)
-        if result:
-            return {"status": "success", **result}
+        loc_factor = self._get_location_factor(location)
+        proj_factor = self._PROJECT_FACTORS.get(project_type, 1.05)
 
-        # Fuzzy match
-        if self.config.get("fuzzy_match", True):
-            fuzzy = self._fuzzy_lookup(item_key)
-            if fuzzy:
-                fuzzy["matched_key"] = fuzzy.pop("_key", item_key)
-                fuzzy["fuzzy_match"] = True
-                return {"status": "success", **fuzzy}
+        rate_key, rate_data = self._find_best_match(item, unit)
 
-        return {
-            "status": "error",
-            "error": f"No benchmark found for '{item_key}'. Try list_all to see available items.",
-            "available_packages": list({v["package"] for v in _BENCHMARK_DATA.values()}),
-        }
-
-    def _lookup_memory(self, item_key: str, package_type: str) -> Optional[Dict]:
-        key = item_key.lower().replace(" ", "_").replace("-", "_")
-        data = _BENCHMARK_DATA.get(key)
-        if data:
-            if package_type and data.get("package") != package_type:
-                return None
-            return {**data, "item_key": key, "source": "in_memory"}
-        return None
-
-    def _fuzzy_lookup(self, item_key: str) -> Optional[Dict]:
-        key_lower = item_key.lower().replace("-", "_")
-        best_score = 0
-        best_key = None
-        for k in _BENCHMARK_DATA:
-            score = sum(1 for word in key_lower.split("_") if word and word in k)
-            if score > best_score:
-                best_score = score
-                best_key = k
-        if best_key and best_score > 0:
-            return {**_BENCHMARK_DATA[best_key], "item_key": best_key, "_key": best_key, "source": "fuzzy_match"}
-        return None
-
-    def _lookup_package(self, package_type: str) -> Dict:
-        items = {
-            k: v for k, v in _BENCHMARK_DATA.items()
-            if v.get("package") == package_type or package_type == ""
-        }
-        if not items:
+        if not rate_data:
             return {
-                "status": "error",
-                "error": f"No items for package '{package_type}'",
-                "available_packages": list({v["package"] for v in _BENCHMARK_DATA.values()}),
+                "status": "not_found",
+                "item": item,
+                "message": f"No benchmark found for '{item}' ({unit}). Check catalogue for available items.",
             }
-        avg_costs = [v["avg_cost"] for v in items.values()]
+
+        base = rate_data["base"]
+        adjusted = round(base * loc_factor * proj_factor, 2)
+
         return {
             "status": "success",
-            "package_type": package_type,
-            "item_count": len(items),
-            "items": {k: {**v, "item_key": k} for k, v in items.items()},
-            "package_avg_cost": round(sum(avg_costs) / len(avg_costs), 2),
-            "source": "in_memory",
+            "item": item,
+            "matched_key": rate_key,
+            "unit": rate_data["unit"],
+            "trade": rate_data["trade"],
+            "rates": {
+                "base_usd": base,
+                "low_usd": round(rate_data["low"] * loc_factor * proj_factor, 2),
+                "high_usd": round(rate_data["high"] * loc_factor * proj_factor, 2),
+                "adjusted_usd": adjusted,
+            },
+            "factors": {
+                "location": location,
+                "location_factor": loc_factor,
+                "project_type": project_type,
+                "project_factor": proj_factor,
+            },
+            "confidence": "high" if rate_key in item.lower().replace(" ", "_") else "medium",
+            "source": "RSMeans-calibrated internal database (mid-2024 USD baseline)",
         }
 
-    def _list_all(self, package_filter: str = "") -> Dict:
-        items = _BENCHMARK_DATA
-        if package_filter:
-            items = {k: v for k, v in items.items() if v.get("package") == package_filter}
-        packages = {}
-        for k, v in items.items():
-            pkg = v["package"]
-            if pkg not in packages:
-                packages[pkg] = []
-            packages[pkg].append(k)
-        return {
-            "status": "success",
-            "total_items": len(items),
-            "packages": packages,
-            "items": {k: {**v, "item_key": k} for k, v in items.items()},
-            "source": "in_memory",
-        }
+    def _batch_lookup(self, data: Dict, params: Dict) -> Dict:
+        items: List[Dict] = params.get("items") or data.get("items") or []
+        location = (params.get("location") or data.get("location", "us national average")).lower()
+        project_type = (params.get("project_type") or data.get("project_type", "general_building")).lower()
 
-    async def _lookup_postgres(self, item_key: str, package_type: str) -> Optional[Dict]:
-        db_url = os.environ.get("DATABASE_URL", "")
-        if not db_url:
-            return None
-        try:
-            import asyncpg
-            conn = await asyncpg.connect(db_url)
-            table = self.config.get("postgres_table", "historical_benchmarks")
-            row = await conn.fetchrow(
-                f"SELECT * FROM {table} WHERE item_key = $1", item_key
+        results = []
+        total = 0.0
+        for item in items:
+            result = self._lookup(
+                {**data, **item},
+                {"location": location, "project_type": project_type,
+                 "item": item.get("item", item.get("description", "")),
+                 "unit": item.get("unit", "")},
             )
-            await conn.close()
-            if row:
-                return dict(row)
-        except Exception:
-            pass
-        return None
+            qty = float(item.get("quantity", 1))
+            if result.get("status") == "success":
+                line_total = round(result["rates"]["adjusted_usd"] * qty, 2)
+                result["quantity"] = qty
+                result["line_total"] = line_total
+                total += line_total
+            results.append(result)
+
+        return {
+            "status": "success",
+            "action": "batch_lookup",
+            "items_requested": len(items),
+            "items_matched": len([r for r in results if r.get("status") == "success"]),
+            "total_cost_usd": round(total, 2),
+            "results": results,
+        }
+
+    def _get_catalogue(self, params: Dict) -> Dict:
+        trade_filter = params.get("trade", "").lower()
+        items = []
+        for key, data in self._RATES.items():
+            if trade_filter and trade_filter not in data["trade"].lower():
+                continue
+            items.append({
+                "key": key,
+                "unit": data["unit"],
+                "trade": data["trade"],
+                "base_rate_usd": data["base"],
+                "range": f"{data['low']} – {data['high']}",
+            })
+        return {
+            "status": "success",
+            "action": "catalogue",
+            "total_items": len(items),
+            "items": items,
+        }
+
+    def _find_best_match(self, item: str, unit: str) -> tuple:
+        n = item.lower()
+        u = unit.lower()
+
+        # Exact keyword matching in priority order
+        if "curtain wall" in n or "curtain_wall" in n:
+            return "curtain_wall_m2", self._RATES["curtain_wall_m2"]
+        if "cladding" in n:
+            return "cladding_m2", self._RATES["cladding_m2"]
+        if "glazing" in n or "glass" in n:
+            return "glazing_standard_m2", self._RATES["glazing_standard_m2"]
+        if "lift" in n or "elevator" in n:
+            return "lift_passenger_ea", self._RATES["lift_passenger_ea"]
+        if "structural steel" in n or ("steel" in n and "kg" in u):
+            return "structural_steel_kg", self._RATES["structural_steel_kg"]
+        if "rebar" in n or "reinforcement" in n:
+            return "rebar_kg", self._RATES["rebar_kg"]
+        if "c40" in n or ("concrete" in n and "40" in n):
+            return "concrete_c40_m3", self._RATES["concrete_c40_m3"]
+        if "c30" in n or ("concrete" in n and "30" in n):
+            return "concrete_c30_m3", self._RATES["concrete_c30_m3"]
+        if "concrete" in n and "m3" in u:
+            return "concrete_c25_m3", self._RATES["concrete_c25_m3"]
+        if "soffit" in n or ("formwork" in n and "soffit" in n):
+            return "formwork_soffit_m2", self._RATES["formwork_soffit_m2"]
+        if "formwork" in n or "shuttering" in n:
+            return "formwork_standard_m2", self._RATES["formwork_standard_m2"]
+        if "pil" in n:
+            return "piling_lm", self._RATES["piling_lm"]
+        if "excavat" in n:
+            return "excavation_m3", self._RATES["excavation_m3"]
+        if "brick" in n:
+            return "brickwork_m2", self._RATES["brickwork_m2"]
+        if "block" in n and "m2" in u:
+            return "blockwork_m2", self._RATES["blockwork_m2"]
+        if "waterproof" in n or "membrane" in n:
+            return "waterproofing_m2", self._RATES["waterproofing_m2"]
+        if "roof" in n:
+            return "roofing_flat_m2", self._RATES["roofing_flat_m2"]
+        if "suspended ceiling" in n or "false ceiling" in n:
+            return "suspended_ceiling_m2", self._RATES["suspended_ceiling_m2"]
+        if "drylining" in n or "drywall" in n:
+            return "drylining_m2", self._RATES["drylining_m2"]
+        if "plaster" in n:
+            return "plaster_m2", self._RATES["plaster_m2"]
+        if "premium tile" in n or "marble" in n or "stone tile" in n:
+            return "tiling_premium_m2", self._RATES["tiling_premium_m2"]
+        if "tile" in n or "tiling" in n:
+            return "tiling_standard_m2", self._RATES["tiling_standard_m2"]
+        if "floor" in n and "screed" in n:
+            return "flooring_screed_m2", self._RATES["flooring_screed_m2"]
+        if "paint" in n:
+            return "painting_m2", self._RATES["painting_m2"]
+        if "insulation" in n:
+            return "insulation_thermal_m2", self._RATES["insulation_thermal_m2"]
+        if "hvac" in n or "mechanical" in n or "air" in n:
+            return "hvac_medium_m2", self._RATES["hvac_medium_m2"]
+        if "fire" in n and "protection" in n:
+            return "fire_protection_m2", self._RATES["fire_protection_m2"]
+        if "electrical" in n or "lighting" in n:
+            return "electrical_standard_m2", self._RATES["electrical_standard_m2"]
+        if "plumbing" in n or "sanitary" in n:
+            return "plumbing_standard_m2", self._RATES["plumbing_standard_m2"]
+        if "external door" in n:
+            return "door_external_ea", self._RATES["door_external_ea"]
+        if "door" in n:
+            return "door_internal_ea", self._RATES["door_internal_ea"]
+        if "window" in n:
+            return "window_standard_ea", self._RATES["window_standard_ea"]
+        if "scaffold" in n:
+            return "scaffold_m2", self._RATES["scaffold_m2"]
+
+        return "", None
+
+    def _get_location_factor(self, location: str) -> float:
+        loc = location.lower().strip()
+        if loc in self._LOCATION_FACTORS:
+            return self._LOCATION_FACTORS[loc]
+        for key, factor in self._LOCATION_FACTORS.items():
+            if key in loc or loc in key:
+                return factor
+        return 1.0

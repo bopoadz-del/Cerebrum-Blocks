@@ -17,7 +17,7 @@ export const QueueBlock: React.FC<QueueBlockProps> = ({
   pollInterval = 2000
 }) => {
   const [status, setStatus] = useState<string>('idle');
-  const [progress, setProgress] = useState<number>(0);
+  const [progress] = useState<number>(0);
   const [result, setResult] = useState<any>(null);
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
