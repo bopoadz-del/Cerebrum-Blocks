@@ -1,36 +1,44 @@
-"""Platform Blocks - Universal Block System (Single Source of Truth)"""
+"""Platform Blocks — Construction Intelligence Platform."""
 
 from app.core.universal_base import UniversalBlock, UniversalContainer
 from app.core.typed_block import TypedBlock
 
-# Core AI Blocks (v1)
-from .chat import ChatBlock
+# ── Document Extraction ──────────────────────────────────────────────────────
 from .pdf import PDFBlock
-from .ocr import OCRBlock
-from .voice import VoiceBlock
-from .vector_search import VectorSearchBlock
-from .image import ImageBlock
-from .translate import TranslateBlock
-from .code import CodeBlock
-from .web import WebBlock
-from .search import SearchBlock
-from .zvec import ZvecBlock
-
-# Core AI Blocks (v2 - TypedBlock)
 from .pdf_v2 import PDFBlockV2
+from .ocr import OCRBlock
 from .ocr_v2 import OCRBlockV2
+from .image import ImageBlock
+from .document_engine import DocumentEngineBlock
+
+# ── AI / Language ─────────────────────────────────────────────────────────────
+from .chat import ChatBlock
+from .translate import TranslateBlock
+from .voice import VoiceBlock
+from .web import WebBlock
+
+# ── Construction Intelligence ─────────────────────────────────────────────────
+from .boq_processor import BOQProcessorBlock
+from .bim_extractor import BIMExtractorBlock
+from .bim import BIMBlock
+from .drawing_qto import DrawingQTOBlock
+from .primavera_parser import PrimaveraParserBlock
+from .spec_analyzer import SpecAnalyzerBlock
+from .formula_executor import FormulaExecutorBlock
+from .sympy_reasoning import SymPyReasoningBlock
+from .historical_benchmark import HistoricalBenchmarkBlock
+from .smart_orchestrator import SmartOrchestratorBlock
 from .construction_v2 import ConstructionBlockV2
 
-# Drive Blocks
+# ── File Access ───────────────────────────────────────────────────────────────
+from .local_drive import LocalDriveBlock
 from .google_drive import GoogleDriveBlock
 from .onedrive import OneDriveBlock
-from .local_drive import LocalDriveBlock
-from .android_drive import AndroidDriveBlock
 
-# Construction Intelligence Blocks (Week 1)
-from .sympy_reasoning import SymPyReasoningBlock
-from .boq_processor import BOQProcessorBlock
-from .spec_analyzer import SpecAnalyzerBlock
+# ── Search & Memory ───────────────────────────────────────────────────────────
+from .vector_search import VectorSearchBlock
+from .zvec import ZvecBlock
+from .cache_manager import CacheManagerBlock
 
 # Construction Domain Blocks (Week 2)
 from .drawing_qto import DrawingQTOBlock
@@ -38,53 +46,7 @@ from .primavera_parser import PrimaveraParserBlock
 from .smart_orchestrator import SmartOrchestratorBlock
 from .skills import SkillsBlock
 
-# Intelligence Blocks (Week 3)
-from .jetson_gateway import JetsonGatewayBlock
-from .formula_executor import FormulaExecutorBlock
-from .bim_extractor import BIMExtractorBlock
 
-# Intelligence Blocks (Week 4)
-from .learning_engine import LearningEngineBlock
-from .historical_benchmark import HistoricalBenchmarkBlock
-from .recommendation_template import RecommendationTemplateBlock
-
-# ML Engine Block
-from .ml_engine import MLEngineBlock
-
-# Reasoning Engine Blocks
-from .validator import ValidatorBlock
-from .credibility_scorer import CredibilityScorerBlock
-from .predictive_engine import PredictiveEngineBlock
-from .evidence_vault import EvidenceVaultBlock
-
-# Telegram Bot Block
-from .telegram_bot import TelegramBotBlock
-
-# Infrastructure Blocks
-from .orchestrator import OrchestratorBlock
-from .traffic_manager import TrafficManagerBlock
-from .event_bus import EventBusBlock
-from .context_broker import ContextBrokerBlock
-from .llm_enhancer import LLMEnhancerBlock
-from .cache_manager import CacheManagerBlock
-from .async_processor import AsyncProcessorBlock
-from .file_hasher import FileHasherBlock
-
-# Domain Containers (v1)
-from app.containers import (
-    ConstructionContainer,
-    MedicalContainer,
-    LegalContainer,
-    FinanceContainer,
-    SecurityContainer,
-    AICoreContainer,
-    StoreContainer,
-    LibrariesContainer,
-    MLContainer,
-    ReasoningEngineContainer,
-)
-
-# Unified Registry
 BLOCK_REGISTRY = {
     # Core AI (v1 - backward compatible)
     "chat": ChatBlock,
@@ -125,47 +87,25 @@ BLOCK_REGISTRY = {
     # Intelligence (Week 4)
     "learning_engine": LearningEngineBlock,
     "historical_benchmark": HistoricalBenchmarkBlock,
-    "recommendation_template": RecommendationTemplateBlock,
-    # ML Engine
-    "ml_engine": MLEngineBlock,
-    # Reasoning Engine Blocks
-    "validator": ValidatorBlock,
-    "credibility_scorer": CredibilityScorerBlock,
-    "predictive_engine": PredictiveEngineBlock,
-    "evidence_vault": EvidenceVaultBlock,
-    # Telegram Bot
-    "telegram_bot": TelegramBotBlock,
-    # Infrastructure
-    "orchestrator": OrchestratorBlock,
-    "traffic_manager": TrafficManagerBlock,
-    "event_bus": EventBusBlock,
-    "context_broker": ContextBrokerBlock,
-    "llm_enhancer": LLMEnhancerBlock,
-    "cache_manager": CacheManagerBlock,
-    "async_processor": AsyncProcessorBlock,
-    "file_hasher": FileHasherBlock,
-    
-    # Domain Containers (v1)
-    "construction": ConstructionContainer,
-    "medical": MedicalContainer,
-    "legal": LegalContainer,
-    "finance": FinanceContainer,
-    "security": SecurityContainer,
-    "ai_core": AICoreContainer,
-    "store": StoreContainer,
-    "libraries": LibrariesContainer,
-    "ml": MLContainer,
-    "reasoning_engine": ReasoningEngineContainer,
+    "smart_orchestrator":   SmartOrchestratorBlock,
+
+    # File Access
+    "local_drive":      LocalDriveBlock,
+    "google_drive":     GoogleDriveBlock,
+    "onedrive":         OneDriveBlock,
+
+    # Search & Memory
+    "vector_search":    VectorSearchBlock,
+    "zvec":             ZvecBlock,
+    "cache_manager":    CacheManagerBlock,
 }
 
 
 def get_block(name: str):
-    """Get a block class by name"""
     return BLOCK_REGISTRY.get(name)
 
 
 def get_all_blocks():
-    """Get all registered blocks"""
     return BLOCK_REGISTRY
 
 

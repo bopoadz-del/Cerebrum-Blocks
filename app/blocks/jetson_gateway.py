@@ -70,13 +70,13 @@ class JetsonGatewayBlock(UniversalBlock):
         params = params or {}
         data = input_data if isinstance(input_data, dict) else {}
 
-        action_name = data.get("action_name") or params.get("action_name", "")
+        action_name = data.get("action_name") or params.get("action_name") or data.get("text") or data.get("input") or (input_data if isinstance(input_data, str) else "")
         file_path = data.get("file_path") or params.get("file_path")
         parameters = data.get("parameters", {})
         parameters.update(params.get("parameters", {}))
 
         if not action_name:
-            return {"status": "error", "error": "action_name is required"}
+            return {"status": "error", "error": "action_name is required. Use: fleet_status, fleet_health, ota_deploy, parallel_execute, or a block action name."}
 
         # Special meta-actions
         if action_name == "fleet_health":

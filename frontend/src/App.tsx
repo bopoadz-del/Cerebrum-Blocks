@@ -16,7 +16,7 @@ import {
 } from './blocks';
 
 function App() {
-  const API_KEY = 'cb_dev_key';
+  const API_KEY = import.meta.env.VITE_API_KEY || 'cb_dev_key';
 
   useEffect(() => {
     API.setKey(API_KEY);

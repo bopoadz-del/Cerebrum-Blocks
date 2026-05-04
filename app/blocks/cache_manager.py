@@ -1,6 +1,7 @@
 """Cache Manager Block - Redis wrapper with in-memory fallback."""
 
 import json
+import os
 import time
 from typing import Any, Dict, Optional
 from app.core.universal_base import UniversalBlock
@@ -19,7 +20,7 @@ class CacheManagerBlock(UniversalBlock):
     default_config = {
         "default_ttl": 3600,
         "max_local_entries": 10000,
-        "redis_url": None  # e.g. "redis://localhost:6379/0"
+        "redis_url": os.environ.get("REDIS_URL")  # falls back to in-memory if unset
     }
 
     ui_schema = {

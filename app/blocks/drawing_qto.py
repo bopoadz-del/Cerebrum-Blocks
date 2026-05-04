@@ -46,9 +46,13 @@ class DrawingQTOBlock(UniversalBlock):
         params = params or {}
         data = input_data if isinstance(input_data, dict) else {}
 
-        file_path = data.get("file_path") or params.get("file_path")
+        # Support string path input directly, or InputAdapter {"text": "/path/to/file.dxf"}
+        if isinstance(input_data, str) and not data:
+            file_path = input_data
+        else:
+            file_path = data.get("file_path") or params.get("file_path") or data.get("text") or data.get("input") or ""
         if not file_path:
-            return {"status": "error", "error": "No file_path provided"}
+            return {"status": "error", "error": "No file_path provided. Requires a DXF or IFC file path."}
         if not os.path.exists(file_path):
             return {"status": "error", "error": f"File not found: {file_path}"}
 

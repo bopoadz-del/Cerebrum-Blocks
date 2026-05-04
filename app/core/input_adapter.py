@@ -103,12 +103,16 @@ class InputAdapter:
         schema = cls._get_schema(block)
         block_name = getattr(block, 'name', 'unknown')
         
+        # URL — wrap with both url and text so any block can use whichever key it prefers
+        if input_str.startswith("http://") or input_str.startswith("https://"):
+            return {"url": input_str, "text": input_str, "input": input_str}
+
         # If it looks like a file path
         if input_str.startswith('/') or input_str.startswith('./') or '.' in input_str.split('/')[-1]:
             # PDF or file-related block
             if 'pdf' in block_name or 'file' in block_name or 'ocr' in block_name:
                 return {"file_path": input_str}
-        
+
         # Text/chat block
         if schema:
             if isinstance(schema, dict):

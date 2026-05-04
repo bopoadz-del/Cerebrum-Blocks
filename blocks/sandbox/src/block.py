@@ -305,15 +305,28 @@ class SandboxBlock(LegoBlock):
         finally:
             os.unlink(temp_path)
     
+    _SHELL_ALLOWLIST = {"echo", "cat", "ls", "pwd", "wc", "head", "tail", "grep", "find", "mkdir", "touch", "cp", "mv", "chmod", "python", "pytest"}
+
+    def _audit_shell(self, code: str, allowed: bool, result: dict = None):
+        import datetime, pathlib
+        log_dir = pathlib.Path("logs")
+        log_dir.mkdir(exist_ok=True)
+        with open(log_dir / "shell_audit.log", "a") as f:
+            ts = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            status = "ALLOWED" if allowed else "BLOCKED"
+            rc = result.get("return_code", "N/A") if result else "N/A"
+            f.write(f"{ts} | SANDBOX | {status} | {code!r} | {rc}\n")
+
     async def _execute_bash(self, code: str, policy: SandboxPolicy) -> Dict:
-        """Execute bash commands in restricted shell"""
+        """Execute bash commands in restricted shell with strict allowlist."""
         import subprocess
         
-        # Block dangerous commands
-        dangerous = ["rm -rf /", ":(){ :|:& };:", "> /dev/sda", "mkfs"]
-        for cmd in dangerous:
-            if cmd in code:
-                return {"error": "Dangerous command blocked", "blocked": True}
+        # Strict allowlist — no blacklist bypass
+        command = code.strip().split()[0] if code.strip() else ""
+        if command not in self._SHELL_ALLOWLIST:
+            result = {"error": f"Command '{command}' not in sandbox allowlist.", "blocked": True}
+            self._audit_shell(code, allowed=False, result=result)
+            return result
         
         # Run in restricted mode
         proc = await asyncio.create_subprocess_shell(

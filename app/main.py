@@ -1,10 +1,23 @@
 """Cerebrum Blocks - Simple Block Execution API."""
 
-import logging
 import os
+import sys
+
+# Force fresh bytecode on Render deployments (clear stale __pycache__)
+for root, dirs, files in os.walk(os.path.dirname(os.path.abspath(__file__))):
+    for d in dirs:
+        if d == "__pycache__":
+            try:
+                import shutil
+                shutil.rmtree(os.path.join(root, d))
+            except Exception:
+                pass
+
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -29,9 +42,6 @@ from app.routers import (
     static,
     upload,
 )
-from app.routers import telegram as telegram_router
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize all blocks eagerly at startup to avoid race conditions."""
@@ -45,6 +55,20 @@ app = FastAPI(
     version="2.0.0",
     docs_url="/docs",
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://cerebrum-platform-frontend-fork.onrender.com",
+        "https://cerebrum-platform-api-fork.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

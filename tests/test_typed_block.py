@@ -180,7 +180,7 @@ class TestDataTransformer:
         }
         
         # Transform to TextContent
-        text_content = transform(pdf_output, "TextContent", "pdf")
+        text_content, _ = transform(pdf_output, "TextContent", "pdf")
         
         assert text_content["text"] == "Extracted PDF text content"
         assert text_content["source"] == "pdf"
@@ -203,7 +203,7 @@ class TestDataTransformer:
             }
         }
         
-        text_content = transform(ocr_output, "TextContent", "ocr")
+        text_content, _ = transform(ocr_output, "TextContent", "ocr")
         
         assert text_content["text"] == "Scanned text from image"
         assert text_content["source"] == "ocr"
@@ -220,7 +220,7 @@ class TestDataTransformer:
             }
         }
         
-        text_content = transform(chat_output, "TextContent", "chat")
+        text_content, _ = transform(chat_output, "TextContent", "chat")
         
         assert text_content["text"] == "AI response message"
         assert text_content["source"] == "chat"
@@ -236,7 +236,7 @@ class TestDataTransformer:
             }
         }
         
-        message = transform(chat_output, "ChatMessage", "chat")
+        message, _ = transform(chat_output, "ChatMessage", "chat")
         
         assert message["role"] == "assistant"
         assert message["content"] == "AI response message"
@@ -245,7 +245,7 @@ class TestDataTransformer:
     
     def test_generic_string_transform(self):
         """Test generic transformation of string to TextContent."""
-        text_content = transform("Plain string input", "TextContent")
+        text_content, _ = transform("Plain string input", "TextContent")
         
         assert text_content["text"] == "Plain string input"
         assert text_content["source"] == "string"
@@ -288,7 +288,7 @@ class TestPDFToChatFlow:
         }
         
         # Step 1: Transform PDF output to TextContent
-        text_content = transform(pdf_result, "TextContent", "pdf")
+        text_content, _ = transform(pdf_result, "TextContent", "pdf")
         
         # Verify transformation
         assert text_content["text"] == "This is construction specifications. Concrete: 100m³, Steel: 50 tons."
@@ -354,7 +354,7 @@ class TestPDFToChatFlow:
         }
         
         # Transform OCR output to TextContent
-        ocr_text = transform(ocr_result, "TextContent", "ocr")
+        ocr_text, _ = transform(ocr_result, "TextContent", "ocr")
         assert ocr_text["text"] == "Steel beams: 200 units, Concrete blocks: 500 units"
         assert ocr_text["source"] == "ocr"
         
@@ -368,7 +368,7 @@ class TestPDFToChatFlow:
         }
         
         # Transform to TextContent for Chat
-        final_text = transform({"result": pdf_content}, "TextContent")
+        final_text, _ = transform({"result": pdf_content}, "TextContent")
         
         # Chat block input
         chat_prompt = f"Analyze this construction data: {final_text['text']}"
@@ -416,7 +416,7 @@ class TestBackwardCompatibility:
         }
         
         # Should transform successfully
-        text_content = transform(legacy_result, "TextContent", "pdf")
+        text_content, _ = transform(legacy_result, "TextContent", "pdf")
         
         assert text_content["text"] == "Legacy block output text"
         assert text_content["source"] == "pdf"
@@ -432,7 +432,7 @@ if __name__ == "__main__":
         
         # Test transformer
         pdf_output = {"result": {"text": "Hello from PDF", "pages": 5}}
-        text = transform(pdf_output, "TextContent", "pdf")
+        text, _ = transform(pdf_output, "TextContent", "pdf")
         print(f"✅ Transform test: {text['text']}")
         
         # Test registry

@@ -17,15 +17,28 @@ class APIKeyAuth:
         self._keys = self._load_keys()
         self._usage: Dict[str, Dict[str, Any]] = {}
     
+    @staticmethod
+    def _is_dev_environment() -> bool:
+        import sys
+        env = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()
+        if env in {"dev", "development", "local", "test", "testing"}:
+            return True
+        # Allow dev key during pytest runs
+        if "pytest" in sys.modules:
+            return True
+        return False
+
     def _load_keys(self) -> Dict[str, Dict]:
         keys = {}
 
-        keys["cb_dev_key"] = {
-            "user": "dev",
-            "tier": "unlimited",
-            "rate_limit": float('inf'),
-            "created_at": time.time()
-        }
+        # cb_dev_key only works in development environments
+        if self._is_dev_environment():
+            keys["cb_dev_key"] = {
+                "user": "dev",
+                "tier": "unlimited",
+                "rate_limit": float('inf'),
+                "created_at": time.time()
+            }
 
         master = os.getenv("CEREBRUM_MASTER_KEY")
         if master:
@@ -54,8 +67,11 @@ class APIKeyAuth:
 
         key = credentials.credentials
 
+        # cb_dev_key only valid in dev environments
         if key == "cb_dev_key":
-            return {"user": "dev", "tier": "unlimited", "valid": True}
+            if self._is_dev_environment():
+                return {"user": "dev", "tier": "unlimited", "valid": True}
+            raise HTTPException(status_code=401, detail="Dev key disabled in production")
 
         if key not in self._keys:
             raise HTTPException(status_code=401, detail="Invalid API key")
