@@ -451,7 +451,50 @@ class ConstructionContainer(UniversalContainer):
         return []
 
     def _extract_tables_advanced(self, page) -> List[Dict]:
-        return []
+        """Extract tables from PDF page using text-dict structure analysis."""
+        tables = []
+        try:
+            text_dict = page.get_text("dict")
+            if not text_dict or "blocks" not in text_dict:
+                return tables
+            
+            # Group text spans by row (y-coordinate) and column (x-coordinate)
+            row_map: Dict[float, List[Dict]] = {}
+            for block in text_dict.get("blocks", []):
+                if block.get("type") == 0:  # text block
+                    for line in block.get("lines", []):
+                        y = round(line["bbox"][1], 1)
+                        for span in line.get("spans", []):
+                            x = round(span["bbox"][0], 1)
+                            txt = span.get("text", "").strip()
+                            if txt:
+                                if y not in row_map:
+                                    row_map[y] = []
+                                row_map[y].append({"x": x, "text": txt})
+            
+            # Sort each row by x-coordinate
+            sorted_rows = []
+            for y in sorted(row_map.keys()):
+                cells = sorted(row_map[y], key=lambda c: c["x"])
+                sorted_rows.append([c["text"] for c in cells])
+            
+            # Heuristic: a table has at least 3 rows with similar column counts
+            if len(sorted_rows) >= 3:
+                col_counts = [len(r) for r in sorted_rows]
+                mode_count = max(set(col_counts), key=col_counts.count)
+                if mode_count >= 2 and col_counts.count(mode_count) >= 3:
+                    # Filter rows that match the dominant column count
+                    table_rows = [r for r in sorted_rows if len(r) == mode_count]
+                    tables.append({
+                        "headers": table_rows[0] if table_rows else [],
+                        "rows": table_rows[1:] if len(table_rows) > 1 else [],
+                        "row_count": len(table_rows) - 1,
+                        "col_count": mode_count,
+                        "source": "pdf_structure"
+                    })
+        except Exception:
+            pass
+        return tables
 
     def _extract_annotations(self, page) -> List[Dict]:
         return []
@@ -1432,6 +1475,7 @@ class ConstructionContainer(UniversalContainer):
     def _extract_measurements_advanced(self, text: str, text_dict: Dict) -> List[Dict]:
         measurements = []
         
+        # --- Dimension patterns (width x height) ---
         dimension_pattern = r'\b(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')\s*(?:x|by|×)\s*(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')'
         for match in re.finditer(dimension_pattern, text, re.IGNORECASE):
             width = float(match.group(1))
@@ -1448,6 +1492,7 @@ class ConstructionContainer(UniversalContainer):
                 "context": text[max(0, match.start()-50):match.end()+50]
             })
         
+        # --- Count patterns (10 nos. Door) ---
         quantity_pattern = r'\b(\d+)\s*(?:no|nos|nr|ea|each)?\.?\s*([A-Z][A-Za-z\s]+)'
         for match in re.finditer(quantity_pattern, text[:2000]):
             qty = int(match.group(1))
@@ -1460,6 +1505,48 @@ class ConstructionContainer(UniversalContainer):
                     "item": item,
                     "raw": match.group(0)
                 })
+        
+        # --- Direct area mentions (1,250 m²) ---
+        area_pattern = r'\b(\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?\s*(?:m²|sqm|m2|ft²|sqft|ft2|sf)'
+        for match in re.finditer(area_pattern, text, re.IGNORECASE):
+            val_str = match.group(1).replace(',', '')
+            val = float(val_str)
+            unit = "m2" if any(u in match.group(0).lower() for u in ["m²", "sqm", "m2"]) else "ft2"
+            measurements.append({
+                "type": "area",
+                "value": val,
+                "unit": unit,
+                "raw": match.group(0),
+                "context": text[max(0, match.start()-50):match.end()+50]
+            })
+        
+        # --- Direct volume mentions (450 m³) ---
+        volume_pattern = r'\b(\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?\s*(?:m³|cum|m3|ft³|cuft|ft3|cy)'
+        for match in re.finditer(volume_pattern, text, re.IGNORECASE):
+            val_str = match.group(1).replace(',', '')
+            val = float(val_str)
+            unit = "m3" if any(u in match.group(0).lower() for u in ["m³", "cum", "m3"]) else "ft3"
+            measurements.append({
+                "type": "volume",
+                "value": val,
+                "unit": unit,
+                "raw": match.group(0),
+                "context": text[max(0, match.start()-50):match.end()+50]
+            })
+        
+        # --- Length / linear patterns (350 m run) ---
+        length_pattern = r'\b(\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?\s*(?:m|m\.|meter|meters|ft|feet|foot)\s+(?:run|linear|lin|length|long)'
+        for match in re.finditer(length_pattern, text, re.IGNORECASE):
+            val_str = match.group(1).replace(',', '')
+            val = float(val_str)
+            unit = "m" if "m" in match.group(0).lower() else "ft"
+            measurements.append({
+                "type": "length",
+                "value": val,
+                "unit": unit,
+                "raw": match.group(0),
+                "context": text[max(0, match.start()-50):match.end()+50]
+            })
         
         return measurements[:50]
     
@@ -1503,38 +1590,60 @@ class ConstructionContainer(UniversalContainer):
     
     def _calculate_quantities(self, measurements: List[Dict]) -> Dict:
         total_area = sum(m.get("value", 0) for m in measurements if m.get("type") == "dimension")
+        total_area += sum(m.get("value", 0) for m in measurements if m.get("type") == "area")
         counts = {m.get("item", "unknown"): m.get("value", 0) for m in measurements if m.get("type") == "count"}
+        total_volume = sum(m.get("value", 0) for m in measurements if m.get("type") == "volume")
+        total_length = sum(m.get("value", 0) for m in measurements if m.get("type") == "length")
         
-        concrete_volume = total_area * 0.15
+        concrete_volume = total_volume if total_volume > 0 else total_area * 0.15
         steel_weight = concrete_volume * 120
-        rebar_length = concrete_volume * 50
+        rebar_length = total_length if total_length > 0 else concrete_volume * 50
         
-        return {
-            "floor_area_m2": round(total_area, 2),
-            "concrete_volume_m3": round(concrete_volume, 2),
-            "steel_weight_kg": round(steel_weight, 2),
-            "rebar_length_m": round(rebar_length, 2),
-            "item_counts": counts
-        }
+        quantities = {}
+        if total_area > 0:
+            quantities["floor_area_m2"] = {"quantity": round(total_area, 2), "unit": "m2", "confidence": 0.85}
+        if concrete_volume > 0:
+            quantities["concrete_volume_m3"] = {"quantity": round(concrete_volume, 2), "unit": "m3", "confidence": 0.80}
+        if steel_weight > 0:
+            quantities["steel_weight_kg"] = {"quantity": round(steel_weight, 2), "unit": "kg", "confidence": 0.75}
+        if rebar_length > 0:
+            quantities["rebar_length_m"] = {"quantity": round(rebar_length, 2), "unit": "m", "confidence": 0.75}
+        for item, qty in counts.items():
+            if qty > 0:
+                quantities[item] = {"quantity": qty, "unit": "ea", "confidence": 0.70}
+        return quantities
     
     def _estimate_costs(self, quantities: Dict) -> Dict:
-        concrete_cost = quantities.get("concrete_volume_m3", 0) * 150
-        steel_cost = quantities.get("steel_weight_kg", 0) * 2.5
-        rebar_cost = quantities.get("rebar_length_m", 0) * 1.8
+        def _get_qty(val):
+            if isinstance(val, dict):
+                return val.get("quantity", 0)
+            return val if isinstance(val, (int, float)) else 0
+        
+        concrete_cost = _get_qty(quantities.get("concrete_volume_m3", 0)) * 150
+        steel_cost = _get_qty(quantities.get("steel_weight_kg", 0)) * 2.5
+        rebar_cost = _get_qty(quantities.get("rebar_length_m", 0)) * 1.8
         
         subtotal = concrete_cost + steel_cost + rebar_cost
+        overhead = round(subtotal * 0.10, 2)
+        contingency = round(subtotal * 0.05, 2)
+        total = round(subtotal + overhead + contingency, 2)
         
         return {
             "concrete_cost": round(concrete_cost, 2),
             "steel_cost": round(steel_cost, 2),
             "rebar_cost": round(rebar_cost, 2),
-            "subtotal": round(subtotal, 2),
-            "total_with_overhead": round(subtotal * 1.25, 2)
+            "subtotal": subtotal,
+            "overhead": overhead,
+            "contingency": contingency,
+            "total_estimate": total,
+            "total_with_overhead": total
         }
     
     def _estimate_carbon(self, quantities: Dict) -> Dict:
-        concrete_carbon = quantities.get("concrete_volume_m3", 0) * 250
-        steel_carbon = quantities.get("steel_weight_kg", 0) * 2.3
+        def _q(v):
+            return v.get("quantity", 0) if isinstance(v, dict) else (v if isinstance(v, (int, float)) else 0)
+        concrete_carbon = _q(quantities.get("concrete_volume_m3", 0)) * 250
+        steel_carbon = _q(quantities.get("steel_weight_kg", 0)) * 2.3
         
         return {
             "concrete_co2_kg": round(concrete_carbon, 2),
@@ -3962,6 +4071,453 @@ Total Extension of Time Sought: {total_delay} days
             return {"status": "error", "error": "recommendation_template block not registered"}
         return await block_cls().process(input_data, params)
 
+    async def _analyse_text_only(self, extracted_text: str, doc_type_hint: str = "auto") -> Dict:
+        """Classify and analyse text when no file_path is provided."""
+        text = extracted_text[:10000]
+        # Simple keyword-based classification
+        text_lower = text.lower()
+        if doc_type_hint == "auto":
+            scores = {
+                "contract": sum(1 for k in ["contract", "agreement", "clause", "party", "obligation"] if k in text_lower),
+                "schedule": sum(1 for k in ["schedule", "cpm", "critical path", "milestone", "duration"] if k in text_lower),
+                "specification": sum(1 for k in ["specification", "spec", "material", "finish", "workmanship"] if k in text_lower),
+                "drawing": sum(1 for k in ["drawing", "plan", "elevation", "section", "dimension"] if k in text_lower),
+                "bom": sum(1 for k in ["bill of quantities", "boq", "schedule of rates", "item", "quantity"] if k in text_lower),
+            }
+            doc_type = max(scores, key=scores.get) if max(scores.values()) > 0 else "report"
+        else:
+            doc_type = doc_type_hint
+        
+        # Extract basic quantities from text
+        measurements = self._extract_measurements_advanced(text, {})
+        quantities = self._calculate_quantities(measurements)
+        
+        return {
+            "status": "success",
+            "doc_type": doc_type,
+            "raw_text": text,
+            "measurements": measurements,
+            "quantities": quantities,
+            "specifications": self._extract_specs_advanced(text),
+            "risks": [],
+            "pages": 1,
+        }
+
+    # ────────────────────────────────────────────────────────────────────────
+    # LLM-ASSISTED EXTRACTION (Priority 1 — complex PDFs, tables, BOQ)
+    # ────────────────────────────────────────────────────────────────────────
+
+    async def _extract_quantities_with_llm(self, raw_text: str) -> Dict:
+        """Use LLM to extract structured quantities from complex PDF text."""
+        from app.blocks import BLOCK_REGISTRY
+        chat_block = BLOCK_REGISTRY.get("chat")
+        if not chat_block:
+            return {}
+
+        prompt = (
+            "You are a construction quantity surveyor. Extract ALL measurable quantities from the text below. "
+            "Return ONLY a JSON object. Keys should be snake_case material names (e.g. floor_area_m2, concrete_volume_m3, "
+            "steel_weight_kg, rebar_length_m, excavation_volume_m3, blockwork_m2, plaster_m2, paint_m2, tiling_m2, "
+            "door_count, window_count). Each value must be an object: {\"quantity\": number, \"unit\": string, \"confidence\": 0.0-1.0}. "
+            "Use 0 or omit if not found. Do NOT guess — only extract what is explicitly stated or clearly implied. "
+            "Text:\n" + raw_text[:8000]
+        )
+        try:
+            chat_instance = chat_block()
+            result = await chat_instance.process(
+                {"text": prompt},
+                {"temperature": 0.1, "max_tokens": 1500}
+            )
+            response_text = result.get("text", "") if isinstance(result, dict) else str(result)
+            start = response_text.find('{')
+            end = response_text.rfind('}') + 1
+            if start >= 0 and end > start:
+                parsed = json.loads(response_text[start:end])
+                quantities = {}
+                for key, val in parsed.items():
+                    if isinstance(val, dict) and val.get("quantity", 0) > 0:
+                        quantities[key] = val
+                    elif isinstance(val, (int, float)) and val > 0:
+                        quantities[key] = {"quantity": val, "unit": "ea", "confidence": 0.7}
+                return quantities
+        except Exception:
+            pass
+        return {}
+
+    async def _extract_boq_with_llm(self, raw_text: str) -> List[Dict]:
+        """Use LLM to extract a Bill of Quantities from drawing text."""
+        from app.blocks import BLOCK_REGISTRY
+        chat_block = BLOCK_REGISTRY.get("chat")
+        if not chat_block:
+            return []
+
+        prompt = (
+            "You are a construction estimator. The text below is from a construction drawing or specification. "
+            "Extract any bill-of-quantities or schedule-of-works items. "
+            "Return ONLY a JSON array of objects: [{\"item\": string, \"description\": string, \"quantity\": number, "
+            "\"unit\": string, \"rate\": number|null, \"confidence\": 0.0-1.0}]. "
+            "Use null for rate if not stated. Return [] if no BOQ items found. "
+            "Text:\n" + raw_text[:8000]
+        )
+        try:
+            chat_instance = chat_block()
+            result = await chat_instance.process(
+                {"text": prompt},
+                {"temperature": 0.1, "max_tokens": 2000}
+            )
+            response_text = result.get("text", "") if isinstance(result, dict) else str(result)
+            start = response_text.find('[')
+            end = response_text.rfind(']') + 1
+            if start >= 0 and end > start:
+                return json.loads(response_text[start:end])
+        except Exception:
+            pass
+        return []
+
+    def _detect_boq_in_drawing(self, raw_text: str) -> bool:
+        """Heuristic: does this drawing text contain a BOQ or schedule table?"""
+        indicators = [
+            "bill of quantities", "schedule of works", "schedule of rates",
+            "quantity schedule", "item description", "unit rate", "total amount",
+            "boq", "sor", "abstract of cost", "cost breakdown",
+            "elemental cost", "summary of costs", "prime cost", "provisional sum"
+        ]
+        text_lower = raw_text.lower()
+        hits = sum(1 for ind in indicators if ind in text_lower)
+        return hits >= 2
+
+    # ────────────────────────────────────────────────────────────────────────
+    # MISSING ACTION METHODS (minimal working versions)
+    # ────────────────────────────────────────────────────────────────────────
+
+    async def estimate_costs(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        quantities = p.get("quantities", data.get("quantities", {}))
+        if not quantities:
+            return {"status": "error", "error": "No quantities provided"}
+        cost = self._estimate_costs(quantities)
+        return {"status": "success", "action": "estimate_costs", "cost_estimate": cost}
+
+    async def procurement_list_generator(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        quantities = p.get("quantities", data.get("quantities", data.get("line_items", [])))
+        if not quantities:
+            return {"status": "error", "error": "No quantities provided"}
+        
+        # Build procurement items from quantities
+        procurement_items = []
+        if isinstance(quantities, dict):
+            for key, val in quantities.items():
+                qty = val.get("quantity", 0) if isinstance(val, dict) else val
+                if qty > 0:
+                    procurement_items.append({
+                        "item": key.replace("_", " ").title(),
+                        "quantity": qty,
+                        "unit": val.get("unit", "ea") if isinstance(val, dict) else "ea",
+                        "lead_time_weeks": 4,
+                        "priority": "normal",
+                        "category": "materials"
+                    })
+        elif isinstance(quantities, list):
+            for item in quantities:
+                if isinstance(item, dict):
+                    procurement_items.append({
+                        "item": item.get("item", "Unknown"),
+                        "quantity": item.get("quantity", 0),
+                        "unit": item.get("unit", "ea"),
+                        "lead_time_weeks": item.get("lead_time_weeks", 4),
+                        "priority": item.get("priority", "normal"),
+                        "category": item.get("category", "materials")
+                    })
+        
+        critical_items = [i for i in procurement_items if i["lead_time_weeks"] > 8]
+        action_items = []
+        if critical_items:
+            action_items.append(f"Order {len(critical_items)} long-lead items immediately")
+        
+        return {
+            "status": "success",
+            "action": "procurement_list_generator",
+            "procurement_list": procurement_items,
+            "total_procurement_cost": None,
+            "critical_long_lead_items": len(critical_items),
+            "action_required": action_items
+        }
+
+    async def payment_certificate(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        cost = data.get("cost_estimate", p.get("cost_estimate", {}))
+        total = cost.get("total_with_overhead", cost.get("total_estimate", 0)) if isinstance(cost, dict) else 0
+        return {
+            "status": "success",
+            "action": "payment_certificate",
+            "certificate": {
+                "amount_due": total,
+                "retention": round(total * 0.05, 2),
+                "net_payable": round(total * 0.95, 2),
+                "status": "draft"
+            }
+        }
+
+    async def risk_register_auto_populate(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        auto_risks = data.get("auto_risks", [])
+        if not auto_risks:
+            auto_risks = [{"description": "General construction risk", "likelihood": "medium", "impact": "medium"}]
+        risks = []
+        for i, r in enumerate(auto_risks[:20]):
+            risks.append({
+                "id": f"R{i+1:03d}",
+                "description": r.get("description", r.get("risk", "Unknown")),
+                "likelihood": r.get("likelihood", "medium"),
+                "impact": r.get("impact", "medium"),
+                "severity": r.get("severity", r.get("level", "medium")),
+                "mitigation": r.get("mitigation", "TBD")
+            })
+        return {
+            "status": "success",
+            "action": "risk_register_auto_populate",
+            "risks": risks,
+            "total_risks": len(risks)
+        }
+
+    async def submittal_log_generator(self, input_data: Any, params: Dict) -> Dict:
+        data = input_data if isinstance(input_data, dict) else {}
+        specs = data.get("specifications", [])
+        submittals = []
+        for s in specs[:30]:
+            if isinstance(s, dict):
+                submittals.append({
+                    "description": s.get("description", s.get("value", "Unknown")),
+                    "category": s.get("type", "general"),
+                    "status": "pending"
+                })
+        return {
+            "status": "success",
+            "action": "submittal_log_generator",
+            "submittals": submittals,
+            "total_submittals": len(submittals)
+        }
+
+    # ────────────────────────────────────────────────────────────────────────
+    # AUTO PIPELINE
+    # ────────────────────────────────────────────────────────────────────────
+
+    async def auto_pipeline(self, input_data: Any, params: Dict) -> Dict:
+        """
+        Single-call intelligent pipeline.
+        1. Runs process_document to understand the file.
+        2. Auto-dispatches downstream actions based on detected content.
+        3. Returns structured panels ready for UI rendering.
+        """
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        file_path = data.get("file_path") or p.get("file_path") or ""
+        extracted_text = data.get("extracted_text") or data.get("text") or ""
+
+        if not file_path and not extracted_text:
+            return {"status": "error", "error": "Provide file_path or extracted_text"}
+
+        # Step 1: domain analysis
+        if file_path:
+            doc_result = await self.process_document(
+                {"file_path": file_path, "extracted_text": extracted_text},
+                {"doc_type": p.get("doc_type", "auto"), "file_path": file_path}
+            )
+        else:
+            doc_type_hint = p.get("doc_type", "auto")
+            doc_result = await self._analyse_text_only(extracted_text, doc_type_hint)
+
+        doc_type = doc_result.get("doc_type", "unknown")
+        panels = []
+        downstream = {}
+        next_actions = []
+
+        # Document info panel (always)
+        panels.append({
+            "type": "document_info",
+            "title": "Document",
+            "data": {
+                "file": file_path.split("/")[-1] if file_path else "text input",
+                "doc_type": doc_type,
+                "status": doc_result.get("status"),
+                "pages": doc_result.get("pages") or doc_result.get("total_pages"),
+                "title": doc_result.get("title") or doc_result.get("document_title"),
+                "project": doc_result.get("project_name") or doc_result.get("project"),
+            }
+        })
+
+        # Step 2: enrich with LLM if quantities look thin
+        raw_text = doc_result.get("raw_text", "") or extracted_text
+        llm_quantities = {}
+        if doc_type in ("drawing", "specification", "report", "bom"):
+            llm_quantities = await self._extract_quantities_with_llm(raw_text)
+            # Merge LLM quantities into doc_result
+            existing = doc_result.get("quantities", {})
+            if isinstance(existing, dict):
+                for k, v in llm_quantities.items():
+                    if k not in existing:
+                        existing[k] = v
+                doc_result["quantities"] = existing
+            else:
+                doc_result["quantities"] = llm_quantities
+
+        # BOQ auto-detection from drawing PDFs
+        boq_items = []
+        if doc_type == "drawing" and self._detect_boq_in_drawing(raw_text):
+            boq_items = await self._extract_boq_with_llm(raw_text)
+            if boq_items:
+                doc_result["bill_of_quantities"] = boq_items
+                doc_result["boq_detected"] = True
+
+        # Quantities panel
+        quantities = (
+            doc_result.get("quantities") or
+            doc_result.get("extracted_quantities") or
+            doc_result.get("bill_of_quantities") or {}
+        )
+        has_quantities = bool(quantities) and any(
+            (v.get("quantity", 0) if isinstance(v, dict) else v) > 0
+            for v in quantities.values()
+        )
+        if has_quantities:
+            panels.append({"type": "quantities", "title": "Quantities", "data": quantities})
+
+        # Cost estimate
+        cost_result = {}
+        if has_quantities:
+            try:
+                gfa = quantities.get("floor_area_m2", 0)
+                if isinstance(gfa, dict):
+                    gfa = gfa.get("quantity", 0)
+                if gfa > 0:
+                    subtotal = gfa * 1200
+                else:
+                    def _q(v):
+                        return v.get("quantity", 0) if isinstance(v, dict) else (v if isinstance(v, (int, float)) else 0)
+                    subtotal = (
+                        _q(quantities.get("concrete_volume_m3", 0)) * 150 +
+                        _q(quantities.get("steel_weight_kg", 0)) * 1.8
+                    )
+                    if isinstance(subtotal, dict):
+                        subtotal = subtotal.get("quantity", 0) * 150
+                overhead = round(subtotal * 0.10, 2)
+                contingency = round(subtotal * 0.05, 2)
+                total_estimate = round(subtotal + overhead + contingency, 2)
+                cost_result = {
+                    "summary": {
+                        "subtotal": round(subtotal, 2),
+                        "overhead": overhead,
+                        "contingency": contingency,
+                        "total_estimate": total_estimate,
+                    }
+                }
+                downstream["cost_estimate"] = cost_result
+                panels.append({
+                    "type": "cost_estimate",
+                    "title": "Cost Estimate",
+                    "data": cost_result["summary"],
+                    "line_items": boq_items
+                })
+            except Exception:
+                pass
+
+        # Procurement button
+        next_actions.append({
+            "action": "procurement_list_generator",
+            "label": "Generate Procurement List",
+            "reason": "Generate prioritised procurement schedule"
+        })
+
+        # Risks
+        risks = doc_result.get("risks") or doc_result.get("identified_risks") or []
+        if risks or doc_type in ("contract", "drawing", "specification"):
+            try:
+                risk_result = await self.risk_register_auto_populate(
+                    {"auto_risks": risks, "project_type": p.get("project_type", "general_building")},
+                    {"location": p.get("location", "US National Average")}
+                )
+                downstream["risk_register"] = risk_result
+                panels.append({
+                    "type": "risks",
+                    "title": "Risk Register",
+                    "data": risk_result.get("risks", []),
+                    "total": risk_result.get("total_risks", 0)
+                })
+            except Exception:
+                pass
+
+        # Specifications → submittal log
+        specs = doc_result.get("specifications") or doc_result.get("spec_sections") or []
+        if specs or doc_type == "specification":
+            try:
+                submittal_result = await self.submittal_log_generator(
+                    {"specifications": specs, "file_path": file_path},
+                    {}
+                )
+                downstream["submittal_log"] = submittal_result
+                panels.append({
+                    "type": "submittals",
+                    "title": "Submittal Log",
+                    "data": submittal_result.get("submittals", []),
+                    "total": submittal_result.get("total_submittals", 0)
+                })
+            except Exception:
+                pass
+
+        # Schedule
+        if doc_type == "schedule":
+            try:
+                sched_result = await self.parse_primavera_schedule(
+                    {"file_path": file_path}, {}
+                )
+                downstream["schedule"] = sched_result
+                panels.append({"type": "schedule", "title": "Schedule", "data": sched_result})
+                next_actions.append({"action": "progress_tracker", "label": "Track Progress", "reason": "Schedule loaded"})
+            except Exception:
+                pass
+
+        # Contract
+        if doc_type == "contract":
+            try:
+                contract_result = await self.process_contract(
+                    {"file_path": file_path, "extracted_text": extracted_text}, {}
+                )
+                downstream["contract"] = contract_result
+                panels.append({"type": "contract", "title": "Contract Analysis", "data": contract_result})
+                next_actions.append({"action": "payment_certificate", "label": "Issue Payment Certificate", "reason": "Contract terms identified"})
+            except Exception:
+                pass
+
+        # Chat context
+        chat_context_parts = [f"Document: {file_path.split('/')[-1] if file_path else 'text input'} (type: {doc_type})"]
+        if quantities:
+            chat_context_parts.append(f"Quantities found: {list(quantities.keys())[:10]}")
+        if risks:
+            chat_context_parts.append(f"Risks identified: {len(risks)}")
+        if specs:
+            chat_context_parts.append(f"Spec sections: {len(specs)}")
+        for panel in panels:
+            if panel["type"] == "cost_estimate":
+                summary = panel.get("data", {})
+                if summary.get("total_estimate"):
+                    chat_context_parts.append(f"Total cost estimate: ${summary['total_estimate']:,.0f}")
+        if extracted_text:
+            chat_context_parts.append(f"\nExtracted text (first 3000 chars):\n{extracted_text[:3000]}")
+
+        return {
+            "status": "success",
+            "action": "auto_pipeline",
+            "doc_type": doc_type,
+            "panels": panels,
+            "downstream_actions_run": list(downstream.keys()),
+            "next_actions": next_actions,
+            "chat_context": "\n".join(chat_context_parts),
+        }
+
     # ────────────────────────────────────────────────────────────────────────
 
     async def route(self, action: str, input_data: Any, params: Dict) -> Dict:
@@ -3973,6 +4529,7 @@ Total Extension of Time Sought: {total_delay} days
             return {"status": "error", "error": "No action specified"}
         
         handlers = {
+            "auto_pipeline": self.auto_pipeline,
             "process_document": self.process_document,
             "qa_qc_inspection": self.qa_qc_inspection,
             "extract_quantities": self.extract_quantities,
