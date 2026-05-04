@@ -554,10 +554,18 @@ Expected output: {task.get('expected_output', '')}
     def _normalize_request(self, input_data: Any) -> Dict:
         """Ensure input is a valid swarm request dict."""
         if isinstance(input_data, dict):
-            return input_data
-        if isinstance(input_data, str):
+            req = input_data
+        elif isinstance(input_data, str):
             try:
-                return json.loads(input_data)
+                req = json.loads(input_data)
             except json.JSONDecodeError:
-                return {"objective": input_data, "agents": [], "tasks": []}
-        return {"objective": str(input_data), "agents": [], "tasks": []}
+                req = {"objective": input_data, "agents": [], "tasks": []}
+        else:
+            req = {"objective": str(input_data), "agents": [], "tasks": []}
+        
+        # Auto-assign IDs to tasks that don't have them
+        for i, task in enumerate(req.get("tasks", [])):
+            if isinstance(task, dict) and "id" not in task:
+                task["id"] = f"task_{i}"
+        
+        return req
