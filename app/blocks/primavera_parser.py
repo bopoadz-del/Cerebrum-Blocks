@@ -2,6 +2,7 @@
 
 import os
 import re
+import tempfile
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from app.core.universal_base import UniversalBlock
@@ -44,9 +45,8 @@ class PrimaveraParserBlock(UniversalBlock):
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
-        data = input_data if isinstance(input_data, dict) else {}
 
-        file_path = data.get("file_path") or params.get("file_path") or data.get("text") or data.get("input") or (input_data if isinstance(input_data, str) else "")
+        file_path = self._resolve_file_path(input_data, params)
         if not file_path:
             return {"status": "error", "error": "No file_path provided — requires a Primavera P6 .xer file"}
         if not os.path.exists(file_path):
@@ -107,6 +107,30 @@ class PrimaveraParserBlock(UniversalBlock):
             "resources": resources[:50],
             "activity_count": len(activities),
         }
+
+    def _resolve_file_path(self, input_data: Any, params: Dict) -> Optional[str]:
+        """Resolve file path from input_data and params, writing bytes to temp if needed."""
+        if isinstance(input_data, str):
+            return input_data
+        if isinstance(input_data, bytes):
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".xer") as f:
+                f.write(input_data)
+                return f.name
+        if isinstance(input_data, dict):
+            file_bytes = input_data.get("file") or input_data.get("bytes")
+            if isinstance(file_bytes, bytes):
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".xer") as f:
+                    f.write(file_bytes)
+                    return f.name
+            return (
+                input_data.get("file_path")
+                or input_data.get("path")
+                or input_data.get("text")
+                or input_data.get("input")
+            )
+        if isinstance(params, dict):
+            return params.get("file_path")
+        return None
 
     def _parse_xer(self, file_path: str) -> Dict[str, List[Dict]]:
         """Parse XER tab-delimited table format into dict of table_name → rows."""

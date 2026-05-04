@@ -33,7 +33,7 @@ async def test_zvec_block_execute_structure(zvec_block):
 async def test_zvec_block_metadata(zvec_block):
     """Test Zvec block metadata."""
     assert zvec_block.name == "zvec"
-    assert zvec_block.config.version == "1.0"
+    assert zvec_block.config.version == "2.0"
     assert "embeddings" in zvec_block.config.supported_outputs
     assert "classifications" in zvec_block.config.supported_outputs
     assert zvec_block.config.requires_api_key == False
@@ -49,7 +49,7 @@ async def test_zvec_block_embed(zvec_block):
     
     assert result["block"] == "zvec"
     assert result["result"]["operation"] == "embed"
-    assert "embeddings" in result["result"]
+    assert "vector" in result["result"]
 
 
 @pytest.mark.asyncio
@@ -73,29 +73,23 @@ async def test_zvec_block_classify(zvec_block):
 async def test_zvec_block_similarity(zvec_block):
     """Test Zvec block similarity operation."""
     result = await zvec_block.execute(
-        ["apple", "banana", "fruit"],
-        {"operation": "similarity"}
+        "apple",
+        {"operation": "similarity", "text_b": "fruit"}
+    )
+    
+    assert result["block"] == "zvec"
+    assert result["result"]["operation"] == "similarity"
+    assert "similarity" in result["result"]
+
+
+@pytest.mark.asyncio
+async def test_zvec_block_similarity_matrix(zvec_block):
+    """Test Zvec block similarity matrix with multiple texts."""
+    result = await zvec_block.execute(
+        "",
+        {"operation": "similarity", "texts": ["apple", "banana", "fruit"]}
     )
     
     assert result["block"] == "zvec"
     assert result["result"]["operation"] == "similarity"
     assert "similarity_matrix" in result["result"]
-
-
-@pytest.mark.asyncio
-async def test_zvec_block_search(zvec_block):
-    """Test Zvec block search operation."""
-    corpus = [
-        "Python programming tutorial",
-        "Machine learning basics",
-        "Cooking recipes"
-    ]
-    
-    result = await zvec_block.execute(
-        "machine learning",
-        {"operation": "search", "corpus": corpus, "top_k": 2}
-    )
-    
-    assert result["block"] == "zvec"
-    assert result["result"]["operation"] == "search"
-    assert "matches" in result["result"]

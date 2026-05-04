@@ -24,10 +24,10 @@ class StorageBlock(UniversalBlock):
         "data_dir": "./data/storage"
     }
     
-    def __init__(self, hal_block, config: Dict[str, Any]):
+    def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)
-        self.backend = config.get("backend", "local")
-        self.data_dir = config.get("data_dir", "./data/storage")
+        self.backend = (config or {}).get("backend", "local")
+        self.data_dir = (config or {}).get("data_dir", "./data/storage")
         self.memory_block = None
         
         # Ensure data directory exists

@@ -21,17 +21,17 @@ class EmailBlock(UniversalBlock):
         "smtp": {}
     }
     
-    def __init__(self, hal_block, config: Dict[str, Any]):
+    def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)
-        self.provider = config.get("provider", "sendgrid")
-        self.api_key = config.get("sendgrid_key") or config.get("ses_key")
-        self.from_email = config.get("from_email", "noreply@cerebrum.io")
+        self.provider = (config or {}).get("provider", "sendgrid")
+        self.api_key = (config or {}).get("sendgrid_key") or (config or {}).get("ses_key")
+        self.from_email = (config or {}).get("from_email", "noreply@cerebrum.io")
         
         # SMTP settings
-        self.smtp_host = config.get("smtp_host")
-        self.smtp_port = config.get("smtp_port", 587)
-        self.smtp_user = config.get("smtp_user")
-        self.smtp_pass = config.get("smtp_pass")
+        self.smtp_host = (config or {}).get("smtp_host")
+        self.smtp_port = (config or {}).get("smtp_port", 587)
+        self.smtp_user = (config or {}).get("smtp_user")
+        self.smtp_pass = (config or {}).get("smtp_pass")
         
     async def process(self, input_data: Dict, params: Dict = None) -> Dict:
         action = (params or {}).get("action") or (input_data.get("action") if isinstance(input_data, dict) else None)

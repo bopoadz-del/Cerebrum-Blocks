@@ -1,8 +1,10 @@
-"""OneDrive Block - real MSAL + Microsoft Graph API"""
+"""OneDrive Block - real Microsoft Graph API using refresh tokens"""
 
 import base64
 import os
 from typing import Any, Dict
+
+import httpx
 
 from app.core.universal_base import UniversalBlock
 
@@ -12,9 +14,9 @@ _SCOPES = ["Files.Read", "Files.ReadWrite"]
 
 
 def _auth_url() -> str:
-    client_id = os.getenv("AZURE_CLIENT_ID", "")
-    tenant = os.getenv("AZURE_TENANT_ID", "common")
-    redirect = os.getenv("AZURE_REDIRECT_URI", "http://localhost:8000/auth/onedrive/callback")
+    client_id = os.getenv("ONEDRIVE_CLIENT_ID", "")
+    tenant = os.getenv("ONEDRIVE_TENANT_ID", "common")
+    redirect = os.getenv("ONEDRIVE_REDIRECT_URI", "http://localhost:8000/auth/onedrive/callback")
     if not client_id:
         return ""
     scope = "%20".join(_SCOPES + ["offline_access"])
@@ -28,12 +30,47 @@ def _auth_url() -> str:
     )
 
 
+async def _get_access_token() -> str:
+    """Refresh access token using ONEDRIVE_REFRESH_TOKEN or fall back to ONEDRIVE_ACCESS_TOKEN."""
+    refresh_token = os.getenv("ONEDRIVE_REFRESH_TOKEN")
+    client_id = os.getenv("ONEDRIVE_CLIENT_ID")
+    client_secret = os.getenv("ONEDRIVE_CLIENT_SECRET")
+
+    if refresh_token and client_id and client_secret:
+        tenant = os.getenv("ONEDRIVE_TENANT_ID", "common")
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.post(
+                f"{_AUTH_BASE}/{tenant}/oauth2/v2.0/token",
+                data={
+                    "grant_type": "refresh_token",
+                    "refresh_token": refresh_token,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "scope": " ".join(_SCOPES + ["offline_access"]),
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                return data["access_token"]
+            raise RuntimeError(f"Token refresh failed ({resp.status_code}): {resp.text[:500]}")
+
+    access_token = os.getenv("ONEDRIVE_ACCESS_TOKEN", "")
+    if access_token:
+        return access_token
+
+    raise RuntimeError(
+        "No OneDrive credentials configured. Set ONEDRIVE_CLIENT_ID + ONEDRIVE_CLIENT_SECRET + ONEDRIVE_REFRESH_TOKEN, "
+        "or set ONEDRIVE_ACCESS_TOKEN directly."
+    )
+
+
 class OneDriveBlock(UniversalBlock):
-    """OneDrive: list, read, download files via Microsoft Graph + MSAL"""
+    """OneDrive: list, read, download files via Microsoft Graph"""
 
     name = "onedrive"
     version = "2.0"
-    description = "OneDrive file operations — set AZURE_CLIENT_ID + ONEDRIVE_ACCESS_TOKEN"
+    description = "OneDrive file operations — set ONEDRIVE_CLIENT_ID + ONEDRIVE_CLIENT_SECRET + ONEDRIVE_REFRESH_TOKEN or ONEDRIVE_ACCESS_TOKEN"
     layer = 4
     tags = ["integration", "storage", "cloud", "microsoft"]
     requires = []
@@ -68,35 +105,37 @@ class OneDriveBlock(UniversalBlock):
 
         # ── Auth / status ─────────────────────────────────────────────────────
         if operation in ("auth", "status"):
-            has_token = bool(os.getenv("ONEDRIVE_ACCESS_TOKEN"))
-            has_creds = bool(os.getenv("AZURE_CLIENT_ID"))
+            has_refresh = bool(os.getenv("ONEDRIVE_REFRESH_TOKEN"))
+            has_access = bool(os.getenv("ONEDRIVE_ACCESS_TOKEN"))
+            has_creds = bool(os.getenv("ONEDRIVE_CLIENT_ID"))
             url = _auth_url()
             return {
                 "status": "success",
                 "operation": "auth",
-                "authenticated": has_token,
-                "credentials_configured": has_creds,
+                "authenticated": has_access or has_refresh,
+                "credentials_configured": has_creds or has_access,
                 "auth_url": url or None,
                 "instructions": (
-                    "Visit auth_url in a browser, approve, then set ONEDRIVE_ACCESS_TOKEN env var."
-                    if url and not has_token else
-                    "Set AZURE_CLIENT_ID + AZURE_TENANT_ID in Render env vars to enable OAuth."
-                    if not has_creds else
-                    "Access token set. Use operation=list to browse files."
+                    "Visit auth_url in a browser, approve, then capture the code and exchange it for a refresh token. "
+                    "Set ONEDRIVE_CLIENT_ID, ONEDRIVE_CLIENT_SECRET, and ONEDRIVE_REFRESH_TOKEN in environment variables."
+                    if url and not (has_access or has_refresh) else
+                    "Set ONEDRIVE_CLIENT_ID + ONEDRIVE_CLIENT_SECRET + ONEDRIVE_REFRESH_TOKEN in env vars to enable OAuth."
+                    if not (has_creds or has_access) else
+                    "Credentials are set. Use operation=list to browse files."
                 ),
             }
 
         # ── List files ────────────────────────────────────────────────────────
         if operation == "list":
-            access_token = params.get("access_token") or os.getenv("ONEDRIVE_ACCESS_TOKEN", "")
-            if not access_token:
+            try:
+                access_token = await _get_access_token()
+            except RuntimeError as e:
                 return {
                     "status": "error",
-                    "error": "Not authenticated. Run with operation=auth to get the auth URL.",
+                    "error": str(e),
                     "auth_url": _auth_url() or None,
                 }
             try:
-                import httpx
                 endpoint = (
                     f"{_GRAPH_API}/me/drive/search(q='{query}')"
                     if query else
@@ -132,13 +171,13 @@ class OneDriveBlock(UniversalBlock):
         # ── Download file ─────────────────────────────────────────────────────
         if operation == "download":
             item_id = query or params.get("file_id", "")
-            access_token = params.get("access_token") or os.getenv("ONEDRIVE_ACCESS_TOKEN", "")
             if not item_id:
                 return {"status": "error", "error": "file_id required for download"}
-            if not access_token:
-                return {"status": "error", "error": "Not authenticated"}
             try:
-                import httpx
+                access_token = await _get_access_token()
+            except RuntimeError as e:
+                return {"status": "error", "error": str(e)}
+            try:
                 async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
                     resp = await client.get(
                         f"{_GRAPH_API}/me/drive/items/{item_id}/content",

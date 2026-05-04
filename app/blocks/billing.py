@@ -37,11 +37,11 @@ class BillingBlock(UniversalBlock):
         }
     }
     
-    def __init__(self, hal_block, config: Dict[str, Any]):
+    def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)
-        self.stripe_key = config.get("stripe_secret_key")
+        self.stripe_key = (config or {}).get("stripe_secret_key")
         self.stripe = None
-        self.webhook_secret = config.get("stripe_webhook_secret")
+        self.webhook_secret = (config or {}).get("stripe_webhook_secret")
         
         if self.stripe_key:
             try:

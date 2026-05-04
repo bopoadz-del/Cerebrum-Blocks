@@ -1,8 +1,11 @@
-"""Google Drive Block - real OAuth 2.0 + Drive API (service account or user token)"""
+"""Google Drive Block - real OAuth 2.0 + Drive API using refresh tokens"""
 
+import base64
 import json
 import os
 from typing import Any, Dict
+
+import httpx
 
 from app.core.universal_base import UniversalBlock
 
@@ -12,20 +15,7 @@ _OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 _DRIVE_API = "https://www.googleapis.com/drive/v3"
 
 
-def _build_service(access_token: str = None):
-    """Build an authenticated Drive HTTP client."""
-    import httpx
-    token = access_token or os.getenv("GOOGLE_ACCESS_TOKEN", "")
-    if not token:
-        raise ValueError("No access token — call with operation=auth first")
-    return httpx.AsyncClient(
-        headers={"Authorization": f"Bearer {token}"},
-        base_url=_DRIVE_API,
-        timeout=20,
-    )
-
-
-def _oauth_url() -> str:
+def _auth_url() -> str:
     client_id = os.getenv("GOOGLE_CLIENT_ID", "")
     if not client_id:
         return ""
@@ -37,6 +27,40 @@ def _oauth_url() -> str:
         f"&response_type=code"
         f"&scope={scope}"
         f"&access_type=offline"
+        f"&prompt=consent"
+    )
+
+
+async def _get_access_token() -> str:
+    """Refresh access token using GOOGLE_REFRESH_TOKEN or fall back to GOOGLE_ACCESS_TOKEN."""
+    refresh_token = os.getenv("GOOGLE_REFRESH_TOKEN")
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+
+    if refresh_token and client_id and client_secret:
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.post(
+                _OAUTH_TOKEN_URL,
+                data={
+                    "grant_type": "refresh_token",
+                    "refresh_token": refresh_token,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                return data["access_token"]
+            raise RuntimeError(f"Token refresh failed ({resp.status_code}): {resp.text[:500]}")
+
+    access_token = os.getenv("GOOGLE_ACCESS_TOKEN", "")
+    if access_token:
+        return access_token
+
+    raise RuntimeError(
+        "No Google credentials configured. Set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GOOGLE_REFRESH_TOKEN, "
+        "or set GOOGLE_ACCESS_TOKEN directly."
     )
 
 
@@ -45,7 +69,7 @@ class GoogleDriveBlock(UniversalBlock):
 
     name = "google_drive"
     version = "2.0"
-    description = "Google Drive file operations — set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET or GOOGLE_ACCESS_TOKEN"
+    description = "Google Drive file operations — set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GOOGLE_REFRESH_TOKEN or GOOGLE_ACCESS_TOKEN"
     layer = 4
     tags = ["integration", "storage", "cloud", "google"]
     requires = []
@@ -80,35 +104,37 @@ class GoogleDriveBlock(UniversalBlock):
 
         # ── Auth status / URL ─────────────────────────────────────────────────
         if operation in ("auth", "status"):
-            has_token = bool(os.getenv("GOOGLE_ACCESS_TOKEN"))
+            has_refresh = bool(os.getenv("GOOGLE_REFRESH_TOKEN"))
+            has_access = bool(os.getenv("GOOGLE_ACCESS_TOKEN"))
             has_creds = bool(os.getenv("GOOGLE_CLIENT_ID"))
-            url = _oauth_url()
+            url = _auth_url()
             return {
                 "status": "success",
                 "operation": "auth",
-                "authenticated": has_token,
-                "credentials_configured": has_creds,
+                "authenticated": has_access or has_refresh,
+                "credentials_configured": has_creds or has_access,
                 "auth_url": url or None,
                 "instructions": (
-                    "Visit auth_url in a browser, approve, then set GOOGLE_ACCESS_TOKEN env var with the returned token."
-                    if url and not has_token else
-                    "Set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET in Render env vars to enable OAuth."
-                    if not has_creds else
-                    "Access token is set. Use operation=list to browse files."
+                    "Visit auth_url in a browser, approve, then capture the code and exchange it for a refresh token. "
+                    "Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN in environment variables."
+                    if url and not (has_access or has_refresh) else
+                    "Set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GOOGLE_REFRESH_TOKEN in env vars to enable OAuth."
+                    if not (has_creds or has_access) else
+                    "Credentials are set. Use operation=list to browse files."
                 ),
             }
 
         # ── List files ────────────────────────────────────────────────────────
         if operation == "list":
-            access_token = params.get("access_token") or os.getenv("GOOGLE_ACCESS_TOKEN", "")
-            if not access_token:
+            try:
+                access_token = await _get_access_token()
+            except RuntimeError as e:
                 return {
                     "status": "error",
-                    "error": "Not authenticated. Run with operation=auth to get the auth URL, then set GOOGLE_ACCESS_TOKEN.",
-                    "auth_url": _oauth_url() or None,
+                    "error": str(e),
+                    "auth_url": _auth_url() or None,
                 }
             try:
-                import httpx
                 q = f"name contains '{query}'" if query else "trashed=false"
                 async with httpx.AsyncClient(timeout=20) as client:
                     resp = await client.get(
@@ -141,13 +167,13 @@ class GoogleDriveBlock(UniversalBlock):
         # ── Download / read file ──────────────────────────────────────────────
         if operation == "download":
             file_id = query or params.get("file_id", "")
-            access_token = params.get("access_token") or os.getenv("GOOGLE_ACCESS_TOKEN", "")
             if not file_id:
                 return {"status": "error", "error": "file_id required for download"}
-            if not access_token:
-                return {"status": "error", "error": "Not authenticated"}
             try:
-                import httpx
+                access_token = await _get_access_token()
+            except RuntimeError as e:
+                return {"status": "error", "error": str(e)}
+            try:
                 async with httpx.AsyncClient(timeout=30) as client:
                     resp = await client.get(
                         f"{_DRIVE_API}/files/{file_id}",
@@ -161,7 +187,7 @@ class GoogleDriveBlock(UniversalBlock):
                     "operation": "download",
                     "file_id": file_id,
                     "size_bytes": len(content),
-                    "content_base64": __import__("base64").b64encode(content).decode(),
+                    "content_base64": base64.b64encode(content).decode(),
                 }
             except Exception as e:
                 return {"status": "error", "error": str(e), "operation": "download"}

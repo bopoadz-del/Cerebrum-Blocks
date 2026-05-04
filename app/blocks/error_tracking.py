@@ -1,3 +1,5 @@
+import re
+
 """Error Tracking Block - Sentry-style error tracking and alerting
 
 Features:

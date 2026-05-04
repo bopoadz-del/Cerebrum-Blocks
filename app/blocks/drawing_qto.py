@@ -2,7 +2,8 @@
 
 import os
 import math
-from typing import Any, Dict, List, Tuple
+import tempfile
+from typing import Any, Dict, List, Tuple, Optional
 from app.core.universal_base import UniversalBlock
 
 
@@ -44,15 +45,10 @@ class DrawingQTOBlock(UniversalBlock):
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
-        data = input_data if isinstance(input_data, dict) else {}
 
-        # Support string path input directly, or InputAdapter {"text": "/path/to/file.dxf"}
-        if isinstance(input_data, str) and not data:
-            file_path = input_data
-        else:
-            file_path = data.get("file_path") or params.get("file_path") or data.get("text") or data.get("input") or ""
+        file_path = self._resolve_file_path(input_data, params)
         if not file_path:
-            return {"status": "error", "error": "No file_path provided. Requires a DXF or IFC file path."}
+            return {"status": "error", "error": "No file_path provided. Requires a DXF or DWG file path."}
         if not os.path.exists(file_path):
             return {"status": "error", "error": f"File not found: {file_path}"}
 
@@ -102,6 +98,35 @@ class DrawingQTOBlock(UniversalBlock):
             "layers": layers[:50],
             "drawing_units": str(doc.units),
         }
+
+    def _resolve_file_path(self, input_data: Any, params: Dict) -> Optional[str]:
+        """Resolve file path from input_data and params, writing bytes to temp if needed."""
+        if isinstance(input_data, str):
+            return input_data
+        if isinstance(input_data, bytes):
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".dxf") as f:
+                f.write(input_data)
+                return f.name
+        if isinstance(input_data, dict):
+            file_bytes = input_data.get("file") or input_data.get("bytes")
+            if isinstance(file_bytes, bytes):
+                ext = ".dxf"
+                for candidate in [".dxf", ".dwg"]:
+                    if candidate in str(input_data.get("filename", "")).lower():
+                        ext = candidate
+                        break
+                with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as f:
+                    f.write(file_bytes)
+                    return f.name
+            return (
+                input_data.get("file_path")
+                or input_data.get("path")
+                or input_data.get("text")
+                or input_data.get("input")
+            )
+        if isinstance(params, dict):
+            return params.get("file_path")
+        return None
 
     def _extract_measurements(self, msp, scale: float) -> List[Dict]:
         results = []

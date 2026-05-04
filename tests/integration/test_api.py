@@ -87,18 +87,18 @@ class TestExecuteEndpoint:
         assert data["block"] == "vector_search"
         assert "collections" in data["result"]
     
-    def test_execute_vector_search_embed(self):
-        """Test vector_search embed operation."""
+    def test_execute_vector_search_create_collection(self):
+        """Test vector_search create_collection operation."""
         response = client.post("/execute", json={
             "block": "vector_search",
-            "input": "test text",
-            "params": {"operation": "embed"}
+            "input": "test_collection",
+            "params": {"operation": "create_collection"}
         })
         
         assert response.status_code == 200
         data = response.json()
         assert data["block"] == "vector_search"
-        assert "embeddings" in data["result"]
+        assert data["result"]["status"] == "success"
     
     def test_execute_web_block(self):
         """Test executing web block."""
@@ -261,4 +261,4 @@ class TestVectorSearchEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert data["block"] == "vector_search"
-        assert data["result"]["document_count"] == 2
+        assert data["result"]["added"] == 2

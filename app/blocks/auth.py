@@ -3,6 +3,7 @@ from typing import Dict, Any, Optional, List
 import hashlib
 import time
 import secrets
+import os
 from enum import Enum
 
 class Role(Enum):
@@ -28,7 +29,7 @@ class AuthBlock(UniversalBlock):
         "rate_limit_window": 3600
     }
     
-    def __init__(self, hal_block, config: Dict[str, Any]):
+    def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)
         self.memory_block = None  # Wired by assembler
         
@@ -48,7 +49,7 @@ class AuthBlock(UniversalBlock):
         }
         
         # Master key for admin operations
-        self.master_key = config.get("master_key", secrets.token_hex(32))
+        self.master_key = (config or {}).get("master_key", secrets.token_hex(32))
     
     async def _legacy_initialize(self):
         """Init auth system"""

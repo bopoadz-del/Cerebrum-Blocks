@@ -61,7 +61,7 @@ class OCRBlock(TypedBlock):
     }
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        """Extract text from image (or PDF) with preprocessing"""
+        """Extract text from image (or PDF) with preprocessing using real OCR (pytesseract)."""
         params = params or {}
 
         # Download from URL if needed (handles bare URL strings and InputAdapter {"text": "url"} wrapping)
@@ -74,6 +74,8 @@ class OCRBlock(TypedBlock):
                 raw = input_data.get("text") or input_data.get("input") or ""
                 if raw.startswith("http"):
                     url = raw
+        if not url and isinstance(params, dict):
+            url = params.get("url")
 
         if url:
             import httpx
@@ -107,86 +109,30 @@ class OCRBlock(TypedBlock):
         if not page_images:
             return {"status": "error", "text": "", "confidence": 0, "error": "Could not process input file"}
         
-        # Try pytesseract first, fallback to Claude Vision, then PyMuPDF
-        all_texts = []
-        all_confs = []
-        engine_used = None
-        tesseract_available = True
-
+        # Real OCR using pytesseract only
         try:
             import pytesseract
-            pytesseract.get_tesseract_version()  # raises if not installed
-        except Exception:
-            tesseract_available = False
+            from PIL import Image
+        except ImportError:
+            return {
+                "status": "error",
+                "text": "",
+                "confidence": 0,
+                "error": "pytesseract not installed. Run: pip install pytesseract pillow",
+            }
 
-        if tesseract_available:
-            try:
-                import pytesseract
-                from PIL import Image
-                engine_used = "pytesseract"
+        all_texts = []
+        all_confs = []
 
-                for page_img_path in page_images:
-                    img = Image.open(page_img_path)
-                    text = pytesseract.image_to_string(img)
-                    if text.strip():
-                        all_texts.append(text.strip())
-                        all_confs.append(0.85)
-            except Exception as e:
-                tesseract_available = False
-
-        if not tesseract_available:
-            # Claude Vision OCR fallback (works for images, no system deps)
-            anthropic_key = os.getenv("ANTHROPIC_API_KEY")
-            vision_error = None
-            if anthropic_key and not image_path.lower().endswith(".pdf"):
-                try:
-                    import base64, anthropic, mimetypes
-                    with open(image_path, "rb") as f:
-                        img_bytes = f.read()
-                    b64 = base64.standard_b64encode(img_bytes).decode()
-                    mime = mimetypes.guess_type(image_path)[0] or "image/jpeg"
-                    client = anthropic.Anthropic(api_key=anthropic_key)
-                    response = client.messages.create(
-                        model="claude-haiku-4-5-20251001",
-                        max_tokens=4096,
-                        messages=[{"role": "user", "content": [
-                            {"type": "image", "source": {"type": "base64", "media_type": mime, "data": b64}},
-                            {"type": "text", "text": "Extract ALL text from this image. Return only the extracted text, nothing else."}
-                        ]}],
-                    )
-                    text = response.content[0].text.strip()
-                    if text:
-                        return {
-                            "status": "success",
-                            "text": text,
-                            "confidence": 0.92,
-                            "word_count": len(text.split()),
-                            "engine": "claude_vision",
-                            "preprocessed": False,
-                            "pages": len(page_images),
-                            "note": "Tesseract not installed; used Claude Vision OCR"
-                        }
-                except Exception as e:
-                    vision_error = str(e)
-            elif not anthropic_key:
-                vision_error = "ANTHROPIC_API_KEY not set"
-            else:
-                vision_error = "PDF files not supported for Vision OCR"
-
-            # Final fallback: PyMuPDF text extraction (text-layer PDFs only)
-            pdf_text = self._extract_pdf_text(image_path)
-            if pdf_text:
-                return {
-                    "status": "success",
-                    "text": pdf_text,
-                    "confidence": 0.95,
-                    "word_count": len(pdf_text.split()),
-                    "engine": "pymupdf_fallback",
-                    "preprocessed": False,
-                    "pages": 1,
-                    "note": "Tesseract not installed; used PyMuPDF text extraction"
-                }
-            return {"status": "error", "text": "", "confidence": 0, "error": f"Tesseract not installed; Vision OCR failed: {vision_error}"}
+        try:
+            for page_img_path in page_images:
+                img = Image.open(page_img_path)
+                text = pytesseract.image_to_string(img)
+                if text.strip():
+                    all_texts.append(text.strip())
+                    all_confs.append(0.85)
+        except Exception as e:
+            return {"status": "error", "text": "", "confidence": 0, "error": f"Tesseract OCR failed: {str(e)}"}
 
         if not all_texts:
             return {"status": "success", "text": "", "confidence": 0, "message": "No text detected"}
@@ -199,16 +145,30 @@ class OCRBlock(TypedBlock):
             "text": full_text,
             "confidence": round(avg_conf, 2),
             "word_count": len(full_text.split()),
-            "engine": engine_used or "unknown",
+            "engine": "pytesseract",
             "preprocessed": preprocess,
             "pages": len(page_images)
         }
     
     def _get_image_path(self, input_data: Any) -> str:
-        """Extract image path from input"""
+        """Extract image path from input, writing bytes to a temp file if needed."""
+        if isinstance(input_data, bytes):
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as f:
+                f.write(input_data)
+                return f.name
         if isinstance(input_data, str):
             return input_data
-        elif isinstance(input_data, dict):
+        if isinstance(input_data, dict):
+            file_bytes = input_data.get("file") or input_data.get("image_bytes") or input_data.get("bytes")
+            if isinstance(file_bytes, bytes):
+                ext = ".png"
+                for candidate in [".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp"]:
+                    if candidate in str(input_data.get("filename", "")).lower():
+                        ext = candidate
+                        break
+                with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as f:
+                    f.write(file_bytes)
+                    return f.name
             return input_data.get("file_path") or input_data.get("path") or input_data.get("url")
         return None
     
@@ -249,19 +209,6 @@ class OCRBlock(TypedBlock):
                 return []
         
         return []
-    
-    def _extract_pdf_text(self, file_path: str) -> str:
-        """Extract text from a PDF using PyMuPDF (fallback when OCR is unavailable)."""
-        try:
-            import fitz
-            doc = fitz.open(file_path)
-            text = ""
-            for page in doc:
-                text += page.get_text()
-            doc.close()
-            return text.strip()
-        except Exception:
-            return ""
     
     def _preprocess_image(self, image_path: str) -> str:
         """Enhance image for better OCR quality"""

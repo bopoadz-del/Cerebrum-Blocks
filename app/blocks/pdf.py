@@ -85,7 +85,7 @@ class PDFBlock(TypedBlock):
             except Exception as e:
                 return {"status": "error", "text": "", "pages": 0, "error": f"Download failed: {str(e)}"}
         
-        # Get PDF path
+        # Get PDF path (handles bytes, strings, dicts)
         pdf_path = self._get_pdf_path(input_data)
         if not pdf_path:
             return {"status": "error", "text": "", "pages": 0, "error": "No PDF provided"}
@@ -93,36 +93,96 @@ class PDFBlock(TypedBlock):
         if not os.path.exists(pdf_path):
             return {"status": "error", "text": "", "pages": 0, "error": f"File not found: {pdf_path}"}
         
-        # Extract using PyMuPDF
+        # Try real PDF libraries in order: pdfplumber, PyPDF2, PyMuPDF
+        last_error = None
+        
+        # 1. Try pdfplumber
         try:
-            import fitz  # PyMuPDF
-            
-            doc = fitz.open(pdf_path)
+            import pdfplumber
+            with pdfplumber.open(pdf_path) as pdf:
+                text = ""
+                for page in pdf.pages:
+                    page_text = page.extract_text() or ""
+                    text += page_text + "\n"
+                pages = len(pdf.pages)
+                return {
+                    "status": "success",
+                    "text": text[:20000],
+                    "pages": pages,
+                    "filename": os.path.basename(pdf_path),
+                    "file_path": pdf_path,
+                    "engine": "pdfplumber",
+                }
+        except ImportError:
+            last_error = "pdfplumber not installed"
+        except Exception as e:
+            last_error = f"pdfplumber failed: {str(e)}"
+        
+        # 2. Try PyPDF2
+        try:
+            from PyPDF2 import PdfReader
+            reader = PdfReader(pdf_path)
             text = ""
-            
-            for page in doc:
-                text += page.get_text()
-            
-            pages = len(doc)
-            doc.close()
-            
+            for page in reader.pages:
+                page_text = page.extract_text() or ""
+                text += page_text + "\n"
+            pages = len(reader.pages)
             return {
                 "status": "success",
-                "text": text[:20000],  # Limit output
+                "text": text[:20000],
                 "pages": pages,
                 "filename": os.path.basename(pdf_path),
-                "file_path": pdf_path
+                "file_path": pdf_path,
+                "engine": "PyPDF2",
             }
-            
         except ImportError:
-            return {"status": "error", "text": "", "pages": 0, "error": "PyMuPDF not installed"}
+            last_error = "PyPDF2 not installed"
         except Exception as e:
-            return {"status": "error", "text": "", "pages": 0, "error": f"PDF extraction failed: {str(e)}"}
+            last_error = f"PyPDF2 failed: {str(e)}"
+        
+        # 3. Try PyMuPDF fallback
+        try:
+            import fitz  # PyMuPDF
+            doc = fitz.open(pdf_path)
+            text = ""
+            for page in doc:
+                text += page.get_text()
+            pages = len(doc)
+            doc.close()
+            return {
+                "status": "success",
+                "text": text[:20000],
+                "pages": pages,
+                "filename": os.path.basename(pdf_path),
+                "file_path": pdf_path,
+                "engine": "pymupdf",
+            }
+        except ImportError:
+            last_error = "PyMuPDF not installed"
+        except Exception as e:
+            last_error = f"PyMuPDF failed: {str(e)}"
+        
+        return {
+            "status": "error",
+            "text": "",
+            "pages": 0,
+            "error": f"No PDF parser available. {last_error}. Install one of: pdfplumber, PyPDF2, or PyMuPDF",
+        }
     
     def _get_pdf_path(self, input_data: Any) -> str:
-        """Extract PDF path from input"""
+        """Extract PDF path from input, writing bytes to a temp file if needed."""
+        if isinstance(input_data, bytes):
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as f:
+                f.write(input_data)
+                return f.name
         if isinstance(input_data, str):
             return input_data
-        elif isinstance(input_data, dict):
+        if isinstance(input_data, dict):
+            # Check for explicit file bytes inside dict
+            file_bytes = input_data.get("file") or input_data.get("pdf_bytes") or input_data.get("bytes")
+            if isinstance(file_bytes, bytes):
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as f:
+                    f.write(file_bytes)
+                    return f.name
             return input_data.get("file_path") or input_data.get("path") or input_data.get("url")
         return None

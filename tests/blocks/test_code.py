@@ -33,7 +33,7 @@ async def test_code_block_execute_structure(code_block):
 async def test_code_block_metadata(code_block):
     """Test Code block metadata."""
     assert code_block.name == "code"
-    assert code_block.config.version == "1.0"
+    assert code_block.config.version == "2.0"
     assert "result" in code_block.config.supported_outputs
     assert "analysis" in code_block.config.supported_outputs
     assert code_block.config.requires_api_key == False

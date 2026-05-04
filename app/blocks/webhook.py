@@ -18,11 +18,11 @@ class WebhookBlock(UniversalBlock):
         "verify_ssl": True
     }
     
-    def __init__(self, hal_block, config: Dict[str, Any]):
+    def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)
-        self.secret = config.get("secret", "")
-        self.timeout = config.get("timeout", 30)
-        self.max_retries = config.get("max_retries", 3)
+        self.secret = (config or {}).get("secret", "")
+        self.timeout = (config or {}).get("timeout", 30)
+        self.max_retries = (config or {}).get("max_retries", 3)
         self.queue_block = None
         
         # Registered webhooks

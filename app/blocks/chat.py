@@ -3,11 +3,12 @@
 import json
 import os
 import httpx
-from typing import Any, Dict, Optional
-from app.core.typed_block import TypedBlock, Schema, ContentType
+from typing import Any, Dict
+
+from app.core.universal_base import UniversalBlock
 
 
-class ChatBlock(TypedBlock):
+class ChatBlock(UniversalBlock):
     """AI chat completions with DeepSeek API and typed I/O"""
 
     name = "chat"
@@ -22,24 +23,6 @@ class ChatBlock(TypedBlock):
         "max_tokens": 2048,
         "temperature": 0.7
     }
-
-    # Type schemas for chain validation
-    accepted_input_types = ["Text", "TextContent", "ChatMessage"]
-    produced_output_types = ["Text", "TextContent", "ChatMessage"]
-
-    input_schema = Schema(
-        content_type=ContentType.TEXT,
-        required_fields=[],  # Can be string or {text: ...}
-        optional_fields=["text", "message", "context"],
-        format_hints={"max_length": 100000}
-    )
-
-    output_schema = Schema(
-        content_type=ContentType.TEXT,
-        required_fields=["text"],
-        optional_fields=["provider", "model", "tokens", "status"],
-        format_hints={}
-    )
 
     ui_schema = {
         "input": {
@@ -64,7 +47,6 @@ class ChatBlock(TypedBlock):
         """Process chat request"""
         params = params or {}
         if isinstance(input_data, dict):
-            # Accept output from upstream chain steps (pdf, ocr, etc.)
             message = (
                 input_data.get("text") or
                 input_data.get("content") or
@@ -81,12 +63,17 @@ class ChatBlock(TypedBlock):
         temperature = params.get("temperature", self.config.get("temperature", 0.7))
         stream = params.get("stream", False)
 
+        if not deepseek_key and not anthropic_key:
+            return {
+                "status": "error",
+                "error": "No AI provider configured. Set DEEPSEEK_API_KEY or ANTHROPIC_API_KEY environment variable."
+            }
+
         # Try DeepSeek first, fall back to Anthropic Claude
         if deepseek_key:
             result = await self._call_deepseek(message, model, max_tokens, temperature, stream, deepseek_key)
             if result.get("status") == "success":
                 return result
-            # DeepSeek failed — try Anthropic fallback
             deepseek_error = result.get("error", "DeepSeek failed")
         else:
             deepseek_error = "DEEPSEEK_API_KEY not configured"

@@ -9,6 +9,7 @@ Integrates with platform blocks:
 """
 
 import os
+import tempfile
 from typing import Any, Dict, Optional
 from app.core.universal_base import UniversalBlock
 
@@ -82,34 +83,70 @@ class DocumentEngineBlock(UniversalBlock):
             return result.get("text", "")
         return None
 
+    def _resolve_path(self, input_data: Any, params: Dict) -> Dict[str, Optional[str]]:
+        """Resolve pdf/docx/xlsx paths from input_data and params."""
+        data = input_data if isinstance(input_data, dict) else {}
+        raw_path = ""
+
+        if isinstance(input_data, str):
+            raw_path = input_data
+        elif isinstance(input_data, dict):
+            raw_path = data.get("text") or data.get("input") or ""
+            # Handle uploaded bytes per type
+            for key, ext in [("pdf", ".pdf"), ("docx", ".docx"), ("xlsx", ".xlsx")]:
+                file_bytes = data.get(key) or data.get(f"{key}_bytes") or data.get("bytes")
+                if isinstance(file_bytes, bytes):
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as f:
+                        f.write(file_bytes)
+                        data[f"{key}_path"] = f.name
+
+        # Also accept a generic file_path and infer type from extension
+        generic_path = data.get("file_path") or data.get("path") or params.get("file_path")
+        if generic_path:
+            raw_path = raw_path or generic_path
+
+        ext = os.path.splitext(raw_path)[1].lower() if raw_path else ""
+
+        file_paths = {
+            "pdf": (
+                data.get("pdf_path") or data.get("pdf") or params.get("pdf_path")
+                or (raw_path if ext == ".pdf" else None)
+            ),
+            "docx": (
+                data.get("docx_path") or data.get("docx") or params.get("docx_path")
+                or (raw_path if ext in (".docx", ".doc") else None)
+            ),
+            "xlsx": (
+                data.get("xlsx_path") or data.get("xlsx") or params.get("xlsx_path")
+                or (raw_path if ext in (".xlsx", ".xls") else None)
+            ),
+        }
+        return file_paths
+
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Main entry point — run the 3-layer pipeline."""
         params = params or {}
-        data = input_data if isinstance(input_data, dict) else {}
 
-        # InputAdapter may wrap bare file path as {"text": "/path/to/file.pdf"} — detect by extension
-        raw_path = data.get("text") or data.get("input") or (input_data if isinstance(input_data, str) else "")
-        raw_ext = os.path.splitext(raw_path)[1].lower() if raw_path else ""
-
-        file_paths = {
-            "pdf": data.get("pdf_path") or data.get("pdf") or params.get("pdf_path") or (raw_path if raw_ext == ".pdf" else None),
-            "docx": data.get("docx_path") or data.get("docx") or params.get("docx_path") or (raw_path if raw_ext in (".docx", ".doc") else None),
-            "xlsx": data.get("xlsx_path") or data.get("xlsx") or params.get("xlsx_path") or (raw_path if raw_ext in (".xlsx", ".xls") else None),
-        }
+        file_paths = self._resolve_path(input_data, params)
 
         if not any(file_paths.values()):
-            return {"status": "error", "error": "No input files provided (pdf/docx/xlsx). Pass file_path as pdf_path, docx_path, or xlsx_path."}
+            return {
+                "status": "error",
+                "error": "No input files provided (pdf/docx/xlsx). Pass file_path as pdf_path, docx_path, or xlsx_path.",
+            }
+
+        # Validate paths exist
+        for ftype, fpath in file_paths.items():
+            if fpath and not os.path.exists(fpath):
+                return {"status": "error", "error": f"{ftype.upper()} file not found: {fpath}"}
 
         try:
-            from blocks.document_engine.main import parse_all
-            from blocks.document_engine.reasoner import DocumentReasoner
-            from blocks.document_engine.mapper import DocumentMapper
-            from blocks.document_engine.parsers.pdf_parser import PDFParser
-            from blocks.document_engine.parsers.docx_parser import DOCXParser
-            from blocks.document_engine.parsers.xlsx_parser import XLSXParser
             import yaml
+        except ImportError:
+            return {"status": "error", "error": "PyYAML not installed. Run: pip install pyyaml"}
 
-            # Load config
+        # Load config
+        try:
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
             config_path = os.path.join(project_root, "blocks", "document_engine", "config.yaml")
             if not os.path.exists(config_path):
@@ -122,57 +159,98 @@ class DocumentEngineBlock(UniversalBlock):
                 config = full_config.get("document_engine", full_config)
             else:
                 config = {}
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to load config: {e}"}
 
-            # ------------------------------------------------------------------
-            # Layer 1: Parse — use platform blocks when available, fallback to own parsers
-            # ------------------------------------------------------------------
-            documents = []
+        # ------------------------------------------------------------------
+        # Layer 1: Parse — use platform blocks when available, fallback to own parsers
+        # ------------------------------------------------------------------
+        documents = []
+        parse_errors = []
 
-            # PDF → platform pdf block → fallback to own PDFParser
-            if file_paths.get("pdf"):
-                pdf_text = None
-                if self.config.get("use_platform_pdf", True):
-                    pdf_text = await self._parse_with_platform_pdf(file_paths["pdf"])
+        # PDF → platform pdf block → fallback to own PDFParser
+        if file_paths.get("pdf"):
+            pdf_text = None
+            if self.config.get("use_platform_pdf", True):
+                pdf_text = await self._parse_with_platform_pdf(file_paths["pdf"])
 
-                if pdf_text is not None:
+            if pdf_text is not None:
+                try:
                     from blocks.document_engine.parsers.pdf_parser import PDFDocument
                     doc = PDFDocument(source=file_paths["pdf"], text=pdf_text)
                     documents.append(doc)
-                else:
+                except ImportError as e:
+                    parse_errors.append(f"PDFDocument class import failed: {e}")
+            else:
+                try:
+                    from blocks.document_engine.parsers.pdf_parser import PDFParser
                     parser = PDFParser(config)
                     documents.append(parser.parse(file_paths["pdf"]))
+                except ImportError as e:
+                    parse_errors.append(f"PDF parser unavailable: {e}")
+                except Exception as e:
+                    parse_errors.append(f"PDF parse failed: {e}")
 
-            # DOCX → own parser (no platform block available)
-            if file_paths.get("docx"):
+        # DOCX → own parser (no platform block available)
+        if file_paths.get("docx"):
+            try:
+                from blocks.document_engine.parsers.docx_parser import DOCXParser
                 parser = DOCXParser(config)
                 documents.append(parser.parse(file_paths["docx"]))
+            except ImportError as e:
+                parse_errors.append(f"DOCX parser unavailable: {e}")
+            except Exception as e:
+                parse_errors.append(f"DOCX parse failed: {e}")
 
-            # XLSX → own parser (no platform block available)
-            if file_paths.get("xlsx"):
+        # XLSX → own parser (no platform block available)
+        if file_paths.get("xlsx"):
+            try:
+                from blocks.document_engine.parsers.xlsx_parser import XLSXParser
                 parser = XLSXParser(config)
                 documents.append(parser.parse(file_paths["xlsx"]))
+            except ImportError as e:
+                parse_errors.append(f"XLSX parser unavailable: {e}")
+            except Exception as e:
+                parse_errors.append(f"XLSX parse failed: {e}")
 
-            # ------------------------------------------------------------------
-            # Layer 2: Reason
-            # ------------------------------------------------------------------
+        if not documents and parse_errors:
+            return {
+                "status": "error",
+                "error": "; ".join(parse_errors),
+            }
+
+        # ------------------------------------------------------------------
+        # Layer 2: Reason
+        # ------------------------------------------------------------------
+        try:
+            from blocks.document_engine.reasoner import DocumentReasoner
             reasoner = DocumentReasoner(config)
             reasoned = reasoner.reason(documents)
+        except ImportError as e:
+            return {"status": "error", "error": f"Document reasoner unavailable: {e}"}
+        except Exception as e:
+            return {"status": "error", "error": f"Document reasoning failed: {e}"}
 
-            # ------------------------------------------------------------------
-            # Layer 3: Map
-            # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Layer 3: Map
+        # ------------------------------------------------------------------
+        try:
+            from blocks.document_engine.mapper import DocumentMapper
             mapper = DocumentMapper(config)
             structured = mapper.map_to_structured(reasoned)
-
-            result = structured.to_dict()
-            result["status"] = "success"
-            result["documents_parsed"] = len(documents)
-            result["platform_blocks_used"] = []
-            if self.config.get("use_platform_pdf") and self.get_dep("pdf"):
-                result["platform_blocks_used"].append("pdf")
-            if self.config.get("use_platform_ocr") and self.get_dep("ocr"):
-                result["platform_blocks_used"].append("ocr")
-            return result
-
+        except ImportError as e:
+            return {"status": "error", "error": f"Document mapper unavailable: {e}"}
         except Exception as e:
-            return {"status": "error", "error": f"Document engine pipeline failed: {str(e)}"}
+            return {"status": "error", "error": f"Document mapping failed: {e}"}
+
+        result = structured.to_dict()
+        result["status"] = "success"
+        result["documents_parsed"] = len(documents)
+        result["platform_blocks_used"] = []
+        if self.config.get("use_platform_pdf") and self.get_dep("pdf"):
+            result["platform_blocks_used"].append("pdf")
+        if self.config.get("use_platform_ocr") and self.get_dep("ocr"):
+            result["platform_blocks_used"].append("ocr")
+        if parse_errors:
+            result["parse_warnings"] = parse_errors
+        return result

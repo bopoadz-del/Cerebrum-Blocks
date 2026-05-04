@@ -34,10 +34,10 @@ class QueueBlock(UniversalBlock):
         "max_workers": 4
     }
     
-    def __init__(self, hal_block, config: Dict[str, Any]):
+    def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)
         self.memory_block = None
-        self.redis_url = config.get("redis_url")
+        self.redis_url = (config or {}).get("redis_url")
         self.use_redis = bool(self.redis_url)
         
         # In-memory queue

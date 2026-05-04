@@ -1,14 +1,18 @@
-"""Image Block - Claude Vision analysis + PIL metadata fallback"""
+"""Image Block - Claude Vision analysis + Stability AI image generation + PIL metadata"""
 
 import base64
+import io
 import mimetypes
 import os
 from pathlib import Path
 from typing import Any, Dict
 
+import httpx
+from PIL import Image
+
 from app.core.universal_base import UniversalBlock
 
-_MODEL = "claude-haiku-4-5-20251001"
+_MODEL = "claude-sonnet-4-5-20251001"
 _MAX_IMAGE_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
@@ -22,8 +26,6 @@ def _load_image_b64(file_path: str) -> tuple[str, str]:
 
 
 async def _download_image_b64(url: str) -> tuple[str, str]:
-    import httpx
-
     async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
         resp = await client.get(url)
         resp.raise_for_status()
@@ -32,10 +34,10 @@ async def _download_image_b64(url: str) -> tuple[str, str]:
     return data, content_type
 
 
-async def _analyze_with_claude(img_data: str, media_type: str, prompt: str) -> str:
+async def _analyze_with_claude(img_data: str, media_type: str, prompt: str, api_key: str) -> str:
     from anthropic import AsyncAnthropic
 
-    client = AsyncAnthropic()
+    client = AsyncAnthropic(api_key=api_key)
     msg = await client.messages.create(
         model=_MODEL,
         max_tokens=1024,
@@ -59,9 +61,26 @@ async def _analyze_with_claude(img_data: str, media_type: str, prompt: str) -> s
     return msg.content[0].text
 
 
-def _pil_metadata(file_path: str) -> Dict:
-    from PIL import Image
+async def _generate_with_stability(prompt: str, api_key: str, width: int = 1024, height: int = 1024) -> bytes:
+    """Generate an image using Stability AI and return raw PNG bytes."""
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            "https://api.stability.ai/v2beta/stable-image/generate/core",
+            headers={"Authorization": f"Bearer {api_key}", "Accept": "image/*"},
+            files={"none": ("", "")},
+            data={
+                "prompt": prompt,
+                "output_format": "png",
+                "width": width,
+                "height": height,
+            },
+        )
+        if response.status_code != 200:
+            raise RuntimeError(f"Stability AI error {response.status_code}: {response.text[:500]}")
+        return response.content
 
+
+def _pil_metadata(file_path: str) -> Dict:
     img = Image.open(file_path)
     width, height = img.size
     mode = img.mode
@@ -94,11 +113,11 @@ def _avg(channel) -> float:
 
 
 class ImageBlock(UniversalBlock):
-    """Image analysis via Claude Vision; PIL metadata when no API key"""
+    """Image analysis via Claude Vision; generation via Stability AI; PIL metadata fallback."""
 
     name = "image"
     version = "2.0"
-    description = "Analyze images with Claude Vision AI or extract basic metadata"
+    description = "Analyze images with Claude Vision AI, generate images with Stability AI, or extract basic metadata"
     layer = 3
     tags = ["domain", "vision", "image"]
     requires = []
@@ -143,13 +162,14 @@ class ImageBlock(UniversalBlock):
             file_path = input_data.get("file_path") or input_data.get("path")
             url = input_data.get("url")
             prompt = input_data.get("prompt", prompt)
-            # InputAdapter wraps bare strings as {"text": "..."} — handle URL and path from it
             if not file_path and not url:
                 raw = input_data.get("text") or input_data.get("input") or ""
                 if raw.startswith("http"):
                     url = raw
                 elif raw and os.path.exists(raw):
                     file_path = raw
+        elif input_data is None and operation == "generate":
+            pass
         else:
             return {"status": "error", "error": "Input must be a file path, URL, or {file_path, url, prompt}"}
 
@@ -178,31 +198,47 @@ class ImageBlock(UniversalBlock):
             except Exception as e:
                 return {"status": "error", "error": str(e)}
 
-        has_api_key = bool(os.getenv("ANTHROPIC_API_KEY"))
+        if operation == "generate":
+            stability_key = os.getenv("STABILITY_API_KEY")
+            if not stability_key:
+                return {
+                    "status": "error",
+                    "error": "STABILITY_API_KEY not set. Set it to enable AI image generation.",
+                }
+            try:
+                if not prompt or prompt == "Describe this image in detail. List any key objects, text, or notable features.":
+                    prompt = input_data if isinstance(input_data, str) else "A beautiful landscape"
+                width = params.get("width", 1024)
+                height = params.get("height", 1024)
+                image_bytes = await _generate_with_stability(prompt, stability_key, width, height)
+                return {
+                    "status": "success",
+                    "operation": "generate",
+                    "prompt": prompt,
+                    "width": width,
+                    "height": height,
+                    "image_base64": base64.b64encode(image_bytes).decode("utf-8"),
+                    "format": "png",
+                    "provider": "stability",
+                }
+            except Exception as e:
+                return {"status": "error", "error": f"Image generation failed: {str(e)}", "operation": "generate"}
 
-        if not has_api_key:
-            # Fallback: PIL metadata only
-            if file_path:
-                try:
-                    meta = _pil_metadata(file_path)
-                    return {
-                        "status": "success",
-                        "operation": "metadata_only",
-                        "note": "Set ANTHROPIC_API_KEY for AI vision analysis",
-                        **meta,
-                    }
-                except Exception as e:
-                    return {"status": "error", "error": str(e)}
+        # Analyze operation
+        anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+        if not anthropic_key:
             return {
                 "status": "error",
-                "error": "ANTHROPIC_API_KEY not set. Provide a file path for basic metadata, or set the key for AI vision.",
+                "error": "ANTHROPIC_API_KEY not set. Set it to enable AI vision analysis, or use operation='metadata' for basic metadata.",
             }
 
         try:
             if url:
                 img_data, media_type = await _download_image_b64(url)
-            else:
+            elif file_path:
                 img_data, media_type = _load_image_b64(file_path)
+            else:
+                return {"status": "error", "error": "Provide file_path or url for analysis"}
 
             if len(img_data) * 3 // 4 > _MAX_IMAGE_BYTES:
                 return {"status": "error", "error": "Image too large (max 5 MB)"}
@@ -216,14 +252,14 @@ class ImageBlock(UniversalBlock):
                     "key measurements, any annotations, and overall purpose."
                 )
 
-            description = await _analyze_with_claude(img_data, media_type, prompt)
+            description = await _analyze_with_claude(img_data, media_type, prompt, anthropic_key)
 
             result = {
                 "status": "success",
                 "operation": operation,
                 "description": description,
                 "model": _MODEL,
-                "source": url or os.path.basename(file_path),
+                "source": url or (os.path.basename(file_path) if file_path else ""),
             }
 
             if file_path:

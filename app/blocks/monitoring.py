@@ -23,7 +23,7 @@ class MonitoringBlock(UniversalBlock):
         "prediction_threshold": 0.3
     }
     
-    def __init__(self, hal_block, config: Dict[str, Any]):
+    def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)
         self.memory_block = None  # Wired by assembler
         

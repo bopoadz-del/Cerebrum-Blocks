@@ -29,7 +29,7 @@ class FailoverBlock(UniversalBlock):
         "health_check_interval": 30
     }
     
-    def __init__(self, hal_block, config: Dict[str, Any]):
+    def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)
         self.chains = {}  # block_name -> failover config
         self.executors = {}  # block_name -> {option: executor_func}
