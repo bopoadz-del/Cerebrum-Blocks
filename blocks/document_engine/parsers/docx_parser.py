@@ -54,9 +54,7 @@ class DOCXParser:
                     rows.append([cell.text.strip() for cell in row.cells])
                 doc.tables.append(rows)
 
-        except ImportError:
-            # Fallback — raw text read (garbled but may yield something)
-            doc.text = path.read_text(errors="ignore")
-            doc.paragraphs = [p for p in doc.text.split("\n") if p.strip()]
+        except ImportError as e:
+            raise ImportError("python-docx not installed. Run: pip install python-docx") from e
 
         return doc

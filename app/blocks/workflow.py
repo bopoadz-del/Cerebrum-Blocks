@@ -125,8 +125,9 @@ class WorkflowBlock(TypedBlock):
             return self._get_pipeline(input_data)
         elif action == "history":
             return self._get_history()
-        else:
-            return {"status": "error", "error": f"Unknown action: {action}"}
+        elif action in ("status", "health"):
+            return {"status": "success", "workflows": len(getattr(self, "_workflows", {}))}
+        return {"status": "error", "error": f"Unknown action: {action}"}
 
     # ── Core Execution ─────────────────────────────────────────────────────────
 

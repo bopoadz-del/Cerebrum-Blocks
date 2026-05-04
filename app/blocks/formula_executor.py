@@ -1,6 +1,5 @@
-"""Formula Executor Block - Chat-to-code generation + sandboxed execution with unit validation"""
+"""Formula Executor Block - Sandboxed execution of construction formulas with unit validation"""
 
-import os
 import math
 import traceback
 from typing import Any, Dict, List, Optional
@@ -26,7 +25,7 @@ _SAFE_MODULES = {
 class FormulaExecutorBlock(UniversalBlock):
     name = "formula_executor"
     version = "1.0.0"
-    description = "Chat-to-code: generate Python formulas from description, execute in sandbox with unit validation"
+    description = "Execute construction formulas in sandbox with unit validation"
     layer = 3
     tags = ["domain", "construction", "formula", "math", "code", "units", "sandbox"]
     requires = []
@@ -119,7 +118,7 @@ class FormulaExecutorBlock(UniversalBlock):
     ui_schema = {
         "input": {
             "type": "json",
-            "placeholder": '{"formula_description": "Calculate concrete volume for a slab", "input_values": {"length_m": 10, "width_m": 8, "thickness_m": 0.2}}',
+            "placeholder": '{"formula_key": "concrete_volume_slab", "input_values": {"length_m": 10, "width_m": 8, "thickness_m": 0.2}}',
             "multiline": True,
         },
         "output": {
@@ -139,17 +138,18 @@ class FormulaExecutorBlock(UniversalBlock):
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
+        if params.get("action") in ("status", "health") or (isinstance(input_data, dict) and input_data.get("action") in ("status", "health")):
+            return {"status": "success", "ready": True}
+        params = params or {}
         data = input_data if isinstance(input_data, dict) else {}
 
-        # InputAdapter wraps bare strings as {"text": "..."} — use as formula description
-        text_fallback = data.get("text") or data.get("input") or (str(input_data) if not isinstance(input_data, dict) else "")
-        description = data.get("formula_description") or params.get("formula_description") or text_fallback
+        description = data.get("formula_description") or params.get("formula_description") or ""
         input_values = data.get("input_values", {})
         input_values.update(params.get("input_values", {}))
         formula_key = data.get("formula_key") or params.get("formula_key")
         operation = data.get("operation") or params.get("operation", "auto")
 
-        if operation == "list" or description.strip().lower() in ("list", "library", "show formulas"):
+        if operation == "list" or str(description).strip().lower() in ("list", "library", "show formulas"):
             return self._list_formulas()
 
         # Try library lookup first
@@ -161,10 +161,13 @@ class FormulaExecutorBlock(UniversalBlock):
         if matched_key and not data.get("custom_code"):
             return await self._run_library_formula(matched_key, input_values)
 
-        # Generate and execute custom formula
+        # Execute custom formula — requires explicit code
         custom_code = data.get("custom_code") or params.get("custom_code")
         if not custom_code:
-            custom_code = self._generate_formula(description, input_values)
+            return {
+                "status": "error",
+                "error": "No formula_key matched and no custom_code provided. Use operation='list' to see available formulas.",
+            }
 
         return await self._execute_sandbox(custom_code, input_values, description)
 
@@ -263,34 +266,9 @@ class FormulaExecutorBlock(UniversalBlock):
             "formatted": f"{result} {unit}" if isinstance(result, (int, float)) else str(result),
         }
 
-    def _generate_formula(self, description: str, variables: Dict) -> str:
-        desc_lower = description.lower()
-        var_names = list(variables.keys())
-        params_str = ", ".join(f"{k}={v}" for k, v in variables.items() if isinstance(v, (int, float)))
-
-        # Simple pattern-based code generation
-        if "volume" in desc_lower and all(k in variables for k in ["length_m", "width_m", "thickness_m"]):
-            return "result = length_m * width_m * thickness_m"
-        if "volume" in desc_lower and all(k in variables for k in ["width_m", "depth_m", "height_m"]):
-            return "result = width_m * depth_m * height_m"
-        if "area" in desc_lower and all(k in variables for k in ["length_m", "width_m"]):
-            return "result = length_m * width_m"
-        if "cost" in desc_lower and all(k in variables for k in ["quantity", "rate"]):
-            return "result = quantity * rate"
-        if "rebar" in desc_lower or "reinforcement" in desc_lower:
-            if "diameter_mm" in variables and "length_m" in variables:
-                return "result = (diameter_mm ** 2 / 162.27) * length_m"
-
-        # Generic multiply all numeric inputs
-        numeric_vars = [k for k, v in variables.items() if isinstance(v, (int, float))]
-        if len(numeric_vars) >= 2:
-            return f"result = {' * '.join(numeric_vars)}"
-        if len(numeric_vars) == 1:
-            return f"result = {numeric_vars[0]}"
-
-        return f"# Auto-generated for: {description}\nresult = None  # Cannot auto-generate — provide custom_code"
-
     def _match_library(self, description: str) -> Optional[str]:
+        if not description:
+            return None
         desc_lower = description.lower()
         scores: Dict[str, int] = {}
         for key, formula in self._FORMULA_LIBRARY.items():

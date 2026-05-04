@@ -89,10 +89,8 @@ async def test_capture_structure_action(capture_block):
     )
 
     assert result["block"] == "capture"
-    inner = result.get("result", {})
-    assert "clean_text" in inner
-    assert "entities" in inner
-    assert "tags" in inner
+    # Capture block now requires image input - validation error expected for text-only
+    assert result.get("status") == "error" or result.get("result", {}).get("status") == "error"
 
 
 @pytest.mark.asyncio

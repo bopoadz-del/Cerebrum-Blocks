@@ -42,7 +42,8 @@ class StorageBlock(UniversalBlock):
     
     async def process(self, input_data: Dict, params: Dict = None) -> Dict:
         """Storage operations"""
-        action = (params or {}).get("action") or (input_data.get("action") if isinstance(input_data, dict) else None)
+        input_data = input_data or {}
+        action = (params or {}).get("action") or input_data.get("action")
         
         if action == "store":
             return await self._store(input_data)

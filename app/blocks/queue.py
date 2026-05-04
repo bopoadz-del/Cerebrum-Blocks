@@ -65,14 +65,15 @@ class QueueBlock(UniversalBlock):
     
     async def process(self, input_data: Dict, params: Dict = None) -> Dict:
         """Queue operations"""
-        action = (params or {}).get("action") or (input_data.get("action") if isinstance(input_data, dict) else None)
+        input_data = input_data or {}
+        action = (params or {}).get("action") or input_data.get("action")
         
         if action == "enqueue":
             return await self._enqueue(input_data)
         elif action == "dequeue":
             return await self._dequeue(input_data.get("queue", "default"))
         elif action == "status":
-            return await self._get_status(input_data.get("job_id"))
+            return await self._get_status(input_data.get("job_id") if input_data else None)
         elif action == "list":
             return await self._list_jobs(input_data.get("queue", "default"))
         

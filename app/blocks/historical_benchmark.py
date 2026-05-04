@@ -1,5 +1,7 @@
 """Historical Benchmark Block — RS Means-style unit cost lookups and market ranges."""
 
+import json
+import os
 from typing import Any, Dict, List, Optional
 from app.core.universal_base import UniversalBlock
 
@@ -26,67 +28,42 @@ class HistoricalBenchmarkBlock(UniversalBlock):
         },
     }
 
-    # ------------------------------------------------------------------ #
-    # Core rate database (USD, mid-2024 baseline)
-    # ------------------------------------------------------------------ #
-    _RATES: Dict[str, Dict] = {
-        # Structural
-        "concrete_c25_m3":       {"base": 130, "low": 100, "high": 175, "unit": "m3", "trade": "Structural"},
-        "concrete_c30_m3":       {"base": 155, "low": 120, "high": 200, "unit": "m3", "trade": "Structural"},
-        "concrete_c40_m3":       {"base": 180, "low": 145, "high": 235, "unit": "m3", "trade": "Structural"},
-        "rebar_kg":              {"base": 1.90, "low": 1.40, "high": 2.60, "unit": "kg", "trade": "Structural"},
-        "structural_steel_kg":   {"base": 3.50, "low": 2.80, "high": 4.80, "unit": "kg", "trade": "Structural"},
-        "formwork_standard_m2":  {"base": 48, "low": 35, "high": 70, "unit": "m2", "trade": "Structural"},
-        "formwork_soffit_m2":    {"base": 60, "low": 45, "high": 85, "unit": "m2", "trade": "Structural"},
-        "piling_lm":             {"base": 290, "low": 200, "high": 420, "unit": "lm", "trade": "Groundworks"},
-        "excavation_m3":         {"base": 24, "low": 14, "high": 40, "unit": "m3", "trade": "Groundworks"},
-        # Masonry / Envelope
-        "blockwork_m2":          {"base": 38, "low": 28, "high": 55, "unit": "m2", "trade": "Masonry"},
-        "brickwork_m2":          {"base": 78, "low": 58, "high": 110, "unit": "m2", "trade": "Masonry"},
-        "curtain_wall_m2":       {"base": 450, "low": 280, "high": 750, "unit": "m2", "trade": "Facades"},
-        "glazing_standard_m2":   {"base": 190, "low": 130, "high": 290, "unit": "m2", "trade": "Facades"},
-        "cladding_m2":           {"base": 220, "low": 140, "high": 380, "unit": "m2", "trade": "Facades"},
-        "roofing_flat_m2":       {"base": 100, "low": 70, "high": 150, "unit": "m2", "trade": "Roofing"},
-        "waterproofing_m2":      {"base": 42, "low": 28, "high": 65, "unit": "m2", "trade": "Waterproofing"},
-        # Finishes
-        "plaster_m2":            {"base": 30, "low": 20, "high": 45, "unit": "m2", "trade": "Finishes"},
-        "drylining_m2":          {"base": 48, "low": 32, "high": 72, "unit": "m2", "trade": "Finishes"},
-        "tiling_standard_m2":    {"base": 90, "low": 60, "high": 140, "unit": "m2", "trade": "Finishes"},
-        "tiling_premium_m2":     {"base": 160, "low": 110, "high": 280, "unit": "m2", "trade": "Finishes"},
-        "flooring_screed_m2":    {"base": 35, "low": 24, "high": 52, "unit": "m2", "trade": "Finishes"},
-        "painting_m2":           {"base": 20, "low": 12, "high": 32, "unit": "m2", "trade": "Finishes"},
-        "suspended_ceiling_m2":  {"base": 65, "low": 42, "high": 100, "unit": "m2", "trade": "Finishes"},
-        "insulation_thermal_m2": {"base": 32, "low": 20, "high": 50, "unit": "m2", "trade": "Insulation"},
-        # MEP
-        "hvac_medium_m2":        {"base": 125, "low": 85, "high": 200, "unit": "m2", "trade": "Mechanical"},
-        "electrical_standard_m2":{"base": 85, "low": 55, "high": 140, "unit": "m2", "trade": "Electrical"},
-        "plumbing_standard_m2":  {"base": 68, "low": 45, "high": 110, "unit": "m2", "trade": "Plumbing"},
-        "fire_protection_m2":    {"base": 38, "low": 25, "high": 62, "unit": "m2", "trade": "Fire Protection"},
-        # Elements
-        "door_internal_ea":      {"base": 900, "low": 600, "high": 1800, "unit": "ea", "trade": "Joinery"},
-        "door_external_ea":      {"base": 2200, "low": 1400, "high": 4500, "unit": "ea", "trade": "Joinery"},
-        "window_standard_ea":    {"base": 1300, "low": 800, "high": 2600, "unit": "ea", "trade": "Joinery"},
-        "lift_passenger_ea":     {"base": 90000, "low": 60000, "high": 150000, "unit": "ea", "trade": "Vertical Transport"},
-        "scaffold_m2":           {"base": 13, "low": 8, "high": 22, "unit": "m2", "trade": "Temporary Works"},
+    default_config = {
+        "rates_env": "BENCHMARK_RATES_PATH",
+        "factors_env": "BENCHMARK_FACTORS_PATH",
     }
 
-    _LOCATION_FACTORS: Dict[str, float] = {
-        "us national average": 1.00, "new york city": 1.35, "san francisco": 1.42,
-        "los angeles": 1.28, "chicago": 1.18, "houston": 1.05,
-        "dubai": 0.95, "abu dhabi": 0.92, "riyadh": 0.88, "jeddah": 0.90,
-        "doha": 0.97, "kuwait city": 0.93,
-        "london": 1.28, "manchester": 1.12, "paris": 1.22,
-        "frankfurt": 1.18, "amsterdam": 1.20,
-        "sydney": 1.15, "melbourne": 1.12,
-        "singapore": 1.08, "hong kong": 1.25, "tokyo": 1.30,
-        "toronto": 1.10, "mumbai": 0.45, "delhi": 0.42,
-    }
+    def __init__(self, hal_block=None, config: Dict = None):
+        super().__init__(hal_block, config)
+        self._rates: Dict[str, Dict] = {}
+        self._location_factors: Dict[str, float] = {}
+        self._project_factors: Dict[str, float] = {}
+        self._load_data()
 
-    _PROJECT_FACTORS: Dict[str, float] = {
-        "residential": 1.00, "commercial": 1.15, "industrial": 0.90,
-        "hospital": 1.45, "education": 1.10, "hotel": 1.25,
-        "general_building": 1.05, "infrastructure": 0.85, "mixed_use": 1.18,
-    }
+    def _load_data(self):
+        """Load benchmark data from external files or environment variables."""
+        rates_path = os.environ.get(
+            self.config.get("rates_env", "BENCHMARK_RATES_PATH"), ""
+        )
+        factors_path = os.environ.get(
+            self.config.get("factors_env", "BENCHMARK_FACTORS_PATH"), ""
+        )
+
+        if rates_path and os.path.exists(rates_path):
+            try:
+                with open(rates_path, "r") as f:
+                    self._rates = json.load(f)
+            except Exception:
+                pass
+
+        if factors_path and os.path.exists(factors_path):
+            try:
+                with open(factors_path, "r") as f:
+                    factors = json.load(f)
+                    self._location_factors = factors.get("location_factors", {})
+                    self._project_factors = factors.get("project_factors", {})
+            except Exception:
+                pass
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
@@ -94,12 +71,24 @@ class HistoricalBenchmarkBlock(UniversalBlock):
 
         action = params.get("action", data.get("action", "lookup"))
 
+        # Allow inline injection of benchmark data for real computation
+        inline_rates = data.get("rates") or params.get("rates")
+        inline_loc_factors = data.get("location_factors") or params.get("location_factors")
+        inline_proj_factors = data.get("project_factors") or params.get("project_factors")
+
+        if inline_rates:
+            self._rates.update(inline_rates)
+        if inline_loc_factors:
+            self._location_factors.update(inline_loc_factors)
+        if inline_proj_factors:
+            self._project_factors.update(inline_proj_factors)
+
         if action == "lookup":
             return self._lookup(data, params)
         if action == "batch":
             return self._batch_lookup(data, params)
         if action == "location_factors":
-            return {"status": "success", "location_factors": self._LOCATION_FACTORS}
+            return {"status": "success", "location_factors": self._location_factors}
         if action == "catalogue":
             return self._get_catalogue(params)
 
@@ -111,8 +100,14 @@ class HistoricalBenchmarkBlock(UniversalBlock):
         location = (params.get("location") or data.get("location", "us national average")).lower()
         project_type = (params.get("project_type") or data.get("project_type", "general_building")).lower()
 
+        if not self._rates:
+            return {
+                "status": "error",
+                "error": "No benchmark data loaded. Provide rates via inline params, environment variable, or file.",
+            }
+
         loc_factor = self._get_location_factor(location)
-        proj_factor = self._PROJECT_FACTORS.get(project_type, 1.05)
+        proj_factor = self._project_factors.get(project_type, 1.05)
 
         rate_key, rate_data = self._find_best_match(item, unit)
 
@@ -145,7 +140,7 @@ class HistoricalBenchmarkBlock(UniversalBlock):
                 "project_factor": proj_factor,
             },
             "confidence": "high" if rate_key in item.lower().replace(" ", "_") else "medium",
-            "source": "RSMeans-calibrated internal database (mid-2024 USD baseline)",
+            "source": "external benchmark database",
         }
 
     def _batch_lookup(self, data: Dict, params: Dict) -> Dict:
@@ -182,7 +177,7 @@ class HistoricalBenchmarkBlock(UniversalBlock):
     def _get_catalogue(self, params: Dict) -> Dict:
         trade_filter = params.get("trade", "").lower()
         items = []
-        for key, data in self._RATES.items():
+        for key, data in self._rates.items():
             if trade_filter and trade_filter not in data["trade"].lower():
                 continue
             items.append({
@@ -205,79 +200,79 @@ class HistoricalBenchmarkBlock(UniversalBlock):
 
         # Exact keyword matching in priority order
         if "curtain wall" in n or "curtain_wall" in n:
-            return "curtain_wall_m2", self._RATES["curtain_wall_m2"]
+            return "curtain_wall_m2", self._rates.get("curtain_wall_m2")
         if "cladding" in n:
-            return "cladding_m2", self._RATES["cladding_m2"]
+            return "cladding_m2", self._rates.get("cladding_m2")
         if "glazing" in n or "glass" in n:
-            return "glazing_standard_m2", self._RATES["glazing_standard_m2"]
+            return "glazing_standard_m2", self._rates.get("glazing_standard_m2")
         if "lift" in n or "elevator" in n:
-            return "lift_passenger_ea", self._RATES["lift_passenger_ea"]
+            return "lift_passenger_ea", self._rates.get("lift_passenger_ea")
         if "structural steel" in n or ("steel" in n and "kg" in u):
-            return "structural_steel_kg", self._RATES["structural_steel_kg"]
+            return "structural_steel_kg", self._rates.get("structural_steel_kg")
         if "rebar" in n or "reinforcement" in n:
-            return "rebar_kg", self._RATES["rebar_kg"]
+            return "rebar_kg", self._rates.get("rebar_kg")
         if "c40" in n or ("concrete" in n and "40" in n):
-            return "concrete_c40_m3", self._RATES["concrete_c40_m3"]
+            return "concrete_c40_m3", self._rates.get("concrete_c40_m3")
         if "c30" in n or ("concrete" in n and "30" in n):
-            return "concrete_c30_m3", self._RATES["concrete_c30_m3"]
+            return "concrete_c30_m3", self._rates.get("concrete_c30_m3")
         if "concrete" in n and "m3" in u:
-            return "concrete_c25_m3", self._RATES["concrete_c25_m3"]
+            return "concrete_c25_m3", self._rates.get("concrete_c25_m3")
         if "soffit" in n or ("formwork" in n and "soffit" in n):
-            return "formwork_soffit_m2", self._RATES["formwork_soffit_m2"]
+            return "formwork_soffit_m2", self._rates.get("formwork_soffit_m2")
         if "formwork" in n or "shuttering" in n:
-            return "formwork_standard_m2", self._RATES["formwork_standard_m2"]
+            return "formwork_standard_m2", self._rates.get("formwork_standard_m2")
         if "pil" in n:
-            return "piling_lm", self._RATES["piling_lm"]
+            return "piling_lm", self._rates.get("piling_lm")
         if "excavat" in n:
-            return "excavation_m3", self._RATES["excavation_m3"]
+            return "excavation_m3", self._rates.get("excavation_m3")
         if "brick" in n:
-            return "brickwork_m2", self._RATES["brickwork_m2"]
+            return "brickwork_m2", self._rates.get("brickwork_m2")
         if "block" in n and "m2" in u:
-            return "blockwork_m2", self._RATES["blockwork_m2"]
+            return "blockwork_m2", self._rates.get("blockwork_m2")
         if "waterproof" in n or "membrane" in n:
-            return "waterproofing_m2", self._RATES["waterproofing_m2"]
+            return "waterproofing_m2", self._rates.get("waterproofing_m2")
         if "roof" in n:
-            return "roofing_flat_m2", self._RATES["roofing_flat_m2"]
+            return "roofing_flat_m2", self._rates.get("roofing_flat_m2")
         if "suspended ceiling" in n or "false ceiling" in n:
-            return "suspended_ceiling_m2", self._RATES["suspended_ceiling_m2"]
+            return "suspended_ceiling_m2", self._rates.get("suspended_ceiling_m2")
         if "drylining" in n or "drywall" in n:
-            return "drylining_m2", self._RATES["drylining_m2"]
+            return "drylining_m2", self._rates.get("drylining_m2")
         if "plaster" in n:
-            return "plaster_m2", self._RATES["plaster_m2"]
+            return "plaster_m2", self._rates.get("plaster_m2")
         if "premium tile" in n or "marble" in n or "stone tile" in n:
-            return "tiling_premium_m2", self._RATES["tiling_premium_m2"]
+            return "tiling_premium_m2", self._rates.get("tiling_premium_m2")
         if "tile" in n or "tiling" in n:
-            return "tiling_standard_m2", self._RATES["tiling_standard_m2"]
+            return "tiling_standard_m2", self._rates.get("tiling_standard_m2")
         if "floor" in n and "screed" in n:
-            return "flooring_screed_m2", self._RATES["flooring_screed_m2"]
+            return "flooring_screed_m2", self._rates.get("flooring_screed_m2")
         if "paint" in n:
-            return "painting_m2", self._RATES["painting_m2"]
+            return "painting_m2", self._rates.get("painting_m2")
         if "insulation" in n:
-            return "insulation_thermal_m2", self._RATES["insulation_thermal_m2"]
+            return "insulation_thermal_m2", self._rates.get("insulation_thermal_m2")
         if "hvac" in n or "mechanical" in n or "air" in n:
-            return "hvac_medium_m2", self._RATES["hvac_medium_m2"]
+            return "hvac_medium_m2", self._rates.get("hvac_medium_m2")
         if "fire" in n and "protection" in n:
-            return "fire_protection_m2", self._RATES["fire_protection_m2"]
+            return "fire_protection_m2", self._rates.get("fire_protection_m2")
         if "electrical" in n or "lighting" in n:
-            return "electrical_standard_m2", self._RATES["electrical_standard_m2"]
+            return "electrical_standard_m2", self._rates.get("electrical_standard_m2")
         if "plumbing" in n or "sanitary" in n:
-            return "plumbing_standard_m2", self._RATES["plumbing_standard_m2"]
+            return "plumbing_standard_m2", self._rates.get("plumbing_standard_m2")
         if "external door" in n:
-            return "door_external_ea", self._RATES["door_external_ea"]
+            return "door_external_ea", self._rates.get("door_external_ea")
         if "door" in n:
-            return "door_internal_ea", self._RATES["door_internal_ea"]
+            return "door_internal_ea", self._rates.get("door_internal_ea")
         if "window" in n:
-            return "window_standard_ea", self._RATES["window_standard_ea"]
+            return "window_standard_ea", self._rates.get("window_standard_ea")
         if "scaffold" in n:
-            return "scaffold_m2", self._RATES["scaffold_m2"]
+            return "scaffold_m2", self._rates.get("scaffold_m2")
 
         return "", None
 
     def _get_location_factor(self, location: str) -> float:
         loc = location.lower().strip()
-        if loc in self._LOCATION_FACTORS:
-            return self._LOCATION_FACTORS[loc]
-        for key, factor in self._LOCATION_FACTORS.items():
+        if loc in self._location_factors:
+            return self._location_factors[loc]
+        for key, factor in self._location_factors.items():
             if key in loc or loc in key:
                 return factor
         return 1.0

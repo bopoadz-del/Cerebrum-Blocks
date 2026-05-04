@@ -49,9 +49,9 @@ class PDFParser:
                 pass
 
         if not parsed:
-            # Ultimate fallback — treat as text
-            doc.text = path.read_text(errors="ignore")
-            doc.pages = [doc.text]
+            raise RuntimeError(
+                "No PDF parser available. Install one of: PyMuPDF, pdfplumber, or PyPDF2"
+            )
 
         doc.glossary = self._extract_glossary(doc.text)
         doc.figures = self._extract_figures(doc.text)

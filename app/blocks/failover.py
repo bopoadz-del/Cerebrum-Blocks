@@ -64,6 +64,7 @@ class FailoverBlock(UniversalBlock):
     
     async def process(self, input_data: Dict, params: Dict = None) -> Dict:
         """Execute with failover"""
+        input_data = input_data or {}
         block_name = input_data.get("block")
         payload = input_data.get("payload", {})
         

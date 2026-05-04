@@ -448,16 +448,63 @@ class ConstructionContainer(UniversalContainer):
         return m.group(1).upper() if m else ""
 
     def _extract_measurements_advanced(self, raw_text: str, text_dict: Dict) -> List[Dict]:
-        return []
+        measurements = []
+        # Dimension pattern: 5.5m x 3.2m
+        dim_pat = r'\b(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')\s*(?:x|by|×)\s*(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')'
+        for m in re.finditer(dim_pat, raw_text, re.IGNORECASE):
+            w = float(m.group(1))
+            h = float(m.group(2))
+            unit = "m" if "m" in m.group(0).lower() else "ft"
+            measurements.append({"type": "dimension", "value": w * h, "unit": f"{unit}²", "width": w, "height": h, "raw": m.group(0)})
+        # Single dimension pattern
+        single_pat = r'\b(\d+(?:\.\d+)?)\s*(?:m|mm|cm|ft)\b'
+        for m in re.finditer(single_pat, raw_text, re.IGNORECASE):
+            val = float(m.group(1))
+            unit = "m"
+            if "mm" in m.group(0).lower():
+                unit = "mm"
+                val = val / 1000.0
+            elif "cm" in m.group(0).lower():
+                unit = "cm"
+                val = val / 100.0
+            elif "ft" in m.group(0).lower():
+                unit = "ft"
+            measurements.append({"type": "length", "value": val, "unit": unit, "raw": m.group(0)})
+        return measurements
 
     def _extract_tables_advanced(self, page) -> List[Dict]:
-        return []
+        tables = []
+        try:
+            tabs = page.find_tables()
+            for t in tabs:
+                tables.append({"row_count": len(t.rows), "col_count": len(t.columns), "header": t.header.names if hasattr(t, "header") else []})
+        except Exception:
+            pass
+        return tables
 
     def _extract_annotations(self, page) -> List[Dict]:
-        return []
+        annotations = []
+        try:
+            for annot in page.annots():
+                if annot:
+                    annotations.append({"type": getattr(annot, "type", ["unknown"])[1] if hasattr(annot, "type") else "unknown", "rect": str(getattr(annot, "rect", ""))})
+        except Exception:
+            pass
+        return annotations
 
     def _extract_specs_advanced(self, raw_text: str) -> List[Dict]:
-        return []
+        specs = []
+        grade_patterns = [
+            (r"\b(?:grade|class|type)\s*[:\-]?\s*([A-Z0-9\-]+)", "grade"),
+            (r"\bASTM\s+([A-Z]\d+(?:\/[A-Z]\d+)?)", "astm_standard"),
+            (r"\bACI\s+(\d+\w*)", "aci_standard"),
+            (r"\bBS\s+(\d+(?:[-:]\d+)?)", "bs_standard"),
+            (r"\bEN\s+(\d+(?:[-:]\d+)?)", "en_standard"),
+        ]
+        for pat, ptype in grade_patterns:
+            for m in re.finditer(pat, raw_text, re.IGNORECASE):
+                specs.append({"type": ptype, "value": m.group(1).strip(), "context": raw_text[max(0, m.start()-40):m.end()+40]})
+        return specs
 
     def _detect_disciplines(self, raw_text: str) -> List[str]:
         disciplines = []
@@ -477,7 +524,15 @@ class ConstructionContainer(UniversalContainer):
         return disciplines
 
     def _extract_title_block(self, sheet_data: Dict) -> Dict:
-        return {}
+        raw = sheet_data.get("raw_text", "")
+        tb = {}
+        for line in raw.split("\n")[:30]:
+            if ":" in line:
+                k, v = line.split(":", 1)
+                k = k.strip().lower()
+                if k in ("project", "title", "drawing no", "revision", "date", "scale", "drawn by", "checked by"):
+                    tb[k] = v.strip()
+        return tb
 
     def _extract_scale(self, raw_text: str) -> Optional[str]:
         import re
@@ -485,16 +540,37 @@ class ConstructionContainer(UniversalContainer):
         return m.group(1) if m else None
 
     def _calculate_quantities(self, measurements: List[Dict]) -> Dict:
-        return {}
+        total_area = sum(m.get("value", 0) for m in measurements if m.get("type") == "dimension")
+        counts = {}
+        for m in measurements:
+            if m.get("type") == "count":
+                item = m.get("item", "unknown")
+                counts[item] = counts.get(item, 0) + m.get("value", 0)
+        return {
+            "floor_area_m2": round(total_area, 2),
+            "element_counts": counts,
+        }
 
     def _estimate_costs(self, quantities: Dict) -> Dict:
-        return {}
+        # Cost estimation requires external rate data; return computed quantities with a note
+        area = quantities.get("floor_area_m2", 0)
+        return {
+            "floor_area_m2": area,
+            "note": "Provide benchmark rates via historical_benchmark block to compute costs.",
+        }
 
     def _estimate_carbon(self, quantities: Dict) -> Dict:
-        return {}
+        area = quantities.get("floor_area_m2", 0)
+        return {
+            "floor_area_m2": area,
+            "note": "Provide embodied carbon factors (kgCO2e/m2) by material to compute carbon.",
+        }
 
     def _calculate_confidence(self, result: Dict) -> Dict:
-        return {"overall": 0.7}
+        m_count = len(result.get("measurements", []))
+        t_count = len(result.get("tables", []))
+        score = min(0.95, 0.5 + (m_count * 0.02) + (t_count * 0.01))
+        return {"overall": round(score, 2), "measurements": m_count, "tables": t_count}
 
     async def _detect_risks_from_drawing(self, result: Dict) -> List[Dict]:
         return []
@@ -981,31 +1057,8 @@ class ConstructionContainer(UniversalContainer):
 
         if not file_path and not extracted_text:
             return {
-                "status": "success",
-                "demo_mode": True,
-                "action": "specification_analysis",
-                "file_name": "sample_spec.pdf",
-                "divisions_found": [3, 4, 5, 7, 8, 9, 21, 22, 23, 26, 28, 31, 32],
-                "total_sections_analyzed": 13,
-                "spec_items": [
-                    {"category": "Division 03", "key": "Concrete", "value": "CSI Div 03 — Reinforced Concrete: C30/37 mix design, 28-day compressive strength, max w/c ratio 0.50", "section": "structural", "confidence": 0.95},
-                    {"category": "Division 04", "key": "Masonry", "value": "CSI Div 04 — Masonry: External cavity wall, inner leaf dense aggregate block, outer leaf facing brick", "section": "envelope", "confidence": 0.92},
-                    {"category": "Division 05", "key": "Metals", "value": "CSI Div 05 — Structural Steelwork: Grade S355 JR, hot-dip galvanised connections, composite metal deck", "section": "structural", "confidence": 0.94},
-                    {"category": "Division 07", "key": "Thermal & Moisture", "value": "CSI Div 07 — Waterproofing: Single-ply TPO membrane, min 1.5mm thickness, 20-year warranty", "section": "envelope", "confidence": 0.91},
-                    {"category": "Division 08", "key": "Openings", "value": "CSI Div 08 — Curtain Wall: Aluminium unitised system, thermally broken, U-value ≤1.6 W/m²K, CWCT standard", "section": "envelope", "confidence": 0.93},
-                    {"category": "Division 09", "key": "Finishes", "value": "CSI Div 09 — Finishes: Raised access floor 600×600, gypsum board partitions, acoustic ceiling tiles", "section": "interiors", "confidence": 0.90},
-                    {"category": "Division 23", "key": "HVAC", "value": "CSI Div 23 — HVAC: VAV system, fresh air min 10 l/s/person, ASHRAE 90.1 energy compliance", "section": "mep", "confidence": 0.88},
-                    {"category": "Division 26", "key": "Electrical", "value": "CSI Div 26 — Electrical: LV distribution, metered tenant circuits, LED lighting min 400 lux open office", "section": "mep", "confidence": 0.89},
-                ],
-                "materials_referenced": ["concrete", "steel", "glass", "aluminum", "insulation", "membrane"],
-                "methods_specified": ["in-situ concrete", "precast", "site welding", "bolted connections"],
-                "testing_requirements": ["28-day cube test", "weld inspection", "air permeability test", "thermographic survey"],
-                "qa_qc_requirements": ["ITP submission", "material approval", "mock-up panel", "commissioning"],
-                "recommendations": [
-                    "Issue RFI for concrete mix design approval prior to pour",
-                    "Pre-order long-lead curtain wall units — 16-week lead time",
-                    "Schedule mock-up panel inspection at week 4 of construction",
-                ],
+                "status": "error",
+                "error": "No specification file or extracted text provided.",
             }
 
         if not file_path:
@@ -1101,13 +1154,13 @@ class ConstructionContainer(UniversalContainer):
             "status": "success",
             "action": "specification_analysis",
             "file_name": "extracted_text",
-            "divisions_found": detected or [3, 5, 9],
-            "total_sections_analyzed": len(spec_items) or 1,
-            "spec_items": spec_items or [{"category": "General", "key": "spec_text", "value": text[:200], "section": "general", "confidence": 0.7}],
+            "divisions_found": detected,
+            "total_sections_analyzed": len(spec_items),
+            "spec_items": spec_items,
             "materials_referenced": materials,
             "methods_specified": self._extract_methods(text),
             "testing_requirements": self._extract_testing_requirements(text),
-            "qa_qc_requirements": [],
+            "qa_qc_requirements": self._extract_qaqc(text),
         }
 
     def _extract_materials(self, text: str) -> List[str]:
@@ -1119,7 +1172,13 @@ class ConstructionContainer(UniversalContainer):
         return materials
     
     def _extract_methods(self, text: str) -> List[str]:
-        return []
+        methods = []
+        method_keywords = ["pour", "cast", "place", "install", "erect", "frame", "weld", "bolt", "fix", "apply"]
+        text_lower = text.lower()
+        for kw in method_keywords:
+            if kw in text_lower:
+                methods.append(kw)
+        return methods
     
     def _extract_testing_requirements(self, text: str) -> List[str]:
         requirements = []
@@ -5435,15 +5494,8 @@ Total Extension of Time Sought: {total_delay} days
                 }
         
         return {
-            "status": "success",
-            "source": "mock",
-            "quantities": {
-                "concrete_volume_m3": 45.5,
-                "steel_weight_kg": 1200,
-                "floor_area_m2": 111.5,
-                "rebar_length_m": 850
-            },
-            "confidence": 0.94
+            "status": "error",
+            "error": "No construction drawing or document provided. Upload a PDF, image, or provide extracted text.",
         }
 
     async def generate_construction_report(self, input_data: Any, params: Dict) -> Dict:

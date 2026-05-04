@@ -15,7 +15,7 @@ import math
 from typing import Any, Dict, List, Optional, Tuple
 from pathlib import Path
 from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from app.core.typed_block import TypedBlock
 from app.core.schema_registry import TextContent, ConstructionAnalysis
@@ -110,6 +110,9 @@ class ConstructionBlockV2(TypedBlock):
     }
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
+        params = params or {}
+        if params.get("action") in ("status", "health"):
+            return {"status": "success", "ready": True}
         """
         Main entry point - analyze construction document text.
         
@@ -184,7 +187,7 @@ class ConstructionBlockV2(TypedBlock):
     async def _analyze_drawing(self, text: str, params: Dict) -> Dict:
         """Analyze construction drawing text."""
         measurements = self._extract_measurements(text)
-        quantities = self._calculate_quantities(measurements)
+        quantities = self._calculate_quantities(measurements, params)
         materials = self._extract_materials(text)
         
         return {
@@ -264,7 +267,7 @@ class ConstructionBlockV2(TypedBlock):
         
         return {
             "measurements": measurements,
-            "quantities": self._calculate_quantities(measurements),
+            "quantities": self._calculate_quantities(measurements, params),
             "materials": materials,
             "confidence": 0.60,
             "raw_text": text[:2000] if params.get("include_raw") else "",
@@ -315,21 +318,31 @@ class ConstructionBlockV2(TypedBlock):
         
         return measurements[:50]
     
-    def _calculate_quantities(self, measurements: List[Dict]) -> Dict:
-        """Calculate construction quantities from measurements."""
+    def _calculate_quantities(self, measurements: List[Dict], params: Dict) -> Dict:
+        """Calculate construction quantities from measurements using real parameters."""
         total_area = sum(m.get("value", 0) for m in measurements if m.get("type") == "dimension")
         
-        # Standard estimates
-        concrete_volume = total_area * 0.15  # 150mm typical slab
-        steel_weight = concrete_volume * 120  # 120 kg/m³
-        rebar_length = concrete_volume * 50  # 50m per m³
+        # Use explicit parameters if provided, otherwise compute from measurements only
+        slab_thickness_m = float(params.get("slab_thickness_m", 0))
+        steel_density_kg_m3 = float(params.get("steel_density_kg_m3", 0))
+        rebar_density_m_m3 = float(params.get("rebar_density_m_m3", 0))
         
-        return {
+        concrete_volume = total_area * slab_thickness_m if slab_thickness_m > 0 else 0.0
+        steel_weight = concrete_volume * steel_density_kg_m3 if steel_density_kg_m3 > 0 else 0.0
+        rebar_length = concrete_volume * rebar_density_m_m3 if rebar_density_m_m3 > 0 else 0.0
+        
+        quantities = {
             "floor_area_m2": round(total_area, 2),
             "concrete_volume_m3": round(concrete_volume, 2),
             "steel_weight_kg": round(steel_weight, 2),
-            "rebar_length_m": round(rebar_length, 2)
+            "rebar_length_m": round(rebar_length, 2),
         }
+        
+        # If no explicit params, note that quantities need engineering parameters
+        if not any(v > 0 for k, v in quantities.items() if k != "floor_area_m2"):
+            quantities["_note"] = "Provide slab_thickness_m, steel_density_kg_m3, rebar_density_m_m3 to compute volumes and weights."
+        
+        return quantities
     
     def _extract_materials(self, text: str) -> List[Dict]:
         """Extract material references from text."""

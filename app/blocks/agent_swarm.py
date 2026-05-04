@@ -21,6 +21,7 @@ from app.core.typed_block import TypedBlock, Schema, ContentType
 
 class LLMProvider(str, Enum):
     OLLAMA = "ollama"
+    DEEPSEEK = "deepseek"
     OPENROUTER = "openrouter"
 
 
@@ -50,22 +51,6 @@ class AgentSwarmBlock(TypedBlock):
 
     accepted_input_types = ["JSON", "SwarmRequest"]
     produced_output_types = ["JSON", "SwarmResponse"]
-
-
-    async def execute(self, input_data: Any, params: Dict = None) -> Dict:
-        params = params or {}
-        action = params.get("action") if isinstance(params, dict) else None
-        if isinstance(input_data, str):
-            if action == "status":
-                input_data = {"job_id": input_data}
-            else:
-                input_data = {"objective": input_data}
-        return await super().execute(input_data, params)
-
-    def validate_input(self, data: Any) -> Dict[str, Any]:
-        if isinstance(data, dict) and data.get("action") in {"health", "status", "list", "history", "get", "unschedule", "broadcast", "search", "summarize", "structure", "execute_async"}:
-            return {"valid": True, "errors": [], "warnings": [], "data": data}
-        return super().validate_input(data)
 
     default_config = {
         "llm_provider": os.getenv("LLM_PROVIDER", "ollama"),
@@ -103,7 +88,6 @@ class AgentSwarmBlock(TypedBlock):
             {"icon": "📋", "label": "Plan Tasks", "prompt": "Generate a task plan with agents"},
         ],
     }
-
 
     async def execute(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
@@ -387,10 +371,13 @@ Expected output: {task.get('expected_output', '')}
         if provider == LLMProvider.OLLAMA:
             return await self._ollama_chat(messages, model, temperature)
         elif provider == "deepseek" or provider == LLMProvider.DEEPSEEK:
+            api_key = self.config.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY", "")
+            if not api_key:
+                raise ValueError("DeepSeek API key not configured")
             model = model or self.config.get("deepseek_model", "deepseek-chat")
             url = "https://api.deepseek.com/chat/completions"
             headers = {
-                "Authorization": f"Bearer {self.config.get('deepseek_api_key')}",
+                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             }
             payload = {
@@ -437,10 +424,13 @@ Expected output: {task.get('expected_output', '')}
 
     async def _openrouter_chat(self, messages, model, temperature):
         import httpx
+        api_key = self.config.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY", "")
+        if not api_key:
+            raise ValueError("OpenRouter API key not configured")
         model = model or self.config.get("openrouter_model", "anthropic/claude-3.5-sonnet")
         url = "https://openrouter.ai/api/v1/chat/completions"
         headers = {
-            "Authorization": f"Bearer {self.config.get('openrouter_api_key')}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         }
         payload = {

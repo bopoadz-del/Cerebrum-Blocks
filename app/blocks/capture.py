@@ -9,6 +9,7 @@ import io
 import uuid
 import json
 import tempfile
+import base64
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
 
@@ -43,26 +44,10 @@ class CaptureBlock(TypedBlock):
     accepted_input_types = ["Image", "ImageContent", "File"]
     produced_output_types = ["Text", "JSON", "CaptureResult"]
 
-
-    async def execute(self, input_data: Any, params: Dict = None) -> Dict:
-        params = params or {}
-        action = params.get("action") if isinstance(params, dict) else None
-        if isinstance(input_data, str):
-            if action == "structure":
-                input_data = {"text": input_data}
-            else:
-                input_data = {"image": input_data}
-        return await super().execute(input_data, params)
-
-    def validate_input(self, data: Any) -> Dict[str, Any]:
-        if isinstance(data, dict) and data.get("action") in {"health", "status", "list", "history", "get", "unschedule", "broadcast", "search", "summarize", "structure", "execute_async", "ocr"}:
-            return {"valid": True, "errors": [], "warnings": [], "data": data}
-        return super().validate_input(data)
-
     default_config = {
         "ocr_languages": "ara+eng",
         "ocr_engine": "tesseract",
-        "llm_provider": os.getenv("LLM_PROVIDER", "ollama"),
+        "llm_provider": os.getenv("LLM_PROVIDER", "deepseek"),
         "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
         "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
         "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
@@ -100,7 +85,6 @@ class CaptureBlock(TypedBlock):
             {"icon": "🧠", "label": "AI Structure", "prompt": "Structure captured text into entities and summary"},
         ],
     }
-
 
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)
@@ -171,6 +155,8 @@ class CaptureBlock(TypedBlock):
 
             # 3. LLM structuring
             structured = await self._structure_with_llm(raw_text, params)
+            if structured.get("status") == "error":
+                return structured
 
             # 4. Build result
             result = {
@@ -206,6 +192,8 @@ class CaptureBlock(TypedBlock):
     async def _structure_text(self, input_data: Any, params: Dict) -> Dict:
         text = input_data if isinstance(input_data, str) else str(input_data)
         structured = await self._structure_with_llm(text, params)
+        if structured.get("status") == "error":
+            return structured
         return {"status": "success", **structured}
 
     async def _search_captures(self, input_data: Any, params: Dict) -> Dict:
@@ -259,7 +247,6 @@ class CaptureBlock(TypedBlock):
         return path
 
     def _save_base64(self, b64data: str, ext: str = ".png") -> str:
-        import base64
         # Strip data URI prefix if present
         if "," in b64data:
             b64data = b64data.split(",", 1)[1]
@@ -342,7 +329,6 @@ class CaptureBlock(TypedBlock):
     # ── Vision (Claude) ────────────────────────────────────────────────────────
 
     async def _vision_with_claude(self, image_path: str, params: Dict) -> Dict:
-        import base64
         import httpx
 
         api_key = self.config.get("anthropic_api_key") or os.getenv("ANTHROPIC_API_KEY", "")
@@ -475,21 +461,12 @@ Return JSON with exactly these keys:
             {"role": "user", "content": user_prompt},
         ]
 
-        try:
-            response = await self._llm_chat(messages, provider)
-            content = response.get("content", "{}")
-            parsed = self._safe_parse_json(content)
-            return parsed
-        except Exception as e:
-            # Fallback: return raw text as clean_text
-            return {
-                "clean_text": raw_text,
-                "summary": "",
-                "entities": [],
-                "tags": [],
-                "language": "unknown",
-                "error": str(e),
-            }
+        response = await self._llm_chat(messages, provider)
+        if response.get("status") == "error":
+            return response
+        content = response.get("content", "{}")
+        parsed = self._safe_parse_json(content)
+        return parsed
 
     async def _llm_chat(self, messages: List[Dict], provider: str) -> Dict:
         import httpx
@@ -539,9 +516,12 @@ Return JSON with exactly these keys:
                 }
 
         elif provider == "openrouter":
+            api_key = self.config.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY", "")
+            if not api_key:
+                return {"status": "error", "error": "OpenRouter API key not configured"}
             url = "https://openrouter.ai/api/v1/chat/completions"
             headers = {
-                "Authorization": f"Bearer {self.config.get('openrouter_api_key')}",
+                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             }
             payload = {
@@ -558,7 +538,76 @@ Return JSON with exactly these keys:
                     "model": self.config.get("openrouter_model"),
                     "provider": "openrouter",
                 }
+        else:
+            return {"status": "error", "error": f"Unknown provider: {provider}"}
 
+    # ── Vector Store ───────────────────────────────────────────────────────────
+
+    async def _store_in_vector_db(self, capture_id: str, capture_result: Dict) -> Optional[str]:
+        vector_block = self.get_dep("vector_search")
+        collection = self.config.get("capture_collection", "cerebrum_captures")
+        content = capture_result.get("clean_text", "") or capture_result.get("raw_text", "")
+        metadata = {
+            "capture_id": capture_id,
+            "source": capture_result.get("source", "unknown"),
+            "ocr_engine": capture_result.get("ocr_engine", "unknown"),
+            "tags": json.dumps(capture_result.get("tags", [])),
+        }
+
+        if vector_block:
+            try:
+                result = await vector_block.process(
+                    {"documents": [content], "metadatas": [metadata], "ids": [capture_id]},
+                    {"operation": "add", "collection": collection},
+                )
+                if result.get("status") == "success":
+                    return capture_id
+            except Exception:
+                pass
+
+        # Fallback HTTP
+        return await self._store_chroma_http(capture_id, content, metadata, collection)
+
+    async def _store_chroma_http(self, doc_id: str, document: str, metadata: Dict, collection: str) -> Optional[str]:
+        import httpx
+        db_url = self.config.get("vector_db_url", "")
+        if not db_url:
+            return None
+        try:
+            payload = {
+                "collection": collection,
+                "documents": [document],
+                "metadatas": [metadata],
+                "ids": [doc_id],
+            }
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.post(f"{db_url}/api/v1/collections/add", json=payload)
+                if resp.status_code == 200:
+                    return doc_id
+        except Exception:
+            pass
+        return None
+
+    async def _search_vectors(self, query: str, params: Dict) -> Dict:
+        vector_block = self.get_dep("vector_search")
+        collection = params.get("collection", self.config.get("capture_collection", "cerebrum_captures"))
+        n_results = params.get("n_results", 5)
+
+        if vector_block:
+            try:
+                result = await vector_block.process(
+                    query,
+                    {"operation": "search", "collection": collection, "n_results": n_results},
+                )
+                if result.get("status") == "success":
+                    return {"status": "success", "results": result.get("results", [])}
+            except Exception:
+                pass
+
+        # Fallback HTTP
+        import httpx
+        db_url = self.config.get("vector_db_url", "")
+        if not db_url:
             return {"status": "error", "error": "Vector DB not configured"}
         try:
             payload = {"collection": collection, "query": query, "n_results": n_results}
@@ -569,3 +618,24 @@ Return JSON with exactly these keys:
         except Exception as e:
             return {"status": "error", "error": str(e)}
         return {"status": "error", "error": "Search failed"}
+
+    # ── Helpers ────────────────────────────────────────────────────────────────
+
+    def _safe_parse_json(self, text: str) -> Dict:
+        """Extract and parse JSON from text, handling markdown code blocks."""
+        import re
+        text = text.strip()
+        # Try to extract JSON from markdown code blocks
+        match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+        if match:
+            text = match.group(1).strip()
+        else:
+            # Try to find JSON object/array boundaries
+            start = text.find("{")
+            end = text.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                text = text[start:end + 1]
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return {}

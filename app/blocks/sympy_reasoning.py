@@ -1,6 +1,5 @@
-"""SymPy Reasoning Block - Symbolic variance analysis + construction recommendations"""
+"""SymPy Reasoning Block - Symbolic variance analysis + data-driven recommendations"""
 
-import os
 from typing import Any, Dict, List
 from app.core.universal_base import UniversalBlock
 
@@ -8,7 +7,7 @@ from app.core.universal_base import UniversalBlock
 class SymPyReasoningBlock(UniversalBlock):
     name = "sympy_reasoning"
     version = "1.0.0"
-    description = "Heavy reasoning engine: symbolic variance analysis + construction recommendations"
+    description = "Heavy reasoning engine: symbolic variance analysis + data-driven construction recommendations"
     layer = 3
     tags = ["domain", "construction", "reasoning", "math", "ai"]
     requires = []
@@ -59,7 +58,7 @@ class SymPyReasoningBlock(UniversalBlock):
 
         variances = self._compute_variances(boq_data, historical_benchmarks, sp, threshold)
         cost_impacts = self._compute_cost_impacts(variances, sp)
-        recommendations = self._generate_recommendations(variances, spec_data, drawing_data)
+        recommendations = self._generate_recommendations(variances, spec_data, drawing_data, sp)
 
         return {
             "status": "success",
@@ -139,57 +138,75 @@ class SymPyReasoningBlock(UniversalBlock):
         return sorted(impacts, key=lambda x: abs(x["cost_impact_usd"]), reverse=True)
 
     def _generate_recommendations(
-        self, variances: List[Dict], spec_data: Dict, drawing_data: Dict
+        self, variances: List[Dict], spec_data: Dict, drawing_data: Dict, sp
     ) -> List[Dict]:
-        templates = {
-            "high_over": {
-                "text": "URGENT: {item} is {pct:.1f}% over benchmark. Review supplier pricing and re-tender.",
-                "severity": "critical",
-                "action_items": [
-                    "Re-tender to 3 suppliers",
-                    "Check market rates",
-                    "Negotiate volume discount",
-                ],
-            },
-            "high_under": {
-                "text": "ALERT: {item} is {pct:.1f}% under benchmark. Verify scope and quality compliance.",
-                "severity": "warning",
-                "action_items": [
-                    "Verify specification compliance",
-                    "Check material grade",
-                    "Audit scope inclusion",
-                ],
-            },
-            "medium_over": {
-                "text": "REVIEW: {item} is {pct:.1f}% above benchmark. Monitor and negotiate.",
-                "severity": "medium",
-                "action_items": ["Request quote breakdown", "Compare with market index"],
-            },
-            "medium_under": {
-                "text": "NOTE: {item} is {pct:.1f}% below benchmark. Confirm quality.",
-                "severity": "low",
-                "action_items": [
-                    "Confirm material specification",
-                    "Check labor inclusion",
-                ],
-            },
-        }
+        """Generate data-driven recommendations using sympy statistical analysis."""
+        if not variances:
+            return []
+
+        # Compute aggregate statistics with sympy
+        var_pcts = [sp.Float(v["variance_pct"]) for v in variances]
+        mean_var = float(sum(var_pcts) / len(var_pcts))
+        sq_diffs = [(v - sp.Float(mean_var)) ** 2 for v in var_pcts]
+        std_var = float(sp.sqrt(sum(sq_diffs) / len(sq_diffs)))
 
         recs = []
         for v in variances:
             if v["severity"] == "low":
                 continue
+
             direction = "over" if v["variance_pct"] > 0 else "under"
-            tpl = templates.get(f"{v['severity']}_{direction}", templates["medium_over"])
+            pct = abs(v["variance_pct"])
+            z = v.get("z_score", 0)
+
+            # Derive severity label from z-score distribution
+            if z > 2.0:
+                severity_label = "critical"
+            elif z > 1.0:
+                severity_label = "high"
+            elif z > 0.5:
+                severity_label = "medium"
+            else:
+                severity_label = "low"
+
+            # Build contextual action items from actual data
+            action_items = []
+            if direction == "over":
+                action_items.append("Re-tender to 3+ suppliers")
+                action_items.append("Check market rates")
+                if pct > 20:
+                    action_items.append("Negotiate volume discount")
+                    action_items.append("Escalate to Project Director")
+                if spec_data:
+                    action_items.append("Verify spec compliance against quoted grade")
+            else:
+                action_items.append("Verify specification compliance")
+                action_items.append("Check material grade")
+                if pct > 15:
+                    action_items.append("Audit scope inclusion")
+                    action_items.append("Request material approval submission")
+                if drawing_data:
+                    action_items.append("Cross-check quantities against drawings")
+
+            # Use sympy to compute a recommendation score
+            score = float(sp.Abs(sp.Float(v["variance_pct"])) * sp.Float(v.get("quantity", 1)))
+
             recs.append(
                 {
                     "item_key": v["item_key"],
-                    "recommendation": tpl["text"].format(
-                        item=v["description"], pct=abs(v["variance_pct"])
+                    "recommendation": (
+                        f"{severity_label.upper()}: {v['description']} is {pct:.1f}% "
+                        f"{direction} benchmark (z={z:.2f}). "
+                        f"Review pricing and {'re-tender' if direction == 'over' else 'verify scope'}."
                     ),
-                    "severity": tpl["severity"],
-                    "action_items": tpl["action_items"],
+                    "severity": severity_label,
+                    "action_items": action_items,
                     "variance_pct": v["variance_pct"],
+                    "recommendation_score": round(score, 2),
+                    "statistics": {
+                        "mean_variance_pct": round(mean_var, 2),
+                        "std_variance_pct": round(std_var, 2),
+                    },
                 }
             )
         return recs

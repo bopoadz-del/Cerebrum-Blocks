@@ -32,7 +32,7 @@ class XLSXParser:
                 doc.sheets[sheet_name] = rows
                 if rows:
                     doc.headers[sheet_name] = [str(c).strip() for c in rows[0]]
-        except ImportError:
-            pass
+        except ImportError as e:
+            raise ImportError("openpyxl not installed. Run: pip install openpyxl") from e
 
         return doc

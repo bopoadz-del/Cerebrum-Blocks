@@ -119,6 +119,11 @@ class LLMEnhancerBlock(UniversalBlock):
                 "temperature": params.get("temperature", self.config.get("temperature", 0.3)),
                 "stream": False
             })
+            # Propagate errors from chat block
+            if result.get("status") == "error":
+                inner = result.get("result", {})
+                error_msg = inner.get("error", "Chat block returned an error")
+                return {"status": "error", "error": f"LLM enhancement failed: {error_msg}"}
             text = result.get("result", {}).get("text", "")
             return {
                 "status": "success",

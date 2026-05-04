@@ -39,7 +39,6 @@ class KnowledgeBlock(TypedBlock):
     accepted_input_types = ["Text", "Question", "JSON"]
     produced_output_types = ["JSON", "Answer", "SearchResults"]
 
-
     async def execute(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
         action = params.get("action") if isinstance(params, dict) else None
@@ -53,7 +52,7 @@ class KnowledgeBlock(TypedBlock):
         return super().validate_input(data)
 
     default_config = {
-        "llm_provider": os.getenv("LLM_PROVIDER", "ollama"),
+        "llm_provider": os.getenv("LLM_PROVIDER", "deepseek"),
         "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
         "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
         "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
@@ -105,7 +104,7 @@ class KnowledgeBlock(TypedBlock):
         query = question if isinstance(question, str) else str(question)
         collections = params.get("collections") or self.config.get("default_collections", ["cerebrum_captures"])
         top_k = params.get("top_k", self.config.get("default_top_k", 5))
-        llm_provider = params.get("llm_provider", self.config.get("llm_provider", "ollama"))
+        llm_provider = params.get("llm_provider", self.config.get("llm_provider", "deepseek"))
 
         # 1. Retrieve from all collections
         all_chunks = []
@@ -162,12 +161,15 @@ Answer the question and cite sources.
             {"role": "user", "content": user_prompt},
         ]
 
-        try:
-            answer_data = await self._llm_chat(messages, llm_provider)
-            answer_text = answer_data.get("content", "")
-        except Exception as e:
-            # Fallback: return top chunk as answer
-            answer_text = f"Based on my knowledge base:\n\n{top_chunks[0].get('text', '')}"
+        answer_data = await self._llm_chat(messages, llm_provider)
+        if answer_data.get("status") == "error":
+            return {
+                "status": "error",
+                "error": answer_data.get("error", "LLM synthesis failed"),
+                "sources": [],
+                "confidence": 0.0,
+            }
+        answer_text = answer_data.get("content", "")
 
         # 5. Extract cited sources from answer
         cited_sources = self._extract_citations(answer_text, source_map)
@@ -208,7 +210,7 @@ Answer the question and cite sources.
     async def _summarize_collection(self, params: Dict) -> Dict:
         collection = params.get("collection", "cerebrum_captures")
         n_docs = params.get("n_docs", 10)
-        llm_provider = params.get("llm_provider", self.config.get("llm_provider", "ollama"))
+        llm_provider = params.get("llm_provider", self.config.get("llm_provider", "deepseek"))
 
         # Get recent documents (query with empty string or list operation)
         docs = await self._list_collection_docs(collection, n_docs)
@@ -221,11 +223,15 @@ Answer the question and cite sources.
             {"role": "user", "content": combined},
         ]
 
-        try:
-            result = await self._llm_chat(messages, llm_provider)
-            summary = result.get("content", "")
-        except Exception as e:
-            summary = f"Failed to summarize: {e}"
+        result = await self._llm_chat(messages, llm_provider)
+        if result.get("status") == "error":
+            return {
+                "status": "error",
+                "error": result.get("error", "LLM summarization failed"),
+                "documents_summarized": len(docs),
+                "collection": collection,
+            }
+        summary = result.get("content", "")
 
         return {
             "status": "success",
@@ -301,9 +307,12 @@ Answer the question and cite sources.
                 return {"content": data["message"]["content"]}
 
         elif provider == "deepseek":
+            api_key = self.config.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY", "")
+            if not api_key:
+                return {"status": "error", "error": "DeepSeek API key not configured"}
             url = "https://api.deepseek.com/chat/completions"
             headers = {
-                "Authorization": f"Bearer {self.config.get('deepseek_api_key')}",
+                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             }
             payload = {
@@ -318,9 +327,12 @@ Answer the question and cite sources.
                 return {"content": data["choices"][0]["message"]["content"]}
 
         elif provider == "openrouter":
+            api_key = self.config.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY", "")
+            if not api_key:
+                return {"status": "error", "error": "OpenRouter API key not configured"}
             url = "https://openrouter.ai/api/v1/chat/completions"
             headers = {
-                "Authorization": f"Bearer {self.config.get('openrouter_api_key')}",
+                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             }
             payload = {
@@ -334,7 +346,7 @@ Answer the question and cite sources.
                 data = resp.json()
                 return {"content": data["choices"][0]["message"]["content"]}
         else:
-            raise ValueError(f"Unknown provider: {provider}")
+            return {"status": "error", "error": f"Unknown provider: {provider}"}
 
     # ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -354,4 +366,3 @@ Answer the question and cite sources.
             return 0.5
         avg = sum(scores) / len(scores)
         return round(min(avg, 1.0), 2)
-
