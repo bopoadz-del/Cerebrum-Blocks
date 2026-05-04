@@ -22,9 +22,9 @@ Complete guide to deploy the Cerebrum Blocks API on Render.
 
 | Setting | Value |
 |---------|-------|
-| **Name** | `cerebrum-blocks` |
+| **Name** | `cerebrum-platform-api` |
 | **Environment** | `Python 3` |
-| **Build Command** | `pip install -r requirements.txt` |
+| **Build Command** | `pip install -r requirements.txt` *(tesseract-ocr auto-installed via `Aptfile`)* |
 | **Start Command** | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
 | **Plan** | Free (or paid for production) |
 
@@ -117,11 +117,12 @@ console.log(response.text);
 
 ## Troubleshooting
 
-### Build Fails
-```bash
-# Check Python version in runtime.txt
-python-3.11.0
+### Build Fails (tesseract-ocr)
+Render auto-installs packages listed in `Aptfile`:
 ```
+tesseract-ocr
+```
+No `apt-get` needed in build command.
 
 ### Port Issues
 Render automatically sets `$PORT`. Don't hardcode it!

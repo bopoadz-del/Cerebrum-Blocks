@@ -11,8 +11,6 @@ deploy/
 │   └── Dockerfile.worker   # Celery worker container
 ├── render/             # Render.com deployment
 │   └── render.yaml         # Render blueprint
-├── gcp/                # Google Cloud Platform
-│   └── cloudbuild.yaml     # Cloud Build + Cloud Run
 ├── edge/               # Edge/Jetson deployment
 │   └── Dockerfile.jetson   # ARM64/CUDA optimized
 └── README.md
@@ -22,12 +20,8 @@ deploy/
 
 ### Render.com (Recommended for Quick Start)
 
-```bash
-# Deploy using Render CLI
-render blueprint apply deploy/render/render.yaml
-
-# Or push to GitHub - Render auto-deploys from main branch
-```
+Push to GitHub - Render auto-deploys from main branch.
+Services are managed manually on the Render dashboard (no Blueprint).
 
 ### Docker (Local/Cloud)
 
@@ -38,16 +32,6 @@ docker-compose up -d
 # Or build specific targets
 docker build -f deploy/cloud/Dockerfile -t cerebrum:cloud .
 docker run -p 8000:8000 -e PORT=8000 cerebrum:cloud
-```
-
-### Google Cloud Platform
-
-```bash
-# Submit build
-gcloud builds submit --config deploy/gcp/cloudbuild.yaml
-
-# Deploy to Cloud Run
-gcloud run deploy cerebrum-api --image gcr.io/PROJECT/cerebrum-api:latest
 ```
 
 ### NVIDIA Jetson (Edge)

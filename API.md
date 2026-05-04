@@ -4,7 +4,7 @@
 
 ```bash
 # Construction AI in one call
-curl -X POST https://ssdppg.onrender.com/chain \
+curl -X POST https://cerebrum-platform-api-fork.onrender.com/v1/chain \
   -H "Content-Type: application/json" \
   -d '{
     "steps": [
@@ -279,7 +279,7 @@ Layer 4 → Store (Lego Tax marketplace)
 Event Bus → Connects all containers (Block 42)
 ```
 
-**Total: 19 Blocks (15 Core + 4 Containers)**
+**Total: 28+ Blocks**
 
 ---
 
@@ -293,6 +293,6 @@ Event Bus → Connects all containers (Block 42)
 
 ---
 
-**Deployed:** https://ssdppg.onrender.com  
+**Deployed:** https://cerebrum-platform-api-fork.onrender.com  
 **Version:** 2.0.0  
 **Status:** ✅ PRODUCTION READY

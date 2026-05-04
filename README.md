@@ -6,7 +6,7 @@ Cerebrum is a **block store for AI**. Instead of building pipelines from scratch
 
 ---
 
-## 🏪 The Store: 50+ Plug & Play Blocks
+## 🏪 The Store: 28+ Plug & Play Blocks
 
 Think of it as an app store, but every "app" is an AI block you can wire into your own system. We ship **50+ blocks** across 6 categories, all with the same universal API:
 
@@ -54,9 +54,9 @@ The Cerebrum Platform is **itself built from these blocks**. It is a live demo o
 
 | Product | What it is | Live URL |
 |---------|-----------|----------|
-| **Platform API** | FastAPI backend executing 22+ blocks | [cerebrum-platform-api.onrender.com](https://cerebrum-platform-api.onrender.com) |
+| **Platform API** | FastAPI backend executing 28+ blocks | [cerebrum-platform-api-fork.onrender.com](https://cerebrum-platform-api-fork.onrender.com) |
 | **Platform UI** | Chat interface, drive connect, chain builder | [cerebrum-platform.onrender.com](https://cerebrum-platform.onrender.com) |
-| **Store API** | Catalog of all 50+ blocks | [cerebrum-store-api.onrender.com](https://cerebrum-store-api.onrender.com) |
+| **Store API** | Catalog of all blocks | [cerebrum-store-api.onrender.com](https://cerebrum-store-api.onrender.com) |
 | **Store UI** | Browse and discover blocks | [cerebrum-store.onrender.com](https://cerebrum-store.onrender.com) |
 
 ---
@@ -221,7 +221,7 @@ Then open http://localhost:8000.
 | Document | Description |
 |----------|-------------|
 | **[API.md](API.md)** | Full API reference |
-| **[DOMAIN_CONTAINER_SPEC.md](DOMAIN_CONTAINER_SPEC.md)** | Build your own container |
+
 | **[RENDER_DEPLOY.md](RENDER_DEPLOY.md)** | Deployment guide |
 
 ---
