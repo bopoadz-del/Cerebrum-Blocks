@@ -377,6 +377,10 @@ class DashboardContainer(ContainerBlock):
 
 
 class StoreContainer(ContainerBlock):
+    # TODO: Auto-populate from BLOCK_REGISTRY
+    # Phase 2C feature — auto-discover all working blocks from registry
+    # instead of hardcoding. Defer until block stability verified.
+    # See: _auto_populate_from_registry() in commit 84fbf4af
     """Pre-configured container for marketplaces/stores"""
     name = "store_container"
     default_config = {

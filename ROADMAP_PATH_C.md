@@ -1405,3 +1405,9 @@ The key to success is maintaining **backward compatibility** throughout the migr
 *Created: 2026-04-20*  
 *Author: Subagent Architecture Audit*  
 *Status: ROADMAP - Ready for Implementation*
+
+---
+
+## Deferred Items
+
+- [ ] **Store auto-populate from BLOCK_REGISTRY** — Phase 2C. Blocked: needs block stability audit first. All blocks must pass integration tests before auto-registering.
