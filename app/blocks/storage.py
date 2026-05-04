@@ -42,6 +42,8 @@ class StorageBlock(UniversalBlock):
     
     async def process(self, input_data: Dict, params: Dict = None) -> Dict:
         """Storage operations"""
+        if isinstance(input_data, str):
+            input_data = {"text": input_data}
         input_data = input_data or {}
         action = (params or {}).get("action") or input_data.get("action")
         
@@ -56,7 +58,8 @@ class StorageBlock(UniversalBlock):
         elif action == "list":
             return await self._list(input_data.get("prefix", ""))
         
-        return {"error": f"Unknown action: {action}"}
+        # Default: list stored files
+        return await self._list("")
     
     async def _store(self, data: Dict) -> Dict:
         """Store a file"""

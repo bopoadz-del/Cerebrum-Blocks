@@ -24,8 +24,8 @@ class KnowledgeBlock(TypedBlock):
 
     input_schema = Schema(
         content_type=ContentType.TEXT,
-        required_fields=["question"],
-        optional_fields=["collections", "top_k", "llm_provider", "n_docs"],
+        required_fields=[],
+        optional_fields=["question", "query", "collections", "top_k", "llm_provider", "n_docs"],
         format_hints={}
     )
 
@@ -101,7 +101,11 @@ class KnowledgeBlock(TypedBlock):
     # ── Core RAG: Ask ──────────────────────────────────────────────────────────
 
     async def _ask(self, question: Any, params: Dict) -> Dict:
-        query = question if isinstance(question, str) else str(question)
+        # Accept dict with 'query' or 'question' key
+        if isinstance(question, dict):
+            query = question.get("question") or question.get("query") or str(question)
+        else:
+            query = question if isinstance(question, str) else str(question)
         collections = params.get("collections") or self.config.get("default_collections", ["cerebrum_captures"])
         top_k = params.get("top_k", self.config.get("default_top_k", 5))
         llm_provider = params.get("llm_provider", self.config.get("llm_provider", "deepseek"))

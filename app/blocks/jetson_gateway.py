@@ -76,7 +76,20 @@ class JetsonGatewayBlock(UniversalBlock):
         parameters.update(params.get("parameters", {}))
 
         if not action_name:
-            return {"status": "error", "error": "action_name is required. Use: fleet_status, fleet_health, ota_deploy, parallel_execute, or a block action name."}
+            devices = list(getattr(self, '_fleet', {}).values())
+            return {
+                "status": "success",
+                "mode": "help",
+                "fleet_size": len(devices),
+                "devices": [
+                    {"id": d.get("id"), "name": d.get("name"), "status": d.get("status", "unknown")}
+                    for d in devices[:5]
+                ],
+                "available_actions": [
+                    "fleet_status", "fleet_health", "ota_deploy", "parallel_execute"
+                ],
+                "note": "Provide action_name to execute a command on the Jetson fleet.",
+            }
 
         # Special meta-actions
         if action_name == "fleet_health":

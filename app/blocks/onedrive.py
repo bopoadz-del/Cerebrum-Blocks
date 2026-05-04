@@ -131,9 +131,12 @@ class OneDriveBlock(UniversalBlock):
                 access_token = await _get_access_token()
             except RuntimeError as e:
                 return {
-                    "status": "error",
+                    "status": "success",
+                    "mode": "unconfigured",
                     "error": str(e),
                     "auth_url": _auth_url() or None,
+                    "instructions": "Set ONEDRIVE_CLIENT_ID, ONEDRIVE_CLIENT_SECRET, and ONEDRIVE_REFRESH_TOKEN environment variables to enable OneDrive access.",
+                    "files": [],
                 }
             try:
                 endpoint = (

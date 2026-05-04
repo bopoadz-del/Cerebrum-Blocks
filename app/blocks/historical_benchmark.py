@@ -65,6 +65,16 @@ class HistoricalBenchmarkBlock(UniversalBlock):
             except Exception:
                 pass
 
+        # Default demo rates so the block works out-of-the-box
+        if not self._rates:
+            self._rates = {
+                "concrete": {"unit": "m3", "rate_usd": 150, "location": "US National Average", "project_type": "general_building"},
+                "rebar": {"unit": "kg", "rate_usd": 1.8, "location": "US National Average", "project_type": "general_building"},
+                "structural_steel": {"unit": "kg", "rate_usd": 2.5, "location": "US National Average", "project_type": "general_building"},
+                "formwork": {"unit": "m2", "rate_usd": 45, "location": "US National Average", "project_type": "general_building"},
+                "excavation": {"unit": "m3", "rate_usd": 25, "location": "US National Average", "project_type": "general_building"},
+            }
+
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
         data = input_data if isinstance(input_data, dict) else {}

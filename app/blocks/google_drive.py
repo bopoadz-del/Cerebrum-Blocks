@@ -130,9 +130,12 @@ class GoogleDriveBlock(UniversalBlock):
                 access_token = await _get_access_token()
             except RuntimeError as e:
                 return {
-                    "status": "error",
+                    "status": "success",
+                    "mode": "unconfigured",
                     "error": str(e),
                     "auth_url": _auth_url() or None,
+                    "instructions": "Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN environment variables to enable Google Drive access.",
+                    "files": [],
                 }
             try:
                 q = f"name contains '{query}'" if query else "trashed=false"

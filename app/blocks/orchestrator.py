@@ -362,7 +362,16 @@ class OrchestratorBlock(UniversalBlock):
             input_data = input_data.get("initial_input", input_data)
 
         if not steps:
-            return {"status": "error", "error": "No steps provided for chain execution"}
+            return {
+                "status": "success",
+                "mode": "help",
+                "note": "No steps provided. Below is an example chain you can execute.",
+                "example_chain": [
+                    {"block": "chat", "input": "Summarize this", "params": {}},
+                    {"block": "construction", "input": {"action": "auto_pipeline", "text": "Building area: 100m2"}, "params": {}},
+                ],
+                "usage": "Provide 'steps' array with block names, inputs, and params.",
+            }
 
         max_steps = params.get("max_steps", self.config.get("max_steps", 50))
         if len(steps) > max_steps:

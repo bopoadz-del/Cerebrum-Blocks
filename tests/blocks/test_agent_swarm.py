@@ -62,12 +62,13 @@ async def test_swarm_dependency_resolution(swarm_block):
 
 @pytest.mark.asyncio
 async def test_swarm_missing_agents(swarm_block):
-    """Test validation fails when agents/tasks are missing."""
+    """Test demo mode when agents/tasks are missing."""
     result = await swarm_block.execute(
         {"project_id": "test", "objective": "Do nothing", "agents": [], "tasks": []},
         {"action": "execute"},
     )
-    assert result["status"] == "error" or result["result"].get("status") == "error"
+    assert result["result"].get("status") == "success"
+    assert result["result"].get("mode") == "demo"
 
 
 @pytest.mark.asyncio

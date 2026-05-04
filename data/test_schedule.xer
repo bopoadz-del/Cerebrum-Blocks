@@ -1,0 +1,12 @@
+%T  PROJECT
+%F  proj_id  proj_short_name  last_recalc_date
+%R  1001     DemoProject      2026-05-01 08:00
+%T  TASK
+%F  task_id  task_name          early_start_date  early_end_date  target_drtn_hr_cnt  total_float_hr_cnt  free_float_hr_cnt  target_work_qty  act_work_qty  wbs_id
+%R  A1000    Foundation Excav   2026-05-01        2026-05-05      40                  0.0                 0.0                40               20            1
+%R  A1010    Concrete Pour      2026-05-06        2026-05-10      40                  10.0                10.0               40               0             1
+%R  A1020    Steel Erection     2026-05-11        2026-05-20      80                  20.0                20.0               80               0             2
+%T  TASKPRED
+%F  task_id  pred_task_id
+%R  A1010    A1000
+%R  A1020    A1010

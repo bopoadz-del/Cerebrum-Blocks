@@ -62,7 +62,7 @@ class AsyncProcessorBlock(UniversalBlock):
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Route to appropriate async action."""
         params = params or {}
-        action = params.get("action") or (input_data.get("action") if isinstance(input_data, dict) else "status")
+        action = params.get("action") or (input_data.get("action") if isinstance(input_data, dict) else None) or "status"
         handlers = {
             "dispatch": self.dispatch,
             "status": self.status,

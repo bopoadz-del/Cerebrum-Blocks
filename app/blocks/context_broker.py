@@ -71,7 +71,18 @@ class ContextBrokerBlock(UniversalBlock):
         elif action in ("clear_context", "clear"):
             return await self._clear_context(session_id)
 
-        return {"status": "error", "error": f"Unknown action: {action}. Use: get_context, set_context, merge_context, clear_context"}
+        # Default: return help with available actions
+        return {
+            "status": "success",
+            "action": "help",
+            "available_actions": [
+                "get_context / get",
+                "set_context / set",
+                "merge_context / merge",
+                "clear_context / clear",
+            ],
+            "note": "Provide 'action' and 'session_id' to use context broker.",
+        }
 
     async def _get_context(self, session_id: Optional[str]) -> Dict:
         if not session_id:

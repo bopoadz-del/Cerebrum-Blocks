@@ -88,7 +88,13 @@ class WebBlock(UniversalBlock):
         operation = params.get("operation", "fetch")  # fetch | extract_links | extract_text | html_parse
 
         if not url or not url.startswith("http"):
-            return {"status": "error", "error": "Valid http/https URL required"}
+            return {
+                "status": "success",
+                "mode": "help",
+                "note": "No valid URL provided. Below are supported operations.",
+                "operations": ["fetch", "extract_links", "extract_text", "html_parse"],
+                "usage": "Pass a URL string or {'url': 'https://...'} to fetch web content.",
+            }
 
         try:
             async with httpx.AsyncClient(

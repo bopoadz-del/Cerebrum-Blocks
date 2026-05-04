@@ -164,10 +164,8 @@ class FormulaExecutorBlock(UniversalBlock):
         # Execute custom formula — requires explicit code
         custom_code = data.get("custom_code") or params.get("custom_code")
         if not custom_code:
-            return {
-                "status": "error",
-                "error": "No formula_key matched and no custom_code provided. Use operation='list' to see available formulas.",
-            }
+            # No formula provided — return the list as a helpful fallback
+            return self._list_formulas()
 
         return await self._execute_sandbox(custom_code, input_values, description)
 

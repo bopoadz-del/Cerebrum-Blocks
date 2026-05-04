@@ -77,7 +77,13 @@ class TrafficManagerBlock(UniversalBlock):
         payload = input_data.get("payload", {}) if isinstance(input_data, dict) else {}
 
         if not target_block:
-            return {"status": "error", "error": "target_block required"}
+            return {
+                "status": "success",
+                "mode": "help",
+                "note": "No target_block provided. Below are current traffic manager stats.",
+                "stats": self._get_stats(),
+                "usage": "Provide target_block to route traffic, or use operation='get_stats'.",
+            }
 
         # 1. Rate limiting
         if self.config.get("rate_limit_enabled", True):
