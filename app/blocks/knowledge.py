@@ -56,6 +56,8 @@ class KnowledgeBlock(TypedBlock):
         "llm_provider": os.getenv("LLM_PROVIDER", "ollama"),
         "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
         "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
+        "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
+        "deepseek_model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
         "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
         "openrouter_model": os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet"),
         "vector_db_url": os.getenv("VECTOR_DB_URL", "http://localhost:8001"),
@@ -297,6 +299,23 @@ Answer the question and cite sources.
                 resp.raise_for_status()
                 data = resp.json()
                 return {"content": data["message"]["content"]}
+
+        elif provider == "deepseek":
+            url = "https://api.deepseek.com/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self.config.get('deepseek_api_key')}",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "model": self.config.get("deepseek_model", "deepseek-chat"),
+                "messages": messages,
+                "temperature": 0.3,
+            }
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.post(url, headers=headers, json=payload)
+                resp.raise_for_status()
+                data = resp.json()
+                return {"content": data["choices"][0]["message"]["content"]}
 
         elif provider == "openrouter":
             url = "https://openrouter.ai/api/v1/chat/completions"

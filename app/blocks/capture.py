@@ -65,7 +65,9 @@ class CaptureBlock(TypedBlock):
         "llm_provider": os.getenv("LLM_PROVIDER", "ollama"),
         "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
         "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
+        "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
         "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
+        "deepseek_model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
         "openrouter_model": os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet"),
         "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY", ""),
         "anthropic_model": os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
@@ -435,7 +437,7 @@ class CaptureBlock(TypedBlock):
 
     async def _structure_with_llm(self, raw_text: str, params: Dict) -> Dict:
         """Send raw OCR text to LLM for entity extraction, tagging, summarization."""
-        provider = params.get("llm_provider", self.config.get("llm_provider", "ollama"))
+        provider = params.get("llm_provider", self.config.get("llm_provider", "deepseek"))
         max_chars = params.get("max_chars", 4000)
         truncated = raw_text[:max_chars]
 
@@ -497,6 +499,32 @@ Return JSON with exactly these keys:
                     "content": data["message"]["content"],
                     "model": self.config.get("ollama_model"),
                     "provider": "ollama",
+                }
+
+        elif provider == "deepseek":
+            api_key = self.config.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY", "")
+            if not api_key:
+                return {"status": "error", "error": "DeepSeek API key not configured"}
+            model = self.config.get("deepseek_model", "deepseek-chat")
+            url = "https://api.deepseek.com/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "model": model,
+                "messages": messages,
+                "temperature": 0.3,
+            }
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.post(url, headers=headers, json=payload)
+                resp.raise_for_status()
+                data = resp.json()
+                return {
+                    "content": data["choices"][0]["message"]["content"],
+                    "model": model,
+                    "provider": "deepseek",
+                    "tokens": data.get("usage", {}).get("total_tokens", 0),
                 }
 
         elif provider == "openrouter":

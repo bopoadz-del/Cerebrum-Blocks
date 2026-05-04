@@ -71,6 +71,8 @@ class AgentSwarmBlock(TypedBlock):
         "llm_provider": os.getenv("LLM_PROVIDER", "ollama"),
         "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
         "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
+        "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
+        "deepseek_model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
         "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
         "openrouter_model": os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet"),
         "vector_db_url": os.getenv("VECTOR_DB_URL", "http://localhost:8001"),
@@ -384,6 +386,29 @@ Expected output: {task.get('expected_output', '')}
 
         if provider == LLMProvider.OLLAMA:
             return await self._ollama_chat(messages, model, temperature)
+        elif provider == "deepseek" or provider == LLMProvider.DEEPSEEK:
+            model = model or self.config.get("deepseek_model", "deepseek-chat")
+            url = "https://api.deepseek.com/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self.config.get('deepseek_api_key')}",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "model": model,
+                "messages": messages,
+                "temperature": temperature,
+            }
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.post(url, headers=headers, json=payload)
+                resp.raise_for_status()
+                data = resp.json()
+                return {
+                    "content": data["choices"][0]["message"]["content"],
+                    "model": model,
+                    "provider": "deepseek",
+                    "tokens": data.get("usage", {}).get("total_tokens", 0),
+                }
+
         elif provider == LLMProvider.OPENROUTER:
             return await self._openrouter_chat(messages, model, temperature)
         else:
@@ -512,6 +537,8 @@ Expected output: {task.get('expected_output', '')}
                 async with httpx.AsyncClient(timeout=5) as client:
                     resp = await client.get(url)
                     return resp.status_code == 200
+            elif provider == "deepseek" or provider == LLMProvider.DEEPSEEK:
+                return bool(self.config.get("deepseek_api_key"))
             elif provider == LLMProvider.OPENROUTER:
                 return bool(self.config.get("openrouter_api_key"))
         except Exception:
