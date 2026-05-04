@@ -4,7 +4,6 @@ services:
     name: cerebrum-platform-api
     env: python
     plan: starter
-    runtime: python-3.11.0
     buildCommand: apt-get update -qq && apt-get install -y -qq tesseract-ocr && pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -31,7 +30,7 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        value: https://cerebrum-platform-api.onrender.com
+        value: https://cerebrum-platform-api-fork.onrender.com
       - key: VITE_API_KEY
         sync: false
 
@@ -40,7 +39,6 @@ services:
     name: cerebrum-store-api
     env: python
     plan: starter
-    runtime: python-3.11.0
     rootDir: store
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
@@ -48,26 +46,6 @@ services:
       - key: ENV
         value: production
     healthCheckPath: /health
-
-  # CLAUDE TELEGRAM BOT — Full Claude Code agent, clones repo on startup
-  - type: worker
-    name: claude-telegram-bot
-    env: python
-    plan: starter
-    rootDir: claudebot
-    buildCommand: pip install -r requirements.txt
-    startCommand: python bot.py
-    envVars:
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: GITHUB_TOKEN
-        sync: false
-      - key: WORK_DIR
-        value: /workspace
-      - key: HISTORY_DIR
-        value: /tmp/history
 
   # STORE FRONTEND
   - type: web

@@ -171,13 +171,3 @@ async def init_blocks():
         get_monitoring_block()
     if get_auth_block:
         get_auth_block()
-
-    # Wire skills block into smart orchestrator for hint enrichment
-    try:
-        if "smart_orchestrator" in block_instances and "skills" in block_instances:
-            orch = block_instances["smart_orchestrator"]
-            skills = block_instances["skills"]
-            if hasattr(orch, "wire_skills"):
-                orch.wire_skills(skills)
-    except Exception as e:
-        logger.warning("Failed to wire skills into smart_orchestrator: %s", e)
