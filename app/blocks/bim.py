@@ -34,7 +34,7 @@ class BIMBlock(UniversalBlock):
         ".csv": "data_export"
     }
     
-    def __init__(self, hal_block, config: Dict[str, Any]):
+    def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)
         self.storage_block = None
         self.vector_block = None
