@@ -52,6 +52,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://cerebrum-platform-frontend-fork.onrender.com",
+        "https://cerebrum-platform.onrender.com",
         "https://cerebrum-platform-api-fork.onrender.com",
         "http://localhost:3000",
         "http://localhost:8000",
