@@ -47,7 +47,7 @@ class FailoverBlock(UniversalBlock):
         
         chain_config = {
             "type": FailoverType.PROVIDER,
-            "chain": ["deepseek", "groq", "openai"],
+            "chain": ["deepseek", "anthropic"],
             "threshold": 3,  # failures before failover
             "timeout_ms": 8000,
         }

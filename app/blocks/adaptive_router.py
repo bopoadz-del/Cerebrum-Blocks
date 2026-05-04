@@ -339,9 +339,9 @@ class AdaptiveRouterBlock(UniversalBlock):
         """Get providers that support a task type"""
         # Default providers
         providers = {
-            "chat": ["deepseek", "groq", "openai", "anthropic"],
-            "embed": ["openai", "cohere", "local"],
-            "image": ["openai", "stability", "midjourney"]
+            "chat": ["deepseek", "anthropic"],
+            "embed": ["local"],
+            "image": ["stability"]
         }
         
         return providers.get(task_type, ["deepseek"])
@@ -451,7 +451,7 @@ class AdaptiveRouterBlock(UniversalBlock):
         return {
             "latency": round(sum(latencies) / len(latencies), 0) if latencies else 500,
             "cost": round(sum(costs) / len(costs), 4) if costs else 0.001,
-            "quality": 0.95 if provider in ["openai", "anthropic"] else 0.85
+            "quality": 0.95 if provider == "anthropic" else 0.85
         }
         
     def _get_fallback(self, primary: str, providers: List[str]) -> Optional[str]:

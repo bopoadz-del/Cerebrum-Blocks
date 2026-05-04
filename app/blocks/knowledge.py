@@ -58,8 +58,6 @@ class KnowledgeBlock(TypedBlock):
         "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
         "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
         "openrouter_model": os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet"),
-        "openai_api_key": os.getenv("OPENAI_API_KEY", ""),
-        "openai_model": os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
         "vector_db_url": os.getenv("VECTOR_DB_URL", "http://localhost:8001"),
         "default_top_k": 5,
         "default_collections": ["cerebrum_captures", "cerebrum_swarm"],
@@ -316,23 +314,6 @@ Answer the question and cite sources.
                 resp.raise_for_status()
                 data = resp.json()
                 return {"content": data["choices"][0]["message"]["content"]}
-
-        elif provider == "openai":
-            url = "https://api.openai.com/v1/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {self.config.get('openai_api_key')}",
-                "Content-Type": "application/json",
-            }
-            payload = {
-                "model": self.config.get("openai_model", "gpt-4o-mini"),
-                "messages": messages,
-                "temperature": 0.3,
-            }
-            async with httpx.AsyncClient(timeout=60) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                return {"content": data["choices"][0]["message"]["content"]}
         else:
             raise ValueError(f"Unknown provider: {provider}")
 
@@ -354,3 +335,4 @@ Answer the question and cite sources.
             return 0.5
         avg = sum(scores) / len(scores)
         return round(min(avg, 1.0), 2)
+

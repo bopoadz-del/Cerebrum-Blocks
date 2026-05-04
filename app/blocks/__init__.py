@@ -59,7 +59,6 @@ from .queue import QueueBlock
 # ── Platform / Admin ──────────────────────────────────────────────────────────
 from .auth import AuthBlock
 from .audit import AuditBlock
-from .billing import BillingBlock
 from .team import TeamBlock
 from .version import VersionBlock
 from .health_check import HealthCheckBlock
@@ -69,7 +68,6 @@ from .validation import ValidationBlock
 from .error_tracking import ErrorTrackingBlock
 
 # ── Communication ─────────────────────────────────────────────────────────────
-from .email import EmailBlock
 from .webhook import WebhookBlock
 
 # ── Intelligence / Analytics ──────────────────────────────────────────────────
@@ -154,7 +152,6 @@ BLOCK_REGISTRY = {
     # Platform / Admin
     "auth":             AuthBlock,
     "audit":            AuditBlock,
-    "billing":          BillingBlock,
     "team":             TeamBlock,
     "version":          VersionBlock,
     "health_check":     HealthCheckBlock,
@@ -164,7 +161,6 @@ BLOCK_REGISTRY = {
     "error_tracking":   ErrorTrackingBlock,
 
     # Communication
-    "email":            EmailBlock,
     "webhook":          WebhookBlock,
 
     # Intelligence / Analytics

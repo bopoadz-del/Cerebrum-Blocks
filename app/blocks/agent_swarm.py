@@ -22,7 +22,6 @@ from app.core.typed_block import TypedBlock, Schema, ContentType
 class LLMProvider(str, Enum):
     OLLAMA = "ollama"
     OPENROUTER = "openrouter"
-    OPENAI = "openai"
 
 
 class AgentSwarmBlock(TypedBlock):
@@ -74,8 +73,6 @@ class AgentSwarmBlock(TypedBlock):
         "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
         "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
         "openrouter_model": os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet"),
-        "openai_api_key": os.getenv("OPENAI_API_KEY", ""),
-        "openai_model": os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
         "vector_db_url": os.getenv("VECTOR_DB_URL", "http://localhost:8001"),
         "max_concurrent_agents": int(os.getenv("MAX_CONCURRENT_AGENTS", "5")),
         "default_timeout": int(os.getenv("DEFAULT_TIMEOUT", "120")),
@@ -389,8 +386,6 @@ Expected output: {task.get('expected_output', '')}
             return await self._ollama_chat(messages, model, temperature)
         elif provider == LLMProvider.OPENROUTER:
             return await self._openrouter_chat(messages, model, temperature)
-        elif provider == LLMProvider.OPENAI:
-            return await self._openai_chat(messages, model, temperature)
         else:
             raise ValueError(f"Unknown provider: {provider}")
 
@@ -436,30 +431,6 @@ Expected output: {task.get('expected_output', '')}
                 "content": data["choices"][0]["message"]["content"],
                 "model": model,
                 "provider": "openrouter",
-                "tokens": data.get("usage", {}).get("total_tokens", 0),
-            }
-
-    async def _openai_chat(self, messages, model, temperature):
-        import httpx
-        model = model or self.config.get("openai_model", "gpt-4o-mini")
-        url = "https://api.openai.com/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {self.config.get('openai_api_key')}",
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-        }
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(url, headers=headers, json=payload)
-            resp.raise_for_status()
-            data = resp.json()
-            return {
-                "content": data["choices"][0]["message"]["content"],
-                "model": model,
-                "provider": "openai",
                 "tokens": data.get("usage", {}).get("total_tokens", 0),
             }
 
@@ -543,8 +514,6 @@ Expected output: {task.get('expected_output', '')}
                     return resp.status_code == 200
             elif provider == LLMProvider.OPENROUTER:
                 return bool(self.config.get("openrouter_api_key"))
-            elif provider == LLMProvider.OPENAI:
-                return bool(self.config.get("openai_api_key"))
         except Exception:
             return False
         return False

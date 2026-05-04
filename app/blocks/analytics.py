@@ -31,8 +31,8 @@ class AnalyticsBlock(UniversalBlock):
         "prediction_window": 10,  # samples for prediction
         "cost_per_1k_requests": {
             "deepseek": 0.14,
-            "groq": 0.59,
-            "openai": 2.50
+            
+            
         }
     }
     
@@ -325,7 +325,7 @@ class AnalyticsBlock(UniversalBlock):
     
     async def _compare_providers(self, data: Dict) -> Dict:
         """Compare providers across multiple dimensions"""
-        providers = data.get("providers", ["deepseek", "groq", "openai"])
+        providers = data.get("providers", ["deepseek", "anthropic"])
         metrics = ["latency", "reliability", "cost"]
         
         comparison = {}

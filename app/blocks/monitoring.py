@@ -18,7 +18,7 @@ class MonitoringBlock(UniversalBlock):
     layer = 2  # Monitoring layer
     tags = ["monitoring", "observability", "core"]
     default_config = {
-        "track_providers": ["deepseek", "groq", "openai", "anthropic"],
+        "track_providers": ["deepseek", "anthropic"],
         "window_size": 100,
         "prediction_threshold": 0.3
     }
@@ -30,8 +30,6 @@ class MonitoringBlock(UniversalBlock):
         # Provider tracking
         self.providers = {
             "deepseek": {"name": "DeepSeek", "type": "cloud", "region": "global"},
-            "groq": {"name": "Groq", "type": "cloud", "region": "us"},
-            "openai": {"name": "OpenAI", "type": "cloud", "region": "global"},
             "anthropic": {"name": "Anthropic", "type": "cloud", "region": "us"},
             "local_ollama": {"name": "Ollama (Local)", "type": "edge", "region": "local"}
         }

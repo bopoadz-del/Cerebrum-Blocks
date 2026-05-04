@@ -38,8 +38,6 @@ class ConfigBlock(UniversalBlock):
                 "default_provider": "deepseek",
                 "providers": {
                     "deepseek": {"model": "deepseek-chat", "timeout": 30},
-                    "groq": {"model": "llama-3.1-70b", "timeout": 10},
-                    "openai": {"model": "gpt-4o-mini", "timeout": 30},
                     "anthropic": {"model": "claude-3-haiku", "timeout": 30},
                 },
                 "streaming": True,
