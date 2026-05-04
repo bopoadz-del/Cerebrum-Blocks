@@ -4,7 +4,7 @@
 
 ```bash
 # Construction AI in one call
-curl -X POST https://cerebrum-platform-api-fork.onrender.com/v1/chain \
+curl -X POST https://cerebrum-platform-api.onrender.com/v1/chain \
   -H "Content-Type: application/json" \
   -d '{
     "steps": [
@@ -293,6 +293,6 @@ Event Bus → Connects all containers (Block 42)
 
 ---
 
-**Deployed:** https://cerebrum-platform-api-fork.onrender.com  
+**Deployed:** https://cerebrum-platform-api.onrender.com  
 **Version:** 2.0.0  
 **Status:** ✅ PRODUCTION READY

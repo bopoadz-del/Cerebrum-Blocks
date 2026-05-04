@@ -54,7 +54,7 @@ The Cerebrum Platform is **itself built from these blocks**. It is a live demo o
 
 | Product | What it is | Live URL |
 |---------|-----------|----------|
-| **Platform API** | FastAPI backend executing 28+ blocks | [cerebrum-platform-api-fork.onrender.com](https://cerebrum-platform-api-fork.onrender.com) |
+| **Platform API** | FastAPI backend executing 28+ blocks | [cerebrum-platform-api.onrender.com](https://cerebrum-platform-api.onrender.com) |
 | **Platform UI** | Chat interface, drive connect, chain builder | [cerebrum-platform.onrender.com](https://cerebrum-platform.onrender.com) |
 | **Store API** | Catalog of all blocks | [cerebrum-store-api.onrender.com](https://cerebrum-store-api.onrender.com) |
 | **Store UI** | Browse and discover blocks | [cerebrum-store.onrender.com](https://cerebrum-store.onrender.com) |
