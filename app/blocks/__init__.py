@@ -40,36 +40,52 @@ from .vector_search import VectorSearchBlock
 from .zvec import ZvecBlock
 from .cache_manager import CacheManagerBlock
 
-# ── Main Construction Container ───────────────────────────────────────────────
-from app.containers import ConstructionContainer
+# Construction Domain Blocks (Week 2)
+from .drawing_qto import DrawingQTOBlock
+from .primavera_parser import PrimaveraParserBlock
+from .smart_orchestrator import SmartOrchestratorBlock
+from .skills import SkillsBlock
 
 
 BLOCK_REGISTRY = {
-    # Document Extraction
-    "pdf":              PDFBlock,
-    "pdf_v2":           PDFBlockV2,
-    "ocr":              OCRBlock,
-    "ocr_v2":           OCRBlockV2,
-    "image":            ImageBlock,
-    "document_engine":  DocumentEngineBlock,
-
-    # AI / Language
-    "chat":             ChatBlock,
-    "translate":        TranslateBlock,
-    "voice":            VoiceBlock,
-    "web":              WebBlock,
-
-    # Construction Intelligence
-    "construction":         ConstructionContainer,
-    "construction_v2":      ConstructionBlockV2,
-    "boq_processor":        BOQProcessorBlock,
-    "bim":                  BIMBlock,
-    "bim_extractor":        BIMExtractorBlock,
-    "drawing_qto":          DrawingQTOBlock,
-    "primavera_parser":     PrimaveraParserBlock,
-    "spec_analyzer":        SpecAnalyzerBlock,
-    "formula_executor":     FormulaExecutorBlock,
-    "sympy_reasoning":      SymPyReasoningBlock,
+    # Core AI (v1 - backward compatible)
+    "chat": ChatBlock,
+    "pdf": PDFBlock,
+    "ocr": OCRBlock,
+    "voice": VoiceBlock,
+    "vector_search": VectorSearchBlock,
+    "image": ImageBlock,
+    "translate": TranslateBlock,
+    "code": CodeBlock,
+    "web": WebBlock,
+    "search": SearchBlock,
+    "zvec": ZvecBlock,
+    
+    # Core AI (v2 - TypedBlock)
+    "pdf_v2": PDFBlockV2,
+    "ocr_v2": OCRBlockV2,
+    "construction_v2": ConstructionBlockV2,
+    
+    # Drive
+    "google_drive": GoogleDriveBlock,
+    "onedrive": OneDriveBlock,
+    "local_drive": LocalDriveBlock,
+    "android_drive": AndroidDriveBlock,
+    # Construction Intelligence (Week 1)
+    "sympy_reasoning": SymPyReasoningBlock,
+    "boq_processor": BOQProcessorBlock,
+    "spec_analyzer": SpecAnalyzerBlock,
+    # Construction Domain (Week 2)
+    "drawing_qto": DrawingQTOBlock,
+    "primavera_parser": PrimaveraParserBlock,
+    "smart_orchestrator": SmartOrchestratorBlock,
+    "skills": SkillsBlock,
+    # Intelligence (Week 3)
+    "jetson_gateway": JetsonGatewayBlock,
+    "formula_executor": FormulaExecutorBlock,
+    "bim_extractor": BIMExtractorBlock,
+    # Intelligence (Week 4)
+    "learning_engine": LearningEngineBlock,
     "historical_benchmark": HistoricalBenchmarkBlock,
     "smart_orchestrator":   SmartOrchestratorBlock,
 
@@ -94,10 +110,38 @@ def get_all_blocks():
 
 
 __all__ = [
-    "UniversalBlock",
-    "UniversalContainer",
-    "TypedBlock",
-    "BLOCK_REGISTRY",
-    "get_block",
-    "get_all_blocks",
+    # Base classes
+    "UniversalBlock", "UniversalContainer", "TypedBlock",
+    
+    # Core v1
+    "ChatBlock", "PDFBlock", "OCRBlock", "VoiceBlock", "VectorSearchBlock",
+    "ImageBlock", "TranslateBlock", "CodeBlock", "WebBlock", "SearchBlock", "ZvecBlock",
+    
+    # Core v2
+    "PDFBlockV2", "OCRBlockV2", "ConstructionBlockV2",
+    
+    # Drive
+    "GoogleDriveBlock", "OneDriveBlock", "LocalDriveBlock", "AndroidDriveBlock",
+    
+    # Infrastructure
+    "OrchestratorBlock", "TrafficManagerBlock", "EventBusBlock", "ContextBrokerBlock",
+    "LLMEnhancerBlock", "CacheManagerBlock", "AsyncProcessorBlock", "FileHasherBlock",
+    
+    # Containers v1
+    "ConstructionContainer", "MedicalContainer", "LegalContainer", "FinanceContainer",
+    "SecurityContainer", "AICoreContainer", "StoreContainer",
+    # Construction Intelligence (all weeks)
+    "SymPyReasoningBlock", "BOQProcessorBlock", "SpecAnalyzerBlock",
+    "DrawingQTOBlock", "PrimaveraParserBlock", "SmartOrchestratorBlock",
+    "SkillsBlock",
+    "JetsonGatewayBlock", "FormulaExecutorBlock", "BIMExtractorBlock",
+    "LearningEngineBlock", "HistoricalBenchmarkBlock", "RecommendationTemplateBlock",
+    # ML Engine + Containers
+    "MLEngineBlock",
+    "ValidatorBlock", "CredibilityScorerBlock", "PredictiveEngineBlock", "EvidenceVaultBlock",
+    "LibrariesContainer", "MLContainer", "ReasoningEngineContainer",
+    # Telegram
+    "TelegramBotBlock",
+    # Registry
+    "BLOCK_REGISTRY", "get_block", "get_all_blocks"
 ]
