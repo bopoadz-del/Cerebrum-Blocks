@@ -28,6 +28,12 @@ export { MemoryBlock } from './Memory';
 export { MonitoringBlock } from './Monitoring';
 export { HALBlock } from './HAL';
 
+// New Blocks (v2)
+export { CaptureBlock } from './Capture';
+export { AgentSwarmBlock } from './AgentSwarm';
+export { NotificationHubBlock } from './NotificationHub';
+export { KnowledgeBlock } from './Knowledge';
+
 // Integration Blocks
 export { DatabaseBlock } from './Database';
 export { EmailBlock } from './Email';

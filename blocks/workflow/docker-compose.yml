@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  workflow:
+    build:
+      context: ../..
+      dockerfile: blocks/workflow/Dockerfile
+    container_name: cerebrum-workflow
+    ports:
+      - "8007:8000"
+    environment:
+      - MAX_PIPELINE_STEPS=20
+      - WORKFLOW_STEP_TIMEOUT=60
+      - ENABLE_WORKFLOW_SCHEDULER=true
+      - CEREBRUM_MASTER_KEY=${CEREBRUM_MASTER_KEY:-test-key}
+    networks:
+      - cerebrum-net
+    restart: unless-stopped
+
+networks:
+  cerebrum-net:
+    external: true

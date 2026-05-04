@@ -1,510 +1,382 @@
-"""Notification Block - Multi-channel alerts and messaging"""
+"""Notification Hub Block — One endpoint for Telegram, Email, Webhook, Slack."""
+
+import os
+import time
+from typing import Any, Callable, Dict, List, Optional
+from pydantic import BaseModel, Field
+
 from app.core.universal_base import UniversalBlock
-from typing import Dict, Any, List, Optional
+from app.core.typed_block import TypedBlock, Schema, ContentType
+
+
+class NotificationEvent(BaseModel):
+    """Event emitted by the notification hub."""
+    event_type: str = Field(..., description="Event type: cost_threshold, swarm_complete, capture_done, etc.")
+    source_block: str = Field(default="unknown")
+    payload: Dict = Field(default_factory=dict)
+    timestamp: float = Field(default_factory=time.time)
+
+
+class NotificationHub:
+    """Event bus for pub/sub notifications across all blocks."""
+
+    def __init__(self):
+        self._subscribers: Dict[str, List[Callable]] = {}
+
+    def subscribe(self, event_type: str, callback: Callable):
+        """Subscribe to an event type. Callback receives NotificationEvent."""
+        if event_type not in self._subscribers:
+            self._subscribers[event_type] = []
+        self._subscribers[event_type].append(callback)
+
+    def unsubscribe(self, event_type: str, callback: Callable):
+        """Unsubscribe from an event type."""
+        if event_type in self._subscribers:
+            self._subscribers[event_type] = [cb for cb in self._subscribers[event_type] if cb != callback]
+
+    async def emit(self, event: NotificationEvent):
+        """Publish event to all subscribers."""
+        subscribers = self._subscribers.get(event.event_type, [])
+        for callback in subscribers:
+            try:
+                if asyncio.iscoroutinefunction(callback):
+                    await callback(event)
+                else:
+                    callback(event)
+            except Exception:
+                pass  # Non-blocking — don't let one subscriber break others
+
+    async def send_and_emit(self, channel: str, message: str, result: Dict, source: str = "notification"):
+        """Emit a delivery event after sending."""
+        await self.emit(NotificationEvent(
+            event_type=f"notification.{channel}",
+            source_block=source,
+            payload={"message": message, "result": result},
+            timestamp=time.time()
+        ))
+
+    def get_subscriber_counts(self) -> Dict[str, int]:
+        """Get count of subscribers per event type."""
+        return {et: len(subs) for et, subs in self._subscribers.items()}
+
+
 import asyncio
-from datetime import datetime, timedelta
-from enum import Enum
+
+# Global instance for cross-block pub/sub
+notification_hub = NotificationHub()
 
 
-class NotificationChannel(Enum):
-    EMAIL = "email"
-    SLACK = "slack"
-    WEBHOOK = "webhook"
-    SMS = "sms"
-    PUSH = "push"
+class NotificationBlock(TypedBlock):
+    """Unified notification dispatcher."""
 
-
-class NotificationSeverity(Enum):
-    CRITICAL = "critical"  # Immediate, all channels
-    HIGH = "high"          # Immediate, primary channels
-    MEDIUM = "medium"      # Batch, within 15 min
-    LOW = "low"            # Digest, daily
-    INFO = "info"          # Log only
-
-
-class NotificationBlock(UniversalBlock):
-    """
-    Notification Block - Multi-channel alerting system
-    
-    Features:
-    - Multi-channel: email, slack, webhook, SMS
-    - Severity-based routing
-    - Rate limiting
-    - Message templates
-    - Batch/digest mode
-    - Acknowledgment tracking
-    """
     name = "notification"
     version = "1.0.0"
-    requires = ["email", "config"]
-    layer = 4  # Utility layer
-    tags = ["notification", "alerts", "communication", "utility"]
+    description = "Send notifications via Telegram, Email, Webhook, or Slack"
+    layer = 2
+    tags = ["notification", "messaging", "integration", "core"]
+    requires = []
+
+    input_schema = Schema(
+        content_type=ContentType.JSON,
+        required_fields=["channel", "message"],
+        optional_fields=["to", "subject", "html", "url", "headers", "payload", "parse_mode", "blocks"],
+        format_hints={}
+    )
+
+    output_schema = Schema(
+        content_type=ContentType.JSON,
+        required_fields=["status", "channel"],
+        optional_fields=["sent", "message_id", "http_status", "response_preview"],
+        format_hints={}
+    )
+
+    accepted_input_types = ["JSON", "NotificationRequest"]
+    produced_output_types = ["JSON", "NotificationResult"]
+
+
+    async def execute(self, input_data: Any, params: Dict = None) -> Dict:
+        params = params or {}
+        action = params.get("action") if isinstance(params, dict) else None
+        if isinstance(input_data, str):
+            input_data = {"message": input_data}
+        return await super().execute(input_data, params)
+
+    def validate_input(self, data: Any) -> Dict[str, Any]:
+        if isinstance(data, dict) and data.get("action") in {"health", "status", "list", "history", "get", "unschedule", "broadcast", "search", "summarize", "structure", "execute_async"}:
+            return {"valid": True, "errors": [], "warnings": [], "data": data}
+        return super().validate_input(data)
+
     default_config = {
-        "channels": ["email", "slack", "webhook"],
-        "rate_limit_per_hour": 100,
-        "batch_window_minutes": 15,
-        "default_template": "default",
-        "retry_attempts": 3,
-        "retry_delay_seconds": 60
+        "telegram_bot_token": os.getenv("TELEGRAM_BOT_TOKEN", ""),
+        "sendgrid_api_key": os.getenv("SENDGRID_API_KEY", ""),
+        "smtp_host": os.getenv("SMTP_HOST", ""),
+        "smtp_port": int(os.getenv("SMTP_PORT", "587")),
+        "smtp_user": os.getenv("SMTP_USER", ""),
+        "smtp_pass": os.getenv("SMTP_PASS", ""),
+        "slack_webhook_url": os.getenv("SLACK_WEBHOOK_URL", ""),
+        "default_from_email": os.getenv("DEFAULT_FROM_EMAIL", "cerebrum@localhost"),
     }
-    
-    def __init__(self, hal_block=None, config: Dict = None):
-        super().__init__(hal_block, config)
-        self.templates: Dict[str, Dict] = {}
-        self.pending: List[Dict] = []  # Batched notifications
-        self.sent_count = 0
-        self.failed_count = 0
-        self.acknowledged = set()
-        self._batch_task = None
-        
-    async def _legacy_initialize(self) -> bool:
-        """Initialize notification system"""
-        print("📢 Notification Block initialized")
-        
-        # Load default templates
-        self._load_default_templates()
-        
-        # Start batch processor
-        self._batch_task = asyncio.create_task(self._batch_processor())
-        
-        print(f"   Channels: {self.config.get('channels', [])}")
-        print(f"   Rate limit: {self.config.get('rate_limit_per_hour', 100)}/hour")
-        
-        self.initialized = True
-        return True
-    
-    def _load_default_templates(self):
-        """Load default message templates"""
-        self.templates = {
-            "default": {
-                "subject": "Notification from {app_name}",
-                "body": "{message}",
-                "format": "text"
-            },
-            "alert": {
-                "subject": "🚨 ALERT: {severity} - {title}",
-                "body": """Alert Details:
-Severity: {severity}
-Time: {timestamp}
-Message: {message}
 
-Acknowledge: {ack_url}""",
-                "format": "markdown"
-            },
-            "digest": {
-                "subject": "📊 Daily Digest - {app_name}",
-                "body": """Summary of {count} notifications:
+    ui_schema = {
+        "input": {
+            "type": "json",
+            "placeholder": '{"channel": "telegram", "to": "123456", "message": "Hello"}',
+            "multiline": True,
+        },
+        "output": {
+            "type": "json",
+            "fields": [
+                {"name": "channel", "type": "text", "label": "Channel"},
+                {"name": "sent", "type": "boolean", "label": "Sent"},
+                {"name": "message_id", "type": "text", "label": "Message ID"},
+            ],
+        },
+        "quick_actions": [
+            {"icon": "📨", "label": "Send Telegram", "prompt": "Send a Telegram message"},
+            {"icon": "✉️", "label": "Send Email", "prompt": "Send an email notification"},
+            {"icon": "🔗", "label": "Webhook", "prompt": "POST to webhook URL"},
+        ],
+    }
 
-{items}
+    async def process(self, input_data: Any, params: Dict = None) -> Dict:
+        params = params or {}
+        data = input_data if isinstance(input_data, dict) else {}
+        action = params.get("action") or data.get("action", "send")
 
----
-View full details: {dashboard_url}""",
-                "format": "html"
-            },
-            "welcome": {
-                "subject": "Welcome to {app_name}!",
-                "body": "Hi {user_name},\n\nWelcome! Your account is ready.",
-                "format": "text"
-            }
-        }
-    
-    async def process(self, input_data: Dict, params: Dict = None) -> Dict:
-        """Handle notification actions"""
-        action = (params or {}).get("action") or (input_data.get("action") if isinstance(input_data, dict) else None)
-        
-        if action == "alert":
-            return await self._send_alert(input_data)
-        elif action == "notify":
-            return await self._send_notification(input_data)
+        if action == "send":
+            return await self._send(data)
         elif action == "broadcast":
-            return await self._broadcast(input_data)
-        elif action == "create_template":
-            return self._create_template(input_data)
-        elif action == "get_template":
-            return self._get_template(input_data)
-        elif action == "acknowledge":
-            return self._acknowledge(input_data)
-        elif action == "get_pending":
-            return self._get_pending(input_data)
-        elif action == "flush_batch":
-            return await self._flush_batch(input_data)
-            
-        return {"error": f"Unknown action: {action}"}
-    
-    async def _send_alert(self, data: Dict) -> Dict:
-        """
-        Send alert with severity-based routing
-        
-        Severity routing:
-        - critical: All channels, immediate, no batching
-        - high: Primary channels, immediate
-        - medium: Batch within 15 min
-        - low: Daily digest
-        - info: Log only
-        """
-        severity = NotificationSeverity(data.get("severity", "info"))
-        message = data.get("message", "")
-        title = data.get("title", "Alert")
-        channels = data.get("channels", self.config.get("channels", []))
-        
-        # Check rate limit
-        if not await self._check_rate_limit():
-            return {"error": "Rate limit exceeded", "retry_after": 3600}
-        
-        # Route based on severity
-        if severity == NotificationSeverity.CRITICAL:
-            # Immediate, all channels
-            return await self._send_immediate({
-                **data,
-                "channels": channels,
-                "require_ack": True
-            })
-            
-        elif severity == NotificationSeverity.HIGH:
-            # Immediate, primary channels
-            primary = [c for c in channels if c in ["email", "slack"]]
-            return await self._send_immediate({
-                **data,
-                "channels": primary,
-                "require_ack": data.get("require_ack", False)
-            })
-            
-        elif severity == NotificationSeverity.MEDIUM:
-            # Batch
-            self.pending.append({
-                **data,
-                "queued_at": datetime.utcnow().isoformat(),
-                "severity": severity.value
-            })
-            return {"queued": True, "severity": severity.value, "batch": True}
-            
-        elif severity == NotificationSeverity.LOW:
-            # Add to daily digest
-            self.pending.append({
-                **data,
-                "queued_at": datetime.utcnow().isoformat(),
-                "severity": severity.value,
-                "digest": True
-            })
-            return {"queued": True, "severity": severity.value, "digest": True}
-            
-        else:  # INFO
-            # Log only
-            return {"logged": True, "severity": severity.value, "sent": False}
-    
-    async def _send_notification(self, data: Dict) -> Dict:
-        """Send simple notification"""
-        to = data.get("to")
-        subject = data.get("subject", "Notification")
-        body = data.get("body", "")
-        channel = data.get("channel", "email")
-        
-        if channel == "email" and hasattr(self, 'email_block') and self.email_block:
-            return await self.email_block.execute({
-                "action": "send",
-                "to": to,
-                "subject": subject,
-                "body": body
-            })
-        
-        elif channel == "webhook":
-            return await self._send_webhook(data)
-        
-        elif channel == "slack":
-            return await self._send_slack(data)
-        
-        return {"error": f"Channel {channel} not available"}
-    
-    async def _send_immediate(self, data: Dict) -> Dict:
-        """Send immediately (no batching)"""
-        channels = data.get("channels", ["email"])
-        results = {}
-        
-        for channel in channels:
-            try:
-                if channel == "email":
-                    result = await self._send_via_email(data)
-                elif channel == "slack":
-                    result = await self._send_slack(data)
-                elif channel == "webhook":
-                    result = await self._send_webhook(data)
-                else:
-                    result = {"error": f"Unknown channel: {channel}"}
-                
-                results[channel] = result
-                if result.get("sent"):
-                    self.sent_count += 1
-                else:
-                    self.failed_count += 1
-                    
-            except Exception as e:
-                results[channel] = {"error": str(e)}
-                self.failed_count += 1
-        
-        return {
-            "sent": True,
-            "channels": results,
-            "require_ack": data.get("require_ack", False),
-            "ack_id": self._generate_ack_id(data) if data.get("require_ack") else None
+            return await self._broadcast(data)
+        elif action == "health":
+            return self._health_check()
+        else:
+            return {"status": "error", "error": f"Unknown action: {action}"}
+
+    # ── Core Send ──────────────────────────────────────────────────────────────
+
+    async def _send(self, data: Dict) -> Dict:
+        channel = data.get("channel", "telegram").lower()
+        handlers = {
+            "telegram": self._send_telegram,
+            "email": self._send_email,
+            "webhook": self._send_webhook,
+            "slack": self._send_slack,
         }
-    
-    async def _send_via_email(self, data: Dict) -> Dict:
-        """Send via email block"""
-        if not hasattr(self, 'email_block') or not self.email_block:
-            return {"error": "Email block not available"}
-        
-        template_name = data.get("template", "alert")
-        template = self.templates.get(template_name, self.templates["default"])
-        
-        subject = template["subject"].format(
-            app_name="Cerebrum",
-            severity=data.get("severity", "info").upper(),
-            title=data.get("title", "Notification")
-        )
-        
-        body = template["body"].format(
-            message=data.get("message", ""),
-            timestamp=datetime.utcnow().isoformat(),
-            severity=data.get("severity", "info"),
-            ack_url=f"/ack/{self._generate_ack_id(data)}"
-        )
-        
-        return await self.email_block.execute({
-            "action": "send",
-            "to": data.get("to"),
-            "subject": subject,
-            "body": body,
-            "html": template.get("format") == "html"
-        })
-    
-    async def _send_slack(self, data: Dict) -> Dict:
-        """Send to Slack webhook"""
-        webhook_url = data.get("slack_webhook") or self.config.get("slack_webhook")
-        
-        if not webhook_url:
-            return {"error": "Slack webhook not configured"}
-        
-        try:
-            import aiohttp
-            
-            payload = {
-                "text": data.get("message"),
-                "attachments": [{
-                    "color": self._severity_color(data.get("severity", "info")),
-                    "title": data.get("title", "Notification"),
-                    "text": data.get("message"),
-                    "footer": "Cerebrum",
-                    "ts": int(datetime.utcnow().timestamp())
-                }]
-            }
-            
-            async with aiohttp.ClientSession() as session:
-                async with session.post(webhook_url, json=payload) as resp:
-                    if resp.status == 200:
-                        return {"sent": True, "channel": "slack"}
-                    return {"error": f"Slack returned {resp.status}"}
-                    
-        except ImportError:
-            return {"error": "aiohttp not installed"}
-        except Exception as e:
-            return {"error": str(e)}
-    
-    async def _send_webhook(self, data: Dict) -> Dict:
-        """Send to generic webhook"""
-        url = data.get("webhook_url")
-        
-        if not url:
-            return {"error": "Webhook URL not provided"}
-        
-        try:
-            import aiohttp
-            
-            payload = {
-                "event": "notification",
-                "severity": data.get("severity", "info"),
-                "title": data.get("title"),
-                "message": data.get("message"),
-                "timestamp": datetime.utcnow().isoformat(),
-                "source": data.get("source", "cerebrum")
-            }
-            
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=payload, timeout=30) as resp:
-                    return {
-                        "sent": resp.status < 400,
-                        "channel": "webhook",
-                        "status": resp.status
-                    }
-                    
-        except Exception as e:
-            return {"error": str(e)}
-    
+        handler = handlers.get(channel)
+        if not handler:
+            return {"status": "error", "error": f"Unknown channel: {channel}"}
+        result = await handler(data)
+
+        # Emit event for subscribers (non-blocking)
+        if result.get("status") == "success":
+            try:
+                await notification_hub.send_and_emit(
+                    channel=channel,
+                    message=data.get("message", ""),
+                    result=result,
+                    source=self.name,
+                )
+            except Exception:
+                pass
+
+        return result
+
     async def _broadcast(self, data: Dict) -> Dict:
-        """Broadcast to all users/channels"""
-        message = data.get("message")
-        severity = data.get("severity", "info")
-        
+        """Send to multiple channels at once."""
+        channels = data.get("channels", ["telegram"])
         results = []
-        for channel in self.config.get("channels", []):
-            result = await self._send_notification({
-                **data,
-                "channel": channel
-            })
-            results.append({"channel": channel, "result": result})
-        
+        for channel in channels:
+            result = await self._send({**data, "channel": channel})
+            results.append({"channel": channel, **result})
+        sent_all = all(r.get("status") == "success" for r in results)
         return {
-            "broadcast": True,
-            "channels": len(results),
-            "results": results
+            "status": "success" if sent_all else "partial",
+            "results": results,
         }
-    
-    def _create_template(self, data: Dict) -> Dict:
-        """Create custom message template"""
-        name = data.get("name")
-        template = {
-            "subject": data.get("subject", ""),
-            "body": data.get("body", ""),
-            "format": data.get("format", "text")
-        }
-        
-        self.templates[name] = template
-        return {"created": True, "template": name}
-    
-    def _get_template(self, data: Dict) -> Dict:
-        """Get template"""
-        name = data.get("name", "default")
-        template = self.templates.get(name)
-        
-        if not template:
-            return {"error": "Template not found"}
-        
-        return {"template": template}
-    
-    def _acknowledge(self, data: Dict) -> Dict:
-        """Acknowledge alert"""
-        ack_id = data.get("ack_id")
-        
-        if not ack_id:
-            return {"error": "ack_id required"}
-        
-        self.acknowledged.add(ack_id)
-        return {"acknowledged": True, "ack_id": ack_id}
-    
-    def _get_pending(self, data: Dict) -> Dict:
-        """Get pending batched notifications"""
-        return {
-            "pending": len(self.pending),
-            "items": self.pending[-10:]  # Last 10
-        }
-    
-    async def _flush_batch(self, data: Dict) -> Dict:
-        """Force send batched notifications"""
-        if not self.pending:
-            return {"flushed": False, "reason": "No pending notifications"}
-        
-        batch = self.pending[:]
-        self.pending = []
-        
-        # Group by recipient
-        by_recipient = {}
-        for item in batch:
-            recipient = item.get("to", "default")
-            if recipient not in by_recipient:
-                by_recipient[recipient] = []
-            by_recipient[recipient].append(item)
-        
-        # Send digests
-        results = []
-        for recipient, items in by_recipient.items():
-            result = await self._send_digest(recipient, items)
-            results.append(result)
-        
-        return {
-            "flushed": True,
-            "sent": len(results),
-            "batched": len(batch)
-        }
-    
-    async def _send_digest(self, recipient: str, items: List[Dict]) -> Dict:
-        """Send digest email"""
-        template = self.templates.get("digest", self.templates["default"])
-        
-        subject = template["subject"].format(
-            app_name="Cerebrum",
-            count=len(items)
-        )
-        
-        items_text = "\n".join([
-            f"- [{i.get('severity', 'info').upper()}] {i.get('title', 'No title')}"
-            for i in items[-20:]  # Last 20
-        ])
-        
-        body = template["body"].format(
-            count=len(items),
-            items=items_text,
-            dashboard_url="/dashboard/notifications"
-        )
-        
-        return await self._send_notification({
-            "to": recipient,
+
+    # ── Telegram ───────────────────────────────────────────────────────────────
+
+    async def _send_telegram(self, data: Dict) -> Dict:
+        import httpx
+        token = self.config.get("telegram_bot_token")
+        if not token:
+            return {"status": "error", "error": "TELEGRAM_BOT_TOKEN not set"}
+
+        chat_id = data.get("to") or data.get("chat_id")
+        text = data.get("message") or data.get("text", "")
+        parse_mode = data.get("parse_mode", "Markdown")
+
+        if not chat_id:
+            return {"status": "error", "error": "chat_id (to) required"}
+
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        payload = {"chat_id": chat_id, "text": text, "parse_mode": parse_mode}
+
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.post(url, json=payload)
+                result = resp.json()
+                if result.get("ok"):
+                    return {
+                        "status": "success",
+                        "channel": "telegram",
+                        "sent": True,
+                        "message_id": str(result["result"]["message_id"]),
+                    }
+                return {"status": "error", "error": result.get("description", "Unknown error")}
+        except Exception as e:
+            return {"status": "error", "error": f"Telegram send failed: {e}"}
+
+    # ── Email ──────────────────────────────────────────────────────────────────
+
+    async def _send_email(self, data: Dict) -> Dict:
+        import httpx
+        to = data.get("to") or data.get("email")
+        subject = data.get("subject", "Cerebrum Notification")
+        body = data.get("message") or data.get("body", "")
+        html = data.get("html", "")
+
+        if not to:
+            return {"status": "error", "error": "to (email) required"}
+
+        # Try SendGrid first
+        sg_key = self.config.get("sendgrid_api_key")
+        if sg_key:
+            return await self._send_sendgrid(to, subject, body, html, sg_key)
+
+        # Fallback SMTP
+        return await self._send_smtp(to, subject, body, html)
+
+    async def _send_sendgrid(self, to: str, subject: str, body: str, html: str, api_key: str) -> Dict:
+        import httpx
+        payload = {
+            "personalizations": [{"to": [{"email": to}]}],
+            "from": {"email": self.config.get("default_from_email")},
             "subject": subject,
-            "body": body,
-            "channel": "email"
-        })
-    
-    async def _batch_processor(self):
-        """Background task to process batched notifications"""
-        while True:
-            try:
-                # Check every 5 minutes
-                await asyncio.sleep(300)
-                
-                if self.pending:
-                    # Check if any are old enough to flush
-                    now = datetime.utcnow()
-                    window = timedelta(minutes=self.config.get("batch_window_minutes", 15))
-                    
-                    to_flush = [
-                        p for p in self.pending
-                        if datetime.fromisoformat(p["queued_at"]) < now - window
-                    ]
-                    
-                    if to_flush:
-                        await self._flush_batch({})
-                        
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                print(f"Batch processor error: {e}")
-    
-    async def _check_rate_limit(self) -> bool:
-        """Check if under rate limit"""
-        # Simple counter - would use sliding window in production
-        return self.sent_count < self.config.get("rate_limit_per_hour", 100)
-    
-    def _severity_color(self, severity: str) -> str:
-        """Get Slack color for severity"""
-        colors = {
-            "critical": "danger",
-            "high": "warning",
-            "medium": "#ff9900",
-            "low": "good",
-            "info": "#36a64f"
+            "content": [
+                {"type": "text/plain", "value": body},
+            ],
         }
-        return colors.get(severity, "good")
-    
-    def _generate_ack_id(self, data: Dict) -> str:
-        """Generate acknowledgment ID"""
-        import hashlib
-        content = f"{data.get('title')}:{data.get('message')}:{datetime.utcnow().timestamp()}"
-        return hashlib.sha256(content.encode()).hexdigest()[:16]
-    
-    def health(self) -> Dict:
-        """Notification health"""
-        h = {"name": self.name, "version": self.version}
-        h["sent"] = self.sent_count
-        h["failed"] = self.failed_count
-        h["pending"] = len(self.pending)
-        h["templates"] = len(self.templates)
-        h["channels"] = self.config.get("channels", [])
-        return h
+        if html:
+            payload["content"].append({"type": "text/html", "value": html})
+
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.post(
+                    "https://api.sendgrid.com/v3/mail/send",
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json=payload,
+                )
+                if resp.status_code in (200, 202):
+                    return {"status": "success", "channel": "email", "sent": True}
+                return {"status": "error", "error": f"SendGrid error: {resp.status_code}"}
+        except Exception as e:
+            return {"status": "error", "error": f"SendGrid failed: {e}"}
+
+    async def _send_smtp(self, to: str, subject: str, body: str, html: str) -> Dict:
+        host = self.config.get("smtp_host")
+        port = self.config.get("smtp_port", 587)
+        user = self.config.get("smtp_user")
+        password = self.config.get("smtp_pass")
+        from_email = self.config.get("default_from_email")
+
+        if not host:
+            return {"status": "error", "error": "SMTP not configured (set SMTP_HOST or SENDGRID_API_KEY)"}
+
+        try:
+            import aiosmtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = from_email
+            msg["To"] = to
+            msg.attach(MIMEText(body, "plain"))
+            if html:
+                msg.attach(MIMEText(html, "html"))
+
+            await aiosmtplib.send(
+                msg,
+                hostname=host,
+                port=port,
+                username=user,
+                password=password,
+                start_tls=True if port == 587 else False,
+            )
+            return {"status": "success", "channel": "email", "sent": True}
+        except ImportError:
+            return {"status": "error", "error": "aiosmtplib not installed. Run: pip install aiosmtplib"}
+        except Exception as e:
+            return {"status": "error", "error": f"SMTP failed: {e}"}
+
+    # ── Webhook ────────────────────────────────────────────────────────────────
+
+    async def _send_webhook(self, data: Dict) -> Dict:
+        import httpx
+        url = data.get("url") or data.get("webhook_url")
+        payload = data.get("payload") or data.get("message") or data.get("body", {})
+        headers = data.get("headers", {"Content-Type": "application/json"})
+        method = data.get("method", "POST").upper()
+
+        if not url:
+            return {"status": "error", "error": "url required"}
+
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                if method == "GET":
+                    resp = await client.get(url, headers=headers, params=payload if isinstance(payload, dict) else {})
+                else:
+                    json_payload = payload if isinstance(payload, dict) else {"message": str(payload)}
+                    resp = await client.request(method, url, headers=headers, json=json_payload)
+                return {
+                    "status": "success",
+                    "channel": "webhook",
+                    "sent": True,
+                    "http_status": resp.status_code,
+                    "response_preview": resp.text[:500],
+                }
+        except Exception as e:
+            return {"status": "error", "error": f"Webhook failed: {e}"}
+
+    # ── Slack ──────────────────────────────────────────────────────────────────
+
+    async def _send_slack(self, data: Dict) -> Dict:
+        import httpx
+        url = data.get("webhook_url") or self.config.get("slack_webhook_url")
+        text = data.get("message") or data.get("text", "")
+        blocks = data.get("blocks")
+
+        if not url:
+            return {"status": "error", "error": "Slack webhook URL not configured"}
+
+        payload = {"text": text}
+        if blocks:
+            payload["blocks"] = blocks
+
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.post(url, json=payload)
+                if resp.status_code == 200 and resp.text == "ok":
+                    return {"status": "success", "channel": "slack", "sent": True}
+                return {"status": "error", "error": f"Slack error: {resp.status_code} {resp.text}"}
+        except Exception as e:
+            return {"status": "error", "error": f"Slack failed: {e}"}
+
+    # ── Health ─────────────────────────────────────────────────────────────────
+
+    def _health_check(self) -> Dict:
+        channels = []
+        if self.config.get("telegram_bot_token"):
+            channels.append("telegram")
+        if self.config.get("sendgrid_api_key") or self.config.get("smtp_host"):
+            channels.append("email")
+        if self.config.get("slack_webhook_url"):
+            channels.append("slack")
+        channels.append("webhook")
+        return {
+            "status": "healthy",
+            "available_channels": channels,
+            "block_id": self.name,
+            "version": self.version,
+        }

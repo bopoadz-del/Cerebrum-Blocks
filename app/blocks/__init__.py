@@ -34,11 +34,19 @@ from .construction_v2 import ConstructionBlockV2
 from .local_drive import LocalDriveBlock
 from .google_drive import GoogleDriveBlock
 from .onedrive import OneDriveBlock
+from .android_drive import AndroidDriveBlock
 
 # ── Search & Memory ───────────────────────────────────────────────────────────
 from .vector_search import VectorSearchBlock
 from .zvec import ZvecBlock
 from .cache_manager import CacheManagerBlock
+
+# Integration Blocks
+from .capture import CaptureBlock
+from .agent_swarm import AgentSwarmBlock
+from .workflow import WorkflowBlock
+from .notification import NotificationBlock
+from .knowledge import KnowledgeBlock
 
 # ── Main Construction Container ───────────────────────────────────────────────
 from app.containers import ConstructionContainer
@@ -77,11 +85,19 @@ BLOCK_REGISTRY = {
     "local_drive":      LocalDriveBlock,
     "google_drive":     GoogleDriveBlock,
     "onedrive":         OneDriveBlock,
+    "android_drive":    AndroidDriveBlock,
 
     # Search & Memory
     "vector_search":    VectorSearchBlock,
     "zvec":             ZvecBlock,
     "cache_manager":    CacheManagerBlock,
+
+    # Integration Blocks
+    "capture":          CaptureBlock,
+    "agent_swarm":      AgentSwarmBlock,
+    "workflow":         WorkflowBlock,
+    "notification":     NotificationBlock,
+    "knowledge":        KnowledgeBlock,
 }
 
 

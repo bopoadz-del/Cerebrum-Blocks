@@ -15,7 +15,7 @@ export class CerebrumClient {
   private base: string;
   private key: string;
 
-  constructor(apiKey: string = import.meta.env.VITE_API_KEY || "cb_dev_key", baseUrl: string = DEFAULT_BASE) {
+  constructor(apiKey: string = "cb_dev_key", baseUrl: string = DEFAULT_BASE) {
     this.base = baseUrl.replace(/\/$/, "");
     this.key = apiKey;
   }
@@ -227,6 +227,42 @@ export class CerebrumClient {
 
   recordMetrics(provider: string, success: boolean, latencyMs?: number) {
     return this.post<any>("/v1/metrics/record", { provider, success, latency_ms: latencyMs });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // NEW BLOCKS (v2)
+  // ─────────────────────────────────────────────────────────────
+
+  async captureUpload(file: File, source = "web") {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("source", source);
+    const res = await fetch(`${this.base}/capture/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${this.key}` },
+      body: form,
+    });
+    return this.handle<any>(res);
+  }
+
+  async swarmExecute(body: any) {
+    return this.post<any>("/swarm/execute", body);
+  }
+
+  async workflowRun(body: any) {
+    return this.post<any>("/workflow/run", body);
+  }
+
+  async notifySend(body: any) {
+    return this.post<any>("/notify/send", body);
+  }
+
+  async knowledgeAsk(body: any) {
+    return this.post<any>("/knowledge/ask", body);
+  }
+
+  async knowledgeSearch(body: any) {
+    return this.post<any>("/knowledge/search", body);
   }
 }
 

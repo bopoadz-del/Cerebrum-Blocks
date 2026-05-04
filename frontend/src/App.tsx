@@ -12,11 +12,13 @@ import {
   FailoverBlock, ConfigBlock, AuthBlock, MemoryBlock, 
   MonitoringBlock, HALBlock,
   // Integration Blocks
-  DatabaseBlock, EmailBlock, WebhookBlock, WorkflowBlock, BillingBlock
+  DatabaseBlock, EmailBlock, WebhookBlock, WorkflowBlock, BillingBlock,
+  // New Blocks (v2)
+  CaptureBlock, AgentSwarmBlock, NotificationHubBlock, KnowledgeBlock
 } from './blocks';
 
 function App() {
-  const API_KEY = import.meta.env.VITE_API_KEY || 'cb_dev_key';
+  const API_KEY = 'cb_dev_key';
 
   useEffect(() => {
     API.setKey(API_KEY);
@@ -133,6 +135,21 @@ function App() {
             <div style={{ padding: '10px', background: '#f5f5f5', borderBottom: '1px solid #ddd' }}>🚁 Drone</div>
             <DroneBlock apiKey={API_KEY} projectId="demo_project" />
           </div>
+
+          <div style={{ border: '1px solid #ddd', borderRadius: '8px' }}>
+            <div style={{ padding: '10px', background: '#f5f5f5', borderBottom: '1px solid #ddd' }}>📸 Capture</div>
+            <CaptureBlock apiKey={API_KEY} />
+          </div>
+
+          <div style={{ border: '1px solid #ddd', borderRadius: '8px' }}>
+            <div style={{ padding: '10px', background: '#f5f5f5', borderBottom: '1px solid #ddd' }}>🐝 Agent Swarm</div>
+            <AgentSwarmBlock apiKey={API_KEY} />
+          </div>
+
+          <div style={{ border: '1px solid #ddd', borderRadius: '8px' }}>
+            <div style={{ padding: '10px', background: '#f5f5f5', borderBottom: '1px solid #ddd' }}>🧠 Knowledge</div>
+            <KnowledgeBlock apiKey={API_KEY} />
+          </div>
         </div>
       )}
 
@@ -197,6 +214,11 @@ function App() {
           <div style={{ border: '1px solid #ddd', borderRadius: '8px' }}>
             <div style={{ padding: '10px', background: '#f5f5f5', borderBottom: '1px solid #ddd' }}>⚡ Workflow</div>
             <WorkflowBlock apiKey={API_KEY} />
+          </div>
+
+          <div style={{ border: '1px solid #ddd', borderRadius: '8px' }}>
+            <div style={{ padding: '10px', background: '#f5f5f5', borderBottom: '1px solid #ddd' }}>📨 Notification Hub</div>
+            <NotificationHubBlock apiKey={API_KEY} />
           </div>
         </div>
       )}

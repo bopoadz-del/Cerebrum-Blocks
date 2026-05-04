@@ -31,6 +31,11 @@ from app.dependencies import block_instances, _create_block_instance, init_block
 from app.routers import (
     auth,
     blocks,
+    capture,
+    agent_swarm,
+    workflow,
+    knowledge,
+    notification,
     chain,
     chat,
     debug,
@@ -125,6 +130,12 @@ app.include_router(memory.router)
 app.include_router(monitoring.router)
 app.include_router(health.router)
 app.include_router(static.router)
+app.include_router(capture.router)
+app.include_router(agent_swarm.router)
+app.include_router(workflow.router)
+app.include_router(knowledge.router)
+app.include_router(notification.router)
+
 # Debug routes — only in non-production environments
 env = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()
 if env in {"dev", "development", "local", "test", "testing"}:

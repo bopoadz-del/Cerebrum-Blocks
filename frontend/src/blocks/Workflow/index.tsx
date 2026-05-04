@@ -22,7 +22,12 @@ const availableBlocks = [
   { value: 'ocr', label: '👁️ OCR', actions: ['extract'] },
   { value: 'web', label: '🕸️ Web', actions: ['scrape', 'browse'] },
   { value: 'email', label: '📧 Email', actions: ['send'] },
-  { value: 'database', label: '🗄️ Database', actions: ['query', 'insert'] }
+  { value: 'database', label: '🗄️ Database', actions: ['query', 'insert'] },
+  { value: 'capture', label: '📸 Capture', actions: ['capture'] },
+  { value: 'agent_swarm', label: '🐝 Swarm', actions: ['execute'] },
+  { value: 'workflow', label: '⚡ Workflow', actions: ['run'] },
+  { value: 'notification', label: '📨 Notify', actions: ['send'] },
+  { value: 'knowledge', label: '🧠 Knowledge', actions: ['ask', 'search'] }
 ];
 
 export const WorkflowBlock: React.FC<WorkflowBlockProps> = ({ apiKey }) => {

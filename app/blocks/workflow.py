@@ -1,280 +1,461 @@
-"""Workflow Block - REAL step execution"""
-from app.core.universal_base import UniversalBlock
-from typing import Dict, Any, List
-import time
-import asyncio
+"""Workflow / Pipeline Block — Chain Cerebrum blocks declaratively.
 
-class WorkflowBlock(UniversalBlock):
-    """Workflow Automation - ACTUALLY executes steps"""
+YAML/JSON pipeline definitions. Variable interpolation between steps.
+Supports manual, webhook, and cron triggers.
+"""
+
+import os
+import time
+import uuid
+import json
+import re
+import asyncio
+from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+
+from app.core.universal_base import UniversalBlock
+from app.core.typed_block import TypedBlock, Schema, ContentType
+
+
+class WorkflowBlock(TypedBlock):
+    """Declarative pipeline orchestrator for Cerebrum Blocks."""
+
     name = "workflow"
     version = "1.0.0"
-    requires = ["config", "queue"]
-    layer = 5  # Integration layer
-    tags = ["workflow", "automation", "integration"]
-    default_config = {
-        "max_steps": 100,
-        "timeout": 300,
-        "parallel": True
-    }
-    
-    def __init__(self, hal_block, config: Dict[str, Any]):
-        super().__init__(hal_block, config)
-        self.workflows = {}
-        self.executions = {}
-        self.queue_block = None
-        self.blocks = {}  # Will be wired to all available blocks
-        
-    async def _legacy_initialize(self):
-        print("⚡ Workflow Block initialized")
-        print("   Supports: conditional steps, parallel execution, error handling")
-        return True
-    
-    async def process(self, input_data: Dict, params: Dict = None) -> Dict:
-        action = (params or {}).get("action") or (input_data.get("action") if isinstance(input_data, dict) else None)
-        if action == "create":
-            return await self._create_workflow(input_data)
-        elif action == "trigger":
-            return await self._trigger_workflow(input_data)
-        elif action == "run":  # Synchronous execution
-            return await self._run_workflow(input_data)
-        elif action == "get_status":
-            return await self._get_execution_status(input_data)
-        elif action == "list":
-            return await self._list_workflows()
-        return {"error": "Unknown action"}
-    
-    async def _create_workflow(self, data: Dict) -> Dict:
-        """Create workflow with step definitions"""
-        workflow_id = data.get("workflow_id") or f"wf_{int(time.time())}"
-        steps = data.get("steps", [])
-        
-        # Validate steps
-        validated_steps = []
-        for step in steps:
-            validated_steps.append({
-                "id": step.get("id", f"step_{len(validated_steps)}"),
-                "block": step.get("block"),  # e.g., "chat", "vector", "pdf"
-                "action": step.get("action"),  # e.g., "extract_text"
-                "params": step.get("params", {}),
-                "input_from": step.get("input_from"),  # Previous step output mapping
-                "condition": step.get("condition"),  # Conditional execution
-                "on_error": step.get("on_error", "stop")  # stop, continue, retry
-            })
-        
-        self.workflows[workflow_id] = {
-            "id": workflow_id,
-            "name": data.get("name", "Untitled"),
-            "steps": validated_steps,
-            "created": time.time(),
-            "trigger": data.get("trigger", "manual")
-        }
-        
-        return {
-            "workflow_id": workflow_id,
-            "steps": len(validated_steps),
-            "created": True
-        }
-    
-    async def _trigger_workflow(self, data: Dict) -> Dict:
-        """Queue workflow for async execution"""
-        workflow_id = data.get("workflow_id")
-        payload = data.get("payload", {})
-        
-        if workflow_id not in self.workflows:
-            return {"error": "Workflow not found"}
-        
-        workflow = self.workflows[workflow_id]
-        execution_id = f"exec_{workflow_id}_{int(time.time() * 1000)}"
-        
-        # Store execution record
-        self.executions[execution_id] = {
-            "status": "queued",
-            "workflow_id": workflow_id,
-            "started": time.time(),
-            "payload": payload,
-            "results": [],
-            "current_step": 0
-        }
-        
-        # Queue or run immediately
-        if self.queue_block:
-            await self.queue_block.execute({
-                "action": "enqueue",
-                "job_type": "workflow",
-                "payload": {
-                    "execution_id": execution_id,
-                    "workflow": workflow,
-                    "input": payload
-                }
-            })
-            return {"execution_id": execution_id, "status": "queued"}
-        else:
-            # Run synchronously
-            asyncio.create_task(self._execute_workflow_real(execution_id, workflow, payload))
-            return {"execution_id": execution_id, "status": "running"}
-    
-    async def _run_workflow(self, data: Dict) -> Dict:
-        """Execute workflow synchronously"""
-        workflow_id = data.get("workflow_id")
-        payload = data.get("payload", {})
-        
-        if workflow_id not in self.workflows:
-            return {"error": "Workflow not found"}
-        
-        workflow = self.workflows[workflow_id]
-        execution_id = f"exec_{workflow_id}_{int(time.time() * 1000)}"
-        
-        # Execute immediately
-        return await self._execute_workflow_real(execution_id, workflow, payload)
-    
-    async def _execute_workflow_real(self, execution_id: str, workflow: Dict, input_data: Dict) -> Dict:
-        """ACTUALLY execute workflow steps"""
-        self.executions[execution_id]["status"] = "running"
-        
-        context = {"input": input_data, "step_outputs": {}}
-        step_results = []
-        
-        for i, step in enumerate(workflow["steps"]):
-            self.executions[execution_id]["current_step"] = i
-            
-            try:
-                # Build step input from context
-                step_input = self._build_step_input(step, context)
-                
-                # Execute step
-                result = await self._execute_step(step, step_input)
-                
-                # Store result
-                step_result = {
-                    "step_id": step["id"],
-                    "block": step["block"],
-                    "status": "success",
-                    "result": result,
-                    "duration": 0  # Would track actual
-                }
-                step_results.append(step_result)
-                context["step_outputs"][step["id"]] = result
-                
-            except Exception as e:
-                step_result = {
-                    "step_id": step["id"],
-                    "block": step["block"],
-                    "status": "error",
-                    "error": str(e)
-                }
-                step_results.append(step_result)
-                
-                if step.get("on_error") == "stop":
-                    self.executions[execution_id]["status"] = "failed"
-                    break
-                elif step.get("on_error") == "retry" and step_result.get("retry_count", 0) < 3:
-                    # Retry logic
-                    pass
-        
-        final_status = "completed" if all(r["status"] == "success" for r in step_results) else "partial"
-        
-        self.executions[execution_id].update({
-            "status": final_status,
-            "results": step_results,
-            "completed_at": time.time(),
-            "output": context.get("step_outputs", {})
-        })
-        
-        return {
-            "execution_id": execution_id,
-            "status": final_status,
-            "steps_executed": len(step_results),
-            "results": step_results,
-            "output": context.get("step_outputs", {})
-        }
-    
-    def _build_step_input(self, step: Dict, context: Dict) -> Dict:
-        """Build step input from params and previous outputs"""
-        params = step.get("params", {}).copy()
-        
-        # Resolve input_from references
-        input_from = step.get("input_from")
-        if input_from:
-            # e.g., "step_1.output.text" -> context["step_outputs"]["step_1"]["text"]
-            parts = input_from.split(".")
-            value = context
-            for part in parts:
-                if isinstance(value, dict):
-                    value = value.get(part, "")
-            
-            # Inject into params
-            if "input" in params:
-                params["input"] = value
-            elif "text" in params:
-                params["text"] = value
-            elif "query" in params:
-                params["query"] = value
-        
-        return params
-    
-    async def _execute_step(self, step: Dict, step_input: Dict) -> Dict:
-        """Execute single step by calling appropriate block"""
-        block_name = step["block"]
-        action = step["action"]
-        
-        # Get block
-        block = self.blocks.get(block_name)
-        if not block:
-            # Try to find in common blocks
-            if block_name == "chat":
-                from blocks.chat.src.block import ChatBlock
-                block = ChatBlock(None, {})
-            elif block_name == "vector":
-                from blocks.vector.src.block import VectorBlock
-                block = VectorBlock(None, {})
-            elif block_name == "pdf":
-                from blocks.pdf.src.block import PDFBlock
-                block = PDFBlock(None, {})
-            elif block_name == "ocr":
-                from blocks.ocr.src.block import OCRBlock
-                block = OCRBlock(None, {})
+    description = "Chain blocks into pipelines with variable interpolation and scheduling"
+    layer = 2
+    tags = ["workflow", "pipeline", "orchestration", "automation", "core"]
+    requires = []
+
+    input_schema = Schema(
+        content_type=ContentType.JSON,
+        required_fields=["steps"],
+        optional_fields=["pipeline_id", "trigger", "timeout"],
+        format_hints={}
+    )
+
+    output_schema = Schema(
+        content_type=ContentType.JSON,
+        required_fields=["status", "pipeline_id", "run_id", "step_count", "results"],
+        optional_fields=["execution_time_ms", "final_output"],
+        format_hints={}
+    )
+
+    accepted_input_types = ["JSON", "PipelineDefinition"]
+    produced_output_types = ["JSON", "PipelineResult"]
+
+
+    async def execute(self, input_data: Any, params: Dict = None) -> Dict:
+        params = params or {}
+        action = params.get("action") if isinstance(params, dict) else None
+        if isinstance(input_data, str):
+            if action in {"get", "unschedule"}:
+                input_data = {"pipeline_id": input_data}
             else:
-                raise ValueError(f"Block {block_name} not available")
-        
-        # Execute
-        return await block.execute({**step_input, "action": action})
-    
-    async def _get_execution_status(self, data: Dict) -> Dict:
-        """Get workflow execution status"""
-        execution_id = data.get("execution_id")
-        execution = self.executions.get(execution_id, {"error": "Execution not found"})
-        
-        # Calculate progress
-        if "workflow_id" in execution:
-            workflow = self.workflows.get(execution["workflow_id"], {})
-            total_steps = len(workflow.get("steps", []))
-            current = execution.get("current_step", 0)
-            execution["progress_percent"] = int((current / total_steps) * 100) if total_steps > 0 else 0
-        
-        return execution
-    
-    async def _list_workflows(self) -> Dict:
-        """List all workflows"""
-        return {
-            "workflows": [
-                {
-                    "id": w["id"],
-                    "name": w["name"],
-                    "steps": len(w["steps"]),
-                    "trigger": w["trigger"]
-                }
-                for w in self.workflows.values()
+                input_data = {"steps": [{"id": "s1", "block": input_data}]}
+        return await super().execute(input_data, params)
+
+    def validate_input(self, data: Any) -> Dict[str, Any]:
+        if isinstance(data, dict) and data.get("action") in {"health", "status", "list", "history", "get", "unschedule", "broadcast", "search", "summarize", "structure", "execute_async"}:
+            return {"valid": True, "errors": [], "warnings": [], "data": data}
+        return super().validate_input(data)
+
+    default_config = {
+        "max_pipeline_steps": int(os.getenv("MAX_PIPELINE_STEPS", "20")),
+        "enable_scheduler": os.getenv("ENABLE_WORKFLOW_SCHEDULER", "true").lower() == "true",
+        "default_timeout": int(os.getenv("WORKFLOW_STEP_TIMEOUT", "60")),
+    }
+
+    ui_schema = {
+        "input": {
+            "type": "json",
+            "placeholder": '{"pipeline_id": "daily-report", "steps": [...]}',
+            "multiline": True,
+        },
+        "output": {
+            "type": "json",
+            "fields": [
+                {"name": "pipeline_id", "type": "text", "label": "Pipeline ID"},
+                {"name": "status", "type": "text", "label": "Status"},
+                {"name": "results", "type": "json", "label": "Step Results"},
+                {"name": "execution_time_ms", "type": "number", "label": "Time (ms)"},
             ],
-            "count": len(self.workflows)
+        },
+        "quick_actions": [
+            {"icon": "⏩", "label": "Run Pipeline", "prompt": "Run a pipeline"},
+            {"icon": "📅", "label": "Schedule", "prompt": "Schedule a recurring pipeline"},
+        ],
+    }
+
+
+    async def execute(self, input_data: Any, params: Dict = None) -> Dict:
+        params = params or {}
+        action = params.get("action") if isinstance(params, dict) else None
+        if isinstance(input_data, str):
+            if action in {"get", "unschedule"}:
+                input_data = {"pipeline_id": input_data}
+            else:
+                input_data = {"steps": [{"id": "s1", "block": input_data}]}
+        return await super().execute(input_data, params)
+
+    def validate_input(self, data: Any) -> Dict[str, Any]:
+        if isinstance(data, dict) and data.get("action") in {"health", "status", "list", "history", "get", "unschedule", "broadcast", "search", "summarize", "structure", "execute_async"}:
+            return {"valid": True, "errors": [], "warnings": [], "data": data}
+        return super().validate_input(data)
+
+    def __init__(self, hal_block=None, config: Dict = None):
+        super().__init__(hal_block, config)
+        self._pipelines: Dict[str, Dict] = {}
+        self._scheduled_tasks: Dict[str, asyncio.Task] = {}
+        self._execution_history: List[Dict] = []
+
+    async def process(self, input_data: Any, params: Dict = None) -> Dict:
+        params = params or {}
+        action = params.get("action", "run")
+
+        if action == "run":
+            return await self._run_pipeline(input_data, params)
+        elif action == "schedule":
+            return await self._schedule_pipeline(input_data, params)
+        elif action == "unschedule":
+            return self._unschedule_pipeline(input_data)
+        elif action == "list":
+            return self._list_pipelines()
+        elif action == "get":
+            return self._get_pipeline(input_data)
+        elif action == "history":
+            return self._get_history()
+        else:
+            return {"status": "error", "error": f"Unknown action: {action}"}
+
+    # ── Core Execution ─────────────────────────────────────────────────────────
+
+    async def _validate_chain(self, steps: List[Dict]) -> List[str]:
+        """Validate that step outputs match next step inputs using block schemas."""
+        errors = []
+        from app.blocks import BLOCK_REGISTRY
+
+        for i in range(len(steps) - 1):
+            current_name = steps[i].get("block")
+            next_name = steps[i + 1].get("block")
+
+            current_cls = BLOCK_REGISTRY.get(current_name)
+            next_cls = BLOCK_REGISTRY.get(next_name)
+
+            if not current_cls or not next_cls:
+                errors.append(f"Step {i}: block '{current_name}' or '{next_name}' not found in registry")
+                continue
+
+            # Check if both blocks have typed schemas
+            if not hasattr(current_cls, 'output_schema') or not current_cls.output_schema:
+                errors.append(f"Step {i}: '{current_name}' has no output_schema")
+                continue
+            if not hasattr(next_cls, 'input_schema') or not next_cls.input_schema:
+                errors.append(f"Step {i+1}: '{next_name}' has no input_schema")
+                continue
+
+            current_schema = current_cls.output_schema
+            next_schema = next_cls.input_schema
+
+            # Extract required/optional fields
+            def get_fields(schema):
+                if hasattr(schema, 'required_fields') and hasattr(schema, 'optional_fields'):
+                    return set(schema.required_fields or []) | set(schema.optional_fields or [])
+                elif isinstance(schema, dict):
+                    props = schema.get("properties", {})
+                    return set(props.keys())
+                return set()
+
+            current_fields = get_fields(current_schema)
+            next_fields_required = set(next_schema.required_fields or []) if hasattr(next_schema, 'required_fields') else set()
+
+            # Check if next step's required inputs are satisfied by current step's output
+            missing = next_fields_required - current_fields
+            if missing:
+                errors.append(
+                    f"Step {i+1} ('{next_name}'): requires fields {sorted(missing)} "
+                    f"but '{current_name}' output only provides {sorted(current_fields)}"
+                )
+
+            # Content type compatibility warning
+            current_type = getattr(current_schema, 'content_type', None)
+            next_type = getattr(next_schema, 'content_type', None)
+            if current_type and next_type and current_type != next_type:
+                if next_type.value not in ['json', 'text', 'unknown']:
+                    errors.append(
+                        f"Step {i+1}: type mismatch — '{current_name}' produces '{current_type.value}' "
+                        f"but '{next_name}' expects '{next_type.value}'"
+                    )
+
+        return errors
+
+    async def _run_pipeline(self, input_data: Any, params: Dict) -> Dict:
+        definition = self._normalize_definition(input_data)
+        pipeline_id = definition.get("pipeline_id") or str(uuid.uuid4())[:8]
+        definition["pipeline_id"] = pipeline_id
+        self._pipelines[pipeline_id] = definition
+        steps = definition.get("steps", [])
+        timeout = definition.get("timeout", self.config.get("default_timeout", 60))
+
+        if not steps:
+            return {"status": "error", "error": "No steps defined"}
+
+        if len(steps) > self.config.get("max_pipeline_steps", 20):
+            return {"status": "error", "error": f"Max {self.config.get('max_pipeline_steps')} steps allowed"}
+
+        # PRE-FLIGHT CHAIN VALIDATION
+        chain_errors = await self._validate_chain(steps)
+        if chain_errors:
+            return {
+                "status": "error",
+                "error": "Chain validation failed — incompatible blocks",
+                "validation_errors": chain_errors,
+                "pipeline_id": pipeline_id,
+            }
+
+        start_time = time.time()
+        context = {"pipeline_id": pipeline_id, "steps": {}}
+        step_results = []
+        overall_status = "completed"
+
+        for idx, step in enumerate(steps):
+            step_id = step.get("id", f"step_{idx}")
+            block_name = step.get("block")
+            step_input = step.get("input", {})
+            step_params = step.get("params", {})
+
+            if not block_name:
+                step_results.append({
+                    "step_id": step_id,
+                    "status": "failed",
+                    "error": "No block specified",
+                })
+                overall_status = "partial"
+                continue
+
+            # Interpolate variables
+            try:
+                step_input = self._interpolate(step_input, context)
+                step_params = self._interpolate(step_params, context)
+            except Exception as e:
+                step_results.append({
+                    "step_id": step_id,
+                    "status": "failed",
+                    "error": f"Interpolation error: {e}",
+                })
+                overall_status = "partial"
+                continue
+
+            # Execute block
+            try:
+                from app.blocks import BLOCK_REGISTRY
+                block_cls = BLOCK_REGISTRY.get(block_name)
+                if not block_cls:
+                    step_results.append({
+                        "step_id": step_id,
+                        "status": "failed",
+                        "error": f"Block '{block_name}' not found",
+                    })
+                    overall_status = "partial"
+                    continue
+
+                block = block_cls()
+                result = await asyncio.wait_for(
+                    block.execute(step_input, step_params),
+                    timeout=timeout,
+                )
+
+                context["steps"][step_id] = result
+                step_results.append({
+                    "step_id": step_id,
+                    "block": block_name,
+                    "status": result.get("status", "unknown"),
+                    "result": result,
+                })
+
+                if result.get("status") == "error" and step.get("stop_on_error", True):
+                    overall_status = "partial"
+                    if step.get("break_on_error", False):
+                        break
+
+            except asyncio.TimeoutError:
+                step_results.append({
+                    "step_id": step_id,
+                    "block": block_name,
+                    "status": "failed",
+                    "error": f"Timeout after {timeout}s",
+                })
+                overall_status = "partial"
+            except Exception as e:
+                step_results.append({
+                    "step_id": step_id,
+                    "block": block_name,
+                    "status": "failed",
+                    "error": str(e),
+                })
+                overall_status = "partial"
+
+        execution_time_ms = int((time.time() - start_time) * 1000)
+        run_record = {
+            "run_id": str(uuid.uuid4())[:8],
+            "pipeline_id": pipeline_id,
+            "status": overall_status,
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "execution_time_ms": execution_time_ms,
+            "step_results": step_results,
         }
-    
-    def register_block(self, name: str, block):
-        """Register a block for workflow execution"""
-        self.blocks[name] = block
-    
-    def health(self) -> Dict:
-        h = {"name": self.name, "version": self.version}
-        h["workflows"] = len(self.workflows)
-        h["executions"] = len(self.executions)
-        h["registered_blocks"] = list(self.blocks.keys())
-        return h
+        self._execution_history.append(run_record)
+        self._execution_history = self._execution_history[-100:]  # Keep last 100
+
+        return {
+            "status": overall_status,
+            "pipeline_id": pipeline_id,
+            "run_id": run_record["run_id"],
+            "step_count": len(steps),
+            "results": step_results,
+            "execution_time_ms": execution_time_ms,
+            "final_output": step_results[-1]["result"] if step_results else {},
+        }
+
+    # ── Scheduling ─────────────────────────────────────────────────────────────
+
+    async def _schedule_pipeline(self, input_data: Any, params: Dict) -> Dict:
+        if not self.config.get("enable_scheduler", True):
+            return {"status": "error", "error": "Scheduler disabled"}
+
+        definition = self._normalize_definition(input_data)
+        pipeline_id = definition.get("pipeline_id")
+        cron = definition.get("trigger", {}).get("cron")
+        interval = definition.get("trigger", {}).get("interval_seconds")
+
+        if not pipeline_id:
+            return {"status": "error", "error": "pipeline_id required for scheduling"}
+
+        if not cron and not interval:
+            return {"status": "error", "error": "Schedule requires cron or interval_seconds"}
+
+        # Store definition
+        self._pipelines[pipeline_id] = definition
+
+        # Cancel existing task if any
+        if pipeline_id in self._scheduled_tasks:
+            self._scheduled_tasks[pipeline_id].cancel()
+
+        # Start new task
+        task = asyncio.create_task(self._scheduler_loop(pipeline_id, cron, interval))
+        self._scheduled_tasks[pipeline_id] = task
+
+        return {
+            "status": "scheduled",
+            "pipeline_id": pipeline_id,
+            "cron": cron,
+            "interval_seconds": interval,
+        }
+
+    def _unschedule_pipeline(self, input_data: Any) -> Dict:
+        pipeline_id = input_data if isinstance(input_data, str) else input_data.get("pipeline_id", "")
+        if pipeline_id in self._scheduled_tasks:
+            self._scheduled_tasks[pipeline_id].cancel()
+            del self._scheduled_tasks[pipeline_id]
+        if pipeline_id in self._pipelines:
+            del self._pipelines[pipeline_id]
+        return {"status": "unscheduled", "pipeline_id": pipeline_id}
+
+    async def _scheduler_loop(self, pipeline_id: str, cron: Optional[str], interval: Optional[int]):
+        """Simple scheduler loop. Supports interval_seconds or basic cron (minute-level)."""
+        try:
+            while True:
+                await self._run_pipeline(self._pipelines.get(pipeline_id, {}), {})
+                if interval:
+                    await asyncio.sleep(interval)
+                elif cron:
+                    # Basic cron: "*/5 * * * *" = every 5 minutes
+                    # For simplicity, parse minute-level cron
+                    wait = self._cron_next_wait(cron)
+                    await asyncio.sleep(wait)
+                else:
+                    break
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            pass
+
+    def _cron_next_wait(self, cron: str) -> int:
+        """Basic cron parser — supports */N * * * * format only."""
+        try:
+            parts = cron.split()
+            if len(parts) >= 1 and parts[0].startswith("*/"):
+                minutes = int(parts[0][2:])
+                return minutes * 60
+        except Exception:
+            pass
+        return 300  # Default 5 minutes
+
+    # ── Queries ────────────────────────────────────────────────────────────────
+
+    def _list_pipelines(self) -> Dict:
+        return {
+            "status": "success",
+            "pipelines": [
+                {
+                    "pipeline_id": pid,
+                    "step_count": len(p.get("steps", [])),
+                    "scheduled": pid in self._scheduled_tasks,
+                }
+                for pid, p in self._pipelines.items()
+            ],
+        }
+
+    def _get_pipeline(self, input_data: Any) -> Dict:
+        pipeline_id = input_data if isinstance(input_data, str) else input_data.get("pipeline_id", "")
+        p = self._pipelines.get(pipeline_id)
+        if not p:
+            return {"status": "error", "error": f"Pipeline '{pipeline_id}' not found"}
+        return {"status": "success", "pipeline": p}
+
+    def _get_history(self) -> Dict:
+        return {
+            "status": "success",
+            "runs": self._execution_history[-20:],  # Last 20
+        }
+
+    # ── Variable Interpolation ─────────────────────────────────────────────────
+
+    def _interpolate(self, obj: Any, context: Dict) -> Any:
+        """Replace {{steps.step_id.path}} with actual values from context."""
+        if isinstance(obj, str):
+            pattern = r"\{\{\s*([\w.\[\]]+)\s*\}\}"
+
+            def replacer(match):
+                path = match.group(1)
+                return str(self._resolve_path(path, context))
+
+            return re.sub(pattern, replacer, obj)
+        elif isinstance(obj, dict):
+            return {k: self._interpolate(v, context) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._interpolate(item, context) for item in obj]
+        return obj
+
+    def _resolve_path(self, path: str, context: Dict) -> Any:
+        """Resolve dotted path like steps.design.result.text"""
+        parts = path.split(".")
+        current = context
+        for part in parts:
+            if isinstance(current, dict):
+                current = current.get(part, "")
+            else:
+                return ""
+        return current if current is not None else ""
+
+    # ── Helpers ────────────────────────────────────────────────────────────────
+
+    def _normalize_definition(self, input_data: Any) -> Dict:
+        if isinstance(input_data, dict):
+            return input_data
+        if isinstance(input_data, str):
+            try:
+                return json.loads(input_data)
+            except json.JSONDecodeError:
+                return {"pipeline_id": None, "steps": []}
+        return {"pipeline_id": None, "steps": []}
