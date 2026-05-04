@@ -51,7 +51,6 @@ from .context_broker import ContextBrokerBlock
 from .capture import CaptureBlock
 from .agent_swarm import AgentSwarmBlock
 from .workflow import WorkflowBlock
-from .notification import NotificationBlock
 from .knowledge import KnowledgeBlock
 from .orchestrator import OrchestratorBlock
 from .queue import QueueBlock
@@ -144,7 +143,6 @@ BLOCK_REGISTRY = {
     "capture":          CaptureBlock,
     "agent_swarm":      AgentSwarmBlock,
     "workflow":         WorkflowBlock,
-    "notification":     NotificationBlock,
     "knowledge":        KnowledgeBlock,
     "orchestrator":     OrchestratorBlock,
     "queue":            QueueBlock,
