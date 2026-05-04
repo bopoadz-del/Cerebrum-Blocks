@@ -48,14 +48,14 @@ async def test_notification_unknown_channel(notification_block):
 
 
 @pytest.mark.asyncio
-async def test_notification_telegram_missing_token(notification_block):
+async def test_notification_mcp_missing_block(notification_block):
     result = await notification_block.execute(
-        {"channel": "telegram", "to": "123", "message": "hi"},
+        {"channel": "mcp", "message": "hi"},
         {"action": "send"},
     )
     inner = result.get("result", result)
     assert inner.get("status") == "error"
-    assert "TELEGRAM_BOT_TOKEN" in inner.get("error", "")
+    assert "block or tool name required" in inner.get("error", "")
 
 
 @pytest.mark.asyncio

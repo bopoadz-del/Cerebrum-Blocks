@@ -107,7 +107,6 @@ class NotificationBlock(TypedBlock):
         return super().validate_input(data)
 
     default_config = {
-        "telegram_bot_token": os.getenv("TELEGRAM_BOT_TOKEN", ""),
         "sendgrid_api_key": os.getenv("SENDGRID_API_KEY", ""),
         "smtp_host": os.getenv("SMTP_HOST", ""),
         "smtp_port": int(os.getenv("SMTP_PORT", "587")),
@@ -132,7 +131,6 @@ class NotificationBlock(TypedBlock):
             ],
         },
         "quick_actions": [
-            {"icon": "📨", "label": "Send Telegram", "prompt": "Send a Telegram message"},
             {"icon": "✉️", "label": "Send Email", "prompt": "Send an email notification"},
             {"icon": "🔗", "label": "Webhook", "prompt": "POST to webhook URL"},
         ],
@@ -157,7 +155,7 @@ class NotificationBlock(TypedBlock):
     async def _send(self, data: Dict) -> Dict:
         channel = data.get("channel", "telegram").lower()
         handlers = {
-            "telegram": self._send_telegram,
+            "mcp": self._send_mcp,
             "email": self._send_email,
             "webhook": self._send_webhook,
             "slack": self._send_slack,
@@ -194,38 +192,36 @@ class NotificationBlock(TypedBlock):
             "results": results,
         }
 
-    # ── Telegram ───────────────────────────────────────────────────────────────
+    # ── MCP (Model Context Protocol) ───────────────────────────────────────────
 
-    async def _send_telegram(self, data: Dict) -> Dict:
-        import httpx
-        token = self.config.get("telegram_bot_token")
-        if not token:
-            return {"status": "error", "error": "TELEGRAM_BOT_TOKEN not set"}
+    async def _send_mcp(self, data: Dict) -> Dict:
+        """Send notification via MCP — calls a block as an MCP tool."""
+        import json
+        block_name = data.get("block") or data.get("tool")
+        payload = data.get("payload") or data.get("message") or data.get("input", {})
+        params = data.get("params", {})
 
-        chat_id = data.get("to") or data.get("chat_id")
-        text = data.get("message") or data.get("text", "")
-        parse_mode = data.get("parse_mode", "Markdown")
-
-        if not chat_id:
-            return {"status": "error", "error": "chat_id (to) required"}
-
-        url = f"https://api.telegram.org/bot{token}/sendMessage"
-        payload = {"chat_id": chat_id, "text": text, "parse_mode": parse_mode}
+        if not block_name:
+            return {"status": "error", "error": "block or tool name required for MCP channel"}
 
         try:
-            async with httpx.AsyncClient(timeout=30) as client:
-                resp = await client.post(url, json=payload)
-                result = resp.json()
-                if result.get("ok"):
-                    return {
-                        "status": "success",
-                        "channel": "telegram",
-                        "sent": True,
-                        "message_id": str(result["result"]["message_id"]),
-                    }
-                return {"status": "error", "error": result.get("description", "Unknown error")}
+            from app.blocks import BLOCK_REGISTRY
+            from app.dependencies import _create_block_instance
+
+            if block_name not in BLOCK_REGISTRY:
+                return {"status": "error", "error": f"Block '{block_name}' not found"}
+
+            block = _create_block_instance(BLOCK_REGISTRY[block_name])
+            result = await block.execute(payload, params)
+            return {
+                "status": "success",
+                "channel": "mcp",
+                "sent": True,
+                "block": block_name,
+                "result_preview": json.dumps(result, default=str)[:500],
+            }
         except Exception as e:
-            return {"status": "error", "error": f"Telegram send failed: {e}"}
+            return {"status": "error", "error": f"MCP dispatch failed: {e}"}
 
     # ── Email ──────────────────────────────────────────────────────────────────
 
@@ -367,8 +363,7 @@ class NotificationBlock(TypedBlock):
 
     def _health_check(self) -> Dict:
         channels = []
-        if self.config.get("telegram_bot_token"):
-            channels.append("telegram")
+        channels.append("mcp")
         if self.config.get("sendgrid_api_key") or self.config.get("smtp_host"):
             channels.append("email")
         if self.config.get("slack_webhook_url"):

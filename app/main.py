@@ -141,5 +141,13 @@ env = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()
 if env in {"dev", "development", "local", "test", "testing"}:
     app.include_router(debug.router)
 
+# Mount MCP SSE endpoint (Model Context Protocol)
+try:
+    from app.mcp_server import app_sse as mcp_app
+    app.mount("/mcp", mcp_app)
+except Exception as e:
+    import logging
+    logging.getLogger("cerebrum").warning(f"MCP server not mounted: {e}")
+
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
