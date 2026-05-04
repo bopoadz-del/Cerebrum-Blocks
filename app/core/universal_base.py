@@ -160,6 +160,41 @@ class UniversalBlock(ABC):
             "processing_time_ms": execution_time
         }
     
+    def mcp_tools(self) -> list:
+        """Expose block capabilities as MCP tool schemas (the CONTRACT)."""
+        return [{
+            "name": f"{self.name}_execute",
+            "description": f"Execute {self.name} block: {self.description}",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "input": {
+                        "type": "object",
+                        "description": f"Input data for {self.name}"
+                    },
+                    "params": {
+                        "type": "object",
+                        "description": "Additional parameters",
+                        "default": {}
+                    }
+                }
+            }
+        }]
+
+    def get_mcp_schema(self) -> Dict:
+        """Get full MCP schema including block metadata."""
+        return {
+            "name": self.name,
+            "version": self.version,
+            "description": self.description,
+            "tools": self.mcp_tools(),
+            "metadata": {
+                "layer": self.layer,
+                "tags": self.tags,
+                "requires": self.requires
+            }
+        }
+
     def get_stats(self) -> Dict:
         """Get execution statistics"""
         avg_time = self.total_execution_time / max(self.execution_count, 1)

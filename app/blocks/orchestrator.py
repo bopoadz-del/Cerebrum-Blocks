@@ -115,7 +115,7 @@ class OrchestratorBlock(UniversalBlock):
         """Set callback for progress updates"""
         self._progress_callback = callback
 
-    def _report_progress(self, step_index: int, step_label: str, status: str, 
+    def _report_progress(self, step_index: int, step_label: str, status: str,
                          details: Dict = None):
         """Report step progress"""
         if self._progress_callback:
@@ -125,6 +125,73 @@ class OrchestratorBlock(UniversalBlock):
                 "status": status,
                 "details": details or {}
             })
+
+    # ── MCP Contract Discovery ─────────────────────────────────────────────────
+
+    def _discover_block_capabilities(self, block_name: str) -> Dict:
+        """
+        Discover block capabilities via MCP schema.
+
+        This is the CONTRACT layer - tells us what the block can do.
+        After discovery, we call .execute() directly (PERFORMANCE layer).
+        """
+        from app.core.mcp_registry import mcp_registry
+
+        try:
+            return mcp_registry.get_block_schema(block_name)
+        except Exception:
+            # Fallback to direct inspection
+            if block_name in self._registry:
+                block = self._registry[block_name]()
+                return block.get_mcp_schema()
+            raise ValueError(f"Block '{block_name}' not found")
+
+    async def _execute_via_mcp_contract(
+        self,
+        block_name: str,
+        input_data: Any,
+        params: Dict
+    ) -> Dict:
+        """
+        Execute using MCP contract but with direct call.
+
+        Flow:
+        1. Check MCP schema to validate capability exists
+        2. Call .execute() directly (no HTTP overhead)
+        3. Return result
+
+        This gives us MCP standards without performance penalty.
+        """
+        # Discover capabilities (MCP contract)
+        schema = self._discover_block_capabilities(block_name)
+
+        # Validate action exists in schema
+        action = params.get('action')
+        if action:
+            # Could validate against schema here
+            pass
+
+        # Direct execution (performance optimization)
+        block = await self._resolve_block(block_name)
+        if not block:
+            if block_name not in self._registry:
+                raise ValueError(f"Block '{block_name}' not found")
+            block = self._create_block_fn(self._registry[block_name])
+            self._instance_cache[block_name] = block
+
+        # Direct .execute() call - FAST (no HTTP)
+        result = await block.execute(input_data, params)
+
+        # Mark execution path for debugging
+        if isinstance(result, dict):
+            result.setdefault('_execution', {})
+            result['_execution'] = {
+                'path': 'direct',
+                'contract': 'mcp',
+                'block': block_name
+            }
+
+        return result
 
     def _get_block_type_info(self, block: Any) -> tuple[str, str]:
         """Get input and output types from a block"""
