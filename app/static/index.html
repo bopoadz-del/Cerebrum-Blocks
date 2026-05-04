@@ -836,6 +836,42 @@ function renderPanels(panels, nextActions, fileName, sizeKb) {
                 html += `</div>`;
             }
 
+        } else if (panel.type === 'procurement') {
+            const pd = panel.data || {};
+            const items = pd.procurement_list || [];
+            html += `<div style="font-size:12px;margin-top:6px;">`;
+            if (pd.total_procurement_cost) {
+                html += `<div style="color:#8b5cf6;font-weight:600;margin-bottom:8px;">Total: $${Number(pd.total_procurement_cost).toLocaleString()}</div>`;
+            }
+            if (pd.critical_long_lead_items) {
+                html += `<div style="color:#ef4444;font-size:11px;margin-bottom:6px;">⚠ ${pd.critical_long_lead_items} critical long-lead items</div>`;
+            }
+            if (items.length) {
+                const priorityColor = { critical: '#ef4444', high: '#f59e0b', normal: '#22c55e' };
+                html += `<table style="width:100%;border-collapse:collapse;">
+                    <tr style="color:#666;font-size:11px;border-bottom:1px solid #333;"><th style="text-align:left;padding:3px 0;">Item</th><th style="text-align:right;padding:3px 0;">Qty</th><th style="text-align:right;padding:3px 0;">Lead</th></tr>`;
+                for (const item of items.slice(0, 10)) {
+                    const col = priorityColor[item.priority] || '#888';
+                    html += `<tr style="border-bottom:1px solid #1a1a1a;">
+                        <td style="padding:3px 0;color:#ccc;font-size:11px;">${escapeHtml(item.item || '')}</td>
+                        <td style="text-align:right;padding:3px 0;color:#aaa;">${item.quantity} ${escapeHtml(item.unit || '')}</td>
+                        <td style="text-align:right;padding:3px 4px;color:${col};font-weight:600;">${item.lead_time_weeks}w</td>
+                    </tr>`;
+                }
+                html += `</table>`;
+                if (items.length > 10) html += `<div style="color:#555;font-size:11px;margin-top:4px;">+${items.length - 10} more items</div>`;
+            } else {
+                html += `<div style="color:#555;">No procurement items generated</div>`;
+            }
+            if (pd.action_required && pd.action_required.length) {
+                html += `<div style="margin-top:8px;"><div style="color:#888;font-size:10px;text-transform:uppercase;margin-bottom:4px;">Action Required</div>`;
+                for (const a of pd.action_required.slice(0, 3)) {
+                    html += `<div style="color:#f59e0b;font-size:11px;margin-bottom:3px;">• ${escapeHtml(a)}</div>`;
+                }
+                html += `</div>`;
+            }
+            html += `</div>`;
+
         } else {
             const raw = JSON.stringify(panel.data || {}, null, 2).substring(0, 400);
             html += `<div class="raw-output" style="margin-top:6px;font-size:11px;">${escapeHtml(raw)}</div>`;
@@ -863,9 +899,17 @@ async function triggerAction(action) {
     showIndicator(true);
     addMessage(`Running ${action}...`, 'system');
     try {
-        const data = await client.execute('construction', activeFileContext.pipelineResult || {}, { action });
-        addMessage(`${action} complete. Check the outcomes panel.`, 'assistant');
-        setOutcomes(renderPanels([{ type: 'raw', title: action, data: data.result }], [], activeFileContext.name, ''));
+        const inputData = {
+            ...(activeFileContext.pipelineResult || {}),
+            quantities: activeFileContext.quantities || {},
+            line_items: activeFileContext.costLineItems || [],
+        };
+        const data = await client.execute('construction', inputData, { action });
+        const result = data.result || {};
+        const panelType = action === 'procurement_list_generator' ? 'procurement' : 'raw';
+        const panelTitle = action === 'procurement_list_generator' ? 'Procurement List' : action;
+        setOutcomes(renderPanels([{ type: panelType, title: panelTitle, data: result }], [], activeFileContext.name, ''));
+        addMessage(`${panelTitle} generated. Check the outcomes panel.`, 'assistant');
     } catch(e) {
         addMessage(`${action} failed: ${e.message}`, 'error');
     }
@@ -920,6 +964,10 @@ async function handleFile(input) {
             const chatCtx = r.chat_context || `File: ${file.name}\nType: ${r.doc_type || 'unknown'}\n\n${extractedText.substring(0, 3000)}`;
             setActiveFileContext(file.name, chatCtx, 'Upload');
             activeFileContext.pipelineResult = { file_path: filePath, extracted_text: extractedText };
+            const qPanel = (r.panels || []).find(p => p.type === 'quantities');
+            const cPanel = (r.panels || []).find(p => p.type === 'cost_estimate');
+            activeFileContext.quantities = (qPanel && qPanel.data) || {};
+            activeFileContext.costLineItems = (cPanel && cPanel.line_items) || [];
             setOutcomes(renderPanels(r.panels || [], r.next_actions || [], file.name, sizeKb));
             const actionsRun = (r.downstream_actions_run || []).join(', ') || 'none';
             addMessage(`"${file.name}" analysed (${r.doc_type || 'document'}). ${(r.panels || []).length} intelligence panels. Actions: ${actionsRun}. Ask me anything.`, 'assistant');

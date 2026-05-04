@@ -2585,7 +2585,8 @@ class ConstructionContainer(UniversalContainer):
     # DRAWING HELPERS
     def _extract_measurements_advanced(self, text: str, text_dict: Dict) -> List[Dict]:
         measurements = []
-        
+
+        # WxH dimension pattern: "5.5m x 3.2m"
         dimension_pattern = r'\b(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')\s*(?:x|by|×)\s*(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')'
         for match in re.finditer(dimension_pattern, text, re.IGNORECASE):
             width = float(match.group(1))
@@ -2601,7 +2602,39 @@ class ConstructionContainer(UniversalContainer):
                 "raw": match.group(0),
                 "context": text[max(0, match.start()-50):match.end()+50]
             })
-        
+
+        # Direct area mentions: "2500 m2", "floor area: 2,500 sqm"
+        area_pattern = r'\b(\d[\d,]*(?:\.\d+)?)\s*(?:m2|m²|sqm|sq\.?\s*m|square\s+met(?:re|er)s?)\b'
+        for match in re.finditer(area_pattern, text, re.IGNORECASE):
+            try:
+                val = float(match.group(1).replace(',', ''))
+                if val > 0:
+                    measurements.append({
+                        "type": "dimension",
+                        "value": val,
+                        "unit": "m²",
+                        "raw": match.group(0),
+                        "context": text[max(0, match.start()-50):match.end()+50]
+                    })
+            except ValueError:
+                pass
+
+        # Direct volume mentions: "450 m3", "concrete: 450 m³"
+        volume_pattern = r'\b(\d[\d,]*(?:\.\d+)?)\s*(?:m3|m³|cubic\s+met(?:re|er)s?)\b'
+        for match in re.finditer(volume_pattern, text, re.IGNORECASE):
+            try:
+                val = float(match.group(1).replace(',', ''))
+                if val > 0:
+                    measurements.append({
+                        "type": "volume",
+                        "value": val,
+                        "unit": "m³",
+                        "raw": match.group(0),
+                        "context": text[max(0, match.start()-50):match.end()+50]
+                    })
+            except ValueError:
+                pass
+
         quantity_pattern = r'\b(\d+)\s*(?:no|nos|nr|ea|each)?\.?\s*([A-Z][A-Za-z\s]+)'
         for match in re.finditer(quantity_pattern, text[:2000]):
             qty = int(match.group(1))
@@ -2614,7 +2647,7 @@ class ConstructionContainer(UniversalContainer):
                     "item": item,
                     "raw": match.group(0)
                 })
-        
+
         return measurements[:50]
     
     def _extract_tables_advanced(self, page) -> List[Dict]:
@@ -2657,19 +2690,25 @@ class ConstructionContainer(UniversalContainer):
     
     def _calculate_quantities(self, measurements: List[Dict]) -> Dict:
         total_area = sum(m.get("value", 0) for m in measurements if m.get("type") == "dimension")
+        direct_volume = sum(m.get("value", 0) for m in measurements if m.get("type") == "volume")
         counts = {m.get("item", "unknown"): m.get("value", 0) for m in measurements if m.get("type") == "count"}
-        
-        concrete_volume = total_area * 0.15
+
+        concrete_volume = direct_volume if direct_volume > 0 else total_area * 0.15
         steel_weight = concrete_volume * 120
         rebar_length = concrete_volume * 50
-        
-        return {
+
+        result = {
             "floor_area_m2": round(total_area, 2),
             "concrete_volume_m3": round(concrete_volume, 2),
             "steel_weight_kg": round(steel_weight, 2),
             "rebar_length_m": round(rebar_length, 2),
-            "item_counts": counts
         }
+        # Flatten item counts as individual scalar rows (no nested objects)
+        for item_name, count in counts.items():
+            if item_name and item_name != "unknown":
+                key = item_name.lower().replace(" ", "_")[:25] + "_count"
+                result[key] = int(count)
+        return result
     
     def _estimate_costs(self, quantities: Dict) -> Dict:
         concrete_cost = quantities.get("concrete_volume_m3", 0) * 150
