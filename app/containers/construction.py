@@ -1342,6 +1342,8 @@ class ConstructionContainer(UniversalContainer):
             return uc.get("plaster_m2", 28.0)
         if "tile" in n or "tiling" in n:
             return uc.get("tiling_m2", 85.0)
+        if "floor_area" in n or "gfa" in n or "gross_floor" in n:
+            return 1200.0  # composite all-in building rate $/m² (structure + MEP + finishes)
         if "floor" in n and u in area_units:
             return uc.get("flooring_m2", 70.0)
         if "paint" in n:
@@ -2693,17 +2695,18 @@ class ConstructionContainer(UniversalContainer):
         direct_volume = sum(m.get("value", 0) for m in measurements if m.get("type") == "volume")
         counts = {m.get("item", "unknown"): m.get("value", 0) for m in measurements if m.get("type") == "count"}
 
+        # Sanity cap — largest buildings in the world are ~500k m²
+        total_area = min(total_area, 500_000)
         concrete_volume = direct_volume if direct_volume > 0 else total_area * 0.15
-        steel_weight = concrete_volume * 120
-        rebar_length = concrete_volume * 50
+        concrete_volume = min(concrete_volume, 750_000)
+        # Only keep steel weight — rebar_length is redundant (same material, causes double-counting)
+        steel_weight_kg = round(concrete_volume * 120, 2)
 
         result = {
             "floor_area_m2": round(total_area, 2),
             "concrete_volume_m3": round(concrete_volume, 2),
-            "steel_weight_kg": round(steel_weight, 2),
-            "rebar_length_m": round(rebar_length, 2),
+            "steel_weight_kg": steel_weight_kg,
         }
-        # Flatten item counts as individual scalar rows (no nested objects)
         for item_name, count in counts.items():
             if item_name and item_name != "unknown":
                 key = item_name.lower().replace(" ", "_")[:25] + "_count"
@@ -5102,34 +5105,48 @@ Total Extension of Time Sought: {total_delay} days
         )
         if has_quantities:
             panels.append({"type": "quantities", "title": "Quantities", "data": quantities})
-        try:
-            cost_result = await self.estimate_costs(
-                {"quantities": quantities} if has_quantities else {},
-                {"location": p.get("location", "US National Average"),
-                 "project_type": p.get("project_type", "general_building")}
-            )
-            downstream["cost_estimate"] = cost_result
-            if cost_result.get("summary", {}).get("total_estimate", 0) > 0:
+        cost_result = {}
+        if has_quantities:
+            try:
+                # Use area-based all-in rate when GFA is available (avoids double-counting
+                # concrete + steel which are already embedded in the composite $/m² rate).
+                # Fall back to elemental pricing only when no floor area is known.
+                gfa = quantities.get("floor_area_m2", 0)
+                if isinstance(gfa, dict):
+                    gfa = gfa.get("quantity", 0)
+                if gfa > 0:
+                    subtotal = gfa * 1200  # $1,200/m² composite (structure+MEP+finishes)
+                else:
+                    subtotal = (
+                        quantities.get("concrete_volume_m3", 0) * 150 +
+                        quantities.get("steel_weight_kg", 0) * 1.8
+                    )
+                overhead = round(subtotal * 0.10, 2)
+                contingency = round(subtotal * 0.05, 2)
+                total_estimate = round(subtotal + overhead + contingency, 2)
+                cost_result = {
+                    "summary": {
+                        "subtotal": round(subtotal, 2),
+                        "overhead": overhead,
+                        "contingency": contingency,
+                        "total_estimate": total_estimate,
+                    }
+                }
+                downstream["cost_estimate"] = cost_result
                 panels.append({
                     "type": "cost_estimate",
                     "title": "Cost Estimate",
-                    "data": cost_result.get("summary", {}),
-                    "line_items": cost_result.get("line_items", [])
+                    "data": cost_result["summary"],
+                    "line_items": []
                 })
-        except Exception:
-            cost_result = {}
+            except Exception:
+                pass
         # Procurement button always shown after any document analysis
         next_actions.append({
             "action": "procurement_list_generator",
             "label": "Generate Procurement List",
             "reason": "Generate prioritised procurement schedule"
         })
-        if has_quantities:
-            next_actions.append({
-                "action": "payment_certificate",
-                "label": "Issue Payment Certificate",
-                "reason": "Cost estimate available"
-            })
 
         # Risks → risk register
         risks = doc_result.get("risks") or doc_result.get("identified_risks") or []
