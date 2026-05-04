@@ -47,9 +47,14 @@ class DrawingQTOBlock(UniversalBlock):
         params = params or {}
 
         file_path = self._resolve_file_path(input_data, params)
-        if not file_path:
-            return {"status": "error", "error": "No file_path provided. Requires a DXF or DWG file path."}
-        if not os.path.exists(file_path):
+
+        # If no valid file path, try text-based quantity extraction
+        if not file_path or not os.path.exists(file_path):
+            text_input = self._extract_text_from_input(input_data, params)
+            if text_input:
+                return self._extract_quantities_from_text(text_input)
+            if not file_path:
+                return {"status": "error", "error": "No file_path provided. Requires a DXF or DWG file path, or text containing dimensions."}
             return {"status": "error", "error": f"File not found: {file_path}"}
 
         ext = os.path.splitext(file_path)[1].lower()
@@ -97,6 +102,144 @@ class DrawingQTOBlock(UniversalBlock):
             "entity_count": len(list(msp)),
             "layers": layers[:50],
             "drawing_units": str(doc.units),
+        }
+
+    def _extract_text_from_input(self, input_data: Any, params: Dict) -> str:
+        """Extract raw text from input when no file is provided."""
+        if isinstance(input_data, str):
+            return input_data
+        if isinstance(input_data, dict):
+            return (
+                input_data.get("text", "") or
+                input_data.get("content", "") or
+                input_data.get("extracted_text", "") or
+                ""
+            )
+        if isinstance(params, dict):
+            return params.get("text", "") or params.get("content", "") or ""
+        return ""
+
+    def _extract_quantities_from_text(self, text: str) -> Dict:
+        """Extract measurements and quantities from text descriptions."""
+        import re
+        t = text.lower()
+
+        measurements = []
+        areas = []
+        volumes = []
+
+        # Dimension patterns: 5.5m x 3.2m, 10' x 12', etc.
+        dim_pat = re.compile(
+            r'(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')\s*(?:x|by|×)\s*(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')',
+            re.IGNORECASE
+        )
+        for m in dim_pat.finditer(t):
+            w = float(m.group(1))
+            h = float(m.group(2))
+            unit = "m" if "m" in m.group(0).lower() else "ft"
+            area_val = w * h
+            measurements.append({
+                "type": "dimension",
+                "length_m": round((w + h) * 2, 3),
+                "width": w,
+                "height": h,
+                "unit": unit,
+                "raw": m.group(0),
+            })
+            areas.append({
+                "type": "rectangular",
+                "area_m2": round(area_val, 3) if unit == "m" else round(area_val * 0.092903, 3),
+                "width": w,
+                "height": h,
+                "unit": unit,
+                "source": "text_extraction",
+            })
+
+        # Single dimensions: 150mm, 5.5m, etc.
+        single_pat = re.compile(r'\b(\d+(?:\.\d+)?)\s*(mm|cm|m|ft|in)\b', re.IGNORECASE)
+        for m in single_pat.finditer(t):
+            val = float(m.group(1))
+            unit = m.group(2).lower()
+            if unit == "mm":
+                val_m = val / 1000.0
+            elif unit == "cm":
+                val_m = val / 100.0
+            elif unit == "ft":
+                val_m = val * 0.3048
+            elif unit == "in":
+                val_m = val * 0.0254
+            else:
+                val_m = val
+            measurements.append({
+                "type": "length",
+                "length_m": round(val_m, 4),
+                "unit": unit,
+                "raw": m.group(0),
+            })
+
+        # Area patterns: 100m2, 500 sqm, etc.
+        area_pat = re.compile(r'(\d+(?:\.\d+)?)\s*(?:m2|m²|sqm|sq\.?\s*m|sf|sq\.?\s*ft)', re.IGNORECASE)
+        for m in area_pat.finditer(t):
+            val = float(m.group(1))
+            unit = "m2" if any(u in m.group(0).lower() for u in ["m2", "m²", "sqm", "sq m"]) else "ft2"
+            area_m2 = val if unit == "m2" else val * 0.092903
+            areas.append({
+                "type": "area",
+                "area_m2": round(area_m2, 3),
+                "unit": unit,
+                "source": "text_extraction",
+            })
+
+        # Volume patterns: 45m3, 100 cubic metres, etc.
+        vol_pat = re.compile(r'(\d+(?:\.\d+)?)\s*(?:m3|m³|cbm|cu\.?\s*m|cubic\s*m)', re.IGNORECASE)
+        for m in vol_pat.finditer(t):
+            val = float(m.group(1))
+            volumes.append({
+                "type": "volume",
+                "volume_m3": round(val, 3),
+                "unit": "m3",
+                "source": "text_extraction",
+            })
+
+        # Concrete / steel quantities from descriptive text
+        concrete_pat = re.compile(r'concrete[^\n]*?(\d[\d,\.\s]*)\s*(?:m3|m³|cbm)', re.IGNORECASE)
+        m = concrete_pat.search(t)
+        if m:
+            try:
+                vol = float(m.group(1).replace(",", "").replace(" ", ""))
+                volumes.append({"type": "concrete", "volume_m3": round(vol, 2), "unit": "m3", "source": "text_extraction"})
+            except ValueError:
+                pass
+
+        steel_pat = re.compile(r'(?:steel|rebar|reinforcement)[^\n]*?(\d[\d,\.\s]*)\s*(?:kg|ton|tonne)', re.IGNORECASE)
+        m = steel_pat.search(t)
+        if m:
+            try:
+                weight = float(m.group(1).replace(",", "").replace(" ", ""))
+                if "ton" in m.group(0).lower():
+                    weight = weight * 1000
+                measurements.append({"type": "steel_weight", "length_m": round(weight, 2), "unit": "kg", "source": "text_extraction"})
+            except ValueError:
+                pass
+
+        total_area = sum(a["area_m2"] for a in areas)
+        total_length = sum(m["length_m"] for m in measurements)
+
+        # Estimate volumes from areas + thickness
+        estimated_volumes = self._estimate_volumes(areas, {})
+
+        return {
+            "status": "success",
+            "source": "text_extraction",
+            "note": "No DXF/DWG file provided. Quantities extracted from text description.",
+            "measurements": measurements,
+            "areas": areas,
+            "volumes": volumes + estimated_volumes,
+            "total_area_m2": round(total_area, 3),
+            "total_length_m": round(total_length, 3),
+            "entity_count": 0,
+            "layers": [],
+            "drawing_units": "text",
         }
 
     def _resolve_file_path(self, input_data: Any, params: Dict) -> Optional[str]:

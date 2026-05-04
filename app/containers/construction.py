@@ -5036,6 +5036,7 @@ Total Extension of Time Sought: {total_delay} days
 
     async def _analyse_text_only(self, text: str, doc_type_hint: str = "auto") -> Dict:
         """Classify and extract structured data from raw text without a file."""
+        import re
         t = text.lower()
 
         # Detect doc type from content
@@ -5054,13 +5055,13 @@ Total Extension of Time Sought: {total_delay} days
         else:
             doc_type = "report"
 
-        # Extract quantities from text
-        import re
         quantities = {}
+
+        # Named quantity patterns
         patterns = [
-            (r"concrete[^\n]*?(\d[\d,\.]*)\s*m3", "concrete_m3", "m3"),
-            (r"rebar[^\n]*?(\d[\d,\.]*)\s*kg", "rebar_kg", "kg"),
-            (r"reinforcement[^\n]*?(\d[\d,\.]*)\s*kg", "rebar_kg", "kg"),
+            (r"concrete[^\n]*?(\d[\d,\.]*)\s*m3", "concrete_volume_m3", "m3"),
+            (r"rebar[^\n]*?(\d[\d,\.]*)\s*kg", "steel_weight_kg", "kg"),
+            (r"reinforcement[^\n]*?(\d[\d,\.]*)\s*kg", "steel_weight_kg", "kg"),
             (r"steel[^\n]*?(\d[\d,\.]*)\s*kg", "structural_steel_kg", "kg"),
             (r"curtain wall[^\n]*?(\d[\d,\.]*)\s*m2", "curtain_wall_m2", "m2"),
             (r"glazing[^\n]*?(\d[\d,\.]*)\s*m2", "glazing_m2", "m2"),
@@ -5084,6 +5085,54 @@ Total Extension of Time Sought: {total_delay} days
                     quantities[key] = {"quantity": val, "unit": unit}
                 except ValueError:
                     pass
+
+        # Generic area extraction: 100m2, 500 sqm, 250 m², etc.
+        area_match = re.search(r'(\d[\d,\.]*)\s*(?:m2|m²|sqm|sq\.?\s*m)', t)
+        if area_match:
+            try:
+                floor_area = float(area_match.group(1).replace(",", ""))
+                quantities["floor_area_m2"] = {"quantity": floor_area, "unit": "m2"}
+            except ValueError:
+                pass
+
+        # Generic dimension extraction: 5.5m x 3.2m
+        dim_match = re.search(r'(\d+(?:\.\d+)?)\s*m\s*(?:x|by|×)\s*(\d+(?:\.\d+)?)\s*m', t)
+        if dim_match:
+            try:
+                w = float(dim_match.group(1))
+                h = float(dim_match.group(2))
+                area = w * h
+                quantities["floor_area_m2"] = {"quantity": round(area, 2), "unit": "m2"}
+            except ValueError:
+                pass
+
+        # Thickness extraction for volume calculation
+        thickness_match = re.search(r'(\d+(?:\.\d+)?)\s*(mm|cm|m)\s*(?:thick|depth)', t)
+        slab_thickness_m = 0.15  # default 150mm
+        if thickness_match:
+            try:
+                tv = float(thickness_match.group(1))
+                tu = thickness_match.group(2).lower()
+                if tu == "mm":
+                    slab_thickness_m = tv / 1000.0
+                elif tu == "cm":
+                    slab_thickness_m = tv / 100.0
+                else:
+                    slab_thickness_m = tv
+            except ValueError:
+                pass
+
+        # Derive concrete volume from floor area + thickness if not already extracted
+        if "concrete_volume_m3" not in quantities and "floor_area_m2" in quantities:
+            floor_area = quantities["floor_area_m2"]["quantity"]
+            concrete_vol = floor_area * slab_thickness_m
+            quantities["concrete_volume_m3"] = {"quantity": round(concrete_vol, 2), "unit": "m3"}
+
+        # Derive steel weight from concrete volume if not already extracted
+        if "steel_weight_kg" not in quantities and "concrete_volume_m3" in quantities:
+            concrete_vol = quantities["concrete_volume_m3"]["quantity"]
+            steel_kg = concrete_vol * 120  # typical 120 kg/m3
+            quantities["steel_weight_kg"] = {"quantity": round(steel_kg, 2), "unit": "kg"}
 
         # Extract risks from text
         risks = []
@@ -5111,10 +5160,19 @@ Total Extension of Time Sought: {total_delay} days
         2. Auto-dispatches downstream actions based on what was found.
         3. Returns structured panels ready for UI rendering — no LLM required.
         """
-        data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
-        file_path = data.get("file_path") or p.get("file_path") or ""
-        extracted_text = data.get("extracted_text") or data.get("text") or ""
+        if isinstance(input_data, dict):
+            data = input_data
+            file_path = data.get("file_path") or p.get("file_path") or ""
+            extracted_text = data.get("extracted_text") or data.get("text") or ""
+        elif isinstance(input_data, str):
+            data = {}
+            file_path = p.get("file_path") or ""
+            extracted_text = input_data
+        else:
+            data = {}
+            file_path = p.get("file_path") or ""
+            extracted_text = ""
 
         if not file_path and not extracted_text:
             return {"status": "error", "error": "Provide file_path or extracted_text"}
@@ -5157,28 +5215,32 @@ Total Extension of Time Sought: {total_delay} days
             doc_result.get("extracted_quantities") or
             doc_result.get("bill_of_quantities") or {}
         )
+
+        def _qty_val(q):
+            """Normalize quantity value to a number."""
+            if isinstance(q, dict):
+                return float(q.get("quantity", 0))
+            try:
+                return float(q)
+            except (ValueError, TypeError):
+                return 0.0
+
         # Only show quantities panel when at least one value is non-zero
         has_quantities = bool(quantities) and any(
-            (v.get("quantity", 0) if isinstance(v, dict) else v) > 0
-            for v in quantities.values()
+            _qty_val(v) > 0 for v in quantities.values()
         )
         if has_quantities:
             panels.append({"type": "quantities", "title": "Quantities", "data": quantities})
         cost_result = {}
         if has_quantities:
             try:
-                # Use area-based all-in rate when GFA is available (avoids double-counting
-                # concrete + steel which are already embedded in the composite $/m² rate).
-                # Fall back to elemental pricing only when no floor area is known.
-                gfa = quantities.get("floor_area_m2", 0)
-                if isinstance(gfa, dict):
-                    gfa = gfa.get("quantity", 0)
+                gfa = _qty_val(quantities.get("floor_area_m2", 0))
                 if gfa > 0:
                     subtotal = gfa * 1200  # $1,200/m² composite (structure+MEP+finishes)
                 else:
                     subtotal = (
-                        quantities.get("concrete_volume_m3", 0) * 150 +
-                        quantities.get("steel_weight_kg", 0) * 1.8
+                        _qty_val(quantities.get("concrete_volume_m3", 0)) * 150 +
+                        _qty_val(quantities.get("steel_weight_kg", 0)) * 1.8
                     )
                 overhead = round(subtotal * 0.10, 2)
                 contingency = round(subtotal * 0.05, 2)
@@ -5200,12 +5262,33 @@ Total Extension of Time Sought: {total_delay} days
                 })
             except Exception:
                 pass
-        # Procurement button always shown after any document analysis
-        next_actions.append({
-            "action": "procurement_list_generator",
-            "label": "Generate Procurement List",
-            "reason": "Generate prioritised procurement schedule"
-        })
+
+        # ── Procurement panel (always generated) ─────────────────────────────
+        try:
+            proc_input = {
+                "quantities": quantities,
+                "summary": cost_result.get("summary", {}),
+                "file_path": file_path,
+            }
+            proc_result = await self.procurement_list_generator(proc_input, {})
+            downstream["procurement"] = proc_result
+            panels.append({
+                "type": "procurement",
+                "title": "Procurement",
+                "data": {
+                    "procurement_list": proc_result.get("procurement_list", []),
+                    "total_procurement_cost": proc_result.get("total_procurement_cost", 0),
+                    "critical_items": proc_result.get("critical_long_lead_items", 0),
+                },
+                "total": proc_result.get("total_items", 0)
+            })
+            next_actions.append({
+                "action": "procurement_list_generator",
+                "label": "Generate Procurement List",
+                "reason": "Generate prioritised procurement schedule"
+            })
+        except Exception:
+            pass
 
         # Risks → risk register
         risks = doc_result.get("risks") or doc_result.get("identified_risks") or []
