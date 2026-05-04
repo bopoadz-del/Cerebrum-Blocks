@@ -11,6 +11,7 @@ from app.core.universal_base import UniversalBlock
 
 _TIMEOUT = 20.0
 _SERPER_URL = "https://google.serper.dev/search"
+_BRAVE_URL  = "https://api.search.brave.com/res/v1/web/search"
 
 
 async def _search_duckduckgo(query: str, num: int) -> list:
@@ -59,6 +60,31 @@ async def _search_serper(query: str, num: int, api_key: str) -> list:
     return results
 
 
+async def _search_brave(query: str, num: int, api_key: str) -> list:
+    async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        resp = await client.get(
+            _BRAVE_URL,
+            headers={
+                "Accept": "application/json",
+                "X-Subscription-Token": api_key,
+            },
+            params={"q": query, "count": num, "offset": 0},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+    results = []
+    for item in data.get("web", {}).get("results", [])[:num]:
+        results.append({
+            "title": item.get("title", ""),
+            "url": item.get("url", ""),
+            "snippet": item.get("description", ""),
+            "display_url": urlparse(item.get("url", "")).netloc,
+            "source": "brave",
+        })
+    return results
+
+
 class SearchBlock(UniversalBlock):
     """Real-time web search — DuckDuckGo HTML (no API key) or Serper API"""
 
@@ -99,11 +125,20 @@ class SearchBlock(UniversalBlock):
         if not query or not query.strip():
             return {"status": "error", "error": "Query is required"}
 
+        brave_key = os.getenv("BRAVE_API_KEY", "")
         serper_key = os.getenv("SERPER_API_KEY", "")
-        provider = "serper" if serper_key else "duckduckgo"
+
+        # Priority: Brave > Serper > DuckDuckGo
+        provider = "duckduckgo"
+        if brave_key:
+            provider = "brave"
+        elif serper_key:
+            provider = "serper"
 
         try:
-            if serper_key:
+            if brave_key:
+                results = await _search_brave(query.strip(), num, brave_key)
+            elif serper_key:
                 results = await _search_serper(query.strip(), num, serper_key)
             else:
                 results = await _search_duckduckgo(query.strip(), num)

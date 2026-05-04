@@ -16,6 +16,7 @@ from .chat import ChatBlock
 from .translate import TranslateBlock
 from .voice import VoiceBlock
 from .web import WebBlock
+from .search import SearchBlock
 
 # ── Construction Intelligence ─────────────────────────────────────────────────
 from .boq_processor import BOQProcessorBlock
@@ -66,6 +67,7 @@ BLOCK_REGISTRY = {
     "translate":        TranslateBlock,
     "voice":            VoiceBlock,
     "web":              WebBlock,
+    "search":           SearchBlock,
 
     # Construction Intelligence
     "construction":         ConstructionContainer,
