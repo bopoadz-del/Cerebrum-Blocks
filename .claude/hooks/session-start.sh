@@ -43,7 +43,11 @@ python3 -m pip install --quiet --break-system-packages --ignore-installed -r req
 # --- Frontend deps -----------------------------------------------------
 if [ -d frontend ] && [ -f frontend/package.json ]; then
     echo "[session-start] Installing frontend npm dependencies…"
-    (cd frontend && npm install --no-audit --no-fund --loglevel=error)
+    # `npm ci` reads package-lock.json verbatim and never modifies it, so
+    # the working tree stays clean across SessionStart runs. Falls back to
+    # `npm install` if the lockfile is missing or out of sync.
+    (cd frontend && (npm ci --no-audit --no-fund --loglevel=error \
+        || npm install --no-audit --no-fund --loglevel=error))
 fi
 
 # --- Persist env for the session --------------------------------------
