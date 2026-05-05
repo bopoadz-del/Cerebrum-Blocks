@@ -15,6 +15,7 @@ import type {
   ProcurementItem,
   ProcessingState,
   PipelineCtx,
+  NextAction,
 } from '@/types';
 import { api, mapConstructionResult } from '@/api';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -49,6 +50,8 @@ function AppContent() {
 
   // Active pipeline context — stored after successful analysis, used by action buttons
   const [activePipelineCtx, setActivePipelineCtx] = useState<PipelineCtx | null>(null);
+  const [nextActions, setNextActions] = useState<NextAction[]>([]);
+  const [activeChatContext, setActiveChatContext] = useState<string>('');
 
   // Hidden file input for local drive browsing
   const localFileInputRef = useRef<HTMLInputElement>(null);
@@ -108,16 +111,21 @@ function AppContent() {
     setProcurement(mapped.procurement);
 
     const panels: any[] = analysisResult.panels || [];
-    const qPanelData = panels.find((p: any) => p.type === 'quantities')?.data || {};
-    const cPanelData = panels.find((p: any) => p.type === 'cost_estimate')?.data || {};
+    const qPanel = panels.find((p: any) => p.type === 'quantities');
+    const cPanel = panels.find((p: any) => p.type === 'cost_estimate');
+    const qPanelData = qPanel?.data || {};
+    // Reference reads cPanel.line_items (panel-level) then falls back to inside data
+    const costLineItems = cPanel?.line_items || cPanel?.data?.line_items || cPanel?.data?.items || [];
 
     setActivePipelineCtx({
       file_path: filePath,
       extracted_text: extractedText,
       quantities: qPanelData,
-      costLineItems: cPanelData.line_items || cPanelData.items || [],
+      costLineItems,
       fileName,
     });
+    setNextActions(analysisResult.next_actions || []);
+    setActiveChatContext(analysisResult.chat_context || '');
 
     setRightOpen(true);
     return mapped;
@@ -157,10 +165,14 @@ function AppContent() {
         }
       }
 
-      // Text-only message → chat API
+      // Text-only message → chat API (inject document context if available)
       if (content.trim() && files.length === 0) {
         setProcessing({ active: true, stage: 'Generating response...', progress: 60 });
-        const result = await api.sendMessage([...messages, { id: uuidv4(), role: 'user', content, timestamp: Date.now() }]);
+        const contextualContent = activeChatContext
+          ? `I am asking about the file "${activePipelineCtx?.fileName}".\n\nContext:\n---\n${activeChatContext}\n---\n\nQuestion: ${content}`
+          : content;
+        const chatMessages = [...messages, { id: uuidv4(), role: 'user' as const, content: contextualContent, timestamp: Date.now() }];
+        const result = await api.sendMessage(chatMessages);
         addMessage('assistant', result.text || result.response || '');
       }
     } catch (err) {
@@ -181,6 +193,8 @@ function AppContent() {
     setContract([]);
     setProcurement([]);
     setActivePipelineCtx(null);
+    setNextActions([]);
+    setActiveChatContext('');
   }, []);
 
   const handleSelectProject = useCallback((project: Project) => {
@@ -255,6 +269,12 @@ function AppContent() {
       return [...prev, newDrive];
     });
 
+    // ZVec index file names for related-file search (fire-and-forget)
+    const indexable = files.filter(f => /\.(pdf|txt|md|csv|docx)$/i.test(f.name)).slice(0, 200);
+    if (indexable.length > 0) {
+      api.runBlock('zvec', indexable.map(f => f.name).join('\n'), { operation: 'embed' }).catch(() => {});
+    }
+
     // Reset so the same files can be re-selected
     event.target.value = '';
   }, []);
@@ -286,16 +306,28 @@ function AppContent() {
 
     try {
       const result = await api.runAction(action, activePipelineCtx);
-      const summary =
-        result.message ||
-        result.summary ||
-        result.text ||
-        result.chat_context ||
-        (result.panels ? `${result.panels.length} panel(s) updated.` : JSON.stringify(result).slice(0, 300));
-      addMessage('system', summary);
 
-      // If the action returned panels, refresh the display
-      if (result.panels) {
+      // Procurement list generator — convert to ProcurementItem[] and show in panel
+      if (action === 'procurement_list_generator') {
+        const rawItems: any[] = result.procurement_list || result.items || [];
+        if (rawItems.length > 0) {
+          setProcurement(rawItems.map((item: any, i: number) => ({
+            id: String(i + 1),
+            item: item.item || item.name || 'Unknown',
+            quantity: item.quantity || 0,
+            unit: item.unit || 'units',
+            leadTime: item.lead_time_weeks || item.lead_time_days || item.lead_time || 0,
+            critical: item.priority === 'critical' || item.critical === true,
+            supplier: item.supplier || undefined,
+            status: item.status || 'PENDING',
+          })));
+        }
+        const total = result.total_procurement_cost ? ` Total: $${Number(result.total_procurement_cost).toLocaleString()}.` : '';
+        const critical = result.critical_long_lead_items ? ` ${result.critical_long_lead_items} critical long-lead items.` : '';
+        addMessage('system', `Procurement list generated: ${rawItems.length} items.${total}${critical}`);
+
+      // Actions that may return a panels array
+      } else if (result.panels) {
         const mapped = mapConstructionResult(result);
         if (mapped.documentInfo) setDocumentInfo(mapped.documentInfo);
         if (mapped.quantities.length > 0) setQuantities(mapped.quantities);
@@ -305,6 +337,19 @@ function AppContent() {
         if (mapped.schedule.length > 0) setSchedule(mapped.schedule);
         if (mapped.contract.length > 0) setContract(mapped.contract);
         if (mapped.procurement.length > 0) setProcurement(mapped.procurement);
+        addMessage('system', result.message || result.summary || result.chat_context || `${action.replace(/_/g, ' ')} complete.`);
+
+      // Flat result — extract best available message
+      } else {
+        const summary =
+          result.message ||
+          result.summary ||
+          result.text ||
+          result.chat_context ||
+          result.certificate_number ||
+          (result.overall_progress_percent != null ? `Overall progress: ${result.overall_progress_percent}%` : null) ||
+          JSON.stringify(result).slice(0, 300);
+        addMessage('system', summary || `${action.replace(/_/g, ' ')} complete.`);
       }
     } catch (err) {
       addMessage('error', `Action "${action}" failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -362,6 +407,7 @@ function AppContent() {
         schedule={schedule}
         contract={contract}
         procurement={procurement}
+        nextActions={nextActions}
         onAction={handleAction}
         isOpen={rightOpen}
         onToggle={() => setRightOpen(!rightOpen)}

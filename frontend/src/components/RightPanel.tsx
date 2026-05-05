@@ -23,7 +23,8 @@ import type {
   Submittal,
   ScheduleItem,
   ContractClause,
-  ProcurementItem
+  ProcurementItem,
+  NextAction,
 } from '@/types';
 
 interface RightPanelProps {
@@ -35,6 +36,7 @@ interface RightPanelProps {
   schedule?: ScheduleItem[];
   contract?: ContractClause[];
   procurement?: ProcurementItem[];
+  nextActions?: NextAction[];
   onAction: (action: string, data?: any) => void;
   isOpen: boolean;
   onToggle: () => void;
@@ -88,6 +90,7 @@ export default function RightPanel({
   schedule,
   contract,
   procurement,
+  nextActions,
   onAction,
   isOpen,
   onToggle,
@@ -409,61 +412,47 @@ export default function RightPanel({
               </PanelSection>
             )}
 
-            {/* Next Actions */}
-            {hasData && (
-              <div className="px-4 py-4 border-t border-[hsl(var(--border))]">
-                <div className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-3">
-                  Next Actions
+            {/* Next Actions — dynamic from pipeline, fallback to defaults */}
+            {hasData && (() => {
+              const defaultActions: NextAction[] = [
+                { action: 'procurement_list_generator', label: 'Generate Procurement List' },
+                { action: 'progress_tracker', label: 'Progress Tracker' },
+                { action: 'payment_certificate', label: 'Payment Certificate' },
+              ];
+              const actions = (nextActions && nextActions.length > 0) ? nextActions : defaultActions;
+              return (
+                <div className="px-4 py-4 border-t border-[hsl(var(--border))]">
+                  <div className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-3">
+                    Next Actions
+                  </div>
+                  <div className="space-y-2">
+                    {actions.map(a => (
+                      <button
+                        key={a.action}
+                        onClick={() => handleAction(a.action)}
+                        disabled={!!loadingAction}
+                        className="w-full flex items-center justify-between px-3 py-2 text-sm bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] rounded-lg transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Wrench className="w-4 h-4 text-[hsl(var(--amber))] shrink-0" />
+                          <div className="min-w-0">
+                            <div>{a.label}</div>
+                            {a.reason && (
+                              <div className="text-xs text-[hsl(var(--muted-foreground))] truncate">{a.reason}</div>
+                            )}
+                          </div>
+                        </div>
+                        {loadingAction === a.action ? (
+                          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                        ) : (
+                          <ArrowRight className="w-4 h-4 text-[hsl(var(--muted-foreground))] shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => handleAction('procurement_list')}
-                    disabled={!!loadingAction}
-                    className="w-full flex items-center justify-between px-3 py-2 text-sm bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] rounded-lg transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Wrench className="w-4 h-4 text-[hsl(var(--amber))]" />
-                      <span>Generate Procurement List</span>
-                    </div>
-                    {loadingAction === 'procurement_list' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <ArrowRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleAction('progress_tracker')}
-                    disabled={!!loadingAction}
-                    className="w-full flex items-center justify-between px-3 py-2 text-sm bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] rounded-lg transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[hsl(var(--amber))]" />
-                      <span>Progress Tracker</span>
-                    </div>
-                    {loadingAction === 'progress_tracker' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <ArrowRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleAction('payment_certificate')}
-                    disabled={!!loadingAction}
-                    className="w-full flex items-center justify-between px-3 py-2 text-sm bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] rounded-lg transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-[hsl(var(--amber))]" />
-                      <span>Payment Certificate</span>
-                    </div>
-                    {loadingAction === 'payment_certificate' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <ArrowRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </>
         )}
       </div>

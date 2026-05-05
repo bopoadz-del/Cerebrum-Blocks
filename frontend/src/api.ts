@@ -155,6 +155,15 @@ export const api = {
     });
   },
 
+  // Generic one-off block call (used for ZVec, etc.)
+  async runBlock(block: string, input: any, params: any): Promise<any> {
+    const result = await fetchApi('/v1/execute', {
+      method: 'POST',
+      body: JSON.stringify({ block, input, params }),
+    });
+    return result.result ?? result;
+  },
+
   // Health check
   async health(): Promise<{ status: string }> {
     return fetchApi('/health');

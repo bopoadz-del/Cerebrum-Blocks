@@ -128,6 +128,12 @@ export interface PipelineCtx {
   fileName: string;
 }
 
+export interface NextAction {
+  action: string;
+  label: string;
+  reason?: string;
+}
+
 export type Theme = 'light' | 'dark';
 
 export type PanelType =
