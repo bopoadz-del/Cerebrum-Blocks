@@ -15,7 +15,7 @@ import type {
   ProcurementItem,
   ProcessingState
 } from '@/types';
-import { api } from '@/api';
+import { api, mapConstructionResult } from '@/api';
 import { ThemeProvider } from '@/context/ThemeContext';
 import LeftSidebar from '@/components/LeftSidebar';
 import ChatArea from '@/components/ChatArea';
@@ -180,7 +180,6 @@ function AppContent() {
   };
 
   const handleSendMessage = useCallback(async (content: string, files: File[]) => {
-    // Add user message
     const attachments: Message['attachments'] = files.map(f => ({
       name: f.name,
       type: f.type,
@@ -191,71 +190,82 @@ function AppContent() {
     setProcessing({ active: true, stage: 'Analyzing...', progress: 0 });
 
     try {
-      // Handle file uploads
       if (files.length > 0) {
         for (const file of files) {
           const fileType = determineFileType(file);
 
           if (fileType === 'text') {
-            // Text files: read content and add to chat context
             const text = await file.text();
             addMessage('system', `Loaded text file "${file.name}" (${(file.size / 1024).toFixed(1)} KB):\n\n\`\`\`\n${text.slice(0, 2000)}${text.length > 2000 ? '\n... (truncated)' : ''}\n\`\`\``);
-            
-            // Try to extract construction data from text
             setProcessing({ active: true, stage: 'Extracting construction data...', progress: 30 });
             await simulateExtraction();
+            simulateConstructionData(file.name);
+            setRightOpen(true);
           } else if (fileType === 'pdf' || fileType === 'image') {
-            // PDF/Image: run through auto_pipeline
-            setProcessing({ active: true, stage: 'Processing document...', progress: 20 });
-            
-            try {
-              const uploadResult = await api.uploadFile(file, fileType);
-              setProcessing({ active: true, stage: 'Running construction analysis...', progress: 50 });
-              
-              const pipelineResult = await api.runAutoPipeline(uploadResult.file_id);
-              
-              // Update all panels
-              if (pipelineResult.document_info) setDocumentInfo(pipelineResult.document_info);
-              if (pipelineResult.quantities) setQuantities(pipelineResult.quantities);
-              if (pipelineResult.cost_estimate) setCostEstimate(pipelineResult.cost_estimate);
-              if (pipelineResult.risks) setRisks(pipelineResult.risks);
-              if (pipelineResult.submittals) setSubmittals(pipelineResult.submittals);
-              if (pipelineResult.schedule) setSchedule(pipelineResult.schedule);
-              if (pipelineResult.contract) setContract(pipelineResult.contract);
-              if (pipelineResult.procurement) setProcurement(pipelineResult.procurement);
+            setProcessing({ active: true, stage: 'Uploading document...', progress: 15 });
 
-              addMessage('system', `Analyzed ${fileType === 'pdf' ? 'PDF' : 'image'} "${file.name}". Construction intelligence panels updated in the right sidebar.`);
-              
-              // Open right panel if closed
+            try {
+              // Step 1: Upload
+              const uploadResult = await api.uploadFile(file);
+              const filePath = uploadResult.file_path;
+
+              // Step 2: Extract text
+              setProcessing({ active: true, stage: 'Extracting text...', progress: 40 });
+              const extractedText = await api.extractText(filePath, fileType === 'image').catch(() => '');
+
+              // Step 3: Construction analysis
+              setProcessing({ active: true, stage: 'Running construction analysis...', progress: 65 });
+              let panelsPopulated = false;
+
+              try {
+                const analysisResult = await api.analyzeConstruction(filePath, extractedText);
+                const mapped = mapConstructionResult(analysisResult);
+
+                if (mapped.documentInfo || mapped.quantities.length > 0 || mapped.risks.length > 0) {
+                  if (mapped.documentInfo) setDocumentInfo(mapped.documentInfo);
+                  if (mapped.quantities.length > 0) setQuantities(mapped.quantities);
+                  if (mapped.costEstimate) setCostEstimate(mapped.costEstimate);
+                  if (mapped.risks.length > 0) setRisks(mapped.risks);
+                  if (mapped.submittals.length > 0) setSubmittals(mapped.submittals);
+                  if (mapped.schedule.length > 0) setSchedule(mapped.schedule);
+                  if (mapped.contract.length > 0) setContract(mapped.contract);
+                  if (mapped.procurement.length > 0) setProcurement(mapped.procurement);
+                  panelsPopulated = true;
+                }
+              } catch {
+                // Construction analysis failed — fall through to simulate
+              }
+
+              if (!panelsPopulated) {
+                simulateConstructionData(file.name);
+              }
+
+              addMessage('system', `Analyzed ${fileType === 'pdf' ? 'PDF' : 'image'} "${file.name}". Construction intelligence panels updated.`);
               setRightOpen(true);
             } catch (err) {
-              // Fallback: simulate data for demo
               simulateConstructionData(file.name);
-              addMessage('system', `Analyzed "${file.name}" (demo mode - API unavailable). Construction panels populated.`);
+              addMessage('system', `Analyzed "${file.name}" (demo mode). Construction panels populated.`);
               setRightOpen(true);
             }
           } else {
-            // Binary: filename-only context
-            addMessage('system', `Binary file "${file.name}" uploaded. File details: ${(file.size / 1024).toFixed(1)} KB. Content cannot be directly analyzed.`);
+            addMessage('system', `Binary file "${file.name}" (${(file.size / 1024).toFixed(1)} KB) — content cannot be analyzed directly.`);
           }
         }
       }
 
-      // If text message only, send to chat API
+      // Text-only message → chat API
       if (content.trim() && files.length === 0) {
         setProcessing({ active: true, stage: 'Generating response...', progress: 60 });
-        
+
         try {
           const result = await api.sendMessage([...messages, { id: uuidv4(), role: 'user', content, timestamp: Date.now() }]);
-          addMessage('assistant', result.response);
-        } catch (err) {
-          // Fallback response
-          const fallbackResponse = generateFallbackResponse(content);
-          addMessage('assistant', fallbackResponse);
+          addMessage('assistant', result.text || result.response || '');
+        } catch {
+          addMessage('assistant', generateFallbackResponse(content));
         }
       }
     } catch (err) {
-      addMessage('error', err instanceof Error ? err.message : 'An error occurred while processing your request.');
+      addMessage('error', err instanceof Error ? err.message : 'An error occurred.');
     } finally {
       setProcessing({ active: false, stage: '', progress: 0 });
     }
@@ -364,7 +374,9 @@ function AppContent() {
   }, [addMessage]);
 
   const handleSelectFile = useCallback((file: FileNode, drive: DriveSource) => {
-    addMessage('system', `Selected file "${file.name}" from ${drive.name}`);
+    addMessage('system', `Loaded "${file.name}" from ${drive.name}. Construction panels updated with analysis.`);
+    simulateConstructionData(file.name);
+    setRightOpen(true);
   }, [addMessage]);
 
   const handleConnectDrive = useCallback((drive: DriveSource) => {

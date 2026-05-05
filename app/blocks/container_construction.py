@@ -267,7 +267,10 @@ class ConstructionContainer(ContainerBlock):
             "safety_audit": self.safety_compliance_audit,
         }
         
-        processor = processors.get(doc_type, self._process_drawing)
+        # _process_drawing expects a string file path, not the input_data dict
+        if doc_type == "drawing" or doc_type not in processors:
+            return await self._process_drawing(file_path, p)
+        processor = processors.get(doc_type)
         return await processor(input_data, p)
 
     async def _classify_document(self, file_path: str) -> str:
@@ -4884,8 +4887,12 @@ Total Extension of Time Sought: {total_delay} days
             "risk_register_auto_populate", "submittal_log_generator",
             "payment_certificate", "bim_clash_detection", "daily_site_report",
             "value_engineering", "commissioning_checklist", "resource_histogram",
-            "claims_builder", "health_check", "process_drawing"
+            "claims_builder", "health_check", "process_drawing",
+            "intelligent_workflow",
         }
+        # Also check params for action (old frontend passes action in params)
+        if not action:
+            action = (params or {}).get("action", "")
         if action in construction_actions:
-            return await self.route(input_data, input_data.get("payload", {}))
-        return await super().execute(input_data)
+            return await self.route(action, input_data, params or {})
+        return {"status": "error", "error": f"Unknown construction action: '{action}'. Valid actions: {sorted(construction_actions)}"}
