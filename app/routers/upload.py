@@ -1,13 +1,16 @@
+import logging
 import os
 import shutil
 import uuid
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.dependencies import require_api_key, block_instances, _create_block_instance
 from app.blocks import BLOCK_REGISTRY
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -19,13 +22,70 @@ ALLOWED_UPLOAD_EXTENSIONS = {
     ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"
 }
 
+# Each extension maps to MIME prefixes that python-magic may legitimately return.
+# OOXML files (docx/xlsx/pptx) are detected as zip archives by libmagic; doc/xls/ppt
+# as the legacy OLE compound. We allow application/octet-stream for ambiguous cases.
+_EXT_MIME_PREFIXES = {
+    ".pdf": ("application/pdf",),
+    ".jpg": ("image/jpeg",),
+    ".jpeg": ("image/jpeg",),
+    ".png": ("image/png",),
+    ".gif": ("image/gif",),
+    ".webp": ("image/webp",),
+    ".txt": ("text/",),
+    ".md": ("text/",),
+    ".csv": ("text/", "application/csv"),
+    ".json": ("application/json", "text/"),
+    ".xml": ("application/xml", "text/xml", "text/"),
+    ".doc": ("application/msword", "application/x-ole", "application/CDFV2"),
+    ".docx": ("application/zip", "application/vnd.openxmlformats", "application/octet-stream"),
+    ".xls": ("application/vnd.ms-excel", "application/x-ole", "application/CDFV2"),
+    ".xlsx": ("application/zip", "application/vnd.openxmlformats", "application/octet-stream"),
+    ".ppt": ("application/vnd.ms-powerpoint", "application/x-ole", "application/CDFV2"),
+    ".pptx": ("application/zip", "application/vnd.openxmlformats", "application/octet-stream"),
+    ".mp3": ("audio/", "application/octet-stream"),
+    ".mp4": ("video/mp4", "audio/mp4"),
+    ".wav": ("audio/",),
+    ".webm": ("video/webm", "audio/webm"),
+}
+
+try:
+    import magic  # python-magic, requires libmagic
+    _mime_detector = magic.Magic(mime=True)
+except Exception as exc:  # ImportError, libmagic missing, etc.
+    _mime_detector = None
+    logger.warning("python-magic unavailable, MIME validation disabled: %s", exc)
+
+
+def _detect_mime(head: bytes) -> Optional[str]:
+    if _mime_detector is None or not head:
+        return None
+    try:
+        return _mime_detector.from_buffer(head)
+    except Exception as exc:
+        logger.warning("MIME detection failed, skipping check: %s", exc)
+        return None
+
+
+def _mime_matches_extension(detected: str, ext: str) -> bool:
+    prefixes = _EXT_MIME_PREFIXES.get(ext)
+    if not prefixes:
+        return True  # extension already passed allowlist; no prefix mapping = skip check
+    return any(detected.startswith(p) for p in prefixes)
+
+
 DATA_DIR = os.getenv("DATA_DIR", "./data")
 try:
     os.makedirs(DATA_DIR, exist_ok=True)
-except PermissionError:
-    # Fallback to temp dir if DATA_DIR is not writable (e.g. Render without disk)
+except (PermissionError, OSError) as exc:
     import tempfile
-    DATA_DIR = tempfile.gettempdir()
+    fallback = tempfile.gettempdir()
+    logger.warning(
+        "DATA_DIR=%s not writable (%s). Falling back to ephemeral %s — "
+        "uploaded files will not persist across restarts.",
+        DATA_DIR, exc, fallback,
+    )
+    DATA_DIR = fallback
 
 
 @router.post("/upload")
@@ -35,7 +95,7 @@ async def upload_v1(file: UploadFile = File(...), auth: dict = Depends(require_a
     Accepts validated files and stores them. Returns URL for processing.
     """
     try:
-        # Validate file size
+        # Validate file size up-front (UploadFile is buffered; seek to end + tell)
         file.file.seek(0, 2)
         file_size = file.file.tell()
         file.file.seek(0)
@@ -52,6 +112,21 @@ async def upload_v1(file: UploadFile = File(...), auth: dict = Depends(require_a
         _, ext = os.path.splitext(original_name.lower())
         if ext not in ALLOWED_UPLOAD_EXTENSIONS:
             raise HTTPException(status_code=400, detail=f"File type '{ext}' not allowed")
+
+        # MIME sniff first 4KB to verify the bytes match the claimed extension.
+        # Skipped silently if python-magic / libmagic unavailable (logged at startup).
+        head = file.file.read(4096)
+        file.file.seek(0)
+        detected_mime = _detect_mime(head)
+        if detected_mime and not _mime_matches_extension(detected_mime, ext):
+            logger.warning(
+                "upload rejected: ext=%s but detected MIME=%s (filename=%s)",
+                ext, detected_mime, original_name,
+            )
+            raise HTTPException(
+                status_code=400,
+                detail=f"File contents do not match extension '{ext}' (detected: {detected_mime})",
+            )
 
         # Generate unique filename
         file_id = str(uuid.uuid4())[:8]
@@ -73,7 +148,8 @@ async def upload_v1(file: UploadFile = File(...), auth: dict = Depends(require_a
         }
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
+        logger.exception("upload failed")
         raise HTTPException(status_code=500, detail="Upload failed")
 
 
