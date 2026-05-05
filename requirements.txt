@@ -99,3 +99,4 @@ pypdf>=5.0.0
 
 # Image processing (capture, OCR, image blocks)
 opencv-python-headless>=4.9.0
+mcp>=1.6.0
