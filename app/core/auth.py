@@ -67,10 +67,6 @@ class APIKeyAuth:
 
         key = credentials.credentials
 
-        # cb_dev_key works everywhere (rate-limited in production)
-        if key == "cb_dev_key":
-            return {"user": "dev", "tier": "unlimited", "valid": True, "rate_limit": 1000}
-
         if key not in self._keys:
             raise HTTPException(status_code=401, detail="Invalid API key")
 
@@ -90,11 +86,8 @@ class APIKeyAuth:
         
         if key not in self._usage:
             self._usage[key] = {}
-        
-        if hour_key not in self._usage[key]:
-            self._usage[key] = {hour_key: 0}
-        
-        self._usage[key][hour_key] += 1
+
+        self._usage[key][hour_key] = self._usage[key].get(hour_key, 0) + 1
     
     def _is_rate_limited(self, key: str, limit: int) -> bool:
         """Check if key is rate limited."""

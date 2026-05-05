@@ -11,13 +11,17 @@ import type {
   PipelineCtx,
 } from '@/types';
 
-const API_BASE =
+const isLocalHost =
   typeof window !== 'undefined' &&
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:8000'
-    : 'https://cerebrum-platform-api.onrender.com';
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-const API_KEY = 'cb_master_22347732f8f09bed3ad4aee7f9849f77';
+const API_BASE =
+  import.meta.env.VITE_API_BASE ??
+  (isLocalHost ? 'http://localhost:8000' : 'https://cerebrum-platform-api.onrender.com');
+
+// Public-tier key injected at build time. SPAs cannot keep secrets — this key
+// must be scoped to client-safe operations on the server. Never inline a master key.
+const API_KEY = import.meta.env.VITE_API_KEY ?? (isLocalHost ? 'cb_dev_key' : '');
 
 class ApiError extends Error {
   status: number;
