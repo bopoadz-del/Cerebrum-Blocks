@@ -321,11 +321,18 @@ class _SseEndpoint:
             )
 
 
+class _MessageEndpoint:
+    """ASGI app wrapper for SSE message POST endpoint."""
+
+    async def __call__(self, scope, receive, send):
+        await _sse_transport.handle_post_message(scope, receive, send)
+
+
 app_sse = Starlette(
     debug=True,
     routes=[
         Route("/sse", endpoint=_SseEndpoint()),
-        Route("/messages/", endpoint=_sse_transport.handle_post_message, methods=["POST"]),
+        Route("/messages/", endpoint=_MessageEndpoint(), methods=["POST"]),
     ],
 )
 
