@@ -147,12 +147,14 @@ function AppContent() {
           const name = file.name.toLowerCase();
           const isPdf = file.type === 'application/pdf' || name.endsWith('.pdf');
           const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|tiff)$/i.test(name);
+          const isSpreadsheet = /\.(xls|xlsx)$/i.test(name);
+          const isWord = /\.(doc|docx)$/i.test(name);
           const isText = file.type.startsWith('text/') || /\.(txt|md|csv)$/.test(name);
 
           if (isText) {
             const text = await file.text();
             addMessage('system', `Loaded "${file.name}":\n\n\`\`\`\n${text.slice(0, 2000)}${text.length > 2000 ? '\n...(truncated)' : ''}\n\`\`\``);
-          } else if (isPdf || isImage) {
+          } else if (isPdf || isImage || isSpreadsheet || isWord) {
             try {
               await runFilePipeline(file, null, file.name, isImage);
               addMessage('system', `Analyzed "${file.name}". Construction intelligence panels updated.`);
@@ -160,7 +162,7 @@ function AppContent() {
               addMessage('error', `Failed to analyze "${file.name}": ${err instanceof Error ? err.message : 'Unknown error'}`);
             }
           } else {
-            addMessage('system', `"${file.name}" (${(file.size / 1024).toFixed(1)} KB) — binary file, cannot be analyzed directly.`);
+            addMessage('system', `"${file.name}" (${(file.size / 1024).toFixed(1)} KB) — unsupported file type.`);
           }
         }
       }
@@ -208,9 +210,11 @@ function AppContent() {
     const name = fileNode.name.toLowerCase();
     const isPdf = name.endsWith('.pdf');
     const isImage = /\.(jpg|jpeg|png|gif|webp|tiff)$/.test(name);
+    const isSpreadsheet = /\.(xls|xlsx)$/.test(name);
+    const isWord = /\.(doc|docx)$/.test(name);
 
-    if (!isPdf && !isImage) {
-      addMessage('system', `"${fileNode.name}" is not a supported document type (PDF or image required).`);
+    if (!isPdf && !isImage && !isSpreadsheet && !isWord) {
+      addMessage('system', `"${fileNode.name}" is not a supported document type.`);
       return;
     }
 
@@ -365,7 +369,7 @@ function AppContent() {
         ref={localFileInputRef}
         type="file"
         multiple
-        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.tiff,.txt,.md,.csv"
+        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.tiff,.txt,.md,.csv,.xls,.xlsx,.docx,.doc"
         className="hidden"
         onChange={handleLocalFilesSelected}
       />

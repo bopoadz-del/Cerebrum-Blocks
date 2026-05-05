@@ -158,8 +158,36 @@ class ZvecBlock(UniversalBlock):
                     "scores": scores,
                 }
 
+            elif operation == "search":
+                query = text
+                corpus = params.get("corpus", [])
+                top_k = int(params.get("top_k", 5))
+                if not corpus:
+                    return {"status": "error", "error": "Provide 'corpus' list in params"}
+                if not query:
+                    return {"status": "error", "error": "Query text required"}
+
+                all_texts = [query] + [str(c) for c in corpus]
+                vectors = _vectorize(all_texts)
+                query_vec = vectors[0]
+                corpus_vecs = vectors[1:]
+
+                scored = []
+                for i, (item, vec) in enumerate(zip(corpus, corpus_vecs)):
+                    score = _cosine(query_vec, vec)
+                    scored.append({"text": str(item), "score": round(score, 4), "index": i})
+
+                scored.sort(key=lambda x: x["score"], reverse=True)
+                return {
+                    "status": "success",
+                    "operation": "search",
+                    "results": scored[:top_k],
+                    "query": query[:200],
+                    "corpus_size": len(corpus),
+                }
+
             else:
-                return {"status": "error", "error": f"Unknown operation: {operation}. Use: embed, batch_embed, similarity, classify"}
+                return {"status": "error", "error": f"Unknown operation: {operation}. Use: embed, batch_embed, similarity, classify, search"}
 
         except Exception as e:
             return {"status": "error", "error": str(e), "operation": operation}

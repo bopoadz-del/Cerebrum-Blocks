@@ -89,10 +89,57 @@ class PDFBlock(TypedBlock):
         pdf_path = self._get_pdf_path(input_data)
         if not pdf_path:
             return {"status": "error", "text": "", "pages": 0, "error": "No PDF provided"}
-        
+
         if not os.path.exists(pdf_path):
             return {"status": "error", "text": "", "pages": 0, "error": f"File not found: {pdf_path}"}
-        
+
+        ext = os.path.splitext(pdf_path)[1].lower()
+
+        # Handle Excel spreadsheets (XLS/XLSX)
+        if ext in ('.xls', '.xlsx'):
+            try:
+                import openpyxl
+                wb = openpyxl.load_workbook(pdf_path, read_only=True, data_only=True)
+                parts = []
+                for sheet_name in wb.sheetnames:
+                    ws = wb[sheet_name]
+                    parts.append(f"=== Sheet: {sheet_name} ===")
+                    for row in ws.iter_rows(values_only=True):
+                        row_text = '\t'.join(str(c) if c is not None else '' for c in row)
+                        if row_text.strip():
+                            parts.append(row_text)
+                wb.close()
+                text = '\n'.join(parts)
+                return {
+                    "status": "success",
+                    "text": text[:20000],
+                    "pages": len(wb.sheetnames) if hasattr(wb, 'sheetnames') else 1,
+                    "filename": os.path.basename(pdf_path),
+                    "file_path": pdf_path,
+                    "engine": "openpyxl",
+                }
+            except Exception as e:
+                return {"status": "error", "text": "", "pages": 0, "error": f"Excel read failed: {str(e)}"}
+
+        # Handle Word documents (DOCX)
+        if ext in ('.doc', '.docx'):
+            try:
+                import docx as python_docx
+                doc = python_docx.Document(pdf_path)
+                text = '\n'.join(p.text for p in doc.paragraphs if p.text.strip())
+                return {
+                    "status": "success",
+                    "text": text[:20000],
+                    "pages": 1,
+                    "filename": os.path.basename(pdf_path),
+                    "file_path": pdf_path,
+                    "engine": "python-docx",
+                }
+            except ImportError:
+                pass  # Fall through — python-docx not installed
+            except Exception as e:
+                return {"status": "error", "text": "", "pages": 0, "error": f"Word read failed: {str(e)}"}
+
         # Try real PDF libraries in order: pdfplumber, PyPDF2, PyMuPDF
         last_error = None
         
