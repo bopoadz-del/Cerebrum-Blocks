@@ -65,9 +65,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://cerebrum-platform-frontend-fork.onrender.com",
         "https://cerebrum-platform.onrender.com",
         "https://cerebrum-platform-api.onrender.com",
+        "https://cerebrum-store.onrender.com",
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:8000",

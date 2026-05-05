@@ -15,7 +15,7 @@ const API_BASE =
   typeof window !== 'undefined' &&
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:8000'
-    : 'https://cerebrum-platform-api-fork.onrender.com';
+    : 'https://cerebrum-platform-api.onrender.com';
 
 const API_KEY = 'cb_master_22347732f8f09bed3ad4aee7f9849f77';
 
