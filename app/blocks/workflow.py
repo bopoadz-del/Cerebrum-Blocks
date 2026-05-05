@@ -8,6 +8,7 @@ import os
 import time
 import uuid
 import json
+import logging
 import re
 import asyncio
 from typing import Any, Dict, List, Optional
@@ -15,6 +16,8 @@ from datetime import datetime, timezone
 
 from app.core.universal_base import UniversalBlock
 from app.core.typed_block import TypedBlock, Schema, ContentType
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowBlock(TypedBlock):
@@ -379,7 +382,7 @@ class WorkflowBlock(TypedBlock):
         except asyncio.CancelledError:
             pass
         except Exception:
-            pass
+            logger.exception("workflow: scheduler loop crashed")
 
     def _cron_next_wait(self, cron: str) -> int:
         """Basic cron parser — supports */N * * * * format only."""
@@ -389,7 +392,7 @@ class WorkflowBlock(TypedBlock):
                 minutes = int(parts[0][2:])
                 return minutes * 60
         except Exception:
-            pass
+            logger.exception("workflow: failed to parse cron expression %r", cron)
         return 300  # Default 5 minutes
 
     # ── Queries ────────────────────────────────────────────────────────────────

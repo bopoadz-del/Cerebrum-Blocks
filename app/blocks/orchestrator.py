@@ -1,10 +1,13 @@
 """Orchestrator Block - The Chain Master with Type Validation"""
 
+import logging
 from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass
 from app.core.universal_base import UniversalBlock
 from app.core.data_transformer import DataTransformer, transform as _transform_data
 from app.core.input_adapter import adapt_input
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -549,7 +552,7 @@ class OrchestratorBlock(UniversalBlock):
                     "ttl": 3600
                 })
             except Exception:
-                pass
+                logger.exception("orchestrator: memory persist failed (step=%d block=%s)", step_index, block_name)
         elif self._memory_fn:
             try:
                 mem = self._memory_fn()
@@ -560,4 +563,4 @@ class OrchestratorBlock(UniversalBlock):
                     "ttl": 3600
                 })
             except Exception:
-                pass
+                logger.exception("orchestrator: memory_fn persist failed (step=%d block=%s)", step_index, block_name)

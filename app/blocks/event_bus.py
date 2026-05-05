@@ -1,9 +1,12 @@
 """Event Bus Block - Request/Response messaging between blocks"""
 
 import asyncio
+import logging
 import uuid
 from typing import Any, Dict, Optional
 from app.core.universal_base import UniversalBlock
+
+logger = logging.getLogger(__name__)
 
 
 class EventBusBlock(UniversalBlock):
@@ -99,7 +102,7 @@ class EventBusBlock(UniversalBlock):
                     handler(event)
                 delivered += 1
             except Exception:
-                pass
+                logger.exception("event_bus: handler raised on topic=%s", topic)
 
         return {
             "status": "success",

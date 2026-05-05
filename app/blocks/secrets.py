@@ -1,10 +1,13 @@
 """Secrets Block - Secure secret management and encryption"""
+import logging
 from app.core.universal_base import UniversalBlock
 from typing import Dict, Any, Optional
 import os
 import hashlib
 import base64
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 
 class SecretsBlock(UniversalBlock):
@@ -98,8 +101,8 @@ class SecretsBlock(UniversalBlock):
                     "created_at": "REAL NOT NULL"
                 }
             })
-        except Exception as e:
-            pass
+        except Exception:
+            logger.exception("secrets: create_table failed — secrets backend may be unusable")
     
     async def process(self, input_data: Dict, params: Dict = None) -> Dict:
         """Handle secrets operations"""
