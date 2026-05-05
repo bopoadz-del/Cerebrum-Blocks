@@ -182,7 +182,7 @@ function AppContent() {
     } finally {
       setProcessing({ active: false, stage: '', progress: 0 });
     }
-  }, [messages, addMessage, runFilePipeline]);
+  }, [messages, addMessage, runFilePipeline, activeChatContext, activePipelineCtx]);
 
   const handleNewChat = useCallback(() => {
     setMessages([]);
@@ -350,8 +350,8 @@ function AppContent() {
           result.summary ||
           result.text ||
           result.chat_context ||
-          result.certificate_number ||
-          (result.overall_progress_percent != null ? `Overall progress: ${result.overall_progress_percent}%` : null) ||
+          result.certificate_summary ||
+          (result.overall_progress?.actual_percent != null ? `Overall progress: ${result.overall_progress.actual_percent}%` : null) ||
           JSON.stringify(result).slice(0, 300);
         addMessage('system', summary || `${action.replace(/_/g, ' ')} complete.`);
       }

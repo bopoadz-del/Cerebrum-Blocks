@@ -141,12 +141,12 @@ export const api = {
       });
       const inner = result.result ?? result;
       const rawFiles: any[] = inner.files || inner.items || [];
-      const fileNodes = rawFiles.map((f: any, i: number) => ({
-        id: `server-file-${i}`,
-        name: f.name || f.filename || String(f),
-        type: (f.type === 'directory' || f.is_dir || f.is_folder) ? 'folder' : 'file',
-        path: f.path || f.file_path || f.name || '',
-      }));
+      const fileNodes = rawFiles.map((f: any, i: number) => {
+        const name = typeof f === 'string' ? f : (f.name || f.filename || String(f));
+        const isDir = typeof f === 'object' && (f.type === 'directory' || f.is_dir || f.is_folder);
+        const path = typeof f === 'string' ? f : (f.path || f.file_path || f.name || f);
+        return { id: `server-file-${i}`, name, type: isDir ? 'folder' : 'file', path };
+      });
       return { success: true, files: fileNodes };
     }
     return fetchApi('/drive/connect', {
