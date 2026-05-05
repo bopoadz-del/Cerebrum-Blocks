@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prebuild": "echo \"=== DEBUG: frontend/src/lib/ contents ===\" && ls -la src/lib/ || echo \"DIR MISSING\""
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",
