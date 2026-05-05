@@ -24,6 +24,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from app.core.logging_config import configure_logging, init_sentry
+
+configure_logging()
+init_sentry()
+
 logger = logging.getLogger(__name__)
 
 from app.blocks import BLOCK_REGISTRY
@@ -62,17 +67,30 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+def _resolve_cors_origins() -> list[str]:
+    raw = os.getenv("CORS_ORIGINS", "").strip()
+    if raw:
+        return [o.strip() for o in raw.split(",") if o.strip()]
+
+    env = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()
+    defaults = [
         "https://cerebrum-platform.onrender.com",
         "https://cerebrum-platform-api.onrender.com",
         "https://cerebrum-store.onrender.com",
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
+    ]
+    if env in {"dev", "development", "local", "test", "testing"}:
+        defaults += [
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+        ]
+    return defaults
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_resolve_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -111,7 +129,7 @@ async def file_upload_security_middleware(request: Request, call_next):
                             },
                         )
             except Exception:
-                pass
+                logger.exception("file upload security middleware failed", extra={"path": path})
 
         async def receive():
             return {"type": "http.request", "body": body, "more_body": False}
@@ -147,9 +165,8 @@ if env in {"dev", "development", "local", "test", "testing"}:
 try:
     from app.mcp_server import app_sse as mcp_app
     app.mount("/mcp", mcp_app)
-except Exception as e:
-    import logging
-    logging.getLogger("cerebrum").warning(f"MCP server not mounted: {e}")
+except Exception:
+    logger.exception("MCP server not mounted")
 
 # Mount static files (graceful fallback if directory missing)
 import os

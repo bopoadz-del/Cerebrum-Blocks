@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,6 +9,7 @@ from app.dependencies import require_api_key
 from app.dependencies import block_instances, _create_block_instance
 from app.core.input_adapter import adapt_input
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -41,8 +43,11 @@ async def execute(request: ExecuteRequest, auth: dict = Depends(require_api_key)
         result = await block.execute(adapted_input, request.params or {})
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(500, f"Execution failed: {str(e)}")
+        logger.exception("block execution failed", extra={"block": block_name})
+        raise HTTPException(500, f"Execution failed: {e}")
 
 
 @router.post("/v1/execute")

@@ -100,3 +100,6 @@ pypdf>=5.0.0
 # Image processing (capture, OCR, image blocks)
 opencv-python-headless>=4.9.0
 mcp>=1.6.0
+
+# Error tracking — optional. Activated when SENTRY_DSN is set.
+sentry-sdk[fastapi]>=2.0.0
