@@ -25,16 +25,24 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Create non-root user with a fixed uid for predictable file ownership
+RUN groupadd --system --gid 1000 cerebrum && \
+    useradd --system --uid 1000 --gid cerebrum --create-home --shell /bin/bash cerebrum
 
-# Persistent data volume
+# Copy application code with non-root ownership
+COPY --chown=cerebrum:cerebrum . .
+
+# Persistent data volume — created and owned by cerebrum so the running
+# user can write uploads/data without needing root.
+RUN mkdir -p /app/data && chown -R cerebrum:cerebrum /app/data && \
+    chmod +x /app/entrypoint.sh
 VOLUME /app/data
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
+USER cerebrum
 EXPOSE 8000
 
 ENTRYPOINT ["/app/entrypoint.sh"]
