@@ -10,11 +10,13 @@ class TestAPIEndpoints:
     """Test suite for API endpoints."""
     
     def test_root_endpoint(self):
-        """Test root endpoint serves platform frontend HTML."""
+        """Root returns API metadata as JSON (frontend SPA is on a separate host)."""
         response = client.get("/")
         assert response.status_code == 200
-        assert "text/html" in response.headers.get("content-type", "")
-        assert "<!DOCTYPE html>" in response.text or "<html" in response.text
+        assert "application/json" in response.headers.get("content-type", "")
+        data = response.json()
+        assert data["name"] == "Cerebrum Blocks"
+        assert "blocks" in data
     
     def test_list_blocks(self):
         """Test listing all blocks."""
