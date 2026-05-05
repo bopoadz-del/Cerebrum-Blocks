@@ -91,7 +91,9 @@ class EmailBlock(UniversalBlock):
                         "type": att.get("type", "application/octet-stream")
                     })
             
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as session:
                 async with session.post(
                     self.PROVIDERS["sendgrid"]["url"],
                     headers={

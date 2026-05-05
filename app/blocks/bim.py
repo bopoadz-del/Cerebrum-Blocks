@@ -301,7 +301,8 @@ class BIMBlock(UniversalBlock):
                             "min": [bbox.extmin[0], bbox.extmin[1]],
                             "max": [bbox.extmax[0], bbox.extmax[1]]
                         }
-                    except:
+                    except (AttributeError, ValueError, IndexError):
+                        # Empty modelspace or unsupported geometry — extents stays empty.
                         pass
                 
                 import os

@@ -241,7 +241,7 @@ class SandboxBlock(UniversalBlock):
             if name not in policy.blocked_builtins and not name.startswith("_"):
                 try:
                     safe_builtins[name] = getattr(__builtins__, name)
-                except:
+                except AttributeError:
                     pass
         
         # Add safe versions of blocked functions
