@@ -1,7 +1,20 @@
 """Database Block - SQLite/PostgreSQL persistence"""
+import logging
+import os
+
 from app.core.universal_base import UniversalBlock
 from typing import Dict, Any, List, Optional
 import json
+
+logger = logging.getLogger(__name__)
+
+
+def _default_sqlite_path() -> str:
+    """Resolve the SQLite path: prefer DATA_DIR (the Render-mounted disk),
+    fall back to ./data so local dev keeps working."""
+    data_dir = os.getenv("DATA_DIR", "./data")
+    return os.path.join(data_dir, "cerebrum.db")
+
 
 class DatabaseBlock(UniversalBlock):
     """SQL Database - SQLite (local) or PostgreSQL (cloud)"""
@@ -12,42 +25,65 @@ class DatabaseBlock(UniversalBlock):
     tags = ["infrastructure", "database", "storage"]
     default_config = {
         "backend": "sqlite",
-        "connection_string": "sqlite:///data/cerebrum.db"
+        "connection_string": None,  # resolved at init from DATA_DIR
     }
-    
+
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)
         self.backend = config.get("backend", "sqlite")
-        self.connection_string = config.get("connection_string", "sqlite:///data/cerebrum.db")
+        configured = config.get("connection_string")
+        if configured:
+            self.connection_string = configured
+        else:
+            self.connection_string = f"sqlite:///{_default_sqlite_path()}"
         self._connection = None
-        
+
     async def _legacy_initialize(self):
         """Initialize database connection"""
-        print(f"🗄️  Database Block initialized")
-        print(f"   Backend: {self.backend}")
-        print(f"   Connection: {self.connection_string}")
-        
+        logger.info("database: backend=%s connection=%s", self.backend, self.connection_string)
+
         if self.backend == "sqlite":
             import sqlite3
-            import os
-            # Ensure directory exists
             db_path = self.connection_string.replace("sqlite:///", "")
-            os.makedirs(os.path.dirname(db_path), exist_ok=True)
-            
+            db_dir = os.path.dirname(db_path)
+            if db_dir:
+                os.makedirs(db_dir, exist_ok=True)
+
             self._connection = sqlite3.connect(db_path, check_same_thread=False)
             self._connection.row_factory = sqlite3.Row
-        
+            self._apply_sqlite_pragmas()
+
         elif self.backend == "postgresql":
             try:
                 import psycopg2
                 self._connection = psycopg2.connect(self.connection_string)
             except ImportError:
-                print("   Warning: psycopg2 not installed, using sqlite fallback")
+                logger.warning("database: psycopg2 not installed, using sqlite fallback")
                 self.backend = "sqlite"
                 import sqlite3
-                self._connection = sqlite3.connect("data/cerebrum.db", check_same_thread=False)
-        
+                fallback_path = _default_sqlite_path()
+                fallback_dir = os.path.dirname(fallback_path)
+                if fallback_dir:
+                    os.makedirs(fallback_dir, exist_ok=True)
+                self._connection = sqlite3.connect(fallback_path, check_same_thread=False)
+                self._connection.row_factory = sqlite3.Row
+                self._apply_sqlite_pragmas()
+
         return True
+
+    def _apply_sqlite_pragmas(self) -> None:
+        """WAL gives concurrent readers while a writer holds the lock — required
+        once more than one request hits the DB at the same time. NORMAL sync
+        with WAL is durable enough for our scale and ~5x faster than FULL."""
+        try:
+            cur = self._connection.cursor()
+            cur.execute("PRAGMA journal_mode=WAL")
+            cur.execute("PRAGMA synchronous=NORMAL")
+            cur.execute("PRAGMA foreign_keys=ON")
+            cur.execute("PRAGMA busy_timeout=5000")
+            self._connection.commit()
+        except Exception:
+            logger.exception("database: failed to apply SQLite pragmas")
     
     async def process(self, input_data: Dict, params: Dict = None) -> Dict:
         action = (params or {}).get("action") or (input_data.get("action") if isinstance(input_data, dict) else None)

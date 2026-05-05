@@ -41,22 +41,28 @@ Go to **Environment** tab and add:
 ```bash
 # Required
 PYTHON_VERSION=3.11.0
-DATA_DIR=/app/data
+DATA_DIR=/app/data            # must match the mounted disk path
+ENV=production
+LOG_LEVEL=INFO
+LOG_FORMAT=json
+CORS_ORIGINS=https://cerebrum-platform.onrender.com   # SPA origin
 
-# API Keys (set at least one)
-CEREBRUM_MASTER_KEY=your-admin-key
+# API Keys (master + per-user — see "Managing users" below)
+CEREBRUM_MASTER_KEY=cb_master_<random-hex>
+CEREBRUM_API_KEY_ALICE=sk-cb-<random>
+CEREBRUM_API_KEY_BOB=sk-cb-<random>
 
-# Optional - AI Features
-OPENAI_API_KEY=sk-your-key
-ANTHROPIC_API_KEY=sk-ant-your-key
+# Optional - AI providers (chat block falls back to rule-based offline if both missing)
+DEEPSEEK_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
 
-# Optional - Search
-SERPER_API_KEY=your-key
-
-# Optional - Drive Integrations
-GOOGLE_CREDENTIALS_PATH=/app/data/credentials.json
-ONEDRIVE_ACCESS_TOKEN=your-token
+# Optional - error tracking
+SENTRY_DSN=https://...
 ```
+
+`scripts/render-rotate.sh` applies the non-secret vars (`CORS_ORIGINS`,
+`LOG_LEVEL`, `LOG_FORMAT`, `ENV`, `VITE_API_BASE`) and triggers a redeploy
+without touching any `*_KEY`. Use it after env changes you can script.
 
 ### Step 5: Deploy
 Click **"Create Web Service"**
@@ -64,6 +70,27 @@ Click **"Create Web Service"**
 Wait for build (~2-3 minutes), then visit your URL!
 
 ---
+
+## Managing users (small-scale, ≤ ~10 users)
+
+The auth layer reads keys from environment variables. Any env var named
+`CEREBRUM_API_KEY_<NAME>` is a valid user key. The auth cache reloads
+from env every 60 seconds (`API_KEYS_RELOAD_TTL` to tune), so adding,
+rotating, or revoking a user takes effect within a minute — **no
+redeploy needed**.
+
+**Add a user:**
+1. Generate a key locally: `python -c "import secrets; print('sk-cb-' + secrets.token_hex(16))"`
+2. Render dashboard → API service → Environment → add `CEREBRUM_API_KEY_<NAME>` with that value
+3. Save (Render does NOT need to redeploy — wait ≤60s)
+4. Hand the user the key; they pass it as `Authorization: Bearer <key>`
+
+**Revoke a user:** delete the env var, wait ≤60s.
+
+**Rotate a user's key:** edit the env var to a new value, wait ≤60s — old key stops working, new one starts.
+
+The `CEREBRUM_MASTER_KEY` is the admin key (unlimited rate). The
+per-user keys get tier=`standard`, 1000 req/hr.
 
 ## Post-Deploy Setup
 
