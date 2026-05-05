@@ -1,5 +1,6 @@
 """Construction Container - Full AEC Industry Domain Container v3.1"""
 
+import logging
 import re
 import json
 import os
@@ -10,6 +11,8 @@ from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta, timezone
 
 from app.core.universal_base import UniversalContainer
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -580,29 +583,37 @@ class ConstructionContainer(UniversalContainer):
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
         file_path = data.get("file_path") or p.get("file_path")
+        extracted_text = data.get("extracted_text") or data.get("text") or ""
         contract_type = p.get("contract_type", "general")
-        
-        if not file_path:
-            return {"status": "error", "error": "No contract file provided"}
-        
-        try:
-            import fitz
-            doc = fitz.open(file_path)
-            full_text = ""
-            for page in doc:
-                full_text += page.get_text()
-            doc.close()
-        except Exception as e:
-            return {"status": "error", "error": f"Could not read contract: {str(e)}"}
-        
+
+        # Prefer pre-extracted text — caller (typically auto_pipeline / SPA) has
+        # already run pdf or ocr against this file. Falling back to fitz only
+        # when the caller didn't extract text.
+        full_text = extracted_text
+        if not full_text:
+            if not file_path:
+                return {"status": "error", "error": "No contract file or extracted_text provided"}
+            try:
+                import fitz
+                doc = fitz.open(file_path)
+                for page in doc:
+                    full_text += page.get_text()
+                doc.close()
+            except Exception as e:
+                return {"status": "error", "error": f"Could not read contract: {str(e)}"}
+
+        # Patterns deliberately permissive — \s\w doesn't match ':' or '$' which
+        # appear constantly in real contracts ("Liquidated damages: $5000/day").
+        # Use [^\n]{0,N} so anything on the line counts as filler between the
+        # head keyword and the qualifier.
         clause_patterns = {
-            "payment_terms": r'(?:payment|pay|invoice)[\s\w]{0,50}(?:term|schedule|milestone|certificate)',
-            "liquidated_damages": r'(?:liquidated damages|ld|delay damages)[\s\w]{0,100}(?:rate|amount|per day)',
-            "retention": r'(?:retention|retainage)[\s\w]{0,50}(?:percent|percentage|amount|release)',
-            "insurance": r'(?:insurance|indemnif)[\s\w]{0,100}(?:required|shall|must|coverage)',
-            "termination": r'(?:terminat|cancel|end)[\s\w]{0,100}(?:notice|for cause|convenience)',
-            "force_majeure": r'(?:force majeure|unforeseen|beyond control|delay event)[\s\w]{0,100}(?:excus|reliev|not liable)',
-            "dispute_resolution": r'(?:dispute|arbitration|mediation|adjudication)[\s\w]{0,100}(?:shall|must|proceed)',
+            "payment_terms": r'(?:payment|pay|invoice)[^\n]{0,50}(?:term|schedule|milestone|certificate|net\s+\d)',
+            "liquidated_damages": r'(?:liquidated damages|delay damages|\bld\b)[^\n]{0,100}(?:rate|amount|per day|\$|day|week)',
+            "retention": r'(?:retention|retainage)[^\n]{0,80}(?:percent|percentage|amount|release|%)',
+            "insurance": r'(?:insurance|indemnif)[^\n]{0,100}(?:required|shall|must|coverage|maintain)',
+            "termination": r'(?:terminat|cancel|end)[^\n]{0,100}(?:notice|for cause|convenience|terminate)',
+            "force_majeure": r'(?:force majeure|unforeseen|beyond control|delay event|act of god)[^\n]{0,150}(?:excus|reliev|not liable|delay|extend)',
+            "dispute_resolution": r'(?:dispute|arbitration|mediation|adjudication)[^\n]{0,100}(?:shall|must|proceed|resolv)',
         }
         
         extracted_clauses = {}
@@ -5057,33 +5068,46 @@ Total Extension of Time Sought: {total_delay} days
 
         quantities = {}
 
-        # Named quantity patterns
+        # Mass units accepted in inputs, normalised to kg.
+        _mass_unit = r"(?:kg|kilogram[s]?|t|mt|ton[s]?|tonne[s]?)"
+        _to_kg = {
+            "kg": 1.0, "kilogram": 1.0, "kilograms": 1.0,
+            "t": 1000.0, "mt": 1000.0,
+            "ton": 1000.0, "tons": 1000.0, "tonne": 1000.0, "tonnes": 1000.0,
+        }
+        _vol_unit = r"(?:m3|m\xb3|cu\.?\s*m|cubic\s*metres?|cubic\s*meters?)"
+        _area_unit = r"(?:m2|m\xb2|sqm|sq\.?\s*m|square\s*metres?|square\s*meters?)"
+
+        # Named quantity patterns: (regex, normalised_key, canonical_unit, unit_capture_group)
         patterns = [
-            (r"concrete[^\n]*?(\d[\d,\.]*)\s*m3", "concrete_volume_m3", "m3"),
-            (r"rebar[^\n]*?(\d[\d,\.]*)\s*kg", "steel_weight_kg", "kg"),
-            (r"reinforcement[^\n]*?(\d[\d,\.]*)\s*kg", "steel_weight_kg", "kg"),
-            (r"steel[^\n]*?(\d[\d,\.]*)\s*kg", "structural_steel_kg", "kg"),
-            (r"curtain wall[^\n]*?(\d[\d,\.]*)\s*m2", "curtain_wall_m2", "m2"),
-            (r"glazing[^\n]*?(\d[\d,\.]*)\s*m2", "glazing_m2", "m2"),
-            (r"hvac[^\n]*?(\d[\d,\.]*)\s*m2", "hvac_m2", "m2"),
-            (r"electrical[^\n]*?(\d[\d,\.]*)\s*m2", "electrical_m2", "m2"),
-            (r"blockwork[^\n]*?(\d[\d,\.]*)\s*m2", "blockwork_m2", "m2"),
-            (r"formwork[^\n]*?(\d[\d,\.]*)\s*m2", "formwork_m2", "m2"),
-            (r"excavat[^\n]*?(\d[\d,\.]*)\s*m3", "excavation_m3", "m3"),
-            (r"pil[^\n]*?(\d[\d,\.]*)\s*lm", "piling_lm", "lm"),
-            (r"waterproof[^\n]*?(\d[\d,\.]*)\s*m2", "waterproofing_m2", "m2"),
-            (r"roofing[^\n]*?(\d[\d,\.]*)\s*m2", "roofing_m2", "m2"),
-            (r"tiling[^\n]*?(\d[\d,\.]*)\s*m2", "tiling_m2", "m2"),
-            (r"painting[^\n]*?(\d[\d,\.]*)\s*m2", "painting_m2", "m2"),
-            (r"plumbing[^\n]*?(\d[\d,\.]*)\s*m2", "plumbing_m2", "m2"),
+            (rf"concrete[^\n]*?(\d[\d,\.]*)\s*{_vol_unit}", "concrete_volume_m3", "m3", None),
+            (rf"(?:rebar|reinforcement)[^\n]*?(\d[\d,\.]*)\s*({_mass_unit})", "steel_weight_kg", "kg", 2),
+            (rf"(?:structural\s+)?steel[^\n]*?(\d[\d,\.]*)\s*({_mass_unit})", "structural_steel_kg", "kg", 2),
+            (rf"curtain\s*wall[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "curtain_wall_m2", "m2", None),
+            (rf"glazing[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "glazing_m2", "m2", None),
+            (rf"hvac[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "hvac_m2", "m2", None),
+            (rf"electrical[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "electrical_m2", "m2", None),
+            (rf"block\s*work[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "blockwork_m2", "m2", None),
+            (rf"formwork[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "formwork_m2", "m2", None),
+            (rf"excavat[^\n]*?(\d[\d,\.]*)\s*{_vol_unit}", "excavation_m3", "m3", None),
+            (rf"pil[^\n]*?(\d[\d,\.]*)\s*(?:lm|m\b|linear\s*metres?|linear\s*meters?)", "piling_lm", "lm", None),
+            (rf"waterproof[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "waterproofing_m2", "m2", None),
+            (rf"roofing[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "roofing_m2", "m2", None),
+            (rf"tiling[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "tiling_m2", "m2", None),
+            (rf"painting[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "painting_m2", "m2", None),
+            (rf"plumbing[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "plumbing_m2", "m2", None),
         ]
-        for pattern, key, unit in patterns:
+        for pattern, key, canonical_unit, unit_group in patterns:
             m = re.search(pattern, t)
             if m:
                 try:
                     val = float(m.group(1).replace(",", ""))
-                    quantities[key] = {"quantity": val, "unit": unit}
-                except ValueError:
+                    if unit_group is not None:
+                        raw_unit = m.group(unit_group).lower().strip()
+                        # Normalise mass units to kg
+                        val = val * _to_kg.get(raw_unit, 1.0)
+                    quantities[key] = {"quantity": val, "unit": canonical_unit}
+                except (ValueError, IndexError):
                     pass
 
         # Generic area extraction: 100m2, 500 sqm, 250 m², etc.
@@ -5134,13 +5158,35 @@ Total Extension of Time Sought: {total_delay} days
             steel_kg = concrete_vol * 120  # typical 120 kg/m3
             quantities["steel_weight_kg"] = {"quantity": round(steel_kg, 2), "unit": "kg"}
 
-        # Extract risks from text
+        # Extract risks from text — keyword + impact heuristic
         risks = []
-        risk_keywords = ["design change", "material delay", "labour shortage", "weather", "cash flow",
-                         "subcontractor", "permit", "ground condition", "safety", "covid", "inflation"]
-        for rk in risk_keywords:
-            if rk in t:
-                risks.append({"description": rk.title(), "likelihood": "medium", "impact": "medium"})
+        risk_taxonomy = [
+            # (keyword(s) — any match wins, canonical description, likelihood, impact)
+            (["design change", "design revision", "rfi"], "Design Change", "medium", "medium"),
+            (["material delay", "supply chain", "lead time"], "Material Delay", "high", "medium"),
+            (["labour shortage", "labor shortage", "manpower"], "Labour Shortage", "medium", "medium"),
+            (["weather", "monsoon", "rain delay", "storm"], "Weather Delay", "medium", "medium"),
+            (["cash flow", "payment delay", "non-payment"], "Cash Flow", "medium", "high"),
+            (["subcontractor", "sub-contractor"], "Subcontractor Risk", "medium", "medium"),
+            (["permit", "approval delay", "authority"], "Permit / Approval Delay", "medium", "medium"),
+            (["ground condition", "subsoil", "geotechnical"], "Unforeseen Ground Conditions", "medium", "high"),
+            (["safety", "incident", "accident"], "Site Safety", "medium", "high"),
+            (["covid", "pandemic"], "Pandemic Disruption", "low", "high"),
+            (["inflation", "price escalation"], "Cost Escalation", "high", "medium"),
+            (["site access", "access restriction", "right of way"], "Site Access", "medium", "medium"),
+            (["liquidated damages", "delay damages", "lds"], "Liquidated Damages", "medium", "high"),
+            (["force majeure"], "Force Majeure", "low", "high"),
+            (["change order", "variation"], "Scope Change", "medium", "medium"),
+        ]
+        seen_descriptions = set()
+        for keywords, description, likelihood, impact in risk_taxonomy:
+            if any(kw in t for kw in keywords) and description not in seen_descriptions:
+                risks.append({
+                    "description": description,
+                    "likelihood": likelihood,
+                    "impact": impact,
+                })
+                seen_descriptions.add(description)
 
         return {
             "status": "success",
@@ -5178,15 +5224,51 @@ Total Extension of Time Sought: {total_delay} days
             return {"status": "error", "error": "Provide file_path or extracted_text"}
 
         # ── Step 1: domain analysis ──────────────────────────────────────────
+        # The SPA always uploads a file AND pre-extracts text via the pdf/ocr
+        # block, then passes both to us. process_document doesn't currently
+        # consume extracted_text — it re-parses the file from disk — so we
+        # always run the text path when extracted_text is non-trivial and
+        # merge its findings on top of the file-based result.
+        doc_type_hint = p.get("doc_type", "auto")
+        text_result: Dict = {}
+        if extracted_text and len(extracted_text.strip()) >= 20:
+            try:
+                text_result = await self._analyse_text_only(extracted_text, doc_type_hint)
+            except Exception:
+                logger.exception("auto_pipeline: text analysis failed")
+                text_result = {}
+
         if file_path:
-            doc_result = await self.process_document(
-                {"file_path": file_path, "extracted_text": extracted_text},
-                {"doc_type": p.get("doc_type", "auto"), "file_path": file_path}
-            )
+            try:
+                doc_result = await self.process_document(
+                    {"file_path": file_path, "extracted_text": extracted_text},
+                    {"doc_type": doc_type_hint, "file_path": file_path}
+                )
+            except Exception:
+                logger.exception("auto_pipeline: process_document failed for %s", file_path)
+                doc_result = text_result or {"status": "error", "doc_type": "unknown"}
         else:
-            # Text-only path — classify from content, skip file IO
-            doc_type_hint = p.get("doc_type", "auto")
-            doc_result = await self._analyse_text_only(extracted_text, doc_type_hint)
+            doc_result = text_result or {"status": "error", "doc_type": "unknown"}
+
+        # Merge text-extracted fields on top so file-based gaps fill in.
+        if text_result:
+            for key in ("quantities", "risks", "specifications"):
+                file_value = doc_result.get(key)
+                text_value = text_result.get(key)
+                if not file_value and text_value:
+                    doc_result[key] = text_value
+                elif isinstance(file_value, dict) and isinstance(text_value, dict):
+                    # union, preferring file-extracted values for overlapping keys
+                    merged = dict(text_value)
+                    merged.update(file_value)
+                    doc_result[key] = merged
+                elif isinstance(file_value, list) and isinstance(text_value, list):
+                    seen = {str(x.get("description") if isinstance(x, dict) else x) for x in file_value}
+                    extras = [x for x in text_value
+                              if str(x.get("description") if isinstance(x, dict) else x) not in seen]
+                    doc_result[key] = list(file_value) + extras
+            if doc_result.get("doc_type") in (None, "unknown") and text_result.get("doc_type"):
+                doc_result["doc_type"] = text_result["doc_type"]
 
         doc_type = doc_result.get("doc_type", "unknown")
         panels = []
@@ -5261,7 +5343,7 @@ Total Extension of Time Sought: {total_delay} days
                     "line_items": []
                 })
             except Exception:
-                pass
+                logger.exception("auto_pipeline: cost estimate calculation failed")
 
         # ── Procurement panel (always generated) ─────────────────────────────
         try:
@@ -5288,7 +5370,7 @@ Total Extension of Time Sought: {total_delay} days
                 "reason": "Generate prioritised procurement schedule"
             })
         except Exception:
-            pass
+            logger.exception("auto_pipeline: procurement_list_generator failed")
 
         # Risks → risk register
         risks = doc_result.get("risks") or doc_result.get("identified_risks") or []
@@ -5302,11 +5384,11 @@ Total Extension of Time Sought: {total_delay} days
                 panels.append({
                     "type": "risks",
                     "title": "Risk Register",
-                    "data": risk_result.get("risks", []),
+                    "data": risk_result.get("risk_register") or risk_result.get("top_risks") or [],
                     "total": risk_result.get("total_risks", 0)
                 })
             except Exception:
-                pass
+                logger.exception("auto_pipeline: risk_register_auto_populate failed")
 
         # Specifications → submittal log
         specs = doc_result.get("specifications") or doc_result.get("spec_sections") or []
@@ -5320,11 +5402,11 @@ Total Extension of Time Sought: {total_delay} days
                 panels.append({
                     "type": "submittals",
                     "title": "Submittal Log",
-                    "data": submittal_result.get("submittals", []),
+                    "data": submittal_result.get("submittal_register") or submittal_result.get("submittals") or [],
                     "total": submittal_result.get("total_submittals", 0)
                 })
             except Exception:
-                pass
+                logger.exception("auto_pipeline: submittal_log_generator failed")
 
         # Schedule → progress tracker
         if doc_type == "schedule":
@@ -5344,7 +5426,7 @@ Total Extension of Time Sought: {total_delay} days
                     "reason": "Schedule loaded"
                 })
             except Exception:
-                pass
+                logger.exception("auto_pipeline: parse_primavera_schedule failed")
 
         # Contract → process contract details
         if doc_type == "contract":
@@ -5364,7 +5446,7 @@ Total Extension of Time Sought: {total_delay} days
                     "reason": "Contract terms identified"
                 })
             except Exception:
-                pass
+                logger.exception("auto_pipeline: process_contract failed")
 
         # ── Chat context: structured text the user can follow up on ──────────
         chat_context_parts = [f"Document: {file_path.split('/')[-1]} (type: {doc_type})"]
