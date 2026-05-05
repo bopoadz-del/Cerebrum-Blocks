@@ -9,6 +9,15 @@ import type {
   ContractClause,
   ProcurementItem,
   PipelineCtx,
+  FileNode,
+  RawPanel,
+  RawRisk,
+  RawSubmittal,
+  RawScheduleActivity,
+  RawContractClause,
+  RawProcurementItem,
+  RawDriveFile,
+  ConstructionApiResult,
 } from '@/types';
 
 const isLocalHost =
@@ -31,7 +40,7 @@ class ApiError extends Error {
   }
 }
 
-async function fetchApi(path: string, options?: RequestInit): Promise<any> {
+async function fetchApi(path: string, options?: RequestInit): Promise<unknown> {
   const url = `${API_BASE}${path}`;
   const response = await fetch(url, {
     ...options,
@@ -48,6 +57,12 @@ async function fetchApi(path: string, options?: RequestInit): Promise<any> {
   }
 
   return response.json();
+}
+
+// Unwrap the optional `{ result: ... }` envelope some endpoints use.
+function unwrapResult<T = ConstructionApiResult>(raw: unknown): T {
+  const r = raw as { result?: T } | T;
+  return ((r as { result?: T })?.result ?? r) as T;
 }
 
 export const api = {
@@ -72,7 +87,7 @@ export const api = {
     return fetchApi('/chat', {
       method: 'POST',
       body: JSON.stringify({ message, model: 'deepseek-chat', stream: false }),
-    });
+    }) as Promise<{ text: string; response?: string }>;
   },
 
   // Upload — multipart; returns file_path (absolute server path)
@@ -97,7 +112,7 @@ export const api = {
   // Extract text from a PDF or image via the pdf/ocr block
   async extractText(filePath: string, isImage = false): Promise<string> {
     const block = isImage ? 'ocr' : 'pdf';
-    const result = await fetchApi('/v1/execute', {
+    const raw = await fetchApi('/v1/execute', {
       method: 'POST',
       body: JSON.stringify({
         block,
@@ -105,13 +120,13 @@ export const api = {
         params: {},
       }),
     });
-    const inner = result.result ?? result;
+    const inner = unwrapResult<{ text?: string; content?: string }>(raw);
     return inner.text || inner.content || '';
   },
 
   // Run construction auto_pipeline — action must be in params, NOT in input
-  async analyzeConstruction(filePath: string, extractedText: string): Promise<any> {
-    const result = await fetchApi('/v1/execute', {
+  async analyzeConstruction(filePath: string, extractedText: string): Promise<ConstructionApiResult> {
+    const raw = await fetchApi('/v1/execute', {
       method: 'POST',
       body: JSON.stringify({
         block: 'construction',
@@ -119,12 +134,12 @@ export const api = {
         params: { action: 'auto_pipeline', doc_type: 'auto' },
       }),
     });
-    return result.result ?? result;
+    return unwrapResult<ConstructionApiResult>(raw);
   },
 
   // Trigger a subsequent construction action with pipeline context
-  async runAction(action: string, ctx: Omit<PipelineCtx, 'fileName'>): Promise<any> {
-    const result = await fetchApi('/v1/execute', {
+  async runAction(action: string, ctx: Omit<PipelineCtx, 'fileName'>): Promise<ConstructionApiResult> {
+    const raw = await fetchApi('/v1/execute', {
       method: 'POST',
       body: JSON.stringify({
         block: 'construction',
@@ -137,16 +152,16 @@ export const api = {
         params: { action },
       }),
     });
-    return result.result ?? result;
+    return unwrapResult<ConstructionApiResult>(raw);
   },
 
   // Drive — local needs no API call (native file picker); server uses local_drive block
-  async connectDrive(type: string): Promise<{ success: boolean; files?: any[] }> {
+  async connectDrive(type: string): Promise<{ success: boolean; files?: FileNode[] }> {
     if (type === 'local') {
       return { success: true, files: [] };
     }
     if (type === 'server') {
-      const result = await fetchApi('/v1/execute', {
+      const raw = await fetchApi('/v1/execute', {
         method: 'POST',
         body: JSON.stringify({
           block: 'local_drive',
@@ -154,12 +169,15 @@ export const api = {
           params: { operation: 'list', folder_path: './' },
         }),
       });
-      const inner = result.result ?? result;
-      const rawFiles: any[] = inner.files || inner.items || [];
-      const fileNodes = rawFiles.map((f: any, i: number) => {
-        const name = typeof f === 'string' ? f : (f.name || f.filename || String(f));
-        const isDir = typeof f === 'object' && (f.type === 'directory' || f.is_dir || f.is_folder);
-        const path = typeof f === 'string' ? f : (f.path || f.file_path || f.name || f);
+      const inner = unwrapResult<{ files?: (RawDriveFile | string)[]; items?: (RawDriveFile | string)[] }>(raw);
+      const rawFiles: (RawDriveFile | string)[] = inner.files || inner.items || [];
+      const fileNodes: FileNode[] = rawFiles.map((f, i) => {
+        if (typeof f === 'string') {
+          return { id: `server-file-${i}`, name: f, type: 'file', path: f };
+        }
+        const name = f.name || f.filename || '';
+        const isDir = f.type === 'directory' || f.is_dir === true || f.is_folder === true;
+        const path = f.path || f.file_path || f.name || '';
         return { id: `server-file-${i}`, name, type: isDir ? 'folder' : 'file', path };
       });
       return { success: true, files: fileNodes };
@@ -167,26 +185,58 @@ export const api = {
     return fetchApi('/drive/connect', {
       method: 'POST',
       body: JSON.stringify({ type }),
-    });
+    }) as Promise<{ success: boolean; files?: FileNode[] }>;
   },
 
   // Generic one-off block call (used for ZVec, etc.)
-  async runBlock(block: string, input: any, params: any): Promise<any> {
-    const result = await fetchApi('/v1/execute', {
+  async runBlock(block: string, input: unknown, params: Record<string, unknown>): Promise<unknown> {
+    const raw = await fetchApi('/v1/execute', {
       method: 'POST',
       body: JSON.stringify({ block, input, params }),
     });
-    return result.result ?? result;
+    return unwrapResult<unknown>(raw);
   },
 
   // Health check
   async health(): Promise<{ status: string }> {
-    return fetchApi('/health');
+    return fetchApi('/health') as Promise<{ status: string }>;
   },
 };
 
+interface RawDocumentInfoData {
+  doc_type?: string;
+  type?: string;
+  title?: string;
+  project?: string;
+  pages?: number;
+  total_pages?: number;
+  author?: string;
+  drawn_by?: string;
+  date?: string;
+}
+
+interface RawQuantityValue {
+  qty?: number;
+  quantity?: number;
+  total?: number;
+  unit?: string;
+}
+
+interface RawCostEstimateData {
+  subtotal?: number;
+  total?: number;
+  overhead?: number;
+  contingency?: number;
+  currency?: string;
+}
+
+interface RawContractData {
+  extracted_clauses?: Record<string, { found?: boolean; examples?: string[] }>;
+  clauses?: RawContractClause[];
+}
+
 // Map auto_pipeline panels array response to typed panel state
-export function mapConstructionResult(result: any): {
+export function mapConstructionResult(result: ConstructionApiResult | null | undefined): {
   documentInfo: DocumentInfo | null;
   quantities: QuantityItem[];
   costEstimate: CostEstimate | null;
@@ -203,17 +253,18 @@ export function mapConstructionResult(result: any): {
 
   if (!result || result.status === 'error') return empty;
 
-  const panels: any[] = result.panels || [];
-  const getPanel = (type: string) => panels.find((p: any) => p.type === type);
+  const panels: RawPanel[] = result.panels || [];
+  const getPanel = <T = unknown>(type: string): RawPanel<T> | undefined =>
+    panels.find(p => p.type === type) as RawPanel<T> | undefined;
 
-  const docPanel = getPanel('document_info');
-  const qPanel = getPanel('quantities');
-  const costPanel = getPanel('cost_estimate');
-  const riskPanel = getPanel('risks');
-  const submittalPanel = getPanel('submittals');
-  const schedulePanel = getPanel('schedule');
-  const contractPanel = getPanel('contract');
-  const procurementPanel = getPanel('procurement');
+  const docPanel = getPanel<RawDocumentInfoData>('document_info');
+  const qPanel = getPanel<Record<string, number | RawQuantityValue> | RawQuantityValue[]>('quantities');
+  const costPanel = getPanel<RawCostEstimateData>('cost_estimate');
+  const riskPanel = getPanel<RawRisk[]>('risks');
+  const submittalPanel = getPanel<RawSubmittal[] | { submittals?: RawSubmittal[] }>('submittals');
+  const schedulePanel = getPanel<RawScheduleActivity[] | { activities?: RawScheduleActivity[] }>('schedule');
+  const contractPanel = getPanel<RawContractData | RawContractClause[]>('contract');
+  const procurementPanel = getPanel<RawProcurementItem[] | { procurement_list?: RawProcurementItem[] }>('procurement');
 
   const documentInfo: DocumentInfo | null = docPanel?.data
     ? {
@@ -229,8 +280,14 @@ export function mapConstructionResult(result: any): {
   const quantities: QuantityItem[] = (() => {
     const q = qPanel?.data;
     if (!q) return [];
-    if (Array.isArray(q)) return q;
-    return Object.entries(q).map(([item, data]: [string, any]) => ({
+    if (Array.isArray(q)) {
+      return q.map(v => ({
+        item: '',
+        quantity: v.qty ?? v.quantity ?? v.total ?? 0,
+        unit: v.unit ?? 'units',
+      }));
+    }
+    return Object.entries(q).map(([item, data]) => ({
       item: item.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
       quantity: typeof data === 'object' ? data.qty ?? data.quantity ?? data.total ?? 0 : Number(data),
       unit: typeof data === 'object' ? data.unit ?? 'units' : 'units',
@@ -247,10 +304,10 @@ export function mapConstructionResult(result: any): {
       }
     : null;
 
-  const risks: Risk[] = (riskPanel?.data || []).map((r: any, i: number) => ({
-    id: r.id ?? String(i + 1),
+  const risks: Risk[] = (riskPanel?.data || []).map((r, i) => ({
+    id: String(r.id ?? i + 1),
     description: r.description || r.risk || r.item || 'Unknown risk',
-    severity: (r.severity || r.level || 'MEDIUM').toUpperCase() as Risk['severity'],
+    severity: ((r.severity || r.level || 'MEDIUM').toUpperCase()) as Risk['severity'],
     category: r.category || r.type || 'General',
     mitigation: r.mitigation || r.recommendation || '',
   }));
@@ -262,41 +319,49 @@ export function mapConstructionResult(result: any): {
     risks,
     submittals: (() => {
       const d = submittalPanel?.data;
-      const raw: any[] = Array.isArray(d) ? d : (Array.isArray(d?.submittals) ? d.submittals : []);
-      return raw.map((s: any, i: number) => ({
-        id: s.id ?? String(i + 1),
+      const raw: RawSubmittal[] = Array.isArray(d)
+        ? d
+        : (Array.isArray(d?.submittals) ? d.submittals : []);
+      return raw.map((s, i) => ({
+        id: String(s.id ?? i + 1),
         item: s.item || s.name || s.description || 'Unknown',
-        status: (s.status || 'PENDING').toUpperCase() as Submittal['status'],
+        status: ((s.status || 'PENDING').toUpperCase()) as Submittal['status'],
         category: s.category || s.type || 'General',
       }));
     })(),
     schedule: (() => {
       const d = schedulePanel?.data;
-      const raw: any[] = Array.isArray(d) ? d : (Array.isArray(d?.activities) ? d.activities : []);
-      return raw.map((a: any, i: number) => ({
-        id: a.id ?? String(i + 1),
-        task: a.task || a.name || a.activity_name || 'Unknown',
-        start: a.start || a.start_date || '',
-        end: a.end || a.finish || a.end_date || '',
-        duration: a.duration ?? a.duration_days ?? 0,
-        progress: a.progress ?? a.percent_complete ?? 0,
-        status: (a.status || (a.progress >= 100 ? 'COMPLETED' : a.progress > 0 ? 'IN_PROGRESS' : 'NOT_STARTED')) as ScheduleItem['status'],
-      }));
+      const raw: RawScheduleActivity[] = Array.isArray(d)
+        ? d
+        : (Array.isArray(d?.activities) ? d.activities : []);
+      return raw.map((a, i) => {
+        const progress = a.progress ?? a.percent_complete ?? 0;
+        return {
+          id: String(a.id ?? i + 1),
+          task: a.task || a.name || a.activity_name || 'Unknown',
+          start: a.start || a.start_date || '',
+          end: a.end || a.finish || a.end_date || '',
+          duration: a.duration ?? a.duration_days ?? 0,
+          progress,
+          status: (a.status || (progress >= 100 ? 'COMPLETED' : progress > 0 ? 'IN_PROGRESS' : 'NOT_STARTED')) as ScheduleItem['status'],
+        };
+      });
     })(),
     contract: (() => {
       const d = contractPanel?.data;
-      const clauses = d?.extracted_clauses;
-      if (clauses && typeof clauses === 'object' && !Array.isArray(clauses)) {
-        return Object.entries(clauses).map(([key, val]: [string, any], i) => ({
+      if (d && !Array.isArray(d) && d.extracted_clauses && typeof d.extracted_clauses === 'object') {
+        return Object.entries(d.extracted_clauses).map(([key, val], i) => ({
           id: String(i + 1),
           title: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-          content: (val?.examples?.[0] || '') as string,
+          content: val?.examples?.[0] || '',
           section: val?.found ? 'Found' : 'Not Found',
         }));
       }
-      const raw: any[] = Array.isArray(d) ? d : (Array.isArray(d?.clauses) ? d.clauses : []);
-      return raw.map((c: any, i: number) => ({
-        id: c.id ?? String(i + 1),
+      const raw: RawContractClause[] = Array.isArray(d)
+        ? d
+        : (d && Array.isArray(d.clauses) ? d.clauses : []);
+      return raw.map((c, i) => ({
+        id: String(c.id ?? i + 1),
         title: c.title || c.name || 'Unknown',
         content: c.content || c.text || '',
         section: c.section || '',
@@ -304,9 +369,11 @@ export function mapConstructionResult(result: any): {
     })(),
     procurement: (() => {
       const d = procurementPanel?.data;
-      const raw: any[] = Array.isArray(d) ? d : (Array.isArray(d?.procurement_list) ? d.procurement_list : []);
-      return raw.map((item: any, i: number) => ({
-        id: item.id ?? String(i + 1),
+      const raw: RawProcurementItem[] = Array.isArray(d)
+        ? d
+        : (Array.isArray(d?.procurement_list) ? d.procurement_list : []);
+      return raw.map((item, i) => ({
+        id: String(item.id ?? i + 1),
         item: item.item || item.name || 'Unknown',
         quantity: item.quantity ?? 0,
         unit: item.unit || 'units',

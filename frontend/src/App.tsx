@@ -111,12 +111,13 @@ function AppContent() {
     setContract(mapped.contract);
     setProcurement(mapped.procurement);
 
-    const panels: any[] = analysisResult.panels || [];
-    const qPanel = panels.find((p: any) => p.type === 'quantities');
-    const cPanel = panels.find((p: any) => p.type === 'cost_estimate');
-    const qPanelData = qPanel?.data || {};
+    const panels = analysisResult.panels || [];
+    const qPanel = panels.find(p => p.type === 'quantities');
+    const cPanel = panels.find(p => p.type === 'cost_estimate');
+    const qPanelData = (qPanel?.data as Record<string, unknown> | undefined) || {};
     // Reference reads cPanel.line_items (panel-level) then falls back to inside data
-    const costLineItems = cPanel?.line_items || cPanel?.data?.line_items || cPanel?.data?.items || [];
+    const cPanelData = cPanel?.data as { line_items?: unknown[]; items?: unknown[] } | undefined;
+    const costLineItems: unknown[] = cPanel?.line_items || cPanelData?.line_items || cPanelData?.items || [];
 
     setActivePipelineCtx({
       file_path: filePath,
@@ -320,9 +321,9 @@ function AppContent() {
 
       // Procurement list generator — convert to ProcurementItem[] and show in panel
       if (action === 'procurement_list_generator') {
-        const rawItems: any[] = result.procurement_list || result.items || [];
+        const rawItems = result.procurement_list || result.items || [];
         if (rawItems.length > 0) {
-          setProcurement(rawItems.map((item: any, i: number) => ({
+          setProcurement(rawItems.map((item, i) => ({
             id: String(i + 1),
             item: item.item || item.name || 'Unknown',
             quantity: item.quantity || 0,
