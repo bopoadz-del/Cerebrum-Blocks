@@ -1,27 +1,21 @@
 from fastapi import APIRouter
-from fastapi.responses import FileResponse
 
 from app.blocks import BLOCK_REGISTRY
 
 router = APIRouter()
 
 
-@router.get("/", response_class=FileResponse)
+@router.get("/")
 async def root():
-    """Serve Block Store UI."""
-    return FileResponse(
-        "app/static/index.html",
-        headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"}
-    )
-
-
-@router.get("/landing", response_class=FileResponse)
-async def landing():
-    """Serve legacy landing page."""
-    return FileResponse(
-        "app/static/landing/index.html",
-        headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"}
-    )
+    """Platform root — new UI will be served here."""
+    return {
+        "name": "Cerebrum Blocks",
+        "version": "2.0.0",
+        "tagline": "Build AI Like Lego",
+        "blocks": len(BLOCK_REGISTRY),
+        "status": "ui_rebuilding",
+        "message": "New UI is being deployed. Check back shortly.",
+    }
 
 
 @router.get("/api")
