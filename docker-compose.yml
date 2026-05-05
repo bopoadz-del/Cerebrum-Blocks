@@ -1,9 +1,9 @@
 version: "3.8"
 
 services:
-  cerebrum-blocks:
+  cerebrum-api:
     build: .
-    container_name: cerebrum-blocks
+    container_name: cerebrum-api
     ports:
       - "8000:8000"
     volumes:
@@ -22,15 +22,13 @@ services:
       retries: 3
       start_period: 40s
 
-  # Optional: Redis for caching (future feature)
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: ai-block-redis
+  # Frontend dev server (optional — for local development)
+  # cerebrum-frontend:
+  #   build: ./frontend
+  #   container_name: cerebrum-frontend
   #   ports:
-  #     - "6379:6379"
+  #     - "5173:5173"
   #   volumes:
-  #     - redis_data:/data
-  #   restart: unless-stopped
-
-# volumes:
-#   redis_data:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #   command: npm run dev -- --host

@@ -1,37 +1,40 @@
-# Multi-stage build - slim, fast, multi-platform
-FROM python:3.11-slim AS builder
+# ═══════════════════════════════════════════════════════════════════════
+# Cerebrum Blocks — Production Dockerfile
+# ═══════════════════════════════════════════════════════════════════════
+
+FROM python:3.11-slim
+
 WORKDIR /app
 
+# Install system dependencies (single layer to reduce image size)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
-    g++ \
-    gfortran \
-    pkg-config \
+    # Build tools
+    build-essential gcc g++ gfortran pkg-config \
+    # PDF / image processing
+    libgl1 libglib2.0-0 libsm6 libxext6 libxrender-dev \
+    poppler-utils \
+    # OCR (critical for capture, ocr, ocr_v2 blocks)
+    tesseract-ocr libtesseract-dev \
+    # Networking / healthchecks
+    curl \
+    # Cleanup
     && rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
 
-FROM python:3.11-slim
-WORKDIR /app
-
-# System deps - simplified for Render
-RUN apt-get update || true && \
-    apt-get install -y --no-install-recommends \
-    libgl1 \
-    libglib2.0-0 \
-    || true && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
+# Copy application code
 COPY . .
 
-# Persistent data for ingest
+# Persistent data volume
 VOLUME /app/data
 
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
 EXPOSE 8000
+
 ENTRYPOINT ["/app/entrypoint.sh"]
