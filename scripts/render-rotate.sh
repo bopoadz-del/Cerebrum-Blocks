@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Rotate Cerebrum keys on Render and apply the new env vars + redeploy.
+# Apply the new non-secret env vars to Cerebrum services on Render and
+# trigger a redeploy on each. Existing API keys are NOT touched.
 #
 # Usage:
 #     RENDER_KEY='rnd_...' bash scripts/render-rotate.sh
@@ -9,11 +10,10 @@
 #     UI_SERVICE=cerebrum-platform
 #     CORS_ORIGINS='https://cerebrum-platform.onrender.com'
 #     API_URL=https://cerebrum-platform-api.onrender.com
-#     DRY_RUN=1   # set to skip the destructive steps and only print the plan
+#     DRY_RUN=1   # preview only; no writes, no deploys
 #
-# Generates two fresh random keys (master + frontend), merges them into the
-# existing env-var list on each service, then triggers a deploy on each.
-# The script never deletes env vars you already set on Render.
+# Merges the env-var updates into the existing list on each service —
+# never deletes env vars you already set on Render.
 
 set -euo pipefail
 
@@ -86,30 +86,15 @@ trigger_deploy() {
     fi
 }
 
-gen_key() {
-    local prefix="$1"
-    printf '%s_%s' "$prefix" "$(openssl rand -hex 16)"
-}
-
 echo "==> Resolving service IDs"
 API_ID="$(find_service_id "$API_SERVICE")"
 UI_ID="$(find_service_id "$UI_SERVICE")"
 echo "    $API_SERVICE -> $API_ID"
 echo "    $UI_SERVICE  -> $UI_ID"
 
-echo "==> Generating new keys"
-NEW_MASTER="$(gen_key cb_master)"
-NEW_FRONTEND="$(gen_key cb_frontend)"
-# Don't print the master key to stdout in non-dry-run mode unless the user
-# explicitly wants it; show truncated previews instead.
-echo "    master:   ${NEW_MASTER:0:16}…"
-echo "    frontend: ${NEW_FRONTEND:0:18}…"
-
 echo "==> Updating API service env vars ($API_SERVICE)"
-api_updates="$(jq -n --arg master "$NEW_MASTER" --arg fkey "$NEW_FRONTEND" \
-    --arg cors "$CORS_ORIGINS" '[
-    {"key":"CEREBRUM_MASTER_KEY","value":$master},
-    {"key":"CEREBRUM_API_KEY_FRONTEND","value":$fkey},
+echo "    NOTE: existing CEREBRUM_MASTER_KEY / CEREBRUM_API_KEY_FRONTEND / VITE_API_KEY are NOT touched."
+api_updates="$(jq -n --arg cors "$CORS_ORIGINS" '[
     {"key":"CORS_ORIGINS","value":$cors},
     {"key":"LOG_LEVEL","value":"INFO"},
     {"key":"LOG_FORMAT","value":"json"},
@@ -118,8 +103,7 @@ api_updates="$(jq -n --arg master "$NEW_MASTER" --arg fkey "$NEW_FRONTEND" \
 merge_env_vars "$API_ID" "$api_updates"
 
 echo "==> Updating UI service env vars ($UI_SERVICE)"
-ui_updates="$(jq -n --arg fkey "$NEW_FRONTEND" --arg base "$API_URL" '[
-    {"key":"VITE_API_KEY","value":$fkey},
+ui_updates="$(jq -n --arg base "$API_URL" '[
     {"key":"VITE_API_BASE","value":$base}
 ]')"
 merge_env_vars "$UI_ID" "$ui_updates"
@@ -132,11 +116,12 @@ echo
 echo "==> Done."
 if [ "$DRY_RUN" != "1" ]; then
     echo
-    echo "SAVE THESE SOMEWHERE SAFE (e.g. 1Password):"
-    echo "    CEREBRUM_MASTER_KEY=$NEW_MASTER"
-    echo "    CEREBRUM_API_KEY_FRONTEND=$NEW_FRONTEND"
-    echo
-    echo "After API deploy is live, smoke-test:"
-    echo "    curl -i -H \"Authorization: Bearer \$CEREBRUM_API_KEY_FRONTEND\" \\"
+    echo "Smoke-test once the API deploy is live (~2-3 min):"
+    echo "    curl -i -H \"Authorization: Bearer <your-existing-frontend-key>\" \\"
     echo "         $API_URL/health"
+    echo
+    echo "Reminder: you still need to set VITE_API_KEY on the UI service to match"
+    echo "the frontend bearer key you want the SPA to send. The script does NOT"
+    echo "touch any *_KEY env var, so set it manually in the Render dashboard if"
+    echo "it isn't already configured."
 fi
