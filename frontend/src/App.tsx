@@ -128,7 +128,7 @@ function AppContent() {
     setActiveChatContext(analysisResult.chat_context || '');
 
     setRightOpen(true);
-    return mapped;
+    return { ...mapped, chat_context: analysisResult.chat_context || '', fileName };
   }, []);
 
   const handleSendMessage = useCallback(async (content: string, files: File[]) => {
@@ -142,6 +142,10 @@ function AppContent() {
     setProcessing({ active: true, stage: 'Processing...', progress: 0 });
 
     try {
+      // Track the freshest chat context — updated if a file is processed this turn
+      let freshContext = activeChatContext;
+      let freshFileName = activePipelineCtx?.fileName || '';
+
       if (files.length > 0) {
         for (const file of files) {
           const name = file.name.toLowerCase();
@@ -156,7 +160,9 @@ function AppContent() {
             addMessage('system', `Loaded "${file.name}":\n\n\`\`\`\n${text.slice(0, 2000)}${text.length > 2000 ? '\n...(truncated)' : ''}\n\`\`\``);
           } else if (isPdf || isImage || isSpreadsheet || isWord) {
             try {
-              await runFilePipeline(file, null, file.name, isImage);
+              const pipelineResult = await runFilePipeline(file, null, file.name, isImage);
+              freshContext = pipelineResult.chat_context;
+              freshFileName = pipelineResult.fileName;
               addMessage('system', `Analyzed "${file.name}". Construction intelligence panels updated.`);
             } catch (err) {
               addMessage('error', `Failed to analyze "${file.name}": ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -167,11 +173,11 @@ function AppContent() {
         }
       }
 
-      // Text-only message → chat API (inject document context if available)
-      if (content.trim() && files.length === 0) {
+      // Send text to chat API — works for text-only AND text+file (question about the file)
+      if (content.trim()) {
         setProcessing({ active: true, stage: 'Generating response...', progress: 60 });
-        const contextualContent = activeChatContext
-          ? `I am asking about the file "${activePipelineCtx?.fileName}".\n\nContext:\n---\n${activeChatContext}\n---\n\nQuestion: ${content}`
+        const contextualContent = freshContext
+          ? `I am asking about the file "${freshFileName}".\n\nContext:\n---\n${freshContext}\n---\n\nQuestion: ${content}`
           : content;
         const chatMessages = [...messages, { id: uuidv4(), role: 'user' as const, content: contextualContent, timestamp: Date.now() }];
         const result = await api.sendMessage(chatMessages);

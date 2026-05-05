@@ -47,16 +47,27 @@ async function fetchApi(path: string, options?: RequestInit): Promise<any> {
 }
 
 export const api = {
-  // Chat — sends the last user message as a string
+  // Chat — sends last message with up to 6 prior turns for multi-turn context
   async sendMessage(messages: Message[]): Promise<{ text: string; response?: string }> {
     const lastUser = [...messages].reverse().find(m => m.role === 'user');
+    if (!lastUser) return { text: '' };
+
+    // Build conversation history from prior turns (exclude the current message)
+    const priorTurns = messages
+      .filter(m => m.id !== lastUser.id && (m.role === 'user' || m.role === 'assistant'))
+      .slice(-6);
+
+    let message = lastUser.content || '';
+    if (priorTurns.length > 0) {
+      const historyText = priorTurns
+        .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+        .join('\n');
+      message = `Previous conversation:\n${historyText}\n\nCurrent message: ${message}`;
+    }
+
     return fetchApi('/chat', {
       method: 'POST',
-      body: JSON.stringify({
-        message: lastUser?.content || '',
-        model: 'deepseek-chat',
-        stream: false,
-      }),
+      body: JSON.stringify({ message, model: 'deepseek-chat', stream: false }),
     });
   },
 
