@@ -16,6 +16,7 @@ interface DriveConnectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConnect: (drive: DriveSource) => void;
+  onBrowseLocal?: () => void;
   existingDrives: DriveSource[];
 }
 
@@ -28,7 +29,7 @@ interface DriveOption {
   description: string;
 }
 
-export default function DriveConnectModal({ isOpen, onClose, onConnect, existingDrives }: DriveConnectModalProps) {
+export default function DriveConnectModal({ isOpen, onClose, onConnect, onBrowseLocal, existingDrives }: DriveConnectModalProps) {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,6 +87,15 @@ export default function DriveConnectModal({ isOpen, onClose, onConnect, existing
   const handleConnect = async (option: DriveOption) => {
     if (option.disabled || connecting) return;
 
+    setError(null);
+
+    // Local drive → native file picker; no API call needed
+    if (option.type === 'local') {
+      onBrowseLocal?.();
+      onClose();
+      return;
+    }
+
     const existing = existingDrives.find(d => d.type === option.type);
     if (existing?.connected) {
       onClose();
@@ -93,7 +103,6 @@ export default function DriveConnectModal({ isOpen, onClose, onConnect, existing
     }
 
     setConnecting(option.id);
-    setError(null);
 
     try {
       const result = await api.connectDrive(option.type);
@@ -175,7 +184,13 @@ export default function DriveConnectModal({ isOpen, onClose, onConnect, existing
                       )}
                     </div>
                     <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                      {option.disabled ? option.description : isConnected ? 'Click to open files' : 'Click to connect'}
+                      {option.disabled
+                        ? option.description
+                        : option.type === 'local'
+                        ? 'Browse and select files from your device'
+                        : isConnected
+                        ? 'Click to reconnect'
+                        : 'Click to connect'}
                     </span>
                   </div>
                   {connecting === option.id ? (

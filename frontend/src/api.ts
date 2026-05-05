@@ -8,6 +8,7 @@ import type {
   ScheduleItem,
   ContractClause,
   ProcurementItem,
+  PipelineCtx,
 } from '@/types';
 
 const API_BASE =
@@ -59,7 +60,7 @@ export const api = {
     });
   },
 
-  // Upload — multipart, no extra fields; returns file_path (absolute server path)
+  // Upload — multipart; returns file_path (absolute server path)
   async uploadFile(file: File): Promise<{ file_path: string; filename: string; url: string }> {
     const formData = new FormData();
     formData.append('file', file);
@@ -89,66 +90,64 @@ export const api = {
         params: {},
       }),
     });
-    // UniversalBlock wraps in {block, status, result: {...}}
     const inner = result.result ?? result;
     return inner.text || inner.content || '';
   },
 
-  // Run construction intelligence analysis
+  // Run construction auto_pipeline — action must be in params, NOT in input
   async analyzeConstruction(filePath: string, extractedText: string): Promise<any> {
     const result = await fetchApi('/v1/execute', {
       method: 'POST',
       body: JSON.stringify({
         block: 'construction',
-        input: {
-          action: 'process_document',
-          file_path: filePath,
-          extracted_text: extractedText,
-        },
-        params: { doc_type: 'auto' },
+        input: { file_path: filePath, extracted_text: extractedText },
+        params: { action: 'auto_pipeline', doc_type: 'auto' },
       }),
     });
     return result.result ?? result;
   },
 
-  // Actions — routed through the construction block
-  async generateProcurementList(_fileId: string): Promise<any> {
-    return fetchApi('/v1/execute', {
+  // Trigger a subsequent construction action with pipeline context
+  async runAction(action: string, ctx: Omit<PipelineCtx, 'fileName'>): Promise<any> {
+    const result = await fetchApi('/v1/execute', {
       method: 'POST',
       body: JSON.stringify({
         block: 'construction',
-        input: { action: 'procurement_list_generator' },
-        params: {},
+        input: {
+          file_path: ctx.file_path,
+          extracted_text: ctx.extracted_text,
+          quantities: ctx.quantities || {},
+          line_items: ctx.costLineItems || [],
+        },
+        params: { action },
       }),
     });
+    return result.result ?? result;
   },
 
-  async trackProgress(_fileId: string): Promise<any> {
-    return fetchApi('/v1/execute', {
-      method: 'POST',
-      body: JSON.stringify({
-        block: 'construction',
-        input: { action: 'progress_tracker' },
-        params: {},
-      }),
-    });
-  },
-
-  async generatePaymentCertificate(_fileId: string): Promise<any> {
-    return fetchApi('/v1/execute', {
-      method: 'POST',
-      body: JSON.stringify({
-        block: 'construction',
-        input: { action: 'payment_certificate' },
-        params: {},
-      }),
-    });
-  },
-
-  // Drive — local type needs no API call
-  async connectDrive(type: string, _credentials?: any): Promise<{ success: boolean; files?: any[] }> {
+  // Drive — local needs no API call (native file picker); server uses local_drive block
+  async connectDrive(type: string): Promise<{ success: boolean; files?: any[] }> {
     if (type === 'local') {
       return { success: true, files: [] };
+    }
+    if (type === 'server') {
+      const result = await fetchApi('/v1/execute', {
+        method: 'POST',
+        body: JSON.stringify({
+          block: 'local_drive',
+          input: null,
+          params: { operation: 'list', folder_path: './' },
+        }),
+      });
+      const inner = result.result ?? result;
+      const rawFiles: any[] = inner.files || inner.items || [];
+      const fileNodes = rawFiles.map((f: any, i: number) => ({
+        id: `server-file-${i}`,
+        name: f.name || f.filename || String(f),
+        type: (f.type === 'directory' || f.is_dir || f.is_folder) ? 'folder' : 'file',
+        path: f.path || f.file_path || f.name || '',
+      }));
+      return { success: true, files: fileNodes };
     }
     return fetchApi('/drive/connect', {
       method: 'POST',
@@ -162,7 +161,7 @@ export const api = {
   },
 };
 
-// Map construction block response to typed panel state
+// Map auto_pipeline panels array response to typed panel state
 export function mapConstructionResult(result: any): {
   documentInfo: DocumentInfo | null;
   quantities: QuantityItem[];
@@ -173,29 +172,40 @@ export function mapConstructionResult(result: any): {
   contract: ContractClause[];
   procurement: ProcurementItem[];
 } {
-  if (!result || result.status === 'error') {
-    return {
-      documentInfo: null, quantities: [], costEstimate: null,
-      risks: [], submittals: [], schedule: [], contract: [], procurement: [],
-    };
-  }
+  const empty = {
+    documentInfo: null, quantities: [], costEstimate: null,
+    risks: [], submittals: [], schedule: [], contract: [], procurement: [],
+  };
 
-  const documentInfo: DocumentInfo | null = result.file_name
+  if (!result || result.status === 'error') return empty;
+
+  const panels: any[] = result.panels || [];
+  const getPanel = (type: string) => panels.find((p: any) => p.type === type);
+
+  const docPanel = getPanel('document_info');
+  const qPanel = getPanel('quantities');
+  const costPanel = getPanel('cost_estimate');
+  const riskPanel = getPanel('risks');
+  const submittalPanel = getPanel('submittals');
+  const schedulePanel = getPanel('schedule');
+  const contractPanel = getPanel('contract');
+  const procurementPanel = getPanel('procurement');
+
+  const documentInfo: DocumentInfo | null = docPanel?.data
     ? {
-        type: result.doc_type || 'Document',
-        title: result.title_block?.title || result.file_name?.replace(/\.[^/.]+$/, '') || 'Document',
-        project: result.title_block?.project || 'Unknown Project',
-        pages: result.total_pages || 1,
-        author: result.title_block?.drawn_by || 'Unknown',
-        date: result.title_block?.date || new Date().toISOString().split('T')[0],
+        type: docPanel.data.doc_type || docPanel.data.type || 'Document',
+        title: docPanel.data.title || result.file_name?.replace(/\.[^/.]+$/, '') || 'Document',
+        project: docPanel.data.project || 'Unknown Project',
+        pages: docPanel.data.pages || docPanel.data.total_pages || 1,
+        author: docPanel.data.author || docPanel.data.drawn_by || 'Unknown',
+        date: docPanel.data.date || new Date().toISOString().split('T')[0],
       }
     : null;
 
   const quantities: QuantityItem[] = (() => {
-    const q = result.quantities;
+    const q = qPanel?.data;
     if (!q) return [];
     if (Array.isArray(q)) return q;
-    // Convert dict {concrete: {qty, unit}} to array
     return Object.entries(q).map(([item, data]: [string, any]) => ({
       item: item.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
       quantity: typeof data === 'object' ? data.qty ?? data.quantity ?? data.total ?? 0 : Number(data),
@@ -203,17 +213,17 @@ export function mapConstructionResult(result: any): {
     }));
   })();
 
-  const costEstimate: CostEstimate | null = result.cost_estimate
+  const costEstimate: CostEstimate | null = costPanel?.data
     ? {
-        subtotal: result.cost_estimate.subtotal ?? result.cost_estimate.total ?? 0,
-        overhead: result.cost_estimate.overhead ?? 0,
-        contingency: result.cost_estimate.contingency ?? 0,
-        total: result.cost_estimate.total ?? result.cost_estimate.subtotal ?? 0,
-        currency: result.cost_estimate.currency ?? '$',
+        subtotal: costPanel.data.subtotal ?? costPanel.data.total ?? 0,
+        overhead: costPanel.data.overhead ?? 0,
+        contingency: costPanel.data.contingency ?? 0,
+        total: costPanel.data.total ?? costPanel.data.subtotal ?? 0,
+        currency: costPanel.data.currency ?? '$',
       }
     : null;
 
-  const risks: Risk[] = (result.auto_risks || result.risks || []).map((r: any, i: number) => ({
+  const risks: Risk[] = (riskPanel?.data || []).map((r: any, i: number) => ({
     id: r.id ?? String(i + 1),
     description: r.description || r.risk || r.item || 'Unknown risk',
     severity: (r.severity || r.level || 'MEDIUM').toUpperCase() as Risk['severity'],
@@ -226,9 +236,9 @@ export function mapConstructionResult(result: any): {
     quantities,
     costEstimate,
     risks,
-    submittals: result.submittals || [],
-    schedule: result.schedule || result.activities || [],
-    contract: result.contract || result.clauses || [],
-    procurement: result.procurement || result.materials || [],
+    submittals: Array.isArray(submittalPanel?.data) ? submittalPanel.data : [],
+    schedule: Array.isArray(schedulePanel?.data) ? schedulePanel.data : [],
+    contract: Array.isArray(contractPanel?.data) ? contractPanel.data : [],
+    procurement: Array.isArray(procurementPanel?.data) ? procurementPanel.data : [],
   };
 }

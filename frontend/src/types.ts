@@ -28,6 +28,7 @@ export interface DriveSource {
   connected: boolean;
   type: 'local' | 'server' | 'google' | 'onedrive' | 'android' | 'dropbox';
   files?: FileNode[];
+  fileObjects?: File[];
 }
 
 export interface FileNode {
@@ -119,9 +120,17 @@ export interface ProcessingState {
   progress: number;
 }
 
+export interface PipelineCtx {
+  file_path: string;
+  extracted_text: string;
+  quantities: any;
+  costLineItems: any[];
+  fileName: string;
+}
+
 export type Theme = 'light' | 'dark';
 
-export type PanelType = 
+export type PanelType =
   | 'documentInfo'
   | 'quantities'
   | 'costEstimate'
