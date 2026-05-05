@@ -245,9 +245,61 @@ export function mapConstructionResult(result: any): {
     quantities,
     costEstimate,
     risks,
-    submittals: Array.isArray(submittalPanel?.data) ? submittalPanel.data : [],
-    schedule: Array.isArray(schedulePanel?.data) ? schedulePanel.data : [],
-    contract: Array.isArray(contractPanel?.data) ? contractPanel.data : [],
-    procurement: Array.isArray(procurementPanel?.data) ? procurementPanel.data : [],
+    submittals: (() => {
+      const d = submittalPanel?.data;
+      const raw: any[] = Array.isArray(d) ? d : (Array.isArray(d?.submittals) ? d.submittals : []);
+      return raw.map((s: any, i: number) => ({
+        id: s.id ?? String(i + 1),
+        item: s.item || s.name || s.description || 'Unknown',
+        status: (s.status || 'PENDING').toUpperCase() as Submittal['status'],
+        category: s.category || s.type || 'General',
+      }));
+    })(),
+    schedule: (() => {
+      const d = schedulePanel?.data;
+      const raw: any[] = Array.isArray(d) ? d : (Array.isArray(d?.activities) ? d.activities : []);
+      return raw.map((a: any, i: number) => ({
+        id: a.id ?? String(i + 1),
+        task: a.task || a.name || a.activity_name || 'Unknown',
+        start: a.start || a.start_date || '',
+        end: a.end || a.finish || a.end_date || '',
+        duration: a.duration ?? a.duration_days ?? 0,
+        progress: a.progress ?? a.percent_complete ?? 0,
+        status: (a.status || (a.progress >= 100 ? 'COMPLETED' : a.progress > 0 ? 'IN_PROGRESS' : 'NOT_STARTED')) as ScheduleItem['status'],
+      }));
+    })(),
+    contract: (() => {
+      const d = contractPanel?.data;
+      const clauses = d?.extracted_clauses;
+      if (clauses && typeof clauses === 'object' && !Array.isArray(clauses)) {
+        return Object.entries(clauses).map(([key, val]: [string, any], i) => ({
+          id: String(i + 1),
+          title: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          content: (val?.examples?.[0] || '') as string,
+          section: val?.found ? 'Found' : 'Not Found',
+        }));
+      }
+      const raw: any[] = Array.isArray(d) ? d : (Array.isArray(d?.clauses) ? d.clauses : []);
+      return raw.map((c: any, i: number) => ({
+        id: c.id ?? String(i + 1),
+        title: c.title || c.name || 'Unknown',
+        content: c.content || c.text || '',
+        section: c.section || '',
+      }));
+    })(),
+    procurement: (() => {
+      const d = procurementPanel?.data;
+      const raw: any[] = Array.isArray(d) ? d : (Array.isArray(d?.procurement_list) ? d.procurement_list : []);
+      return raw.map((item: any, i: number) => ({
+        id: item.id ?? String(i + 1),
+        item: item.item || item.name || 'Unknown',
+        quantity: item.quantity ?? 0,
+        unit: item.unit || 'units',
+        leadTime: item.lead_time_weeks ?? item.lead_time_days ?? item.lead_time ?? 0,
+        critical: item.priority === 'critical' || item.critical === true,
+        supplier: item.supplier_type || item.supplier || undefined,
+        status: item.status || 'PENDING',
+      }));
+    })(),
   };
 }
