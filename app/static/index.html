@@ -58,12 +58,7 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .file-preview { max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 8px; }
         .raw-output { background: #0f0f0f; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px; margin-top: 12px; font-family: monospace; font-size: 12px; color: #888; overflow-x: auto; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
-        /* Error display */
-        .validation-error { background: #3a1a1a; border: 1px solid #5a2a2a; border-radius: 8px; padding: 12px; margin-top: 8px; }
-        .validation-error h4 { color: #ff6666; font-size: 13px; margin-bottom: 8px; }
-        .validation-error ul { color: #cc8888; font-size: 12px; margin-left: 16px; }
-        .validation-error li { margin-bottom: 4px; }
-        /* Modal */
+        /* Drive Connect Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
         .modal { background: #151515; border: 1px solid #333; border-radius: 12px; padding: 24px; width: 320px; }
@@ -75,12 +70,6 @@
         .drive-option .desc { font-size: 11px; color: #666; }
         .modal-close { width: 100%; margin-top: 8px; padding: 10px; background: transparent; border: 1px solid #333; color: #999; border-radius: 6px; cursor: pointer; }
         .modal-close:hover { border-color: #666; color: #fff; }
-        /* Type conversion badge */
-        .type-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px; }
-        .type-badge.pdf { background: #8b5cf620; color: #8b5cf6; }
-        .type-badge.text { background: #22c55e20; color: #22c55e; }
-        .type-badge.image { background: #f59e0b20; color: #f59e0b; }
-        .type-badge.converted { background: #3b82f620; color: #3b82f6; }
     </style>
 </head>
 <body>
@@ -177,14 +166,17 @@
 
 <script>
 // ─────────────────────────────────────────────────────────────
-// UNIVERSAL ADAPTER CLIENT - Same Origin (No CORS)
+// UNIVERSAL ADAPTER CLIENT
 // ─────────────────────────────────────────────────────────────
-const API_BASE = '';  // Same origin - relative paths
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8000'
+    : 'https://cerebrum-platform-api-fork.onrender.com';
+
 const API_KEY = 'cb_master_22347732f8f09bed3ad4aee7f9849f77';
 
 class CerebrumClient {
     constructor(baseUrl = API_BASE, apiKey = API_KEY) {
-        this.base = baseUrl;
+        this.base = baseUrl.replace(/\/$/, '');
         this.key = apiKey;
     }
 
@@ -194,17 +186,16 @@ class CerebrumClient {
         if (body && !isFormData) {
             headers['Content-Type'] = 'application/json';
         }
-        const opts = { method, headers };
+        const opts = { method, mode: 'cors', headers };
         if (body) opts.body = isFormData ? body : JSON.stringify(body);
         
         const response = await fetch(url, opts);
-        const responseData = await response.json().catch(() => null);
-        
         if (!response.ok) {
-            const errorText = responseData ? JSON.stringify(responseData) : await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+            const text = await response.text();
+            throw new Error(`HTTP ${response.status}: ${text}`);
         }
-        return responseData;
+        if (response.status === 204) return undefined;
+        return response.json();
     }
 
     execute(block, input = null, params = {}) {
@@ -224,7 +215,7 @@ class CerebrumClient {
     }
 
     async health() {
-        const r = await fetch(`${this.base}/health`);
+        const r = await fetch(`${this.base}/health`, { mode: 'cors' });
         if (!r.ok) throw new Error(`Health check failed: ${r.status}`);
         return r.json();
     }
@@ -237,109 +228,61 @@ const client = new CerebrumClient();
 // ─────────────────────────────────────────────────────────────
 const TEXT_EXTS = new Set(['txt','md','csv','json','xml','html','htm','js','ts','py','java','c','cpp','h','css','yaml','yml','ini','log','sh','sql','tsx','jsx','sh','bat']);
 const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','webp','bmp','tiff','tif']);
-const DOCX_EXTS = new Set(['docx','doc']);
-const XLSX_EXTS = new Set(['xlsx','xls']);
 
 function getExt(name) {
     return (name.split('.').pop() || '').toLowerCase();
 }
 
-function isTextFile(name) { return TEXT_EXTS.has(getExt(name)); }
-function isImageFile(name) { return IMAGE_EXTS.has(getExt(name)); }
-function isPdfFile(name) { return getExt(name) === 'pdf'; }
-function isDocxFile(name) { return DOCX_EXTS.has(getExt(name)); }
-function isXlsxFile(name) { return XLSX_EXTS.has(getExt(name)); }
+function isTextFile(name) {
+    return TEXT_EXTS.has(getExt(name));
+}
+
+function isImageFile(name) {
+    return IMAGE_EXTS.has(getExt(name));
+}
+
+function isPdfFile(name) {
+    return getExt(name) === 'pdf';
+}
 
 function getFileKind(name) {
     if (isTextFile(name)) return 'text';
     if (isPdfFile(name)) return 'pdf';
     if (isImageFile(name)) return 'image';
-    if (isDocxFile(name)) return 'docx';
-    if (isXlsxFile(name)) return 'xlsx';
     return 'binary';
 }
 
-function getTypeBadge(kind) {
-    const badges = {
-        'pdf': '<span class="type-badge pdf">PDF</span>',
-        'text': '<span class="type-badge text">TEXT</span>',
-        'image': '<span class="type-badge image">IMG</span>',
-    };
-    return badges[kind] || '';
-}
-
-/**
- * Run a chain using the server-side /v1/chain endpoint
- * This provides full type validation and automatic conversion
- */
 async function runChain(label, steps, onProgress) {
-    onProgress(-1, 'validation', 'running');
-    
-    // Convert steps to server format
-    const serverSteps = steps.map((step, i) => ({
-        block: step.block,
-        params: step.params || {},
-        input_mapping: step.input_mapping || null,
-        label: step.label || step.block
-    }));
-    
-    try {
-        const result = await client.chain(serverSteps, null);
+    // steps: [{block, input, params, label}]
+    // input can be a static value or a function(prevOutput) => value
+    let context = null;
+    const results = [];
+    for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const stepLabel = step.label || `${step.block}`;
+        onProgress(i, stepLabel, 'running');
         
-        // Handle validation failure (before execution)
-        if (result.status === 'validation_failed') {
-            const errorHtml = formatValidationErrors(result.validation_errors);
-            throw new Error(`Chain validation failed:\n${errorHtml}`);
+        let stepInput = step.input;
+        if (typeof stepInput === 'function') {
+            stepInput = stepInput(context, results);
         }
         
-        // Handle execution error
-        if (result.status === 'error') {
-            throw new Error(result.error || `Step ${result.step || '?'} failed`);
-        }
+        const result = await client.execute(step.block, stepInput, step.params || {});
+        context = result.result || result;
+        results.push({ step: i, block: step.block, result: context });
+        onProgress(i, stepLabel, 'done');
         
-        // Simulate progress for each completed step
-        if (result.results) {
-            for (let i = 0; i < result.results.length; i++) {
-                onProgress(i, steps[i]?.label || steps[i]?.block, 'done');
-            }
+        if (context && typeof context === 'object' && context.status === 'error') {
+            throw new Error(context.error || `Step ${stepLabel} failed`);
         }
-        
-        return {
-            finalOutput: result.final_output,
-            results: result.results,
-            typeConversions: result.type_conversions || [],
-            stepsExecuted: result.steps_executed
-        };
-    } catch (error) {
-        // Check if it's a validation error with HTML
-        if (error.message.includes('Chain validation failed')) {
-            throw error;  // Pass through with HTML
-        }
-        throw new Error(`Chain execution failed: ${error.message}`);
     }
+    return { finalOutput: context, results };
 }
 
-function formatValidationErrors(errors) {
-    if (!errors || errors.length === 0) return '';
-    
-    return `
-<div class="validation-error">
-    <h4>Type Mismatch Detected</h4>
-    <ul>
-        ${errors.map(e => `<li><strong>Step ${e.step}</strong>: ${e.message}</li>`).join('')}
-    </ul>
-</div>`;
-}
-
-function formatTypeConversions(conversions) {
-    if (!conversions || conversions.length === 0) return '';
-    
-    return conversions.map(c => 
-        `<span class="type-badge converted" title="Step ${c.step}: ${c.from} → ${c.to} (${c.operation})">↻</span>`
-    ).join('');
-}
-
+// Connected drives state
 const connectedDrives = {};
+
+// Active file context for chat
 let activeFileContext = null;
 
 function setActiveFileContext(name, content, driveName) {
@@ -355,14 +298,7 @@ function addMessage(text, role = 'assistant') {
     const msg = document.createElement('div');
     msg.className = `msg ${role}`;
     msg.innerHTML = `<div class="bubble"></div>`;
-    
-    // Handle HTML in error messages
-    if (role === 'error' && text.includes('<div')) {
-        msg.querySelector('.bubble').innerHTML = text;
-    } else {
-        msg.querySelector('.bubble').textContent = text;
-    }
-    
+    msg.querySelector('.bubble').textContent = text;
     messages.appendChild(msg);
     messages.scrollTop = messages.scrollHeight;
 }
@@ -462,6 +398,7 @@ async function handleLocalFiles(input) {
         const fileNames = files.map(f => f.name);
         const folderName = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : 'My Device Files';
         
+        // Only index text-like files for ZVec (limit to first 200 to avoid overload)
         const indexableNames = fileNames.filter(n => isTextFile(n) || isPdfFile(n)).slice(0, 200);
         let zvecResult = null;
         if (indexableNames.length > 0) {
@@ -573,71 +510,21 @@ async function connectDrive(driveType) {
     showIndicator(false);
 }
 
-function getDriveIcon(type) {
-    const icons = {
-        google_drive: '📁',
-        onedrive: '☁️',
-        local_drive: '💾',
-        android_drive: '📱'
-    };
-    return icons[type] || '💿';
-}
-
-function renderDrives() {
-    const container = document.getElementById('drivesList');
-    if (Object.keys(connectedDrives).length === 0) {
-        container.innerHTML = '<div class="drive-empty">No drives connected yet</div>';
-        return;
-    }
-    
-    container.innerHTML = Object.entries(connectedDrives).map(([key, drive]) => `
-        <div class="drive-project">
-            <div class="drive-header" onclick="toggleDrive('${key}')" id="drive-header-${key}">
-                <span class="icon">${drive.icon}</span>
-                <span>${drive.name}</span>
-                <span class="toggle">▶</span>
-            </div>
-            <div class="drive-files" id="drive-files-${key}">
-                ${drive.files.length === 0 
-                    ? '<div class="drive-empty">No files found</div>' 
-                    : drive.files.map(f => `
-                        <div class="drive-file" onclick="selectDriveFile('${key}', '${typeof f === 'string' ? f.replace(/'/g, "\\'") : JSON.stringify(f).replace(/'/g, "\\'")}')">
-                            <span>${typeof f === 'string' ? f : (f.name || f.text || JSON.stringify(f))}</span>
-                            ${drive.indexed ? '<span class="zvec-badge">zvec</span>' : ''}
-                        </div>
-                    `).join('')
-                }
-            </div>
-        </div>
-    `).join('');
-}
-
-function toggleDrive(key) {
-    const header = document.getElementById(`drive-header-${key}`);
-    const files = document.getElementById(`drive-files-${key}`);
-    header.classList.toggle('expanded');
-    files.classList.toggle('expanded');
-}
-
-function clearAllDrives() {
-    Object.keys(connectedDrives).forEach(k => delete connectedDrives[k]);
-    renderDrives();
-    addMessage('All drives disconnected.', 'system');
-}
-
-
 async function selectDriveFile(driveId, fileName) {
     showIndicator(true);
     const drive = connectedDrives[driveId];
     if (!drive) return;
-
+    
     try {
         const kind = getFileKind(fileName);
-
+        let analysisText = '';
+        let previewHtml = '';
+        let chainSummary = '';
+        
         if (drive.isLocal && drive.fileObjects) {
             const fileObj = drive.fileObjects.find(f => f.name === fileName);
             if (!fileObj) {
-                addMessage(`File not found: ${fileName}`, 'error');
+                addMessage(`File not found in local objects: ${fileName}`, 'error');
                 showIndicator(false);
                 return;
             }
@@ -683,6 +570,7 @@ async function selectDriveFile(driveId, fileName) {
                 activeFileContext.pipelineResult = { file_path: filePath, extracted_text: extractedText };
                 setOutcomes(renderPanels(r.panels || [], r.next_actions || [], fileName, sizeKb));
                 addMessage(`"${fileName}" from ${drive.name} analysed (${r.doc_type || 'document'}). Ask me anything about it.`, 'assistant');
+                chainSummary = `${extractBlock} → construction.auto_pipeline`;
 
             } else {
                 setActiveFileContext(fileName, '[Binary file]', drive.name);
@@ -690,21 +578,37 @@ async function selectDriveFile(driveId, fileName) {
                     <div class="outcome-label">📦 ${fileName}</div>
                     <div style="color:#888;font-size:12px;margin-top:4px;">Binary file from ${drive.name}</div>
                 </div>`);
-                addMessage(`"${fileName}" from ${drive.name} — binary format.`, 'assistant');
+                analysisText = `Loaded "${fileName}" from ${drive.name}. Binary file — I can answer questions based on the filename only.`;
+                addMessage(analysisText, 'assistant');
             }
         } else {
-            const readData = await client.execute('local_drive', null, { operation: 'read', file_path: fileName });
+            // Remote drive — read content then run auto_pipeline for pdf/image, or set context for text
+            const readData = await client.execute(
+                driveId.includes('google') ? 'google_drive' : driveId.includes('one') ? 'onedrive' : driveId.includes('android') ? 'android_drive' : 'local_drive',
+                null, { operation: 'read', file_path: fileName }
+            );
             const fileContent = readData.result?.content || readData.result?.text || '';
-            const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
-            setActiveFileContext(fileName, trimmed, drive.name);
-            setOutcomes(`<div class="outcome-item">
-                <div class="outcome-label">📄 ${fileName}</div>
-                <div style="color:#888;font-size:12px;margin-top:4px;">From ${drive.name}</div>
-                <div class="raw-output" style="max-height:200px;margin-top:8px;">${escapeHtml(trimmed.substring(0, 800))}${trimmed.length > 800 ? '…' : ''}</div>
-            </div>`);
-            addMessage(`"${fileName}" loaded from ${drive.name}. Ask me anything about it.`, 'assistant');
-        }
 
+            if (fileContent && kind !== 'binary') {
+                const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
+                setActiveFileContext(fileName, trimmed, drive.name);
+                setOutcomes(`<div class="outcome-item">
+                    <div class="outcome-label">📄 ${fileName}</div>
+                    <div style="color:#888;font-size:12px;margin-top:4px;">From ${drive.name}</div>
+                    <div class="raw-output" style="max-height:200px;margin-top:8px;">${escapeHtml(trimmed.substring(0, 800))}${trimmed.length > 800 ? '…' : ''}</div>
+                </div>`);
+                addMessage(`"${fileName}" loaded from ${drive.name}. Ask me anything about it.`, 'assistant');
+            } else {
+                setActiveFileContext(fileName, '[Remote binary file]', drive.name);
+                setOutcomes(`<div class="outcome-item">
+                    <div class="outcome-label">📦 ${fileName}</div>
+                    <div style="color:#888;font-size:12px;margin-top:4px;">Binary or empty file from ${drive.name}</div>
+                </div>`);
+                addMessage(`"${fileName}" from ${drive.name} — binary format, limited analysis available.`, 'assistant');
+            }
+        }
+        
+        // Append ZVec related files to whatever panels are already rendered
         try {
             const zvecData = await client.execute('zvec', fileName, {
                 operation: 'search',
@@ -713,7 +617,8 @@ async function selectDriveFile(driveId, fileName) {
             });
             const related = zvecData.result?.results || [];
             if (related.length > 0) {
-                document.getElementById('outcomes').innerHTML += `<div class="outcome-item">
+                const outcomeEl = document.getElementById('outcomes');
+                outcomeEl.innerHTML += `<div class="outcome-item">
                     <div class="outcome-label">🔍 Related Files</div>
                     <div style="color:#ccc;font-size:12px;margin-top:6px;">
                         ${related.map(r => `<div style="margin-bottom:4px;">• ${escapeHtml(r.text || String(r))} ${r.score ? `<span style="color:#555;">(${Math.round(r.score*100)}%)</span>` : ''}</div>`).join('')}
@@ -721,11 +626,11 @@ async function selectDriveFile(driveId, fileName) {
                 </div>`;
             }
         } catch (e) { /* ZVec optional */ }
-
+        
     } catch (err) {
         addMessage(`Error loading file: ${err.message}`, 'error');
     }
-
+    
     showIndicator(false);
 }
 
@@ -739,17 +644,17 @@ async function sendMessage() {
     const input = document.getElementById('textInput');
     let text = input.value.trim();
     if (!text) return;
-
+    
     if (activeFileContext && activeFileContext.content) {
         text = `I am asking about the file "${activeFileContext.name}" from ${activeFileContext.driveName}.\n\nHere is the file content:\n---\n${activeFileContext.content}\n---\n\nMy question: ${text}`;
     }
-
+    
     addMessage(input.value.trim(), 'user');
     input.value = '';
     input.style.height = 'auto';
     document.getElementById('sendBtn').disabled = true;
     showIndicator(true);
-
+    
     try {
         const data = await client.chat(text);
         addMessage(data.text || data.result?.text || JSON.stringify(data), 'assistant');
@@ -757,13 +662,13 @@ async function sendMessage() {
         console.error('Chat error:', err);
         addMessage(`Error: ${err.message}. Make sure the API server is running.`, 'error');
     }
-
+    
     document.getElementById('sendBtn').disabled = false;
     showIndicator(false);
 }
 
 function renderPanels(panels, nextActions, fileName, sizeKb) {
-    const typeIcons = { document_info: '📄', quantities: '📐', cost_estimate: '💰', risks: '⚠️', submittals: '📋', schedule: '📅', contract: '📜' };
+    const typeIcons = { document_info: '📄', quantities: '📐', cost_estimate: '💰', risks: '⚠️', submittals: '📋', schedule: '📅', contract: '📜', procurement: '🛒' };
     let html = '';
 
     for (const panel of panels) {
@@ -934,6 +839,7 @@ async function handleFile(input) {
         const filePath = uploadData.file_path || uploadData.path || uploadData.filename;
 
         if (kind === 'text') {
+            // Text files: read locally, set context, no chain needed
             const fileContent = await readFileContent(file);
             const trimmed = fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n... [truncated] ...' : fileContent;
             setActiveFileContext(file.name, trimmed, 'Upload');
@@ -945,6 +851,7 @@ async function handleFile(input) {
             addMessage(`"${file.name}" loaded. Ask me anything about it.`, 'assistant');
 
         } else if (kind === 'pdf' || kind === 'image') {
+            // Step 1: extract text
             setOutcomes(`<div class="outcome-item"><div class="outcome-label">⚙️ Processing</div>
                 <div style="color:#8b5cf6;font-size:12px;margin-top:4px;">Step 1/2 — extracting text…</div></div>`);
             const extractBlock = kind === 'pdf' ? 'pdf' : 'ocr';
@@ -952,8 +859,9 @@ async function handleFile(input) {
             try {
                 const extractResult = await client.execute(extractBlock, { action: 'extract_text', file_path: filePath }, {});
                 extractedText = extractResult.result?.text || extractResult.result?.extracted_text || '';
-            } catch(e) { /* extraction optional */ }
+            } catch(e) { /* extraction optional — pipeline continues */ }
 
+            // Step 2: auto_pipeline (domain intelligence, no DeepSeek)
             setOutcomes(`<div class="outcome-item"><div class="outcome-label">⚙️ Processing</div>
                 <div style="color:#8b5cf6;font-size:12px;margin-top:4px;">Step 2/2 — construction intelligence…</div></div>`);
             const pipelineResult = await client.execute('construction',
@@ -961,24 +869,31 @@ async function handleFile(input) {
                 { action: 'auto_pipeline', doc_type: 'auto' }
             );
             const r = pipelineResult.result || {};
+            const panels = r.panels || [];
+            const nextActions = r.next_actions || [];
+
+            // Store context for follow-up chat
             const chatCtx = r.chat_context || `File: ${file.name}\nType: ${r.doc_type || 'unknown'}\n\n${extractedText.substring(0, 3000)}`;
             setActiveFileContext(file.name, chatCtx, 'Upload');
             activeFileContext.pipelineResult = { file_path: filePath, extracted_text: extractedText };
-            const qPanel = (r.panels || []).find(p => p.type === 'quantities');
-            const cPanel = (r.panels || []).find(p => p.type === 'cost_estimate');
+            const qPanel = panels.find(p => p.type === 'quantities');
+            const cPanel = panels.find(p => p.type === 'cost_estimate');
             activeFileContext.quantities = (qPanel && qPanel.data) || {};
             activeFileContext.costLineItems = (cPanel && cPanel.line_items) || [];
-            setOutcomes(renderPanels(r.panels || [], r.next_actions || [], file.name, sizeKb));
+
+            setOutcomes(renderPanels(panels, nextActions, file.name, sizeKb));
+
+            const docType = r.doc_type || 'document';
             const actionsRun = (r.downstream_actions_run || []).join(', ') || 'none';
-            addMessage(`"${file.name}" analysed (${r.doc_type || 'document'}). ${(r.panels || []).length} intelligence panels. Actions: ${actionsRun}. Ask me anything.`, 'assistant');
+            addMessage(`"${file.name}" analysed (${docType}). ${panels.length} intelligence panels generated. Actions run: ${actionsRun}. Ask me anything about it.`, 'assistant');
 
         } else {
             setActiveFileContext(file.name, `[Binary file — ${kind}]`, 'Upload');
             setOutcomes(`<div class="outcome-item">
                 <div class="outcome-label">📦 ${file.name}</div>
-                <div style="color:#888;font-size:12px;margin-top:4px;">${sizeKb} KB · Binary file</div>
+                <div style="color:#888;font-size:12px;margin-top:4px;">${sizeKb} KB · Binary file — no text extraction available</div>
             </div>`);
-            addMessage(`"${file.name}" uploaded. Binary format — limited analysis available.`, 'assistant');
+            addMessage(`"${file.name}" uploaded. Binary format — I can answer questions based on the filename only.`, 'assistant');
         }
 
     } catch (err) {
@@ -1005,7 +920,7 @@ client.health()
     })
     .catch(err => {
         console.error('Health check failed:', err);
-        addMessage(`⚠️ API not available at ${API_BASE || 'same origin'}`, 'error');
+        addMessage(`⚠️ API not available at ${API_BASE}`, 'error');
     });
 
 // Initialize drives list
