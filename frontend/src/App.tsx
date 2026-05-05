@@ -23,6 +23,7 @@ import LeftSidebar from '@/components/LeftSidebar';
 import ChatArea from '@/components/ChatArea';
 import RightPanel from '@/components/RightPanel';
 import DriveConnectModal from '@/components/DriveConnectModal';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 function AppContent() {
   // Panel layout state
@@ -381,49 +382,55 @@ function AppContent() {
       />
 
       {/* Left Sidebar */}
-      <LeftSidebar
-        projects={projects}
-        drives={drives}
-        onNewChat={handleNewChat}
-        onConnectDrive={() => setShowDriveModal(true)}
-        onSelectProject={handleSelectProject}
-        onSelectFile={handleSelectFile}
-        isOpen={leftOpen}
-        onToggle={() => setLeftOpen(!leftOpen)}
-        width={leftWidth}
-        onResize={setLeftWidth}
-      />
+      <ErrorBoundary label="Left sidebar">
+        <LeftSidebar
+          projects={projects}
+          drives={drives}
+          onNewChat={handleNewChat}
+          onConnectDrive={() => setShowDriveModal(true)}
+          onSelectProject={handleSelectProject}
+          onSelectFile={handleSelectFile}
+          isOpen={leftOpen}
+          onToggle={() => setLeftOpen(!leftOpen)}
+          width={leftWidth}
+          onResize={setLeftWidth}
+        />
+      </ErrorBoundary>
 
       {/* Center Chat */}
       <div className="flex-1 min-w-0 rounded-2xl overflow-hidden">
-        <ChatArea
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          processing={processing}
-          isLeftOpen={leftOpen}
-          isRightOpen={rightOpen}
-          onToggleLeft={() => setLeftOpen(!leftOpen)}
-          onToggleRight={() => setRightOpen(!rightOpen)}
-        />
+        <ErrorBoundary label="Chat">
+          <ChatArea
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            processing={processing}
+            isLeftOpen={leftOpen}
+            isRightOpen={rightOpen}
+            onToggleLeft={() => setLeftOpen(!leftOpen)}
+            onToggleRight={() => setRightOpen(!rightOpen)}
+          />
+        </ErrorBoundary>
       </div>
 
       {/* Right Panel */}
-      <RightPanel
-        documentInfo={documentInfo}
-        quantities={quantities}
-        costEstimate={costEstimate}
-        risks={risks}
-        submittals={submittals}
-        schedule={schedule}
-        contract={contract}
-        procurement={procurement}
-        nextActions={nextActions}
-        onAction={handleAction}
-        isOpen={rightOpen}
-        onToggle={() => setRightOpen(!rightOpen)}
-        width={rightWidth}
-        onResize={setRightWidth}
-      />
+      <ErrorBoundary label="Right panel">
+        <RightPanel
+          documentInfo={documentInfo}
+          quantities={quantities}
+          costEstimate={costEstimate}
+          risks={risks}
+          submittals={submittals}
+          schedule={schedule}
+          contract={contract}
+          procurement={procurement}
+          nextActions={nextActions}
+          onAction={handleAction}
+          isOpen={rightOpen}
+          onToggle={() => setRightOpen(!rightOpen)}
+          width={rightWidth}
+          onResize={setRightWidth}
+        />
+      </ErrorBoundary>
 
       {/* Drive Connect Modal */}
       <DriveConnectModal
