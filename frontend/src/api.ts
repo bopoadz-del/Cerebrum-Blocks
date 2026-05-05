@@ -67,7 +67,13 @@ function unwrapResult<T = ConstructionApiResult>(raw: unknown): T {
 
 export const api = {
   // Chat — sends last message with up to 6 prior turns for multi-turn context
-  async sendMessage(messages: Message[]): Promise<{ text: string; response?: string }> {
+  async sendMessage(messages: Message[]): Promise<{
+    text: string;
+    response?: string;
+    fallback?: boolean;
+    fallback_reason?: string;
+    provider?: string;
+  }> {
     const lastUser = [...messages].reverse().find(m => m.role === 'user');
     if (!lastUser) return { text: '' };
 
@@ -87,7 +93,13 @@ export const api = {
     return fetchApi('/chat', {
       method: 'POST',
       body: JSON.stringify({ message, model: 'deepseek-chat', stream: false }),
-    }) as Promise<{ text: string; response?: string }>;
+    }) as Promise<{
+      text: string;
+      response?: string;
+      fallback?: boolean;
+      fallback_reason?: string;
+      provider?: string;
+    }>;
   },
 
   // Upload — multipart; returns file_path (absolute server path)

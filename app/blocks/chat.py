@@ -127,6 +127,8 @@ class ChatBlock(UniversalBlock):
             "provider": "offline",
             "model": "cerebrum-local",
             "offline": True,
+            "fallback": True,
+            "fallback_reason": "credit_exhausted" if is_credit_issue else "providers_unavailable",
             "error_detail": error_detail,
             "credit_exhausted": is_credit_issue,
         }

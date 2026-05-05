@@ -183,6 +183,12 @@ function AppContent() {
           : content;
         const chatMessages = [...messages, { id: uuidv4(), role: 'user' as const, content: contextualContent, timestamp: Date.now() }];
         const result = await api.sendMessage(chatMessages);
+        if (result.fallback) {
+          const reason = result.fallback_reason === 'credit_exhausted'
+            ? 'AI provider credits exhausted'
+            : 'AI provider unavailable';
+          addMessage('system', `⚠️ ${reason}. Showing rule-based fallback response.`);
+        }
         addMessage('assistant', result.text || result.response || '');
       }
     } catch (err) {
