@@ -43,6 +43,7 @@ from app.routers import (
     health,
     memory,
     monitoring,
+    skills,
     static,
     upload,
 )
@@ -134,6 +135,7 @@ app.include_router(capture.router)
 app.include_router(agent_swarm.router)
 app.include_router(workflow.router)
 app.include_router(knowledge.router)
+app.include_router(skills.router)
 
 # Debug routes — only in non-production environments
 env = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()
@@ -148,5 +150,10 @@ except Exception as e:
     import logging
     logging.getLogger("cerebrum").warning(f"MCP server not mounted: {e}")
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# Mount static files (graceful fallback if directory missing)
+import os
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.isdir(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+else:
+    logger.warning("Static directory %s not found — skipping StaticFiles mount", static_dir)

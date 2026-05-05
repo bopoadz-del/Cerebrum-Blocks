@@ -30,6 +30,7 @@ from .formula_executor import FormulaExecutorBlock
 from .sympy_reasoning import SymPyReasoningBlock
 from .historical_benchmark import HistoricalBenchmarkBlock
 from .smart_orchestrator import SmartOrchestratorBlock
+from .skills import SkillsBlock
 from .construction_v2 import ConstructionBlockV2
 from .recommendation_template import RecommendationTemplateBlock
 
@@ -123,6 +124,7 @@ BLOCK_REGISTRY = {
     "sympy_reasoning":      SymPyReasoningBlock,
     "historical_benchmark": HistoricalBenchmarkBlock,
     "smart_orchestrator":   SmartOrchestratorBlock,
+    "skills":               SkillsBlock,
     "recommendation_template": RecommendationTemplateBlock,
 
     # File Access
