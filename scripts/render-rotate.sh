@@ -63,7 +63,7 @@ merge_env_vars() {
     # updates-json-array: [{"key":"X","value":"Y"}, ...]
     local id="$1" updates="$2"
     local current merged
-    current="$(api GET "/services/${id}/env-vars?limit=200" | jq '[.[].envVar]')"
+    current="$(api GET "/services/${id}/env-vars?limit=100" | jq '[.[].envVar]')"
     merged="$(jq -n --argjson cur "$current" --argjson upd "$updates" '
         ($upd | map(.key)) as $upd_keys
         | ($cur | map(select(.key as $k | ($upd_keys | index($k)) | not))) + $upd
