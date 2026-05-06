@@ -17,40 +17,9 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.dependencies import require_api_key, get_block_instance
+from app.core.http_errors import classify_block_error as _classify_block_error
 
 router = APIRouter()
-
-
-def _classify_block_error(error_text: str) -> int:
-    """Pick a meaningful HTTP status from a block's error string.
-
-    Block errors mostly fall into three buckets:
-      - "X not configured" / "API key required" → 503 Service Unavailable
-        (the platform is fine, the optional integration isn't set up)
-      - network / DNS / connection failures → 503
-      - everything else → 422 (genuine input/processing problem)
-    """
-    if not error_text:
-        return 422
-    lowered = error_text.lower()
-    config_markers = (
-        "not configured",
-        "api key required",
-        "no api key",
-        "credentials missing",
-    )
-    network_markers = (
-        "connection",
-        "name or service not known",
-        "all connection attempts failed",
-        "timed out",
-        "unreachable",
-    )
-    if any(m in lowered for m in config_markers):
-        return 503
-    if any(m in lowered for m in network_markers):
-        return 503
-    return 422
 
 CAPTURE_DATA_DIR = os.path.join(os.getenv("DATA_DIR", "./data"), "captures")
 os.makedirs(CAPTURE_DATA_DIR, exist_ok=True)

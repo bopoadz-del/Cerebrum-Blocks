@@ -53,10 +53,12 @@ async def workflow_run(request: PipelineRequest, auth: dict = Depends(require_ap
     if result.get("status") == "error":
         # Surface validation_errors / step errors so the caller can fix the
         # pipeline. The bare error string is unactionable on its own.
-        detail: Any = result.get("error", "Pipeline failed")
+        from app.core.http_errors import classify_block_error
+        err = result.get("error", "Pipeline failed")
+        detail: Any = err
         if result.get("validation_errors"):
-            detail = {"error": detail, "validation_errors": result["validation_errors"]}
-        raise HTTPException(status_code=422, detail=detail)
+            detail = {"error": err, "validation_errors": result["validation_errors"]}
+        raise HTTPException(status_code=classify_block_error(err), detail=detail)
 
     inner = result.get("result", result)
     return PipelineResponse(
@@ -78,7 +80,9 @@ async def workflow_schedule(request: PipelineRequest, auth: dict = Depends(requi
     result = await block.process(payload, {"action": "schedule"})
 
     if result.get("status") == "error":
-        raise HTTPException(status_code=422, detail=result.get("error", "Scheduling failed"))
+        from app.core.http_errors import classify_block_error
+        err = result.get("error", "Scheduling failed")
+        raise HTTPException(status_code=classify_block_error(err), detail=err)
 
     return result.get("result", result)
 

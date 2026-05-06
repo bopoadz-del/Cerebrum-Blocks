@@ -1,11 +1,11 @@
 """Skills Router — Dedicated REST endpoints for the skills block."""
 
 from typing import Any, Dict, Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app.blocks import BLOCK_REGISTRY
-from app.dependencies import block_instances, _create_block_instance
+from app.dependencies import block_instances, _create_block_instance, require_api_key
 
 router = APIRouter()
 
@@ -24,7 +24,7 @@ async def _get_skills_block():
 
 
 @router.get("/skills/deliverables")
-async def list_deliverables():
+async def list_deliverables(auth: dict = Depends(require_api_key)):
     """List all supported deliverable types and workflows."""
     block = await _get_skills_block()
     result = await block.execute(None, {"action": "list"})
@@ -34,7 +34,7 @@ async def list_deliverables():
 
 
 @router.post("/skills/hints")
-async def get_hints(request: SkillsRequest):
+async def get_hints(request: SkillsRequest, auth: dict = Depends(require_api_key)):
     """Get orchestrator hints for a deliverable or workflow."""
     block = await _get_skills_block()
     deliverable = request.deliverable or (str(request.input) if request.input else None)
@@ -49,7 +49,7 @@ async def get_hints(request: SkillsRequest):
 
 
 @router.post("/skills/validation")
-async def get_validation(request: SkillsRequest):
+async def get_validation(request: SkillsRequest, auth: dict = Depends(require_api_key)):
     """Get validation rules for a deliverable type."""
     block = await _get_skills_block()
     deliverable = request.deliverable or (str(request.input) if request.input else None)
@@ -63,7 +63,7 @@ async def get_validation(request: SkillsRequest):
 
 
 @router.post("/skills/style")
-async def get_style(request: SkillsRequest):
+async def get_style(request: SkillsRequest, auth: dict = Depends(require_api_key)):
     """Get style system for a deliverable type."""
     block = await _get_skills_block()
     deliverable = request.deliverable or (str(request.input) if request.input else None)
@@ -77,7 +77,7 @@ async def get_style(request: SkillsRequest):
 
 
 @router.post("/skills/workflow")
-async def get_workflow(request: SkillsRequest):
+async def get_workflow(request: SkillsRequest, auth: dict = Depends(require_api_key)):
     """Get full workflow pipeline for a domain."""
     block = await _get_skills_block()
     workflow = request.workflow or request.deliverable or (str(request.input) if request.input else None)

@@ -79,7 +79,9 @@ async def execute_swarm(request: SwarmRequest, auth: dict = Depends(require_api_
     result = await block.process(payload, {"action": "execute"})
 
     if result.get("status") == "error":
-        raise HTTPException(status_code=422, detail=result.get("error", "Swarm execution failed"))
+        from app.core.http_errors import classify_block_error
+        err = result.get("error", "Swarm execution failed")
+        raise HTTPException(status_code=classify_block_error(err), detail=err)
 
     inner = result.get("result", result)
     return SwarmResponse(
@@ -103,7 +105,9 @@ async def execute_swarm_async(request: SwarmRequest, auth: dict = Depends(requir
     result = await block.process(payload, {"action": "execute_async"})
 
     if result.get("status") == "error":
-        raise HTTPException(status_code=422, detail=result.get("error", "Async execution failed"))
+        from app.core.http_errors import classify_block_error
+        err = result.get("error", "Async execution failed")
+        raise HTTPException(status_code=classify_block_error(err), detail=err)
 
     return result.get("result", result)
 

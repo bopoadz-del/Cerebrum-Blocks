@@ -37,7 +37,9 @@ async def notify_send(request: SendRequest, auth: dict = Depends(require_api_key
     result = await block.process(request.model_dump(), {"action": "send"})
 
     if result.get("status") == "error":
-        raise HTTPException(status_code=422, detail=result.get("error", "Send failed"))
+        from app.core.http_errors import classify_block_error
+        err = result.get("error", "Send failed")
+        raise HTTPException(status_code=classify_block_error(err), detail=err)
 
     return result.get("result", result)
 

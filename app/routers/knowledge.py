@@ -5,8 +5,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app.dependencies import require_api_key, get_block_instance
+from app.core.http_errors import classify_block_error
 
 router = APIRouter()
+
+
+def _raise_for_block_error(result: Dict[str, Any]) -> None:
+    if isinstance(result, dict) and result.get("status") == "error":
+        err = result.get("error", "Operation failed")
+        raise HTTPException(status_code=classify_block_error(err), detail=err)
 
 
 class AskRequest(BaseModel):
@@ -42,9 +49,7 @@ async def knowledge_ask(request: AskRequest, auth: dict = Depends(require_api_ke
         },
     )
 
-    if result.get("status") == "error":
-        raise HTTPException(status_code=422, detail=result.get("error", "Ask failed"))
-
+    _raise_for_block_error(result)
     return result.get("result", result)
 
 
@@ -60,6 +65,7 @@ async def knowledge_search(request: SearchRequest, auth: dict = Depends(require_
             "top_k": request.top_k,
         },
     )
+    _raise_for_block_error(result)
     return result.get("result", result)
 
 
@@ -76,4 +82,5 @@ async def knowledge_summarize(request: SummarizeRequest, auth: dict = Depends(re
             "llm_provider": request.llm_provider,
         },
     )
+    _raise_for_block_error(result)
     return result.get("result", result)
