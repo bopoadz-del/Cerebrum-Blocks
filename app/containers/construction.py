@@ -6059,6 +6059,7 @@ Total Extension of Time Sought: {total_delay} days
             "intelligent_workflow": self.intelligent_workflow,
             "auto_pipeline": self.auto_pipeline,
             "discover_projects": self.discover_projects,
+            "procurement_analysis": self.procurement_analysis,
             "health_check": self.health_check,
             # Week-1 Intelligence Blocks
             "boq_process": self.boq_process,
@@ -6136,6 +6137,7 @@ Total Extension of Time Sought: {total_delay} days
             "intelligent_workflow": self.intelligent_workflow,
             "auto_pipeline": self.auto_pipeline,
             "discover_projects": self.discover_projects,
+            "procurement_analysis": self.procurement_analysis,
             "health_check": self.health_check,
             # Week-1 Intelligence Blocks
             "boq_process": self.boq_process,
