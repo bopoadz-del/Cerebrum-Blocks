@@ -1,9 +1,70 @@
 """PDF Block - Extract text from PDF files with Typed Schema"""
 
+import logging
 import os
 import tempfile
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from app.core.typed_block import TypedBlock, Schema, ContentType
+
+logger = logging.getLogger(__name__)
+
+
+def _try_ocr_fallback(
+    pdf_path: str,
+    original_text: str,
+    max_pages: int = 30,
+    dpi: int = 200,
+    time_budget_s: float = 60.0,
+) -> Optional[str]:
+    """Rasterise a scanned PDF and OCR each page until we beat the original
+    text-extraction result, hit ``max_pages``, or burn ``time_budget_s``.
+
+    Returns the OCR'd text only if it has more non-whitespace content than
+    ``original_text``; otherwise ``None`` (signalling to the caller to keep
+    the original result). Returns ``None`` on any import/runtime failure —
+    OCR is best-effort, never required.
+    """
+    try:
+        import io
+        import time
+
+        import fitz  # PyMuPDF
+        import pytesseract
+        from PIL import Image
+    except ImportError as e:  # pragma: no cover - exercised via monkeypatch
+        logger.warning("OCR fallback skipped: %s", e)
+        return None
+
+    started = time.perf_counter()
+    try:
+        doc = fitz.open(pdf_path)
+    except Exception as e:
+        logger.warning("OCR fallback could not open %s: %s", pdf_path, e)
+        return None
+
+    try:
+        ocr_pages = []
+        for i, page in enumerate(doc):
+            if i >= max_pages:
+                break
+            if time.perf_counter() - started > time_budget_s:
+                logger.warning("OCR fallback hit time budget at page %d", i)
+                break
+            try:
+                pix = page.get_pixmap(dpi=dpi)
+                img = Image.open(io.BytesIO(pix.tobytes("png")))
+                page_text = pytesseract.image_to_string(img, timeout=10) or ""
+            except Exception as e:
+                logger.warning("OCR failed on page %d: %s", i, e)
+                continue
+            if page_text.strip():
+                ocr_pages.append(f"\n--- page {i + 1} ---\n{page_text}")
+        out = "".join(ocr_pages)
+        if len(out.strip()) > len(original_text.strip()):
+            return out
+        return None
+    finally:
+        doc.close()
 
 
 class PDFBlock(TypedBlock):
@@ -140,80 +201,99 @@ class PDFBlock(TypedBlock):
             except Exception as e:
                 return {"status": "error", "text": "", "pages": 0, "error": f"Word read failed: {str(e)}"}
 
-        # Try real PDF libraries in order: pdfplumber, PyPDF2, PyMuPDF
+        # Try real PDF libraries in order: pdfplumber, PyPDF2, PyMuPDF.
+        # On success, fall through to the OCR-fallback gate below instead
+        # of returning early — a vector/scanned PDF will extract cleanly
+        # but produce almost no characters per page, and we want to retry
+        # with tesseract before we hand the user a near-empty result.
         last_error = None
-        
+        text = None
+        pages = 0
+        engine = None
+
         # 1. Try pdfplumber
         try:
             import pdfplumber
             with pdfplumber.open(pdf_path) as pdf:
-                text = ""
+                buf = ""
                 for page in pdf.pages:
                     page_text = page.extract_text() or ""
-                    text += page_text + "\n"
+                    buf += page_text + "\n"
+                text = buf
                 pages = len(pdf.pages)
-                return {
-                    "status": "success",
-                    "text": text[:200000],
-                    "pages": pages,
-                    "filename": os.path.basename(pdf_path),
-                    "file_path": pdf_path,
-                    "engine": "pdfplumber",
-                }
+                engine = "pdfplumber"
         except ImportError:
             last_error = "pdfplumber not installed"
         except Exception as e:
             last_error = f"pdfplumber failed: {str(e)}"
-        
+
         # 2. Try PyPDF2
-        try:
-            from PyPDF2 import PdfReader
-            reader = PdfReader(pdf_path)
-            text = ""
-            for page in reader.pages:
-                page_text = page.extract_text() or ""
-                text += page_text + "\n"
-            pages = len(reader.pages)
-            return {
-                "status": "success",
-                "text": text[:200000],
-                "pages": pages,
-                "filename": os.path.basename(pdf_path),
-                "file_path": pdf_path,
-                "engine": "PyPDF2",
-            }
-        except ImportError:
-            last_error = "PyPDF2 not installed"
-        except Exception as e:
-            last_error = f"PyPDF2 failed: {str(e)}"
-        
+        if text is None:
+            try:
+                from PyPDF2 import PdfReader
+                reader = PdfReader(pdf_path)
+                buf = ""
+                for page in reader.pages:
+                    page_text = page.extract_text() or ""
+                    buf += page_text + "\n"
+                text = buf
+                pages = len(reader.pages)
+                engine = "PyPDF2"
+            except ImportError:
+                last_error = "PyPDF2 not installed"
+            except Exception as e:
+                last_error = f"PyPDF2 failed: {str(e)}"
+
         # 3. Try PyMuPDF fallback
-        try:
-            import fitz  # PyMuPDF
-            doc = fitz.open(pdf_path)
-            text = ""
-            for page in doc:
-                text += page.get_text()
-            pages = len(doc)
-            doc.close()
+        if text is None:
+            try:
+                import fitz  # PyMuPDF
+                doc = fitz.open(pdf_path)
+                buf = ""
+                for page in doc:
+                    buf += page.get_text()
+                text = buf
+                pages = len(doc)
+                doc.close()
+                engine = "PyMuPDF"
+            except ImportError:
+                last_error = "PyMuPDF not installed"
+            except Exception as e:
+                last_error = f"PyMuPDF failed: {str(e)}"
+
+        if text is None:
             return {
-                "status": "success",
-                "text": text[:200000],
-                "pages": pages,
-                "filename": os.path.basename(pdf_path),
-                "file_path": pdf_path,
-                "engine": "pymupdf",
+                "status": "error",
+                "text": "",
+                "pages": 0,
+                "error": (
+                    f"No PDF parser available. {last_error}. "
+                    "Install one of: pdfplumber, PyPDF2, or PyMuPDF"
+                ),
             }
-        except ImportError:
-            last_error = "PyMuPDF not installed"
-        except Exception as e:
-            last_error = f"PyMuPDF failed: {str(e)}"
-        
+
+        # OCR fallback gate: only fires for actual .pdf files when the
+        # text-density-per-page is suspiciously low. The 100-char/page
+        # threshold is the minimum where a real document stops looking
+        # like a scan or a vector-only drawing.
+        if ext == ".pdf":
+            text_density = len(text.strip()) / max(pages, 1)
+            if text_density < 100:
+                ocr_text = _try_ocr_fallback(pdf_path, text)
+                if ocr_text is not None:
+                    if len(text.strip()) == 0:
+                        engine = "OCR-only"
+                    else:
+                        engine = f"{engine} + OCR"
+                    text = ocr_text
+
         return {
-            "status": "error",
-            "text": "",
-            "pages": 0,
-            "error": f"No PDF parser available. {last_error}. Install one of: pdfplumber, PyPDF2, or PyMuPDF",
+            "status": "success",
+            "text": text[:200000],
+            "pages": pages,
+            "filename": os.path.basename(pdf_path),
+            "file_path": pdf_path,
+            "engine": engine,
         }
     
     def _get_pdf_path(self, input_data: Any) -> str:
