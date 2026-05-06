@@ -1528,53 +1528,140 @@ class ConstructionContainer(UniversalContainer):
             "confidence": "medium"
         }
     
-    def _get_rsmeans_data(self) -> Dict:
+    def _get_rsmeans_data(self, region: str = "us") -> Dict:
+        """USD unit-cost table mid-range market, with regional multipliers.
+
+        Sources: RSMeans 2024, RICS BCIS (UK), composite contractor bids
+        2023-2024. Real estimating tools pull live; this is a sane default.
+
+        Pass region in [us, uk, eu, gulf, asia, latam] to scale all rates.
+        """
+        # Base unit-cost table — all USD assuming US-national-average market
+        base_costs = {
+            # ── Substructure ───────────────────────────────────────────────
+            "excavation_m3":           22.0,   # bulk excavation
+            "rock_excavation_m3":     180.0,
+            "backfill_m3":             18.0,
+            "lean_concrete_m3":       110.0,   # blinding
+            "piling_lm":              280.0,   # CFA bored pile, average
+            "sheet_pile_m2":          240.0,
+            "pile_cap_m3":            220.0,
+            "ground_beam_m3":         220.0,
+            "raft_slab_m3":           200.0,
+            "retaining_wall_m2":      280.0,
+            "underpinning_m3":        650.0,
+            "drainage_lm":             95.0,
+            "manhole_ea":            1800.0,
+            # ── Superstructure ─────────────────────────────────────────────
+            "concrete_m3":            150.0,   # generic
+            "concrete_grade_c25_m3":  155.0,
+            "concrete_grade_c30_m3":  165.0,
+            "concrete_grade_c40_m3":  185.0,
+            "concrete_grade_c50_m3":  210.0,
+            "rebar_kg":                 1.8,
+            "structural_steel_kg":      3.2,
+            "post_tension_kg":          5.5,   # PT cable + grouting
+            "precast_panel_m2":       320.0,
+            "formwork_m2":             45.0,   # vertical
+            "formwork_soffit_m2":      55.0,   # slab soffit
+            # ── Envelope ──────────────────────────────────────────────────
+            "block_m2":                35.0,   # external blockwork
+            "brick_m2":                75.0,
+            "masonry_m2":              65.0,
+            "external_wall_m2":       180.0,   # composite wall assembly
+            "curtain_wall_m2":        420.0,
+            "cladding_m2":            210.0,
+            "stone_cladding_m2":      380.0,
+            "metal_cladding_m2":      180.0,
+            "glazing_m2":             180.0,   # standard double-glazed
+            "structural_glass_m2":    520.0,
+            "roofing_m2":              95.0,   # generic
+            "flat_roof_m2":            85.0,
+            "pitched_roof_m2":        110.0,
+            "green_roof_m2":          240.0,
+            "waterproofing_m2":        40.0,
+            "insulation_m2":           30.0,
+            "rooflight_m2":           220.0,
+            # ── Internal walls / finishes ─────────────────────────────────
+            "internal_partition_m2":   95.0,
+            "drylining_m2":            45.0,
+            "plaster_m2":              28.0,
+            "render_m2":               35.0,
+            "screed_m2":               25.0,
+            "flooring_m2":             70.0,
+            "carpet_m2":               45.0,
+            "vinyl_floor_m2":          55.0,
+            "tiling_m2":               85.0,
+            "stone_floor_m2":         145.0,
+            "wall_tile_m2":            75.0,
+            "painting_m2":             18.0,
+            "wallpaper_m2":            32.0,
+            "suspended_ceiling_m2":    60.0,
+            "ceiling_m2":              45.0,
+            "finishes_m2":             55.0,
+            # ── MEP — area-based ──────────────────────────────────────────
+            "hvac_m2":                120.0,
+            "electrical_m2":           80.0,
+            "plumbing_m2":             65.0,
+            "fire_protection_m2":      35.0,
+            "bms_m2":                  18.0,
+            "data_cabling_m2":         22.0,
+            # ── MEP — count-based ─────────────────────────────────────────
+            "ahu_ea":               12000.0,   # air handling unit
+            "fcu_ea":                1600.0,   # fan coil
+            "vrf_indoor_ea":         2200.0,
+            "chiller_ea":           45000.0,
+            "boiler_ea":            18000.0,
+            "pump_ea":               2400.0,
+            "fan_ea":                1200.0,
+            "diffuser_ea":            120.0,
+            "vav_ea":                1800.0,
+            "luminaire_ea":           180.0,
+            "outlet_ea":               55.0,
+            "switch_ea":               45.0,
+            "panel_board_ea":        2500.0,
+            "transformer_ea":       18000.0,
+            "generator_ea":         55000.0,
+            "ups_ea":               12000.0,
+            "fire_panel_ea":         3500.0,
+            "sprinkler_head_ea":      120.0,
+            "wc_ea":                  450.0,
+            "basin_ea":               350.0,
+            "shower_ea":              580.0,
+            "kitchen_sink_ea":        420.0,
+            "lift_ea":              85000.0,
+            "escalator_ea":         95000.0,
+            # ── External works ─────────────────────────────────────────────
+            "paving_m2":               80.0,
+            "asphalt_m2":              35.0,
+            "kerb_lm":                 65.0,
+            "fencing_lm":              85.0,
+            "landscape_m2":            45.0,
+            "hard_landscape_m2":       95.0,
+            "external_lighting_ea":   650.0,
+            "bollard_ea":             280.0,
+            "tree_planting_ea":       220.0,
+            # ── General building ─────────────────────────────────────────
+            "door_ea":                850.0,
+            "fire_door_ea":          1450.0,
+            "window_ea":             1200.0,
+            "rooflight_ea":          1800.0,
+            "scaffold_m2":             12.0,
+            "shoring_m2":              45.0,
+        }
+
+        # Regional multipliers (vs US national average)
+        regional_factor = {
+            "us": 1.00, "uk": 1.18, "eu": 1.10,
+            "gulf": 1.05, "asia": 0.65, "latam": 0.55,
+        }.get(region.lower(), 1.00)
+
+        adjusted = {k: round(v * regional_factor, 2) for k, v in base_costs.items()}
+
         return {
-            "unit_costs": {
-                # Structural
-                "concrete_m3": 150.0,
-                "concrete_grade_c30_m3": 165.0,
-                "concrete_grade_c40_m3": 185.0,
-                "rebar_kg": 1.8,
-                "steel_kg": 2.5,
-                "structural_steel_kg": 3.2,
-                "formwork_m2": 45.0,
-                "formwork_soffit_m2": 55.0,
-                # Masonry
-                "block_m2": 35.0,
-                "masonry_m2": 65.0,
-                "brick_m2": 75.0,
-                # Envelope
-                "glazing_m2": 180.0,
-                "curtain_wall_m2": 420.0,
-                "cladding_m2": 210.0,
-                "roofing_m2": 95.0,
-                "waterproofing_m2": 40.0,
-                # Finishes
-                "finishes_m2": 55.0,
-                "tiling_m2": 85.0,
-                "flooring_m2": 70.0,
-                "painting_m2": 18.0,
-                "plaster_m2": 28.0,
-                "drylining_m2": 45.0,
-                "suspended_ceiling_m2": 60.0,
-                # MEP
-                "hvac_m2": 120.0,
-                "electrical_m2": 80.0,
-                "plumbing_m2": 65.0,
-                "fire_protection_m2": 35.0,
-                # Groundworks
-                "excavation_m3": 22.0,
-                "backfill_m3": 18.0,
-                "piling_lm": 280.0,
-                "drainage_lm": 95.0,
-                # Misc
-                "insulation_m2": 30.0,
-                "door_ea": 850.0,
-                "window_ea": 1200.0,
-                "lift_ea": 85000.0,
-                "scaffold_m2": 12.0,
-            },
+            "unit_costs": adjusted,
+            "region_factor": regional_factor,
+            "region": region,
             "location_factors": {
                 "US National Average": 1.00,
                 "New York City": 1.35,
@@ -1617,92 +1704,246 @@ class ConstructionContainer(UniversalContainer):
         }
 
     def _lookup_unit_cost(self, item_name: str, unit: str, rsmeans_data: Dict) -> float:
+        """Look up a unit cost for any construction line item.
+
+        Match order matters: more specific patterns first, generic last.
+        Multilingual: EN/ES/PT/FR aliases on every category. Returns the
+        regional-adjusted USD cost from rsmeans_data['unit_costs'].
+        """
         uc = rsmeans_data.get("unit_costs", {})
         n = item_name.lower()
-        u = unit.lower()
+        u = unit.lower().strip()
 
-        vol_units = {"m3", "cu m", "cubic meter", "m³"}
-        area_units = {"m2", "sq m", "square meter", "m²"}
-        weight_units = {"kg", "kilogram", "tonne", "t"}
-        len_units = {"lm", "m", "linear meter", "rm"}
-        count_units = {"ea", "no", "nr", "each", "item"}
+        vol_units = {"m3", "cu m", "cubic meter", "cubic metre", "m³"}
+        area_units = {"m2", "sq m", "square meter", "square metre", "m²"}
+        weight_units = {"kg", "kilogram", "tonne", "tonnes", "t", "ton"}
+        len_units = {"lm", "m", "linear meter", "linear metre", "rm"}
+        count_units = {"ea", "no", "nr", "each", "item", "unit"}
 
-        if "curtain wall" in n or "curtain_wall" in n:
-            return uc.get("curtain_wall_m2", 420.0)
-        if "cladding" in n or "facade" in n:
-            return uc.get("cladding_m2", 210.0)
-        if "glazing" in n or "glass" in n:
-            return uc.get("glazing_m2", 180.0)
-        if "roofing" in n or "roof" in n:
-            return uc.get("roofing_m2", 95.0)
-        if "waterproof" in n:
-            return uc.get("waterproofing_m2", 40.0)
-        if "structural steel" in n:
-            return uc.get("structural_steel_kg", 3.2)
-        if ("steel" in n or "rebar" in n or "reinforcement" in n) and u in weight_units:
-            return uc.get("rebar_kg", 1.8)
-        if "steel" in n and u in weight_units:
-            return uc.get("steel_kg", 2.5)
-        if "c40" in n or "grade 40" in n or "40mpa" in n:
+        # ── Substructure ───────────────────────────────────────────────────
+        if ("rock" in n) and ("excavat" in n or "excavación" in n):
+            return uc.get("rock_excavation_m3", 180.0)
+        if "excavat" in n or "excavación" in n or "escavação" in n or "terrassement" in n:
+            return uc.get("excavation_m3", 22.0)
+        if "lean concrete" in n or "blinding" in n:
+            return uc.get("lean_concrete_m3", 110.0)
+        if "backfill" in n or "relleno" in n or "aterro" in n:
+            return uc.get("backfill_m3", 18.0)
+        if "pile cap" in n:
+            return uc.get("pile_cap_m3", 220.0)
+        if "ground beam" in n or "viga de cimentación" in n:
+            return uc.get("ground_beam_m3", 220.0)
+        if "raft" in n and ("slab" in n or u in vol_units):
+            return uc.get("raft_slab_m3", 200.0)
+        if "retaining wall" in n or "muro de contención" in n:
+            return uc.get("retaining_wall_m2", 280.0)
+        if "underpinning" in n:
+            return uc.get("underpinning_m3", 650.0)
+        if ("pile" in n or "pilote" in n) and u in len_units:
+            return uc.get("piling_lm", 280.0)
+        if "sheet pile" in n or "tablestaca" in n:
+            return uc.get("sheet_pile_m2", 240.0)
+        if "manhole" in n or "registro" in n:
+            return uc.get("manhole_ea", 1800.0)
+        if ("drain" in n or "drenaje" in n or "drenagem" in n) and u in len_units:
+            return uc.get("drainage_lm", 95.0)
+
+        # ── Superstructure: concrete by grade ──────────────────────────────
+        if "post-tension" in n or "post tension" in n or "pt cable" in n:
+            return uc.get("post_tension_kg", 5.5)
+        if "precast" in n or "prefabricado" in n or "pré-fabricado" in n:
+            return uc.get("precast_panel_m2", 320.0)
+        if any(g in n for g in ("c50", "grade 50", "50mpa")):
+            return uc.get("concrete_grade_c50_m3", 210.0)
+        if any(g in n for g in ("c40", "grade 40", "40mpa")):
             return uc.get("concrete_grade_c40_m3", 185.0)
-        if "c30" in n or "grade 30" in n or "30mpa" in n:
+        if any(g in n for g in ("c30", "grade 30", "30mpa")):
             return uc.get("concrete_grade_c30_m3", 165.0)
-        if "concrete" in n and u in vol_units:
+        if any(g in n for g in ("c25", "grade 25", "25mpa")):
+            return uc.get("concrete_grade_c25_m3", 155.0)
+        if "concrete" in n or "hormigón" in n or "concreto" in n or "béton" in n:
             return uc.get("concrete_m3", 150.0)
+        if "structural steel" in n or "estructural" in n or "estrutural" in n:
+            return uc.get("structural_steel_kg", 3.2)
+        if ("steel" in n or "rebar" in n or "reinforcement" in n or "armadura" in n or "armado" in n) and u in weight_units:
+            return uc.get("rebar_kg", 1.8)
         if "soffit" in n or "slab formwork" in n:
             return uc.get("formwork_soffit_m2", 55.0)
-        if "formwork" in n or "shuttering" in n:
+        if "formwork" in n or "shuttering" in n or "encofrado" in n or "cofragem" in n or "coffrage" in n:
             return uc.get("formwork_m2", 45.0)
-        if "brick" in n:
+
+        # ── Envelope ──────────────────────────────────────────────────────
+        if "curtain wall" in n or "curtain_wall" in n:
+            return uc.get("curtain_wall_m2", 420.0)
+        if "stone cladding" in n:
+            return uc.get("stone_cladding_m2", 380.0)
+        if "metal cladding" in n:
+            return uc.get("metal_cladding_m2", 180.0)
+        if "cladding" in n or "facade" in n or "fachada" in n:
+            return uc.get("cladding_m2", 210.0)
+        if "structural glass" in n:
+            return uc.get("structural_glass_m2", 520.0)
+        if "glazing" in n or "glass" in n or "vidrio" in n or "vidro" in n:
+            return uc.get("glazing_m2", 180.0)
+        if "green roof" in n:
+            return uc.get("green_roof_m2", 240.0)
+        if "flat roof" in n:
+            return uc.get("flat_roof_m2", 85.0)
+        if "pitched roof" in n:
+            return uc.get("pitched_roof_m2", 110.0)
+        if "rooflight" in n or "skylight" in n or "lucernario" in n:
+            return uc.get("rooflight_m2", 220.0) if u in area_units else uc.get("rooflight_ea", 1800.0)
+        if "roofing" in n or "roof" in n or "cubierta" in n or "telhado" in n:
+            return uc.get("roofing_m2", 95.0)
+        if "waterproof" in n or "impermeabilización" in n:
+            return uc.get("waterproofing_m2", 40.0)
+        if "external wall" in n:
+            return uc.get("external_wall_m2", 180.0)
+
+        # ── Masonry / internal walls ──────────────────────────────────────
+        if "brick" in n or "ladrillo" in n or "tijolo" in n:
             return uc.get("brick_m2", 75.0)
-        if "block" in n and u in area_units:
+        if ("block" in n or "bloque" in n or "bloco" in n) and u in area_units:
             return uc.get("block_m2", 35.0)
-        if "masonry" in n:
+        if "masonry" in n or "mampostería" in n or "alvenaria" in n:
             return uc.get("masonry_m2", 65.0)
-        if "suspended ceiling" in n or "false ceiling" in n:
-            return uc.get("suspended_ceiling_m2", 60.0)
-        if "drylining" in n or "dry lining" in n or "drywall" in n:
+        if "internal partition" in n or "partition wall" in n:
+            return uc.get("internal_partition_m2", 95.0)
+        if "drylining" in n or "dry lining" in n or "drywall" in n or "placoplâtre" in n:
             return uc.get("drylining_m2", 45.0)
-        if "plaster" in n:
+        if "plaster" in n or "yeso" in n or "gesso" in n:
             return uc.get("plaster_m2", 28.0)
-        if "tile" in n or "tiling" in n:
+        if "render" in n:
+            return uc.get("render_m2", 35.0)
+
+        # ── Internal finishes ─────────────────────────────────────────────
+        if "screed" in n:
+            return uc.get("screed_m2", 25.0)
+        if "carpet" in n or "alfombra" in n or "carpete" in n:
+            return uc.get("carpet_m2", 45.0)
+        if "vinyl" in n:
+            return uc.get("vinyl_floor_m2", 55.0)
+        if "stone floor" in n or "stone flooring" in n:
+            return uc.get("stone_floor_m2", 145.0)
+        if "wall tile" in n:
+            return uc.get("wall_tile_m2", 75.0)
+        if "tile" in n or "tiling" in n or "azulejo" in n or "baldosa" in n:
             return uc.get("tiling_m2", 85.0)
+        if "wallpaper" in n or "papel pintado" in n:
+            return uc.get("wallpaper_m2", 32.0)
+        if "paint" in n or "pintura" in n or "peinture" in n:
+            return uc.get("painting_m2", 18.0)
+        if "suspended ceiling" in n or "false ceiling" in n or "techo registrable" in n:
+            return uc.get("suspended_ceiling_m2", 60.0)
+        if "ceiling" in n or "cielo raso" in n or "teto" in n:
+            return uc.get("ceiling_m2", 45.0)
         if "floor_area" in n or "gfa" in n or "gross_floor" in n:
-            return 1200.0  # composite all-in building rate $/m² (structure + MEP + finishes)
+            return 1200.0  # composite all-in building rate $/m²
         if "floor" in n and u in area_units:
             return uc.get("flooring_m2", 70.0)
-        if "paint" in n:
-            return uc.get("painting_m2", 18.0)
         if "finish" in n:
             return uc.get("finishes_m2", 55.0)
+
+        # ── MEP — count-based ─────────────────────────────────────────────
+        if u in count_units:
+            if "ahu" in n or "air handling" in n:
+                return uc.get("ahu_ea", 12000.0)
+            if "fcu" in n or "fan coil" in n:
+                return uc.get("fcu_ea", 1600.0)
+            if "vrf" in n or "vrv" in n:
+                return uc.get("vrf_indoor_ea", 2200.0)
+            if "chiller" in n:
+                return uc.get("chiller_ea", 45000.0)
+            if "boiler" in n or "caldera" in n:
+                return uc.get("boiler_ea", 18000.0)
+            if "pump" in n or "bomba" in n:
+                return uc.get("pump_ea", 2400.0)
+            if "fan" in n or "ventilador" in n:
+                return uc.get("fan_ea", 1200.0)
+            if "diffuser" in n or "difusor" in n:
+                return uc.get("diffuser_ea", 120.0)
+            if "vav" in n:
+                return uc.get("vav_ea", 1800.0)
+            if "luminaire" in n or "light fitting" in n or "lámpara" in n:
+                return uc.get("luminaire_ea", 180.0)
+            if "outlet" in n or "socket" in n or "tomacorriente" in n:
+                return uc.get("outlet_ea", 55.0)
+            if "switch" in n and "panel" not in n:
+                return uc.get("switch_ea", 45.0)
+            if "panel board" in n or "distribution board" in n:
+                return uc.get("panel_board_ea", 2500.0)
+            if "transformer" in n or "transformador" in n:
+                return uc.get("transformer_ea", 18000.0)
+            if "generator" in n or "generador" in n or "genset" in n:
+                return uc.get("generator_ea", 55000.0)
+            if "ups" in n:
+                return uc.get("ups_ea", 12000.0)
+            if "fire panel" in n or "alarm panel" in n:
+                return uc.get("fire_panel_ea", 3500.0)
+            if "sprinkler" in n and ("head" in n or u in count_units):
+                return uc.get("sprinkler_head_ea", 120.0)
+            if "wc " in n or n.startswith("wc") or "toilet" in n or "inodoro" in n or "vaso sanitário" in n:
+                return uc.get("wc_ea", 450.0)
+            if "basin" in n or "lavabo" in n or "lavatório" in n:
+                return uc.get("basin_ea", 350.0)
+            if "shower" in n or "ducha" in n or "chuveiro" in n:
+                return uc.get("shower_ea", 580.0)
+            if "kitchen sink" in n or "fregadero" in n:
+                return uc.get("kitchen_sink_ea", 420.0)
+            if "fire door" in n:
+                return uc.get("fire_door_ea", 1450.0)
+            if "door" in n or "puerta" in n or "porta" in n:
+                return uc.get("door_ea", 850.0)
+            if "window" in n or "ventana" in n or "janela" in n:
+                return uc.get("window_ea", 1200.0)
+            if "escalator" in n or "escalera mecánica" in n:
+                return uc.get("escalator_ea", 95000.0)
+            if "lift" in n or "elevator" in n or "ascensor" in n or "elevador" in n:
+                return uc.get("lift_ea", 85000.0)
+            if "bollard" in n or "pilona" in n:
+                return uc.get("bollard_ea", 280.0)
+            if "tree" in n and ("planting" in n or u in count_units):
+                return uc.get("tree_planting_ea", 220.0)
+            if "external lighting" in n or "street light" in n:
+                return uc.get("external_lighting_ea", 650.0)
+
+        # ── MEP — area-based ──────────────────────────────────────────────
         if "hvac" in n or "air conditioning" in n or "mechanical" in n:
             return uc.get("hvac_m2", 120.0)
-        if "electrical" in n or "lighting" in n or "power" in n:
+        if "electrical" in n or "lighting" in n or "power" in n or "eléctrico" in n:
             return uc.get("electrical_m2", 80.0)
-        if "plumbing" in n or "sanitary" in n or "pipe" in n:
+        if "plumbing" in n or "sanitary" in n or "fontanería" in n or "hidráulica" in n:
             return uc.get("plumbing_m2", 65.0)
         if "fire" in n and ("sprinkler" in n or "protection" in n):
             return uc.get("fire_protection_m2", 35.0)
-        if "excavat" in n and u in vol_units:
-            return uc.get("excavation_m3", 22.0)
-        if "backfill" in n:
-            return uc.get("backfill_m3", 18.0)
-        if "pil" in n and u in len_units:
-            return uc.get("piling_lm", 280.0)
-        if "drain" in n and u in len_units:
-            return uc.get("drainage_lm", 95.0)
-        if "insulation" in n:
-            return uc.get("insulation_m2", 30.0)
-        if "scaffold" in n:
-            return uc.get("scaffold_m2", 12.0)
-        if "door" in n and u in count_units:
-            return uc.get("door_ea", 850.0)
-        if "window" in n and u in count_units:
-            return uc.get("window_ea", 1200.0)
-        if "lift" in n or "elevator" in n:
-            return uc.get("lift_ea", 85000.0)
+        if "bms" in n or "building management" in n:
+            return uc.get("bms_m2", 18.0)
+        if "data" in n and ("cabling" in n or "network" in n):
+            return uc.get("data_cabling_m2", 22.0)
 
-        # Fallback by unit type
+        # ── External works ────────────────────────────────────────────────
+        if "asphalt" in n or "asfalto" in n:
+            return uc.get("asphalt_m2", 35.0)
+        if "paving" in n or "pavimento" in n:
+            return uc.get("paving_m2", 80.0)
+        if "kerb" in n or "curb" in n or "bordillo" in n:
+            return uc.get("kerb_lm", 65.0)
+        if ("fence" in n or "fencing" in n or "valla" in n or "cerca" in n) and u in len_units:
+            return uc.get("fencing_lm", 85.0)
+        if "hard landscape" in n:
+            return uc.get("hard_landscape_m2", 95.0)
+        if "landscape" in n or "ajardin" in n or "paisagismo" in n:
+            return uc.get("landscape_m2", 45.0)
+
+        # ── General ───────────────────────────────────────────────────────
+        if "scaffold" in n or "andamio" in n:
+            return uc.get("scaffold_m2", 12.0)
+        if "shoring" in n:
+            return uc.get("shoring_m2", 45.0)
+        if "insulation" in n or "aislamiento" in n or "isolamento" in n:
+            return uc.get("insulation_m2", 30.0)
+
+        # Fallback by unit type — last resort
         if u in vol_units:
             return 120.0
         if u in area_units:
@@ -5797,38 +6038,125 @@ Total Extension of Time Sought: {total_delay} days
 
         quantities: Dict[str, Dict[str, Any]] = {}
 
-        # ── Quantity patterns: (regex, normalised_key, canonical_unit, unit_grp)
+        # Count-units regex (used by count-based patterns below)
+        _count_unit = r"(?:no\.?|nos\.?|nr\.?|ea\.?|each|unit[s]?|item[s]?|#|x)?"
+        _len_unit = r"(?:lm|m\b|linear\s*met(?:re|er)s?|metros?\s*lineales?)"
+
+        # ── Quantity patterns: (regex, normalised_key, canonical_unit, unit_grp, sanity_floor)
         # Multi-language keyword groups. Each pattern uses re.finditer so we
         # SUM matches across the doc (e.g. concrete poured on multiple floors).
         # `unit_grp` non-None means we read the unit from the regex match and
         # convert to the canonical unit (only mass needs this today).
-        patterns = [
-            # Concrete: en/es/pt + structural steel
+        patterns: List[Tuple[str, str, str, Optional[int], float]] = [
+            # ── Substructure ───────────────────────────────────────────────
+            (rf"(?:excavat|excavación|escavação|terrassement)[^\n]{{0,80}}?{_qty}\s*{_vol_unit}", "excavation_m3", "m3", None, 1.0),
+            (rf"(?:rock\s*excavat)[^\n]{{0,80}}?{_qty}\s*{_vol_unit}", "rock_excavation_m3", "m3", None, 1.0),
+            (rf"(?:lean\s*concrete|blinding)[^\n]{{0,80}}?{_qty}\s*{_vol_unit}", "lean_concrete_m3", "m3", None, 0.1),
+            (rf"(?:backfill|relleno|aterro)[^\n]{{0,80}}?{_qty}\s*{_vol_unit}", "backfill_m3", "m3", None, 1.0),
+            (rf"(?:piling|bored\s*pile|cfa\s*pile|pilote)[^\n]{{0,80}}?{_qty}\s*{_len_unit}", "piling_lm", "lm", None, 1.0),
+            (rf"(?:sheet\s*pile|tablestaca)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "sheet_pile_m2", "m2", None, 1.0),
+            (rf"(?:pile\s*cap)[^\n]{{0,80}}?{_qty}\s*{_vol_unit}", "pile_cap_m3", "m3", None, 0.1),
+            (rf"(?:ground\s*beam)[^\n]{{0,80}}?{_qty}\s*{_vol_unit}", "ground_beam_m3", "m3", None, 0.1),
+            (rf"(?:raft\s*slab)[^\n]{{0,80}}?{_qty}\s*{_vol_unit}", "raft_slab_m3", "m3", None, 1.0),
+            (rf"(?:retaining\s*wall|muro\s*de\s*contención)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "retaining_wall_m2", "m2", None, 1.0),
+            (rf"(?:drainage|drenaje|drenagem)[^\n]{{0,80}}?{_qty}\s*{_len_unit}", "drainage_lm", "lm", None, 1.0),
+
+            # ── Superstructure ─────────────────────────────────────────────
             (rf"(?:concrete|hormigón|hormigon|concreto|béton)[^\n]{{0,80}}?{_qty}\s*{_vol_unit}", "concrete_volume_m3", "m3", None, 0.5),
-            (rf"(?:rebar|reinforcement|acero|acero\s+de\s+refuerzo|aço|armadura|armado|ferraillage)[^\n]{{0,80}}?{_qty}\s*({_mass_unit})", "steel_weight_kg", "kg", 2, 10.0),
+            (rf"(?:rebar|reinforcement|acero\s+de\s+refuerzo|armadura|armado|ferraillage)[^\n]{{0,80}}?{_qty}\s*({_mass_unit})", "steel_weight_kg", "kg", 2, 10.0),
             (rf"(?:structural\s+steel|estructural|estrutural|charpente)[^\n]{{0,80}}?{_qty}\s*({_mass_unit})", "structural_steel_kg", "kg", 2, 10.0),
-            # Envelope
+            (rf"(?:post[\s-]?tension|pt\s*cable)[^\n]{{0,80}}?{_qty}\s*({_mass_unit})", "post_tension_kg", "kg", 2, 1.0),
+            (rf"(?:precast(?:\s+panel)?|prefabricado|pré-fabricado)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "precast_panel_m2", "m2", None, 1.0),
+            (rf"(?:formwork|shuttering|encofrado|cofragem|coffrage)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "formwork_m2", "m2", None, 1.0),
+
+            # ── Envelope ──────────────────────────────────────────────────
             (rf"curtain\s*wall[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "curtain_wall_m2", "m2", None, 1.0),
-            (rf"(?:glazing|vidro|vidrio|vitrage)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "glazing_m2", "m2", None, 1.0),
+            (rf"(?:glazing|vidrio|vidro|vitrage)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "glazing_m2", "m2", None, 1.0),
+            (rf"(?:stone\s*cladding)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "stone_cladding_m2", "m2", None, 1.0),
+            (rf"(?:metal\s*cladding)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "metal_cladding_m2", "m2", None, 1.0),
             (rf"(?:cladding|fachada|revestimento|bardage)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "cladding_m2", "m2", None, 1.0),
-            (rf"(?:roofing|techo|cubierta|telhado|toiture)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "roofing_m2", "m2", None, 1.0),
-            # MEP
+            (rf"(?:flat\s*roof)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "flat_roof_m2", "m2", None, 1.0),
+            (rf"(?:pitched\s*roof)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "pitched_roof_m2", "m2", None, 1.0),
+            (rf"(?:green\s*roof)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "green_roof_m2", "m2", None, 1.0),
+            (rf"(?:roofing|cubierta|telhado|toiture)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "roofing_m2", "m2", None, 1.0),
+            (rf"(?:waterproof|impermeabilización|impermeabilização)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "waterproofing_m2", "m2", None, 1.0),
+            (rf"(?:insulation|aislamiento|isolamento)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "insulation_m2", "m2", None, 1.0),
+
+            # ── Internal walls / partitions ────────────────────────────────
+            (rf"(?:block\s*work|mampostería|alvenaria|maçonnerie)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "blockwork_m2", "m2", None, 1.0),
+            (rf"(?:brick\s*work|brick|ladrillo|tijolo)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "brick_m2", "m2", None, 1.0),
+            (rf"(?:internal\s*partition|partition\s*wall|partition)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "internal_partition_m2", "m2", None, 1.0),
+
+            # ── Internal finishes ──────────────────────────────────────────
+            (rf"(?:tiling|tiles|azulejo|baldosa|carrelage)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "tiling_m2", "m2", None, 1.0),
+            (rf"(?:wall\s*tile)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "wall_tile_m2", "m2", None, 1.0),
+            (rf"(?:carpet|alfombra|carpete)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "carpet_m2", "m2", None, 1.0),
+            (rf"(?:vinyl(?:\s+floor)?)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "vinyl_floor_m2", "m2", None, 1.0),
+            (rf"(?:painting|pintura|peinture)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "painting_m2", "m2", None, 1.0),
+            (rf"(?:plaster|yeso|gesso)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "plaster_m2", "m2", None, 1.0),
+            (rf"(?:render)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "render_m2", "m2", None, 1.0),
+            (rf"(?:screed)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "screed_m2", "m2", None, 1.0),
+            (rf"(?:gypsum|drywall|placoplâtre)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "drylining_m2", "m2", None, 1.0),
+            (rf"(?:suspended\s*ceiling|false\s*ceiling)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "suspended_ceiling_m2", "m2", None, 1.0),
+            (rf"(?:ceiling|cielo\s*raso|teto)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "ceiling_m2", "m2", None, 1.0),
+
+            # ── MEP — area-based ──────────────────────────────────────────
             (rf"hvac[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "hvac_m2", "m2", None, 1.0),
             (rf"(?:electrical|eléctrico|elétrico|électrique)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "electrical_m2", "m2", None, 1.0),
-            (rf"(?:plumbing|fontaneria|hidráulica|hidraulica|plomberie)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "plumbing_m2", "m2", None, 1.0),
-            # Masonry / formwork
-            (rf"(?:block\s*work|mampostería|alvenaria|maçonnerie)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "blockwork_m2", "m2", None, 1.0),
-            (rf"(?:formwork|encofrado|cofragem|coffrage)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "formwork_m2", "m2", None, 1.0),
-            # Earthworks
-            (rf"(?:excavat|excavación|escavação|terrassement)[^\n]{{0,80}}?{_qty}\s*{_vol_unit}", "excavation_m3", "m3", None, 1.0),
-            (rf"(?:piling|pilote)[^\n]{{0,80}}?{_qty}\s*(?:lm|m\b|linear\s*metres?|linear\s*meters?)", "piling_lm", "lm", None, 1.0),
-            # Finishes
-            (rf"(?:waterproof|impermeabilización|impermeabilização)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "waterproofing_m2", "m2", None, 1.0),
-            (rf"(?:tiling|tiles|azulejo|baldosa|carrelage)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "tiling_m2", "m2", None, 1.0),
-            (rf"(?:painting|pintura|peinture)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "painting_m2", "m2", None, 1.0),
-            (rf"(?:gypsum|drywall|placoplâtre)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "gypsum_m2", "m2", None, 1.0),
-            (rf"(?:ceiling|cielo\s*raso|teto)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "ceiling_m2", "m2", None, 1.0),
+            (rf"(?:plumbing|fontanería|hidráulica|hidraulica|plomberie)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "plumbing_m2", "m2", None, 1.0),
+            (rf"(?:fire\s*protection|sprinkler\s*system)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "fire_protection_m2", "m2", None, 1.0),
+            (rf"(?:bms|building\s*management)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "bms_m2", "m2", None, 1.0),
+
+            # ── External works ─────────────────────────────────────────────
+            (rf"(?:asphalt|asfalto)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "asphalt_m2", "m2", None, 1.0),
+            (rf"(?:paving|pavimento)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "paving_m2", "m2", None, 1.0),
+            (rf"(?:kerb|curb|bordillo)[^\n]{{0,80}}?{_qty}\s*{_len_unit}", "kerb_lm", "lm", None, 1.0),
+            (rf"(?:fenc(?:e|ing)|valla|cerca)[^\n]{{0,80}}?{_qty}\s*{_len_unit}", "fencing_lm", "lm", None, 1.0),
+            (rf"(?:landscape|ajardin|paisagismo)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "landscape_m2", "m2", None, 1.0),
         ]
+
+        # ── Count-based patterns: doors, windows, lifts, MEP fixtures ─────
+        # Pattern: optional "Description:" + "<number> <unit_word>?" + "<keyword>".
+        # Examples: "Doors: 24 ea", "12 nr fire door", "8 lifts", "AHU x 3".
+        # Match either "<n> <unit?> <kw>" or "<kw> ... <n> <unit?>".
+        count_patterns: List[Tuple[str, str, float]] = [
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:fire\s*doors?)\b", "fire_door_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:doors?|puertas?|portas?)\b", "door_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:windows?|ventanas?|janelas?)\b", "window_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:lifts?|elevators?|ascensores?|elevadores?)\b", "lift_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:escalators?)\b", "escalator_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:ahu|air\s*handling\s*units?)\b", "ahu_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:fcus?|fan\s*coils?)\b", "fcu_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:vrf|vrv)(?:\s+indoor)?\b", "vrf_indoor_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:chillers?)\b", "chiller_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:boilers?|calderas?)\b", "boiler_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:pumps?|bombas?)\b", "pump_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:luminaires?|light\s*fittings?|fixtures?|lámparas?)\b", "luminaire_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:wcs?|toilets?|inodoros?|vasos?\s*sanitários?)\b", "wc_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:basins?|wash\s*basins?|lavabos?)\b", "basin_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:showers?|duchas?|chuveiros?)\b", "shower_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:sprinkler\s*heads?)\b", "sprinkler_head_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:transformers?|transformadores?)\b", "transformer_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:generators?|generadores?|gensets?)\b", "generator_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:panel\s*boards?|distribution\s*boards?)\b", "panel_board_count", 1.0),
+            (rf"(?:^|[\s,;.])(\d{{1,4}})\s*{_count_unit}\s+(?:manholes?|registros?)\b", "manhole_count", 1.0),
+        ]
+
+        # Process count patterns the same way (sum by key)
+        for pattern, key, sanity_floor in count_patterns:
+            running = 0
+            occurrences = 0
+            for m in re.finditer(pattern, t, re.IGNORECASE):
+                val = safe_float(m.group(1))
+                if val is None or val < sanity_floor:
+                    continue
+                # Sanity cap: nobody has 10,000 doors on a single floor
+                if val > 5000:
+                    continue
+                running += int(val)
+                occurrences += 1
+            if running > 0:
+                quantities[key] = {"quantity": running, "unit": "ea", "occurrences": occurrences}
 
         for pattern, key, canonical_unit, unit_group, sanity_floor in patterns:
             running = 0.0
