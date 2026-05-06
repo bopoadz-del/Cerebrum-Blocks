@@ -796,11 +796,11 @@ class ConstructionContainer(UniversalContainer):
         terms: Dict[str, Any] = {}
 
         value_match = re.search(
-            r"(?:contract\s+(?:value|sum|price|amount)|total\s+(?:contract\s+)?(?:value|sum|price)|valor\s+(?:del?\s+)?contrato|valor\s+do\s+contrato)[^\n]{0,30}(?:USD|EUR|GBP|BRL|MXN|AED|SAR|QAR|R\$|\$|€|£)?[^\n]{0,10}(\d[\d,\.]*)",
+            r"(?:contract\s+(?:value|sum|price|amount)|total\s+(?:contract\s+)?(?:value|sum|price)|valor\s+(?:del?\s+)?contrato|valor\s+do\s+contrato)\s*[:=]?\s*(?:USD|EUR|GBP|BRL|MXN|AED|SAR|QAR|R\$|\$|€|£)?\s*(\d[\d,\.]{3,})",
             text, re.IGNORECASE,
         )
         if value_match:
-            terms["contract_value"] = value_match.group(1).replace(",", "")
+            terms["contract_value"] = value_match.group(1).replace(",", "").rstrip(".")
 
         advance_match = re.search(
             r"(?:advance|mobilization|advance\s+payment|anticipo|adiantamento|acompte)[^\n]{0,60}?(\d+(?:\.\d+)?)\s*%",
