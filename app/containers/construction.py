@@ -1631,6 +1631,14 @@ class ConstructionContainer(UniversalContainer):
 
         # From quantities dict
         elif quantities:
+            # Stopwords for items that obviously aren't buildable — addresses,
+            # page references, geographic terms — that can leak in from greedy
+            # text extraction. Last line of defense if upstream filters miss.
+            _NOT_BUILDABLE = {
+                "main street", "campos", "page", "phase", "level", "floor",
+                "address", "city", "country", "zone", "district", "lot",
+                "parcel", "annex", "section", "chapter", "sheet", "revision",
+            }
             for item_name, qty_data in quantities.items():
                 if isinstance(qty_data, dict):
                     qty = float(qty_data.get("quantity", 0))
@@ -1638,6 +1646,10 @@ class ConstructionContainer(UniversalContainer):
                 else:
                     qty = float(qty_data)
                     unit = "ea"
+                # Skip non-buildable items + items with zero quantity
+                lc = str(item_name).lower()
+                if qty <= 0 or any(sw in lc for sw in _NOT_BUILDABLE):
+                    continue
                 unit_cost = self._lookup_unit_cost(item_name, unit, rsmeans)
                 total = qty * unit_cost
                 cat, lead, supplier = self._classify_procurement_item(item_name)
@@ -2734,18 +2746,50 @@ class ConstructionContainer(UniversalContainer):
             except ValueError:
                 pass
 
-        quantity_pattern = r'\b(\d+)\s*(?:no|nos|nr|ea|each)?\.?\s*([A-Z][A-Za-z\s]+)'
-        for match in re.finditer(quantity_pattern, text[:2000]):
-            qty = int(match.group(1))
-            item = match.group(2).strip()[:50]
-            if len(item) > 3:
-                measurements.append({
-                    "type": "count",
-                    "value": qty,
-                    "unit": "ea",
-                    "item": item,
-                    "raw": match.group(0)
-                })
+        # Count pattern: "<number> <Capitalized building element>". The previous
+        # pattern was unanchored and grabbed ANY capitalised word after a number
+        # — so "1 Main Street", "5 Campos", "Page 12" all became "count"
+        # measurements that downstream procurement_list_generator iterated as
+        # buildable items. Now requires a real count keyword (no/nos/nr/ea) AND
+        # a building-element word, with a stopword list filtering known noise.
+        building_elements = (
+            r"(?:column|beam|slab|wall|footing|pile|foundation|truss|"
+            r"door|window|opening|panel|tile|brick|block|"
+            r"pump|chiller|fan|ahu|vrf|fcu|"
+            r"luminaire|fitting|fixture|outlet|socket|switch|"
+            r"valve|tap|wc|basin|sink|toilet|"
+            r"lift|elevator|escalator|"
+            r"barrier|kerb|sign|bollard|tree|lamp|bench|"
+            r"unit|item)s?"
+        )
+        quantity_pattern = (
+            r'\b(\d+)\s*(?:no\.|nos\.|nr\.|ea\.|each|\#)?\s+'
+            rf'([A-Z][a-z]+(?:\s+[A-Za-z]+)?\s+{building_elements})\b'
+        )
+        _STOPWORDS = {
+            "main street", "side street", "campos", "page", "section",
+            "chapter", "phase", "level", "floor", "month", "year", "week",
+            "rev", "revision", "drawing", "sheet", "version", "annex",
+            "address", "city", "country", "zone", "district", "block",
+            "lot", "parcel",
+        }
+        for match in re.finditer(quantity_pattern, text[:5000], re.IGNORECASE):
+            try:
+                qty = int(match.group(1))
+            except ValueError:
+                continue
+            item = match.group(2).strip()
+            if not item or len(item) < 4 or item.lower() in _STOPWORDS:
+                continue
+            if any(sw in item.lower() for sw in _STOPWORDS):
+                continue
+            measurements.append({
+                "type": "count",
+                "value": qty,
+                "unit": "ea",
+                "item": item[:60],
+                "raw": match.group(0),
+            })
 
         return measurements[:50]
     

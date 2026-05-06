@@ -17,6 +17,7 @@ interface DriveConnectModalProps {
   onClose: () => void;
   onConnect: (drive: DriveSource) => void;
   onBrowseLocal?: () => void;
+  onBrowseLocalFolder?: () => void;
   existingDrives: DriveSource[];
 }
 
@@ -29,18 +30,26 @@ interface DriveOption {
   description: string;
 }
 
-export default function DriveConnectModal({ isOpen, onClose, onConnect, onBrowseLocal, existingDrives }: DriveConnectModalProps) {
+export default function DriveConnectModal({ isOpen, onClose, onConnect, onBrowseLocal, onBrowseLocalFolder, existingDrives }: DriveConnectModalProps) {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const driveOptions: DriveOption[] = [
     {
       id: 'local',
-      name: 'My Device Files',
+      name: 'Pick Files',
       icon: <HardDrive className="w-5 h-5" />,
       type: 'local',
       disabled: false,
-      description: 'Access files on your local device'
+      description: 'Choose individual documents from your device'
+    },
+    {
+      id: 'local-folder',
+      name: 'Pick Folder',
+      icon: <HardDrive className="w-5 h-5" />,
+      type: 'local',
+      disabled: false,
+      description: 'Browse a project folder — preserves the folder hierarchy in the sidebar'
     },
     {
       id: 'server',
@@ -89,9 +98,13 @@ export default function DriveConnectModal({ isOpen, onClose, onConnect, onBrowse
 
     setError(null);
 
-    // Local drive → native file picker; no API call needed
+    // Local drive → native picker (file or folder mode); no API call needed
     if (option.type === 'local') {
-      onBrowseLocal?.();
+      if (option.id === 'local-folder') {
+        onBrowseLocalFolder?.();
+      } else {
+        onBrowseLocal?.();
+      }
       onClose();
       return;
     }

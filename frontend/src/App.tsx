@@ -54,8 +54,11 @@ function AppContent() {
   const [nextActions, setNextActions] = useState<NextAction[]>([]);
   const [activeChatContext, setActiveChatContext] = useState<string>('');
 
-  // Hidden file input for local drive browsing
+  // Hidden file inputs for local drive browsing.
+  // Two modes: pick individual files, OR pick a whole folder (better for AEC
+  // projects where the file tree itself carries grouping information).
   const localFileInputRef = useRef<HTMLInputElement>(null);
+  const localFolderInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     api.health().catch(() => {
@@ -260,12 +263,58 @@ function AppContent() {
     const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
 
-    const fileNodes: FileNode[] = files.map(f => ({
-      id: uuidv4(),
-      name: f.name,
-      type: 'file' as const,
-      path: f.name,
-    }));
+    // When the user picked a folder (input has webkitdirectory), each File has
+    // a `webkitRelativePath` like "ProjectA/Drawings/floor1.pdf". Build a real
+    // tree from those paths so the sidebar shows folders, not a flat list.
+    const filesWithPath = files.map(f => {
+      const relPath = (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name;
+      return { file: f, relPath };
+    });
+
+    type MutableNode = FileNode & { children?: MutableNode[]; _byName?: Map<string, MutableNode> };
+    const root: MutableNode = { id: 'local-root', name: '', type: 'folder', children: [], _byName: new Map() };
+
+    for (const { file, relPath } of filesWithPath) {
+      const parts = relPath.split('/').filter(Boolean);
+      let cursor = root;
+      // walk/create folder nodes for everything except the last segment (the file)
+      for (let i = 0; i < parts.length - 1; i++) {
+        const segment = parts[i];
+        let child = cursor._byName?.get(segment);
+        if (!child) {
+          child = {
+            id: `${cursor.id}/${segment}`,
+            name: segment,
+            type: 'folder',
+            path: parts.slice(0, i + 1).join('/'),
+            children: [],
+            _byName: new Map(),
+            expanded: i === 0,  // expand top-level folders by default
+          };
+          cursor.children = cursor.children || [];
+          cursor.children.push(child);
+          cursor._byName?.set(segment, child);
+        }
+        cursor = child;
+      }
+      // leaf: the actual file
+      const fname = parts[parts.length - 1];
+      cursor.children = cursor.children || [];
+      cursor.children.push({
+        id: `${cursor.id}/${fname}-${cursor.children.length}`,
+        name: fname,
+        type: 'file',
+        path: relPath,
+      });
+    }
+
+    // Strip the _byName helper before exposing to React
+    const cleanTree = (n: MutableNode): FileNode => ({
+      id: n.id, name: n.name, type: n.type, path: n.path,
+      expanded: n.expanded,
+      children: n.children?.map(cleanTree),
+    });
+    const fileNodes: FileNode[] = (root.children || []).map(cleanTree);
 
     const newDrive: DriveSource = {
       id: 'local-1',
@@ -274,7 +323,7 @@ function AppContent() {
       connected: true,
       type: 'local',
       files: fileNodes,
-      fileObjects: files,
+      fileObjects: files,  // keep flat list for upload handler matching by name
     };
 
     setDrives(prev => {
@@ -293,7 +342,13 @@ function AppContent() {
     // Projects section. Fire-and-forget on failure — drive still works flat.
     const indexable = files.filter(f => /\.(pdf|txt|md|csv|docx|xlsx|doc)$/i.test(f.name)).slice(0, 200);
     if (indexable.length > 0) {
-      api.discoverProjects(indexable.map(f => ({ name: f.name, path: f.name }))).then(res => {
+      // Send the relative path (folder/sub/file.pdf) when available — the
+      // backend's path-prefix grouping is far stronger signal than zvec
+      // similarity on names alone.
+      api.discoverProjects(indexable.map(f => {
+        const rel = (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name;
+        return { name: f.name, path: rel };
+      })).then(res => {
         // Defensive: API may return an error envelope (no `projects` key) when
         // the construction block fails internally — don't crash the SPA.
         const projectsArr = Array.isArray(res?.projects) ? res.projects : [];
@@ -325,6 +380,10 @@ function AppContent() {
 
   const handleBrowseLocal = useCallback(() => {
     localFileInputRef.current?.click();
+  }, []);
+
+  const handleBrowseLocalFolder = useCallback(() => {
+    localFolderInputRef.current?.click();
   }, []);
 
   const handleConnectDrive = useCallback((drive: DriveSource) => {
@@ -404,12 +463,26 @@ function AppContent() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[hsl(var(--background))] text-[hsl(var(--foreground))] p-2 gap-2">
-      {/* Hidden file input for local drive */}
+      {/* Hidden file input for local drive — file picker mode */}
       <input
         ref={localFileInputRef}
         type="file"
         multiple
         accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.tiff,.txt,.md,.csv,.xls,.xlsx,.docx,.doc"
+        className="hidden"
+        onChange={handleLocalFilesSelected}
+      />
+      {/* Folder picker — webkitdirectory gives us the file tree via
+          File.webkitRelativePath, which handleLocalFilesSelected reconstructs
+          into a real folder hierarchy in the sidebar. */}
+      <input
+        ref={localFolderInputRef}
+        type="file"
+        // @ts-expect-error — webkitdirectory + directory aren't in the standard
+        // HTMLInputElement TS types but every modern browser honours them.
+        webkitdirectory=""
+        directory=""
+        multiple
         className="hidden"
         onChange={handleLocalFilesSelected}
       />
@@ -471,6 +544,7 @@ function AppContent() {
         onClose={() => setShowDriveModal(false)}
         onConnect={handleConnectDrive}
         onBrowseLocal={handleBrowseLocal}
+        onBrowseLocalFolder={handleBrowseLocalFolder}
         existingDrives={drives}
       />
     </div>
