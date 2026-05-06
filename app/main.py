@@ -50,11 +50,13 @@ from app.routers import (
     execute,
     health,
     memory,
+    metrics as metrics_router,
     monitoring,
     skills,
     static,
     upload,
 )
+from app.routers.metrics import _record_metrics
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Start serving traffic immediately; warm core blocks in the background.
@@ -170,6 +172,13 @@ async def _security_headers(request, call_next):
     return response
 
 
+# Prometheus metrics middleware — registered after security headers so
+# the response we time and label is the one the client actually receives
+# (post-header-injection). Defined in app/routers/metrics.py so the
+# router and middleware live next to the metric definitions.
+app.middleware("http")(_record_metrics)
+
+
 # NOTE: a previous /upload security middleware lived here. It tried to
 # json.loads() the request body to feed a `security` block, but /upload is
 # multipart (FormData), so the JSON decode silently failed and validation
@@ -187,6 +196,7 @@ app.include_router(chat.router)
 app.include_router(upload.router)
 app.include_router(auth.router)
 app.include_router(memory.router)
+app.include_router(metrics_router.router)
 app.include_router(monitoring.router)
 app.include_router(health.router)
 app.include_router(static.router)

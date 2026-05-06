@@ -252,28 +252,196 @@ class FormulaExecutorBlock(UniversalBlock):
             "description": description,
         }
 
-    def _validate_units(self, result: Any, variables: Dict, description: str) -> Dict:
+    # Pint can't parse "m3" — only "m**3" or "m^3". Map common construction
+    # shorthand (and unicode superscripts) to Pint's syntax.
+    _PINT_UNIT_ALIASES: Dict[str, str] = {
+        "m3": "m**3",
+        "m³": "m**3",
+        "m2": "m**2",
+        "m²": "m**2",
+        "ft3": "ft**3",
+        "ft³": "ft**3",
+        "ft2": "ft**2",
+        "ft²": "ft**2",
+    }
+
+    # Currencies aren't dimensional under Pint's default registry; treat
+    # them as opaque tokens with same-unit-only equality checks.
+    _CURRENCY_TOKENS = {"SAR", "USD", "EUR", "AED", "GBP", "JPY"}
+
+    @classmethod
+    def _normalise_unit_token(cls, token: str) -> str:
+        token = token.strip()
+        return cls._PINT_UNIT_ALIASES.get(token, token)
+
+    @classmethod
+    def _detect_target_unit(cls, description: str) -> Optional[str]:
+        """Scan a free-text description for a recognised target unit token.
+
+        Order matters: composite tokens (m³, m3, ft³…) are tried first so
+        the bare 'm' / 'kg' fallbacks don't eat them. Bare letter tokens
+        require a word boundary so 'compute' and 'time' don't accidentally
+        match 'm'/'cm'.
+        """
+        import re
+
+        if not description:
+            return None
+
+        composite = (
+            "m³", "m3", "ft³", "ft3", "m²", "m2", "ft²", "ft2",
+        )
+        word_units = ("mm", "cm", "kg", "lb", "m")
+        currencies = ("SAR", "USD", "EUR", "AED", "GBP", "JPY")
+
         desc_lower = description.lower()
-        unit = "unknown"
-        if any(w in desc_lower for w in ("volume", "m3", "m³")):
-            unit = "m³"
-        elif any(w in desc_lower for w in ("area", "m2", "m²", "paint", "formwork")):
-            unit = "m²"
-        elif any(w in desc_lower for w in ("weight", "kg", "tonne", "rebar", "steel")):
-            unit = "kg"
-        elif any(w in desc_lower for w in ("cost", "price", "usd", "sar", "aed", "budget")):
-            unit = "USD"
-        elif any(w in desc_lower for w in ("carbon", "co2", "emission")):
-            unit = "kgCO2e"
-        elif any(w in desc_lower for w in ("length", "meter", "metre", "span")):
-            unit = "m"
-        elif any(w in desc_lower for w in ("count", "pieces", "number", "bricks")):
-            unit = "pcs"
+
+        # Composite tokens — substring match is safe since they aren't
+        # English words.
+        for tok in composite:
+            if tok.lower() in desc_lower:
+                return tok
+
+        # Currencies — case-sensitive, substring match.
+        for tok in currencies:
+            if tok in description:
+                return tok
+
+        # Word-boundary match for bare letter units so 'compute' doesn't
+        # match 'm', and 'completed' doesn't match 'cm'.
+        for tok in word_units:
+            if re.search(rf"\b{re.escape(tok)}\b", desc_lower):
+                return tok
+
+        return None
+
+    def _validate_units(self, result: Any, variables: Dict, description: str) -> Dict:
+        """Dimensional unit check using Pint.
+
+        Accepts ``result`` as either a quantity-shaped dict
+        ``{"value": <number>, "unit": <str>}`` or a raw scalar.
+
+        Returns a dict with keys: unit_check, result_unit, target_unit,
+        result_in_target, reason. ``unit_check`` is one of:
+          - "ok"          — result and target are dimensionally compatible
+          - "mismatch"    — incompatible dimensions
+          - "no_target"   — couldn't infer a target unit from description
+          - "skipped"     — Pint not installed or non-quantity input
+        """
+        # Lazy import — block must still load if Pint isn't on PYTHONPATH.
+        try:
+            import pint
+        except ImportError:
+            return {
+                "unit_check": "skipped",
+                "result_unit": None,
+                "target_unit": None,
+                "result_in_target": None,
+                "reason": "pint not installed",
+            }
+
+        target_token = self._detect_target_unit(description or "")
+
+        # Only quantity-shaped dicts get the full dimensional check.
+        if not (isinstance(result, dict) and "value" in result and "unit" in result):
+            return {
+                "unit_check": "skipped",
+                "result_unit": None,
+                "target_unit": target_token,
+                "result_in_target": None,
+                "reason": "result is not a {value, unit} quantity",
+            }
+
+        result_unit_raw = str(result.get("unit", "")).strip()
+        try:
+            result_value = float(result.get("value"))
+        except (TypeError, ValueError):
+            return {
+                "unit_check": "skipped",
+                "result_unit": result_unit_raw or None,
+                "target_unit": target_token,
+                "result_in_target": None,
+                "reason": "result value is not numeric",
+            }
+
+        if target_token is None:
+            return {
+                "unit_check": "no_target",
+                "result_unit": result_unit_raw or None,
+                "target_unit": None,
+                "result_in_target": None,
+                "reason": "no recognisable target unit in description",
+            }
+
+        # Currency: same-token equality, no Pint conversion.
+        if target_token in self._CURRENCY_TOKENS or result_unit_raw.upper() in self._CURRENCY_TOKENS:
+            ok = result_unit_raw.upper() == target_token.upper()
+            return {
+                "unit_check": "ok" if ok else "mismatch",
+                "result_unit": result_unit_raw or None,
+                "target_unit": target_token,
+                "result_in_target": result_value if ok else None,
+                "reason": (
+                    "currency tokens match"
+                    if ok
+                    else f"currency mismatch: result {result_unit_raw!r} vs target {target_token!r}"
+                ),
+            }
+
+        # Dimensional check via Pint.
+        ureg = pint.UnitRegistry()
+        try:
+            result_unit = ureg.Unit(self._normalise_unit_token(result_unit_raw))
+        except Exception as e:
+            return {
+                "unit_check": "skipped",
+                "result_unit": result_unit_raw or None,
+                "target_unit": target_token,
+                "result_in_target": None,
+                "reason": f"pint could not parse result unit {result_unit_raw!r}: {e}",
+            }
+
+        try:
+            target_unit = ureg.Unit(self._normalise_unit_token(target_token))
+        except Exception as e:
+            return {
+                "unit_check": "skipped",
+                "result_unit": result_unit_raw or None,
+                "target_unit": target_token,
+                "result_in_target": None,
+                "reason": f"pint could not parse target unit {target_token!r}: {e}",
+            }
+
+        quantity = ureg.Quantity(result_value, result_unit)
+        if quantity.dimensionality != target_unit.dimensionality:
+            return {
+                "unit_check": "mismatch",
+                "result_unit": str(result_unit),
+                "target_unit": str(target_unit),
+                "result_in_target": None,
+                "reason": (
+                    f"dimensional mismatch: result is {quantity.dimensionality}, "
+                    f"target is {target_unit.dimensionality}"
+                ),
+            }
+
+        try:
+            converted = quantity.to(target_unit)
+        except Exception as e:
+            return {
+                "unit_check": "mismatch",
+                "result_unit": str(result_unit),
+                "target_unit": str(target_unit),
+                "result_in_target": None,
+                "reason": f"conversion failed: {e}",
+            }
 
         return {
-            "value": result,
-            "unit": unit,
-            "formatted": f"{result} {unit}" if isinstance(result, (int, float)) else str(result),
+            "unit_check": "ok",
+            "result_unit": str(result_unit),
+            "target_unit": str(target_unit),
+            "result_in_target": float(converted.magnitude),
+            "reason": f"converted to {target_unit}",
         }
 
     def _match_library(self, description: str) -> Optional[str]:

@@ -5,6 +5,11 @@ import json
 import time
 from typing import Any, Dict, List, Optional
 from app.core.universal_base import UniversalBlock
+from app.core.credibility import (
+    CredibilityRecord,
+    CredibilityScorer,
+    CredibilityTier,
+)
 
 _STORAGE_PATH = os.environ.get("LEARNING_ENGINE_STORAGE", "/tmp/cerebrum_learning_engine.json")
 
@@ -55,6 +60,84 @@ class LearningEngineBlock(UniversalBlock):
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)
         self._state: Dict = self._load_state()
+        # Shared credibility scorer — pure functions; safe to memoise.
+        self._credibility_scorer = CredibilityScorer()
+
+    # ── credibility helpers ────────────────────────────────────────────
+
+    def _credibility_record(self, formula_id: str) -> CredibilityRecord:
+        """Load or initialise the CredibilityRecord for ``formula_id``."""
+        formula = self._state["formulas"].setdefault(formula_id, {
+            "samples": [],
+            "tier": "bronze",
+            "coefficients": {"bias": 0.0, "scale": 1.0},
+            "executions": 0,
+            "created_at": time.time(),
+        })
+        cred = formula.get("credibility")
+        if isinstance(cred, dict) and cred.get("item_id"):
+            try:
+                return CredibilityRecord.from_dict(cred)
+            except Exception:
+                pass
+        return CredibilityRecord(item_id=formula_id)
+
+    @staticmethod
+    def _accuracy_from_samples(samples: List[Dict]) -> float:
+        """Compute rolling accuracy in [0, 1] from predicted/actual pairs.
+
+        Defined as ``1 - MAPE`` (mean absolute percentage error), clamped.
+        Empty samples → 0.0 so it doesn't masquerade as perfect.
+        """
+        if not samples:
+            return 0.0
+        errs: List[float] = []
+        for s in samples:
+            try:
+                p = float(s["predicted"])
+                a = float(s["actual"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if a == 0:
+                # Avoid divide-by-zero; treat as exact when both are 0.
+                errs.append(0.0 if p == 0 else 1.0)
+            else:
+                errs.append(min(1.0, abs(a - p) / abs(a)))
+        if not errs:
+            return 0.0
+        mape = sum(errs) / len(errs)
+        return max(0.0, min(1.0, 1.0 - mape))
+
+    def _update_credibility(self, formula_id: str, reason: Optional[str] = None) -> Dict[str, Any]:
+        """Recompute and persist the credibility record for ``formula_id``.
+
+        Returns a dict shaped for the action response:
+            {tier, previous_tier, accuracy, sample_size, promoted}
+        """
+        formula = self._state["formulas"][formula_id]
+        record = self._credibility_record(formula_id)
+        previous_tier = record.tier
+
+        accuracy = self._accuracy_from_samples(formula.get("samples", []))
+        sample_size = len(formula.get("samples", []))
+        record = self._credibility_scorer.evaluate_promotion(
+            record, accuracy, sample_size, reason=reason,
+        )
+        formula["credibility"] = record.to_dict()
+        promoted = (
+            int(record.tier) < int(previous_tier)
+            if previous_tier is not None else False
+        )
+        return {
+            "tier": record.tier.name,
+            "tier_value": int(record.tier),
+            "previous_tier": previous_tier.name,
+            "previous_tier_value": int(previous_tier),
+            "accuracy": record.accuracy,
+            "sample_size": record.sample_size,
+            "promoted": record.tier != previous_tier,  # True on either direction change
+            "promoted_up": promoted,
+        }
 
     def _load_state(self) -> Dict:
         path = self.config.get("storage_path", _STORAGE_PATH) if hasattr(self, "config") else _STORAGE_PATH
@@ -138,6 +221,8 @@ class LearningEngineBlock(UniversalBlock):
         if promoted:
             formula["tier"] = tier
 
+        credibility = self._update_credibility(formula_id, reason="correction recorded")
+
         self._save_state()
 
         return {
@@ -148,6 +233,7 @@ class LearningEngineBlock(UniversalBlock):
             "promotion_flag": promoted,
             "sample_count": len(formula["samples"]),
             "auto_tuned": tuned,
+            "credibility": credibility,
         }
 
     async def _tune_coefficients(self, data: Dict, params: Dict) -> Dict:
@@ -201,12 +287,14 @@ class LearningEngineBlock(UniversalBlock):
             tier, promoted = self._compute_tier(formula)
             if promoted:
                 formula["tier"] = tier
+            credibility = self._update_credibility(fid, reason="promotion eval")
             results[fid] = {
                 "old_tier": old_tier,
                 "new_tier": formula["tier"],
                 "promoted": promoted,
                 "executions": formula["executions"],
                 "sample_count": len(formula["samples"]),
+                "credibility": credibility,
             }
 
         self._save_state()
@@ -216,18 +304,27 @@ class LearningEngineBlock(UniversalBlock):
             "tier_level": list({v["new_tier"] for v in results.values()}),
             "updated_coefficients": {},
             "promotion_flag": any(v["promoted"] for v in results.values()),
+            "credibility_promotion_flag": any(
+                v["credibility"]["promoted"] for v in results.values()
+            ),
         }
 
     def _get_status(self) -> Dict:
         summary = {}
+        credibility_dist: Dict[str, int] = {}
         for fid, formula in self._state["formulas"].items():
+            cred = formula.get("credibility") or {}
             summary[fid] = {
                 "tier": formula["tier"],
                 "executions": formula["executions"],
                 "samples": len(formula["samples"]),
                 "coefficients": formula["coefficients"],
                 "last_mae": formula.get("last_mae"),
+                "credibility": cred,
             }
+            cred_name = cred.get("tier_name")
+            if cred_name:
+                credibility_dist[cred_name] = credibility_dist.get(cred_name, 0) + 1
         tier_dist: Dict[str, int] = {}
         for f in self._state["formulas"].values():
             t = f["tier"]
@@ -236,6 +333,7 @@ class LearningEngineBlock(UniversalBlock):
             "status": "success",
             "total_formulas": len(self._state["formulas"]),
             "tier_distribution": tier_dist,
+            "credibility_distribution": credibility_dist,
             "formula_summary": summary,
             "tier_level": list(tier_dist.keys()),
             "updated_coefficients": {},

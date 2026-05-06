@@ -1,82 +1,70 @@
-"""Tests for Local Drive Block."""
+"""Tests for Local Drive Block.
+
+The block was hardened in commit 61de979e:
+  - read and write operations were removed (RCE / arbitrary FS access vector)
+  - list paths must resolve inside DATA_DIR
+
+These tests verify the post-hardening surface.
+"""
 
 import pytest
 import os
-import tempfile
+
 from app.blocks import LocalDriveBlock
 
 
 @pytest.fixture
-def local_drive_block():
+def local_drive_block(tmp_path, monkeypatch):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
     return LocalDriveBlock()
 
 
 @pytest.mark.asyncio
 async def test_local_drive_block_execute_structure(local_drive_block):
-    """Test that Local Drive block returns standardized JSON structure."""
-    result = await local_drive_block.execute(
-        None,
-        {"operation": "list"}
-    )
-    
-    # Assert standardized keys
-    assert "block" in result
+    """Block returns the standardised UniversalBlock envelope."""
+    result = await local_drive_block.execute(None, {"operation": "list"})
+    for k in ("block", "request_id", "status", "result", "confidence",
+              "metadata", "source_id", "processing_time_ms"):
+        assert k in result
     assert result["block"] == "local_drive"
-    assert "request_id" in result
-    assert "status" in result
-    assert "result" in result
-    assert "confidence" in result
-    assert "metadata" in result
-    assert "source_id" in result
-    assert "processing_time_ms" in result
 
 
 @pytest.mark.asyncio
 async def test_local_drive_block_metadata(local_drive_block):
-    """Test Local Drive block metadata."""
+    """Block class metadata reflects the v2.0 sandboxed surface."""
     assert local_drive_block.name == "local_drive"
-    assert local_drive_block.config.version == "1.0"
-    assert "file_path" in local_drive_block.config.supported_outputs
-    assert "metadata" in local_drive_block.config.supported_outputs
-    assert local_drive_block.config.requires_api_key == False
+    # version bumped to 2.0 when read/write were removed
+    assert local_drive_block.version == "2.0"
 
 
 @pytest.mark.asyncio
-async def test_local_drive_block_list(local_drive_block):
-    """Test Local Drive block list operation."""
-    result = await local_drive_block.execute(
-        None,
-        {"operation": "list", "folder_path": "/"}
-    )
-    
+async def test_local_drive_block_list(tmp_path, local_drive_block):
+    """list operation returns files inside DATA_DIR."""
+    (tmp_path / "a.txt").write_text("hi")
+    (tmp_path / "subdir").mkdir()
+    result = await local_drive_block.execute(None, {"operation": "list", "folder_path": "."})
     assert result["block"] == "local_drive"
     assert result["result"]["operation"] == "list"
     assert "files" in result["result"]
+    names = {f["name"] for f in result["result"]["files"]}
+    assert {"a.txt", "subdir"}.issubset(names)
 
 
 @pytest.mark.asyncio
-async def test_local_drive_block_write_and_read(local_drive_block):
-    """Test Local Drive block write and read operations."""
-    # Write a file
-    test_path = "/tmp/test_write.txt"
-    write_result = await local_drive_block.execute(
+async def test_local_drive_rejects_write_operation(local_drive_block):
+    """The write operation was removed as part of the security audit."""
+    result = await local_drive_block.execute(
         None,
-        {
-            "operation": "write",
-            "file_path": test_path,
-            "content": "Hello from test!"
-        }
+        {"operation": "write", "file_path": "/tmp/x.txt", "content": "no"},
     )
-    
-    assert write_result["block"] == "local_drive"
-    assert write_result["result"]["operation"] == "write"
-    
-    # Read the file
-    read_result = await local_drive_block.execute(
-        None,
-        {"operation": "read", "file_path": test_path}
-    )
-    
-    assert read_result["block"] == "local_drive"
-    assert read_result["result"]["operation"] == "read"
-    assert "content" in read_result["result"]
+    assert result["result"]["status"] == "error"
+    assert "not supported" in result["result"]["error"].lower()
+
+
+@pytest.mark.asyncio
+async def test_local_drive_rejects_path_outside_data_dir(local_drive_block):
+    """Listing a path outside DATA_DIR is rejected."""
+    result = await local_drive_block.execute(None, {"operation": "list", "folder_path": "/etc"})
+    assert result["result"]["status"] == "error"
+    err = result["result"].get("error", "")
+    assert "outside" in err.lower() or "permitted" in err.lower()

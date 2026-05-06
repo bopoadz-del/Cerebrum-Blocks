@@ -46,11 +46,20 @@ ifcopenshell>=0.7.0
 # Intelligence Blocks (Week 4)
 scikit-learn>=1.4.0
 
+# Domain formula backends — Library Container (Layer 4)
+CoolProp>=6.5            # thermodynamic / HVAC property lookups
+QuantLib-Python>=1.30    # quantitative finance (PV, swaps, rates)
+
+# ML experiment tracking — used by app/core/mlflow_tracker.py.
+# No-ops gracefully when MLFLOW_TRACKING_URI is unset.
+mlflow>=2.10.0
+
+# PostgreSQL async driver — activates the Postgres backend for the
+# historical_benchmark block when DATABASE_URL is set; otherwise the block
+# falls back to its file-backed store.
+asyncpg>=0.29
+
 # Optional - domain libraries (install as needed)
-# CoolProp>=6.6.0        # thermodynamics / HVAC
-# QuantLib-Python>=1.32  # quantitative finance
-# mlflow>=2.10.0         # ML experiment tracking
-# asyncpg>=0.29.0        # PostgreSQL async (historical_benchmark)
 # spacy>=3.7.0           # NLP for spec_analyzer
 # pdfplumber>=0.11.0     # PDF table extraction
 # python-docx>=1.1.0     # Word document processing
@@ -103,3 +112,8 @@ mcp>=1.6.0
 
 # Error tracking — optional. Activated when SENTRY_DSN is set.
 sentry-sdk[fastapi]>=2.0.0
+
+# Prometheus metrics exposition — used by app/routers/metrics.py to
+# expose /metrics in the Prometheus text format and to record per-request
+# counters/histograms via the metrics middleware.
+prometheus_client>=0.19

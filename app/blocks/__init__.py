@@ -45,6 +45,7 @@ _BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "spec_analyzer":        ("app.blocks.spec_analyzer", "SpecAnalyzerBlock"),
     "formula_executor":     ("app.blocks.formula_executor", "FormulaExecutorBlock"),
     "sympy_reasoning":      ("app.blocks.sympy_reasoning", "SymPyReasoningBlock"),
+    "library_container":    ("app.blocks.library_container", "LibraryContainerBlock"),
     "historical_benchmark": ("app.blocks.historical_benchmark", "HistoricalBenchmarkBlock"),
     "smart_orchestrator":   ("app.blocks.smart_orchestrator", "SmartOrchestratorBlock"),
     "skills":               ("app.blocks.skills", "SkillsBlock"),

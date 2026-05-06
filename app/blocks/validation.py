@@ -1,14 +1,38 @@
-"""Validation Block - Automated testing and security scanning
+"""Validation Block - Automated testing and security scanning + 5-Stage Pipeline.
 
-Gatekeeper for Block Store quality with automated testing,
-security scanning, and certification.
+Two responsibilities live here:
+
+1. The legacy block-store quality gate (security scan, test scaffolding,
+   code-quality heuristics, certification). Existing callers and the
+   `_validate_block` action keep working unchanged.
+
+2. The 5-Stage Validation Pipeline promised by the architecture docs.
+   Each stage is a named method on the block:
+
+       Syntactic   → schema/shape (required fields, type & range checks)
+       Dimensional → unit consistency
+       Physical    → domain laws (volume > 0, plausible ratios)
+       Empirical   → 3σ historical-benchmark comparison
+       Operational → operational sanity (schedule/cost envelopes)
+
+   Drive it via `process({"action": "validate_pipeline", "item": ...})`.
 """
 
 from app.core.universal_base import UniversalBlock
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import ast
+import math
 import re
+
+
+# Status ordering — used to bubble up the worst stage status for a pipeline run.
+_STATUS_RANK = {"ok": 0, "skipped": 0, "warn": 1, "fail": 2}
+
+
+def _worse(a: str, b: str) -> str:
+    """Return whichever of two pipeline statuses is worse (fail > warn > ok)."""
+    return a if _STATUS_RANK.get(a, 0) >= _STATUS_RANK.get(b, 0) else b
 
 
 class ValidationBlock(UniversalBlock):
@@ -17,10 +41,10 @@ class ValidationBlock(UniversalBlock):
     Gatekeeper for Block Store quality.
     """
     name = "validation"
-    version = "1.0.0"
+    version = "1.1.0"
     requires = ["sandbox", "database"]
     layer = 3
-    tags = ["store", "security", "quality", "ci", "testing"]
+    tags = ["store", "security", "quality", "ci", "testing", "pipeline"]
     
     default_config = {
         "security_checks": ["network", "filesystem", "memory", "imports"],
@@ -77,14 +101,442 @@ class ValidationBlock(UniversalBlock):
             "check_code_quality": self._check_code_quality,
             "validate_dependencies": self._validate_dependencies,
             "generate_test_template": self._generate_test_template,
-            "revoke_certification": self._revoke_certification
+            "revoke_certification": self._revoke_certification,
         }
-        
+
+        if action == "validate_pipeline":
+            # New action: 5-stage data-validation pipeline. Reads the
+            # `item` payload + `context` map from input_data, plus
+            # `params.fail_fast` for stop-on-first-failure semantics.
+            data = input_data if isinstance(input_data, dict) else {}
+            item = data.get("item", data)
+            context = data.get("context", {})
+            fail_fast = bool((params or {}).get("fail_fast", True))
+            return self.validate_pipeline(item, context, fail_fast=fail_fast)
+
         if action in actions:
             return await actions[action](input_data)
-            
-        return {"error": f"Unknown action: {action}", "available": list(actions.keys())}
+
+        return {"error": f"Unknown action: {action}", "available": list(actions.keys()) + ["validate_pipeline"]}
         
+    # ──────────────────────────────────────────────────────────────────
+    # 5-Stage Validation Pipeline
+    # ──────────────────────────────────────────────────────────────────
+
+    #: Default stage order for the pipeline. Tests assert this exact order.
+    PIPELINE_STAGES = (
+        "syntactic",
+        "dimensional",
+        "physical",
+        "empirical",
+        "operational",
+    )
+
+    #: Required top-level fields and the type each must coerce to.
+    _SYNTACTIC_REQUIRED_FIELDS = {
+        "id": str,
+        "type": str,
+    }
+
+    #: Recognised concrete grades for the physical stage.
+    _CONCRETE_GRADES = {"C20", "C25", "C30", "C35", "C40", "C45", "C50", "C55", "C60"}
+
+    def validate_pipeline(
+        self,
+        item: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+        fail_fast: bool = True,
+    ) -> Dict[str, Any]:
+        """Run all 5 validation stages on ``item``.
+
+        Returns the per-stage results plus an aggregate ``status``
+        (worst across stages) and the first stage to fail (if any).
+
+        ``fail_fast=True`` stops at the first ``fail`` stage. Stages
+        that follow the failure are still listed but with status
+        ``skipped`` and an empty issues list.
+        """
+        ctx = context or {}
+        if not isinstance(item, dict):
+            # The pipeline is defined over dict-shaped items. Fail at the
+            # syntactic stage rather than blowing up on attribute access.
+            stage = {
+                "stage": "syntactic",
+                "status": "fail",
+                "issues": [f"item must be a dict, got {type(item).__name__}"],
+                "details": {},
+            }
+            return {
+                "status": "fail",
+                "stages": [stage] + [
+                    {"stage": s, "status": "skipped", "issues": [], "details": {"reason": "fail_fast"}}
+                    for s in self.PIPELINE_STAGES[1:]
+                ],
+                "fail_fast_stage": "syntactic",
+            }
+
+        stages: List[Dict[str, Any]] = []
+        aggregate = "ok"
+        fail_fast_stage: Optional[str] = None
+        stop = False
+
+        runners = {
+            "syntactic": self._stage_syntactic,
+            "dimensional": self._stage_dimensional,
+            "physical": self._stage_physical,
+            "empirical": self._stage_empirical,
+            "operational": self._stage_operational,
+        }
+
+        for stage_name in self.PIPELINE_STAGES:
+            if stop:
+                stages.append({
+                    "stage": stage_name,
+                    "status": "skipped",
+                    "issues": [],
+                    "details": {"reason": "fail_fast"},
+                })
+                continue
+
+            try:
+                result = runners[stage_name](item, ctx)
+            except Exception as e:
+                # A stage raising is itself a failure — record it and continue.
+                result = {
+                    "stage": stage_name,
+                    "status": "fail",
+                    "issues": [f"stage raised {type(e).__name__}: {e}"],
+                    "details": {},
+                }
+
+            # Defensive: ensure shape.
+            result.setdefault("stage", stage_name)
+            result.setdefault("status", "ok")
+            result.setdefault("issues", [])
+            result.setdefault("details", {})
+            stages.append(result)
+
+            if result["status"] == "fail" and fail_fast_stage is None:
+                fail_fast_stage = stage_name
+                if fail_fast:
+                    stop = True
+
+            aggregate = _worse(aggregate, result["status"])
+
+        return {
+            "status": aggregate,
+            "stages": stages,
+            "fail_fast_stage": fail_fast_stage,
+        }
+
+    # ── individual stage implementations ──────────────────────────────
+
+    def _stage_syntactic(self, item: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """Schema/shape validation: required fields, types, ranges."""
+        issues: List[str] = []
+        details: Dict[str, Any] = {}
+
+        for field, expected_type in self._SYNTACTIC_REQUIRED_FIELDS.items():
+            if field not in item:
+                issues.append(f"missing required field: {field}")
+                continue
+            value = item[field]
+            if not isinstance(value, expected_type):
+                issues.append(
+                    f"field {field!r} expected {expected_type.__name__}, "
+                    f"got {type(value).__name__}"
+                )
+
+        # Range sanity for any well-known numeric fields when provided.
+        for numeric_field in ("quantity", "value", "duration_days", "cost"):
+            if numeric_field in item:
+                v = item[numeric_field]
+                if not isinstance(v, (int, float)) or isinstance(v, bool):
+                    issues.append(f"field {numeric_field!r} must be numeric")
+                elif math.isnan(v) or math.isinf(v):
+                    issues.append(f"field {numeric_field!r} must be finite")
+
+        return {
+            "stage": "syntactic",
+            "status": "fail" if issues else "ok",
+            "issues": issues,
+            "details": details,
+        }
+
+    def _stage_dimensional(self, item: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """Unit consistency: any (value, unit) pairs must be sensibly paired."""
+        issues: List[str] = []
+
+        # Recognised unit families. We don't try to do full dimensional
+        # algebra — that's overkill here; just catch obvious mismatches
+        # like a "volume_m3" labelled "kg".
+        unit_families = {
+            "length": {"m", "mm", "cm", "km", "ft", "in"},
+            "area":   {"m2", "m^2", "ft2", "ft^2"},
+            "volume": {"m3", "m^3", "ft3", "ft^3", "l", "L"},
+            "mass":   {"kg", "t", "g", "lb"},
+            "time":   {"s", "min", "h", "d", "day", "days"},
+            "currency": {"USD", "EUR", "GBP", "AED", "SAR"},
+        }
+
+        # Form 1: explicit value/unit pair under known keys.
+        if "value" in item and "unit" in item:
+            unit = item.get("unit")
+            if not isinstance(unit, str) or not unit.strip():
+                issues.append("unit must be a non-empty string when value is set")
+
+        # Form 2: per-quantity with hinted family in field name (e.g. volume_m3).
+        for field, value in item.items():
+            if not isinstance(field, str) or not isinstance(value, (int, float)):
+                continue
+            for family, units in unit_families.items():
+                if family in field.lower():
+                    suffix = field.split("_")[-1]
+                    if suffix and suffix not in units and suffix.lower() not in {u.lower() for u in units}:
+                        # Only flag if the suffix looks like a unit (short, lowercase-ish).
+                        if len(suffix) <= 4 and suffix.isalnum():
+                            issues.append(
+                                f"field {field!r} suggests {family} but suffix "
+                                f"{suffix!r} is not a known {family} unit"
+                            )
+                    break
+
+        return {
+            "stage": "dimensional",
+            "status": "warn" if issues else "ok",
+            "issues": issues,
+            "details": {},
+        }
+
+    def _stage_physical(self, item: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """Domain laws: volume > 0, plausible concrete grade & rebar ratio."""
+        issues: List[str] = []
+        details: Dict[str, Any] = {}
+
+        # Volume / area / length / mass must be strictly positive when set.
+        for field in ("volume", "volume_m3", "area", "area_m2", "length", "mass", "quantity"):
+            if field in item:
+                v = item[field]
+                if isinstance(v, (int, float)) and not isinstance(v, bool):
+                    if v <= 0:
+                        issues.append(f"{field} must be > 0, got {v}")
+
+        # Concrete grade plausibility.
+        grade = item.get("concrete_grade") or item.get("grade")
+        if grade is not None:
+            if not isinstance(grade, str) or grade.upper() not in self._CONCRETE_GRADES:
+                issues.append(
+                    f"concrete grade {grade!r} not in supported set "
+                    f"{sorted(self._CONCRETE_GRADES)}"
+                )
+            else:
+                details["concrete_grade"] = grade.upper()
+
+        # Rebar-to-concrete ratio plausibility (kg of rebar per m³ of concrete).
+        rebar = item.get("rebar_kg")
+        concrete = item.get("concrete_m3") or item.get("volume_m3")
+        if rebar is not None and concrete:
+            try:
+                ratio = float(rebar) / float(concrete)
+                details["rebar_concrete_ratio_kg_per_m3"] = ratio
+                # Typical range: 80–250 kg/m³. Outside that is suspicious.
+                if ratio <= 0 or ratio > 500:
+                    issues.append(
+                        f"rebar:concrete ratio {ratio:.1f} kg/m³ is implausible"
+                    )
+            except (TypeError, ValueError, ZeroDivisionError):
+                issues.append("could not compute rebar:concrete ratio")
+
+        return {
+            "stage": "physical",
+            "status": "fail" if issues else "ok",
+            "issues": issues,
+            "details": details,
+        }
+
+    def _stage_empirical(self, item: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """Compare against historical_benchmark; reject outside 3σ.
+
+        If no historical_benchmark dep is available, the stage records
+        ``skipped`` rather than failing. Production setups wire the dep
+        via the assembler; tests deliberately leave it unwired to verify
+        the skip path works.
+        """
+        bench = self._resolve_benchmark_dep()
+        if bench is None:
+            return {
+                "stage": "empirical",
+                "status": "skipped",
+                "issues": [],
+                "details": {"reason": "historical_benchmark dep not wired"},
+            }
+
+        # Pull benchmark stats for this item type. The benchmark block has
+        # several signatures across the repo; we stay tolerant.
+        item_type = item.get("type") or item.get("category")
+        value = item.get("value")
+        if value is None:
+            for k in ("cost", "quantity", "duration_days"):
+                if k in item:
+                    value = item[k]
+                    break
+
+        if value is None or item_type is None:
+            return {
+                "stage": "empirical",
+                "status": "skipped",
+                "issues": [],
+                "details": {"reason": "no comparable value/type on item"},
+            }
+
+        stats = self._fetch_benchmark_stats(bench, item_type, ctx)
+        if not stats:
+            return {
+                "stage": "empirical",
+                "status": "skipped",
+                "issues": [],
+                "details": {"reason": f"no benchmark stats for type={item_type!r}"},
+            }
+
+        mean = float(stats.get("mean", 0.0))
+        std = float(stats.get("std", 0.0)) or 0.0
+        if std <= 0:
+            return {
+                "stage": "empirical",
+                "status": "skipped",
+                "issues": [],
+                "details": {"reason": "benchmark std is zero", "mean": mean},
+            }
+
+        z = abs(float(value) - mean) / std
+        details = {"mean": mean, "std": std, "z_score": z, "value": float(value)}
+        if z > 3.0:
+            return {
+                "stage": "empirical",
+                "status": "fail",
+                "issues": [
+                    f"value {value} is {z:.2f}σ from benchmark mean {mean} (>3σ)"
+                ],
+                "details": details,
+            }
+        if z > 2.0:
+            return {
+                "stage": "empirical",
+                "status": "warn",
+                "issues": [
+                    f"value {value} is {z:.2f}σ from benchmark mean {mean}"
+                ],
+                "details": details,
+            }
+        return {
+            "stage": "empirical",
+            "status": "ok",
+            "issues": [],
+            "details": details,
+        }
+
+    def _stage_operational(self, item: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """Operational sanity: schedule fits, cost within budget envelope."""
+        issues: List[str] = []
+        details: Dict[str, Any] = {}
+
+        project_total_days = ctx.get("project_total_days")
+        duration = item.get("duration_days")
+        if project_total_days is not None and duration is not None:
+            try:
+                if float(duration) > float(project_total_days):
+                    issues.append(
+                        f"item duration_days={duration} exceeds project total "
+                        f"{project_total_days}"
+                    )
+                details["duration_vs_project"] = {
+                    "duration_days": float(duration),
+                    "project_total_days": float(project_total_days),
+                }
+            except (TypeError, ValueError):
+                issues.append("non-numeric duration_days or project_total_days")
+
+        budget = ctx.get("budget")
+        cost = item.get("cost")
+        if budget is not None and cost is not None:
+            try:
+                if float(cost) > float(budget):
+                    issues.append(f"cost {cost} exceeds budget envelope {budget}")
+                details["cost_vs_budget"] = {
+                    "cost": float(cost),
+                    "budget": float(budget),
+                }
+            except (TypeError, ValueError):
+                issues.append("non-numeric cost or budget")
+
+        return {
+            "stage": "operational",
+            "status": "fail" if issues else "ok",
+            "issues": issues,
+            "details": details,
+        }
+
+    # ── empirical-stage helpers ───────────────────────────────────────
+
+    def _resolve_benchmark_dep(self):
+        """Look up the historical_benchmark dep, tolerant of wiring style.
+
+        Block code in the repo uses `self.get_dep("historical_benchmark")`;
+        legacy code sets a `historical_benchmark_block` attribute directly.
+        Tests pass a plain dict via `wire()`. We deliberately do NOT fall
+        back to the global `_resolve_dep` here — that resolver lazily
+        instantiates blocks from the registry, which would mask "dep not
+        wired" with "dep returns no stats" and break the skipped-path
+        contract. Callers that want the global resolver behaviour should
+        wire the dep explicitly.
+        """
+        # 1. Direct attribute (set by tests or legacy wiring)
+        attr = getattr(self, "historical_benchmark_block", None)
+        if attr is not None:
+            return attr
+        # 2. Wired dep via UniversalBlock.wire()
+        if hasattr(self, "get_dep"):
+            try:
+                dep = self.get_dep("historical_benchmark")
+                if dep is not None:
+                    return dep
+            except Exception:
+                pass
+        return None
+
+    @staticmethod
+    def _fetch_benchmark_stats(bench, item_type: str, ctx: Dict[str, Any]) -> Optional[Dict[str, float]]:
+        """Pull {mean, std} for ``item_type`` from the benchmark dep.
+
+        The block exposes many shapes across the codebase. We probe
+        the most common ones in turn:
+
+          - bench.get_stats(item_type) → {"mean": .., "std": ..}
+          - bench.stats[item_type]     → {"mean": .., "std": ..}
+          - bench(item_type)           → tuple/dict
+        """
+        # A test injection may also pass a plain dict.
+        if isinstance(bench, dict):
+            return bench.get(item_type)
+
+        for getter in ("get_stats", "stats_for", "lookup"):
+            fn = getattr(bench, getter, None)
+            if callable(fn):
+                try:
+                    out = fn(item_type)
+                    if isinstance(out, dict) and "mean" in out:
+                        return out
+                except Exception:
+                    pass
+
+        stats_attr = getattr(bench, "stats", None)
+        if isinstance(stats_attr, dict):
+            entry = stats_attr.get(item_type)
+            if isinstance(entry, dict) and "mean" in entry:
+                return entry
+
+        return None
+
     def _load_test_templates(self):
         """Load boilerplate test templates"""
         self.test_templates = {
