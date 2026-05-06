@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def _safe_float(value: Any, default: float = 0.0) -> float:
     """Convert anything to a float without crashing on bad input.
 
-    The audit flagged several float(p.get(...)) sites that crash with
+    The audit flagged several _safe_float(p.get(...)) sites that crash with
     ValueError when the user passes a string like "10%" or "1,200" or None.
     This swallows those cases and returns `default` instead.
     """
@@ -895,16 +895,16 @@ class ConstructionContainer(UniversalContainer):
                 # with one fewer field than %F (truncated last column). Without
                 # this, total_float_hr_cnt-style float() conversions blew up.
                 try:
-                    target_work = _safe_float(act.get("target_work_qty"), 1) or 1
+                    target_work = _safe__safe_float(act.get("target_work_qty"), 1) or 1
                     structured_activities.append({
                         "id": act.get("task_id", ""),
                         "name": act.get("task_name", ""),
                         "start": act.get("act_start_date") or act.get("early_start_date") or "",
                         "finish": act.get("act_end_date") or act.get("early_end_date") or "",
-                        "duration": _safe_float(act.get("target_drtn_hr_cnt"), 0),
-                        "total_float": _safe_float(act.get("total_float_hr_cnt"), 0) / 8,
-                        "free_float": _safe_float(act.get("free_float_hr_cnt"), 0) / 8,
-                        "percent_complete": _safe_float(act.get("act_work_qty"), 0) / target_work * 100,
+                        "duration": _safe__safe_float(act.get("target_drtn_hr_cnt"), 0),
+                        "total_float": _safe__safe_float(act.get("total_float_hr_cnt"), 0) / 8,
+                        "free_float": _safe__safe_float(act.get("free_float_hr_cnt"), 0) / 8,
+                        "percent_complete": _safe__safe_float(act.get("act_work_qty"), 0) / target_work * 100,
                         "wbs": act.get("wbs_id", ""),
                         "predecessors": [r.get("pred_task_id") for r in relationships if r.get("task_id") == act.get("task_id")],
                         "successors": [r.get("task_id") for r in relationships if r.get("pred_task_id") == act.get("task_id")],
@@ -973,7 +973,7 @@ class ConstructionContainer(UniversalContainer):
             if start_dates and finish_dates:
                 duration = (max(finish_dates) - min(start_dates)).days
             else:
-                duration = sum(_safe_float(a.get("duration"), 0) for a in critical_activities) / 8
+                duration = sum(_safe__safe_float(a.get("duration"), 0) for a in critical_activities) / 8
         
         floats = [a.get("total_float", 0) for a in activities if a.get("total_float", 999) < 999]
         avg_float = sum(floats) / len(floats) if floats else 0
@@ -1592,17 +1592,17 @@ class ConstructionContainer(UniversalContainer):
 
         # _safe_float instead of bare float(...) — the audit flagged these as
         # crash sites when callers pass "10%", "1,200", None, etc.
-        contract_value = _safe_float(p.get("contract_value") or data.get("contract_value"))
-        work_done_pct = _safe_float(p.get("work_done_percent") or data.get("work_done_percent")) / 100.0
-        previous_certified = _safe_float(p.get("previous_certified") or data.get("previous_certified"))
-        retention_pct = _safe_float(p.get("retention_percent", p.get("retention_rate", 10))) / 100.0
-        advance_payment = _safe_float(p.get("advance_payment") or data.get("advance_paid") or data.get("advance_payment"))
-        advance_recovery_pct = _safe_float(p.get("advance_recovery_percent", 20)) / 100.0
+        contract_value = _safe__safe_float(p.get("contract_value") or data.get("contract_value"))
+        work_done_pct = _safe__safe_float(p.get("work_done_percent") or data.get("work_done_percent")) / 100.0
+        previous_certified = _safe__safe_float(p.get("previous_certified") or data.get("previous_certified"))
+        retention_pct = _safe__safe_float(p.get("retention_percent", p.get("retention_rate", 10))) / 100.0
+        advance_payment = _safe__safe_float(p.get("advance_payment") or data.get("advance_paid") or data.get("advance_payment"))
+        advance_recovery_pct = _safe__safe_float(p.get("advance_recovery_percent", 20)) / 100.0
         payment_period = p.get("payment_period", "Current Period")
         contractor = p.get("contractor_name", p.get("contractor", data.get("contractor_name", "Contractor")))
 
         # Accept gross_valuation directly if contract_value not provided
-        direct_gross = _safe_float(p.get("gross_valuation") or data.get("gross_valuation"))
+        direct_gross = _safe__safe_float(p.get("gross_valuation") or data.get("gross_valuation"))
         if contract_value <= 0:
             if direct_gross > 0:
                 gross_valuation = round(direct_gross, 2)
@@ -1664,7 +1664,7 @@ class ConstructionContainer(UniversalContainer):
 
         quantities = p.get("quantities") or data.get("quantities") or {}
         boq = p.get("boq") or data.get("boq") or data.get("line_items", [])
-        budget = float(p.get("budget") or data.get("summary", {}).get("total_estimate", 0))
+        budget = _safe_float(p.get("budget") or data.get("summary", {}).get("total_estimate", 0))
         schedule_start = p.get("schedule_start_date") or data.get("schedule_start_date")
         rsmeans = self._get_rsmeans_data()
 
@@ -1708,7 +1708,7 @@ class ConstructionContainer(UniversalContainer):
             }
             for item_name, qty_data in quantities.items():
                 if isinstance(qty_data, dict):
-                    qty = float(qty_data.get("quantity", 0))
+                    qty = _safe_float(qty_data.get("quantity", 0))
                     unit = qty_data.get("unit", "ea")
                 else:
                     qty = float(qty_data)
@@ -2066,9 +2066,9 @@ class ConstructionContainer(UniversalContainer):
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
 
-        planned_pct = float(p.get("planned_percent") or data.get("planned_percent", 0))
-        actual_pct = float(p.get("actual_percent") or data.get("actual_percent", 0))
-        contract_value = float(p.get("contract_value") or data.get("contract_value", 0))
+        planned_pct = _safe_float(p.get("planned_percent") or data.get("planned_percent", 0))
+        actual_pct = _safe_float(p.get("actual_percent") or data.get("actual_percent", 0))
+        contract_value = _safe_float(p.get("contract_value") or data.get("contract_value", 0))
         reporting_period = p.get("reporting_period", datetime.now(timezone.utc).strftime("%B %Y"))
         activities = p.get("activities") or data.get("activities", [])
         photos = p.get("photos") or data.get("photos", [])
@@ -2086,8 +2086,8 @@ class ConstructionContainer(UniversalContainer):
 
         activity_summary = []
         for act in activities[:20]:
-            act_actual = float(act.get("actual_percent", 0))
-            act_planned = float(act.get("planned_percent", 0))
+            act_actual = _safe_float(act.get("actual_percent", 0))
+            act_planned = _safe_float(act.get("planned_percent", 0))
             activity_summary.append({
                 "activity": act.get("name", act.get("description", "Unknown")),
                 "planned": act_planned,
@@ -2135,7 +2135,7 @@ class ConstructionContainer(UniversalContainer):
 
         as_built_file = data.get("as_built_file") or p.get("as_built_file")
         design_file = data.get("design_file") or p.get("design_file")
-        tolerance_mm = float(p.get("tolerance_mm", 10))
+        tolerance_mm = _safe_float(p.get("tolerance_mm", 10))
         element_type = p.get("element_type", "general")
 
         deviations = []
@@ -2200,12 +2200,12 @@ class ConstructionContainer(UniversalContainer):
     ) -> List[Dict]:
         deviations = []
         for ab in as_built:
-            ab_val = float(ab.get("value", 0))
+            ab_val = _safe_float(ab.get("value", 0))
             matching = next(
                 (d for d in design if d.get("type") == ab.get("type")), None
             )
             if matching:
-                design_val = float(matching.get("value", 0))
+                design_val = _safe_float(matching.get("value", 0))
                 diff = abs(ab_val - design_val)
                 if diff > tolerance_mm / 1000:
                     deviations.append({
@@ -3012,7 +3012,7 @@ class ConstructionContainer(UniversalContainer):
         discipline_models = p.get("discipline_models") or data.get("discipline_models", [])
         if ifc_file and ifc_file not in discipline_models:
             discipline_models = [ifc_file] + discipline_models
-        tolerance = float(p.get("tolerance", 0.05))
+        tolerance = _safe_float(p.get("tolerance", 0.05))
         clash_types = p.get("clash_types", ["hard", "soft", "clearance"])
 
         if not discipline_models:
@@ -4306,7 +4306,7 @@ Total Extension of Time Sought: {total_delay} days
         
         # Use sample contract value when nothing provided
         if not contract_value:
-            contract_value = float(p.get("contract_value") or data.get("contract_value") or 5000000)
+            contract_value = _safe_float(p.get("contract_value") or data.get("contract_value") or 5000000)
 
         activities = []
         if schedule_file:
@@ -5414,7 +5414,7 @@ Total Extension of Time Sought: {total_delay} days
         # Char-level TF-IDF similarity sits in 0.15–0.45 for files sharing a
         # leading project token; word-level needs 0.30+. Default tuned for
         # char-level (the path we take below).
-        threshold = float(p.get("threshold", 0.25))
+        threshold = _safe_float(p.get("threshold", 0.25))
 
         files = data.get("files") or p.get("files") or []
         if not files:
@@ -5687,7 +5687,7 @@ Total Extension of Time Sought: {total_delay} days
         def _qty_val(q):
             """Normalize quantity value to a number."""
             if isinstance(q, dict):
-                return float(q.get("quantity", 0))
+                return _safe_float(q.get("quantity", 0))
             try:
                 return float(q)
             except (ValueError, TypeError):
