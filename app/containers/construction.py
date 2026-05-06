@@ -6408,6 +6408,63 @@ Total Extension of Time Sought: {total_delay} days
         except Exception:
             logger.exception("auto_pipeline: procurement_list_generator failed")
 
+        # ── Carbon panel (when quantities present) ───────────────────────────
+        # Region-aware embodied-carbon report. params.region (default global)
+        # picks the factor set; gfa_m2 enables the per-m² intensity benchmark.
+        if has_quantities:
+            try:
+                gfa = _qty_val(quantities.get("floor_area_m2", 0))
+                carbon_result = await self.generate_carbon_report(
+                    {"quantities": quantities, "gfa_m2": gfa},
+                    {"region": p.get("region", "global")},
+                )
+                downstream["carbon"] = carbon_result
+                panels.append({
+                    "type": "carbon",
+                    "title": "Embodied Carbon",
+                    "data": {
+                        "total_tonnes_co2": carbon_result.get("total_tonnes_co2"),
+                        "intensity_kg_co2_per_m2": carbon_result.get("intensity_kg_co2_per_m2"),
+                        "verdict": carbon_result.get("verdict"),
+                        "region": carbon_result.get("region"),
+                        "top_contributors": sorted(
+                            carbon_result.get("breakdown", []),
+                            key=lambda x: x.get("total_kg_co2", 0),
+                            reverse=True,
+                        )[:5],
+                        "recommendations": carbon_result.get("recommendations", [])[:3],
+                    },
+                })
+            except Exception:
+                logger.exception("auto_pipeline: carbon report failed")
+
+        # ── RFIs panel (when text contains TBD/clarification gaps) ───────────
+        # Auto-detected from extracted_text — empty if the document is clean.
+        if extracted_text and len(extracted_text.strip()) >= 100:
+            try:
+                rfi_result = await self.rfi_generator(
+                    {"extracted_text": extracted_text, "file_name": Path(file_path).name if file_path else None},
+                    {"project_name": p.get("project_name", "Project")},
+                )
+                rfis = rfi_result.get("rfis", [])
+                # Only emit the panel when something was actually detected —
+                # empty-RFI panels are noise.
+                if rfis:
+                    downstream["rfis"] = rfi_result
+                    panels.append({
+                        "type": "rfis",
+                        "title": "Information Gaps (RFIs)",
+                        "data": rfis,
+                        "total": len(rfis),
+                    })
+                    next_actions.append({
+                        "action": "rfi_generator",
+                        "label": "Issue RFIs",
+                        "reason": f"{len(rfis)} information gap(s) detected in document",
+                    })
+            except Exception:
+                logger.exception("auto_pipeline: rfi_generator failed")
+
         # Risks → risk register
         risks = doc_result.get("risks") or doc_result.get("identified_risks") or []
         if risks or doc_type in ("contract", "drawing", "specification"):
