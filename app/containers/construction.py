@@ -5794,18 +5794,15 @@ Total Extension of Time Sought: {total_delay} days
         }
 
     async def progress_tracking(self, input_data: Any, params: Dict) -> Dict:
-        """Legacy progress tracking"""
-        return {
-            "status": "success",
-            "project_id": params.get("project_id", "demo_project"),
-            "progress_pct": 78.3,
-            "scheduled_pct": 80.0,
-            "variance": -1.7,
-            "on_schedule": False,
-            "critical_path_items": [
-                {"task": "steel_erection", "status": "in_progress", "completion": 0.65}
-            ]
-        }
+        """Legacy progress-tracking entry point.
+
+        Was a hardcoded demo stub returning a fixed 78.3% / steel_erection
+        critical-path item regardless of input. The audit flagged it as the
+        only true DEMO method in the container. Now delegates to the real
+        progress_tracker so any caller still using this name gets actual
+        EVM/SPI computation against their schedule.
+        """
+        return await self.progress_tracker(input_data, params)
 
     async def _compare_photo_to_bim(self, photo_path: str, bim_file: str, location: str) -> Dict:
         """Visual SLAM + BIM comparison"""
