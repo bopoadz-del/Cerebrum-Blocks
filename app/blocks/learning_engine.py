@@ -1,5 +1,6 @@
 """Learning Engine Block - Tier promotion + coefficient tuning via scikit-learn"""
 
+import logging
 import os
 import json
 import time
@@ -10,6 +11,8 @@ from app.core.credibility import (
     CredibilityScorer,
     CredibilityTier,
 )
+
+logger = logging.getLogger(__name__)
 
 _STORAGE_PATH = os.environ.get("LEARNING_ENGINE_STORAGE", "/tmp/cerebrum_learning_engine.json")
 
@@ -81,6 +84,51 @@ class LearningEngineBlock(UniversalBlock):
             except Exception:
                 pass
         return CredibilityRecord(item_id=formula_id)
+
+    def _sample_count(self, formula_id: str) -> int:
+        """Number of recorded correction samples for ``formula_id``."""
+        formula = self._state.get("formulas", {}).get(formula_id) or {}
+        return len(formula.get("samples", []))
+
+    def get_correction_history(self, formula_id: str) -> List[Dict]:
+        """Return the raw correction samples (predicted/actual/ts) for
+        ``formula_id``. Public so the retrain Celery task can pull it."""
+        formula = self._state.get("formulas", {}).get(formula_id) or {}
+        return list(formula.get("samples", []))
+
+    def set_coefficients(self, formula_id: str, coefficients: Dict[str, float]) -> None:
+        """Persist ``coefficients`` for ``formula_id``. Used by the
+        retrain task to commit a new fit."""
+        formula = self._state.setdefault("formulas", {}).setdefault(formula_id, {
+            "samples": [],
+            "tier": "bronze",
+            "coefficients": {},
+            "executions": 0,
+            "created_at": time.time(),
+        })
+        formula["coefficients"] = dict(coefficients)
+        self._save_state()
+
+    def get_coefficient_mae(self, formula_id: str, history: List[Dict]) -> Optional[float]:
+        """Return the MAE of the currently-stored coefficients evaluated
+        against ``history``. Returns ``None`` when no usable coefficients
+        are persisted yet (the retrain task treats that as "any fit is
+        an improvement")."""
+        formula = self._state.get("formulas", {}).get(formula_id) or {}
+        coeffs = formula.get("coefficients") or {}
+        scale = float(coeffs.get("scale", coeffs.get("multiplier", 1.0) or 1.0))
+        bias = float(coeffs.get("bias", 0.0))
+        errs: List[float] = []
+        for h in history:
+            try:
+                p = float(h.get("predicted", 0))
+                a = float(h.get("actual", 0))
+            except (TypeError, ValueError):
+                continue
+            errs.append(abs((p * scale + bias) - a))
+        if not errs:
+            return None
+        return sum(errs) / len(errs)
 
     @staticmethod
     def _accuracy_from_samples(samples: List[Dict]) -> float:
@@ -221,7 +269,51 @@ class LearningEngineBlock(UniversalBlock):
         if promoted:
             formula["tier"] = tier
 
-        credibility = self._update_credibility(formula_id, reason="correction recorded")
+        # ── credibility + drift detection ─────────────────────────────
+        # Snapshot the credibility record BEFORE recompute so we can:
+        #   1. compare current accuracy against accuracy_at_promotion
+        #   2. detect tier transitions (record.tier vs updated.tier)
+        # `_credibility_record` returns a fresh CredibilityRecord copy
+        # built from persisted state — mutating it is safe.
+        record_before = self._credibility_record(formula_id)
+        previous_tier = record_before.tier
+        # Capture the pre-evaluation baseline because evaluate_promotion
+        # rewrites accuracy_at_promotion on tier change.
+        baseline_at_promotion = record_before.accuracy_at_promotion
+
+        new_accuracy = self._accuracy_from_samples(formula.get("samples", []))
+        new_sample_size = self._sample_count(formula_id)
+
+        # `detect_drift` gates on `record.sample_size`. The persisted
+        # record carries the previous eval's sample count; bump it to
+        # `max(persisted, current)` so a stream of fresh corrections
+        # actually counts toward the min_samples floor without losing
+        # prior history that lived in `formula["credibility"]`.
+        if new_sample_size > record_before.sample_size:
+            record_before.sample_size = new_sample_size
+        drift_detected = self._credibility_scorer.detect_drift(
+            record_before, new_accuracy,
+        )
+
+        # Recompute tier with the latest stats (mutates record_before).
+        updated = self._credibility_scorer.evaluate_promotion(
+            record_before, new_accuracy, new_sample_size,
+            reason="correction recorded",
+        )
+        formula["credibility"] = updated.to_dict()
+
+        if drift_detected:
+            self._handle_drift_event(
+                formula_id=formula_id,
+                baseline_accuracy=baseline_at_promotion,
+                new_accuracy=new_accuracy,
+                new_sample_size=new_sample_size,
+                tier_before=previous_tier,
+                tier_after=updated.tier,
+            )
+
+            if updated.tier > CredibilityTier.OPERATIONAL:
+                self._enqueue_retrain(formula_id)
 
         self._save_state()
 
@@ -233,8 +325,81 @@ class LearningEngineBlock(UniversalBlock):
             "promotion_flag": promoted,
             "sample_count": len(formula["samples"]),
             "auto_tuned": tuned,
-            "credibility": credibility,
+            "credibility": {
+                "tier": str(updated.tier),
+                "tier_name": updated.tier.name,
+                "previous_tier": str(previous_tier),
+                "previous_tier_name": previous_tier.name,
+                "accuracy": new_accuracy,
+                "sample_size": new_sample_size,
+                "drift_detected": drift_detected,
+                "promoted": updated.tier != previous_tier,
+            },
         }
+
+    def _handle_drift_event(
+        self,
+        *,
+        formula_id: str,
+        baseline_accuracy: float,
+        new_accuracy: float,
+        new_sample_size: int,
+        tier_before: CredibilityTier,
+        tier_after: CredibilityTier,
+    ) -> None:
+        """Persist a drift event and forward to MLflow.
+
+        Both writes are best-effort: MLflow is no-op when not configured,
+        and state writes are wrapped because callers must never have a
+        correction-recording flow fail because of a logging side effect.
+        """
+        try:
+            from app.core.mlflow_tracker import tracker
+            with tracker.start_run(f"drift-{formula_id}"):
+                tracker.log_metrics({
+                    "accuracy_at_promotion": float(baseline_accuracy),
+                    "current_accuracy": float(new_accuracy),
+                    "drift_delta": float(baseline_accuracy) - float(new_accuracy),
+                    "sample_size": float(new_sample_size),
+                })
+                tracker.log_param("formula_id", formula_id)
+                tracker.log_param("tier_before", str(tier_before))
+                tracker.log_param("tier_after", str(tier_after))
+        except Exception:
+            logger.exception("learning: MLflow drift logging failed")
+
+        # Persist into learning_state.json so operators can audit drift
+        # without a separate event store.
+        self._state.setdefault("drift_events", []).append({
+            "formula_id": formula_id,
+            "at": time.time(),
+            "from_accuracy": float(baseline_accuracy),
+            "to_accuracy": float(new_accuracy),
+            "tier_before": str(tier_before),
+            "tier_after": str(tier_after),
+        })
+        self._save_state()
+
+    def _enqueue_retrain(self, formula_id: str) -> None:
+        """Best-effort retrain enqueue.
+
+        When Celery is wired and the broker is reachable, ``.delay()``
+        ships the task. When it isn't (CI, local dev without Redis),
+        record the formula_id in a ``pending_retrains`` queue inside the
+        learning state file so an operator/cron job can pick them up
+        later. Either way, never raise — drift handling must not break
+        correction recording.
+        """
+        try:
+            from app.tasks.learning_retrain import retrain_formula
+            retrain_formula.delay(formula_id)
+        except Exception:
+            logger.exception("learning: retrain enqueue failed; recording as pending")
+            self._state.setdefault("pending_retrains", []).append({
+                "formula_id": formula_id,
+                "at": time.time(),
+            })
+            self._save_state()
 
     async def _tune_coefficients(self, data: Dict, params: Dict) -> Dict:
         formula_id = data.get("formula_id") or params.get("formula_id")

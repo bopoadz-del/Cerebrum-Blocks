@@ -2,6 +2,7 @@
 from app.core.universal_base import UniversalBlock
 from typing import Dict, Any, Callable, Optional
 import asyncio
+import logging
 import resource
 import tempfile
 import os
@@ -10,6 +11,8 @@ import sys
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class SandboxLevel(Enum):
@@ -169,7 +172,20 @@ class SandboxBlock(UniversalBlock):
         import time
         import io
         import sys
-        
+
+        sandbox_url = os.getenv("SANDBOX_RUNNER_URL")
+        if sandbox_url:
+            via = await self._exec_via_runner(
+                sandbox_url,
+                language="python",
+                code=code,
+                input_values=inputs or {},
+                timeout_s=policy.max_cpu_time,
+            )
+            if via is not None:
+                return via
+            # else fall through to in-process
+
         start_time = time.time()
         
         # Create restricted globals
@@ -320,13 +336,27 @@ class SandboxBlock(UniversalBlock):
     async def _execute_bash(self, code: str, policy: SandboxPolicy) -> Dict:
         """Execute bash commands in restricted shell with strict allowlist."""
         import subprocess
-        
+
         # Strict allowlist — no blacklist bypass
         command = code.strip().split()[0] if code.strip() else ""
         if command not in self._SHELL_ALLOWLIST:
             result = {"error": f"Command '{command}' not in sandbox allowlist.", "blocked": True}
             self._audit_shell(code, allowed=False, result=result)
             return result
+
+        sandbox_url = os.getenv("SANDBOX_RUNNER_URL")
+        if sandbox_url:
+            via = await self._exec_via_runner(
+                sandbox_url,
+                language="bash",
+                code=code,
+                input_values={},
+                timeout_s=policy.max_cpu_time,
+            )
+            if via is not None:
+                self._audit_shell(code, allowed=True, result=via)
+                return via
+            # else fall through to in-process
         
         # Run in restricted mode
         proc = await asyncio.create_subprocess_shell(
@@ -353,6 +383,69 @@ class SandboxBlock(UniversalBlock):
             proc.kill()
             raise TimeoutException()
     
+    async def _exec_via_runner(
+        self,
+        url: str,
+        *,
+        language: str,
+        code: str,
+        input_values: Dict,
+        timeout_s: int,
+    ):
+        """POST to the sandbox runner. Returns this block's result-shape on
+        success, or None on network / HTTP errors so callers can fall back."""
+        try:
+            import httpx
+        except ImportError:
+            logger.warning("httpx not installed; cannot use SANDBOX_RUNNER_URL")
+            return None
+
+        payload = {
+            "language": language,
+            "code": code,
+            "input_values": input_values or {},
+            "timeout_s": int(timeout_s) if timeout_s else 10,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=payload["timeout_s"] + 5) as client:
+                resp = await client.post(f"{url.rstrip('/')}/exec", json=payload)
+        except (httpx.HTTPError, OSError) as e:
+            logger.warning("sandbox runner network error: %s; falling back", e)
+            return None
+
+        if resp.status_code != 200:
+            logger.warning(
+                "sandbox runner returned %s; falling back",
+                resp.status_code,
+            )
+            return None
+
+        try:
+            data = resp.json()
+        except ValueError:
+            logger.warning("sandbox runner returned non-JSON; falling back")
+            return None
+
+        runner_status = data.get("status")
+        ok = runner_status == "ok"
+        return {
+            "success": ok,
+            "result": data.get("result"),
+            "stdout": data.get("stdout", ""),
+            "stderr": data.get("stderr", ""),
+            "returncode": data.get("exit_code"),
+            "error": (
+                None if ok else (
+                    "Execution timeout"
+                    if data.get("timed_out")
+                    else (data.get("stderr") or f"runner status: {runner_status}")
+                )
+            ),
+            "execution_time": (data.get("elapsed_ms", 0) / 1000.0),
+            "sandboxed": True,
+            "runner": True,
+        }
+
     async def _validate_code(self, data: Dict) -> Dict:
         """Static analysis of code before execution"""
         code = data.get("code", "")

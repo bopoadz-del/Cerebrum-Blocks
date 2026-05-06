@@ -176,14 +176,19 @@ class FormulaExecutorBlock(UniversalBlock):
     async def _run_library_formula(self, key: str, input_values: Dict) -> Dict:
         formula = self._FORMULA_LIBRARY[key]
         merged = {**formula["params"], **input_values}
-        result = await self._execute_sandbox(formula["code"], merged, formula["description"])
+        # Library formulas are trusted code — keep them in-process even when
+        # SANDBOX_RUNNER_URL is set, to avoid the network round-trip on every
+        # built-in calculation.
+        result = await self._execute_sandbox(
+            formula["code"], merged, formula["description"], _trusted=True,
+        )
         result["formula_key"] = key
         result["formula_description"] = formula["description"]
         result["unit"] = formula["unit"]
         return result
 
     async def _execute_sandbox(
-        self, code: str, variables: Dict, description: str
+        self, code: str, variables: Dict, description: str, _trusted: bool = False,
     ) -> Dict:
         # Validate code length
         lines = [l for l in code.strip().splitlines() if l.strip()]
@@ -193,6 +198,21 @@ class FormulaExecutorBlock(UniversalBlock):
                 "status": "error",
                 "error": f"Code too long: {len(lines)} lines (max {max_lines})",
             }
+
+        # Route to docker sandbox runner only for custom_code paths.
+        # Library formulas are trusted and stay in-process.
+        sandbox_url = os.getenv("SANDBOX_RUNNER_URL") if not _trusted else None
+        if sandbox_url:
+            runner_payload = await self._exec_via_runner(
+                sandbox_url,
+                code=code,
+                variables=variables,
+                description=description,
+                timeout_s=int(self.config.get("timeout_seconds", 10)),
+            )
+            if runner_payload is not None:
+                return runner_payload
+            # fall through on runner failure
 
         # Build safe execution namespace
         namespace = {**_SAFE_BUILTINS, "math": math}
@@ -243,6 +263,80 @@ class FormulaExecutorBlock(UniversalBlock):
         raw_result = namespace.get("result")
         unit_output = self._validate_units(raw_result, variables, description)
 
+        return {
+            "status": "success",
+            "generated_code": code,
+            "execution_result": raw_result,
+            "unit_validated_output": unit_output,
+            "input_values": variables,
+            "description": description,
+        }
+
+    async def _exec_via_runner(
+        self,
+        url: str,
+        *,
+        code: str,
+        variables: Dict,
+        description: str,
+        timeout_s: int,
+    ):
+        """POST to the sandbox runner and shape the response to match the
+        in-process _execute_sandbox return value. Returns None on network /
+        HTTP errors so the caller can fall back to in-process exec."""
+        try:
+            import httpx
+        except ImportError:
+            logger.warning("httpx not installed; cannot use SANDBOX_RUNNER_URL")
+            return None
+
+        # Only forward JSON-safe variable types; numpy arrays / sympy
+        # symbols can't survive a JSON round-trip.
+        safe_inputs = {
+            k: v for k, v in (variables or {}).items()
+            if isinstance(v, (int, float, str, bool, list, dict)) or v is None
+        }
+
+        payload = {
+            "language": "python",
+            "code": code,
+            "input_values": safe_inputs,
+            "timeout_s": int(timeout_s) if timeout_s else 10,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=payload["timeout_s"] + 5) as client:
+                resp = await client.post(f"{url.rstrip('/')}/exec", json=payload)
+        except (httpx.HTTPError, OSError) as e:
+            logger.warning("sandbox runner network error: %s; falling back", e)
+            return None
+
+        if resp.status_code != 200:
+            logger.warning(
+                "sandbox runner returned %s; falling back",
+                resp.status_code,
+            )
+            return None
+
+        try:
+            data = resp.json()
+        except ValueError:
+            logger.warning("sandbox runner returned non-JSON; falling back")
+            return None
+
+        if data.get("status") != "ok":
+            return {
+                "status": "error",
+                "error": (
+                    "Execution timeout"
+                    if data.get("timed_out")
+                    else (data.get("stderr") or "Execution error")
+                ),
+                "input_values": variables,
+            }
+
+        raw_result = data.get("result")
+        # Pint unit validation still runs regardless of execution path.
+        unit_output = self._validate_units(raw_result, variables, description)
         return {
             "status": "success",
             "generated_code": code,

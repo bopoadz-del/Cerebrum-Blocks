@@ -1,6 +1,7 @@
 """Code Block - Sandboxed Python execution via subprocess + AST analysis"""
 
 import ast
+import logging
 import os
 import subprocess
 import sys
@@ -9,6 +10,8 @@ import time
 from typing import Any, Dict
 
 from app.core.universal_base import UniversalBlock
+
+logger = logging.getLogger(__name__)
 
 _TIMEOUT = 10  # seconds
 _MAX_OUTPUT = 10_000
@@ -197,7 +200,23 @@ class CodeBlock(UniversalBlock):
 
         # execute
         if language in ("python", "py"):
-            result = _run_python(code, timeout)
+            sandbox_url = os.getenv("SANDBOX_RUNNER_URL")
+            if sandbox_url:
+                runner_result = await self._exec_via_runner(
+                    sandbox_url,
+                    language="python",
+                    code=code,
+                    input_values=params.get("input_values", {}) if isinstance(params.get("input_values", {}), dict) else {},
+                    timeout_s=timeout,
+                )
+                if runner_result is not None:
+                    result = runner_result
+                else:
+                    # Network/HTTP failure — fall back to in-process so the
+                    # caller never sees a 500 just because the runner is down.
+                    result = _run_python(code, timeout)
+            else:
+                result = _run_python(code, timeout)
         elif language in ("javascript", "js", "node"):
             result = _run_node(code, timeout)
         else:
@@ -211,4 +230,64 @@ class CodeBlock(UniversalBlock):
             "language": language,
             "operation": operation,
             "lines_executed": len(code.splitlines()),
+        }
+
+    async def _exec_via_runner(
+        self,
+        url: str,
+        *,
+        language: str,
+        code: str,
+        input_values: Dict,
+        timeout_s: int,
+    ):
+        """POST to the sandbox runner. Returns a dict matching this block's
+        existing _run_python output shape on success, or None on network /
+        HTTP errors so the caller can fall back to in-process."""
+        try:
+            import httpx
+        except ImportError:
+            logger.warning("httpx not installed; cannot use SANDBOX_RUNNER_URL")
+            return None
+
+        payload = {
+            "language": language,
+            "code": code,
+            "input_values": input_values or {},
+            "timeout_s": timeout_s,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=timeout_s + 5) as client:
+                resp = await client.post(f"{url.rstrip('/')}/exec", json=payload)
+        except (httpx.HTTPError, OSError) as e:
+            logger.warning("sandbox runner network error: %s; falling back to in-process", e)
+            return None
+
+        if resp.status_code != 200:
+            logger.warning(
+                "sandbox runner returned %s; falling back to in-process",
+                resp.status_code,
+            )
+            return None
+
+        try:
+            data = resp.json()
+        except ValueError:
+            logger.warning("sandbox runner returned non-JSON; falling back")
+            return None
+
+        # Translate runner shape -> code-block shape
+        runner_status = data.get("status")
+        return {
+            "status": "success" if runner_status == "ok" else "error",
+            "output": data.get("stdout", ""),
+            "stderr": data.get("stderr") or None,
+            "exit_code": data.get("exit_code"),
+            "execution_time_ms": data.get("elapsed_ms", 0),
+            "result": data.get("result"),
+            "error": (
+                f"Execution timed out after {timeout_s}s"
+                if data.get("timed_out") else
+                (None if runner_status == "ok" else data.get("stderr") or "execution error")
+            ),
         }

@@ -58,3 +58,18 @@ services:
         sync: false
       - key: DEEPSEEK_API_KEY
         sync: false
+      # Private-network URL of the sandbox runner sibling service.
+      # Render resolves this hostname inside the private network only.
+      - key: SANDBOX_RUNNER_URL
+        value: http://cerebrum-sandbox-runner:8001
+
+  - type: pserv
+    name: cerebrum-sandbox-runner
+    runtime: docker
+    plan: starter
+    region: oregon
+    rootDir: sandbox-runner
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars: []

@@ -47,6 +47,7 @@ class CredibilityRecord:
     sample_size: int = 0
     last_updated: float = field(default_factory=time.time)
     promotion_history: List[Dict[str, Any]] = field(default_factory=list)
+    accuracy_at_promotion: float = 0.0  # accuracy snapshot at the last tier change; baseline for drift comparison
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -57,17 +58,23 @@ class CredibilityRecord:
             "sample_size": self.sample_size,
             "last_updated": self.last_updated,
             "promotion_history": list(self.promotion_history),
+            "accuracy_at_promotion": self.accuracy_at_promotion,
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CredibilityRecord":
+        # Backwards compat: if accuracy_at_promotion isn't recorded yet,
+        # default to the current accuracy so drift comparison starts at
+        # parity (i.e. existing rows can't immediately fire drift events).
+        accuracy = float(data.get("accuracy", 0.0))
         return cls(
             item_id=data["item_id"],
             tier=CredibilityTier(int(data.get("tier", CredibilityTier.UNVERIFIED))),
-            accuracy=float(data.get("accuracy", 0.0)),
+            accuracy=accuracy,
             sample_size=int(data.get("sample_size", 0)),
             last_updated=float(data.get("last_updated", time.time())),
             promotion_history=list(data.get("promotion_history", [])),
+            accuracy_at_promotion=float(data.get("accuracy_at_promotion", accuracy)),
         )
 
 
@@ -164,6 +171,12 @@ class CredibilityScorer:
 
         if new_tier != previous_tier:
             record.tier = new_tier
+            # Snapshot accuracy at the tier transition so drift detection
+            # has a stable baseline to measure against until the next
+            # promotion/demotion. Without this, drift would always be
+            # measured from whatever happens to be in `accuracy` and we'd
+            # lose the "what was true when this tier was earned" signal.
+            record.accuracy_at_promotion = record.accuracy
             record.promotion_history.append({
                 "from": int(previous_tier),
                 "from_name": previous_tier.name,
@@ -175,6 +188,30 @@ class CredibilityScorer:
                 "sample_size": record.sample_size,
             })
         return record
+
+    def detect_drift(
+        self,
+        record: CredibilityRecord,
+        current_accuracy: float,
+        *,
+        min_samples: int = 20,
+        threshold: float = 0.10,
+    ) -> bool:
+        """Return True when ``current_accuracy`` has dropped by ``threshold``
+        or more from ``record.accuracy_at_promotion`` AND
+        ``record.sample_size`` is at least ``min_samples``.
+
+        Both gates matter:
+          - The sample-size floor stops one bad correction from demoting
+            a brand-new formula (variance dominates at low N).
+          - The threshold avoids paging on noise — anything inside ±10pp
+            from the baseline is treated as normal jitter.
+        """
+        if record.sample_size < int(min_samples):
+            return False
+        baseline = float(record.accuracy_at_promotion)
+        delta = baseline - float(current_accuracy)
+        return delta >= float(threshold)
 
     @staticmethod
     def _default_reason(prev: CredibilityTier, new: CredibilityTier) -> str:
