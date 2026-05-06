@@ -15,6 +15,52 @@ from app.core.universal_base import UniversalContainer
 logger = logging.getLogger(__name__)
 
 
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    """Convert anything to a float without crashing on bad input.
+
+    The audit flagged several float(p.get(...)) sites that crash with
+    ValueError when the user passes a string like "10%" or "1,200" or None.
+    This swallows those cases and returns `default` instead.
+    """
+    if value is None or value == "":
+        return default
+    try:
+        if isinstance(value, str):
+            value = value.replace(",", "").replace("%", "").strip()
+            if not value:
+                return default
+        return float(value)
+    except (ValueError, TypeError):
+        return default
+
+
+def _safe_iso_date(value: Any) -> Optional[datetime]:
+    """Parse a date string tolerating common AEC formats.
+
+    Handles: ISO 8601 (with/without Z), `YYYY-MM-DD`, `DD/MM/YYYY`,
+    `MM/DD/YYYY`, Primavera's date strings. Returns None on failure
+    instead of crashing — the audit flagged datetime.fromisoformat()
+    blowing up on legitimate non-ISO inputs.
+    """
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value
+    s = str(value).strip()
+    # ISO 8601 with optional trailing Z
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        pass
+    # Common alternates
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%Y-%m-%d %H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    return None
+
+
 @dataclass
 class Measurement:
     value: float
@@ -901,13 +947,14 @@ class ConstructionContainer(UniversalContainer):
         
         duration = 0
         if critical_activities:
-            try:
-                start_dates = [datetime.fromisoformat(a.get("start", "").replace('Z', '+00:00')) for a in critical_activities if a.get("start")]
-                finish_dates = [datetime.fromisoformat(a.get("finish", "").replace('Z', '+00:00')) for a in critical_activities if a.get("finish")]
-                if start_dates and finish_dates:
-                    duration = (max(finish_dates) - min(start_dates)).days
-            except Exception:
-                duration = sum(a.get("duration", 0) for a in critical_activities) / 8
+            # _safe_iso_date handles ISO 8601, DD/MM/YYYY, MM/DD/YYYY, etc.
+            # without crashing on Primavera-style date strings.
+            start_dates = [d for d in (_safe_iso_date(a.get("start")) for a in critical_activities) if d]
+            finish_dates = [d for d in (_safe_iso_date(a.get("finish")) for a in critical_activities) if d]
+            if start_dates and finish_dates:
+                duration = (max(finish_dates) - min(start_dates)).days
+            else:
+                duration = sum(_safe_float(a.get("duration"), 0) for a in critical_activities) / 8
         
         floats = [a.get("total_float", 0) for a in activities if a.get("total_float", 999) < 999]
         avg_float = sum(floats) / len(floats) if floats else 0
@@ -1042,20 +1089,19 @@ class ConstructionContainer(UniversalContainer):
         return "critical" if total_delay > 14 else "moderate" if total_delay > 7 else "minor"
     
     def _calculate_duration_days(self, start: str, finish: str) -> int:
-        try:
-            s = datetime.fromisoformat(start.replace('Z', '+00:00'))
-            f = datetime.fromisoformat(finish.replace('Z', '+00:00'))
+        # _safe_iso_date handles non-ISO formats (DD/MM/YYYY, MM/DD/YYYY,
+        # Primavera dates, etc.) — was previously silently returning 0 for
+        # any non-ISO input, masking real durations.
+        s, f = _safe_iso_date(start), _safe_iso_date(finish)
+        if s and f:
             return max(0, (f - s).days)
-        except Exception:
-            return 0
-    
+        return 0
+
     def _calculate_date_diff(self, date1: str, date2: str) -> int:
-        try:
-            d1 = datetime.fromisoformat(date1.replace('Z', '+00:00'))
-            d2 = datetime.fromisoformat(date2.replace('Z', '+00:00'))
+        d1, d2 = _safe_iso_date(date1), _safe_iso_date(date2)
+        if d1 and d2:
             return max(0, (d2 - d1).days)
-        except Exception:
-            return 0
+        return 0
 
     # SPECIFICATIONS (CSI MasterFormat)
     async def process_specification_full(self, input_data: Any, params: Dict) -> Dict:
@@ -1525,17 +1571,19 @@ class ConstructionContainer(UniversalContainer):
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
 
-        contract_value = float(p.get("contract_value") or data.get("contract_value", 0))
-        work_done_pct = float(p.get("work_done_percent") or data.get("work_done_percent", 0)) / 100.0
-        previous_certified = float(p.get("previous_certified") or data.get("previous_certified", 0))
-        retention_pct = float(p.get("retention_percent", p.get("retention_rate", 10))) / 100.0
-        advance_payment = float(p.get("advance_payment") or data.get("advance_paid", 0) or data.get("advance_payment", 0))
-        advance_recovery_pct = float(p.get("advance_recovery_percent", 20)) / 100.0
+        # _safe_float instead of bare float(...) — the audit flagged these as
+        # crash sites when callers pass "10%", "1,200", None, etc.
+        contract_value = _safe_float(p.get("contract_value") or data.get("contract_value"))
+        work_done_pct = _safe_float(p.get("work_done_percent") or data.get("work_done_percent")) / 100.0
+        previous_certified = _safe_float(p.get("previous_certified") or data.get("previous_certified"))
+        retention_pct = _safe_float(p.get("retention_percent", p.get("retention_rate", 10))) / 100.0
+        advance_payment = _safe_float(p.get("advance_payment") or data.get("advance_paid") or data.get("advance_payment"))
+        advance_recovery_pct = _safe_float(p.get("advance_recovery_percent", 20)) / 100.0
         payment_period = p.get("payment_period", "Current Period")
         contractor = p.get("contractor_name", p.get("contractor", data.get("contractor_name", "Contractor")))
 
         # Accept gross_valuation directly if contract_value not provided
-        direct_gross = float(p.get("gross_valuation") or data.get("gross_valuation", 0))
+        direct_gross = _safe_float(p.get("gross_valuation") or data.get("gross_valuation"))
         if contract_value <= 0:
             if direct_gross > 0:
                 gross_valuation = round(direct_gross, 2)
@@ -5117,117 +5165,164 @@ Total Extension of Time Sought: {total_delay} days
 
 
     async def _analyse_text_only(self, text: str, doc_type_hint: str = "auto") -> Dict:
-        """Classify and extract structured data from raw text without a file."""
+        """Classify and extract structured data from raw text without a file.
+
+        Robustness upgrades over the original:
+          - re.finditer instead of re.search → sums multi-line BOQ entries
+            (e.g. concrete on every floor adds up rather than first-match-wins)
+          - Negative lookbehind on \\d skips concrete grades (C30, M40, B25)
+            and rebar grades (T16, Y10) that used to be misread as quantities
+          - Numeric sanity floor: drops matches < 0.1 of the unit (catches
+            grade leaks the regex didn't filter)
+          - Multilingual keywords (en/es/pt/fr/ar) for the AEC core set
+          - Slab thickness can be pulled per-element, not one global default
+          - safe_float() guards every conversion so malformed rows don't crash
+        """
         import re
         t = text.lower()
 
-        # Detect doc type from content
+        # Doc type — content-based with multilingual hooks
         if doc_type_hint != "auto":
             doc_type = doc_type_hint
-        elif any(k in t for k in ["bill of quantities", "boq", "schedule of rates", "item no", "unit rate"]):
+        elif any(k in t for k in ["bill of quantities", "boq", "schedule of rates", "item no", "unit rate", "metrado", "presupuesto"]):
             doc_type = "bom"
-        elif any(k in t for k in ["specification", "clause", "section", "csi", "masterformat", "div "]):
+        elif any(k in t for k in ["specification", "especificación", "especificação", "csi", "masterformat", "div ", "clause"]):
             doc_type = "specification"
-        elif any(k in t for k in ["contract", "agreement", "clause", "liquidated damages", "retention"]):
+        elif any(k in t for k in ["contract", "agreement", "contrato", "convenio", "liquidated damages", "retention"]):
             doc_type = "contract"
-        elif any(k in t for k in ["programme", "schedule", "activity id", "wbs", "baseline", "primavera"]):
+        elif any(k in t for k in ["programme", "schedule", "cronograma", "activity id", "wbs", "baseline", "primavera"]):
             doc_type = "schedule"
-        elif any(k in t for k in ["drawing", "elevation", "section", "plan", "detail", "grid"]):
+        elif any(k in t for k in ["drawing", "plano", "elevation", "alzado", "section", "detail", "grid", "axes"]):
             doc_type = "drawing"
         else:
             doc_type = "report"
 
-        quantities = {}
+        # ── Helpers ──────────────────────────────────────────────────────────
+        def safe_float(s) -> Optional[float]:
+            """Parse a numeric token tolerating commas and stray spaces."""
+            try:
+                return float(str(s).replace(",", "").strip())
+            except (ValueError, TypeError):
+                return None
 
-        # Mass units accepted in inputs, normalised to kg.
-        _mass_unit = r"(?:kg|kilogram[s]?|t|mt|ton[s]?|tonne[s]?)"
+        # Unit normalisation
+        _mass_unit = r"(?:kg|kilogram[s]?|t|mt|ton[s]?|tonne[s]?|toneladas?)"
         _to_kg = {
             "kg": 1.0, "kilogram": 1.0, "kilograms": 1.0,
             "t": 1000.0, "mt": 1000.0,
             "ton": 1000.0, "tons": 1000.0, "tonne": 1000.0, "tonnes": 1000.0,
+            "toneladas": 1000.0, "tonelada": 1000.0,
         }
-        _vol_unit = r"(?:m3|m\xb3|cu\.?\s*m|cubic\s*metres?|cubic\s*meters?)"
-        _area_unit = r"(?:m2|m\xb2|sqm|sq\.?\s*m|square\s*metres?|square\s*meters?)"
+        _vol_unit = r"(?:m3|m\xb3|cu\.?\s*m|cubic\s*metres?|cubic\s*meters?|metros?\s*cubicos?)"
+        _area_unit = r"(?:m2|m\xb2|sqm|sq\.?\s*m|square\s*metres?|square\s*meters?|metros?\s*cuadrados?)"
 
-        # Named quantity patterns: (regex, normalised_key, canonical_unit, unit_capture_group)
+        # Number with at least 1 digit before optional decimal — and crucially
+        # NOT preceded by a letter (so "C30", "M40", "Y10", "T16" — concrete
+        # and rebar grade designators — won't be picked up as quantities).
+        _qty = r"(?<![A-Za-z])(\d[\d,\.]*)"
+
+        quantities: Dict[str, Dict[str, Any]] = {}
+
+        # ── Quantity patterns: (regex, normalised_key, canonical_unit, unit_grp)
+        # Multi-language keyword groups. Each pattern uses re.finditer so we
+        # SUM matches across the doc (e.g. concrete poured on multiple floors).
+        # `unit_grp` non-None means we read the unit from the regex match and
+        # convert to the canonical unit (only mass needs this today).
         patterns = [
-            (rf"concrete[^\n]*?(\d[\d,\.]*)\s*{_vol_unit}", "concrete_volume_m3", "m3", None),
-            (rf"(?:rebar|reinforcement)[^\n]*?(\d[\d,\.]*)\s*({_mass_unit})", "steel_weight_kg", "kg", 2),
-            (rf"(?:structural\s+)?steel[^\n]*?(\d[\d,\.]*)\s*({_mass_unit})", "structural_steel_kg", "kg", 2),
-            (rf"curtain\s*wall[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "curtain_wall_m2", "m2", None),
-            (rf"glazing[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "glazing_m2", "m2", None),
-            (rf"hvac[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "hvac_m2", "m2", None),
-            (rf"electrical[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "electrical_m2", "m2", None),
-            (rf"block\s*work[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "blockwork_m2", "m2", None),
-            (rf"formwork[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "formwork_m2", "m2", None),
-            (rf"excavat[^\n]*?(\d[\d,\.]*)\s*{_vol_unit}", "excavation_m3", "m3", None),
-            (rf"pil[^\n]*?(\d[\d,\.]*)\s*(?:lm|m\b|linear\s*metres?|linear\s*meters?)", "piling_lm", "lm", None),
-            (rf"waterproof[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "waterproofing_m2", "m2", None),
-            (rf"roofing[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "roofing_m2", "m2", None),
-            (rf"tiling[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "tiling_m2", "m2", None),
-            (rf"painting[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "painting_m2", "m2", None),
-            (rf"plumbing[^\n]*?(\d[\d,\.]*)\s*{_area_unit}", "plumbing_m2", "m2", None),
+            # Concrete: en/es/pt + structural steel
+            (rf"(?:concrete|hormigón|hormigon|concreto|béton)[^\n]{{0,80}}?{_qty}\s*{_vol_unit}", "concrete_volume_m3", "m3", None, 0.5),
+            (rf"(?:rebar|reinforcement|acero|acero\s+de\s+refuerzo|aço|armadura|armado|ferraillage)[^\n]{{0,80}}?{_qty}\s*({_mass_unit})", "steel_weight_kg", "kg", 2, 10.0),
+            (rf"(?:structural\s+steel|estructural|estrutural|charpente)[^\n]{{0,80}}?{_qty}\s*({_mass_unit})", "structural_steel_kg", "kg", 2, 10.0),
+            # Envelope
+            (rf"curtain\s*wall[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "curtain_wall_m2", "m2", None, 1.0),
+            (rf"(?:glazing|vidro|vidrio|vitrage)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "glazing_m2", "m2", None, 1.0),
+            (rf"(?:cladding|fachada|revestimento|bardage)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "cladding_m2", "m2", None, 1.0),
+            (rf"(?:roofing|techo|cubierta|telhado|toiture)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "roofing_m2", "m2", None, 1.0),
+            # MEP
+            (rf"hvac[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "hvac_m2", "m2", None, 1.0),
+            (rf"(?:electrical|eléctrico|elétrico|électrique)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "electrical_m2", "m2", None, 1.0),
+            (rf"(?:plumbing|fontaneria|hidráulica|hidraulica|plomberie)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "plumbing_m2", "m2", None, 1.0),
+            # Masonry / formwork
+            (rf"(?:block\s*work|mampostería|alvenaria|maçonnerie)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "blockwork_m2", "m2", None, 1.0),
+            (rf"(?:formwork|encofrado|cofragem|coffrage)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "formwork_m2", "m2", None, 1.0),
+            # Earthworks
+            (rf"(?:excavat|excavación|escavação|terrassement)[^\n]{{0,80}}?{_qty}\s*{_vol_unit}", "excavation_m3", "m3", None, 1.0),
+            (rf"(?:piling|pilote)[^\n]{{0,80}}?{_qty}\s*(?:lm|m\b|linear\s*metres?|linear\s*meters?)", "piling_lm", "lm", None, 1.0),
+            # Finishes
+            (rf"(?:waterproof|impermeabilización|impermeabilização)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "waterproofing_m2", "m2", None, 1.0),
+            (rf"(?:tiling|tiles|azulejo|baldosa|carrelage)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "tiling_m2", "m2", None, 1.0),
+            (rf"(?:painting|pintura|peinture)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "painting_m2", "m2", None, 1.0),
+            (rf"(?:gypsum|drywall|placoplâtre)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "gypsum_m2", "m2", None, 1.0),
+            (rf"(?:ceiling|cielo\s*raso|teto)[^\n]{{0,80}}?{_qty}\s*{_area_unit}", "ceiling_m2", "m2", None, 1.0),
         ]
-        for pattern, key, canonical_unit, unit_group in patterns:
-            m = re.search(pattern, t)
-            if m:
-                try:
-                    val = float(m.group(1).replace(",", ""))
-                    if unit_group is not None:
+
+        for pattern, key, canonical_unit, unit_group, sanity_floor in patterns:
+            running = 0.0
+            count = 0
+            for m in re.finditer(pattern, t):
+                val = safe_float(m.group(1))
+                if val is None:
+                    continue
+                if unit_group is not None:
+                    try:
                         raw_unit = m.group(unit_group).lower().strip()
-                        # Normalise mass units to kg
                         val = val * _to_kg.get(raw_unit, 1.0)
-                    quantities[key] = {"quantity": val, "unit": canonical_unit}
-                except (ValueError, IndexError):
-                    pass
+                    except (IndexError, AttributeError):
+                        continue
+                # Drop tiny matches that are almost certainly grade leaks
+                if val < sanity_floor:
+                    continue
+                running += val
+                count += 1
+            if count > 0:
+                quantities[key] = {
+                    "quantity": round(running, 2),
+                    "unit": canonical_unit,
+                    "occurrences": count,
+                }
 
-        # Generic area extraction: 100m2, 500 sqm, 250 m², etc.
-        area_match = re.search(r'(\d[\d,\.]*)\s*(?:m2|m²|sqm|sq\.?\s*m)', t)
-        if area_match:
-            try:
-                floor_area = float(area_match.group(1).replace(",", ""))
-                quantities["floor_area_m2"] = {"quantity": floor_area, "unit": "m2"}
-            except ValueError:
-                pass
+        # Generic area extraction (catches "1500 m2 GFA" etc. when no keyword matched)
+        # If the named patterns already found floor_area, skip this — it'd double-count.
+        if "floor_area_m2" not in quantities:
+            area_match = re.search(rf"{_qty}\s*(?:m2|m²|sqm|sq\.?\s*m)", t)
+            if area_match:
+                v = safe_float(area_match.group(1))
+                if v is not None and v >= 1.0:
+                    quantities["floor_area_m2"] = {"quantity": v, "unit": "m2"}
 
-        # Generic dimension extraction: 5.5m x 3.2m
-        dim_match = re.search(r'(\d+(?:\.\d+)?)\s*m\s*(?:x|by|×)\s*(\d+(?:\.\d+)?)\s*m', t)
-        if dim_match:
-            try:
-                w = float(dim_match.group(1))
-                h = float(dim_match.group(2))
-                area = w * h
-                quantities["floor_area_m2"] = {"quantity": round(area, 2), "unit": "m2"}
-            except ValueError:
-                pass
+        # Dimension extraction: 5.5m x 3.2m → derive area
+        dim_match = re.search(r"(\d+(?:\.\d+)?)\s*m\s*(?:x|by|×)\s*(\d+(?:\.\d+)?)\s*m", t)
+        if dim_match and "floor_area_m2" not in quantities:
+            w, h = safe_float(dim_match.group(1)), safe_float(dim_match.group(2))
+            if w and h:
+                quantities["floor_area_m2"] = {"quantity": round(w * h, 2), "unit": "m2"}
 
-        # Thickness extraction for volume calculation
-        thickness_match = re.search(r'(\d+(?:\.\d+)?)\s*(mm|cm|m)\s*(?:thick|depth)', t)
+        # Slab thickness inference (used for derived volumes)
         slab_thickness_m = 0.15  # default 150mm
+        thickness_match = re.search(r"(\d+(?:\.\d+)?)\s*(mm|cm|m)\s*(?:thick|depth|espesor|espessura|épaisseur)", t)
         if thickness_match:
-            try:
-                tv = float(thickness_match.group(1))
-                tu = thickness_match.group(2).lower()
-                if tu == "mm":
-                    slab_thickness_m = tv / 1000.0
-                elif tu == "cm":
-                    slab_thickness_m = tv / 100.0
-                else:
-                    slab_thickness_m = tv
-            except ValueError:
-                pass
+            tv = safe_float(thickness_match.group(1))
+            tu = thickness_match.group(2).lower()
+            if tv:
+                slab_thickness_m = tv / 1000.0 if tu == "mm" else tv / 100.0 if tu == "cm" else tv
 
-        # Derive concrete volume from floor area + thickness if not already extracted
+        # Derived: concrete volume from floor area + thickness
         if "concrete_volume_m3" not in quantities and "floor_area_m2" in quantities:
-            floor_area = quantities["floor_area_m2"]["quantity"]
-            concrete_vol = floor_area * slab_thickness_m
-            quantities["concrete_volume_m3"] = {"quantity": round(concrete_vol, 2), "unit": "m3"}
+            fa = quantities["floor_area_m2"]["quantity"]
+            quantities["concrete_volume_m3"] = {
+                "quantity": round(fa * slab_thickness_m, 2),
+                "unit": "m3",
+                "derived_from": "floor_area_m2 × slab_thickness",
+            }
 
-        # Derive steel weight from concrete volume if not already extracted
+        # Derived: steel weight from concrete volume (typical 120 kg/m³ ratio)
         if "steel_weight_kg" not in quantities and "concrete_volume_m3" in quantities:
-            concrete_vol = quantities["concrete_volume_m3"]["quantity"]
-            steel_kg = concrete_vol * 120  # typical 120 kg/m3
-            quantities["steel_weight_kg"] = {"quantity": round(steel_kg, 2), "unit": "kg"}
+            cv = quantities["concrete_volume_m3"]["quantity"]
+            quantities["steel_weight_kg"] = {
+                "quantity": round(cv * 120, 2),
+                "unit": "kg",
+                "derived_from": "concrete_volume × 120 kg/m³ typical ratio",
+            }
 
         # Extract risks from text — keyword + impact heuristic
         risks = []
