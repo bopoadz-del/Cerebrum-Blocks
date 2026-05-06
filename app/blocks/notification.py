@@ -310,13 +310,20 @@ class NotificationBlock(TypedBlock):
 
     async def _send_webhook(self, data: Dict) -> Dict:
         import httpx
+        # `to` is the unified recipient field used by every other channel
+        # (telegram chat_id, email address). When the caller picks
+        # channel=webhook and passes a URL through that field, accept it.
         url = data.get("url") or data.get("webhook_url")
+        if not url:
+            candidate = data.get("to")
+            if isinstance(candidate, str) and candidate.startswith(("http://", "https://")):
+                url = candidate
         payload = data.get("payload") or data.get("message") or data.get("body", {})
         headers = data.get("headers", {"Content-Type": "application/json"})
         method = data.get("method", "POST").upper()
 
         if not url:
-            return {"status": "error", "error": "url required"}
+            return {"status": "error", "error": "url required (set 'url' or pass an http(s) URL as 'to')"}
 
         try:
             async with httpx.AsyncClient(timeout=30) as client:

@@ -48,21 +48,63 @@ def _create_block_instance(block_class):
     return instance
 
 
+def _resolve_dep(dep_name: str):
+    """Look up a dep instance via four sources, in order:
+
+    1. block_instances (already wired)
+    2. BLOCK_REGISTRY (lazy-instantiate via get_block_instance)
+    3. Legacy accessor `get_<name>_block()` (memory/monitoring/auth live here)
+    4. Globals — caches like `_memory_block` set by the legacy accessors
+
+    Returns the instance, or None if no source has it. None is fine — most
+    dependent blocks check `if self.X_block:` before using the dep, and the
+    audit caught the few that didn't.
+    """
+    if dep_name in block_instances:
+        return block_instances[dep_name]
+    if dep_name in BLOCK_REGISTRY:
+        try:
+            return get_block_instance(dep_name)
+        except Exception:
+            logger.warning("dep_resolver: %s in BLOCK_REGISTRY but failed to instantiate", dep_name)
+    accessor = globals().get(f"get_{dep_name}_block")
+    if callable(accessor):
+        try:
+            return accessor()
+        except Exception:
+            logger.warning("dep_resolver: legacy accessor get_%s_block failed", dep_name)
+    cached = globals().get(f"_{dep_name}_block")
+    if cached is not None:
+        return cached
+    return None
+
+
 def _wire_block_dependencies(instance, block_class, name: str = None):
     """Wire requires=[] dependencies into a platform block instance.
 
-    Mirrors UniversalAssembler.inject() for the app/blocks/ layer.
+    The audit found 31 blocks with requires=["config"|"database"|"memory"|...]
+    where the dep name isn't in BLOCK_REGISTRY. Previous version silently
+    skipped — the block then crashed on first use of self.X_block. Now we
+    resolve via four sources (registry → lazy instance → legacy accessor →
+    cached global) and only skip + log when none has it.
     """
     requires = getattr(block_class, "requires", []) or []
     for dep_name in requires:
-        if dep_name in block_instances:
-            dep_instance = block_instances[dep_name]
-            if hasattr(instance, "wire"):
-                instance.wire(dep_name, dep_instance)
-            elif hasattr(instance, "inject"):
-                instance.inject(dep_name, dep_instance)
-            else:
-                setattr(instance, f"{dep_name}_block", dep_instance)
+        dep_instance = _resolve_dep(dep_name)
+        if dep_instance is None:
+            logger.warning(
+                "block %s requires '%s' but no provider found "
+                "(not in BLOCK_REGISTRY, no get_%s_block accessor) — "
+                "block will run without it; calls that touch self.%s_block may fail.",
+                name or "?", dep_name, dep_name, dep_name,
+            )
+            continue
+        if hasattr(instance, "wire"):
+            instance.wire(dep_name, dep_instance)
+        elif hasattr(instance, "inject"):
+            instance.inject(dep_name, dep_instance)
+        else:
+            setattr(instance, f"{dep_name}_block", dep_instance)
 
 
 def get_block_instance(block_name: str) -> Any:
