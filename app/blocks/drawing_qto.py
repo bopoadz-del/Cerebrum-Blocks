@@ -1,10 +1,39 @@
 """Drawing QTO Block - Quantity Take-Off from DXF/DWG construction drawings"""
 
 import os
+import re
 import math
 import tempfile
 from typing import Any, Dict, List, Tuple, Optional
 from app.core.universal_base import UniversalBlock
+
+
+# DXF INSUNITS code → multiplier to convert that unit to meters.
+# 0 = unitless (legacy default mm); 1 = in; 2 = ft; 3 = miles;
+# 4 = mm; 5 = cm; 6 = m; 7 = km.
+_DXF_UNIT_TO_METERS = {
+    0: 0.001,
+    1: 0.0254,
+    2: 0.3048,
+    3: 1609.344,
+    4: 0.001,
+    5: 0.01,
+    6: 1.0,
+    7: 1000.0,
+}
+
+
+def _doc_units_to_meters(doc, override_scale: float = 1.0) -> Tuple[float, int]:
+    """Return (multiplier-to-meters, raw_INSUNITS_code) for a DXF doc.
+
+    Falls back to mm for unitless drawings — that matches the previous
+    hard-coded behaviour and keeps existing call sites stable.
+    """
+    try:
+        u = int(doc.units) if hasattr(doc, "units") else 0
+    except (TypeError, ValueError):
+        u = 0
+    return _DXF_UNIT_TO_METERS.get(u, 0.001) * override_scale, u
 
 
 class DrawingQTOBlock(UniversalBlock):
@@ -103,7 +132,8 @@ class DrawingQTOBlock(UniversalBlock):
                 continue
 
             msp = doc.modelspace()
-            measurements = self._extract_measurements(msp, scale)
+            to_meters, units_code = _doc_units_to_meters(doc, scale)
+            measurements = self._extract_measurements(msp, to_meters)
             line_endpoints: List[Tuple[float, float]] = []
             for m in measurements:
                 if m.get("type") == "line":
@@ -121,6 +151,7 @@ class DrawingQTOBlock(UniversalBlock):
                 "title": metadata.get("title_text"),
                 "project": metadata.get("project_text"),
                 "drawing_units": metadata.get("drawing_units"),
+                "_units_code": units_code,
                 "bbox": [round(c, 3) for c in bbox],
                 "total_lines": sum(1 for m in measurements if m.get("type") == "line"),
                 "boundary_lines": len(boundary),
@@ -130,11 +161,23 @@ class DrawingQTOBlock(UniversalBlock):
             })
             sheets.append(entry)
 
-        # Cross-match every successful sheet pair
+        # Cross-match every successful sheet pair. Skip pairings where the
+        # two sheets disagree on units — they'd be at radically different
+        # scales after normalisation anyway, and the user probably meant
+        # to convert one of them first.
         pairings: List[Dict] = []
+        unit_mismatches: List[Dict] = []
         successful = [s for s in sheets if s.get("status") == "success"]
         for i, sa in enumerate(successful):
             for sb in successful[i + 1:]:
+                if sa.get("_units_code") != sb.get("_units_code"):
+                    unit_mismatches.append({
+                        "sheet_a": sa.get("sheet_id") or sa.get("file"),
+                        "sheet_b": sb.get("sheet_id") or sb.get("file"),
+                        "units_a": sa.get("drawing_units"),
+                        "units_b": sb.get("drawing_units"),
+                    })
+                    continue
                 pairs = _match_continuity(
                     sa["_boundary"], sa["_bbox"],
                     sb["_boundary"], sb["_bbox"],
@@ -153,7 +196,7 @@ class DrawingQTOBlock(UniversalBlock):
 
         # Strip the heavy internal arrays before returning
         for s in sheets:
-            for k in ("_lines", "_boundary", "_bbox"):
+            for k in ("_lines", "_boundary", "_bbox", "_units_code"):
                 s.pop(k, None)
 
         # Suggest a stitching order: pair sheets by their adjacency edges.
@@ -183,6 +226,7 @@ class DrawingQTOBlock(UniversalBlock):
             "sheets_successful": len(successful),
             "sheets": sheets,
             "pairings": pairings,
+            "unit_mismatches": unit_mismatches,
             "total_matches": sum(p["match_count"] for p in pairings),
             "stitching_suggestion": stitching_suggestion,
             "tolerances_used": {"angle_rad": angle_tol, "coord_pct": coord_tol},
@@ -234,8 +278,9 @@ class DrawingQTOBlock(UniversalBlock):
         min_area = float(params.get("min_area_m2", self.config.get("min_area_m2", 0.01)))
 
         msp = doc.modelspace()
-        measurements = self._extract_measurements(msp, scale)
-        areas = self._extract_areas(msp, scale, layer_filter, min_area)
+        to_meters, _units_code = _doc_units_to_meters(doc, scale)
+        measurements = self._extract_measurements(msp, to_meters)
+        areas = self._extract_areas(msp, to_meters, layer_filter, min_area)
         volumes = self._estimate_volumes(areas, params)
         layers = list({e.dxf.layer for e in msp if hasattr(e.dxf, "layer")})
 
@@ -421,7 +466,9 @@ class DrawingQTOBlock(UniversalBlock):
             return params.get("file_path")
         return None
 
-    def _extract_measurements(self, msp, scale: float) -> List[Dict]:
+    def _extract_measurements(self, msp, to_meters: float) -> List[Dict]:
+        """Extract linear measurements. `to_meters` is the multiplier from
+        native drawing units → meters (already accounts for INSUNITS)."""
         results = []
         for entity in msp:
             etype = entity.dxftype()
@@ -432,16 +479,16 @@ class DrawingQTOBlock(UniversalBlock):
                     length = math.dist(
                         (start.x, start.y, start.z),
                         (end.x, end.y, end.z)
-                    ) * scale / 1000  # mm → m
+                    ) * to_meters
                     results.append({
                         "type": "line",
                         "length_m": round(length, 4),
                         "layer": entity.dxf.layer,
-                        "start": [round(start.x * scale / 1000, 3), round(start.y * scale / 1000, 3)],
-                        "end": [round(end.x * scale / 1000, 3), round(end.y * scale / 1000, 3)],
+                        "start": [round(start.x * to_meters, 3), round(start.y * to_meters, 3)],
+                        "end": [round(end.x * to_meters, 3), round(end.y * to_meters, 3)],
                     })
                 elif etype == "CIRCLE":
-                    radius = entity.dxf.radius * scale / 1000
+                    radius = entity.dxf.radius * to_meters
                     circumference = 2 * math.pi * radius
                     results.append({
                         "type": "circle",
@@ -451,7 +498,7 @@ class DrawingQTOBlock(UniversalBlock):
                         "layer": entity.dxf.layer,
                     })
                 elif etype == "ARC":
-                    radius = entity.dxf.radius * scale / 1000
+                    radius = entity.dxf.radius * to_meters
                     start_angle = math.radians(entity.dxf.start_angle)
                     end_angle = math.radians(entity.dxf.end_angle)
                     if end_angle < start_angle:
@@ -477,7 +524,7 @@ class DrawingQTOBlock(UniversalBlock):
                             (pts[-1][0], pts[-1][1]),
                             (pts[0][0], pts[0][1])
                         )
-                    length = length * scale / 1000
+                    length = length * to_meters
                     results.append({
                         "type": "polyline",
                         "length_m": round(length, 4),
@@ -487,7 +534,7 @@ class DrawingQTOBlock(UniversalBlock):
                     })
                 elif etype == "DIMENSION":
                     if hasattr(entity.dxf, "actual_measurement"):
-                        val = entity.dxf.actual_measurement * scale / 1000
+                        val = entity.dxf.actual_measurement * to_meters
                         results.append({
                             "type": "dimension",
                             "length_m": round(val, 4),
@@ -499,7 +546,7 @@ class DrawingQTOBlock(UniversalBlock):
         return results
 
     def _extract_areas(
-        self, msp, scale: float, layer_filter: List[str], min_area: float
+        self, msp, to_meters: float, layer_filter: List[str], min_area: float
     ) -> List[Dict]:
         results = []
         try:
@@ -515,7 +562,7 @@ class DrawingQTOBlock(UniversalBlock):
                 continue
             try:
                 if etype == "CIRCLE":
-                    r = entity.dxf.radius * scale / 1000
+                    r = entity.dxf.radius * to_meters
                     area = math.pi * r * r
                     if area >= min_area:
                         results.append({
@@ -526,7 +573,7 @@ class DrawingQTOBlock(UniversalBlock):
                         })
                 elif etype in ("LWPOLYLINE", "POLYLINE") and entity.is_closed:
                     pts = list(entity.get_points() if etype == "LWPOLYLINE" else entity.points())
-                    coords = [(p[0] * scale / 1000, p[1] * scale / 1000) for p in pts]
+                    coords = [(p[0] * to_meters, p[1] * to_meters) for p in pts]
                     if use_shapely and len(coords) >= 3:
                         poly = Polygon(coords)
                         area = poly.area
@@ -550,7 +597,7 @@ class DrawingQTOBlock(UniversalBlock):
                         for path in entity.paths:
                             if hasattr(path, "vertices") and len(path.vertices) >= 3:
                                 coords = [
-                                    (v[0] * scale / 1000, v[1] * scale / 1000)
+                                    (v[0] * to_meters, v[1] * to_meters)
                                     for v in path.vertices
                                 ]
                                 area = abs(_shoelace(coords))
@@ -699,8 +746,12 @@ def _match_continuity(
     score derived from angle delta + coord delta.
     """
     pairs: List[Dict] = []
-    width_a = (bbox_a[2] - bbox_a[0]) or 1.0
-    height_a = (bbox_a[3] - bbox_a[1]) or 1.0
+    # Average the two bboxes when computing perpendicular-coordinate
+    # tolerance — sheets that share a match-line often differ in extent,
+    # so locking the tolerance to bbox_a alone biased small-vs-large
+    # pairings.
+    width_avg = (((bbox_a[2] - bbox_a[0]) + (bbox_b[2] - bbox_b[0])) / 2) or 1.0
+    height_avg = (((bbox_a[3] - bbox_a[1]) + (bbox_b[3] - bbox_b[1])) / 2) or 1.0
 
     for la in bdy_a:
         # The edge that touches the boundary
@@ -710,10 +761,10 @@ def _match_continuity(
         opp = _OPPOSITE_EDGE[edge_a]
         # Coordinate perpendicular to the match (the one we expect to align)
         if edge_a in ("left", "right"):
-            tol_perp = height_a * coord_tol_pct
+            tol_perp = height_avg * coord_tol_pct
             perp_a = (la.get("start") or [0, 0])[1] if la.get("start_edge") == edge_a else (la.get("end") or [0, 0])[1]
         else:
-            tol_perp = width_a * coord_tol_pct
+            tol_perp = width_avg * coord_tol_pct
             perp_a = (la.get("start") or [0, 0])[0] if la.get("start_edge") == edge_a else (la.get("end") or [0, 0])[0]
 
         for lb in bdy_b:
@@ -793,10 +844,6 @@ def _extract_sheet_metadata(doc) -> Dict:
         "title_text": title_text,
         "drawing_units": str(doc.units) if hasattr(doc, "units") else None,
     }
-
-
-# Need re for the metadata regexes above
-import re
 
 
 def _summarise_edge_distribution(pairs: List[Dict]) -> Dict[str, int]:

@@ -34,6 +34,49 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _parse_money_str(value: Any) -> Optional[float]:
+    """Parse a money string handling US (1,234,567.89) and EU (1.234.567,89)
+    thousands/decimal conventions. Returns None if unparseable.
+
+    Heuristics for ambiguous cases (single separator, no other):
+    - followed by exactly 3 digits → thousands separator ("500.000" → 500000)
+    - followed by 1-2 or 4+ digits → decimal separator ("1.5", "1.2345")
+    Multiple occurrences of one separator → all thousands ("1.234.567" → 1234567).
+    """
+    if value is None:
+        return None
+    s = re.sub(r"[^0-9,.\-]", "", str(value))
+    if not s or s in ("-", ".", ","):
+        return None
+
+    has_comma = "," in s
+    has_period = "." in s
+
+    if has_comma and has_period:
+        if s.rfind(",") > s.rfind("."):
+            s = s.replace(".", "").replace(",", ".")
+        else:
+            s = s.replace(",", "")
+    elif has_comma:
+        if s.count(",") > 1:
+            s = s.replace(",", "")
+        else:
+            after = s.split(",")[-1]
+            s = s.replace(",", "") if len(after) == 3 else s.replace(",", ".")
+    elif has_period:
+        if s.count(".") > 1:
+            s = s.replace(".", "")
+        else:
+            after = s.split(".")[-1]
+            if len(after) == 3:
+                s = s.replace(".", "")
+
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+
 def _safe_iso_date(value: Any) -> Optional[datetime]:
     """Parse a date string tolerating common AEC formats.
 
@@ -436,20 +479,6 @@ class ConstructionContainer(UniversalContainer):
         file_path = data.get("file_path") or p.get("file_path")
         return await self._process_image(file_path, p)
     
-    def _extract_drawing_number(self, filename: str) -> str:
-        """Extract drawing number from filename (e.g., 'A-101-plan.pdf' -> 'A-101')."""
-        import re
-        # Look for patterns like A-101, ARCH-001, C-501, etc.
-        match = re.search(r'([A-Z]+-?\d{3,})', filename.upper())
-        return match.group(1) if match else "Unknown"
-    
-    def _extract_revision(self, filename: str) -> str:
-        """Extract revision from filename (e.g., 'plan-rev-A.pdf' -> 'A')."""
-        import re
-        # Look for rev patterns
-        match = re.search(r'[Rr][Ee][Vv][-_]?(\w)', filename)
-        return match.group(1) if match else "A"
-    
     async def _download_file(self, url: str) -> str:
         import uuid
         import httpx
@@ -494,131 +523,6 @@ class ConstructionContainer(UniversalContainer):
         import re
         m = re.search(r'[Rr][Ee]?[Vv]?\s*([A-Z0-9])', filename)
         return m.group(1).upper() if m else ""
-
-    def _extract_measurements_advanced(self, raw_text: str, text_dict: Dict) -> List[Dict]:
-        measurements = []
-        # Dimension pattern: 5.5m x 3.2m
-        dim_pat = r'\b(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')\s*(?:x|by|×)\s*(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')'
-        for m in re.finditer(dim_pat, raw_text, re.IGNORECASE):
-            w = float(m.group(1))
-            h = float(m.group(2))
-            unit = "m" if "m" in m.group(0).lower() else "ft"
-            measurements.append({"type": "dimension", "value": w * h, "unit": f"{unit}²", "width": w, "height": h, "raw": m.group(0)})
-        # Single dimension pattern
-        single_pat = r'\b(\d+(?:\.\d+)?)\s*(?:m|mm|cm|ft)\b'
-        for m in re.finditer(single_pat, raw_text, re.IGNORECASE):
-            val = float(m.group(1))
-            unit = "m"
-            if "mm" in m.group(0).lower():
-                unit = "mm"
-                val = val / 1000.0
-            elif "cm" in m.group(0).lower():
-                unit = "cm"
-                val = val / 100.0
-            elif "ft" in m.group(0).lower():
-                unit = "ft"
-            measurements.append({"type": "length", "value": val, "unit": unit, "raw": m.group(0)})
-        return measurements
-
-    def _extract_tables_advanced(self, page) -> List[Dict]:
-        tables = []
-        try:
-            tabs = page.find_tables()
-            for t in tabs:
-                tables.append({"row_count": len(t.rows), "col_count": len(t.columns), "header": t.header.names if hasattr(t, "header") else []})
-        except Exception:
-            pass
-        return tables
-
-    def _extract_annotations(self, page) -> List[Dict]:
-        annotations = []
-        try:
-            for annot in page.annots():
-                if annot:
-                    annotations.append({"type": getattr(annot, "type", ["unknown"])[1] if hasattr(annot, "type") else "unknown", "rect": str(getattr(annot, "rect", ""))})
-        except Exception:
-            pass
-        return annotations
-
-    def _extract_specs_advanced(self, raw_text: str) -> List[Dict]:
-        specs = []
-        grade_patterns = [
-            (r"\b(?:grade|class|type)\s*[:\-]?\s*([A-Z0-9\-]+)", "grade"),
-            (r"\bASTM\s+([A-Z]\d+(?:\/[A-Z]\d+)?)", "astm_standard"),
-            (r"\bACI\s+(\d+\w*)", "aci_standard"),
-            (r"\bBS\s+(\d+(?:[-:]\d+)?)", "bs_standard"),
-            (r"\bEN\s+(\d+(?:[-:]\d+)?)", "en_standard"),
-        ]
-        for pat, ptype in grade_patterns:
-            for m in re.finditer(pat, raw_text, re.IGNORECASE):
-                specs.append({"type": ptype, "value": m.group(1).strip(), "context": raw_text[max(0, m.start()-40):m.end()+40]})
-        return specs
-
-    def _detect_disciplines(self, raw_text: str) -> List[str]:
-        disciplines = []
-        raw = raw_text.lower()
-        if any(k in raw for k in ["structural", "rebar", "concrete", "foundation"]):
-            disciplines.append("Structural")
-        if any(k in raw for k in ["architectural", "elevation", "finish", "floor plan"]):
-            disciplines.append("Architectural")
-        if any(k in raw for k in ["mechanical", "hvac", "duct", "air"]):
-            disciplines.append("Mechanical")
-        if any(k in raw for k in ["electrical", "lighting", "power", "circuit"]):
-            disciplines.append("Electrical")
-        if any(k in raw for k in ["plumbing", "pipe", "drain", "water"]):
-            disciplines.append("Plumbing")
-        if not disciplines:
-            disciplines.append("General")
-        return disciplines
-
-    def _extract_title_block(self, sheet_data: Dict) -> Dict:
-        raw = sheet_data.get("raw_text", "")
-        tb = {}
-        for line in raw.split("\n")[:30]:
-            if ":" in line:
-                k, v = line.split(":", 1)
-                k = k.strip().lower()
-                if k in ("project", "title", "drawing no", "revision", "date", "scale", "drawn by", "checked by"):
-                    tb[k] = v.strip()
-        return tb
-
-    def _extract_scale(self, raw_text: str) -> Optional[str]:
-        import re
-        m = re.search(r'(\d+\s*[:/]\s*\d+)', raw_text)
-        return m.group(1) if m else None
-
-    def _calculate_quantities(self, measurements: List[Dict]) -> Dict:
-        total_area = sum(m.get("value", 0) for m in measurements if m.get("type") == "dimension")
-        counts = {}
-        for m in measurements:
-            if m.get("type") == "count":
-                item = m.get("item", "unknown")
-                counts[item] = counts.get(item, 0) + m.get("value", 0)
-        return {
-            "floor_area_m2": round(total_area, 2),
-            "element_counts": counts,
-        }
-
-    def _estimate_costs(self, quantities: Dict) -> Dict:
-        # Cost estimation requires external rate data; return computed quantities with a note
-        area = quantities.get("floor_area_m2", 0)
-        return {
-            "floor_area_m2": area,
-            "note": "Provide benchmark rates via historical_benchmark block to compute costs.",
-        }
-
-    def _estimate_carbon(self, quantities: Dict) -> Dict:
-        area = quantities.get("floor_area_m2", 0)
-        return {
-            "floor_area_m2": area,
-            "note": "Provide embodied carbon factors (kgCO2e/m2) by material to compute carbon.",
-        }
-
-    def _calculate_confidence(self, result: Dict) -> Dict:
-        m_count = len(result.get("measurements", []))
-        t_count = len(result.get("tables", []))
-        score = min(0.95, 0.5 + (m_count * 0.02) + (t_count * 0.01))
-        return {"overall": round(score, 2), "measurements": m_count, "tables": t_count}
 
     async def _detect_risks_from_drawing(self, result: Dict) -> List[Dict]:
         return []
@@ -714,11 +618,14 @@ class ConstructionContainer(UniversalContainer):
         (dever / obrigar) + FR (devoir / s'engager).
         """
         obligations: List[Dict] = []
+        # Body terminator accepts '.', ';', or end-of-line (lookahead) so
+        # multi-line clauses without a sentence period — common in legalese
+        # — still register.
         obligation_patterns = [
-            (r'(?:contractor|builder|contratista|empreiteiro|entrepreneur)[^\n]{0,80}(?:shall|must|will|agrees? to|deber[áa]|debe|deve|s\'engage)[^\n.]{0,180}\.', "contractor_obligation"),
-            (r'(?:employer|owner|client|propietari[oa]|propriet[áa]ri[oa]|ma[îi]tre d\'ouvrage)[^\n]{0,80}(?:shall|must|will|agrees? to|deber[áa]|debe|deve|s\'engage)[^\n.]{0,180}\.', "employer_obligation"),
-            (r'(?:both parties|each party|ambas partes|cada parte|les deux parties)[^\n]{0,80}(?:shall|must|will|deber[áa]n|deber[áa]|s\'engagent)[^\n.]{0,180}\.', "mutual_obligation"),
-            (r'(?:architect|engineer|supervisor|arquitect[oa]|ingenier[oa]|supervisor[a]?|architecte|ing[ée]nieur)[^\n]{0,80}(?:shall|must|will|deber[áa]|debe|deve|s\'engage)[^\n.]{0,180}\.', "consultant_obligation"),
+            (r'(?:contractor|builder|contratista|empreiteiro|entrepreneur)[^\n]{0,80}(?:shall|must|will|agrees? to|deber[áa]|debe|deve|s\'engage)[^\n.;]{0,180}(?:[.;]|(?=\n))', "contractor_obligation"),
+            (r'(?:employer|owner|client|propietari[oa]|propriet[áa]ri[oa]|ma[îi]tre d\'ouvrage)[^\n]{0,80}(?:shall|must|will|agrees? to|deber[áa]|debe|deve|s\'engage)[^\n.;]{0,180}(?:[.;]|(?=\n))', "employer_obligation"),
+            (r'(?:both parties|each party|ambas partes|cada parte|les deux parties)[^\n]{0,80}(?:shall|must|will|deber[áa]n|deber[áa]|s\'engagent)[^\n.;]{0,180}(?:[.;]|(?=\n))', "mutual_obligation"),
+            (r'(?:architect|engineer|supervisor|arquitect[oa]|ingenier[oa]|supervisor[a]?|architecte|ing[ée]nieur)[^\n]{0,80}(?:shall|must|will|deber[áa]|debe|deve|s\'engage)[^\n.;]{0,180}(?:[.;]|(?=\n))', "consultant_obligation"),
         ]
         seen_text: set = set()
         for pattern, obl_type in obligation_patterns:
@@ -800,7 +707,11 @@ class ConstructionContainer(UniversalContainer):
             text, re.IGNORECASE,
         )
         if value_match:
-            terms["contract_value"] = value_match.group(1).replace(",", "").rstrip(".")
+            parsed = _parse_money_str(value_match.group(1))
+            if parsed is not None:
+                terms["contract_value"] = (
+                    str(int(parsed)) if parsed == int(parsed) else str(parsed)
+                )
 
         advance_match = re.search(
             r"(?:advance|mobilization|advance\s+payment|anticipo|adiantamento|acompte)[^\n]{0,60}?(\d+(?:\.\d+)?)\s*%",
@@ -821,7 +732,11 @@ class ConstructionContainer(UniversalContainer):
             text, re.IGNORECASE,
         )
         if ld_match:
-            terms["liquidated_damages_per_day"] = ld_match.group(1).replace(",", "")
+            parsed_ld = _parse_money_str(ld_match.group(1))
+            if parsed_ld is not None:
+                terms["liquidated_damages_per_day"] = (
+                    str(int(parsed_ld)) if parsed_ld == int(parsed_ld) else str(parsed_ld)
+                )
 
         net_match = re.search(r"\bnet\s+(\d{1,3})\b|\beom\b|\bend\s+of\s+month\b", text, re.IGNORECASE)
         if net_match:
@@ -950,16 +865,16 @@ class ConstructionContainer(UniversalContainer):
                 # with one fewer field than %F (truncated last column). Without
                 # this, total_float_hr_cnt-style float() conversions blew up.
                 try:
-                    target_work = _safe__safe_float(act.get("target_work_qty"), 1) or 1
+                    target_work = _safe_float(act.get("target_work_qty"), 1) or 1
                     structured_activities.append({
                         "id": act.get("task_id", ""),
                         "name": act.get("task_name", ""),
                         "start": act.get("act_start_date") or act.get("early_start_date") or "",
                         "finish": act.get("act_end_date") or act.get("early_end_date") or "",
-                        "duration": _safe__safe_float(act.get("target_drtn_hr_cnt"), 0),
-                        "total_float": _safe__safe_float(act.get("total_float_hr_cnt"), 0) / 8,
-                        "free_float": _safe__safe_float(act.get("free_float_hr_cnt"), 0) / 8,
-                        "percent_complete": _safe__safe_float(act.get("act_work_qty"), 0) / target_work * 100,
+                        "duration": _safe_float(act.get("target_drtn_hr_cnt"), 0),
+                        "total_float": _safe_float(act.get("total_float_hr_cnt"), 0) / 8,
+                        "free_float": _safe_float(act.get("free_float_hr_cnt"), 0) / 8,
+                        "percent_complete": _safe_float(act.get("act_work_qty"), 0) / target_work * 100,
                         "wbs": act.get("wbs_id", ""),
                         "predecessors": [r.get("pred_task_id") for r in relationships if r.get("task_id") == act.get("task_id")],
                         "successors": [r.get("task_id") for r in relationships if r.get("pred_task_id") == act.get("task_id")],
@@ -1028,7 +943,7 @@ class ConstructionContainer(UniversalContainer):
             if start_dates and finish_dates:
                 duration = (max(finish_dates) - min(start_dates)).days
             else:
-                duration = sum(_safe__safe_float(a.get("duration"), 0) for a in critical_activities) / 8
+                duration = sum(_safe_float(a.get("duration"), 0) for a in critical_activities) / 8
         
         floats = [a.get("total_float", 0) for a in activities if a.get("total_float", 999) < 999]
         avg_float = sum(floats) / len(floats) if floats else 0
@@ -1720,129 +1635,197 @@ class ConstructionContainer(UniversalContainer):
         len_units = {"lm", "m", "linear meter", "linear metre", "rm"}
         count_units = {"ea", "no", "nr", "each", "item", "unit"}
 
+        # When the supplied unit disagrees with the unit class implied by
+        # the rate-key suffix, skip the rule and let matching fall through
+        # to the unit-aware fallback. Stops "concrete cube samples"
+        # (unit=ea) from matching the volumetric concrete rate.
+        def _pick(key: str, default: float):
+            if u:
+                if key.endswith("_m3") and u not in vol_units:
+                    return None
+                if key.endswith("_m2") and u not in area_units:
+                    return None
+                if key.endswith("_kg") and u not in weight_units:
+                    return None
+                if key.endswith("_lm") and u not in len_units:
+                    return None
+                if key.endswith("_ea") and u not in count_units:
+                    return None
+            return uc.get(key, default)
+
         # ── Substructure ───────────────────────────────────────────────────
         if ("rock" in n) and ("excavat" in n or "excavación" in n):
-            return uc.get("rock_excavation_m3", 180.0)
+            r = _pick("rock_excavation_m3", 180.0)
+            if r is not None: return r
         if "excavat" in n or "excavación" in n or "escavação" in n or "terrassement" in n:
-            return uc.get("excavation_m3", 22.0)
+            r = _pick("excavation_m3", 22.0)
+            if r is not None: return r
         if "lean concrete" in n or "blinding" in n:
-            return uc.get("lean_concrete_m3", 110.0)
+            r = _pick("lean_concrete_m3", 110.0)
+            if r is not None: return r
         if "backfill" in n or "relleno" in n or "aterro" in n:
-            return uc.get("backfill_m3", 18.0)
+            r = _pick("backfill_m3", 18.0)
+            if r is not None: return r
         if "pile cap" in n:
-            return uc.get("pile_cap_m3", 220.0)
+            r = _pick("pile_cap_m3", 220.0)
+            if r is not None: return r
         if "ground beam" in n or "viga de cimentación" in n:
-            return uc.get("ground_beam_m3", 220.0)
+            r = _pick("ground_beam_m3", 220.0)
+            if r is not None: return r
         if "raft" in n and ("slab" in n or u in vol_units):
-            return uc.get("raft_slab_m3", 200.0)
+            r = _pick("raft_slab_m3", 200.0)
+            if r is not None: return r
         if "retaining wall" in n or "muro de contención" in n:
-            return uc.get("retaining_wall_m2", 280.0)
+            r = _pick("retaining_wall_m2", 280.0)
+            if r is not None: return r
         if "underpinning" in n:
-            return uc.get("underpinning_m3", 650.0)
+            r = _pick("underpinning_m3", 650.0)
+            if r is not None: return r
         if ("pile" in n or "pilote" in n) and u in len_units:
             return uc.get("piling_lm", 280.0)
         if "sheet pile" in n or "tablestaca" in n:
-            return uc.get("sheet_pile_m2", 240.0)
+            r = _pick("sheet_pile_m2", 240.0)
+            if r is not None: return r
         if "manhole" in n or "registro" in n:
-            return uc.get("manhole_ea", 1800.0)
+            r = _pick("manhole_ea", 1800.0)
+            if r is not None: return r
         if ("drain" in n or "drenaje" in n or "drenagem" in n) and u in len_units:
             return uc.get("drainage_lm", 95.0)
 
         # ── Superstructure: concrete by grade ──────────────────────────────
         if "post-tension" in n or "post tension" in n or "pt cable" in n:
-            return uc.get("post_tension_kg", 5.5)
+            r = _pick("post_tension_kg", 5.5)
+            if r is not None: return r
         if "precast" in n or "prefabricado" in n or "pré-fabricado" in n:
-            return uc.get("precast_panel_m2", 320.0)
+            r = _pick("precast_panel_m2", 320.0)
+            if r is not None: return r
         if any(g in n for g in ("c50", "grade 50", "50mpa")):
-            return uc.get("concrete_grade_c50_m3", 210.0)
+            r = _pick("concrete_grade_c50_m3", 210.0)
+            if r is not None: return r
         if any(g in n for g in ("c40", "grade 40", "40mpa")):
-            return uc.get("concrete_grade_c40_m3", 185.0)
+            r = _pick("concrete_grade_c40_m3", 185.0)
+            if r is not None: return r
         if any(g in n for g in ("c30", "grade 30", "30mpa")):
-            return uc.get("concrete_grade_c30_m3", 165.0)
+            r = _pick("concrete_grade_c30_m3", 165.0)
+            if r is not None: return r
         if any(g in n for g in ("c25", "grade 25", "25mpa")):
-            return uc.get("concrete_grade_c25_m3", 155.0)
+            r = _pick("concrete_grade_c25_m3", 155.0)
+            if r is not None: return r
         if "concrete" in n or "hormigón" in n or "concreto" in n or "béton" in n:
-            return uc.get("concrete_m3", 150.0)
+            r = _pick("concrete_m3", 150.0)
+            if r is not None: return r
         if "structural steel" in n or "estructural" in n or "estrutural" in n:
-            return uc.get("structural_steel_kg", 3.2)
+            r = _pick("structural_steel_kg", 3.2)
+            if r is not None: return r
         if ("steel" in n or "rebar" in n or "reinforcement" in n or "armadura" in n or "armado" in n) and u in weight_units:
             return uc.get("rebar_kg", 1.8)
         if "soffit" in n or "slab formwork" in n:
-            return uc.get("formwork_soffit_m2", 55.0)
+            r = _pick("formwork_soffit_m2", 55.0)
+            if r is not None: return r
         if "formwork" in n or "shuttering" in n or "encofrado" in n or "cofragem" in n or "coffrage" in n:
-            return uc.get("formwork_m2", 45.0)
+            r = _pick("formwork_m2", 45.0)
+            if r is not None: return r
 
         # ── Envelope ──────────────────────────────────────────────────────
         if "curtain wall" in n or "curtain_wall" in n:
-            return uc.get("curtain_wall_m2", 420.0)
+            r = _pick("curtain_wall_m2", 420.0)
+            if r is not None: return r
         if "stone cladding" in n:
-            return uc.get("stone_cladding_m2", 380.0)
+            r = _pick("stone_cladding_m2", 380.0)
+            if r is not None: return r
         if "metal cladding" in n:
-            return uc.get("metal_cladding_m2", 180.0)
+            r = _pick("metal_cladding_m2", 180.0)
+            if r is not None: return r
         if "cladding" in n or "facade" in n or "fachada" in n:
-            return uc.get("cladding_m2", 210.0)
+            r = _pick("cladding_m2", 210.0)
+            if r is not None: return r
         if "structural glass" in n:
-            return uc.get("structural_glass_m2", 520.0)
+            r = _pick("structural_glass_m2", 520.0)
+            if r is not None: return r
         if "glazing" in n or "glass" in n or "vidrio" in n or "vidro" in n:
-            return uc.get("glazing_m2", 180.0)
+            r = _pick("glazing_m2", 180.0)
+            if r is not None: return r
         if "green roof" in n:
-            return uc.get("green_roof_m2", 240.0)
+            r = _pick("green_roof_m2", 240.0)
+            if r is not None: return r
         if "flat roof" in n:
-            return uc.get("flat_roof_m2", 85.0)
+            r = _pick("flat_roof_m2", 85.0)
+            if r is not None: return r
         if "pitched roof" in n:
-            return uc.get("pitched_roof_m2", 110.0)
+            r = _pick("pitched_roof_m2", 110.0)
+            if r is not None: return r
         if "rooflight" in n or "skylight" in n or "lucernario" in n:
             return uc.get("rooflight_m2", 220.0) if u in area_units else uc.get("rooflight_ea", 1800.0)
         if "roofing" in n or "roof" in n or "cubierta" in n or "telhado" in n:
-            return uc.get("roofing_m2", 95.0)
+            r = _pick("roofing_m2", 95.0)
+            if r is not None: return r
         if "waterproof" in n or "impermeabilización" in n:
-            return uc.get("waterproofing_m2", 40.0)
+            r = _pick("waterproofing_m2", 40.0)
+            if r is not None: return r
         if "external wall" in n:
-            return uc.get("external_wall_m2", 180.0)
+            r = _pick("external_wall_m2", 180.0)
+            if r is not None: return r
 
         # ── Masonry / internal walls ──────────────────────────────────────
         if "brick" in n or "ladrillo" in n or "tijolo" in n:
-            return uc.get("brick_m2", 75.0)
+            r = _pick("brick_m2", 75.0)
+            if r is not None: return r
         if ("block" in n or "bloque" in n or "bloco" in n) and u in area_units:
             return uc.get("block_m2", 35.0)
         if "masonry" in n or "mampostería" in n or "alvenaria" in n:
-            return uc.get("masonry_m2", 65.0)
+            r = _pick("masonry_m2", 65.0)
+            if r is not None: return r
         if "internal partition" in n or "partition wall" in n:
-            return uc.get("internal_partition_m2", 95.0)
+            r = _pick("internal_partition_m2", 95.0)
+            if r is not None: return r
         if "drylining" in n or "dry lining" in n or "drywall" in n or "placoplâtre" in n:
-            return uc.get("drylining_m2", 45.0)
+            r = _pick("drylining_m2", 45.0)
+            if r is not None: return r
         if "plaster" in n or "yeso" in n or "gesso" in n:
-            return uc.get("plaster_m2", 28.0)
+            r = _pick("plaster_m2", 28.0)
+            if r is not None: return r
         if "render" in n:
-            return uc.get("render_m2", 35.0)
+            r = _pick("render_m2", 35.0)
+            if r is not None: return r
 
         # ── Internal finishes ─────────────────────────────────────────────
         if "screed" in n:
-            return uc.get("screed_m2", 25.0)
+            r = _pick("screed_m2", 25.0)
+            if r is not None: return r
         if "carpet" in n or "alfombra" in n or "carpete" in n:
-            return uc.get("carpet_m2", 45.0)
+            r = _pick("carpet_m2", 45.0)
+            if r is not None: return r
         if "vinyl" in n:
-            return uc.get("vinyl_floor_m2", 55.0)
+            r = _pick("vinyl_floor_m2", 55.0)
+            if r is not None: return r
         if "stone floor" in n or "stone flooring" in n:
-            return uc.get("stone_floor_m2", 145.0)
+            r = _pick("stone_floor_m2", 145.0)
+            if r is not None: return r
         if "wall tile" in n:
-            return uc.get("wall_tile_m2", 75.0)
+            r = _pick("wall_tile_m2", 75.0)
+            if r is not None: return r
         if "tile" in n or "tiling" in n or "azulejo" in n or "baldosa" in n:
-            return uc.get("tiling_m2", 85.0)
+            r = _pick("tiling_m2", 85.0)
+            if r is not None: return r
         if "wallpaper" in n or "papel pintado" in n:
-            return uc.get("wallpaper_m2", 32.0)
+            r = _pick("wallpaper_m2", 32.0)
+            if r is not None: return r
         if "paint" in n or "pintura" in n or "peinture" in n:
-            return uc.get("painting_m2", 18.0)
+            r = _pick("painting_m2", 18.0)
+            if r is not None: return r
         if "suspended ceiling" in n or "false ceiling" in n or "techo registrable" in n:
-            return uc.get("suspended_ceiling_m2", 60.0)
+            r = _pick("suspended_ceiling_m2", 60.0)
+            if r is not None: return r
         if "ceiling" in n or "cielo raso" in n or "teto" in n:
-            return uc.get("ceiling_m2", 45.0)
-        if "floor_area" in n or "gfa" in n or "gross_floor" in n:
+            r = _pick("ceiling_m2", 45.0)
+            if r is not None: return r
+        if ("floor_area" in n or "gfa" in n or "gross_floor" in n) and (not u or u in area_units):
             return 1200.0  # composite all-in building rate $/m²
         if "floor" in n and u in area_units:
             return uc.get("flooring_m2", 70.0)
         if "finish" in n:
-            return uc.get("finishes_m2", 55.0)
+            r = _pick("finishes_m2", 55.0)
+            if r is not None: return r
 
         # ── MEP — count-based ─────────────────────────────────────────────
         if u in count_units:
@@ -1909,39 +1892,53 @@ class ConstructionContainer(UniversalContainer):
 
         # ── MEP — area-based ──────────────────────────────────────────────
         if "hvac" in n or "air conditioning" in n or "mechanical" in n:
-            return uc.get("hvac_m2", 120.0)
+            r = _pick("hvac_m2", 120.0)
+            if r is not None: return r
         if "electrical" in n or "lighting" in n or "power" in n or "eléctrico" in n:
-            return uc.get("electrical_m2", 80.0)
+            r = _pick("electrical_m2", 80.0)
+            if r is not None: return r
         if "plumbing" in n or "sanitary" in n or "fontanería" in n or "hidráulica" in n:
-            return uc.get("plumbing_m2", 65.0)
+            r = _pick("plumbing_m2", 65.0)
+            if r is not None: return r
         if "fire" in n and ("sprinkler" in n or "protection" in n):
-            return uc.get("fire_protection_m2", 35.0)
+            r = _pick("fire_protection_m2", 35.0)
+            if r is not None: return r
         if "bms" in n or "building management" in n:
-            return uc.get("bms_m2", 18.0)
+            r = _pick("bms_m2", 18.0)
+            if r is not None: return r
         if "data" in n and ("cabling" in n or "network" in n):
-            return uc.get("data_cabling_m2", 22.0)
+            r = _pick("data_cabling_m2", 22.0)
+            if r is not None: return r
 
         # ── External works ────────────────────────────────────────────────
         if "asphalt" in n or "asfalto" in n:
-            return uc.get("asphalt_m2", 35.0)
+            r = _pick("asphalt_m2", 35.0)
+            if r is not None: return r
         if "paving" in n or "pavimento" in n:
-            return uc.get("paving_m2", 80.0)
+            r = _pick("paving_m2", 80.0)
+            if r is not None: return r
         if "kerb" in n or "curb" in n or "bordillo" in n:
-            return uc.get("kerb_lm", 65.0)
+            r = _pick("kerb_lm", 65.0)
+            if r is not None: return r
         if ("fence" in n or "fencing" in n or "valla" in n or "cerca" in n) and u in len_units:
             return uc.get("fencing_lm", 85.0)
         if "hard landscape" in n:
-            return uc.get("hard_landscape_m2", 95.0)
+            r = _pick("hard_landscape_m2", 95.0)
+            if r is not None: return r
         if "landscape" in n or "ajardin" in n or "paisagismo" in n:
-            return uc.get("landscape_m2", 45.0)
+            r = _pick("landscape_m2", 45.0)
+            if r is not None: return r
 
         # ── General ───────────────────────────────────────────────────────
         if "scaffold" in n or "andamio" in n:
-            return uc.get("scaffold_m2", 12.0)
+            r = _pick("scaffold_m2", 12.0)
+            if r is not None: return r
         if "shoring" in n:
-            return uc.get("shoring_m2", 45.0)
+            r = _pick("shoring_m2", 45.0)
+            if r is not None: return r
         if "insulation" in n or "aislamiento" in n or "isolamento" in n:
-            return uc.get("insulation_m2", 30.0)
+            r = _pick("insulation_m2", 30.0)
+            if r is not None: return r
 
         # Fallback by unit type — last resort
         if u in vol_units:
@@ -2072,17 +2069,17 @@ class ConstructionContainer(UniversalContainer):
 
         # _safe_float instead of bare float(...) — the audit flagged these as
         # crash sites when callers pass "10%", "1,200", None, etc.
-        contract_value = _safe__safe_float(p.get("contract_value") or data.get("contract_value"))
-        work_done_pct = _safe__safe_float(p.get("work_done_percent") or data.get("work_done_percent")) / 100.0
-        previous_certified = _safe__safe_float(p.get("previous_certified") or data.get("previous_certified"))
-        retention_pct = _safe__safe_float(p.get("retention_percent", p.get("retention_rate", 10))) / 100.0
-        advance_payment = _safe__safe_float(p.get("advance_payment") or data.get("advance_paid") or data.get("advance_payment"))
-        advance_recovery_pct = _safe__safe_float(p.get("advance_recovery_percent", 20)) / 100.0
+        contract_value = _safe_float(p.get("contract_value") or data.get("contract_value"))
+        work_done_pct = _safe_float(p.get("work_done_percent") or data.get("work_done_percent")) / 100.0
+        previous_certified = _safe_float(p.get("previous_certified") or data.get("previous_certified"))
+        retention_pct = _safe_float(p.get("retention_percent", p.get("retention_rate", 10))) / 100.0
+        advance_payment = _safe_float(p.get("advance_payment") or data.get("advance_paid") or data.get("advance_payment"))
+        advance_recovery_pct = _safe_float(p.get("advance_recovery_percent", 20)) / 100.0
         payment_period = p.get("payment_period", "Current Period")
         contractor = p.get("contractor_name", p.get("contractor", data.get("contractor_name", "Contractor")))
 
         # Accept gross_valuation directly if contract_value not provided
-        direct_gross = _safe__safe_float(p.get("gross_valuation") or data.get("gross_valuation"))
+        direct_gross = _safe_float(p.get("gross_valuation") or data.get("gross_valuation"))
         if contract_value <= 0:
             if direct_gross > 0:
                 gross_valuation = round(direct_gross, 2)
@@ -3080,8 +3077,11 @@ class ConstructionContainer(UniversalContainer):
              "Scope Boundary", "medium"),
             (r"(?:depende\s+de|sujet[oa]\s+a|subject\s+to)\s+(?:approval|aprobaci[óo]n|aprovação)[^\n.]{0,150}",
              "Approval Pending", "medium"),
-            # Question-mark clauses on architectural/structural notes
-            (r"[A-Z][^.\n?]{15,150}\?",
+            # Question-mark clauses on architectural/structural notes.
+            # Anchored to start-of-line and required to contain drawing-note
+            # vocabulary so prose questions ("Are the dimensions OK?") in
+            # contracts/specs don't flood the RFI panel.
+            (r"(?im)^\s*(?:NOTE\s*[:.]?\s*|REF(?:ER)?\s*[:.]?\s*|DETAIL\s*[:.]?\s*)?[A-Z][^.\n?]{0,150}\b(?:dim(?:ension)?|detail|note|ref(?:er(?:ence)?)?|sheet|grid|beam|slab|column|wall|elevation|section|scale|spec(?:ification)?|drawing|coord(?:inate)?)s?\b[^.\n?]{0,80}\?",
              "Question on Drawing Note", "low"),
         ]
         items: List[Dict] = []
