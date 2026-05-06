@@ -41,12 +41,15 @@ class ApiError extends Error {
 }
 
 // Render's upstream returns 502/503 during deploy swaps, cold starts, or when
-// the worker is briefly unhealthy. These almost always recover within seconds.
-// Retrying transparently turns a deploy-window blip from a user-visible error
-// into a tiny pause. Don't retry 4xx — those are real client problems.
+// the worker is briefly unhealthy. A full Render deploy swap takes 2–3 minutes;
+// the previous 5-second retry budget couldn't bridge that. Stretched out to
+// ~3 minutes total so a user-initiated upload survives a redeploy window
+// instead of the SPA giving up after 5s.
+//
+// 4xx aren't retried — those are real client problems.
 const _RETRYABLE_STATUSES = new Set([502, 503, 504]);
-const _MAX_RETRIES = 3;
-const _RETRY_BACKOFF_MS = [400, 1200, 3000];
+const _MAX_RETRIES = 6;
+const _RETRY_BACKOFF_MS = [500, 1500, 4000, 10000, 30000, 60000];  // ~106s total
 
 async function fetchApi(path: string, options?: RequestInit): Promise<unknown> {
   const url = `${API_BASE}${path}`;
