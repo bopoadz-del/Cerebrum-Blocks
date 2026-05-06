@@ -1563,17 +1563,65 @@ class ConstructionContainer(UniversalContainer):
         return 50.0
 
     async def extract_quantities(self, input_data: Any, params: Dict) -> Dict:
+        """Extract quantities from multiple input shapes:
+
+        - measurements: list[dict]  → existing path, dimensional formulas
+        - quantities: dict[name → {quantity, unit}] → SPA / auto_pipeline shape
+        - extracted_text: str  → run regex extractor (delegates to _analyse_text_only)
+        - empty input → demo fixtures (clearly marked)
+        """
         data = input_data if isinstance(input_data, dict) else {}
-        measurements = data.get("measurements") or data.get("quantities") or []
+        p = params or {}
+        mode = "real"
+
+        # 1. Quantities dict already in canonical shape (SPA / auto_pipeline)
+        # The SPA sends quantities as {name: {quantity, unit}} — pass through
+        # without re-running formulas.
+        existing_q = data.get("quantities") or p.get("quantities")
+        if isinstance(existing_q, dict) and existing_q:
+            return {
+                "status": "success",
+                "source": "input_quantities",
+                "quantities": existing_q,
+                "measurements": [],
+                "mode": "passthrough",
+            }
+
+        # 2. Raw text → regex extractor for the headline materials
+        text = data.get("extracted_text") or p.get("extracted_text")
+        if isinstance(text, str) and len(text) >= 20:
+            text_result = await self._analyse_text_only(text, "auto")
+            return {
+                "status": "success",
+                "source": "extracted_text",
+                "quantities": text_result.get("quantities", {}),
+                "measurements": [],
+                "mode": "from_text",
+            }
+
+        # 3. List of measurements → existing dimensional path
+        measurements = data.get("measurements") or []
+        if not isinstance(measurements, list):
+            measurements = []
+
         if not measurements:
+            mode = "demo"
             measurements = [
                 {"element": "Columns", "length": 4.0, "width": 0.5, "height": 0.5, "count": 24},
                 {"element": "Beams", "length": 8.0, "width": 0.4, "height": 0.6, "count": 48},
                 {"element": "Slabs", "length": 30.0, "width": 20.0, "height": 0.25, "count": 6},
                 {"element": "Walls", "length": 200.0, "width": 0.2, "height": 3.5, "count": 1},
             ]
+
         quantities = self._calculate_quantities(measurements)
-        return {"status": "success", "quantities": quantities, "measurements": measurements}
+        return {
+            "status": "success",
+            "source": "measurements",
+            "quantities": quantities,
+            "measurements": measurements,
+            "mode": mode,
+            **({"note": "Demo fixtures used — pass `measurements`, `quantities`, or `extracted_text` for real extraction"} if mode == "demo" else {}),
+        }
 
     # ─────────────────────────────────────────────────────────────────
     # COST ACTIONS
