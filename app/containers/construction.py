@@ -2611,7 +2611,14 @@ class ConstructionContainer(UniversalContainer):
         }
 
     async def rfi_generator(self, input_data: Any, params: Dict) -> Dict:
-        """Generate Request for Information (RFI) documents from drawing or spec issues."""
+        """Generate Request for Information (RFI) documents from drawing or spec issues.
+
+        Two input paths:
+          - Caller-supplied `issues` list (preferred when available)
+          - Auto-detect from `extracted_text` — scans for TBD/TBC/'to be
+            confirmed'/'clarification required'/missing dimensions/etc.
+            so the SPA can chain straight from process_document.
+        """
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
 
@@ -2621,6 +2628,14 @@ class ConstructionContainer(UniversalContainer):
             or data.get("auto_risks")
             or []
         )
+
+        # Auto-detect RFI-worthy items from extracted_text when no explicit
+        # issues list provided. Common AEC red flags:
+        text = data.get("extracted_text") or p.get("extracted_text") or ""
+        if not issues and isinstance(text, str) and len(text) >= 20:
+            auto_detected = self._auto_detect_rfi_items(text)
+            issues = auto_detected
+
         project_name = p.get("project_name", data.get("project_name", "Project"))
         contractor = p.get("contractor_name", "Contractor")
         engineer = p.get("engineer_name", "Engineer of Record")
@@ -2671,6 +2686,60 @@ class ConstructionContainer(UniversalContainer):
                 "Log all RFIs in contract admin system and track response times",
             ],
         }
+
+    def _auto_detect_rfi_items(self, text: str) -> List[Dict]:
+        """Scan text for patterns that suggest an RFI is needed.
+
+        AEC red flags caught:
+          - TBD / TBC / "to be confirmed" / "to be determined"
+          - "clarification required" / "please clarify" / "verify"
+          - "unclear" / "ambiguous" / "missing"
+          - bare question marks at end of sentences (drawings often note
+            "is dim correct?")
+          - "field verify" / "by others" / "n.i.c." (not in contract)
+          - multilingual: "a definir", "por confirmar", "à préciser"
+        """
+        rfi_patterns = [
+            (r"\b(?:tbd|to\s+be\s+determined|to\s+be\s+decided)\b[^\n.]{0,150}",
+             "Design Clarification", "high"),
+            (r"\b(?:tbc|to\s+be\s+confirmed|por\s+confirmar|a\s+confirmar|à\s+confirmer)\b[^\n.]{0,150}",
+             "Design Clarification", "medium"),
+            (r"(?:clarification\s+required|please\s+clarify|aclarar|esclarecer|à\s+préciser)[^\n.]{0,150}",
+             "Design Clarification", "high"),
+            (r"\b(?:unclear|ambiguous|conflict(?:ing)?|inconsistent)[^\n.]{0,150}",
+             "Discipline Coordination", "medium"),
+            (r"\b(?:missing|incomplete|not\s+shown|no\s+detail)[^\n.]{0,150}",
+             "Drawing Information Gap", "medium"),
+            (r"\b(?:field\s+verify|verify\s+in\s+field|verify\s+on\s+site)[^\n.]{0,150}",
+             "Field Verification", "low"),
+            (r"\b(?:by\s+others|by\s+contractor|by\s+owner|n\.i\.c\.|not\s+in\s+contract)[^\n.]{0,150}",
+             "Scope Boundary", "medium"),
+            (r"(?:depende\s+de|sujet[oa]\s+a|subject\s+to)\s+(?:approval|aprobaci[óo]n|aprovação)[^\n.]{0,150}",
+             "Approval Pending", "medium"),
+            # Question-mark clauses on architectural/structural notes
+            (r"[A-Z][^.\n?]{15,150}\?",
+             "Question on Drawing Note", "low"),
+        ]
+        items: List[Dict] = []
+        seen_keys = set()
+        for pat, category, severity in rfi_patterns:
+            for m in re.finditer(pat, text, re.IGNORECASE):
+                snippet = m.group(0).strip()[:200]
+                # de-dupe on first 60 chars (case-insensitive)
+                key = snippet[:60].lower().replace(" ", "")
+                if key in seen_keys:
+                    continue
+                seen_keys.add(key)
+                items.append({
+                    "description": snippet,
+                    "type": category,
+                    "category": category,
+                    "severity": severity,
+                    "context": "auto-detected from document text",
+                })
+                if len(items) >= 30:
+                    return items
+        return items
 
     def _map_rfi_discipline(self, category: str) -> str:
         mapping = {
