@@ -16,11 +16,16 @@ USER sandbox
 
 COPY --chown=sandbox:sandbox server.py .
 
+# PORT is set by the orchestrator (Render injects 10000 by default;
+# docker-compose / local dev defaults to 8001). $PORT respected here so
+# the same image works in both environments.
+ENV PORT=8001
 EXPOSE 8001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8001/health || exit 1
+    CMD curl -f "http://localhost:${PORT}/health" || exit 1
 
 # Run with no env passthrough so secrets from the parent env don't leak.
 # Operators should run with: docker run --read-only --tmpfs /scratch \
 #   --network=none-or-restricted --cap-drop=ALL --user=999:999 ...
-CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8001", "--no-access-log"]
+# sh -c form so $PORT expands; uvicorn doesn't expand env vars in its argv.
+CMD ["sh", "-c", "exec python -m uvicorn server:app --host 0.0.0.0 --port ${PORT} --no-access-log"]

@@ -60,8 +60,11 @@ services:
         sync: false
       # Private-network URL of the sandbox runner sibling service.
       # Render resolves this hostname inside the private network only.
+      # Port is 10000 because Render assigns that to private services
+      # by default; the runner's Dockerfile honours $PORT so the same
+      # image still works on port 8001 locally.
       - key: SANDBOX_RUNNER_URL
-        value: http://cerebrum-sandbox-runner:8001
+        value: http://cerebrum-sandbox-runner:10000
 
   - type: pserv
     name: cerebrum-sandbox-runner
