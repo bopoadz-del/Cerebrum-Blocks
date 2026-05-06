@@ -1,6 +1,6 @@
 """Workflow Router — Declarative pipeline execution endpoints."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -12,8 +12,10 @@ router = APIRouter()
 class PipelineStep(BaseModel):
     id: str = Field(..., description="Step identifier")
     block: str = Field(..., description="Block name to execute")
-    input: Dict = Field(default_factory=dict)
-    params: Dict = Field(default_factory=dict)
+    # Block inputs may be a dict, a string (e.g. plain prompt for chat/translate),
+    # a list (e.g. batch of texts for vector_search), or null. Don't lock to dict.
+    input: Optional[Union[Dict[str, Any], str, list]] = Field(default_factory=dict)
+    params: Dict[str, Any] = Field(default_factory=dict)
     stop_on_error: bool = Field(default=True)
     break_on_error: bool = Field(default=False)
 
@@ -49,7 +51,12 @@ async def workflow_run(request: PipelineRequest, auth: dict = Depends(require_ap
     result = await block.process(payload, {"action": "run"})
 
     if result.get("status") == "error":
-        raise HTTPException(status_code=422, detail=result.get("error", "Pipeline failed"))
+        # Surface validation_errors / step errors so the caller can fix the
+        # pipeline. The bare error string is unactionable on its own.
+        detail: Any = result.get("error", "Pipeline failed")
+        if result.get("validation_errors"):
+            detail = {"error": detail, "validation_errors": result["validation_errors"]}
+        raise HTTPException(status_code=422, detail=detail)
 
     inner = result.get("result", result)
     return PipelineResponse(

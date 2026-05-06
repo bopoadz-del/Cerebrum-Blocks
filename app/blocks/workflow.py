@@ -150,12 +150,12 @@ class WorkflowBlock(TypedBlock):
                 errors.append(f"Step {i}: block '{current_name}' or '{next_name}' not found in registry")
                 continue
 
-            # Check if both blocks have typed schemas
+            # Both blocks must declare typed schemas to be statically validated.
+            # Untyped blocks are common in this platform — skip them rather than
+            # rejecting the chain (the runtime will just pass values through).
             if not hasattr(current_cls, 'output_schema') or not current_cls.output_schema:
-                errors.append(f"Step {i}: '{current_name}' has no output_schema")
                 continue
             if not hasattr(next_cls, 'input_schema') or not next_cls.input_schema:
-                errors.append(f"Step {i+1}: '{next_name}' has no input_schema")
                 continue
 
             current_schema = current_cls.output_schema
