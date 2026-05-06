@@ -200,7 +200,16 @@ async def capture_structure_text(
     if llm_provider:
         params["llm_provider"] = llm_provider
 
-    result = await block.process(text, params)
+    # Wrap the block call: when the underlying LLM provider raises (which the
+    # block's _llm_chat does via httpx.HTTPStatusError instead of returning a
+    # status:error envelope), we'd otherwise leak a bare "Internal Server
+    # Error" text response. Surface the actual failure with a sensible code.
+    try:
+        result = await block.process(text, params)
+    except Exception as e:
+        err = str(e) or e.__class__.__name__
+        raise HTTPException(status_code=_classify_block_error(err), detail=err)
+
     if result.get("status") == "error":
         err = result.get("error", "Structuring failed")
         raise HTTPException(status_code=_classify_block_error(err), detail=err)

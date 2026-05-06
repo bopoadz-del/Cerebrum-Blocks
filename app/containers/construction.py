@@ -5852,6 +5852,151 @@ Total Extension of Time Sought: {total_delay} days
             ]
         return []
 
+    # ── Internal helpers used by qa_qc_inspection / _compare_photo_to_bim ─
+    # These were referenced via self._X but never defined — every call site
+    # crashed with AttributeError. Minimal real implementations below; replace
+    # with stronger logic when domain rules are nailed down.
+
+    def _parse_defects(self, description: str) -> List[Dict]:
+        """Pull defect-like phrases out of an LLM/visual description string."""
+        if not description:
+            return []
+        defect_keywords = {
+            "crack": "structural", "cracking": "structural",
+            "spall": "structural", "spalling": "structural",
+            "honeycomb": "concrete-quality",
+            "rebar exposed": "structural", "exposed rebar": "structural",
+            "water damage": "envelope", "leak": "envelope", "damp": "envelope",
+            "rust": "envelope", "corrosion": "envelope",
+            "missing": "completeness", "incomplete": "completeness",
+            "misalign": "geometry", "out of plumb": "geometry", "out of level": "geometry",
+            "scaffold": "safety", "edge protection": "safety",
+            "ppe": "safety", "guard": "safety", "fire": "safety",
+        }
+        defects: List[Dict] = []
+        d_low = description.lower()
+        for kw, category in defect_keywords.items():
+            if kw in d_low:
+                # Severity heuristic: structural/safety = major; rest = minor
+                severity = "major" if category in ("structural", "safety") else "minor"
+                defects.append({
+                    "description": kw,
+                    "category": category,
+                    "severity": severity,
+                })
+        return defects
+
+    def _calculate_severity(self, defects: List[Dict]) -> float:
+        """Aggregate severity score (0-100) from a defect list."""
+        if not defects:
+            return 0.0
+        weight = {"major": 25, "minor": 5, "critical": 50}
+        score = sum(weight.get(d.get("severity", "minor"), 5) for d in defects)
+        return float(min(100, score))
+
+    def _check_compliance(self, defects: List[Dict], inspection_type: str) -> Dict:
+        """Flag any defect categories that fail compliance for this inspection."""
+        major = [d for d in defects if d.get("severity") in ("major", "critical")]
+        return {
+            "status": "non_compliant" if major else ("conditional" if defects else "compliant"),
+            "issues": [d.get("description", "?") for d in major],
+            "inspection_type": inspection_type,
+        }
+
+    def _generate_recommendations(self, defects: List[Dict], inspection_type: str) -> List[str]:
+        """Map defect categories to actionable recommendations."""
+        if not defects:
+            return [f"No defects found in {inspection_type} inspection — sign off."]
+        recs: List[str] = []
+        seen_categories = set()
+        category_actions = {
+            "structural": "Engage structural engineer for assessment + repair plan.",
+            "concrete-quality": "Re-inspect after curing; consider non-destructive testing.",
+            "envelope": "Schedule waterproofing/cladding contractor; document moisture extent.",
+            "completeness": "Issue snag list and target close-out before next progress claim.",
+            "geometry": "Survey for re-alignment; check tolerances against drawings.",
+            "safety": "Halt work in affected area; rectify before resuming.",
+        }
+        for d in defects:
+            cat = d.get("category", "general")
+            if cat in seen_categories:
+                continue
+            seen_categories.add(cat)
+            recs.append(category_actions.get(cat, f"Review {cat} defects with site team."))
+        return recs
+
+    def _generate_doc_recommendations(self, doc_result: Dict) -> List[str]:
+        """Suggest follow-up actions based on what process_document found."""
+        recs: List[str] = []
+        if doc_result.get("status") != "success":
+            return ["Re-extract document — initial parse failed."]
+        if not doc_result.get("measurements"):
+            recs.append("No measurements detected — verify document is a quantified drawing/spec.")
+        if not doc_result.get("tables"):
+            recs.append("No tables found — check if BOQ data is embedded as text.")
+        disciplines = doc_result.get("detected_disciplines") or []
+        if len(disciplines) > 1:
+            recs.append(f"Multi-discipline document ({', '.join(disciplines)}) — split into per-discipline analysis for more accurate quantities.")
+        if not recs:
+            recs.append("Document parsed cleanly; proceed to quantity takeoff and cost estimate.")
+        return recs
+
+    def _element_similarity(self, expected: Dict, detected: Any) -> float:
+        """Score how well a detected object matches an expected BIM element.
+
+        Lightweight token overlap on type/category — not vision-grade matching
+        but good enough as a defensive fallback in _compare_photo_to_bim.
+        """
+        if not expected or detected is None:
+            return 0.0
+        expected_type = str(expected.get("type", "")).lower()
+        if not expected_type:
+            return 0.0
+        if isinstance(detected, dict):
+            detected_text = " ".join(str(v) for v in detected.values()).lower()
+        else:
+            detected_text = str(detected).lower()
+        if expected_type in detected_text:
+            return 0.85
+        # Token-overlap fallback
+        exp_tokens = set(expected_type.split())
+        det_tokens = set(detected_text.split())
+        if not exp_tokens:
+            return 0.0
+        overlap = len(exp_tokens & det_tokens) / len(exp_tokens)
+        return float(overlap)
+
+    def _find_deviations(self, detected: List[Any], expected: List[Dict]) -> List[Dict]:
+        """Report elements present in detected but not in expected, and vice versa."""
+        deviations: List[Dict] = []
+        expected_types = {str(e.get("type", "")).lower() for e in expected if isinstance(e, dict)}
+        detected_types: List[str] = []
+        for d in detected:
+            if isinstance(d, dict):
+                detected_types.append(str(d.get("type") or d.get("name") or "").lower())
+            else:
+                detected_types.append(str(d).lower())
+        detected_set = {t for t in detected_types if t}
+        for missing in expected_types - detected_set:
+            deviations.append({"type": missing, "deviation": "expected_but_not_detected"})
+        for extra in detected_set - expected_types:
+            deviations.append({"type": extra, "deviation": "detected_but_not_expected"})
+        return deviations
+
+    def _assess_delay_risk(self, comparison_results: List[Dict]) -> str:
+        """Roll up multiple per-photo BIM comparisons into a risk band."""
+        if not comparison_results:
+            return "unknown"
+        scores = [r.get("match_confidence", 0) for r in comparison_results if isinstance(r, dict)]
+        if not scores:
+            return "unknown"
+        avg = sum(scores) / len(scores)
+        if avg >= 0.85:
+            return "low"
+        if avg >= 0.6:
+            return "medium"
+        return "high"
+
     async def extract_measurements(self, input_data: Any, params: Dict) -> Dict:
         """Extract measurements from construction drawings"""
         if self._looks_like_file(input_data, params):
