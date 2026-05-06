@@ -30,6 +30,12 @@ _CONFIG_MARKERS = (
     "quota exceeded",
     "rate limit",
     "ocr_unavailable",
+    # Provider-side payment / billing failures — caller can't fix by retrying
+    "402",
+    "payment required",
+    "billing",
+    "insufficient_quota",
+    "out of credits",
 )
 
 _NETWORK_MARKERS = (
