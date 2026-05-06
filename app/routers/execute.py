@@ -20,9 +20,15 @@ class ExecuteRequest(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Block parameters")
 
 
-@router.post("/execute")
-async def execute(request: ExecuteRequest, auth: dict = Depends(require_api_key)):
-    """Execute a single block."""
+async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
+    """Shared body for /execute and /v1/execute.
+
+    Both routers do FastAPI auth themselves (Depends(require_api_key))
+    and pass the resolved auth dict in. Previously /v1/execute called
+    /execute as a coroutine, leaving execute()'s `auth` param at its
+    default — the Depends sentinel — which then crashed
+    enforce_block_access (`'Depends' object has no attribute 'get'`).
+    """
     block_name = request.block
 
     if block_name not in BLOCK_REGISTRY:
@@ -43,10 +49,10 @@ async def execute(request: ExecuteRequest, auth: dict = Depends(require_api_key)
             block_instances[block_name] = _create_block_instance(BLOCK_REGISTRY[block_name])
 
         block = block_instances[block_name]
-        
+
         # Adapt input to what block expects
         adapted_input = adapt_input(request.input, block)
-        
+
         result = await block.execute(adapted_input, request.params or {})
         return result
 
@@ -66,12 +72,13 @@ async def execute(request: ExecuteRequest, auth: dict = Depends(require_api_key)
         raise HTTPException(status, err)
 
 
+@router.post("/execute")
+async def execute(request: ExecuteRequest, auth: dict = Depends(require_api_key)):
+    """Execute a single block."""
+    return await _run_block(request, auth)
+
+
 @router.post("/v1/execute")
 async def execute_v1(request: ExecuteRequest, auth: dict = Depends(require_api_key)):
     """Execute a single block (v1 API)."""
-    # Re-check the block access here too — execute() called as a coroutine
-    # below doesn't run FastAPI dependencies, so the auth dict from this
-    # handler is what we need to gate against.
-    if request.block in BLOCK_REGISTRY:
-        enforce_block_access(request.block, auth)
-    return await execute(request)
+    return await _run_block(request, auth)
