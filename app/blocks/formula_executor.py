@@ -1,9 +1,13 @@
 """Formula Executor Block - Sandboxed execution of construction formulas with unit validation"""
 
+import logging
 import math
+import os
 import traceback
 from typing import Any, Dict, List, Optional
 from app.core.universal_base import UniversalBlock
+
+logger = logging.getLogger(__name__)
 
 
 # Safe builtins allowed inside sandbox
@@ -220,13 +224,21 @@ class FormulaExecutorBlock(UniversalBlock):
         try:
             exec(compile(code, "<formula>", "exec"), namespace)  # noqa: S102
         except Exception as e:
-            return {
+            # Don't leak the traceback to API callers in production —
+            # internal file paths and module structure shouldn't be
+            # part of the response. Server logs still capture it.
+            logger.exception("formula_executor: exec failed")
+            payload = {
                 "status": "error",
                 "error": f"Execution error: {e}",
-                "traceback": traceback.format_exc(limit=3),
-                "generated_code": code,
                 "input_values": variables,
             }
+            if os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower() in {
+                "dev", "development", "local", "test", "testing"
+            }:
+                payload["traceback"] = traceback.format_exc(limit=3)
+                payload["generated_code"] = code
+            return payload
 
         raw_result = namespace.get("result")
         unit_output = self._validate_units(raw_result, variables, description)

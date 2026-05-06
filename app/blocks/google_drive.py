@@ -138,6 +138,16 @@ class GoogleDriveBlock(UniversalBlock):
                     "files": [],
                 }
             try:
+                # Drive Query Language: single quotes terminate the literal,
+                # so an unsanitised `query` lets the caller break out into
+                # arbitrary clauses (e.g. "' or trashed=false or '"). Drive
+                # has no escaping mechanism for q values; the safe move is
+                # to reject any embedded single quote.
+                if query and "'" in query:
+                    return {
+                        "status": "error",
+                        "error": "Search query may not contain single quotes",
+                    }
                 q = f"name contains '{query}'" if query else "trashed=false"
                 async with httpx.AsyncClient(timeout=20) as client:
                     resp = await client.get(

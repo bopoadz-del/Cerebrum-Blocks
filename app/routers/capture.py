@@ -9,6 +9,7 @@ Accepts multipart image uploads from any client:
 """
 
 import os
+import re
 import shutil
 import uuid
 from typing import Optional
@@ -20,6 +21,13 @@ from app.dependencies import require_api_key, get_block_instance
 from app.core.http_errors import classify_block_error as _classify_block_error
 
 router = APIRouter()
+
+# capture_id is interpolated into the saved-file path via f"{fid}_{name}".
+# Without sanitisation, an attacker could pass capture_id="../../tmp/x"
+# and write outside CAPTURE_DATA_DIR. Restrict to a tight identifier set;
+# the block uses the value internally too, so don't be more lenient here
+# than the downstream consumer is.
+_CAPTURE_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{1,32}$")
 
 CAPTURE_DATA_DIR = os.path.join(os.getenv("DATA_DIR", "./data"), "captures")
 os.makedirs(CAPTURE_DATA_DIR, exist_ok=True)
@@ -72,9 +80,20 @@ async def capture_upload(
         raise HTTPException(status_code=400, detail=f"Image type '{ext}' not allowed")
 
     # Save to disk
+    if capture_id is not None and not _CAPTURE_ID_RE.match(capture_id):
+        raise HTTPException(
+            status_code=400,
+            detail="capture_id must match [a-zA-Z0-9_-]{1,32}",
+        )
     fid = capture_id or str(uuid.uuid4())[:8]
     stored_name = f"{fid}_{original_name}"
-    file_path = os.path.join(CAPTURE_DATA_DIR, stored_name)
+    # Defence in depth: even after sanitising fid + stripping basename
+    # from the upload, double-check the resolved path stays in
+    # CAPTURE_DATA_DIR.
+    capture_root = os.path.realpath(CAPTURE_DATA_DIR)
+    file_path = os.path.realpath(os.path.join(CAPTURE_DATA_DIR, stored_name))
+    if not (file_path == capture_root or file_path.startswith(capture_root + os.sep)):
+        raise HTTPException(status_code=400, detail="Invalid file path")
 
     try:
         with open(file_path, "wb") as buffer:

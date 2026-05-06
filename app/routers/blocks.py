@@ -1,15 +1,17 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.blocks import BLOCK_REGISTRY, get_all_blocks
 from app.core.universal_base import UniversalContainer
-from app.dependencies import block_instances, _create_block_instance
+from app.dependencies import block_instances, _create_block_instance, require_api_key
 
 router = APIRouter()
 
 
 @router.get("/blocks")
-def list_blocks():
-    """List all available blocks."""
+def list_blocks(auth: dict = Depends(require_api_key)):
+    """List all available blocks. Auth required — block menu is recon
+    surface (the audit found this leaked the registry to unauth callers,
+    enabling targeted attacks on the most exploitable blocks)."""
     blocks = []
     for name, block_class in get_all_blocks().items():
         # Skip containers - they belong to Block Store
@@ -47,7 +49,7 @@ def list_blocks():
 
 
 @router.get("/blocks/{block_name}")
-def get_block_info(block_name: str):
+def get_block_info(block_name: str, auth: dict = Depends(require_api_key)):
     """Get block details."""
     if block_name not in BLOCK_REGISTRY:
         raise HTTPException(404, f"Block '{block_name}' not found")
@@ -73,12 +75,12 @@ def get_block_info(block_name: str):
 
 
 @router.get("/v1/blocks")
-def list_blocks_v1():
+def list_blocks_v1(auth: dict = Depends(require_api_key)):
     """List all available blocks (v1 API)."""
-    return list_blocks()
+    return list_blocks(auth)
 
 
 @router.get("/v1/blocks/{block_name}")
-def get_block_v1(block_name: str):
+def get_block_v1(block_name: str, auth: dict = Depends(require_api_key)):
     """Get block details (v1 API)."""
-    return get_block_info(block_name)
+    return get_block_info(block_name, auth)

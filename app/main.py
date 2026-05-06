@@ -145,6 +145,31 @@ app.add_middleware(
 )
 
 
+# Security headers middleware — adds the standard browser-side defences.
+# Only applies to top-level FastAPI routes; the /mcp Starlette mount
+# below has its own auth gate which adds its own response shape.
+@app.middleware("http")
+async def _security_headers(request, call_next):
+    response = await call_next(request)
+    # HSTS: tell browsers to only use HTTPS for this origin. preload-eligible
+    # but conservative on duration to avoid lock-in if we ever roll back to
+    # HTTP for debugging.
+    response.headers.setdefault(
+        "Strict-Transport-Security",
+        "max-age=31536000; includeSubDomains",
+    )
+    # Block clickjacking. The API has no UI, so DENY is fine.
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    # Stop browsers from MIME-sniffing JSON responses.
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    # Don't leak the API URL into Referer when the SPA cross-links out.
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    # Modern browsers don't honour X-XSS-Protection, but the value
+    # "0" disables broken legacy filters that hurt more than help.
+    response.headers.setdefault("X-XSS-Protection", "0")
+    return response
+
+
 # NOTE: a previous /upload security middleware lived here. It tried to
 # json.loads() the request body to feed a `security` block, but /upload is
 # multipart (FormData), so the JSON decode silently failed and validation

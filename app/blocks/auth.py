@@ -221,9 +221,10 @@ class AuthBlock(UniversalBlock):
     
     async def create_api_key(self, name: str, role: Role, owner: str) -> Dict:
         """Generate new API key"""
-        # Generate secure key
-        key_bytes = secrets.token_bytes(32)
-        api_key = f"cb_{hashlib.sha256(key_bytes).hexdigest()[:24]}"
+        # Use the full URL-safe random token rather than hashing a smaller
+        # block to 24 hex chars (96 bits). secrets.token_urlsafe(32) gives
+        # 256 bits of entropy and avoids the unnecessary hash step.
+        api_key = f"cb_{secrets.token_urlsafe(32)}"
         
         metadata = {
             "name": name,

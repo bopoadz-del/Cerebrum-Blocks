@@ -10,7 +10,11 @@ from app.core.universal_base import UniversalBlock
 
 _GRAPH_API = "https://graph.microsoft.com/v1.0"
 _AUTH_BASE = "https://login.microsoftonline.com"
-_SCOPES = ["Files.Read", "Files.ReadWrite"]
+# Block only implements list+download — Files.Read is sufficient.
+# Files.ReadWrite was previously requested but never used; keeping it
+# would mean a leaked refresh token grants tenant-wide write access to
+# the user's OneDrive.
+_SCOPES = ["Files.Read"]
 
 
 def _auth_url() -> str:
@@ -139,6 +143,14 @@ class OneDriveBlock(UniversalBlock):
                     "files": [],
                 }
             try:
+                # Graph search query language uses single quotes as the
+                # literal delimiter; without escaping, a quote in `query`
+                # turns into clause injection. Reject embedded quotes.
+                if query and "'" in query:
+                    return {
+                        "status": "error",
+                        "error": "Search query may not contain single quotes",
+                    }
                 endpoint = (
                     f"{_GRAPH_API}/me/drive/search(q='{query}')"
                     if query else
