@@ -1,0 +1,60 @@
+# Render blueprint for the Cerebrum Blocks API.
+#
+# Key change vs. the dashboard-only config: `healthCheckPath: /health`.
+# With it set, Render waits for the new instance to return 2xx on /health
+# before swapping traffic. Without it, Render swaps as soon as the worker
+# binds to $PORT — which is BEFORE FastAPI's lifespan / route mounting
+# completes, so users see ~30-60s of CORS-stripped 502s on every deploy.
+#
+# To apply:
+#   Option A (preferred — keeps dashboard env vars): Render dashboard →
+#     the cerebrum-platform-api service → Settings → Health & Alerts →
+#     Health Check Path → set to `/health` → Save. One-click; no
+#     blueprint sync needed.
+#
+#   Option B (full blueprint adoption): Render dashboard → Blueprints
+#     → "Sync from repo". Will import all settings from this file.
+#     Caveat: secret env vars (CEREBRUM_API_KEY_*, STRIPE_SECRET_KEY,
+#     OPENAI_API_KEY, etc.) must remain in the dashboard with
+#     `sync: false` semantics — never commit them here.
+
+services:
+  - type: web
+    name: cerebrum-platform-api
+    runtime: python
+    plan: starter
+    region: oregon
+    buildCommand: ./render-build.sh
+    # --no-access-log matches entrypoint.sh; uvicorn binds to $PORT.
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --no-access-log
+    # Zero-downtime gate — Render holds traffic on the old instance
+    # until the new one returns 2xx here. /health responds the moment
+    # uvicorn binds (lifespan() returns instantly; init_blocks runs as
+    # a background task) so this adds <1s to swap latency.
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      # Stop writing .pyc files — was the original reason the
+      # __pycache__-clearing import-time hack existed in main.py.
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      # Secret env vars stay in the dashboard. List with `sync: false`
+      # so blueprint sync doesn't overwrite them with placeholders.
+      - key: CORS_ORIGINS
+        sync: false
+      - key: DATA_DIR
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
