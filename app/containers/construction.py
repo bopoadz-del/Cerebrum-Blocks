@@ -6039,10 +6039,13 @@ Total Extension of Time Sought: {total_delay} days
             # Short-name aliases — older callers + the now-removed initial route()
             # used these names. Keep them mapped so existing integrations keep
             # working, even though the canonical names are above.
+            # NOTE: "contract_review" → process_contract (the dead route() had
+            # it as review_contract_clause but that method never existed; the
+            # closest functional equivalent is process_contract).
             "cost_estimate": self.generate_cost_estimate,
             "analyze_spec": self.analyze_spec_section,
             "schedule_risk": self.analyze_schedule_risk,
-            "contract_review": self.review_contract_clause,
+            "contract_review": self.process_contract,
             "safety_audit": self.safety_compliance_audit,
             "carbon_report": self.generate_carbon_report,
             "procurement": self.procurement_analysis,

@@ -294,15 +294,19 @@ function AppContent() {
     const indexable = files.filter(f => /\.(pdf|txt|md|csv|docx|xlsx|doc)$/i.test(f.name)).slice(0, 200);
     if (indexable.length > 0) {
       api.discoverProjects(indexable.map(f => ({ name: f.name, path: f.name }))).then(res => {
-        const discovered: Project[] = res.projects.map(p => ({
+        // Defensive: API may return an error envelope (no `projects` key) when
+        // the construction block fails internally — don't crash the SPA.
+        const projectsArr = Array.isArray(res?.projects) ? res.projects : [];
+        if (projectsArr.length === 0) return;
+        const discovered: Project[] = projectsArr.map(p => ({
           id: p.id,
           name: p.name,
           source: p.source,
-          files: p.files.map((f, i) => ({
+          files: (Array.isArray(p.files) ? p.files : []).map((f, i) => ({
             id: `${p.id}-file-${i}`,
-            name: f.name,
+            name: f?.name ?? '',
             type: 'file' as const,
-            path: f.path,
+            path: f?.path,
           })),
         }));
         setProjects(prev => {
