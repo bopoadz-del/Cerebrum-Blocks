@@ -254,12 +254,19 @@ async def init_blocks():
         if block_class:
             _wire_block_dependencies(instance, block_class, name)
 
+    # The legacy accessors below internally call asyncio.create_task(...)
+    # which REQUIRES a running event loop — must be invoked from the loop,
+    # not via to_thread. Their imports already happened above; this is just
+    # the instance creation, which is cheap.
     if get_memory_block:
-        await asyncio.to_thread(get_memory_block)
+        try: get_memory_block()
+        except Exception: logger.exception("get_memory_block init failed")
     if get_monitoring_block:
-        await asyncio.to_thread(get_monitoring_block)
+        try: get_monitoring_block()
+        except Exception: logger.exception("get_monitoring_block init failed")
     if get_auth_block:
-        await asyncio.to_thread(get_auth_block)
+        try: get_auth_block()
+        except Exception: logger.exception("get_auth_block init failed")
 
     try:
         if "smart_orchestrator" in block_instances and "skills" in block_instances:
