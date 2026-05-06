@@ -48,7 +48,7 @@ scikit-learn>=1.4.0
 
 # Domain formula backends — Library Container (Layer 4)
 CoolProp>=6.5            # thermodynamic / HVAC property lookups
-QuantLib-Python>=1.30    # quantitative finance (PV, swaps, rates)
+QuantLib>=1.30           # quantitative finance — PyPI name is `QuantLib` (imports as `import QuantLib`)
 
 # ML experiment tracking — used by app/core/mlflow_tracker.py.
 # No-ops gracefully when MLFLOW_TRACKING_URI is unset.
