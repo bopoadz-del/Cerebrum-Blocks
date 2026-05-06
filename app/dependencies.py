@@ -150,17 +150,40 @@ async def require_api_key(
 
 
 async def init_blocks():
-    """Initialize all block instances at startup."""
-    # Pass 1: instantiate
-    for name, block_class in BLOCK_REGISTRY.items():
-        try:
-            if name not in block_instances:
-                block_instances[name] = _create_block_instance(block_class)
-        except Exception as e:
-            logger.warning("Failed to initialize block %s: %s", name, e)
+    """Initialise the blocks needed for cold-start health checks.
 
-    # Pass 2: wire dependencies (universal connectors)
-    for name, instance in block_instances.items():
+    Eagerly instantiating every block at startup OOM'd Render's Starter
+    plan (512MB) — sklearn, sympy, ezdxf, ifcopenshell etc. add up fast.
+    Now we pre-warm only the blocks that are touched on every request or
+    that need wiring at boot. Everything else lazy-loads through
+    get_block_instance on first use.
+
+    Override via env: BLOCKS_PREWARM=all forces the old eager behaviour
+    (useful for benchmarking / catching import errors on a beefier plan).
+    """
+    prewarm_mode = os.getenv("BLOCKS_PREWARM", "core").strip().lower()
+
+    if prewarm_mode == "all":
+        targets = list(BLOCK_REGISTRY.keys())
+    else:
+        # Core blocks: SPA happy path + the ones init_blocks specifically
+        # wires together at the bottom of this function.
+        targets = [
+            "chat", "pdf", "ocr", "construction", "zvec",
+            "smart_orchestrator", "skills",
+        ]
+
+    for name in targets:
+        if name in block_instances:
+            continue
+        try:
+            block_class = BLOCK_REGISTRY[name]
+            block_instances[name] = _create_block_instance(block_class)
+        except Exception as e:
+            logger.warning("Failed to initialise block %s: %s", name, e)
+
+    # Wire deps for whatever we did manage to instantiate
+    for name, instance in list(block_instances.items()):
         block_class = BLOCK_REGISTRY.get(name)
         if block_class:
             _wire_block_dependencies(instance, block_class, name)
