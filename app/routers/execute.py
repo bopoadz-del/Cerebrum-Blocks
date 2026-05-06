@@ -8,6 +8,7 @@ from app.blocks import BLOCK_REGISTRY
 from app.dependencies import require_api_key
 from app.dependencies import block_instances, _create_block_instance
 from app.core.input_adapter import adapt_input
+from app.core.security import enforce_block_access
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -30,6 +31,12 @@ async def execute(request: ExecuteRequest, auth: dict = Depends(require_api_key)
     # Skip containers - they belong to Block Store
     if block_name.startswith("container_"):
         raise HTTPException(400, f"Container '{block_name}' cannot be executed directly. Use Block Store.")
+
+    # Tier × block guard — RCE / SSRF / vault / FS blocks are restricted
+    # to unlimited-tier keys. Standard-tier (including the SPA-shipped
+    # public key) gets 403 here instead of being allowed to invoke the
+    # block and rely on the block's own (often missing) sandbox.
+    enforce_block_access(block_name, auth)
 
     try:
         if block_name not in block_instances:
@@ -62,4 +69,9 @@ async def execute(request: ExecuteRequest, auth: dict = Depends(require_api_key)
 @router.post("/v1/execute")
 async def execute_v1(request: ExecuteRequest, auth: dict = Depends(require_api_key)):
     """Execute a single block (v1 API)."""
+    # Re-check the block access here too — execute() called as a coroutine
+    # below doesn't run FastAPI dependencies, so the auth dict from this
+    # handler is what we need to gate against.
+    if request.block in BLOCK_REGISTRY:
+        enforce_block_access(request.block, auth)
     return await execute(request)

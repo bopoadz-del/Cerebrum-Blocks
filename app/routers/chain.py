@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from app.blocks import BLOCK_REGISTRY
 from app.dependencies import require_api_key
 from app.dependencies import block_instances, _create_block_instance
+from app.core.security import enforce_block_access
 
 router = APIRouter()
 
@@ -42,6 +43,13 @@ async def chain_execute(request: ChainRequest, auth: dict = Depends(require_api_
     """Execute a chain of blocks via OrchestratorBlock."""
     if "orchestrator" not in BLOCK_REGISTRY:
         raise HTTPException(500, "Orchestrator block not available")
+
+    # Walk the chain steps and enforce tier × block access on each one.
+    # Without this, a standard-tier key could chain through `orchestrator`
+    # to reach restricted blocks that /v1/execute would otherwise block.
+    for step in request.steps:
+        if step.block in BLOCK_REGISTRY:
+            enforce_block_access(step.block, auth)
 
     try:
         if "orchestrator" not in block_instances:

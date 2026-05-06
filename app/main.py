@@ -177,10 +177,18 @@ env = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()
 if env in {"dev", "development", "local", "test", "testing"}:
     app.include_router(debug.router)
 
-# Mount MCP SSE endpoint (Model Context Protocol)
+# Mount MCP SSE endpoint (Model Context Protocol).
+# Wrapped in asgi_auth_required so the SSE transport requires Bearer
+# auth + tier=unlimited (master key only by default). Previously the
+# mount was unauthenticated — anyone on the public internet could call
+# any block as an MCP tool, including the RCE-shaped ones (code,
+# sandbox, formula_executor, secrets, database, web, webhook).
+# Override via env CEREBRUM_MCP_REQUIRED_TIER or
+# CEREBRUM_MCP_DISABLE_AUTH=1 (local stdio testing only).
 try:
     from app.mcp_server import app_sse as mcp_app
-    app.mount("/mcp", mcp_app)
+    from app.core.security import asgi_auth_required
+    app.mount("/mcp", asgi_auth_required(mcp_app))
 except Exception:
     logger.exception("MCP server not mounted")
 
