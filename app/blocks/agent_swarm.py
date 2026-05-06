@@ -33,6 +33,7 @@ class LLMProvider(str, Enum):
     OLLAMA = "ollama"
     DEEPSEEK = "deepseek"
     OPENROUTER = "openrouter"
+    ANTHROPIC = "anthropic"
 
 
 class AgentSwarmBlock(TypedBlock):
@@ -70,6 +71,8 @@ class AgentSwarmBlock(TypedBlock):
         "deepseek_model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
         "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
         "openrouter_model": os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet"),
+        "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY", ""),
+        "anthropic_model": os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
         "vector_db_url": os.getenv("VECTOR_DB_URL", "http://localhost:8001"),
         "max_concurrent_agents": int(os.getenv("MAX_CONCURRENT_AGENTS", "5")),
         "default_timeout": int(os.getenv("DEFAULT_TIMEOUT", "120")),
@@ -631,8 +634,127 @@ class AgentSwarmBlock(TypedBlock):
                 url="https://openrouter.ai/api/v1/chat/completions",
                 provider_label="openrouter",
             )
+        elif provider == "anthropic" or provider == LLMProvider.ANTHROPIC:
+            return await self._anthropic_chat(messages, model, temperature, tools)
         else:
             raise ValueError(f"Unknown provider: {provider}")
+
+    async def _anthropic_chat(
+        self,
+        messages: List[Dict[str, Any]],
+        model: Optional[str],
+        temperature: float,
+        tools: Optional[List[Dict[str, Any]]],
+    ) -> Dict[str, Any]:
+        """Direct Anthropic /v1/messages call. Translates between OpenAI's
+        tools/tool_calls/role=tool format (what the rest of the swarm uses)
+        and Anthropic's messages-API native format.
+
+        Translation rules:
+          - System message in OpenAI → top-level `system` param
+          - {role:"tool",content,...} → {role:"user", content:[{type:tool_result}]}
+          - assistant tool_calls → already separated below into content blocks
+          - response.stop_reason=tool_use → unwrap to OpenAI-shape tool_calls
+        """
+        import httpx
+        api_key = self.config.get("anthropic_api_key") or os.getenv("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            raise ValueError("anthropic API key not configured")
+        model = model or self.config.get("anthropic_model", "claude-sonnet-4-6")
+
+        # Pull the system message out — Anthropic wants it as a top-level param.
+        system_text = ""
+        chat_messages: List[Dict[str, Any]] = []
+        for m in messages:
+            role = m.get("role")
+            if role == "system":
+                system_text = (system_text + "\n\n" + (m.get("content") or "")).strip()
+            elif role == "tool":
+                chat_messages.append({
+                    "role": "user",
+                    "content": [{
+                        "type": "tool_result",
+                        "tool_use_id": m.get("tool_call_id"),
+                        "content": m.get("content", ""),
+                    }],
+                })
+            elif role == "assistant" and m.get("tool_calls"):
+                blocks: List[Dict[str, Any]] = []
+                if m.get("content"):
+                    blocks.append({"type": "text", "text": m["content"]})
+                for tc in m["tool_calls"]:
+                    fn = tc.get("function") or {}
+                    raw_args = fn.get("arguments", "{}")
+                    args = json.loads(raw_args) if isinstance(raw_args, str) else (raw_args or {})
+                    blocks.append({
+                        "type": "tool_use",
+                        "id": tc.get("id", ""),
+                        "name": fn.get("name", ""),
+                        "input": args,
+                    })
+                chat_messages.append({"role": "assistant", "content": blocks})
+            else:
+                chat_messages.append({"role": role, "content": m.get("content", "")})
+
+        # Translate OpenAI tools → Anthropic tools
+        anthropic_tools = None
+        if tools:
+            anthropic_tools = []
+            for t in tools:
+                fn = t.get("function") or {}
+                anthropic_tools.append({
+                    "name": fn.get("name", ""),
+                    "description": fn.get("description", ""),
+                    "input_schema": fn.get("parameters") or {"type": "object", "properties": {}},
+                })
+
+        payload: Dict[str, Any] = {
+            "model": model,
+            "max_tokens": 4096,
+            "temperature": temperature,
+            "messages": chat_messages,
+        }
+        if system_text:
+            payload["system"] = system_text
+        if anthropic_tools:
+            payload["tools"] = anthropic_tools
+
+        headers = {
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        }
+
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post("https://api.anthropic.com/v1/messages", headers=headers, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+
+        # Anthropic returns content as a list of blocks; pull out text + tool_use
+        text_parts: List[str] = []
+        oa_tool_calls: List[Dict[str, Any]] = []
+        for block in data.get("content", []):
+            btype = block.get("type")
+            if btype == "text":
+                text_parts.append(block.get("text", ""))
+            elif btype == "tool_use":
+                oa_tool_calls.append({
+                    "id": block.get("id", ""),
+                    "type": "function",
+                    "function": {
+                        "name": block.get("name", ""),
+                        "arguments": json.dumps(block.get("input") or {}),
+                    },
+                })
+
+        usage = data.get("usage") or {}
+        return {
+            "content": "\n".join(text_parts),
+            "tool_calls": oa_tool_calls,
+            "model": model,
+            "provider": "anthropic",
+            "tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
+        }
 
     async def _openai_compatible_chat(
         self,
