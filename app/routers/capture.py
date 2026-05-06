@@ -20,6 +20,38 @@ from app.dependencies import require_api_key, get_block_instance
 
 router = APIRouter()
 
+
+def _classify_block_error(error_text: str) -> int:
+    """Pick a meaningful HTTP status from a block's error string.
+
+    Block errors mostly fall into three buckets:
+      - "X not configured" / "API key required" → 503 Service Unavailable
+        (the platform is fine, the optional integration isn't set up)
+      - network / DNS / connection failures → 503
+      - everything else → 422 (genuine input/processing problem)
+    """
+    if not error_text:
+        return 422
+    lowered = error_text.lower()
+    config_markers = (
+        "not configured",
+        "api key required",
+        "no api key",
+        "credentials missing",
+    )
+    network_markers = (
+        "connection",
+        "name or service not known",
+        "all connection attempts failed",
+        "timed out",
+        "unreachable",
+    )
+    if any(m in lowered for m in config_markers):
+        return 503
+    if any(m in lowered for m in network_markers):
+        return 503
+    return 422
+
 CAPTURE_DATA_DIR = os.path.join(os.getenv("DATA_DIR", "./data"), "captures")
 os.makedirs(CAPTURE_DATA_DIR, exist_ok=True)
 
@@ -99,7 +131,8 @@ async def capture_upload(
         raise HTTPException(status_code=500, detail=f"Capture processing failed: {e}")
 
     if result.get("status") == "error":
-        raise HTTPException(status_code=422, detail=result.get("error", "Processing error"))
+        err = result.get("error", "Processing error")
+        raise HTTPException(status_code=_classify_block_error(err), detail=err)
 
     # Flatten to response model
     inner = result.get("result", result)
@@ -142,7 +175,8 @@ async def capture_ocr_only(
     )
 
     if result.get("status") == "error":
-        raise HTTPException(status_code=422, detail=result.get("error", "OCR failed"))
+        err = result.get("error", "OCR failed")
+        raise HTTPException(status_code=_classify_block_error(err), detail=err)
 
     inner = result.get("result", result)
     return {
@@ -168,7 +202,8 @@ async def capture_structure_text(
 
     result = await block.process(text, params)
     if result.get("status") == "error":
-        raise HTTPException(status_code=422, detail=result.get("error", "Structuring failed"))
+        err = result.get("error", "Structuring failed")
+        raise HTTPException(status_code=_classify_block_error(err), detail=err)
 
     inner = result.get("result", result)
     return {
@@ -191,6 +226,7 @@ async def capture_search(
     result = await block.process(query, {"action": "search", "n_results": n_results})
 
     if result.get("status") == "error":
-        raise HTTPException(status_code=422, detail=result.get("error", "Search failed"))
+        err = result.get("error", "Search failed")
+        raise HTTPException(status_code=_classify_block_error(err), detail=err)
 
     return result.get("result", result)
