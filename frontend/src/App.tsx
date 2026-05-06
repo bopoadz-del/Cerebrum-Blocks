@@ -287,10 +287,32 @@ function AppContent() {
       return [...prev, newDrive];
     });
 
-    // ZVec index file names for related-file search (fire-and-forget)
-    const indexable = files.filter(f => /\.(pdf|txt|md|csv|docx)$/i.test(f.name)).slice(0, 200);
+    // Cascade project names: send filenames to construction.discover_projects,
+    // which uses zvec char-level TF-IDF similarity + path-prefix clustering
+    // to group files under detected projects. Result populates the sidebar's
+    // Projects section. Fire-and-forget on failure — drive still works flat.
+    const indexable = files.filter(f => /\.(pdf|txt|md|csv|docx|xlsx|doc)$/i.test(f.name)).slice(0, 200);
     if (indexable.length > 0) {
-      api.runBlock('zvec', indexable.map(f => f.name).join('\n'), { operation: 'embed' }).catch(() => {});
+      api.discoverProjects(indexable.map(f => ({ name: f.name, path: f.name }))).then(res => {
+        const discovered: Project[] = res.projects.map(p => ({
+          id: p.id,
+          name: p.name,
+          source: p.source,
+          files: p.files.map((f, i) => ({
+            id: `${p.id}-file-${i}`,
+            name: f.name,
+            type: 'file' as const,
+            path: f.path,
+          })),
+        }));
+        setProjects(prev => {
+          // Merge: drop previously auto-discovered ones, keep manually-added projects
+          const manual = prev.filter(p => !p.id.startsWith('proj-'));
+          return [...manual, ...discovered];
+        });
+      }).catch(err => {
+        console.warn('discoverProjects failed', err);
+      });
     }
 
     // Reset so the same files can be re-selected

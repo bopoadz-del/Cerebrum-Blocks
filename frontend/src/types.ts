@@ -19,6 +19,8 @@ export interface Project {
   name: string;
   description?: string;
   active?: boolean;
+  files?: FileNode[];
+  source?: string;
 }
 
 export interface DriveSource {

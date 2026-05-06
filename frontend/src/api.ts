@@ -209,6 +209,28 @@ export const api = {
     return unwrapResult<unknown>(raw);
   },
 
+  // Group a drive's files into projects via construction.discover_projects
+  // (which uses zvec char-level TF-IDF similarity + path-prefix clustering).
+  async discoverProjects(
+    files: Array<{ name: string; path?: string }>,
+  ): Promise<{
+    projects: Array<{ id: string; name: string; files: Array<{ name: string; path?: string }>; file_count: number; source?: string }>;
+    uncategorized: Array<{ name: string; path?: string }>;
+    total_files: number;
+    total_projects: number;
+    method?: string;
+  }> {
+    const raw = await fetchApi('/v1/execute', {
+      method: 'POST',
+      body: JSON.stringify({
+        block: 'construction',
+        input: { files },
+        params: { action: 'discover_projects' },
+      }),
+    });
+    return unwrapResult(raw) as Awaited<ReturnType<typeof api.discoverProjects>>;
+  },
+
   // Health check
   async health(): Promise<{ status: string }> {
     return fetchApi('/health') as Promise<{ status: string }>;

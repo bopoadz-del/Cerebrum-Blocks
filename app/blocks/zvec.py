@@ -101,21 +101,26 @@ class ZvecBlock(UniversalBlock):
                 text_a = params.get("text_a") or _input_text_a or text
                 text_b = params.get("text_b") or _input_text_b or ""
                 texts_list = params.get("texts", [])
+                # char_level=True swaps the analyzer to char-ngrams, which
+                # captures shared substrings on short inputs (filenames,
+                # codes, IDs) where word-TF-IDF is too sparse.
+                char_level = bool(params.get("char_level", False))
 
                 if texts_list and len(texts_list) >= 2:
-                    vectors = _vectorize(texts_list)
+                    vectors = _vectorize(texts_list, char_level=char_level)
                     matrix = cosine_similarity(vectors).tolist()
                     return {
                         "status": "success",
                         "operation": "similarity",
                         "similarity_matrix": matrix,
                         "count": len(texts_list),
+                        "char_level": char_level,
                     }
 
                 if not text_b:
                     return {"status": "error", "error": "Provide text_b or texts list in params"}
 
-                vectors = _vectorize([text_a, text_b])
+                vectors = _vectorize([text_a, text_b], char_level=char_level)
                 score = _cosine(vectors[0], vectors[1])
                 return {
                     "status": "success",
@@ -123,6 +128,7 @@ class ZvecBlock(UniversalBlock):
                     "similarity": round(score, 4),
                     "text_a": text_a[:100],
                     "text_b": text_b[:100],
+                    "char_level": char_level,
                 }
 
             elif operation == "classify":

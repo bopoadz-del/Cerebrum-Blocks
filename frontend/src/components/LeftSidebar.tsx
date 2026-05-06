@@ -109,6 +109,7 @@ export default function LeftSidebar({
   onResize
 }: LeftSidebarProps) {
   const [expandedDrives, setExpandedDrives] = useState<Set<string>>(new Set());
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -119,6 +120,18 @@ export default function LeftSidebar({
         next.delete(driveId);
       } else {
         next.add(driveId);
+      }
+      return next;
+    });
+  };
+
+  const toggleProject = (projectId: string) => {
+    setExpandedProjects(prev => {
+      const next = new Set(prev);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
       }
       return next;
     });
@@ -211,19 +224,58 @@ export default function LeftSidebar({
             Projects
           </div>
           <div className="space-y-0.5">
-            {projects.map(project => (
-              <button
-                key={project.id}
-                onClick={() => onSelectProject(project)}
-                className={`w-full text-left px-2 py-1.5 text-sm rounded-lg transition-colors truncate ${
-                  project.active
-                    ? 'bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]'
-                    : 'hover:bg-[hsl(var(--muted))] text-[hsl(var(--sidebar-fg))]'
-                }`}
-              >
-                {project.name}
-              </button>
-            ))}
+            {projects.map(project => {
+              const hasFiles = (project.files?.length ?? 0) > 0;
+              const isExpanded = expandedProjects.has(project.id);
+              return (
+                <div key={project.id}>
+                  <button
+                    onClick={() => {
+                      if (hasFiles) toggleProject(project.id);
+                      onSelectProject(project);
+                    }}
+                    className={`w-full flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-lg transition-colors ${
+                      project.active
+                        ? 'bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]'
+                        : 'hover:bg-[hsl(var(--muted))] text-[hsl(var(--sidebar-fg))]'
+                    }`}
+                  >
+                    {hasFiles ? (
+                      isExpanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />
+                    ) : (
+                      <span className="w-3 h-3 shrink-0" />
+                    )}
+                    <Folder className="w-4 h-4 shrink-0 opacity-60" />
+                    <span className="truncate flex-1 text-left">{project.name}</span>
+                    {hasFiles && (
+                      <span className="text-xs opacity-60 shrink-0">{project.files!.length}</span>
+                    )}
+                  </button>
+                  {hasFiles && isExpanded && (
+                    <div className="ml-2 border-l border-[hsl(var(--border))] pl-1 mt-0.5">
+                      {project.files!.map(file => {
+                        const driveForFile = drives.find(d => d.fileObjects?.some(f => f.name === file.name)) || drives[0];
+                        return (
+                          <button
+                            key={file.id}
+                            onClick={() => driveForFile && onSelectFile(file, driveForFile)}
+                            className="w-full flex items-center gap-1.5 px-2 py-1 text-xs rounded-md hover:bg-[hsl(var(--muted))] text-[hsl(var(--sidebar-fg))] transition-colors"
+                          >
+                            <FileText className="w-3 h-3 shrink-0 opacity-60" />
+                            <span className="truncate text-left flex-1">{file.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {projects.length === 0 && (
+              <div className="text-xs text-[hsl(var(--muted-foreground))] px-2 py-1">
+                No projects yet — connect a drive
+              </div>
+            )}
           </div>
         </div>
 

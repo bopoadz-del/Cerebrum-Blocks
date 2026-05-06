@@ -5199,6 +5199,207 @@ Total Extension of Time Sought: {total_delay} days
             "pages": None,
         }
 
+    async def discover_projects(self, input_data: Any, params: Dict) -> Dict:
+        """Group a list of files into projects using zvec similarity.
+
+        Pipeline:
+        1. Build a "label" per file = path + filename stem (without extension).
+           File content embedding would be ideal but the SPA only has names at
+           drive-connect time; names are usually informative enough for AEC
+           ("OfficeTower_Drawings_RevA.pdf" tells you the project).
+        2. Call the zvec block with operation=similarity, texts=[labels] →
+           NxN cosine matrix.
+        3. Single-link cluster: any pair with cosine ≥ threshold joins into a
+           component. Components with ≥2 files become projects; singletons
+           fall to "uncategorized".
+        4. Project name = longest common token prefix across the cluster
+           (Title-Cased), with a fallback to the alphabetically-first member.
+        5. Filesystem path prefix overrides naming when present (drives that
+           preserve folder structure → top-level dir = project).
+
+        threshold can be tuned via params.threshold (default 0.35).
+        Falls back to a deterministic filename-prefix heuristic if zvec is
+        unavailable (block missing, sklearn import error, etc.) so the action
+        still produces something useful in restricted environments.
+        """
+        from app.blocks import BLOCK_REGISTRY
+
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+        # Char-level TF-IDF similarity sits in 0.15–0.45 for files sharing a
+        # leading project token; word-level needs 0.30+. Default tuned for
+        # char-level (the path we take below).
+        threshold = float(p.get("threshold", 0.25))
+
+        files = data.get("files") or p.get("files") or []
+        if not files:
+            return {
+                "status": "success",
+                "action": "discover_projects",
+                "projects": [],
+                "uncategorized": [],
+                "total_files": 0,
+                "total_projects": 0,
+                "method": "empty",
+            }
+
+        # Normalise: accept ["name.pdf"], [{"name": ..., "path": ...}], or mixed
+        norm: List[Dict[str, str]] = []
+        for f in files:
+            if isinstance(f, str):
+                norm.append({"name": os.path.basename(f), "path": f})
+            elif isinstance(f, dict):
+                name = f.get("name") or os.path.basename(f.get("path", "")) or ""
+                if name:
+                    norm.append({"name": name, "path": f.get("path") or name})
+
+        # Filesystem-prefix shortcut: if files share a top-level dir, group by it
+        # outright — that's a much stronger signal than name similarity.
+        path_groups: Dict[str, List[int]] = {}
+        rest_indices: List[int] = []
+        for i, item in enumerate(norm):
+            path = item.get("path") or ""
+            parts = [s for s in path.split("/") if s and s != item.get("name")]
+            if parts:
+                path_groups.setdefault(parts[0], []).append(i)
+            else:
+                rest_indices.append(i)
+
+        # Items the path-prefix grouping didn't claim get clustered via zvec
+        labels_for_zvec = [
+            re.sub(r'\.[^.]+$', '', norm[i].get("name", "")).replace("_", " ").replace("-", " ")
+            for i in rest_indices
+        ]
+        zvec_components: List[List[int]] = []  # each entry: indices into rest_indices
+        method = "filesystem-prefix"
+
+        if len(labels_for_zvec) >= 2 and "zvec" in BLOCK_REGISTRY:
+            try:
+                zvec = BLOCK_REGISTRY["zvec"]()
+                sim_result = await zvec.process(
+                    {},
+                    {
+                        "operation": "similarity",
+                        "texts": labels_for_zvec,
+                        "char_level": True,
+                    },
+                )
+                matrix = (
+                    sim_result.get("similarity_matrix")
+                    or sim_result.get("result", {}).get("similarity_matrix")
+                )
+                if matrix:
+                    method = "zvec-similarity"
+                    n = len(labels_for_zvec)
+                    parent = list(range(n))
+
+                    def _find(x: int) -> int:
+                        while parent[x] != x:
+                            parent[x] = parent[parent[x]]
+                            x = parent[x]
+                        return x
+
+                    def _union(a: int, b: int) -> None:
+                        ra, rb = _find(a), _find(b)
+                        if ra != rb:
+                            parent[ra] = rb
+
+                    for i in range(n):
+                        for j in range(i + 1, n):
+                            if matrix[i][j] >= threshold:
+                                _union(i, j)
+
+                    components: Dict[int, List[int]] = {}
+                    for i in range(n):
+                        components.setdefault(_find(i), []).append(i)
+                    zvec_components = list(components.values())
+            except Exception:
+                logger.exception("discover_projects: zvec similarity failed, "
+                                 "falling back to name-prefix heuristic")
+                zvec_components = []
+
+        # Filename-prefix fallback (also used when zvec only had 0–1 candidates)
+        if not zvec_components and labels_for_zvec:
+            method = "filename-prefix"
+            prefix_groups: Dict[str, List[int]] = {}
+            singletons: List[int] = []
+            for k, label in enumerate(labels_for_zvec):
+                tokens = [t for t in re.split(r'[\s_\-.]+', label) if t]
+                head = tokens[0] if tokens else ""
+                if len(head) < 3 or re.fullmatch(r'\d+', head):
+                    singletons.append(k)
+                    continue
+                prefix_groups.setdefault(head.lower(), []).append(k)
+            for ks in prefix_groups.values():
+                zvec_components.append(ks)
+            for k in singletons:
+                zvec_components.append([k])
+
+        # Build final project list: filesystem-prefix groups first, then zvec/prefix
+        projects: List[Dict[str, Any]] = []
+        uncategorized: List[Dict[str, str]] = []
+
+        def _project_name(file_indices: List[int]) -> str:
+            """Title-cased longest common token prefix across the cluster, or
+            the first file's leading token as a fallback."""
+            names = [norm[i]["name"] for i in file_indices]
+            stems = [
+                [t for t in re.split(r'[\s_\-.]+', re.sub(r'\.[^.]+$', '', n)) if t]
+                for n in names
+            ]
+            common: List[str] = []
+            for token_at_i in zip(*stems):
+                if all(t.lower() == token_at_i[0].lower() for t in token_at_i):
+                    common.append(token_at_i[0])
+                else:
+                    break
+            if common:
+                head = " ".join(common)
+            else:
+                head = stems[0][0] if stems and stems[0] else "Project"
+            # CamelCase split for display: OfficeTower → Office Tower
+            display = re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', head)
+            return display.title() if display.islower() or display.isupper() else display
+
+        proj_id = 0
+        for prefix_name, indices in sorted(path_groups.items(), key=lambda kv: (-len(kv[1]), kv[0])):
+            if len(indices) < 2:
+                uncategorized.extend(norm[i] for i in indices)
+                continue
+            proj_id += 1
+            projects.append({
+                "id": f"proj-{proj_id:03d}",
+                "name": prefix_name,
+                "files": [norm[i] for i in indices],
+                "file_count": len(indices),
+                "source": "path",
+            })
+
+        for component in sorted(zvec_components, key=lambda c: -len(c)):
+            global_indices = [rest_indices[k] for k in component]
+            if len(global_indices) < 2:
+                uncategorized.extend(norm[i] for i in global_indices)
+                continue
+            proj_id += 1
+            projects.append({
+                "id": f"proj-{proj_id:03d}",
+                "name": _project_name(global_indices),
+                "files": [norm[i] for i in global_indices],
+                "file_count": len(global_indices),
+                "source": method,
+            })
+
+        return {
+            "status": "success",
+            "action": "discover_projects",
+            "projects": projects,
+            "uncategorized": uncategorized,
+            "total_files": len(norm),
+            "total_projects": len(projects),
+            "method": method,
+            "threshold": threshold,
+        }
+
     async def auto_pipeline(self, input_data: Any, params: Dict) -> Dict:
         """
         Single-call intelligent pipeline.
@@ -5830,6 +6031,7 @@ Total Extension of Time Sought: {total_delay} days
             "digital_twin_sync": self.digital_twin_sync,
             "intelligent_workflow": self.intelligent_workflow,
             "auto_pipeline": self.auto_pipeline,
+            "discover_projects": self.discover_projects,
             "health_check": self.health_check,
             # Week-1 Intelligence Blocks
             "boq_process": self.boq_process,
@@ -5892,6 +6094,7 @@ Total Extension of Time Sought: {total_delay} days
             "digital_twin_sync": self.digital_twin_sync,
             "intelligent_workflow": self.intelligent_workflow,
             "auto_pipeline": self.auto_pipeline,
+            "discover_projects": self.discover_projects,
             "health_check": self.health_check,
             # Week-1 Intelligence Blocks
             "boq_process": self.boq_process,
