@@ -43,8 +43,158 @@ class DrawingQTOBlock(UniversalBlock):
         ],
     }
 
+    async def merge_drawings(self, input_data: Any, params: Dict = None) -> Dict:
+        """Connect 2+ DXF drawings: extract metadata per sheet, find lines that
+        continue across sheet boundaries.
+
+        Inputs:
+          input_data: {"file_paths": ["a.dxf", "b.dxf", ...]} OR list of paths
+          params: {"angle_tol_rad": 0.05, "coord_tol_pct": 0.02}
+
+        Returns sheets[] (per-drawing metadata + bbox + boundary line count)
+        and pairings[] (cross-sheet line continuity matches sorted by
+        confidence). Useful for stitching adjacent floor plans, verifying
+        match-line alignment between disciplines, or detecting that a wall on
+        sheet A-101 keeps going on sheet A-102.
+        """
+        params = params or {}
+        if isinstance(input_data, list):
+            file_paths = input_data
+        elif isinstance(input_data, dict):
+            file_paths = input_data.get("file_paths") or input_data.get("files") or []
+        else:
+            file_paths = []
+        if isinstance(file_paths, dict):
+            file_paths = list(file_paths.values())
+        if not isinstance(file_paths, list) or len(file_paths) < 2:
+            return {
+                "status": "error",
+                "error": "merge_drawings requires file_paths list with ≥2 DXF files",
+            }
+
+        try:
+            import ezdxf  # noqa: F401
+        except ImportError:
+            return {"status": "error", "error": "ezdxf not installed. pip install ezdxf"}
+        import ezdxf
+
+        scale = float(params.get("unit_scale", self.config.get("unit_scale", 1.0)))
+        angle_tol = float(params.get("angle_tol_rad", 0.05))
+        coord_tol = float(params.get("coord_tol_pct", 0.02))
+
+        # Parse each drawing — collect lines + bbox + sheet metadata
+        sheets: List[Dict] = []
+        for fp in file_paths:
+            entry: Dict[str, Any] = {"file": os.path.basename(str(fp)), "path": str(fp)}
+            if not os.path.exists(fp):
+                entry.update({"status": "error", "error": "file not found"})
+                sheets.append(entry)
+                continue
+            ext = os.path.splitext(fp)[1].lower()
+            if ext != ".dxf":
+                entry.update({"status": "error", "error": f"unsupported format {ext} (DXF only — convert DWG via ODA)"})
+                sheets.append(entry)
+                continue
+            try:
+                doc = ezdxf.readfile(fp)
+            except Exception as e:
+                entry.update({"status": "error", "error": f"DXF read error: {e}"})
+                sheets.append(entry)
+                continue
+
+            msp = doc.modelspace()
+            measurements = self._extract_measurements(msp, scale)
+            line_endpoints: List[Tuple[float, float]] = []
+            for m in measurements:
+                if m.get("type") == "line":
+                    s = m.get("start") or [0, 0]
+                    e = m.get("end") or [0, 0]
+                    line_endpoints.extend([(s[0], s[1]), (e[0], e[1])])
+            bbox = _bbox(line_endpoints)
+            boundary = _find_boundary_lines(measurements, bbox, tol_pct=coord_tol)
+            metadata = _extract_sheet_metadata(doc)
+
+            entry.update({
+                "status": "success",
+                "sheet_id": metadata.get("sheet_id"),
+                "scale": metadata.get("scale_annotation"),
+                "title": metadata.get("title_text"),
+                "project": metadata.get("project_text"),
+                "drawing_units": metadata.get("drawing_units"),
+                "bbox": [round(c, 3) for c in bbox],
+                "total_lines": sum(1 for m in measurements if m.get("type") == "line"),
+                "boundary_lines": len(boundary),
+                "_lines": measurements,
+                "_boundary": boundary,
+                "_bbox": bbox,
+            })
+            sheets.append(entry)
+
+        # Cross-match every successful sheet pair
+        pairings: List[Dict] = []
+        successful = [s for s in sheets if s.get("status") == "success"]
+        for i, sa in enumerate(successful):
+            for sb in successful[i + 1:]:
+                pairs = _match_continuity(
+                    sa["_boundary"], sa["_bbox"],
+                    sb["_boundary"], sb["_bbox"],
+                    angle_tol_rad=angle_tol,
+                    coord_tol_pct=coord_tol,
+                )
+                if pairs:
+                    pairings.append({
+                        "sheet_a": sa.get("sheet_id") or sa.get("file"),
+                        "sheet_b": sb.get("sheet_id") or sb.get("file"),
+                        "match_count": len(pairs),
+                        "top_confidence": pairs[0]["confidence"],
+                        "edge_distribution": _summarise_edge_distribution(pairs),
+                        "matches": pairs[:50],  # cap to keep response size bounded
+                    })
+
+        # Strip the heavy internal arrays before returning
+        for s in sheets:
+            for k in ("_lines", "_boundary", "_bbox"):
+                s.pop(k, None)
+
+        # Suggest a stitching order: pair sheets by their adjacency edges.
+        stitching_suggestion: List[str] = []
+        if pairings:
+            top = max(pairings, key=lambda p: p["top_confidence"])
+            stitching_suggestion.append(
+                f"Strongest match: {top['sheet_a']} ↔ {top['sheet_b']} "
+                f"({top['match_count']} aligned lines, confidence {top['top_confidence']:.2f})"
+            )
+            for p in pairings:
+                if p is top:
+                    continue
+                stitching_suggestion.append(
+                    f"  - {p['sheet_a']} ↔ {p['sheet_b']}: {p['match_count']} matches"
+                )
+        else:
+            stitching_suggestion.append(
+                "No line-continuity matches found — drawings may not share a match-line "
+                "or may be at different scales/orientations."
+            )
+
+        return {
+            "status": "success",
+            "action": "merge_drawings",
+            "sheets_processed": len(sheets),
+            "sheets_successful": len(successful),
+            "sheets": sheets,
+            "pairings": pairings,
+            "total_matches": sum(p["match_count"] for p in pairings),
+            "stitching_suggestion": stitching_suggestion,
+            "tolerances_used": {"angle_rad": angle_tol, "coord_pct": coord_tol},
+        }
+
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
+
+        # Multi-drawing route: action=merge_drawings with file_paths list
+        if (params.get("action") == "merge_drawings"
+                or (isinstance(input_data, dict) and isinstance(input_data.get("file_paths"), list))):
+            return await self.merge_drawings(input_data, params)
 
         file_path = self._resolve_file_path(input_data, params)
 
@@ -437,3 +587,224 @@ def _shoelace(coords: List[Tuple[float, float]]) -> float:
         area += coords[i][0] * coords[j][1]
         area -= coords[j][0] * coords[i][1]
     return area / 2.0
+
+
+# ── Multi-drawing analysis (sheet matching + line continuity) ─────────────
+# Used by the construction container's `merge_drawings` action. Detects
+# when two drawings cover adjacent regions: line endpoints near the sheet
+# boundary on drawing A that match line endpoints + direction on the
+# corresponding edge of drawing B = a continuity candidate.
+
+def _bbox(points: List[Tuple[float, float]]) -> Tuple[float, float, float, float]:
+    """Return (min_x, min_y, max_x, max_y) bounding box."""
+    if not points:
+        return (0.0, 0.0, 0.0, 0.0)
+    xs = [p[0] for p in points]
+    ys = [p[1] for p in points]
+    return (min(xs), min(ys), max(xs), max(ys))
+
+
+def _classify_boundary_edge(
+    point: Tuple[float, float],
+    bbox: Tuple[float, float, float, float],
+    tol_pct: float = 0.05,
+) -> Optional[str]:
+    """Return 'left'/'right'/'top'/'bottom' if point is within tol_pct of the
+    matching edge of bbox; None if interior. Uses % of the bbox side length
+    for tolerance so the same threshold works at any drawing scale."""
+    min_x, min_y, max_x, max_y = bbox
+    width = max_x - min_x or 1.0
+    height = max_y - min_y or 1.0
+    tol_x = width * tol_pct
+    tol_y = height * tol_pct
+    px, py = point
+    edges = []
+    if abs(px - min_x) <= tol_x:
+        edges.append(("left", abs(px - min_x)))
+    if abs(px - max_x) <= tol_x:
+        edges.append(("right", abs(px - max_x)))
+    if abs(py - min_y) <= tol_y:
+        edges.append(("bottom", abs(py - min_y)))
+    if abs(py - max_y) <= tol_y:
+        edges.append(("top", abs(py - max_y)))
+    if not edges:
+        return None
+    # Closest wins
+    edges.sort(key=lambda e: e[1])
+    return edges[0][0]
+
+
+def _line_direction_angle(start: Tuple[float, float], end: Tuple[float, float]) -> float:
+    """Return line direction in radians, normalised to [0, π) so that a
+    line and its reverse get the same angle."""
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    angle = math.atan2(dy, dx)
+    if angle < 0:
+        angle += math.pi
+    if angle >= math.pi:
+        angle -= math.pi
+    return angle
+
+
+def _find_boundary_lines(
+    measurements: List[Dict],
+    bbox: Tuple[float, float, float, float],
+    tol_pct: float = 0.05,
+) -> List[Dict]:
+    """Filter the measurements list down to lines with at least one
+    endpoint near the bbox edge — those are continuity candidates."""
+    boundary: List[Dict] = []
+    for m in measurements:
+        if m.get("type") != "line":
+            continue
+        start = m.get("start") or [0, 0]
+        end = m.get("end") or [0, 0]
+        s_edge = _classify_boundary_edge((start[0], start[1]), bbox, tol_pct)
+        e_edge = _classify_boundary_edge((end[0], end[1]), bbox, tol_pct)
+        if s_edge or e_edge:
+            boundary.append({
+                **m,
+                "start_edge": s_edge,
+                "end_edge": e_edge,
+                "angle_rad": round(_line_direction_angle(tuple(start[:2]), tuple(end[:2])), 4),
+            })
+    return boundary
+
+
+_OPPOSITE_EDGE = {"left": "right", "right": "left", "top": "bottom", "bottom": "top"}
+
+
+def _match_continuity(
+    bdy_a: List[Dict],
+    bbox_a: Tuple[float, float, float, float],
+    bdy_b: List[Dict],
+    bbox_b: Tuple[float, float, float, float],
+    *,
+    angle_tol_rad: float = 0.05,
+    coord_tol_pct: float = 0.02,
+) -> List[Dict]:
+    """Pair lines across two drawings that look like the same physical line
+    continuing across a match-line boundary.
+
+    Algorithm:
+      - Drawing A's right-edge candidates pair with Drawing B's left-edge.
+        Top/bottom and other edge orientations work the same way.
+      - Lines must share the same direction angle (mod π) within angle_tol.
+      - The endpoint-coordinate perpendicular to the match edge must match
+        within coord_tol_pct of bbox extent (e.g. for a right-left pairing,
+        the y-coords of the endpoints must agree).
+
+    Returns: list of pairings each with both line dicts + a confidence
+    score derived from angle delta + coord delta.
+    """
+    pairs: List[Dict] = []
+    width_a = (bbox_a[2] - bbox_a[0]) or 1.0
+    height_a = (bbox_a[3] - bbox_a[1]) or 1.0
+
+    for la in bdy_a:
+        # The edge that touches the boundary
+        edge_a = la.get("end_edge") or la.get("start_edge")
+        if not edge_a:
+            continue
+        opp = _OPPOSITE_EDGE[edge_a]
+        # Coordinate perpendicular to the match (the one we expect to align)
+        if edge_a in ("left", "right"):
+            tol_perp = height_a * coord_tol_pct
+            perp_a = (la.get("start") or [0, 0])[1] if la.get("start_edge") == edge_a else (la.get("end") or [0, 0])[1]
+        else:
+            tol_perp = width_a * coord_tol_pct
+            perp_a = (la.get("start") or [0, 0])[0] if la.get("start_edge") == edge_a else (la.get("end") or [0, 0])[0]
+
+        for lb in bdy_b:
+            edge_b = lb.get("start_edge") or lb.get("end_edge")
+            if edge_b != opp:
+                continue
+            # Direction must match (lines are 'same' if angles within tol mod π)
+            d_angle = abs((la.get("angle_rad", 0) - lb.get("angle_rad", 0)) % math.pi)
+            d_angle = min(d_angle, math.pi - d_angle)
+            if d_angle > angle_tol_rad:
+                continue
+            if edge_b in ("left", "right"):
+                perp_b = (lb.get("start") or [0, 0])[1] if lb.get("start_edge") == edge_b else (lb.get("end") or [0, 0])[1]
+            else:
+                perp_b = (lb.get("start") or [0, 0])[0] if lb.get("start_edge") == edge_b else (lb.get("end") or [0, 0])[0]
+            d_perp = abs(perp_a - perp_b)
+            if d_perp > tol_perp:
+                continue
+            # Confidence: blend of angle delta + coord delta
+            angle_score = max(0, 1 - d_angle / max(angle_tol_rad, 1e-6))
+            perp_score = max(0, 1 - d_perp / max(tol_perp, 1e-6))
+            confidence = round((angle_score * 0.4 + perp_score * 0.6), 3)
+            pairs.append({
+                "drawing_a_line": la,
+                "drawing_b_line": lb,
+                "edge": f"{edge_a}↔{opp}",
+                "angle_delta_rad": round(d_angle, 4),
+                "coord_delta": round(d_perp, 4),
+                "confidence": confidence,
+                "same_layer": la.get("layer") == lb.get("layer"),
+            })
+    pairs.sort(key=lambda p: -p["confidence"])
+    return pairs
+
+
+def _extract_sheet_metadata(doc) -> Dict:
+    """Pull title-block hints from a DXF: sheet number, scale annotation,
+    drawing units. Best-effort — DXF doesn't standardise title blocks so we
+    look for common conventions (TEXT entities on TITLE_BLOCK / TITLE layer
+    + scale strings like '1:50' or 'SCALE: 1/100')."""
+    sheet_id = None
+    scale_text = None
+    project_text = None
+    title_text = None
+    msp = doc.modelspace()
+    sheet_re = re.compile(r"\b([A-Z]{1,2}-?\d{2,4}[A-Z]?)\b")  # A-101, S101, M-201A
+    scale_re = re.compile(r"\b(?:scale|esc\.?)\s*[:=]?\s*(1\s*[:/]\s*\d{1,4}|\d+/\d+|\d+\"\s*=\s*\d+'?)", re.IGNORECASE)
+    for entity in msp:
+        etype = entity.dxftype()
+        if etype not in ("TEXT", "MTEXT"):
+            continue
+        try:
+            text = entity.text if etype == "MTEXT" else entity.dxf.text
+            text = str(text or "").strip()
+            if not text:
+                continue
+            layer = (getattr(entity.dxf, "layer", "") or "").upper()
+            if "TITLE" in layer or "TBLOCK" in layer or "BORDER" in layer:
+                if not title_text:
+                    title_text = text[:120]
+            if not sheet_id:
+                m = sheet_re.search(text)
+                if m and len(m.group(1)) <= 10:
+                    sheet_id = m.group(1)
+            if not scale_text:
+                m = scale_re.search(text)
+                if m:
+                    scale_text = m.group(1).strip()
+            if not project_text and ("project" in text.lower() or "proyecto" in text.lower()):
+                project_text = text[:120]
+        except Exception:
+            continue
+    return {
+        "sheet_id": sheet_id,
+        "scale_annotation": scale_text,
+        "project_text": project_text,
+        "title_text": title_text,
+        "drawing_units": str(doc.units) if hasattr(doc, "units") else None,
+    }
+
+
+# Need re for the metadata regexes above
+import re
+
+
+def _summarise_edge_distribution(pairs: List[Dict]) -> Dict[str, int]:
+    """Count which edge-orientations matched. Tells the user whether the
+    drawings stitch primarily horizontally (left↔right) or vertically
+    (top↔bottom)."""
+    out: Dict[str, int] = {}
+    for p in pairs:
+        edge = p.get("edge", "?")
+        out[edge] = out.get(edge, 0) + 1
+    return dict(sorted(out.items(), key=lambda kv: -kv[1]))

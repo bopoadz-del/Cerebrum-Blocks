@@ -7283,6 +7283,30 @@ Total Extension of Time Sought: {total_delay} days
             return {"status": "error", "error": "drawing_qto block not registered"}
         return await block_cls().process(input_data, params)
 
+    async def merge_drawings(self, input_data: Any, params: Dict) -> Dict:
+        """Connect 2+ DXF drawings — sheet metadata extraction + line continuity
+        detection across boundary lines. Useful for stitching adjacent floor
+        plans, verifying match-line alignment between disciplines, or
+        confirming a wall on sheet A-101 continues onto A-102.
+
+        Inputs:
+            input_data: {"file_paths": ["a.dxf", "b.dxf", ...]} OR list of paths
+            params.angle_tol_rad: line direction tolerance (default 0.05 rad ≈ 2.9°)
+            params.coord_tol_pct: endpoint perpendicular alignment tol as % of
+                bbox extent (default 0.02 ≈ 2%)
+
+        Returns: per-sheet metadata, cross-sheet continuity pairings sorted
+        by confidence, edge distribution (horizontal/vertical adjacency),
+        and a stitching suggestion.
+        """
+        from app.blocks import BLOCK_REGISTRY
+        block_cls = BLOCK_REGISTRY.get("drawing_qto")
+        if not block_cls:
+            return {"status": "error", "error": "drawing_qto block not registered"}
+        # Make sure params carries the action so the block routes to merge_drawings
+        merged_params = {**(params or {}), "action": "merge_drawings"}
+        return await block_cls().merge_drawings(input_data, merged_params)
+
     async def primavera_parse(self, input_data: Any, params: Dict) -> Dict:
         """Delegate to PrimaveraParserBlock: parse .xer schedule files."""
         from app.blocks import BLOCK_REGISTRY
@@ -7402,6 +7426,7 @@ Total Extension of Time Sought: {total_delay} days
             "sympy_reason": self.sympy_reason,
             # Week-2 Domain Blocks
             "drawing_qto": self.drawing_qto,
+            "merge_drawings": self.merge_drawings,
             "primavera_parse": self.primavera_parse,
             "orchestrate": self.orchestrate,
             # Week-3 Intelligence Blocks
@@ -7480,6 +7505,7 @@ Total Extension of Time Sought: {total_delay} days
             "sympy_reason": self.sympy_reason,
             # Week-2 Domain Blocks
             "drawing_qto": self.drawing_qto,
+            "merge_drawings": self.merge_drawings,
             "primavera_parse": self.primavera_parse,
             "orchestrate": self.orchestrate,
             # Week-3 Intelligence Blocks
