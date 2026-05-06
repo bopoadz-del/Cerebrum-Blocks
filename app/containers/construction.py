@@ -99,31 +99,18 @@ class ConstructionContainer(UniversalContainer):
         ]
     }
 
-    # ─────────────────────────────────────────────────────────────────
-    # ROUTING TABLE
-    # ─────────────────────────────────────────────────────────────────
-    async def route(self, action: str, input_data: Any, params: Dict) -> Dict:
-        routes = {
-            "process_document": self.process_document,
-            "extract_quantities": self.extract_quantities,
-            "analyze_spec": self.analyze_spec_section,
-            "cost_estimate": self.generate_cost_estimate,
-            "schedule_risk": self.analyze_schedule_risk,
-            "contract_review": self.review_contract_clause,
-            "safety_audit": self.safety_compliance_audit,
-            "carbon_report": self.generate_carbon_report,
-            "procurement": self.procurement_analysis,
-            "status": self._status,
-        }
-        handler = routes.get(action, self._status)
-        return await handler(input_data, params)
+    # The active route() method is defined further down (it has the full
+    # 50-action handler table). A short stub used to live here too — Python
+    # silently took the second definition, so this file had two methods with
+    # the same name and the first 10-action one was unreachable. Removed to
+    # leave a single source of truth.
 
     async def _status(self, input_data: Any, params: Dict) -> Dict:
         return {
             "status": "success",
             "container": self.name,
             "version": self.version,
-            "actions_available": list(self.route.__code__.co_consts[1].keys()) if hasattr(self.route.__code__, 'co_consts') else []
+            "actions_available": [],
         }
 
     # ─────────────────────────────────────────────────────────────────
@@ -6049,11 +6036,22 @@ Total Extension of Time Sought: {total_delay} days
             "learn": self.learn,
             "benchmark_lookup": self.benchmark_lookup,
             "recommend": self.recommend,
+            # Short-name aliases — older callers + the now-removed initial route()
+            # used these names. Keep them mapped so existing integrations keep
+            # working, even though the canonical names are above.
+            "cost_estimate": self.generate_cost_estimate,
+            "analyze_spec": self.analyze_spec_section,
+            "schedule_risk": self.analyze_schedule_risk,
+            "contract_review": self.review_contract_clause,
+            "safety_audit": self.safety_compliance_audit,
+            "carbon_report": self.generate_carbon_report,
+            "procurement": self.procurement_analysis,
+            "status": self._status,
         }
 
         handler = handlers.get(action)
         if not handler:
-            return {"status": "error", "error": f"Unknown action: {action}"}
+            return {"status": "error", "error": f"Unknown action: {action}", "known_actions": sorted(handlers.keys())}
 
         return await handler(input_data, params)
 

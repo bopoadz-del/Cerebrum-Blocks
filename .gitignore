@@ -61,3 +61,6 @@ frontend/node_modules
 vault/secrets.tar.gz
 claudebot/KEYS.md
 frontend/dist
+
+# Runtime data — uploads, captures, the SQLite db file. Generated at runtime.
+data/
