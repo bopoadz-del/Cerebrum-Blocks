@@ -155,6 +155,7 @@ app.include_router(agent_swarm.router)
 app.include_router(workflow.router)
 app.include_router(knowledge.router)
 app.include_router(skills.router)
+app.include_router(notification.router)
 
 # Debug routes — only in non-production environments
 env = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()

@@ -5,6 +5,7 @@ Lightweight async orchestrator. No heavy frameworks.
 - LLM routing: Ollama (local/Orin) ↔ OpenRouter/OpenAI (cloud)
 - Vector memory integration
 - Standard Cerebrum block contract
+- Tool-using agents via MCP contract + direct dispatch (no HTTP)
 """
 
 import os
@@ -12,11 +13,20 @@ import time
 import uuid
 import asyncio
 import json
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
 
 from app.core.universal_base import UniversalBlock
 from app.core.typed_block import TypedBlock, Schema, ContentType
+
+logger = logging.getLogger(__name__)
+
+
+# Cap on tool-call iterations within a single agent task. Without a cap a
+# misbehaving LLM can loop forever; ~6 round-trips is plenty for any realistic
+# task ("plan → call A → call B → summarise" fits in 4).
+_MAX_TOOL_ITERATIONS = int(os.getenv("AGENT_MAX_TOOL_ITERATIONS", "6"))
 
 
 class LLMProvider(str, Enum):
@@ -304,15 +314,23 @@ class AgentSwarmBlock(TypedBlock):
 
             full_context = "\n\n".join(context_parts) if context_parts else ""
 
-            system_prompt = f"""You are {agent.get('name', 'Agent')}, a {agent.get('role', 'custom')} agent.
-Backstory: {agent.get('backstory', '')}
-Goal: {agent.get('goal', '')}
+            tool_specs, tool_block_map = self._build_agent_toolset(agent)
+            tool_hint = (
+                f"\n\nYou have access to these tools (call them when useful, "
+                f"otherwise answer directly): {[t['function']['name'] for t in tool_specs]}"
+                if tool_specs else ""
+            )
 
-Your task: {task.get('description', '')}
-Expected output: {task.get('expected_output', '')}
-{full_context}
-"""
-            messages = [
+            system_prompt = (
+                f"You are {agent.get('name', 'Agent')}, a {agent.get('role', 'custom')} agent.\n"
+                f"Backstory: {agent.get('backstory', '')}\n"
+                f"Goal: {agent.get('goal', '')}\n\n"
+                f"Your task: {task.get('description', '')}\n"
+                f"Expected output: {task.get('expected_output', '')}\n"
+                f"{full_context}"
+                f"{tool_hint}"
+            )
+            messages: List[Dict[str, Any]] = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Execute this task and return only the final result.\n\n{task.get('description', '')}"},
             ]
@@ -322,11 +340,13 @@ Expected output: {task.get('expected_output', '')}
             temperature = agent.get("temperature", 0.3)
 
             try:
-                result = await self._llm_chat(
+                result = await self._run_agent_loop(
                     messages=messages,
                     provider=provider,
                     model=model,
                     temperature=temperature,
+                    tool_specs=tool_specs,
+                    tool_block_map=tool_block_map,
                 )
                 return {
                     "agent": agent_name,
@@ -338,9 +358,12 @@ Expected output: {task.get('expected_output', '')}
                     "metadata": {
                         "model": result.get("model"),
                         "provider": result.get("provider"),
+                        "tool_calls": result.get("tool_calls", []),
+                        "iterations": result.get("iterations", 1),
                     },
                 }
             except Exception as e:
+                logger.exception("agent_swarm: task %s failed", task_id)
                 return {
                     "agent": agent_name,
                     "task_id": task_id,
@@ -350,6 +373,206 @@ Expected output: {task.get('expected_output', '')}
                     "execution_time_ms": int((time.time() - start) * 1000),
                     "metadata": {"error": str(e)},
                 }
+
+    # ── MCP-contract tool calling ─────────────────────────────────────────────
+
+    def _build_agent_toolset(
+        self, agent: Dict
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
+        """Filter the global MCP registry down to this agent's allowlist.
+
+        agent['tools'] can be either:
+          - block names ("construction", "zvec") — exposes that block's tools
+          - explicit MCP tool names ("construction_execute") — exact match
+          - omitted/empty — agent runs without tools (LLM-only, current default)
+
+        Returns:
+            (tool_specs_for_llm, tool_name → block_name map)
+            tool_specs are in OpenAI-compatible {type:"function", function:{...}}
+            shape — both DeepSeek and OpenRouter accept this.
+        """
+        allowed = agent.get("tools") or []
+        if not allowed:
+            return [], {}
+
+        # Resolve only the blocks this agent needs — calling get_all_schemas()
+        # would import every registered block module (≈100MB of sklearn/sympy/
+        # ezdxf/etc. on a Render starter dyno).
+        from app.blocks import BLOCK_REGISTRY
+        from app.core.mcp_registry import mcp_registry
+
+        # Items in `allowed` are either block names or exact tool names. Map
+        # each candidate back to a block name we can fetch the schema for.
+        wanted_blocks: set = set()
+        wanted_tool_names: set = set()
+        for item in allowed:
+            if item in BLOCK_REGISTRY:
+                wanted_blocks.add(item)
+            else:
+                # Treat as a tool name; tool naming convention is "<block>_execute"
+                # for the default mcp_tools() shape, so peel off the suffix.
+                wanted_tool_names.add(item)
+                if item.endswith("_execute"):
+                    candidate = item[: -len("_execute")]
+                    if candidate in BLOCK_REGISTRY:
+                        wanted_blocks.add(candidate)
+
+        tool_specs: List[Dict[str, Any]] = []
+        tool_block_map: Dict[str, str] = {}
+
+        for block_name in wanted_blocks:
+            try:
+                schema = mcp_registry.get_block_schema(block_name)
+            except Exception:
+                logger.exception("agent_swarm: schema unavailable for block %s", block_name)
+                continue
+
+            for tool in schema.get("tools", []):
+                tool_name = tool.get("name")
+                if not tool_name:
+                    continue
+                # If the agent specified a specific tool name and this block's
+                # tool isn't it, skip — only matters when allowlist mixes block
+                # names and tool names.
+                if (
+                    block_name not in (agent.get("tools") or [])
+                    and tool_name not in wanted_tool_names
+                ):
+                    continue
+                tool_specs.append({
+                    "type": "function",
+                    "function": {
+                        "name": tool_name,
+                        "description": tool.get("description", ""),
+                        "parameters": tool.get("inputSchema") or {"type": "object", "properties": {}},
+                    },
+                })
+                tool_block_map[tool_name] = block_name
+
+        return tool_specs, tool_block_map
+
+    async def _call_tool_direct(
+        self, tool_name: str, args: Dict[str, Any], tool_block_map: Dict[str, str]
+    ) -> Dict[str, Any]:
+        """Dispatch an LLM tool_call to a block via direct .execute().
+
+        MCP defines the contract; dispatch is in-process. Saves the ~3ms
+        per-call HTTP overhead measured between TestClient and direct calls,
+        which adds up across multi-step tool loops.
+        """
+        block_name = tool_block_map.get(tool_name)
+        if not block_name:
+            return {"error": f"tool '{tool_name}' not allowed for this agent"}
+
+        from app.dependencies import get_block_instance
+
+        try:
+            block = get_block_instance(block_name)
+        except Exception as e:
+            logger.exception("agent_swarm: failed to resolve block %s", block_name)
+            return {"error": f"block '{block_name}' could not be loaded: {e}"}
+
+        input_data = args.get("input")
+        if input_data is None:
+            # If the LLM passed everything flat (no "input" wrapper), treat
+            # the whole args object as input — minus our reserved "params"
+            input_data = {k: v for k, v in args.items() if k != "params"} or {}
+        params = args.get("params") or {}
+
+        try:
+            result = await block.execute(input_data, params)
+        except Exception as e:
+            logger.exception("agent_swarm: block %s raised", block_name)
+            return {"error": f"block raised: {e}"}
+
+        # Strip envelope so the LLM sees the inner result
+        return result.get("result", result) if isinstance(result, dict) else {"value": result}
+
+    async def _run_agent_loop(
+        self,
+        messages: List[Dict[str, Any]],
+        provider: str,
+        model: Optional[str],
+        temperature: float,
+        tool_specs: List[Dict[str, Any]],
+        tool_block_map: Dict[str, str],
+    ) -> Dict[str, Any]:
+        """Tool-calling loop: chat → tool_calls → dispatch → chat → ...
+
+        Falls back to a single chat call if the agent has no tools, preserving
+        backwards compatibility with the previous "talking head" behaviour.
+        """
+        if not tool_specs:
+            single = await self._llm_chat(
+                messages=messages, provider=provider, model=model, temperature=temperature,
+            )
+            return {**single, "tool_calls": [], "iterations": 1}
+
+        executed_calls: List[Dict[str, Any]] = []
+        total_tokens = 0
+        last_meta: Dict[str, Any] = {}
+
+        for iteration in range(1, _MAX_TOOL_ITERATIONS + 1):
+            response = await self._llm_chat(
+                messages=messages,
+                provider=provider,
+                model=model,
+                temperature=temperature,
+                tools=tool_specs,
+            )
+            total_tokens += response.get("tokens", 0)
+            last_meta = response
+
+            tool_calls = response.get("tool_calls") or []
+            if not tool_calls:
+                # LLM produced a final answer — done.
+                return {
+                    "content": response.get("content", ""),
+                    "model": response.get("model"),
+                    "provider": response.get("provider"),
+                    "tokens": total_tokens,
+                    "tool_calls": executed_calls,
+                    "iterations": iteration,
+                }
+
+            # Record the assistant turn with its tool_calls so the LLM can
+            # match its tool_call_ids against our results.
+            messages.append({
+                "role": "assistant",
+                "content": response.get("content") or "",
+                "tool_calls": tool_calls,
+            })
+
+            for tc in tool_calls:
+                tc_id = tc.get("id", f"call-{len(executed_calls)+1}")
+                fn = tc.get("function", {}) if isinstance(tc.get("function"), dict) else {}
+                tname = fn.get("name", "")
+                raw_args = fn.get("arguments", "{}")
+                try:
+                    args = json.loads(raw_args) if isinstance(raw_args, str) else (raw_args or {})
+                except json.JSONDecodeError:
+                    args = {}
+
+                tool_result = await self._call_tool_direct(tname, args, tool_block_map)
+                executed_calls.append({"tool": tname, "args": args, "result": tool_result})
+
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc_id,
+                    "name": tname,
+                    "content": json.dumps(tool_result, default=str)[:8000],
+                })
+
+        # Iteration cap hit — return whatever the last assistant message said.
+        return {
+            "content": last_meta.get("content", "") or "Iteration cap reached without final answer.",
+            "model": last_meta.get("model"),
+            "provider": last_meta.get("provider"),
+            "tokens": total_tokens,
+            "tool_calls": executed_calls,
+            "iterations": _MAX_TOOL_ITERATIONS,
+            "iteration_cap_hit": True,
+        }
 
     # ── Dependency Resolution ──────────────────────────────────────────────────
 
@@ -380,43 +603,80 @@ Expected output: {task.get('expected_output', '')}
         provider: str,
         model: Optional[str] = None,
         temperature: float = 0.3,
+        tools: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict:
-        import httpx
+        import httpx  # noqa: F401  (used by the provider helpers)
 
         if provider == LLMProvider.OLLAMA:
-            return await self._ollama_chat(messages, model, temperature)
+            # Ollama tool-call support varies wildly by model; pass tools through
+            # but expect plain text for unsupported models.
+            return await self._ollama_chat(messages, model, temperature, tools)
         elif provider == "deepseek" or provider == LLMProvider.DEEPSEEK:
-            api_key = self.config.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY", "")
-            if not api_key:
-                raise ValueError("DeepSeek API key not configured")
-            model = model or self.config.get("deepseek_model", "deepseek-chat")
-            url = "https://api.deepseek.com/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
-            payload = {
-                "model": model,
-                "messages": messages,
-                "temperature": temperature,
-            }
-            async with httpx.AsyncClient(timeout=60) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                return {
-                    "content": data["choices"][0]["message"]["content"],
-                    "model": model,
-                    "provider": "deepseek",
-                    "tokens": data.get("usage", {}).get("total_tokens", 0),
-                }
-
+            return await self._openai_compatible_chat(
+                messages=messages,
+                model=model or self.config.get("deepseek_model", "deepseek-chat"),
+                temperature=temperature,
+                tools=tools,
+                api_key=self.config.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY", ""),
+                url="https://api.deepseek.com/chat/completions",
+                provider_label="deepseek",
+            )
         elif provider == LLMProvider.OPENROUTER:
-            return await self._openrouter_chat(messages, model, temperature)
+            return await self._openai_compatible_chat(
+                messages=messages,
+                model=model or self.config.get("openrouter_model", "anthropic/claude-3.5-sonnet"),
+                temperature=temperature,
+                tools=tools,
+                api_key=self.config.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY", ""),
+                url="https://openrouter.ai/api/v1/chat/completions",
+                provider_label="openrouter",
+            )
         else:
             raise ValueError(f"Unknown provider: {provider}")
 
-    async def _ollama_chat(self, messages, model, temperature):
+    async def _openai_compatible_chat(
+        self,
+        messages: List[Dict[str, Any]],
+        model: str,
+        temperature: float,
+        tools: Optional[List[Dict[str, Any]]],
+        api_key: str,
+        url: str,
+        provider_label: str,
+    ) -> Dict[str, Any]:
+        """Single OpenAI-format call for DeepSeek / OpenRouter.
+
+        Both providers accept the same {messages, tools, tool_choice} shape
+        and return the same {choices: [{message: {content, tool_calls}}]}.
+        """
+        import httpx
+        if not api_key:
+            raise ValueError(f"{provider_label} API key not configured")
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        payload: Dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+        }
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
+
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(url, headers=headers, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+
+        message = data["choices"][0]["message"]
+        return {
+            "content": message.get("content", "") or "",
+            "tool_calls": message.get("tool_calls") or [],
+            "model": model,
+            "provider": provider_label,
+            "tokens": data.get("usage", {}).get("total_tokens", 0),
+        }
+
+    async def _ollama_chat(self, messages, model, temperature, tools=None):
         import httpx
         model = model or self.config.get("ollama_model", "llama3.2:3b")
         url = f"{self.config.get('ollama_base_url')}/api/chat"
@@ -426,43 +686,24 @@ Expected output: {task.get('expected_output', '')}
             "stream": False,
             "options": {"temperature": temperature},
         }
+        if tools:
+            # Ollama follows the OpenAI tools schema for models that support it
+            # (llama3.1+, qwen2.5, mistral-nemo, etc.). For others it's ignored.
+            payload["tools"] = tools
+
         async with httpx.AsyncClient(timeout=self.config.get("default_timeout", 120)) as client:
             resp = await client.post(url, json=payload)
             resp.raise_for_status()
             data = resp.json()
-            return {
-                "content": data["message"]["content"],
-                "model": model,
-                "provider": "ollama",
-                "tokens": data.get("eval_count", 0) + data.get("prompt_eval_count", 0),
-            }
 
-    async def _openrouter_chat(self, messages, model, temperature):
-        import httpx
-        api_key = self.config.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY", "")
-        if not api_key:
-            raise ValueError("OpenRouter API key not configured")
-        model = model or self.config.get("openrouter_model", "anthropic/claude-3.5-sonnet")
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        }
-        payload = {
+        message = data.get("message", {})
+        return {
+            "content": message.get("content", "") or "",
+            "tool_calls": message.get("tool_calls") or [],
             "model": model,
-            "messages": messages,
-            "temperature": temperature,
+            "provider": "ollama",
+            "tokens": data.get("eval_count", 0) + data.get("prompt_eval_count", 0),
         }
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(url, headers=headers, json=payload)
-            resp.raise_for_status()
-            data = resp.json()
-            return {
-                "content": data["choices"][0]["message"]["content"],
-                "model": model,
-                "provider": "openrouter",
-                "tokens": data.get("usage", {}).get("total_tokens", 0),
-            }
 
     # ── Vector Memory ──────────────────────────────────────────────────────────
 

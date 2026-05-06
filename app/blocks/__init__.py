@@ -85,6 +85,7 @@ _BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
 
     # Communication
     "webhook":          ("app.blocks.webhook", "WebhookBlock"),
+    "notification":     ("app.blocks.notification", "NotificationBlock"),
 
     # Intelligence / Analytics
     "analytics":        ("app.blocks.analytics", "AnalyticsBlock"),
