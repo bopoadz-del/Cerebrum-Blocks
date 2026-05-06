@@ -40,23 +40,53 @@ class ApiError extends Error {
   }
 }
 
+// Render's upstream returns 502/503 during deploy swaps, cold starts, or when
+// the worker is briefly unhealthy. These almost always recover within seconds.
+// Retrying transparently turns a deploy-window blip from a user-visible error
+// into a tiny pause. Don't retry 4xx — those are real client problems.
+const _RETRYABLE_STATUSES = new Set([502, 503, 504]);
+const _MAX_RETRIES = 3;
+const _RETRY_BACKOFF_MS = [400, 1200, 3000];
+
 async function fetchApi(path: string, options?: RequestInit): Promise<unknown> {
   const url = `${API_BASE}${path}`;
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_KEY}`,
-      ...options?.headers,
-    },
-  });
+  let lastError: ApiError | null = null;
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new ApiError(response.status, error || `HTTP ${response.status}`);
+  for (let attempt = 0; attempt <= _MAX_RETRIES; attempt++) {
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`,
+          ...options?.headers,
+        },
+      });
+    } catch (e) {
+      // Network error (often the CORS-stripped 502 manifests this way)
+      lastError = new ApiError(0, e instanceof Error ? e.message : 'Network error');
+      if (attempt < _MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, _RETRY_BACKOFF_MS[attempt]));
+        continue;
+      }
+      throw lastError;
+    }
+
+    if (response.ok) {
+      return response.json();
+    }
+
+    if (_RETRYABLE_STATUSES.has(response.status) && attempt < _MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, _RETRY_BACKOFF_MS[attempt]));
+      continue;
+    }
+
+    const errorText = await response.text();
+    throw new ApiError(response.status, errorText || `HTTP ${response.status}`);
   }
 
-  return response.json();
+  throw lastError ?? new ApiError(0, 'fetchApi: retry loop exhausted');
 }
 
 // Unwrap the optional `{ result: ... }` envelope some endpoints use.
@@ -103,22 +133,38 @@ export const api = {
   },
 
   // Upload — multipart; returns file_path (absolute server path)
+  // Same 502/503 retry policy as fetchApi (deploy windows hit upload too).
   async uploadFile(file: File): Promise<{ file_path: string; filename: string; url: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
+    let lastError: ApiError | null = null;
+    for (let attempt = 0; attempt <= _MAX_RETRIES; attempt++) {
+      const formData = new FormData();
+      formData.append('file', file);
 
-    const response = await fetch(`${API_BASE}/upload`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${API_KEY}` },
-      body: formData,
-    });
+      let response: Response;
+      try {
+        response = await fetch(`${API_BASE}/upload`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${API_KEY}` },
+          body: formData,
+        });
+      } catch (e) {
+        lastError = new ApiError(0, e instanceof Error ? e.message : 'Network error');
+        if (attempt < _MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, _RETRY_BACKOFF_MS[attempt]));
+          continue;
+        }
+        throw lastError;
+      }
 
-    if (!response.ok) {
+      if (response.ok) return response.json();
+      if (_RETRYABLE_STATUSES.has(response.status) && attempt < _MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, _RETRY_BACKOFF_MS[attempt]));
+        continue;
+      }
       const error = await response.text();
       throw new ApiError(response.status, error);
     }
-
-    return response.json();
+    throw lastError ?? new ApiError(0, 'uploadFile: retry loop exhausted');
   },
 
   // Extract text from a PDF or image via the pdf/ocr block

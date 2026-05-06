@@ -54,8 +54,21 @@ from app.routers import (
 )
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize all blocks eagerly at startup to avoid race conditions."""
-    await init_blocks()
+    """Start serving traffic immediately; warm core blocks in the background.
+
+    Previously this blocked startup for ~2s+ (importing sklearn, sympy, etc.).
+    During every redeploy, that translated into a window where Render's
+    upstream returned 502 because the new worker hadn't completed lifespan
+    yet. With auto-deploy on every commit, a busy session = several
+    user-visible 502 spikes.
+
+    Now: lifespan returns instantly, init_blocks() runs as a background task.
+    /health responds the moment uvicorn binds. First /v1/execute call may pay
+    a small lazy-import cost (10ms in our profile), but no request is ever
+    blocked on a 2s+ pre-warm.
+    """
+    import asyncio
+    asyncio.create_task(init_blocks())
     yield
 
 
