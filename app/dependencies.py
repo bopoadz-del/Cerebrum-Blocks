@@ -202,52 +202,65 @@ async def require_api_key(
 
 
 async def init_blocks():
-    """Initialise the blocks needed for cold-start health checks.
+    """Lazy-only initialisation — pre-warm runs in a thread pool.
 
-    Eagerly instantiating every block at startup OOM'd Render's Starter
-    plan (512MB) — sklearn, sympy, ezdxf, ifcopenshell etc. add up fast.
-    Now we pre-warm only the blocks that are touched on every request or
-    that need wiring at boot. Everything else lazy-loads through
-    get_block_instance on first use.
+    Earlier we pre-warmed core blocks here (chat/pdf/ocr/construction/zvec/
+    smart_orchestrator/skills) which pulls in sklearn/sympy/ezdxf etc.
+    Even as a background asyncio task, those synchronous imports BLOCK
+    THE EVENT LOOP. Render's health checker then times out hitting
+    /health, marks the worker unhealthy, and kills it — visible in the
+    service event log as `server_failed` with `dial tcp: connect: ...`.
 
-    Override via env: BLOCKS_PREWARM=all forces the old eager behaviour
-    (useful for benchmarking / catching import errors on a beefier plan).
+    Now: pre-warm runs in a thread executor so the event loop stays
+    responsive throughout. /health responds instantly during the pre-warm
+    window. First /v1/execute on a not-yet-warm block pays a small lazy-
+    import cost (~50–500ms depending on the block).
+
+    Override via env:
+        BLOCKS_PREWARM=none → skip pre-warm entirely (pure lazy)
+        BLOCKS_PREWARM=all  → pre-warm every registered block (benchmark)
+        BLOCKS_PREWARM=core → default; pre-warm SPA happy-path blocks
     """
     prewarm_mode = os.getenv("BLOCKS_PREWARM", "core").strip().lower()
+    if prewarm_mode == "none":
+        return
 
     if prewarm_mode == "all":
         targets = list(BLOCK_REGISTRY.keys())
     else:
-        # Core blocks: SPA happy path + the ones init_blocks specifically
-        # wires together at the bottom of this function.
         targets = [
             "chat", "pdf", "ocr", "construction", "zvec",
             "smart_orchestrator", "skills",
         ]
 
-    for name in targets:
+    def _warm_target(name: str) -> None:
         if name in block_instances:
-            continue
+            return
         try:
             block_class = BLOCK_REGISTRY[name]
             block_instances[name] = _create_block_instance(block_class)
         except Exception as e:
             logger.warning("Failed to initialise block %s: %s", name, e)
 
-    # Wire deps for whatever we did manage to instantiate
+    loop = asyncio.get_running_loop()
+    for name in targets:
+        # to_thread() runs the synchronous import in the default executor —
+        # event loop continues serving /health and other fast endpoints.
+        await asyncio.to_thread(_warm_target, name)
+
+    # Wire deps for whatever we did manage to instantiate (cheap, no imports)
     for name, instance in list(block_instances.items()):
         block_class = BLOCK_REGISTRY.get(name)
         if block_class:
             _wire_block_dependencies(instance, block_class, name)
 
     if get_memory_block:
-        get_memory_block()
+        await asyncio.to_thread(get_memory_block)
     if get_monitoring_block:
-        get_monitoring_block()
+        await asyncio.to_thread(get_monitoring_block)
     if get_auth_block:
-        get_auth_block()
+        await asyncio.to_thread(get_auth_block)
 
-    # Wire skills block into smart orchestrator for hint enrichment
     try:
         if "smart_orchestrator" in block_instances and "skills" in block_instances:
             orch = block_instances["smart_orchestrator"]
