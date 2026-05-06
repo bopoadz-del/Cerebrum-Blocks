@@ -3,22 +3,26 @@
 import os
 import sys
 
-# Force fresh bytecode on Render deployments (clear stale __pycache__)
-for root, dirs, files in os.walk(os.path.dirname(os.path.abspath(__file__))):
-    for d in dirs:
-        if d == "__pycache__":
-            try:
-                import shutil
-                shutil.rmtree(os.path.join(root, d))
-            except Exception:
-                pass
+# Optional: clear stale bytecode at import time. Originally a workaround
+# for Render redeploys keeping prior worker's __pycache__ around. Now
+# gated behind CLEAR_PYCACHE=1 so we don't scan the whole tree (and miss
+# the bytecode cache on every cold start) by default. Prefer setting
+# PYTHONDONTWRITEBYTECODE=1 in the deploy environment instead.
+if os.getenv("CLEAR_PYCACHE", "").lower() in ("1", "true", "yes"):
+    import shutil as _shutil
+    for _root, _dirs, _ in os.walk(os.path.dirname(os.path.abspath(__file__))):
+        for _d in _dirs:
+            if _d == "__pycache__":
+                try:
+                    _shutil.rmtree(os.path.join(_root, _d))
+                except OSError:
+                    pass
 
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
@@ -31,8 +35,7 @@ init_sentry()
 
 logger = logging.getLogger(__name__)
 
-from app.blocks import BLOCK_REGISTRY
-from app.dependencies import block_instances, _create_block_instance, init_blocks
+from app.dependencies import init_blocks
 from app.routers import (
     auth,
     blocks,
@@ -81,9 +84,23 @@ app = FastAPI(
 )
 
 def _resolve_cors_origins() -> list[str]:
+    """Resolve allowed origins.
+
+    `CORS_ORIGINS` env wins when set (comma-separated). Otherwise we fall
+    back to the known Render production URLs, with localhost added in dev.
+    `*` is rejected when `allow_credentials=True` (browsers reject it
+    anyway, but it's worth catching at config time).
+    """
     raw = os.getenv("CORS_ORIGINS", "").strip()
     if raw:
-        return [o.strip() for o in raw.split(",") if o.strip()]
+        origins = [o.strip() for o in raw.split(",") if o.strip()]
+        if "*" in origins:
+            logger.warning(
+                "CORS_ORIGINS contains '*' but allow_credentials=True. "
+                "Wildcard ignored — set explicit origins instead."
+            )
+            origins = [o for o in origins if o != "*"]
+        return origins
 
     env = os.getenv("ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()
     defaults = [
@@ -105,51 +122,36 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_resolve_cors_origins(),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # Explicit method allowlist — `["*"]` is browser-broad and made it hard
+    # to audit which verbs the API actually serves.
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    # Explicit header allowlist. Authorization carries the bearer token;
+    # X-Requested-With is conventional for the SPA's fetch wrapper.
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "X-Requested-With",
+        "X-Request-ID",
+    ],
+    # Surface rate-limit and request-id headers so the SPA can react
+    # without hard-coding header sniffing.
+    expose_headers=[
+        "X-RateLimit-Limit",
+        "X-RateLimit-Remaining",
+        "X-RateLimit-Reset",
+        "X-Request-ID",
+    ],
+    max_age=600,
 )
 
 
-# File upload security — only intercepts actual upload paths, never chat/chain
-@app.middleware("http")
-async def file_upload_security_middleware(request: Request, call_next):
-    path = request.url.path.lower()
-
-    if "/upload" in path:
-        body = await request.body()
-
-        try:
-            import json
-            data = json.loads(body) if body else {}
-        except Exception:
-            data = {}
-
-        if any(k in str(data) for k in ["file_path", "filename", "file"]):
-            try:
-                if "security" not in block_instances:
-                    block_instances["security"] = _create_block_instance(BLOCK_REGISTRY["security"])
-                security = block_instances.get("security")
-                if security:
-                    validation = await security.validate_file(data, {})
-                    if not validation.get("safe"):
-                        return JSONResponse(
-                            status_code=400,
-                            content={
-                                "status": "error",
-                                "error": "Security validation failed",
-                                "details": validation.get("error"),
-                                "violation": validation.get("violation"),
-                            },
-                        )
-            except Exception:
-                logger.exception("file upload security middleware failed", extra={"path": path})
-
-        async def receive():
-            return {"type": "http.request", "body": body, "more_body": False}
-
-        request = Request(request.scope, receive, request._send)
-
-    return await call_next(request)
+# NOTE: a previous /upload security middleware lived here. It tried to
+# json.loads() the request body to feed a `security` block, but /upload is
+# multipart (FormData), so the JSON decode silently failed and validation
+# never ran. Worse, the middleware also buffered the entire upload body
+# into memory just to discard it. The route handler in upload.py already
+# enforces size, extension, MIME, and traversal-safe filenames — so the
+# middleware was dead weight at best and a memory hazard at worst. Removed.
 
 
 # Include all routers

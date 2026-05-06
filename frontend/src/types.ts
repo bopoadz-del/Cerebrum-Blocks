@@ -182,7 +182,7 @@ export interface CostEstimate {
 export interface Risk {
   id: string;
   description: string;
-  severity: 'HIGH' | 'MEDIUM' | 'LOW';
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   category: string;
   mitigation?: string;
 }

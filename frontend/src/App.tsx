@@ -17,7 +17,7 @@ import type {
   PipelineCtx,
   NextAction,
 } from '@/types';
-import { api, mapConstructionResult } from '@/api';
+import { api, mapConstructionResult, describeError } from '@/api';
 import { ThemeProvider } from '@/context/ThemeContext';
 import LeftSidebar from '@/components/LeftSidebar';
 import ChatArea from '@/components/ChatArea';
@@ -60,10 +60,24 @@ function AppContent() {
   const localFileInputRef = useRef<HTMLInputElement>(null);
   const localFolderInputRef = useRef<HTMLInputElement>(null);
 
+  // I8: surface health-check failures up-front. A silent fail leaves the
+  // user typing for ~10s before they discover the API is asleep.
   useEffect(() => {
-    api.health().catch(() => {
-      console.log('API health check failed — server may be waking up');
+    let cancelled = false;
+    api.health().catch((err) => {
+      if (cancelled) return;
+      const { message } = describeError(err);
+      setMessages((prev) => [
+        {
+          id: uuidv4(),
+          role: 'system',
+          content: `⚠️ ${message} (the server may still be waking up — actions will retry)`,
+          timestamp: Date.now(),
+        },
+        ...prev,
+      ]);
     });
+    return () => { cancelled = true; };
   }, []);
 
   const addMessage = useCallback((role: Message['role'], content: string, attachments?: Message['attachments']) => {
@@ -170,7 +184,7 @@ function AppContent() {
               freshFileName = pipelineResult.fileName;
               addMessage('system', `Analyzed "${file.name}". Construction intelligence panels updated.`);
             } catch (err) {
-              addMessage('error', `Failed to analyze "${file.name}": ${err instanceof Error ? err.message : 'Unknown error'}`);
+              addMessage('error', `Failed to analyze "${file.name}": ${describeError(err).message}`);
             }
           } else {
             addMessage('system', `"${file.name}" (${(file.size / 1024).toFixed(1)} KB) — unsupported file type.`);
@@ -195,7 +209,7 @@ function AppContent() {
         addMessage('assistant', result.text || result.response || '');
       }
     } catch (err) {
-      addMessage('error', err instanceof Error ? err.message : 'An unexpected error occurred.');
+      addMessage('error', describeError(err).message);
     } finally {
       setProcessing({ active: false, stage: '', progress: 0 });
     }
@@ -252,7 +266,7 @@ function AppContent() {
       }
       addMessage('system', `Analyzed "${fileNode.name}" from ${drive.name}. Construction intelligence panels updated.`);
     } catch (err) {
-      addMessage('error', `Failed to analyze "${fileNode.name}": ${err instanceof Error ? err.message : 'Unknown error'}`);
+      addMessage('error', `Failed to analyze "${fileNode.name}": ${describeError(err).message}`);
     } finally {
       setProcessing({ active: false, stage: '', progress: 0 });
     }
@@ -352,7 +366,16 @@ function AppContent() {
         // Defensive: API may return an error envelope (no `projects` key) when
         // the construction block fails internally — don't crash the SPA.
         const projectsArr = Array.isArray(res?.projects) ? res.projects : [];
-        if (projectsArr.length === 0) return;
+        if (projectsArr.length === 0) {
+          // I7: Tell the user explicitly. Otherwise an empty Projects
+          // sidebar after picking 200 PDFs looks like the upload silently
+          // failed.
+          addMessage(
+            'system',
+            `Loaded ${indexable.length} file(s) from "${newDrive.name}" — no project groupings detected. Files available under the drive in a flat list.`,
+          );
+          return;
+        }
         const discovered: Project[] = projectsArr.map(p => ({
           id: p.id,
           name: p.name,
@@ -364,13 +387,22 @@ function AppContent() {
             path: f?.path,
           })),
         }));
+        // M7: only drop previously auto-discovered entries from the same
+        // drive source. The old prefix check `id.startsWith('proj-')`
+        // would also wipe manually-added projects whose IDs happened to
+        // share the prefix.
         setProjects(prev => {
-          // Merge: drop previously auto-discovered ones, keep manually-added projects
-          const manual = prev.filter(p => !p.id.startsWith('proj-'));
-          return [...manual, ...discovered];
+          const replacedSources = new Set(discovered.map(d => d.source).filter(Boolean));
+          const kept = prev.filter(p => !replacedSources.has(p.source));
+          return [...kept, ...discovered];
         });
+        addMessage(
+          'system',
+          `Detected ${discovered.length} project group(s) from "${newDrive.name}".`,
+        );
       }).catch(err => {
         console.warn('discoverProjects failed', err);
+        addMessage('system', `Project discovery skipped: ${describeError(err).message}`);
       });
     }
 
@@ -455,7 +487,7 @@ function AppContent() {
         addMessage('system', summary || `${action.replace(/_/g, ' ')} complete.`);
       }
     } catch (err) {
-      addMessage('error', `Action "${action}" failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      addMessage('error', `Action "${action}" failed: ${describeError(err).message}`);
     } finally {
       setProcessing({ active: false, stage: '', progress: 0 });
     }

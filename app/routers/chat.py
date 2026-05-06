@@ -21,7 +21,14 @@ class ChatRequest(BaseModel):
 
 @router.post("/chat")
 async def chat(request: ChatRequest, auth: dict = Depends(require_api_key)):
-    """Simple chat endpoint."""
+    """Primary chat endpoint — consumed by the SPA's `api.sendMessage`.
+
+    The other chat-shaped routes in this file (`/chat/stream`,
+    `/v1/chat`, `/v1/chat/stream`) exist for streaming/MCP use cases but
+    are NOT consumed by the current SPA. Don't delete them without
+    auditing external callers, but treat them as legacy until the SPA
+    grows a streaming UI.
+    """
     if "chat" not in BLOCK_REGISTRY:
         raise HTTPException(500, "Chat block not available")
 

@@ -695,10 +695,16 @@ class ConstructionContainer(UniversalContainer):
     def _extract_financial_terms(self, text: str) -> Dict:
         """Pull headline numbers from contract text.
 
-        Patterns now use [^\n] (any char except newline) instead of [\s\w]
-        so they traverse \':\' \'$\' \'(\' etc. — real terms read
-        \'Advance payment: 20% upon mobilization\' (the \':\' was the previous
-        regex\'s Achilles heel). Multilingual EN/ES/PT/FR.
+        Patterns now use [^\\n] (any char except newline) instead of [\\s\\w]
+        so they traverse ':' '$' '(' etc. — real terms read
+        'Advance payment: 20% upon mobilization' (the ':' was the previous
+        regex's Achilles heel). Multilingual EN/ES/PT/FR.
+
+        Note: `contract_value` and `liquidated_damages_per_day` are stored
+        as numeric *strings* (parsed via `_parse_money_str` to handle US/EU
+        conventions but kept as str so we don't lose precision on values
+        large enough to push float64 limits). Downstream callers that need
+        a number must run them back through `_safe_float`.
         """
         terms: Dict[str, Any] = {}
 
@@ -2884,7 +2890,12 @@ class ConstructionContainer(UniversalContainer):
             "ref": ref_num,
             "description": name,
             "type": sub_type,
-            "status": "Not Submitted",
+            # Status uses the SPA Submittal enum (PENDING / APPROVED /
+            # REJECTED / REQUIRED). "Pending" maps to PENDING after the
+            # mapper's .toUpperCase() — keeps newly-generated entries
+            # rendering with the proper amber chip instead of a grey
+            # overflow badge.
+            "status": "Pending",
             "due_date": due_date,
             "review_days": 14,
         }
@@ -6560,12 +6571,16 @@ Total Extension of Time Sought: {total_delay} days
         # merge its findings on top of the file-based result.
         doc_type_hint = p.get("doc_type", "auto")
         text_result: Dict = {}
+        # Captured here so we can surface the warning in the response even
+        # though doc_result hasn't been built yet.
+        _early_warnings: List[Dict] = []
         if extracted_text and len(extracted_text.strip()) >= 20:
             try:
                 text_result = await self._analyse_text_only(extracted_text, doc_type_hint)
-            except Exception:
+            except Exception as exc:
                 logger.exception("auto_pipeline: text analysis failed")
                 text_result = {}
+                _early_warnings.append({"panel": "text_analysis", "error": str(exc)})
 
         if file_path:
             try:
@@ -6573,9 +6588,10 @@ Total Extension of Time Sought: {total_delay} days
                     {"file_path": file_path, "extracted_text": extracted_text},
                     {"doc_type": doc_type_hint, "file_path": file_path}
                 )
-            except Exception:
+            except Exception as exc:
                 logger.exception("auto_pipeline: process_document failed for %s", file_path)
                 doc_result = text_result or {"status": "error", "doc_type": "unknown"}
+                _early_warnings.append({"panel": "document_parse", "error": str(exc)})
         else:
             doc_result = text_result or {"status": "error", "doc_type": "unknown"}
 
@@ -6603,6 +6619,10 @@ Total Extension of Time Sought: {total_delay} days
         panels = []
         downstream = {}
         next_actions = []
+        # Per-panel failures are captured here so the SPA can render a
+        # "1 panel failed to populate" notice instead of silently empty
+        # sections. Each entry: {"panel": <name>, "error": <message>}.
+        pipeline_warnings: List[Dict] = list(_early_warnings)
 
         # ── Document info panel (always) ─────────────────────────────────────
         panels.append({
@@ -6676,14 +6696,48 @@ Total Extension of Time Sought: {total_delay} days
         if has_quantities:
             try:
                 gfa = _qty_val(quantities.get("floor_area_m2", 0))
+                # Build per-input line items so the SPA cost panel can show
+                # the breakdown rather than just a subtotal. Values are in
+                # the requested currency (already FX-adjusted below).
+                line_items: List[Dict] = []
                 if gfa > 0:
                     subtotal_usd = gfa * rate_usd_per_m2
+                    line_items.append({
+                        "item": f"{building_type.replace('_', ' ').title()} GFA",
+                        "quantity": gfa,
+                        "unit": "m²",
+                        "rate": rate_usd_per_m2,
+                        "amount_usd": round(subtotal_usd, 2),
+                    })
                 else:
-                    subtotal_usd = (
-                        _qty_val(quantities.get("concrete_volume_m3", 0)) * 150 +
-                        _qty_val(quantities.get("steel_weight_kg", 0)) * 1.8
-                    )
-                # Convert from USD to the requested currency
+                    concrete = _qty_val(quantities.get("concrete_volume_m3", 0))
+                    steel = _qty_val(quantities.get("steel_weight_kg", 0))
+                    if concrete > 0:
+                        line_items.append({
+                            "item": "Concrete",
+                            "quantity": concrete,
+                            "unit": "m³",
+                            "rate": 150.0,
+                            "amount_usd": round(concrete * 150, 2),
+                        })
+                    if steel > 0:
+                        line_items.append({
+                            "item": "Steel / Rebar",
+                            "quantity": steel,
+                            "unit": "kg",
+                            "rate": 1.8,
+                            "amount_usd": round(steel * 1.8, 2),
+                        })
+                    subtotal_usd = sum(li["amount_usd"] for li in line_items)
+                # Convert from USD to the requested currency.
+                if currency != "USD" and fx and fx != 1.0:
+                    for li in line_items:
+                        li["amount"] = round(li["amount_usd"] / fx, 2)
+                        li["currency"] = currency
+                else:
+                    for li in line_items:
+                        li["amount"] = li["amount_usd"]
+                        li["currency"] = currency
                 subtotal = subtotal_usd / fx if currency != "USD" else subtotal_usd
                 overhead = round(subtotal * 0.10, 2)
                 contingency = round(subtotal * 0.05, 2)
@@ -6697,17 +6751,19 @@ Total Extension of Time Sought: {total_delay} days
                         "currency": currency,
                         "rate_per_m2": round(rate_usd_per_m2 / fx, 2) if gfa > 0 else None,
                         "building_type": building_type if gfa > 0 else None,
-                    }
+                    },
+                    "line_items": line_items,
                 }
                 downstream["cost_estimate"] = cost_result
                 panels.append({
                     "type": "cost_estimate",
                     "title": "Cost Estimate",
                     "data": cost_result["summary"],
-                    "line_items": []
+                    "line_items": line_items,
                 })
-            except Exception:
+            except Exception as exc:
                 logger.exception("auto_pipeline: cost estimate calculation failed")
+                pipeline_warnings.append({"panel": "cost_estimate", "error": str(exc)})
 
         # ── Procurement panel (always generated) ─────────────────────────────
         try:
@@ -6733,8 +6789,9 @@ Total Extension of Time Sought: {total_delay} days
                 "label": "Generate Procurement List",
                 "reason": "Generate prioritised procurement schedule"
             })
-        except Exception:
+        except Exception as exc:
             logger.exception("auto_pipeline: procurement_list_generator failed")
+            pipeline_warnings.append({"panel": "procurement", "error": str(exc)})
 
         # ── Carbon panel (when quantities present) ───────────────────────────
         # Region-aware embodied-carbon report. params.region (default global)
@@ -6763,8 +6820,9 @@ Total Extension of Time Sought: {total_delay} days
                         "recommendations": carbon_result.get("recommendations", [])[:3],
                     },
                 })
-            except Exception:
+            except Exception as exc:
                 logger.exception("auto_pipeline: carbon report failed")
+                pipeline_warnings.append({"panel": "carbon", "error": str(exc)})
 
         # ── RFIs panel (when text contains TBD/clarification gaps) ───────────
         # Auto-detected from extracted_text — empty if the document is clean.
@@ -6790,8 +6848,9 @@ Total Extension of Time Sought: {total_delay} days
                         "label": "Issue RFIs",
                         "reason": f"{len(rfis)} information gap(s) detected in document",
                     })
-            except Exception:
+            except Exception as exc:
                 logger.exception("auto_pipeline: rfi_generator failed")
+                pipeline_warnings.append({"panel": "rfis", "error": str(exc)})
 
         # Risks → risk register
         risks = doc_result.get("risks") or doc_result.get("identified_risks") or []
@@ -6808,8 +6867,9 @@ Total Extension of Time Sought: {total_delay} days
                     "data": risk_result.get("risk_register") or risk_result.get("top_risks") or [],
                     "total": risk_result.get("total_risks", 0)
                 })
-            except Exception:
+            except Exception as exc:
                 logger.exception("auto_pipeline: risk_register_auto_populate failed")
+                pipeline_warnings.append({"panel": "risks", "error": str(exc)})
 
         # Specifications → submittal log
         specs = doc_result.get("specifications") or doc_result.get("spec_sections") or []
@@ -6826,28 +6886,48 @@ Total Extension of Time Sought: {total_delay} days
                     "data": submittal_result.get("submittal_register") or submittal_result.get("submittals") or [],
                     "total": submittal_result.get("total_submittals", 0)
                 })
-            except Exception:
+            except Exception as exc:
                 logger.exception("auto_pipeline: submittal_log_generator failed")
+                pipeline_warnings.append({"panel": "submittals", "error": str(exc)})
 
         # Schedule → progress tracker
         if doc_type == "schedule":
             try:
+                # include_details=True so the activities array actually
+                # populates; without it the SPA's schedule panel comes
+                # back empty even when parsing succeeds.
                 sched_result = await self.parse_primavera_schedule(
-                    {"file_path": file_path}, {}
+                    {"file_path": file_path}, {"include_details": True}
                 )
                 downstream["schedule"] = sched_result
+                # Hoist the activity list into a stable top-level
+                # `activities` key so the SPA mapper finds it without
+                # walking the nested response shape.
+                activities = (
+                    sched_result.get("detailed_activities")
+                    or (sched_result.get("critical_path") or {}).get("activities")
+                    or []
+                )
                 panels.append({
                     "type": "schedule",
                     "title": "Schedule",
-                    "data": sched_result
+                    "data": {
+                        "activities": activities,
+                        "summary": sched_result.get("summary"),
+                        "critical_path": sched_result.get("critical_path"),
+                        "milestones": sched_result.get("milestones"),
+                        "schedule_risks": sched_result.get("schedule_risks"),
+                        "recommendations": sched_result.get("recommendations"),
+                    },
                 })
                 next_actions.append({
                     "action": "progress_tracker",
                     "label": "Track Progress",
                     "reason": "Schedule loaded"
                 })
-            except Exception:
+            except Exception as exc:
                 logger.exception("auto_pipeline: parse_primavera_schedule failed")
+                pipeline_warnings.append({"panel": "schedule", "error": str(exc)})
 
         # Contract → process contract details
         if doc_type == "contract":
@@ -6866,8 +6946,9 @@ Total Extension of Time Sought: {total_delay} days
                     "label": "Issue Payment Certificate",
                     "reason": "Contract terms identified"
                 })
-            except Exception:
+            except Exception as exc:
                 logger.exception("auto_pipeline: process_contract failed")
+                pipeline_warnings.append({"panel": "contract", "error": str(exc)})
 
         # ── Chat context: structured text the user can follow up on ──────────
         chat_context_parts = [f"Document: {file_path.split('/')[-1]} (type: {doc_type})"]
@@ -6885,6 +6966,35 @@ Total Extension of Time Sought: {total_delay} days
         if extracted_text:
             chat_context_parts.append(f"\nExtracted text (first 3000 chars):\n{extracted_text[:3000]}")
 
+        # ── Placeholder panels for missing schedule / contract ───────────────
+        # If the dedicated panel wasn't emitted — either because doc_type
+        # didn't trigger that branch, or because the branch ran and threw
+        # — surface a hint instead of leaving the SPA section silently
+        # empty. The user can re-run via the Run Action menu.
+        _failed_panels = {w["panel"] for w in pipeline_warnings}
+        if not any(p["type"] == "schedule" for p in panels):
+            note = (
+                "Schedule generation failed — see warnings."
+                if "schedule" in _failed_panels
+                else "Schedule not auto-detected. Use Run Action → Parse Schedule (XER/XML)."
+            )
+            panels.append({
+                "type": "schedule_hint",
+                "title": "Schedule",
+                "data": {"note": note},
+            })
+        if not any(p["type"] == "contract" for p in panels):
+            note = (
+                "Contract analysis failed — see warnings."
+                if "contract" in _failed_panels
+                else "Contract not auto-detected. Use Run Action → Process Contract."
+            )
+            panels.append({
+                "type": "contract_hint",
+                "title": "Contract Analysis",
+                "data": {"note": note},
+            })
+
         return {
             "status": "success",
             "action": "auto_pipeline",
@@ -6892,6 +7002,7 @@ Total Extension of Time Sought: {total_delay} days
             "panels": panels,
             "downstream_actions_run": list(downstream.keys()),
             "next_actions": next_actions,
+            "pipeline_warnings": pipeline_warnings,
             "chat_context": "\n".join(chat_context_parts),
             "raw_doc_result": doc_result,
         }

@@ -191,6 +191,9 @@ async def ingest(
     Layer 3 (Map): Structured output + downstream feeds for schedule/cost/risk engines
 
     Returns structured JSON/YAML consumable by downstream blocks.
+
+    NOTE: not consumed by the SPA today (the SPA uses `/upload` then
+    `/v1/execute`). Direct API or programmatic callers only.
     """
     saved_paths = {}
     temp_files = []

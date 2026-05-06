@@ -280,8 +280,15 @@ export default function RightPanel({
                         <span
                           className="text-xs px-2 py-0.5 rounded-full font-medium"
                           style={{
-                            backgroundColor: risk.severity === 'HIGH' ? 'hsl(var(--destructive))' : risk.severity === 'MEDIUM' ? 'hsl(var(--warning))' : 'hsl(var(--success))',
-                            color: '#fff'
+                            backgroundColor:
+                              risk.severity === 'CRITICAL' ? 'hsl(var(--destructive))' :
+                              risk.severity === 'HIGH'     ? 'hsl(var(--destructive))' :
+                              risk.severity === 'MEDIUM'   ? 'hsl(var(--warning))' :
+                                                             'hsl(var(--success))',
+                            color: '#fff',
+                            // CRITICAL gets the same destructive hue as HIGH but slightly bolder
+                            // to keep visual hierarchy when both are present in the list.
+                            fontWeight: risk.severity === 'CRITICAL' ? 700 : 500,
                           }}
                         >
                           {risk.severity}

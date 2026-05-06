@@ -32,12 +32,60 @@ const API_BASE =
 // must be scoped to client-safe operations on the server. Never inline a master key.
 const API_KEY = import.meta.env.VITE_API_KEY ?? (isLocalHost ? 'cb_dev_key' : '');
 
-class ApiError extends Error {
+export type ApiErrorKind =
+  | 'network'           // status 0 — fetch threw / CORS-stripped failure
+  | 'auth'              // 401
+  | 'forbidden'         // 403
+  | 'not-found'         // 404
+  | 'payload-too-large' // 413
+  | 'rate-limited'      // 429
+  | 'server-down'       // 502/503/504 (after retries exhausted)
+  | 'server-error'      // 5xx other
+  | 'client-error'      // 4xx other
+  | 'unknown';
+
+export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  kind: ApiErrorKind;
+  constructor(status: number, message: string, kind?: ApiErrorKind) {
     super(message);
     this.status = status;
+    this.kind = kind ?? classifyStatus(status);
   }
+}
+
+function classifyStatus(status: number): ApiErrorKind {
+  if (status === 0) return 'network';
+  if (status === 401) return 'auth';
+  if (status === 403) return 'forbidden';
+  if (status === 404) return 'not-found';
+  if (status === 413) return 'payload-too-large';
+  if (status === 429) return 'rate-limited';
+  if (status === 502 || status === 503 || status === 504) return 'server-down';
+  if (status >= 500) return 'server-error';
+  if (status >= 400) return 'client-error';
+  return 'unknown';
+}
+
+/** Stable, user-facing message for each error kind. UI components map the
+ *  tag directly to a banner / toast so we don't render raw API error text. */
+export function describeError(err: unknown): { kind: ApiErrorKind; message: string } {
+  if (err instanceof ApiError) {
+    const messages: Record<ApiErrorKind, string> = {
+      'network': 'Server unreachable. Check your connection and try again.',
+      'auth': 'Session expired or invalid API key. Please sign in again.',
+      'forbidden': 'You don\'t have permission for that action.',
+      'not-found': 'Endpoint not found. The feature may be unavailable.',
+      'payload-too-large': 'File is too large. Try a smaller file.',
+      'rate-limited': 'Too many requests — slow down for a moment.',
+      'server-down': 'Server is restarting. Please retry in a minute.',
+      'server-error': 'The server encountered an error. Please try again.',
+      'client-error': err.message || 'Request rejected.',
+      'unknown': err.message || 'An unexpected error occurred.',
+    };
+    return { kind: err.kind, message: messages[err.kind] };
+  }
+  return { kind: 'unknown', message: err instanceof Error ? err.message : 'An unexpected error occurred.' };
 }
 
 // Render's upstream returns 502/503 during deploy swaps, cold starts, or when
@@ -51,11 +99,34 @@ const _RETRYABLE_STATUSES = new Set([502, 503, 504]);
 const _MAX_RETRIES = 6;
 const _RETRY_BACKOFF_MS = [500, 1500, 4000, 10000, 30000, 60000];  // ~106s total
 
+// Methods we'll auto-retry on transient 5xx. Mutating verbs (POST/PUT/PATCH/
+// DELETE) are *not* on this list — without an Idempotency-Key header,
+// retrying them risks double-issuing things like payment_certificate.
+// /chat and /v1/execute are exceptions: chat is replayable (the model just
+// re-runs) and /v1/execute is the only way the SPA reaches container
+// actions, so we accept the (small) double-execute risk in exchange for
+// surviving Render redeploys mid-conversation.
+const _RETRY_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const _RETRY_ALLOWLISTED_PATHS = new Set([
+  '/chat',
+  '/v1/execute',
+  '/health',
+]);
+
+function _shouldRetry(method: string, path: string): boolean {
+  if (_RETRY_SAFE_METHODS.has(method.toUpperCase())) return true;
+  return _RETRY_ALLOWLISTED_PATHS.has(path);
+}
+
 async function fetchApi(path: string, options?: RequestInit): Promise<unknown> {
   const url = `${API_BASE}${path}`;
+  const method = (options?.method || 'GET').toUpperCase();
+  const retryable = _shouldRetry(method, path);
   let lastError: ApiError | null = null;
 
-  for (let attempt = 0; attempt <= _MAX_RETRIES; attempt++) {
+  const maxAttempts = retryable ? _MAX_RETRIES : 0;
+
+  for (let attempt = 0; attempt <= maxAttempts; attempt++) {
     let response: Response;
     try {
       response = await fetch(url, {
@@ -67,9 +138,9 @@ async function fetchApi(path: string, options?: RequestInit): Promise<unknown> {
         },
       });
     } catch (e) {
-      // Network error (often the CORS-stripped 502 manifests this way)
+      // Network error (often the CORS-stripped 502 manifests this way).
       lastError = new ApiError(0, e instanceof Error ? e.message : 'Network error');
-      if (attempt < _MAX_RETRIES) {
+      if (retryable && attempt < maxAttempts) {
         await new Promise(r => setTimeout(r, _RETRY_BACKOFF_MS[attempt]));
         continue;
       }
@@ -80,7 +151,7 @@ async function fetchApi(path: string, options?: RequestInit): Promise<unknown> {
       return response.json();
     }
 
-    if (_RETRYABLE_STATUSES.has(response.status) && attempt < _MAX_RETRIES) {
+    if (retryable && _RETRYABLE_STATUSES.has(response.status) && attempt < maxAttempts) {
       await new Promise(r => setTimeout(r, _RETRY_BACKOFF_MS[attempt]));
       continue;
     }
@@ -243,10 +314,17 @@ export const api = {
       });
       return { success: true, files: fileNodes };
     }
-    return fetchApi('/drive/connect', {
-      method: 'POST',
-      body: JSON.stringify({ type }),
-    }) as Promise<{ success: boolean; files?: FileNode[] }>;
+    // Cloud drives (google / onedrive / dropbox / android) are not yet
+    // wired to a backend route. The DriveConnectModal currently disables
+    // these entries, so this branch is only reachable if a future change
+    // enables them without adding the corresponding backend handler.
+    // Fail loudly so the regression is obvious instead of silently 404ing
+    // through fetchApi.
+    throw new ApiError(
+      501,
+      `Cloud drive '${type}' is not yet supported. Use 'local' or 'server'.`,
+      'not-found',
+    );
   },
 
   // Generic one-off block call (used for ZVec, etc.)
@@ -313,9 +391,19 @@ interface RawCostEstimateData {
   currency?: string;
 }
 
+interface RawContractObligation {
+  type?: string;
+  text?: string;
+  category?: string;
+  priority?: string;
+}
+
 interface RawContractData {
   extracted_clauses?: Record<string, { found?: boolean; examples?: string[] }>;
   clauses?: RawContractClause[];
+  key_obligations?: RawContractObligation[];
+  summary?: string;
+  contract_type?: string;
 }
 
 // Map auto_pipeline panels array response to typed panel state
@@ -387,10 +475,21 @@ export function mapConstructionResult(result: ConstructionApiResult | null | und
       }
     : null;
 
+  // M8: normalise severity to the UI enum. Anything we don't recognise
+  // (backends sometimes emit 'severe', 'minor', 'urgent') maps to MEDIUM
+  // so the badge still styles consistently instead of falling back to
+  // the muted default.
+  const _normaliseSeverity = (raw: unknown): Risk['severity'] => {
+    const v = String(raw || '').toUpperCase().trim();
+    if (v === 'CRITICAL' || v === 'SEVERE' || v === 'URGENT') return 'CRITICAL';
+    if (v === 'HIGH') return 'HIGH';
+    if (v === 'LOW' || v === 'MINOR') return 'LOW';
+    return 'MEDIUM';
+  };
   const risks: Risk[] = (riskPanel?.data || []).map((r, i) => ({
     id: String(r.id ?? i + 1),
     description: r.description || r.risk || r.item || 'Unknown risk',
-    severity: ((r.severity || r.level || 'MEDIUM').toUpperCase()) as Risk['severity'],
+    severity: _normaliseSeverity(r.severity || r.level),
     category: r.category || r.type || 'General',
     mitigation: r.mitigation || r.recommendation || '',
   }));
@@ -413,10 +512,22 @@ export function mapConstructionResult(result: ConstructionApiResult | null | und
       }));
     })(),
     schedule: (() => {
-      const d = schedulePanel?.data;
+      const d = schedulePanel?.data as
+        | RawScheduleActivity[]
+        | {
+            activities?: RawScheduleActivity[];
+            detailed_activities?: RawScheduleActivity[];
+            critical_path?: { activities?: RawScheduleActivity[] };
+          }
+        | undefined;
       const raw: RawScheduleActivity[] = Array.isArray(d)
         ? d
-        : (Array.isArray(d?.activities) ? d.activities : []);
+        : (
+            (d && Array.isArray(d.activities) && d.activities) ||
+            (d && Array.isArray(d.detailed_activities) && d.detailed_activities) ||
+            (d && d.critical_path && Array.isArray(d.critical_path.activities) && d.critical_path.activities) ||
+            []
+          );
       return raw.map((a, i) => {
         const progress = a.progress ?? a.percent_complete ?? 0;
         return {
@@ -432,23 +543,60 @@ export function mapConstructionResult(result: ConstructionApiResult | null | und
     })(),
     contract: (() => {
       const d = contractPanel?.data;
+      const out: ContractClause[] = [];
+
+      // Section 1: extracted_clauses (the headline panel rows)
       if (d && !Array.isArray(d) && d.extracted_clauses && typeof d.extracted_clauses === 'object') {
-        return Object.entries(d.extracted_clauses).map(([key, val], i) => ({
-          id: String(i + 1),
-          title: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-          content: val?.examples?.[0] || '',
-          section: val?.found ? 'Found' : 'Not Found',
-        }));
+        Object.entries(d.extracted_clauses).forEach(([key, val], i) => {
+          out.push({
+            id: `clause-${i + 1}`,
+            title: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            content: val?.examples?.[0] || '',
+            section: val?.found ? 'Found' : 'Not Found',
+          });
+        });
+      } else {
+        const raw: RawContractClause[] = Array.isArray(d)
+          ? d
+          : (d && Array.isArray(d.clauses) ? d.clauses : []);
+        raw.forEach((c, i) => {
+          out.push({
+            id: String(c.id ?? `clause-${i + 1}`),
+            title: c.title || c.name || 'Unknown',
+            content: c.content || c.text || '',
+            section: c.section || '',
+          });
+        });
       }
-      const raw: RawContractClause[] = Array.isArray(d)
-        ? d
-        : (d && Array.isArray(d.clauses) ? d.clauses : []);
-      return raw.map((c, i) => ({
-        id: String(c.id ?? i + 1),
-        title: c.title || c.name || 'Unknown',
-        content: c.content || c.text || '',
-        section: c.section || '',
-      }));
+
+      // M5: surface key_obligations as their own clauses so the user
+      // sees them in the contract panel rather than just the clause-found
+      // list. Tagged with section "Obligation" for visual grouping.
+      if (d && !Array.isArray(d) && Array.isArray(d.key_obligations)) {
+        d.key_obligations.slice(0, 20).forEach((o, i) => {
+          out.push({
+            id: `obligation-${i + 1}`,
+            title: (o.type || 'Obligation').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            content: o.text || '',
+            section: o.priority ? `Obligation · ${o.priority}` : 'Obligation',
+          });
+        });
+      }
+
+      // M9: surface the human summary as a leading clause-shaped row so
+      // users see the big-picture verdict above the line items.
+      if (d && !Array.isArray(d) && d.summary) {
+        out.unshift({
+          id: 'summary',
+          title: d.contract_type
+            ? `Summary · ${String(d.contract_type).replace(/_/g, ' ')}`
+            : 'Summary',
+          content: d.summary,
+          section: 'Overview',
+        });
+      }
+
+      return out;
     })(),
     procurement: (() => {
       const d = procurementPanel?.data;
