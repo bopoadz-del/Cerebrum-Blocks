@@ -2111,52 +2111,175 @@ class ConstructionContainer(UniversalContainer):
 
     # CARBON & SUSTAINABILITY
     async def generate_carbon_report(self, input_data: Any, params: Dict) -> Dict:
+        """Embodied-carbon report. Region-aware factors per ICE / RICS / EPA.
+
+        Inputs:
+          quantities: {name → {quantity, unit}}  (auto_pipeline shape)
+          OR
+          quantities: {name → number}           (legacy)
+          params.region: 'global' (default), 'eu', 'us', 'asia', 'middle_east'
+            — selects the carbon factor set for grid-mix / cement-blend
+            differences between regions.
+          params.gfa_m2: optional — used for the per-m² intensity comparison
+            against typical-building benchmarks.
+        """
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
-        quantities = p.get("quantities", data.get("quantities", {}))
-        
-        carbon_factors = {
-            "concrete_m3": 250.0,
-            "steel_kg": 2.3,
-            "rebar_kg": 1.9,
-            "timber_m3": -500.0,
-            "block_m2": 45.0,
-            "aluminum_kg": 11.0,
-            "glass_m2": 35.0
+        quantities = p.get("quantities") or data.get("quantities") or {}
+        region = (p.get("region") or "global").lower()
+        gfa_m2 = _safe_float(p.get("gfa_m2") or data.get("gfa_m2"))
+
+        # Carbon factors (kg CO2-eq per unit) — sourced from ICE database (UK),
+        # EPA waste reduction model, RICS WLCA. Negative timber values
+        # represent biogenic sequestration on responsibly-sourced product.
+        # Asian / Middle East factors are ~10–20% higher on cement/steel due
+        # to coal-heavy electricity. EU is lower due to grid decarbonisation.
+        carbon_factors_by_region = {
+            "global": {
+                "concrete_volume_m3": 250.0,
+                "steel_weight_kg":     2.30,
+                "structural_steel_kg": 1.90,
+                "rebar_kg":            1.90,
+                "blockwork_m2":        45.0,
+                "curtain_wall_m2":    280.0,
+                "glazing_m2":          35.0,
+                "cladding_m2":         95.0,
+                "roofing_m2":          70.0,
+                "insulation_m2":        7.0,
+                "gypsum_m2":           12.0,
+                "tiling_m2":           24.0,
+                "painting_m2":          2.5,
+                "timber_m3":         -500.0,
+                "aluminum_kg":         11.0,
+                "asphalt_m3":         180.0,
+                "excavation_m3":        4.5,
+                "formwork_m2":          8.0,
+            },
+            "eu": {
+                # Grid is greener; cement blends use more SCMs (slag, fly ash)
+                "concrete_volume_m3": 200.0,
+                "steel_weight_kg":     1.80,
+                "structural_steel_kg": 1.60,
+                "rebar_kg":            1.60,
+                "blockwork_m2":        38.0,
+                "curtain_wall_m2":    240.0,
+                "glazing_m2":          30.0,
+                "cladding_m2":         85.0,
+                "roofing_m2":          60.0,
+                "aluminum_kg":          8.5,
+            },
+            "us": {
+                "concrete_volume_m3": 270.0,
+                "steel_weight_kg":     2.20,
+                "structural_steel_kg": 1.85,
+                "rebar_kg":            2.00,
+                "blockwork_m2":        50.0,
+                "curtain_wall_m2":    290.0,
+                "aluminum_kg":         10.5,
+            },
+            "asia": {
+                # Coal-heavy grid; higher cement clinker ratio
+                "concrete_volume_m3": 300.0,
+                "steel_weight_kg":     2.70,
+                "structural_steel_kg": 2.30,
+                "rebar_kg":            2.30,
+                "blockwork_m2":        55.0,
+                "curtain_wall_m2":    320.0,
+                "aluminum_kg":         13.5,
+            },
+            "middle_east": {
+                "concrete_volume_m3": 280.0,
+                "steel_weight_kg":     2.50,
+                "structural_steel_kg": 2.10,
+                "rebar_kg":            2.10,
+                "blockwork_m2":        50.0,
+                "curtain_wall_m2":    300.0,
+                "aluminum_kg":         12.0,
+            },
         }
-        
-        total_carbon = 0
-        breakdown = []
-        
+        # Fall back to global for any material not in the regional override
+        regional = carbon_factors_by_region.get(region, carbon_factors_by_region["global"])
+        global_factors = carbon_factors_by_region["global"]
+
+        # Build benchmarks per region (kg CO2/m²)
+        benchmarks = {
+            "global":      {"residential": 400, "office": 500, "industrial": 600},
+            "eu":          {"residential": 320, "office": 400, "industrial": 500},
+            "us":          {"residential": 420, "office": 530, "industrial": 640},
+            "asia":        {"residential": 480, "office": 580, "industrial": 700},
+            "middle_east": {"residential": 450, "office": 550, "industrial": 660},
+        }.get(region, {"office": 500})
+
+        total_carbon = 0.0
+        breakdown: List[Dict] = []
+
         for material, qty_data in quantities.items():
             if isinstance(qty_data, dict):
-                quantity = qty_data.get("quantity", 0)
+                quantity = _safe_float(qty_data.get("quantity"))
             else:
-                quantity = qty_data
-            
-            factor = carbon_factors.get(material, 100.0)
+                quantity = _safe_float(qty_data)
+            if quantity <= 0:
+                continue
+            factor = regional.get(material, global_factors.get(material, 100.0))
             carbon = quantity * factor
             total_carbon += carbon
-            
             breakdown.append({
                 "material": material,
                 "quantity": quantity,
                 "factor_kg_co2_per_unit": factor,
-                "total_kg_co2": round(carbon, 2)
+                "total_kg_co2": round(carbon, 2),
+                "factor_source": "regional" if material in regional else "global_fallback",
             })
-        
+
+        # Per-m² intensity if GFA known
+        intensity_per_m2 = None
+        verdict = None
+        if gfa_m2 > 0 and total_carbon > 0:
+            intensity_per_m2 = round(total_carbon / gfa_m2, 1)
+            office_bench = benchmarks.get("office", 500)
+            if intensity_per_m2 < office_bench * 0.8:
+                verdict = "Below benchmark — strong sustainability profile"
+            elif intensity_per_m2 < office_bench * 1.2:
+                verdict = "Within typical range"
+            else:
+                verdict = "Above benchmark — opportunities for low-carbon substitution"
+
+        recommendations = []
+        if total_carbon > 0:
+            # Material-specific recs based on what dominates
+            heavy = sorted(breakdown, key=lambda x: x["total_kg_co2"], reverse=True)[:3]
+            for h in heavy:
+                m = h["material"]
+                if "concrete" in m:
+                    recommendations.append(
+                        "Concrete is the largest contributor — consider GGBS/fly-ash replacement (30-50% cement) and lower-strength mixes where structurally acceptable."
+                    )
+                elif "steel" in m or "rebar" in m:
+                    recommendations.append(
+                        "Steel is significant — specify EAF / recycled-content steel and optimise structural design to reduce tonnage."
+                    )
+                elif "curtain_wall" in m or "glazing" in m or "aluminum" in m:
+                    recommendations.append(
+                        "Facade aluminium drives carbon — specify recycled-content aluminium (≥75% recycled) and consider unitised systems."
+                    )
+                elif "asphalt" in m:
+                    recommendations.append(
+                        "Asphalt is high-carbon — consider warm-mix asphalt or recycled aggregates."
+                    )
+        else:
+            recommendations.append("No quantities provided — pass `quantities` dict for a real carbon report.")
+
         return {
             "status": "success",
             "action": "carbon_report",
+            "region": region,
             "total_embodied_carbon_kg": round(total_carbon, 2),
             "total_tonnes_co2": round(total_carbon / 1000, 2),
+            "intensity_kg_co2_per_m2": intensity_per_m2,
+            "verdict": verdict,
             "breakdown": breakdown,
-            "benchmark": "Typical office building: 350-500 kg CO2/m²",
-            "recommendations": [
-                "Consider low-carbon concrete mixes",
-                "Optimize steel tonnage through efficient design",
-                "Specify recycled content where possible"
-            ]
+            "benchmark_kg_co2_per_m2": benchmarks,
+            "recommendations": list(dict.fromkeys(recommendations)),  # de-dupe
         }
 
     # SAFETY & COMPLIANCE
