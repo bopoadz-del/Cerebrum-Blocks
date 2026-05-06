@@ -112,7 +112,7 @@ class PDFBlock(TypedBlock):
                 text = '\n'.join(parts)
                 return {
                     "status": "success",
-                    "text": text[:20000],
+                    "text": text[:200000],
                     "pages": len(wb.sheetnames) if hasattr(wb, 'sheetnames') else 1,
                     "filename": os.path.basename(pdf_path),
                     "file_path": pdf_path,
@@ -129,7 +129,7 @@ class PDFBlock(TypedBlock):
                 text = '\n'.join(p.text for p in doc.paragraphs if p.text.strip())
                 return {
                     "status": "success",
-                    "text": text[:20000],
+                    "text": text[:200000],
                     "pages": 1,
                     "filename": os.path.basename(pdf_path),
                     "file_path": pdf_path,
@@ -154,7 +154,7 @@ class PDFBlock(TypedBlock):
                 pages = len(pdf.pages)
                 return {
                     "status": "success",
-                    "text": text[:20000],
+                    "text": text[:200000],
                     "pages": pages,
                     "filename": os.path.basename(pdf_path),
                     "file_path": pdf_path,
@@ -176,7 +176,7 @@ class PDFBlock(TypedBlock):
             pages = len(reader.pages)
             return {
                 "status": "success",
-                "text": text[:20000],
+                "text": text[:200000],
                 "pages": pages,
                 "filename": os.path.basename(pdf_path),
                 "file_path": pdf_path,
@@ -198,7 +198,7 @@ class PDFBlock(TypedBlock):
             doc.close()
             return {
                 "status": "success",
-                "text": text[:20000],
+                "text": text[:200000],
                 "pages": pages,
                 "filename": os.path.basename(pdf_path),
                 "file_path": pdf_path,

@@ -59,10 +59,14 @@ mlflow>=2.10.0
 # falls back to its file-backed store.
 asyncpg>=0.29
 
+# Document parsing — promoted from optional after real-world tests
+# showed DOCX uploads silently producing zero text and BOQ tables in
+# PDFs being missed without table-aware extraction.
+python-docx>=1.1.0       # Word documents (.docx) — used by app/blocks/pdf.py
+pdfplumber>=0.11.0       # PDF table-aware extraction — better at BOQ tables than text-only
+
 # Optional - domain libraries (install as needed)
 # spacy>=3.7.0           # NLP for spec_analyzer
-# pdfplumber>=0.11.0     # PDF table extraction
-# python-docx>=1.1.0     # Word document processing
 # reportlab>=4.1.0       # PDF generation
 # statsmodels>=0.14.0    # statistical modeling
 # xgboost>=2.0.0         # gradient boosting

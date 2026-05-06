@@ -3070,23 +3070,31 @@ class ConstructionContainer(UniversalContainer):
             "is dim correct?")
           - "field verify" / "by others" / "n.i.c." (not in contract)
           - multilingual: "a definir", "por confirmar", "à préciser"
+
+        Patterns require 20+ chars of context BEFORE each trigger so the
+        captured snippet contains a real subject, not just the trigger
+        phrase. Real-world test on Anthropic RFP returned RFIs whose
+        description was literally "to be confirmed" — useless without
+        the surrounding sentence.
         """
         rfi_patterns = [
-            (r"\b(?:tbd|to\s+be\s+determined|to\s+be\s+decided)\b[^\n.]{0,150}",
+            # Each pattern: 20-200 chars of preceding context, then the
+            # trigger, then up to 100 chars of trailing context.
+            (r"[^\n.]{20,200}\b(?:tbd|to\s+be\s+determined|to\s+be\s+decided)\b[^\n.]{0,100}",
              "Design Clarification", "high"),
-            (r"\b(?:tbc|to\s+be\s+confirmed|por\s+confirmar|a\s+confirmar|à\s+confirmer)\b[^\n.]{0,150}",
+            (r"[^\n.]{20,200}\b(?:tbc|to\s+be\s+confirmed|por\s+confirmar|a\s+confirmar|à\s+confirmer)\b[^\n.]{0,100}",
              "Design Clarification", "medium"),
-            (r"(?:clarification\s+required|please\s+clarify|aclarar|esclarecer|à\s+préciser)[^\n.]{0,150}",
+            (r"[^\n.]{20,200}(?:clarification\s+required|please\s+clarify|aclarar|esclarecer|à\s+préciser)[^\n.]{0,100}",
              "Design Clarification", "high"),
-            (r"\b(?:unclear|ambiguous|conflict(?:ing)?|inconsistent)[^\n.]{0,150}",
+            (r"[^\n.]{20,200}\b(?:unclear|ambiguous|conflict(?:ing)?|inconsistent)\b[^\n.]{0,100}",
              "Discipline Coordination", "medium"),
-            (r"\b(?:missing|incomplete|not\s+shown|no\s+detail)[^\n.]{0,150}",
+            (r"[^\n.]{20,200}\b(?:missing|incomplete|not\s+shown|no\s+detail)\b[^\n.]{0,100}",
              "Drawing Information Gap", "medium"),
-            (r"\b(?:field\s+verify|verify\s+in\s+field|verify\s+on\s+site)[^\n.]{0,150}",
+            (r"[^\n.]{20,200}\b(?:field\s+verify|verify\s+in\s+field|verify\s+on\s+site)\b[^\n.]{0,100}",
              "Field Verification", "low"),
-            (r"\b(?:by\s+others|by\s+contractor|by\s+owner|n\.i\.c\.|not\s+in\s+contract)[^\n.]{0,150}",
+            (r"[^\n.]{20,200}\b(?:by\s+others|by\s+contractor|by\s+owner|n\.i\.c\.|not\s+in\s+contract)\b[^\n.]{0,100}",
              "Scope Boundary", "medium"),
-            (r"(?:depende\s+de|sujet[oa]\s+a|subject\s+to)\s+(?:approval|aprobaci[óo]n|aprovação)[^\n.]{0,150}",
+            (r"[^\n.]{20,200}(?:depende\s+de|sujet[oa]\s+a|subject\s+to)\s+(?:approval|aprobaci[óo]n|aprovação)[^\n.]{0,100}",
              "Approval Pending", "medium"),
             # Question-mark clauses on architectural/structural notes.
             # Anchored to start-of-line and required to contain drawing-note
@@ -3100,6 +3108,11 @@ class ConstructionContainer(UniversalContainer):
         for pat, category, severity in rfi_patterns:
             for m in re.finditer(pat, text, re.IGNORECASE):
                 snippet = m.group(0).strip()[:200]
+                # Defensive: drop matches under 30 chars even if pattern
+                # somehow let one through. A useful RFI description has
+                # to carry a subject + verb at minimum.
+                if len(snippet) < 30:
+                    continue
                 # de-dupe on first 60 chars (case-insensitive)
                 key = snippet[:60].lower().replace(" ", "")
                 if key in seen_keys:
