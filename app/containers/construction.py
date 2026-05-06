@@ -5343,31 +5343,91 @@ Total Extension of Time Sought: {total_delay} days
                 "derived_from": "concrete_volume × 120 kg/m³ typical ratio",
             }
 
-        # Extract risks from text — keyword + impact heuristic
+        # Risk taxonomy — multilingual (en/es/pt/fr) + categorised. Each entry:
+        # (keyword(s) match-any, canonical description, category, likelihood, impact)
         risks = []
-        risk_taxonomy = [
-            # (keyword(s) — any match wins, canonical description, likelihood, impact)
-            (["design change", "design revision", "rfi"], "Design Change", "medium", "medium"),
-            (["material delay", "supply chain", "lead time"], "Material Delay", "high", "medium"),
-            (["labour shortage", "labor shortage", "manpower"], "Labour Shortage", "medium", "medium"),
-            (["weather", "monsoon", "rain delay", "storm"], "Weather Delay", "medium", "medium"),
-            (["cash flow", "payment delay", "non-payment"], "Cash Flow", "medium", "high"),
-            (["subcontractor", "sub-contractor"], "Subcontractor Risk", "medium", "medium"),
-            (["permit", "approval delay", "authority"], "Permit / Approval Delay", "medium", "medium"),
-            (["ground condition", "subsoil", "geotechnical"], "Unforeseen Ground Conditions", "medium", "high"),
-            (["safety", "incident", "accident"], "Site Safety", "medium", "high"),
-            (["covid", "pandemic"], "Pandemic Disruption", "low", "high"),
-            (["inflation", "price escalation"], "Cost Escalation", "high", "medium"),
-            (["site access", "access restriction", "right of way"], "Site Access", "medium", "medium"),
-            (["liquidated damages", "delay damages", "lds"], "Liquidated Damages", "medium", "high"),
-            (["force majeure"], "Force Majeure", "low", "high"),
-            (["change order", "variation"], "Scope Change", "medium", "medium"),
+        risk_taxonomy: List[Tuple[List[str], str, str, str, str]] = [
+            # ── Design / Engineering ────────────────────────────────────────
+            (["design change", "design revision", "rfi", "cambio de diseño", "alteração de projeto", "modification de conception"],
+             "Design Change", "design", "medium", "medium"),
+            (["incomplete drawing", "missing detail", "ambiguity", "ambigüedad", "ambiguidade"],
+             "Incomplete Design Information", "design", "medium", "medium"),
+            (["coordination", "clash", "interference", "interferencia", "interferência"],
+             "Discipline Coordination Clash", "design", "medium", "medium"),
+            # ── Procurement / Supply Chain ──────────────────────────────────
+            (["material delay", "supply chain", "lead time", "atraso en suministro", "atraso de material", "rupture d'approvisionnement"],
+             "Material Delay", "procurement", "high", "medium"),
+            (["import duty", "customs", "tariff", "aduana", "alfândega", "douane"],
+             "Import / Customs Risk", "procurement", "medium", "medium"),
+            (["currency", "fx ", "exchange rate", "tipo de cambio", "câmbio", "taux de change"],
+             "Currency / FX Risk", "procurement", "medium", "high"),
+            # ── Labour ──────────────────────────────────────────────────────
+            (["labour shortage", "labor shortage", "manpower", "escasez de mano de obra", "falta de mão de obra"],
+             "Labour Shortage", "labour", "medium", "medium"),
+            (["strike", "industrial action", "huelga", "greve", "grève"],
+             "Industrial Action / Strike", "labour", "low", "high"),
+            (["productivity", "rendimiento bajo", "baixa produtividade"],
+             "Low Productivity", "labour", "medium", "medium"),
+            # ── Environment / Weather / Geotech ─────────────────────────────
+            (["weather", "monsoon", "rain delay", "storm", "lluvia", "tempestade", "tempête"],
+             "Weather Delay", "environment", "medium", "medium"),
+            (["flood", "flooding", "inundación", "inundação", "inondation"],
+             "Flooding", "environment", "low", "high"),
+            (["ground condition", "subsoil", "geotechnical", "condición del suelo", "geotécnico"],
+             "Unforeseen Ground Conditions", "geotech", "medium", "high"),
+            (["contamination", "asbestos", "contaminación", "contaminação"],
+             "Site Contamination", "environment", "low", "high"),
+            # ── Financial ───────────────────────────────────────────────────
+            (["cash flow", "payment delay", "non-payment", "flujo de caja", "fluxo de caixa", "trésorerie"],
+             "Cash Flow", "financial", "medium", "high"),
+            (["inflation", "price escalation", "inflación", "inflação"],
+             "Cost Escalation", "financial", "high", "medium"),
+            (["bond", "guarantee call", "garantía", "fiança"],
+             "Bond / Guarantee Call", "financial", "low", "high"),
+            (["liquidated damages", "delay damages", "lds", "daños y perjuicios", "multa por atraso", "pénalit"],
+             "Liquidated Damages", "financial", "medium", "high"),
+            # ── Contract / Legal ────────────────────────────────────────────
+            (["change order", "variation", "aditivo", "modificación", "avenant"],
+             "Scope Change", "contract", "medium", "medium"),
+            (["force majeure", "fuerza mayor", "força maior", "caso fortuito"],
+             "Force Majeure", "contract", "low", "high"),
+            (["dispute", "claim", "arbitration", "controversia", "arbitragem", "litige"],
+             "Dispute / Claim", "contract", "medium", "high"),
+            (["termination", "rescis", "résili"],
+             "Termination Risk", "contract", "low", "high"),
+            # ── Regulatory / Permits ────────────────────────────────────────
+            (["permit", "approval delay", "authority", "permiso", "alvará", "autorisation"],
+             "Permit / Approval Delay", "regulatory", "medium", "medium"),
+            (["zoning", "land use", "uso de suelo", "uso do solo"],
+             "Zoning / Land-Use", "regulatory", "low", "high"),
+            (["environmental impact", "eia", "impacto ambiental"],
+             "EIA / Environmental Compliance", "regulatory", "medium", "medium"),
+            # ── Subcontractor ───────────────────────────────────────────────
+            (["subcontractor", "sub-contractor", "subcontratista", "subempreiteiro"],
+             "Subcontractor Risk", "delivery", "medium", "medium"),
+            (["bankruptcy", "insolvency", "quiebra", "falência", "faillite"],
+             "Subcontractor Insolvency", "delivery", "low", "high"),
+            # ── Site / Safety ───────────────────────────────────────────────
+            (["safety", "incident", "accident", "accidente", "acidente"],
+             "Site Safety", "safety", "medium", "high"),
+            (["site access", "access restriction", "right of way", "acceso al sitio", "acesso ao local"],
+             "Site Access", "logistics", "medium", "medium"),
+            (["theft", "vandalism", "robo", "vandalismo", "vol", "vandalisme"],
+             "Theft / Vandalism", "security", "low", "medium"),
+            # ── Force Majeure / Macro ───────────────────────────────────────
+            (["covid", "pandemic", "pandemia", "pandémie"],
+             "Pandemic Disruption", "macro", "low", "high"),
+            (["war", "conflict", "sanctions", "guerra", "sanciones", "sanctions"],
+             "Geopolitical / Conflict", "macro", "low", "high"),
+            (["cyber", "ransomware", "data breach", "ciberataque", "violação de dados"],
+             "Cyber-Security", "tech", "low", "high"),
         ]
         seen_descriptions = set()
-        for keywords, description, likelihood, impact in risk_taxonomy:
+        for keywords, description, category, likelihood, impact in risk_taxonomy:
             if any(kw in t for kw in keywords) and description not in seen_descriptions:
                 risks.append({
                     "description": description,
+                    "category": category,
                     "likelihood": likelihood,
                     "impact": impact,
                 })
@@ -5699,17 +5759,49 @@ Total Extension of Time Sought: {total_delay} days
         )
         if has_quantities:
             panels.append({"type": "quantities", "title": "Quantities", "data": quantities})
+        # ── Cost estimate ────────────────────────────────────────────────────
+        # Composite GFA rates by building type (USD/m² mid-range — replace
+        # with RSMeans / regional data for production estimates). Caller can
+        # override via params.building_type, params.gfa_rate, params.currency.
+        BUILDING_TYPE_RATES_USD = {
+            "residential":  900,   # mid-range apartment / housing
+            "office":       1200,  # commercial office (default)
+            "retail":       1100,
+            "warehouse":    600,   # industrial / logistics
+            "industrial":   1400,  # heavy / specialised
+            "hospital":     2400,
+            "school":       1500,
+            "data_center":  3500,  # server-density adjusted
+            "hotel":        2000,
+            "mixed_use":    1300,
+        }
+        # Currency conversion vs USD — caller can override via
+        # params.currency_rate. These are illustrative; real estimating tools
+        # pull live FX. Defaulting USD = 1.0.
+        CURRENCY_TO_USD = {
+            "USD": 1.0, "EUR": 1.08, "GBP": 1.27,
+            "BRL": 0.20, "MXN": 0.058, "ARS": 0.0011,
+            "AED": 0.27, "SAR": 0.27, "INR": 0.012,
+            "JPY": 0.0067, "CNY": 0.14,
+        }
+        building_type = (p.get("building_type") or "office").lower().replace(" ", "_")
+        rate_usd_per_m2 = _safe_float(p.get("gfa_rate"), BUILDING_TYPE_RATES_USD.get(building_type, 1200))
+        currency = (p.get("currency") or "USD").upper()
+        fx = _safe_float(p.get("currency_rate"), CURRENCY_TO_USD.get(currency, 1.0)) or 1.0
+
         cost_result = {}
         if has_quantities:
             try:
                 gfa = _qty_val(quantities.get("floor_area_m2", 0))
                 if gfa > 0:
-                    subtotal = gfa * 1200  # $1,200/m² composite (structure+MEP+finishes)
+                    subtotal_usd = gfa * rate_usd_per_m2
                 else:
-                    subtotal = (
+                    subtotal_usd = (
                         _qty_val(quantities.get("concrete_volume_m3", 0)) * 150 +
                         _qty_val(quantities.get("steel_weight_kg", 0)) * 1.8
                     )
+                # Convert from USD to the requested currency
+                subtotal = subtotal_usd / fx if currency != "USD" else subtotal_usd
                 overhead = round(subtotal * 0.10, 2)
                 contingency = round(subtotal * 0.05, 2)
                 total_estimate = round(subtotal + overhead + contingency, 2)
@@ -5719,6 +5811,9 @@ Total Extension of Time Sought: {total_delay} days
                         "overhead": overhead,
                         "contingency": contingency,
                         "total_estimate": total_estimate,
+                        "currency": currency,
+                        "rate_per_m2": round(rate_usd_per_m2 / fx, 2) if gfa > 0 else None,
+                        "building_type": building_type if gfa > 0 else None,
                     }
                 }
                 downstream["cost_estimate"] = cost_result
