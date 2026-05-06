@@ -21,9 +21,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     from blocks.hal.src.detector import HALBlock
     _hal = HALBlock()
+
+    def get_hal_block():
+        # Exposed via the same accessor pattern memory/monitoring/auth use,
+        # so _resolve_dep("hal") finds it for blocks declaring requires=["hal"]
+        # (config.py is the main one).
+        return _hal
+
+    HAL_AVAILABLE = True
 except Exception as e:
     logger.warning("HALBlock not available during startup: %s", e)
     _hal = None
+    get_hal_block = None  # type: ignore[assignment]
+    HAL_AVAILABLE = False
 
 # Shared block instances
 block_instances: Dict[str, Any] = {}
