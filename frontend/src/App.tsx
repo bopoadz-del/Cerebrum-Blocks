@@ -274,7 +274,7 @@ function AppContent() {
     type MutableNode = FileNode & { children?: MutableNode[]; _byName?: Map<string, MutableNode> };
     const root: MutableNode = { id: 'local-root', name: '', type: 'folder', children: [], _byName: new Map() };
 
-    for (const { file, relPath } of filesWithPath) {
+    for (const { relPath } of filesWithPath) {
       const parts = relPath.split('/').filter(Boolean);
       let cursor = root;
       // walk/create folder nodes for everything except the last segment (the file)
