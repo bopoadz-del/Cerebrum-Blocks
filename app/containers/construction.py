@@ -652,13 +652,21 @@ class ConstructionContainer(UniversalContainer):
         # Use [^\n]{0,N} so anything on the line counts as filler between the
         # head keyword and the qualifier.
         clause_patterns = {
-            "payment_terms": r'(?:payment|pay|invoice)[^\n]{0,50}(?:term|schedule|milestone|certificate|net\s+\d)',
-            "liquidated_damages": r'(?:liquidated damages|delay damages|\bld\b)[^\n]{0,100}(?:rate|amount|per day|\$|day|week)',
-            "retention": r'(?:retention|retainage)[^\n]{0,80}(?:percent|percentage|amount|release|%)',
-            "insurance": r'(?:insurance|indemnif)[^\n]{0,100}(?:required|shall|must|coverage|maintain)',
-            "termination": r'(?:terminat|cancel|end)[^\n]{0,100}(?:notice|for cause|convenience|terminate)',
-            "force_majeure": r'(?:force majeure|unforeseen|beyond control|delay event|act of god)[^\n]{0,150}(?:excus|reliev|not liable|delay|extend)',
-            "dispute_resolution": r'(?:dispute|arbitration|mediation|adjudication)[^\n]{0,100}(?:shall|must|proceed|resolv)',
+            # Patterns are deliberately lenient — match the head keyword and
+            # require at least one supporting term within the same line. Each
+            # clause covers its EN/ES/PT/FR variants so multilingual contracts
+            # (common in international AEC) actually parse.
+            "payment_terms": r'(?:payment|pay|invoice|pago|pagamento|paiement)[^\n]{0,80}(?:term|schedule|milestone|certificate|net\s+\d|plazo|prazo|échéance)',
+            "liquidated_damages": r'(?:liquidated damages|delay damages|\bld\b|daños y perjuicios|multa por atraso|pénalit)[^\n]{0,120}(?:rate|amount|per day|per week|\$|day|week|d[ií]a|semaine)',
+            "retention": r'(?:retention|retainage|retenci[óo]n|reten[çc][aã]o|retenue)[^\n]{0,100}(?:percent|percentage|amount|release|%|liber|porcent)',
+            "insurance": r'(?:insurance|indemnif|seguro|seguros|assurance|garantie)[^\n]{0,120}(?:required|shall|must|coverage|maintain|obligator|cobertura|couverture)',
+            "termination": r'(?:terminat|cancel|end|rescis|resili)[^\n]{0,120}(?:notice|for cause|convenience|terminate|preaviso|aviso|résili|cause)',
+            "force_majeure": r'(?:force majeure|fuerza mayor|força maior|unforeseen|beyond control|delay event|act of god|caso fortuito)[^\n]{0,180}(?:excus|reliev|not liable|delay|extend|exonerar|exonerac|exclu)',
+            "dispute_resolution": r'(?:dispute|arbitration|mediation|adjudication|controversia|disputa|arbitragem|arbitrage|m[ée]diation)[^\n]{0,120}(?:shall|must|proceed|resolv|deber|resolver|saisir)',
+            "warranty": r'(?:warrant|guarant|garant)[^\n]{0,120}(?:period|year|month|defect|repair|replace|periodo|período|ano|mois|d[ée]faut)',
+            "intellectual_property": r'(?:intellectual property|copyright|patent|trade mark|trademark|propiedad intelectual|propriedade intelectual)[^\n]{0,120}(?:assign|transfer|own|license|cedi|titular)',
+            "confidentiality": r'(?:confidential|non-disclosure|nda|confidenci|confidentialit)[^\n]{0,120}(?:disclose|reveal|share|maintain|keep|sigilo|divulg)',
+            "change_of_scope": r'(?:variation|change order|amendment|modification|adicional|aditivo|avenant)[^\n]{0,120}(?:approv|written|cost|price|impact|costo|coût)',
         }
         
         extracted_clauses = {}
@@ -874,25 +882,36 @@ class ConstructionContainer(UniversalContainer):
                     record = dict(zip(headers, values))
                     sections[current_section].append(record)
             
-            project_info = sections.get('PROJECT', [{}])[0]
-            activities = sections.get('TASK', [])
-            relationships = sections.get('TASKPRED', [])
-            
+            # Defensive lookups: some XER exports omit PROJECT/TASK sections
+            # entirely on partial schedules — return empty rather than crash.
+            project_section = sections.get('PROJECT') or [{}]
+            project_info = project_section[0] if project_section else {}
+            activities = sections.get('TASK') or []
+            relationships = sections.get('TASKPRED') or []
+
             structured_activities = []
             for act in activities:
-                structured_activities.append({
-                    "id": act.get("task_id", ""),
-                    "name": act.get("task_name", ""),
-                    "start": act.get("act_start_date", act.get("early_start_date", "")),
-                    "finish": act.get("act_end_date", act.get("early_end_date", "")),
-                    "duration": act.get("target_drtn_hr_cnt", 0),
-                    "total_float": float(act.get("total_float_hr_cnt", 0)) / 8,
-                    "free_float": float(act.get("free_float_hr_cnt", 0)) / 8,
-                    "percent_complete": float(act.get("act_work_qty", 0)) / max(1, float(act.get("target_work_qty", 1))) * 100,
-                    "wbs": act.get("wbs_id", ""),
-                    "predecessors": [r.get("pred_task_id") for r in relationships if r.get("task_id") == act.get("task_id")],
-                    "successors": [r.get("task_id") for r in relationships if r.get("pred_task_id") == act.get("task_id")],
-                })
+                # Each row is wrapped — Primavera occasionally emits %R lines
+                # with one fewer field than %F (truncated last column). Without
+                # this, total_float_hr_cnt-style float() conversions blew up.
+                try:
+                    target_work = _safe_float(act.get("target_work_qty"), 1) or 1
+                    structured_activities.append({
+                        "id": act.get("task_id", ""),
+                        "name": act.get("task_name", ""),
+                        "start": act.get("act_start_date") or act.get("early_start_date") or "",
+                        "finish": act.get("act_end_date") or act.get("early_end_date") or "",
+                        "duration": _safe_float(act.get("target_drtn_hr_cnt"), 0),
+                        "total_float": _safe_float(act.get("total_float_hr_cnt"), 0) / 8,
+                        "free_float": _safe_float(act.get("free_float_hr_cnt"), 0) / 8,
+                        "percent_complete": _safe_float(act.get("act_work_qty"), 0) / target_work * 100,
+                        "wbs": act.get("wbs_id", ""),
+                        "predecessors": [r.get("pred_task_id") for r in relationships if r.get("task_id") == act.get("task_id")],
+                        "successors": [r.get("task_id") for r in relationships if r.get("pred_task_id") == act.get("task_id")],
+                    })
+                except Exception:
+                    logger.warning("XER row skipped: %s", str(act)[:120], exc_info=False)
+                    continue
             
             return {
                 "status": "success",
