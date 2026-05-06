@@ -1279,33 +1279,129 @@ class ConstructionContainer(UniversalContainer):
         }
 
     def _extract_materials(self, text: str) -> List[str]:
-        materials = []
-        material_keywords = ["concrete", "steel", "rebar", "brick", "block", "glass", "aluminum", "timber", "insulation", "membrane"]
-        for kw in material_keywords:
-            if kw in text.lower():
-                materials.append(kw)
-        return materials
-    
+        """Pull material specifications out of spec text — keyword + grade /
+        standard if mentioned in the same line. Multilingual EN/ES/PT/FR.
+        Returns one string per distinct material with grade context."""
+        text_low = text.lower()
+        # Keyword → canonical material name. Multilingual aliases per family.
+        materials_map = {
+            "concrete": ["concrete", "hormigón", "hormigon", "concreto", "béton"],
+            "steel": ["steel", "acero", "aço", "acier"],
+            "rebar": ["rebar", "reinforcement", "armadura", "armado", "ferraillage"],
+            "brick": ["brick", "ladrillo", "tijolo", "brique"],
+            "block": ["block", "bloque", "bloco"],
+            "glass": ["glass", "vidrio", "vidro", "verre"],
+            "aluminum": ["aluminum", "aluminium", "aluminio", "alumínio"],
+            "timber": ["timber", "wood", "madera", "madeira", "bois"],
+            "insulation": ["insulation", "aislamiento", "isolamento", "isolation"],
+            "membrane": ["membrane", "membrana"],
+            "cement": ["cement", "cemento", "cimento", "ciment"],
+            "asphalt": ["asphalt", "asfalto", "bitume"],
+            "gypsum": ["gypsum", "drywall", "yeso", "gesso"],
+            "stone": ["stone", "piedra", "pedra", "pierre"],
+            "tile": ["tile", "tiles", "azulejo", "baldosa", "carrelage"],
+        }
+        # Grade pattern — e.g. C30, M40, ASTM A992, ACI 318, EN 1992
+        grade_re = re.compile(
+            r"\b(?:[CMB]\d{2,3}|astm\s*[a-z]?\d+|aci\s*\d+|en\s*\d+|grade\s*\d+|"
+            r"f['']?c\s*=\s*\d+|s\d{3})\b",
+            re.IGNORECASE,
+        )
+        out: List[str] = []
+        for canonical, aliases in materials_map.items():
+            for alias in aliases:
+                if alias in text_low:
+                    # Find one line containing the alias to capture grade context
+                    grade_context = ""
+                    for line in text.split("\n"):
+                        if alias in line.lower():
+                            g = grade_re.search(line)
+                            if g:
+                                grade_context = f" ({g.group(0)})"
+                                break
+                    out.append(f"{canonical}{grade_context}")
+                    break  # one entry per canonical material
+        return out
+
     def _extract_methods(self, text: str) -> List[str]:
-        methods = []
-        method_keywords = ["pour", "cast", "place", "install", "erect", "frame", "weld", "bolt", "fix", "apply"]
-        text_lower = text.lower()
-        for kw in method_keywords:
-            if kw in text_lower:
-                methods.append(kw)
-        return methods
-    
+        """Construction methods/processes called out in the spec, plus the
+        standards or guidelines they reference (where present)."""
+        text_low = text.lower()
+        methods_map = {
+            "pour": ["pour", "vertido", "concretagem", "coulage"],
+            "cast-in-place": ["cast-in-place", "cast in place", "in-situ", "in situ", "vaciado", "moldagem"],
+            "precast": ["precast", "prefabricated", "prefabricado", "pré-fabricado"],
+            "weld": ["weld", "soldadura", "soldagem", "soudure"],
+            "bolt": ["bolt", "perno", "parafuso"],
+            "install": ["install", "instalación", "instalação", "installation"],
+            "erect": ["erect", "montar", "montagem"],
+            "frame": ["frame", "encofrado", "armação", "ossature"],
+            "fix": ["fix", "fijar", "fixar"],
+            "apply": ["apply", "aplicar", "appliquer"],
+            "compact": ["compact", "compactar"],
+            "cure": ["cure", "curing", "curado", "cura"],
+        }
+        out: List[str] = []
+        for canonical, aliases in methods_map.items():
+            if any(a in text_low for a in aliases):
+                out.append(canonical)
+        return out
+
     def _extract_testing_requirements(self, text: str) -> List[str]:
-        requirements = []
-        if re.search(r'\btest\b|\bsample\b|\blab\b', text, re.IGNORECASE):
-            requirements.append("Testing requirements found")
-        return requirements
-    
+        """Specific testing requirements with frequency/standard if present.
+        Replaces the previous single 'Testing requirements found' marker
+        with the actual requirements lifted from the spec."""
+        out: List[str] = []
+        # Direct test mentions: type + standard
+        test_patterns = [
+            (r"\b(slump\s*test|cone\s*slump)\b[^\n]{0,120}", "Concrete slump"),
+            (r"\b(compressive\s*strength|cube\s*test|cylinder\s*test)\b[^\n]{0,120}", "Compressive strength"),
+            (r"\b(ultrasonic|ut\s*test|magnetic\s*particle|mt\s*test)\b[^\n]{0,120}", "NDT (UT/MT)"),
+            (r"\b(soil\s*test|cbr|spt|geotech)\b[^\n]{0,120}", "Geotechnical"),
+            (r"\b(load\s*test|pile\s*load)\b[^\n]{0,120}", "Load test"),
+            (r"\b(hydrostatic|leak\s*test|pressure\s*test)\b[^\n]{0,120}", "Pressure / leak test"),
+            (r"\b(insulation\s*resistance|megger)\b[^\n]{0,120}", "Electrical insulation test"),
+            (r"\b(commission|tab|test\s*and\s*balance)\b[^\n]{0,120}", "Commissioning / TAB"),
+            (r"\b(dft|dry\s*film\s*thickness)\b[^\n]{0,120}", "Coating DFT"),
+            (r"\b(witness\s*test|factory\s*test|fat)\b[^\n]{0,120}", "Witness / FAT"),
+        ]
+        seen = set()
+        for pat, label in test_patterns:
+            for m in re.finditer(pat, text, re.IGNORECASE):
+                key = label.lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                # Capture frequency hint if "per" or "every" is mentioned in same span
+                ctx = m.group(0)
+                freq = ""
+                fm = re.search(r"\b(?:per|every|each)\s+\d+[^\.\n]{0,30}", ctx, re.IGNORECASE)
+                if fm:
+                    freq = f" — {fm.group(0).strip()}"
+                out.append(f"{label}{freq}")
+        return out
+
     def _extract_qaqc(self, text: str) -> List[str]:
-        qa = []
-        if re.search(r'\binspection\b|\bwitness\b|\bhold point\b', text, re.IGNORECASE):
-            qa.append("Inspection/witness requirements")
-        return qa
+        """QA/QC requirements lifted from the spec — inspection points,
+        approval gates, hold points, witness requirements with context."""
+        out: List[str] = []
+        qa_patterns = [
+            (r"\b(hold\s*point|witness\s*point|inspection\s*point)\b[^\n]{0,100}", "Inspection / hold points"),
+            (r"\b(third[- ]?party|independent\s*inspector|independent\s*lab)\b[^\n]{0,100}", "Third-party inspection"),
+            (r"\b(mill\s*test\s*report|mtr|certificate\s*of\s*conformity|coc)\b[^\n]{0,100}", "Mill test reports / CoC"),
+            (r"\b(method\s*statement|risk\s*assessment|swms|jha)\b[^\n]{0,100}", "Method statements / JHA"),
+            (r"\b(qa\s*plan|quality\s*plan|qaqc\s*plan|plan\s*de\s*calidad)\b[^\n]{0,100}", "Quality plan"),
+            (r"\b(snag|punch\s*list|deficiency)\b[^\n]{0,100}", "Snag / punch list"),
+            (r"\b(handover|practical\s*completion|certificate\s*of\s*completion)\b[^\n]{0,100}", "Handover / completion"),
+            (r"\b(record\s*drawings?|as[- ]built)\b[^\n]{0,100}", "As-built records"),
+        ]
+        seen = set()
+        for pat, label in qa_patterns:
+            if re.search(pat, text, re.IGNORECASE):
+                if label not in seen:
+                    out.append(label)
+                    seen.add(label)
+        return out
 
     # COST ESTIMATION (RSMeans-style)
     async def generate_cost_estimate(self, input_data: Any, params: Dict) -> Dict:
