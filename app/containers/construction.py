@@ -1130,74 +1130,114 @@ class ConstructionContainer(UniversalContainer):
         extracted_text = data.get("extracted_text") or p.get("extracted_text") or ""
         division_filter = p.get("division")
 
-        if not file_path and not extracted_text:
+        # Prefer extracted_text when present — same pattern auto_pipeline uses,
+        # avoids re-parsing the file when the SPA has already extracted text.
+        full_text = extracted_text
+        if not full_text and file_path:
+            try:
+                import fitz
+                doc = fitz.open(file_path)
+                for page in doc:
+                    full_text += page.get_text()
+                doc.close()
+            except Exception as e:
+                return {"status": "error", "error": f"Could not read spec file: {str(e)}"}
+
+        if not full_text:
             return {
                 "status": "error",
                 "error": "No specification file or extracted text provided.",
             }
 
-        if not file_path:
-            # Parse from extracted_text only
-            return self._process_spec_from_text(extracted_text, division_filter)
+        # CSI MasterFormat division headers come in three formats and the old
+        # single regex caught only one:
+        #   "03 30 00 — Cast-in-Place Concrete"   (three 2-digit groups, MF2004+)
+        #   "03   Concrete"                        (legacy 2-digit + spaces)
+        #   "03000 — Concrete"                     (MF1995 5-digit)
+        # Multilingual headers (división/divisão/division) also recognised.
+        division_re = re.compile(
+            r'^(?:divis(?:i[oó]n|ão|ion)\s+)?'   # optional "Division "/Sp/Pt prefix
+            r'(\d{2})'                            # the 2-digit division
+            r'(?:\s+\d{2}(?:\s+\d{2})?)?'         # optional MF2004 "30 00"
+            r'(?:\s*[—–\-]\s*\d{0,5})?'           # optional dash + section
+            r'\s+',                               # at least one trailing space
+            re.IGNORECASE,
+        )
+        divisions: Dict[int, List[str]] = {i: [] for i in range(1, 50)}
+        current_division: Optional[int] = None
 
-        try:
-            import fitz
-            doc = fitz.open(file_path)
-            full_text = ""
-            for page in doc:
-                full_text += page.get_text()
-            doc.close()
-        except Exception as e:
-            return {"status": "error", "error": f"Could not read spec file: {str(e)}"}
-        
-        divisions = {i: [] for i in range(1, 50)}
-        current_division = None
-        lines = full_text.split('\n')
-        
-        for line in lines:
-            division_match = re.match(r'^(\d{2})\s{3,}', line)
-            if division_match:
-                div_num = int(division_match.group(1))
+        for line in full_text.split('\n'):
+            line_stripped = line.strip()
+            if not line_stripped:
+                continue
+            m = division_re.match(line_stripped)
+            if m:
+                div_num = int(m.group(1))
                 if 1 <= div_num <= 49:
                     current_division = div_num
-                    divisions[current_division].append(line.strip())
-            elif current_division and line.strip():
-                divisions[current_division].append(line.strip())
-        
+                    divisions[current_division].append(line_stripped)
+                    continue
+            if current_division:
+                divisions[current_division].append(line_stripped)
+
         detected_divisions = [i for i, content in divisions.items() if content]
-        
-        spec_items = []
+
+        # Aggregate across-division extracts so the response always includes
+        # them regardless of how many sections matched. Fixes the previous
+        # `dir()`-scope bug that returned [] for materials/methods/testing.
+        spec_items: List[Any] = []
+        all_materials: List[str] = []
+        all_methods: List[str] = []
+        all_testing: List[str] = []
+        all_qaqc: List[str] = []
+
         for div_num, content in divisions.items():
             if not content:
                 continue
             if division_filter and str(div_num) != str(division_filter):
                 continue
             full_content = '\n'.join(content)
-            materials = self._extract_materials(full_content)
-            methods = self._extract_methods(full_content)
-            testing = self._extract_testing_requirements(full_content)
-            qa_qc = self._extract_qaqc(full_content)
-            
+            div_materials = self._extract_materials(full_content) or []
+            div_methods = self._extract_methods(full_content) or []
+            div_testing = self._extract_testing_requirements(full_content) or []
+            div_qaqc = self._extract_qaqc(full_content) or []
+
+            all_materials.extend(div_materials)
+            all_methods.extend(div_methods)
+            all_testing.extend(div_testing)
+            all_qaqc.extend(div_qaqc)
+
             spec_items.append(SpecItem(
                 category=f"Division {div_num:02d}",
                 key="content",
-                value=f"{len(content)} paragraphs",
+                value=f"{len(content)} paragraphs, {len(div_materials)} materials, {len(div_methods)} methods",
                 section="general",
-                confidence=0.9
+                confidence=0.9,
             ))
-        
+
+        # De-dupe while preserving order
+        def _uniq(xs: List[str]) -> List[str]:
+            seen = set()
+            out: List[str] = []
+            for x in xs:
+                key = str(x).lower()
+                if key not in seen:
+                    seen.add(key)
+                    out.append(x)
+            return out
+
         return {
             "status": "success",
             "action": "specification_analysis",
-            "file_name": Path(file_path).name,
+            "file_name": Path(file_path).name if file_path else "(text input)",
             "divisions_found": detected_divisions,
             "division_filter_applied": division_filter,
             "total_sections_analyzed": len(spec_items),
             "spec_items": [asdict(item) for item in spec_items],
-            "materials_referenced": materials if 'materials' in dir() else [],
-            "methods_specified": methods if 'methods' in dir() else [],
-            "testing_requirements": testing if 'testing' in dir() else [],
-            "qa_qc_requirements": qa_qc if 'qa_qc' in dir() else []
+            "materials_referenced": _uniq(all_materials)[:50],
+            "methods_specified": _uniq(all_methods)[:50],
+            "testing_requirements": _uniq(all_testing)[:50],
+            "qa_qc_requirements": _uniq(all_qaqc)[:50],
         }
     
     async def analyze_spec_section(self, input_data: Any, params: Dict) -> Dict:
