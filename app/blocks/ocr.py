@@ -123,6 +123,30 @@ class OCRBlock(TypedBlock):
                 "text": "",
                 "confidence": 0,
                 "error": "pytesseract not installed. Run: pip install pytesseract pillow",
+                "remediation": "Install pytesseract via pip in requirements.txt.",
+            }
+
+        # Render's native Python runtime doesn't honor the Aptfile entry for
+        # tesseract-ocr — the binary isn't on PATH at runtime. Detect this up
+        # front and return a useful error with concrete remediation, instead of
+        # the cryptic "tesseract is not installed or it's not in your PATH"
+        # leaking out of pytesseract.
+        import shutil
+        if shutil.which("tesseract") is None:
+            return {
+                "status": "error",
+                "text": "",
+                "confidence": 0,
+                "error": "ocr_unavailable: the tesseract binary is not installed on this host",
+                "engine": "pytesseract",
+                "remediation": (
+                    "OCR requires the tesseract-ocr system package. On Render's "
+                    "native Python runtime the Aptfile entry isn't being honored; "
+                    "switch the service to the Docker runtime (the repo's "
+                    "Dockerfile installs tesseract-ocr + libtesseract-dev "
+                    "correctly), or use the 'pdf' block for text-based PDFs "
+                    "where OCR isn't needed."
+                ),
             }
 
         all_texts = []

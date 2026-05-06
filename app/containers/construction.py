@@ -106,11 +106,23 @@ class ConstructionContainer(UniversalContainer):
     # leave a single source of truth.
 
     async def _status(self, input_data: Any, params: Dict) -> Dict:
+        # Discover available actions by calling the active route() with a
+        # sentinel — its handlers dict is the source of truth. Cheaper than
+        # duplicating the action list here (which inevitably drifts).
+        actions: List[str] = []
+        try:
+            # route() builds its handlers dict on every call; trigger it with
+            # an unknown action and pull known_actions out of the error.
+            sentinel = await self.route("__list__", None, {})
+            actions = sentinel.get("known_actions", []) if isinstance(sentinel, dict) else []
+        except Exception:
+            actions = []
         return {
             "status": "success",
             "container": self.name,
             "version": self.version,
-            "actions_available": [],
+            "actions_available": actions,
+            "action_count": len(actions),
         }
 
     # ─────────────────────────────────────────────────────────────────
@@ -2551,7 +2563,35 @@ class ConstructionContainer(UniversalContainer):
 
     # PROCUREMENT & SUBCONTRACTOR
     async def procurement_analysis(self, input_data: Any, params: Dict) -> Dict:
-        return {"status": "success", "action": "procurement_analysis", "recommendations": []}
+        # The original stub returned an empty recommendations list which made
+        # the "procurement" action alias effectively useless. Delegate to
+        # procurement_list_generator (the real implementation) and reshape
+        # its output into a recommendations-style summary.
+        result = await self.procurement_list_generator(input_data, params)
+        items = result.get("procurement_list", [])
+        critical = [i for i in items if i.get("priority") == "critical"]
+        long_lead = [i for i in items if (i.get("lead_time_weeks") or 0) >= 12]
+        recommendations: List[str] = []
+        if critical:
+            recommendations.append(
+                f"Order {len(critical)} critical-priority items immediately to protect schedule."
+            )
+        if long_lead:
+            recommendations.append(
+                f"{len(long_lead)} items have lead times ≥12 weeks — issue POs in the first 30 days."
+            )
+        if items and not recommendations:
+            recommendations.append(f"All {len(items)} items have manageable lead times.")
+        return {
+            "status": "success",
+            "action": "procurement_analysis",
+            "total_items": len(items),
+            "critical_count": len(critical),
+            "long_lead_count": len(long_lead),
+            "total_cost": result.get("total_procurement_cost", 0),
+            "recommendations": recommendations,
+            "items": items,
+        }
 
     # CHANGE ORDER / VARIATION
     async def change_order_impact(self, input_data: Any, params: Dict) -> Dict:
