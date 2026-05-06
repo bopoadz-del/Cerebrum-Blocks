@@ -117,7 +117,14 @@ async def chain_execute(request: ChainRequest, auth: dict = Depends(require_api_
         }
 
     except Exception as e:
-        raise HTTPException(500, f"Chain execution failed: {str(e)}")
+        from app.core.http_errors import classify_block_error
+        err = f"Chain execution failed: {str(e)}"
+        status = classify_block_error(str(e))
+        # Unhandled exception → at least a 500 (config/network markers may
+        # bump it to 503 so callers can distinguish setup gap from real bug).
+        if status == 422:
+            status = 500
+        raise HTTPException(status, err)
 
 
 @router.post("/v1/chain")

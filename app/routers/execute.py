@@ -47,7 +47,16 @@ async def execute(request: ExecuteRequest, auth: dict = Depends(require_api_key)
         raise
     except Exception as e:
         logger.exception("block execution failed", extra={"block": block_name})
-        raise HTTPException(500, f"Execution failed: {e}")
+        # Distinguish "operator config missing / network down" (503) from
+        # "real internal failure" (500) so SPAs and downstream services
+        # can decide whether to retry, fall back, or surface a setup error.
+        from app.core.http_errors import classify_block_error
+        err = f"Execution failed: {e}"
+        status = classify_block_error(str(e))
+        # 422 isn't right for an unhandled exception — bump to 500 for those.
+        if status == 422:
+            status = 500
+        raise HTTPException(status, err)
 
 
 @router.post("/v1/execute")
