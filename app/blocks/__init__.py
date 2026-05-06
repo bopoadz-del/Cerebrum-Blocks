@@ -106,6 +106,20 @@ _BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "review":           ("app.blocks.review", "ReviewBlock"),
     "payment_split":    ("app.blocks.payment_split", "PaymentSplitBlock"),
     "documentation":    ("app.blocks.documentation", "DocumentationBlock"),
+
+    # Infrastructure — these block files existed in app/blocks/ but were
+    # never registered, so 31 dependent blocks (auth, audit, secrets, team,
+    # validation, version, etc.) silently lost their `requires` deps.
+    # Registered here as part of the same lazy mapping so dep wiring can
+    # find them. They each have UniversalBlock-compatible signatures.
+    "config":           ("app.blocks.config", "ConfigBlock"),
+    "database":         ("app.blocks.database", "DatabaseBlock"),
+    "vector":           ("app.blocks.vector", "VectorBlock"),
+    "billing":          ("app.blocks.billing", "BillingBlock"),
+    "email":            ("app.blocks.email", "EmailBlock"),
+    "migration":        ("app.blocks.migration", "MigrationBlock"),
+    "event_bus":        ("app.blocks.event_bus", "EventBusBlock"),
+    "secrets":          ("app.blocks.secrets", "SecretsBlock"),
 }
 
 
