@@ -35,9 +35,16 @@ async def chat(request: ChatRequest, auth: dict = Depends(require_api_key)):
             "stream": False,
         })
 
+        # Pass through fields the SPA needs: fallback flag (so the user gets a
+        # "credits exhausted" warning instead of mistaking offline rule-based
+        # output for a real LLM response), provider, and model.
+        inner = result.get("result", {}) if isinstance(result, dict) else {}
         return {
-            "text": result.get("result", {}).get("text", ""),
-            "model": request.model,
+            "text": inner.get("text", ""),
+            "model": inner.get("model") or request.model,
+            "provider": inner.get("provider"),
+            "fallback": inner.get("fallback", False),
+            "fallback_reason": inner.get("fallback_reason"),
         }
 
     except Exception as e:
