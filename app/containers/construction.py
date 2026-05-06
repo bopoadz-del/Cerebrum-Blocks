@@ -2747,7 +2747,131 @@ class ConstructionContainer(UniversalContainer):
 
     # RISK ANALYSIS
     async def analyze_schedule_risk(self, input_data: Any, params: Dict) -> Dict:
-        return await self.parse_primavera_schedule(input_data, params)
+        """Schedule-risk analysis: classify activities by float band, identify
+        bottlenecks, flag long-duration items, surface delays vs baseline.
+
+        Inputs:
+          - file_path: schedule file (XER/XML) → parsed via parse_primavera_schedule
+          OR
+          - activities: list of {id, name, start, finish, duration, total_float, percent_complete}
+        """
+        data = input_data if isinstance(input_data, dict) else {}
+        p = params or {}
+
+        activities = data.get("activities") or []
+        if not activities:
+            # Fall through to file-based parse if caller gave us a schedule file
+            file_path = data.get("file_path") or p.get("file_path")
+            if file_path:
+                parsed = await self.parse_primavera_schedule(input_data, params)
+                if parsed.get("status") == "error":
+                    return parsed
+                activities = parsed.get("activities", []) or []
+            if not activities:
+                return {
+                    "status": "error",
+                    "error": "No schedule provided — pass `activities` array or `file_path` to a P6 XER/XML",
+                }
+
+        # Float-band classification (industry-standard thresholds for risk)
+        critical_path = []   # float ≤ 0
+        near_critical = []   # 0 < float ≤ 5 days
+        moderate = []        # 5 < float ≤ 20 days
+        comfortable = []     # > 20 days
+        for a in activities:
+            f = _safe_float(a.get("total_float"), 0)
+            if f <= 0:
+                critical_path.append(a)
+            elif f <= 5:
+                near_critical.append(a)
+            elif f <= 20:
+                moderate.append(a)
+            else:
+                comfortable.append(a)
+
+        # Long-duration activities (> 30 days) are bottleneck candidates —
+        # one slip cascades. Flag them for fast-tracking review.
+        long_duration = []
+        for a in activities:
+            dur = _safe_float(a.get("duration"), 0)
+            # XER duration is in hours (target_drtn_hr_cnt); guess if it's days otherwise.
+            dur_days = dur / 8 if dur > 100 else dur
+            if dur_days > 30:
+                long_duration.append({
+                    "id": a.get("id"),
+                    "name": a.get("name"),
+                    "duration_days": round(dur_days, 1),
+                })
+
+        # Behind-schedule check: progress < expected at this date
+        behind = []
+        for a in activities:
+            pct = _safe_float(a.get("percent_complete"), 0)
+            start = _safe_iso_date(a.get("start"))
+            finish = _safe_iso_date(a.get("finish"))
+            if start and finish and finish > start:
+                total_days = (finish - start).days or 1
+                elapsed = max(0, (datetime.now(timezone.utc).replace(tzinfo=None) - start.replace(tzinfo=None)).days)
+                expected_pct = min(100, (elapsed / total_days) * 100)
+                if pct + 10 < expected_pct:  # >10pp behind
+                    behind.append({
+                        "id": a.get("id"),
+                        "name": a.get("name"),
+                        "expected_pct": round(expected_pct, 1),
+                        "actual_pct": round(pct, 1),
+                        "variance_pp": round(expected_pct - pct, 1),
+                    })
+
+        # Risk score: 0–100 scale, higher = riskier
+        score = 0
+        score += min(40, len(critical_path) * 2)
+        score += min(20, len(near_critical))
+        score += min(20, len(long_duration) * 5)
+        score += min(20, len(behind) * 3)
+
+        risk_level = "critical" if score >= 70 else "high" if score >= 50 else "moderate" if score >= 25 else "low"
+
+        recommendations: List[str] = []
+        if critical_path:
+            recommendations.append(
+                f"{len(critical_path)} activities on critical path — any slip directly impacts completion. "
+                "Resource-load these first."
+            )
+        if near_critical:
+            recommendations.append(
+                f"{len(near_critical)} near-critical activities (≤5 days float) — monitor weekly; "
+                "consider time impact analysis if any slip."
+            )
+        if long_duration:
+            recommendations.append(
+                f"{len(long_duration)} activities longer than 30 days — break down or fast-track to "
+                "reduce single-point-of-failure risk."
+            )
+        if behind:
+            recommendations.append(
+                f"{len(behind)} activities ≥10pp behind plan — initiate recovery plan and "
+                "reassess critical path forecast."
+            )
+        if not recommendations:
+            recommendations.append("Schedule risk profile within normal range — continue weekly monitoring.")
+
+        return {
+            "status": "success",
+            "action": "schedule_risk_analysis",
+            "total_activities": len(activities),
+            "risk_score": score,
+            "risk_level": risk_level,
+            "float_bands": {
+                "critical_path": len(critical_path),
+                "near_critical": len(near_critical),
+                "moderate": len(moderate),
+                "comfortable": len(comfortable),
+            },
+            "long_duration_activities": long_duration[:20],
+            "behind_schedule_activities": behind[:20],
+            "critical_path_sample": [{"id": a.get("id"), "name": a.get("name")} for a in critical_path[:10]],
+            "recommendations": recommendations,
+        }
     
     def _create_risk_item(self, category: str, description: str, probability: str, impact: str, mitigation: str, source: str) -> Dict:
         return {
