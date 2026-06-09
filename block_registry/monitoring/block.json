@@ -2,44 +2,65 @@
   "id": "monitoring",
   "name": "Monitoring",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 2,
+  "requires": [
+    "config",
+    "memory"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "record_call",
+      "options": [
+        "record_call",
+        "leaderboard",
+        "provider_status",
+        "recommend",
+        "health_report",
+        "predictive_failover"
+      ]
     },
     {
       "name": "track_providers",
-      "type": "array",
+      "type": "json",
       "required": false,
+      "description": "Track Providers",
       "default": [
         "deepseek",
         "anthropic"
-      ],
-      "description": "Configuration parameter: track_providers"
+      ]
     },
     {
       "name": "window_size",
       "type": "number",
       "required": false,
-      "default": 100,
-      "description": "Configuration parameter: window_size"
+      "description": "Window Size",
+      "default": 100
     },
     {
       "name": "prediction_threshold",
       "type": "number",
       "required": false,
-      "default": 0.3,
-      "description": "Configuration parameter: prediction_threshold"
+      "description": "Prediction Threshold",
+      "default": 0.3
     }
   ],
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -49,8 +70,21 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "record_call",
+        "leaderboard",
+        "provider_status",
+        "recommend",
+        "health_report",
+        "predictive_failover"
+      ]
     },
     {
       "name": "track_providers",

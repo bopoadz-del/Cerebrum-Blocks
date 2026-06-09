@@ -32,6 +32,13 @@ class HealthCheckBlock(UniversalBlock):
         "alert_on_failure": True,
         "max_probe_history": 100
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'status', 'type': 'text', 'label': 'Health status'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['ping', 'deep_check', 'check_dependency', 'register_probe', 'unregister_probe', 'get_status', 'get_history', 'simulate_failure'], 'default': 'ping'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

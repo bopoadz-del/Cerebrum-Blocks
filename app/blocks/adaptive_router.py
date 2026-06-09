@@ -35,6 +35,13 @@ class AdaptiveRouterBlock(UniversalBlock):
         "time_aware": True,  # Consider time of day
         "quality_threshold": 0.8  # Min quality score to select
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'Task, quality tier, budget, provider constraints...', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['select_provider', 'record_result', 'get_recommendation', 'forecast_issues', 'get_scores', 'reset_scores', 'ab_test', 'explain_choice'], 'default': 'select_provider'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

@@ -22,6 +22,13 @@ class MonitoringBlock(UniversalBlock):
         "window_size": 100,
         "prediction_threshold": 0.3
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['record_call', 'leaderboard', 'provider_status', 'recommend', 'health_report', 'predictive_failover'], 'default': 'record_call'}, {'name': 'track_providers', 'type': 'json', 'label': 'Track Providers', 'default': ['deepseek', 'anthropic']}, {'name': 'window_size', 'type': 'number', 'label': 'Window Size', 'default': 100}, {'name': 'prediction_threshold', 'type': 'number', 'label': 'Prediction Threshold', 'default': 0.3}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)

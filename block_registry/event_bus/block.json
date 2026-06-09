@@ -2,8 +2,12 @@
   "id": "event_bus",
   "name": "Event Bus",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Event bus for synchronous and asynchronous block communication",
+  "layer": 5,
+  "requires": [
+    "memory"
+  ],
   "inputs": [
     {
       "name": "input",

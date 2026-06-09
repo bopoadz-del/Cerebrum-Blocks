@@ -2,8 +2,10 @@
   "id": "local_drive",
   "name": "Local Drive",
   "version": "2.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Sandboxed read-only directory listing within DATA_DIR.",
+  "layer": 4,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

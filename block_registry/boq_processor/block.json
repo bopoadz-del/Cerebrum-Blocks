@@ -2,8 +2,10 @@
   "id": "boq_processor",
   "name": "Boq Processor",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Parse Excel/CSV Bills of Quantities into structured quantities and cost breakdown",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

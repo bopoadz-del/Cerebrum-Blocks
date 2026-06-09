@@ -2,14 +2,44 @@
   "id": "historical_benchmark",
   "name": "Historical Benchmark",
   "version": "1.1",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "RS Means-style benchmark unit costs, cost ranges, and market data for construction items",
+  "layer": 2,
+  "requires": [],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Item description, unit, location, project type"
+    },
+    {
+      "name": "item",
       "type": "string",
       "required": false,
-      "description": "Pass item description + location for benchmark rates"
+      "description": "Item description",
+      "default": ""
+    },
+    {
+      "name": "unit",
+      "type": "string",
+      "required": false,
+      "description": "Unit (m2, m3, kg, ea\u2026)",
+      "default": ""
+    },
+    {
+      "name": "location",
+      "type": "string",
+      "required": false,
+      "description": "Location / city",
+      "default": ""
+    },
+    {
+      "name": "project_type",
+      "type": "string",
+      "required": false,
+      "description": "Project type",
+      "default": ""
     },
     {
       "name": "rates_env",
@@ -35,8 +65,19 @@
   ],
   "outputs": [
     {
-      "name": "result",
-      "type": "json"
+      "name": "unit_cost",
+      "type": "number",
+      "description": "Unit cost"
+    },
+    {
+      "name": "range",
+      "type": "json",
+      "description": "Cost range"
+    },
+    {
+      "name": "location_factor",
+      "type": "number",
+      "description": "Location factor"
     }
   ],
   "execution": {
@@ -46,8 +87,28 @@
   "ui_schema": [
     {
       "name": "input",
+      "widget": "json",
+      "label": "Item description, unit, location, project type"
+    },
+    {
+      "name": "item",
       "widget": "text",
-      "label": "Pass item description + location for benchmark rates"
+      "label": "Item description"
+    },
+    {
+      "name": "unit",
+      "widget": "text",
+      "label": "Unit (m2, m3, kg, ea\u2026)"
+    },
+    {
+      "name": "location",
+      "widget": "text",
+      "label": "Location / city"
+    },
+    {
+      "name": "project_type",
+      "widget": "text",
+      "label": "Project type"
     },
     {
       "name": "rates_env",

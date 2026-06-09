@@ -2,8 +2,10 @@
   "id": "pdf",
   "name": "Pdf",
   "version": "2.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Extract text from PDF files",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

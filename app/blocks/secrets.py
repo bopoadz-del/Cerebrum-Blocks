@@ -32,6 +32,13 @@ class SecretsBlock(UniversalBlock):
         "audit_access": True,
         "key_derivation_iterations": 100000
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'secret', 'type': 'json', 'label': 'Secret value'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['set', 'get', 'delete', 'list', 'encrypt', 'decrypt', 'hash'], 'default': 'set'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

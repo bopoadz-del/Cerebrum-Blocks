@@ -22,14 +22,18 @@ block_registry/
 
 ## block.json Schema
 
-Each block manifest follows this structure:
+Each block manifest follows this structure. Inline blocks (`app/blocks/*.py`) use the same contract via `UniversalBlock.ui_schema`:
 
 ```json
 {
   "id": "chat",
   "name": "Chat",
   "version": "2.0.0",
+  "author": "Cerebrum Team",
   "description": "AI chat completions",
+  "layer": 2,
+  "requires": [],
+  "tags": ["ai", "core", "llm", "chat"],
   "inputs": [
     {"name": "input", "type": "string", "required": false, "description": "..."}
   ],
@@ -41,10 +45,27 @@ Each block manifest follows this structure:
     "image": "ghcr.io/cerebrum-blocks/chat:latest"
   },
   "ui_schema": [
-    {"name": "input", "widget": "text", "label": "Ask anything..."}
+    {"name": "input", "widget": "text", "label": "Ask anything..."},
+    {"name": "action", "widget": "select", "label": "Action", "options": ["get", "set"]}
   ]
 }
 ```
+
+Python blocks should also define:
+
+```python
+ui_schema = {
+    "input": {"type": "json", "placeholder": "...", "multiline": True},
+    "output": {"type": "json", "fields": [{"name": "result", "type": "json", "label": "Result"}]},
+    "params": [
+        {"name": "action", "type": "select", "label": "Action", "options": [...], "default": "get"},
+        {"name": "max_tokens", "type": "number", "label": "Max tokens", "default": 2048},
+    ],
+    "quick_actions": [],
+}
+```
+
+Use `app/core/ui_schema_builder.py` helpers (`action_ui_schema`, `file_ui_schema`, etc.) to stay consistent.
 
 ## Running a Block Standalone
 

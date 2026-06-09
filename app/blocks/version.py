@@ -29,6 +29,13 @@ class VersionBlock(UniversalBlock):
         "max_versions_kept": 10,
         "require_changelog": True
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['publish_version', 'check_compatibility', 'rollback', 'deprecate', 'dependency_tree', 'get_version', 'list_versions', 'compare_versions', 'get_changelog', 'suggest_update', 'validate_version', 'yank_version'], 'default': 'publish_version'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

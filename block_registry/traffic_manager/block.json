@@ -2,8 +2,14 @@
   "id": "traffic_manager",
   "name": "Traffic Manager",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Governance layer between block-to-block calls",
+  "layer": 1,
+  "requires": [
+    "rate_limiter",
+    "failover",
+    "queue"
+  ],
   "inputs": [
     {
       "name": "input",

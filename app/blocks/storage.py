@@ -23,6 +23,13 @@ class StorageBlock(UniversalBlock):
         "backend": "local",
         "data_dir": "./data/storage"
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['store', 'retrieve', 'delete', 'exists', 'list'], 'default': 'store'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)

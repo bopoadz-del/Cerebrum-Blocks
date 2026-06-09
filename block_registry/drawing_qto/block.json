@@ -2,8 +2,10 @@
   "id": "drawing_qto",
   "name": "Drawing Qto",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Extract measurements, areas, and volumes from DXF/DWG construction drawings",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

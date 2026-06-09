@@ -39,6 +39,13 @@ class RateLimiterBlock(UniversalBlock):
         "burst_allowance": 10,  # burst over limit
         "cleanup_interval": 300  # cleanup expired counters every 5 min
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['check_limit', 'record_hit', 'set_custom_limit', 'get_usage_stats', 'reset_limit', 'get_limit_info'], 'default': 'check_limit'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

@@ -2,14 +2,29 @@
   "id": "validation",
   "name": "Validation",
   "version": "1.1.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 3,
+  "requires": [
+    "sandbox",
+    "database"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Pipeline definition to validate"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "validate_pipeline",
+      "options": [
+        "validate_pipeline"
+      ]
     },
     {
       "name": "security_checks",
@@ -77,7 +92,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -87,8 +103,16 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "Pipeline definition to validate"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "validate_pipeline"
+      ]
     },
     {
       "name": "security_checks",

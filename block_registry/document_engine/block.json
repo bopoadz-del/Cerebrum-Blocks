@@ -2,8 +2,13 @@
   "id": "document_engine",
   "name": "Document Engine",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Parse \u2192 Reason \u2192 Map pipeline for technical document intelligence",
+  "layer": 3,
+  "requires": [
+    "pdf",
+    "ocr"
+  ],
   "inputs": [
     {
       "name": "input",

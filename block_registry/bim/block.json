@@ -2,14 +2,38 @@
   "id": "bim",
   "name": "Bim",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 6,
+  "requires": [
+    "config",
+    "storage",
+    "vector",
+    "pdf",
+    "ocr"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "IFC/DWG/PDF path or folder payload"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "index_folder",
+      "options": [
+        "index_folder",
+        "parse_ifc",
+        "extract_dwg_metadata",
+        "process_pdf",
+        "get_elements",
+        "spatial_query",
+        "compare_versions"
+      ]
     },
     {
       "name": "ifc_enabled",
@@ -36,7 +60,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -46,8 +71,22 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "file",
+      "label": "IFC/DWG/PDF path or folder payload"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "index_folder",
+        "parse_ifc",
+        "extract_dwg_metadata",
+        "process_pdf",
+        "get_elements",
+        "spatial_query",
+        "compare_versions"
+      ]
     },
     {
       "name": "ifc_enabled",

@@ -2,14 +2,36 @@
   "id": "documentation",
   "name": "Documentation",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 4,
+  "requires": [
+    "code",
+    "vector"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "generate_docs",
+      "options": [
+        "generate_docs",
+        "extract_signature",
+        "create_playground",
+        "search_docs",
+        "add_example",
+        "get_examples",
+        "render_markdown",
+        "validate_docs"
+      ]
     },
     {
       "name": "auto_generate",
@@ -50,7 +72,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -60,8 +83,23 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "generate_docs",
+        "extract_signature",
+        "create_playground",
+        "search_docs",
+        "add_example",
+        "get_examples",
+        "render_markdown",
+        "validate_docs"
+      ]
     },
     {
       "name": "auto_generate",

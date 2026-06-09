@@ -27,6 +27,13 @@ class DashboardBlock(UniversalBlock):
         "max_widgets": 20,
         "theme": "light"
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['render', 'add_widget', 'remove_widget', 'update_widget', 'get_metrics', 'list_widgets', 'save_layout', 'get_layout', 'subscribe_stream', 'get_snapshot'], 'default': 'render'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

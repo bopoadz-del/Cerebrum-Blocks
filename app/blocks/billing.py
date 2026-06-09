@@ -15,6 +15,13 @@ class BillingBlock(UniversalBlock):
         "free_tier_requests": 1000,
         "pro_tier_requests": 50000
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['record_usage', 'check_quota', 'create_customer', 'create_subscription', 'get_invoice', 'upgrade', 'webhook'], 'default': 'record_usage'}],
+        'quick_actions': [],
+    }
     
     PLANS = {
         "free": {

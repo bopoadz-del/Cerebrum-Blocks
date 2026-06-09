@@ -30,6 +30,7 @@ import {
   parseWorkflowImport,
   type WorkflowNodeData,
 } from '@/lib/workflowEngine';
+import { defaultParamsFromFields, extractParamFields } from '@/lib/blockUiSchema';
 
 const nodeTypes = {
   cerebrum: CerebrumNode,
@@ -127,6 +128,8 @@ function FlowCanvas() {
 
       try {
         const { block } = JSON.parse(json);
+        const blockMeta = blocks.find(b => b.name === block);
+        const paramFields = extractParamFields(blockMeta?.ui_schema);
         const bounds = reactFlowWrapper.current?.getBoundingClientRect();
         if (!bounds) return;
 
@@ -141,8 +144,10 @@ function FlowCanvas() {
           position,
           data: {
             block,
-            params: {},
+            params: defaultParamsFromFields(paramFields),
             label: block,
+            tags: blockMeta?.tags || [],
+            ui_schema: blockMeta?.ui_schema || {},
           } as WorkflowNodeData,
         };
 
@@ -158,7 +163,7 @@ function FlowCanvas() {
         // ignore invalid drop data
       }
     },
-    [screenToFlowPosition, setNodes, edges, pushState, fitView]
+    [screenToFlowPosition, setNodes, edges, pushState, fitView, blocks]
   );
 
   const onNodeDragStop = useCallback(

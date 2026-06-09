@@ -17,6 +17,13 @@ class WebhookBlock(UniversalBlock):
         "retries": 3,
         "verify_ssl": True
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'Webhook URL, events, payload', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['register', 'send', 'trigger', 'list'], 'default': 'register'}, {'name': 'timeout', 'type': 'number', 'label': 'Timeout', 'default': 30}, {'name': 'retries', 'type': 'number', 'label': 'Retries', 'default': 3}, {'name': 'verify_ssl', 'type': 'boolean', 'label': 'Verify Ssl', 'default': True}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)

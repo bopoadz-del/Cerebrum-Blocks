@@ -2,8 +2,12 @@
   "id": "spec_analyzer",
   "name": "Spec Analyzer",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Extract grade requirements, material specs, and compliance flags from specification PDFs",
+  "layer": 3,
+  "requires": [
+    "pdf"
+  ],
   "inputs": [
     {
       "name": "input",

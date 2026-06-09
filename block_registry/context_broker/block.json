@@ -2,8 +2,12 @@
   "id": "context_broker",
   "name": "Context Broker",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Memory coordinator for cross-block session state",
+  "layer": 0,
+  "requires": [
+    "memory"
+  ],
   "inputs": [
     {
       "name": "input",

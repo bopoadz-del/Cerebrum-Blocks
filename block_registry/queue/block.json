@@ -2,41 +2,60 @@
   "id": "queue",
   "name": "Queue",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 2,
+  "requires": [
+    "config",
+    "memory"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Job type, payload, queue name"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "enqueue",
+      "options": [
+        "enqueue",
+        "dequeue",
+        "status",
+        "list"
+      ]
     },
     {
       "name": "backend",
       "type": "string",
       "required": false,
-      "default": "memory",
-      "description": "Configuration parameter: backend"
+      "description": "Backend",
+      "default": "memory"
     },
     {
       "name": "redis_url",
       "type": "string",
       "required": false,
-      "default": null,
-      "description": "Configuration parameter: redis_url"
+      "description": "Redis Url",
+      "default": null
     },
     {
       "name": "max_workers",
       "type": "number",
       "required": false,
-      "default": 4,
-      "description": "Configuration parameter: max_workers"
+      "description": "Max Workers",
+      "default": 4
     }
   ],
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -46,8 +65,19 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "Job type, payload, queue name"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "enqueue",
+        "dequeue",
+        "status",
+        "list"
+      ]
     },
     {
       "name": "backend",

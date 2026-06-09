@@ -2,8 +2,12 @@
   "id": "capture",
   "name": "Capture",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Receive images from any client, OCR extract, AI structure, vector store",
+  "layer": 3,
+  "requires": [
+    "vector_search"
+  ],
   "inputs": [
     {
       "name": "input",

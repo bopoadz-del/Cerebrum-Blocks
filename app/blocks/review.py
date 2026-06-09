@@ -30,6 +30,13 @@ class ReviewBlock(UniversalBlock):
         "auto_moderate": True,
         "flag_threshold": 3  # Flags before manual review
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'Review item id and metadata', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['approve', 'reject', 'hide'], 'default': 'approve'}],
+        'quick_actions': [],
+    }
     
     # Simple spam indicators (in production, use ML)
     SPAM_PATTERNS = [

@@ -2,8 +2,10 @@
   "id": "recommendation_template",
   "name": "Recommendation Template",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Data-driven construction recommendation engine: variance data \u2192 severity-ranked recommendations + action items",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

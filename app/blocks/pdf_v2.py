@@ -62,7 +62,15 @@ class PDFBlockV2(TypedBlock):
                 {"name": "pages", "type": "number", "label": "Pages"},
                 {"name": "source", "type": "string", "label": "Source"}
             ]
-        }
+        },
+        "params": [
+            {"name": "extract_tables", "type": "boolean", "label": "Extract tables", "default": True},
+            {"name": "max_pages", "type": "number", "label": "Max pages", "default": 100},
+            {"name": "text_limit", "type": "number", "label": "Text limit", "default": 20000},
+        ],
+        "quick_actions": [
+            {"icon": "📄", "label": "Extract text", "prompt": "Extract all text from this PDF"},
+        ],
     }
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:

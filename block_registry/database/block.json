@@ -2,14 +2,33 @@
   "id": "database",
   "name": "Database",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 0,
+  "requires": [
+    "config"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "query",
+      "options": [
+        "query",
+        "insert",
+        "update",
+        "delete",
+        "create_table",
+        "list_tables"
+      ]
     },
     {
       "name": "backend",
@@ -28,8 +47,9 @@
   ],
   "outputs": [
     {
-      "name": "result",
-      "type": "json"
+      "name": "rows",
+      "type": "json",
+      "description": "Rows"
     }
   ],
   "execution": {
@@ -39,8 +59,21 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "query",
+        "insert",
+        "update",
+        "delete",
+        "create_table",
+        "list_tables"
+      ]
     },
     {
       "name": "backend",

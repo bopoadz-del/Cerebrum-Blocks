@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""Audit block_registry entries against the Cerebrum plug-and-play standard."""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+REGISTRY_ROOT = Path(__file__).parent.parent / "block_registry"
+SKIP_DIRS = {"__pycache__"}
+
+REQUIRED_MANIFEST_KEYS = [
+    "id",
+    "name",
+    "version",
+    "description",
+    "inputs",
+    "outputs",
+    "execution",
+    "ui_schema",
+    "tags",
+    "layer",
+    "requires",
+]
+
+RECOMMENDED_MANIFEST_KEYS = ["author"]
+
+
+def audit_block(block_dir: Path) -> dict:
+    name = block_dir.name
+    result = {"block": name, "errors": [], "warnings": []}
+
+    manifest_path = block_dir / "block.json"
+    adapter_path = block_dir / "block.py"
+    dockerfile_path = block_dir / "Dockerfile"
+
+    if not manifest_path.exists():
+        result["errors"].append("missing block.json")
+        return result
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        result["errors"].append(f"invalid block.json: {exc}")
+        return result
+
+    for key in REQUIRED_MANIFEST_KEYS:
+        if key not in manifest:
+            result["errors"].append(f"missing required field: {key}")
+
+    for key in RECOMMENDED_MANIFEST_KEYS:
+        if not manifest.get(key):
+            result["warnings"].append(f"missing recommended field: {key}")
+
+    if manifest.get("id") != name:
+        result["warnings"].append(f"id '{manifest.get('id')}' != folder '{name}'")
+
+    execution = manifest.get("execution", {})
+    exec_type = execution.get("type")
+    if exec_type == "docker" and not execution.get("image"):
+        result["errors"].append("execution.type=docker but execution.image missing")
+    elif exec_type not in {"docker", "python"}:
+        result["warnings"].append(f"unusual execution.type={exec_type!r}")
+
+    ui_schema = manifest.get("ui_schema")
+    if isinstance(ui_schema, dict):
+        result["errors"].append("ui_schema must be an array of widgets, not an object")
+    elif isinstance(ui_schema, list):
+        input_names = {item.get("name") for item in manifest.get("inputs", []) if isinstance(item, dict)}
+        widget_names = {item.get("name") for item in ui_schema if isinstance(item, dict)}
+        missing = sorted(n for n in input_names - widget_names if n)
+        if missing:
+            result["warnings"].append(f"inputs missing ui widgets: {missing}")
+
+    outputs = manifest.get("outputs", [])
+    if not outputs:
+        result["errors"].append("outputs must contain at least one item")
+
+    if not adapter_path.exists():
+        result["errors"].append("missing block.py")
+    else:
+        source = adapter_path.read_text(encoding="utf-8", errors="replace")
+        if "def run" not in source:
+            result["errors"].append("block.py must define run()")
+        if "BLOCK_REGISTRY" in source and "instance.process(" in source:
+            result["warnings"].append("adapter uses process() instead of execute() envelope")
+
+    if not dockerfile_path.exists():
+        result["errors"].append("missing Dockerfile")
+    else:
+        dockerfile = dockerfile_path.read_text(encoding="utf-8")
+        if 'ENTRYPOINT ["python", "run.py"]' in dockerfile and "COPY" not in dockerfile:
+            result["warnings"].append("Dockerfile uses run.py but does not COPY it (relies on base image)")
+
+    return result
+
+
+def main() -> int:
+    if not REGISTRY_ROOT.exists():
+        print(f"Registry not found: {REGISTRY_ROOT}")
+        return 1
+
+    blocks = sorted(
+        p for p in REGISTRY_ROOT.iterdir() if p.is_dir() and p.name not in SKIP_DIRS
+    )
+    results = [audit_block(block_dir) for block_dir in blocks]
+
+    errors = [r for r in results if r["errors"]]
+    warnings = [r for r in results if r["warnings"]]
+
+    print("=" * 72)
+    print("Cerebrum Block Standards Audit")
+    print("=" * 72)
+    print(f"Blocks scanned: {len(results)}")
+    print(f"Blocks with errors: {len(errors)}")
+    print(f"Blocks with warnings: {len(warnings)}")
+    print()
+
+    if errors:
+        print("ERRORS")
+        print("-" * 72)
+        for row in errors:
+            print(f"{row['block']}")
+            for item in row["errors"]:
+                print(f"  - {item}")
+        print()
+
+    if warnings:
+        print("WARNINGS")
+        print("-" * 72)
+        for row in warnings[:30]:
+            print(f"{row['block']}: {'; '.join(row['warnings'])}")
+        if len(warnings) > 30:
+            print(f"... and {len(warnings) - 30} more")
+        print()
+
+    return 1 if errors else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

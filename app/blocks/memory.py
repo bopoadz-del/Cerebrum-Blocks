@@ -20,6 +20,13 @@ class MemoryBlock(UniversalBlock):
         "default_ttl": 3600,
         "cleanup_interval": 300
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'Cache key/value payload, e.g. {"key": "session", "value": {...}}', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['get', 'set', 'delete', 'exists', 'flush', 'stats', 'keys'], 'default': 'get'}, {'name': 'max_size', 'type': 'number', 'label': 'Max Size', 'default': 10000}, {'name': 'default_ttl', 'type': 'number', 'label': 'Default Ttl', 'default': 3600}, {'name': 'cleanup_interval', 'type': 'number', 'label': 'Cleanup Interval', 'default': 300}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

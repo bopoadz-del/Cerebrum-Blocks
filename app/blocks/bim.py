@@ -21,6 +21,13 @@ class BIMBlock(UniversalBlock):
         "dwg_enabled": True,
         "auto_index": True
     }
+
+    ui_schema = {
+        'input': {'type': 'file', 'accept': None, 'placeholder': 'IFC/DWG/PDF path or folder payload', 'multiline': False},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['index_folder', 'parse_ifc', 'extract_dwg_metadata', 'process_pdf', 'get_elements', 'spatial_query', 'compare_versions'], 'default': 'index_folder'}],
+        'quick_actions': [],
+    }
     
     SUPPORTED_FORMATS = {
         ".ifc": "bim_model",

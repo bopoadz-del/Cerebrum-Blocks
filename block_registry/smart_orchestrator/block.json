@@ -2,8 +2,10 @@
   "id": "smart_orchestrator",
   "name": "Smart Orchestrator",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Construction semantic router: maps user messages to action queues with TF-IDF similarity scoring",
+  "layer": 2,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

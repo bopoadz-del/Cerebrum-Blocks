@@ -2,8 +2,10 @@
   "id": "zvec",
   "name": "Zvec",
   "version": "2.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Embed text as TF-IDF vectors; compute similarity; zero-shot classify",
+  "layer": 2,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

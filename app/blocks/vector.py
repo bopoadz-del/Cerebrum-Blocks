@@ -23,6 +23,13 @@ class VectorBlock(UniversalBlock):
         "collection": "default",
         "persist_directory": "./data/vector"
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'Vector id, embedding, or query', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['add', 'search', 'delete', 'get', 'count'], 'default': 'add'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

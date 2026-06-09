@@ -2,8 +2,10 @@
   "id": "workflow",
   "name": "Workflow",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Chain blocks into pipelines with variable interpolation and scheduling",
+  "layer": 2,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

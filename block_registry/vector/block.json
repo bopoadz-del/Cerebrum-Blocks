@@ -2,14 +2,33 @@
   "id": "vector",
   "name": "Vector",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 3,
+  "requires": [
+    "config",
+    "memory"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Vector id, embedding, or query"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "add",
+      "options": [
+        "add",
+        "search",
+        "delete",
+        "get",
+        "count"
+      ]
     },
     {
       "name": "backend",
@@ -43,7 +62,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -53,8 +73,20 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "Vector id, embedding, or query"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "add",
+        "search",
+        "delete",
+        "get",
+        "count"
+      ]
     },
     {
       "name": "backend",

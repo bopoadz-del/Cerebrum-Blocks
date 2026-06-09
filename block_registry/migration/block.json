@@ -2,14 +2,36 @@
   "id": "migration",
   "name": "Migration",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 0,
+  "requires": [
+    "database",
+    "version"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "migrate",
+      "options": [
+        "migrate",
+        "rollback",
+        "status",
+        "create_migration",
+        "seed_data",
+        "list_pending",
+        "verify",
+        "force_version"
+      ]
     },
     {
       "name": "auto_migrate",
@@ -43,7 +65,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -53,8 +76,23 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "migrate",
+        "rollback",
+        "status",
+        "create_migration",
+        "seed_data",
+        "list_pending",
+        "verify",
+        "force_version"
+      ]
     },
     {
       "name": "auto_migrate",

@@ -40,6 +40,13 @@ class TeamBlock(UniversalBlock):
         "enable_sso": False,
         "require_2fa_for_admins": True
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['create_team', 'delete_team', 'invite_member', 'accept_invitation', 'remove_member', 'set_role', 'get_team', 'list_teams', 'get_members', 'get_team_context', 'switch_team', 'check_permission'], 'default': 'create_team'}],
+        'quick_actions': [],
+    }
     
     ROLE_HIERARCHY = {
         TeamRole.OWNER: ["admin", "developer", "member", "viewer"],

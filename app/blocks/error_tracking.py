@@ -35,6 +35,13 @@ class ErrorTrackingBlock(UniversalBlock):
         "max_events_per_issue": 1000,
         "retention_days": 30
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['capture_exception', 'capture_message', 'get_issue', 'resolve_issue', 'performance_trace', 'end_trace', 'get_issues', 'get_stats', 'add_breadcrumb'], 'default': 'capture_exception'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

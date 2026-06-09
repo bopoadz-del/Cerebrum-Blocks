@@ -14,6 +14,13 @@ class EmailBlock(UniversalBlock):
         "smtp_host": "localhost",
         "smtp_port": 587
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'Recipient, subject, body, template data', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['send', 'send_template', 'validate_address'], 'default': 'send'}],
+        'quick_actions': [],
+    }
     
     PROVIDERS = {
         "sendgrid": {"url": "https://api.sendgrid.com/v3/mail/send"},

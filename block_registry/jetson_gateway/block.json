@@ -2,8 +2,10 @@
   "id": "jetson_gateway",
   "name": "Jetson Gateway",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Edge computing gateway: dispatch construction actions to NVIDIA Jetson fleet with OTA, health monitoring, parallel execution",
+  "layer": 2,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

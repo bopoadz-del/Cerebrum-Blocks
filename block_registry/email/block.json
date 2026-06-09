@@ -2,14 +2,30 @@
   "id": "email",
   "name": "Email",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 5,
+  "requires": [
+    "config"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Recipient, subject, body, template data"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "send",
+      "options": [
+        "send",
+        "send_template",
+        "validate_address"
+      ]
     },
     {
       "name": "provider",
@@ -36,7 +52,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -46,8 +63,18 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "Recipient, subject, body, template data"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "send",
+        "send_template",
+        "validate_address"
+      ]
     },
     {
       "name": "provider",

@@ -79,8 +79,36 @@ def extract_inputs(block_class) -> List[Dict[str, Any]]:
             "description": ui_input.get("placeholder", "Block input"),
         })
 
-    # Params from default_config become configurable inputs
+    # Explicit workflow params from ui_schema.params
+    for param in ui_schema.get("params", []) or []:
+        if not isinstance(param, dict) or not param.get("name"):
+            continue
+        param_type = param.get("type", "string")
+        mapped = {
+            "boolean": "boolean",
+            "number": "number",
+            "json": "json",
+            "select": "string",
+            "file": "file",
+            "text": "string",
+        }.get(param_type, "string")
+        entry = {
+            "name": param["name"],
+            "type": mapped,
+            "required": False,
+            "description": param.get("label", param["name"]),
+        }
+        if "default" in param:
+            entry["default"] = param["default"]
+        if param.get("options"):
+            entry["options"] = param["options"]
+        inputs.append(entry)
+
+    # Params from default_config become configurable inputs (legacy path)
+    existing = {item["name"] for item in inputs}
     for key, value in default_config.items():
+        if key in existing:
+            continue
         param_type = "string"
         if isinstance(value, bool):
             param_type = "boolean"
@@ -139,8 +167,31 @@ def extract_ui_schema(block_class) -> List[Dict[str, Any]]:
             "label": ui_input.get("placeholder", "Input"),
         })
 
-    # Config param widgets
+    for param in ui_schema.get("params", []) or []:
+        if not isinstance(param, dict) or not param.get("name"):
+            continue
+        param_type = param.get("type", "text")
+        widget = {
+            "boolean": "toggle",
+            "number": "number",
+            "json": "json",
+            "select": "select",
+            "file": "file",
+        }.get(param_type, "text")
+        entry = {
+            "name": param["name"],
+            "widget": widget,
+            "label": param.get("label", param["name"].replace("_", " ").title()),
+        }
+        if param.get("options"):
+            entry["options"] = param["options"]
+        widgets.append(entry)
+
+    existing = {w["name"] for w in widgets}
+    # Config param widgets (legacy fallback)
     for key, value in default_config.items():
+        if key in existing:
+            continue
         widget = "text"
         if isinstance(value, bool):
             widget = "toggle"
@@ -181,8 +232,10 @@ def generate_block_json(block_name: str, block_class) -> Optional[Dict[str, Any]
         "id": name,
         "name": name.replace("_", " ").title(),
         "version": version,
-        "author": author,
+        "author": author or "Cerebrum Team",
         "description": description,
+        "layer": getattr(block_class, "layer", 3),
+        "requires": getattr(block_class, "requires", []) or [],
         "inputs": inputs,
         "outputs": outputs,
         "execution": {
@@ -197,14 +250,14 @@ def generate_block_json(block_name: str, block_class) -> Optional[Dict[str, Any]
 
 
 def generate_block_adapter(block_name: str, block_class) -> str:
-    """Generate block.py adapter that wraps UniversalBlock.process() into run()."""
+    """Generate block.py adapter that wraps UniversalBlock.execute() into run()."""
     cls_name = block_class.__name__
     module_path = block_class.__module__
 
     code = f'''#!/usr/bin/env python3
 """
 Auto-generated adapter for Cerebrum block: {block_name}
-Wraps {module_path}.{cls_name}.process() into a synchronous run() function.
+Wraps {module_path}.{cls_name}.execute() into a synchronous run() function.
 """
 
 import sys
@@ -215,33 +268,36 @@ sys.path.insert(0, "/app")
 from app.blocks import BLOCK_REGISTRY
 
 
+def _run_async(coro):
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+
+    import concurrent.futures
+    with concurrent.futures.ThreadPoolExecutor() as pool:
+        return pool.submit(asyncio.run, coro).result()
+
+
 def run(**kwargs):
     """
     Execute the {block_name} block.
     Accepts keyword args matching the block's inputs/params.
-    Returns the block's raw result dict.
+    Returns the standardized block result payload.
     """
     block_cls = BLOCK_REGISTRY["{block_name}"]
     instance = block_cls()
 
-    # Separate input from params
     input_data = kwargs.get("input", kwargs)
     params = {{k: v for k, v in kwargs.items() if k != "input"}}
 
-    # process() is async — run it in a new event loop
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
+    envelope = _run_async(instance.execute(input_data, params))
+    if envelope.get("status") == "error":
+        inner = envelope.get("result", {{}})
+        message = inner.get("error") if isinstance(inner, dict) else str(inner)
+        raise RuntimeError(message or f"{block_name} block failed")
 
-    if loop is not None:
-        # Already inside an async context (e.g. FastAPI) — schedule it
-        import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            future = pool.submit(asyncio.run, instance.process(input_data, params))
-            return future.result()
-    else:
-        return asyncio.run(instance.process(input_data, params))
+    return envelope.get("result", envelope)
 '''
     return code
 
@@ -252,7 +308,8 @@ def generate_dockerfile(block_name: str) -> str:
 
 WORKDIR /app
 COPY block.json block.py ./
-ENTRYPOINT ["python", "run.py"]
+# run.py is provided by cerebrum-block-base:latest
+ENTRYPOINT ["python", "/app/run.py"]
 '''
 
 
@@ -312,19 +369,22 @@ def main():
     print("Cerebrum Block Registry Generator")
     print("=" * 60)
 
-    # Determine which blocks to generate
-    target_blocks = []
-    if len(sys.argv) > 1:
-        target_blocks = sys.argv[1:]
+    force = "--force" in sys.argv
+    argv = [arg for arg in sys.argv[1:] if arg not in {"--force", "--all"}]
+
+    if "--all" in sys.argv:
+        target_blocks = sorted(name for name in get_all_blocks().keys())
+    elif argv:
+        target_blocks = argv
     else:
         target_blocks = POC_BLOCKS
 
-    print(f"\nGenerating {len(target_blocks)} blocks:\n")
+    print(f"\nGenerating {len(target_blocks)} blocks (force={force}):\n")
 
     generated = 0
     for name in target_blocks:
         print(f"--> {name}")
-        if generate_block(name):
+        if generate_block(name, force=force):
             generated += 1
 
     print(f"\n{'=' * 60}")

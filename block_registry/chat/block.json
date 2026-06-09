@@ -2,8 +2,10 @@
   "id": "chat",
   "name": "Chat",
   "version": "2.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "AI chat completions with DeepSeek API",
+  "layer": 2,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

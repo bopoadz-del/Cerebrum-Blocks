@@ -2,8 +2,10 @@
   "id": "async_processor",
   "name": "Async Processor",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Celery-style task dispatcher with in-process fallback queue",
+  "layer": 0,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

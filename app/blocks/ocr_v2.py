@@ -67,7 +67,13 @@ class OCRBlockV2(TypedBlock):
                 {"name": "text", "type": "text", "label": "Extracted Text"},
                 {"name": "confidence", "type": "percentage", "label": "Confidence"}
             ]
-        }
+        },
+        "params": [
+            {"name": "language", "type": "text", "label": "OCR language", "default": "eng"},
+        ],
+        "quick_actions": [
+            {"icon": "👁️", "label": "Extract text", "prompt": "Extract all visible text from this image"},
+        ],
     }
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:

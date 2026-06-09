@@ -2,8 +2,10 @@
   "id": "vector_search",
   "name": "Vector Search",
   "version": "2.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Semantic search over in-memory document collections \u2014 no external DB needed",
+  "layer": 2,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

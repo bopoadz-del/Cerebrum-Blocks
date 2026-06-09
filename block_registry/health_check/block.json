@@ -2,14 +2,37 @@
   "id": "health_check",
   "name": "Health Check",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 1,
+  "requires": [
+    "database",
+    "memory",
+    "config"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "ping",
+      "options": [
+        "ping",
+        "deep_check",
+        "check_dependency",
+        "register_probe",
+        "unregister_probe",
+        "get_status",
+        "get_history",
+        "simulate_failure"
+      ]
     },
     {
       "name": "check_interval",
@@ -49,8 +72,9 @@
   ],
   "outputs": [
     {
-      "name": "result",
-      "type": "json"
+      "name": "status",
+      "type": "text",
+      "description": "Health status"
     }
   ],
   "execution": {
@@ -60,8 +84,23 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "ping",
+        "deep_check",
+        "check_dependency",
+        "register_probe",
+        "unregister_probe",
+        "get_status",
+        "get_history",
+        "simulate_failure"
+      ]
     },
     {
       "name": "check_interval",

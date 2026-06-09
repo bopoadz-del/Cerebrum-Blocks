@@ -31,6 +31,13 @@ class MigrationBlock(UniversalBlock):
         "migration_table": "schema_migrations",
         "migrations_dir": "./migrations"
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['migrate', 'rollback', 'status', 'create_migration', 'seed_data', 'list_pending', 'verify', 'force_version'], 'default': 'migrate'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

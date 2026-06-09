@@ -35,6 +35,13 @@ class AnalyticsBlock(UniversalBlock):
             
         }
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['track_event', 'leaderboard', 'usage_report', 'predict_failure', 'cost_analysis', 'get_metrics', 'compare_providers'], 'default': 'track_event'}, {'name': 'window_size', 'type': 'number', 'label': 'Window Size', 'default': 100}, {'name': 'prediction_threshold', 'type': 'number', 'label': 'Prediction Threshold', 'default': 0.3}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

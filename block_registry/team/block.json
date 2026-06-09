@@ -2,14 +2,41 @@
   "id": "team",
   "name": "Team",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 3,
+  "requires": [
+    "auth",
+    "database",
+    "billing"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "create_team",
+      "options": [
+        "create_team",
+        "delete_team",
+        "invite_member",
+        "accept_invitation",
+        "remove_member",
+        "set_role",
+        "get_team",
+        "list_teams",
+        "get_members",
+        "get_team_context",
+        "switch_team",
+        "check_permission"
+      ]
     },
     {
       "name": "max_members_per_team",
@@ -57,7 +84,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -67,8 +95,27 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "create_team",
+        "delete_team",
+        "invite_member",
+        "accept_invitation",
+        "remove_member",
+        "set_role",
+        "get_team",
+        "list_teams",
+        "get_members",
+        "get_team_context",
+        "switch_team",
+        "check_permission"
+      ]
     },
     {
       "name": "max_members_per_team",

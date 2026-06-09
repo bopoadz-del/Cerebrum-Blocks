@@ -28,6 +28,13 @@ class AuthBlock(UniversalBlock):
         "rate_limit_default": 100,
         "rate_limit_window": 3600
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'authorized', 'type': 'boolean', 'label': 'Authorized'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['validate', 'check_rate_limit', 'check_permission', 'create_key', 'revoke_key', 'rotate_key', 'get_usage', 'list_keys'], 'default': 'validate'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)

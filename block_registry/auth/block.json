@@ -2,14 +2,35 @@
   "id": "auth",
   "name": "Auth",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 1,
+  "requires": [
+    "memory"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "validate",
+      "options": [
+        "validate",
+        "check_rate_limit",
+        "check_permission",
+        "create_key",
+        "revoke_key",
+        "rotate_key",
+        "get_usage",
+        "list_keys"
+      ]
     },
     {
       "name": "master_key",
@@ -35,8 +56,9 @@
   ],
   "outputs": [
     {
-      "name": "result",
-      "type": "json"
+      "name": "authorized",
+      "type": "boolean",
+      "description": "Authorized"
     }
   ],
   "execution": {
@@ -46,8 +68,23 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "validate",
+        "check_rate_limit",
+        "check_permission",
+        "create_key",
+        "revoke_key",
+        "rotate_key",
+        "get_usage",
+        "list_keys"
+      ]
     },
     {
       "name": "master_key",

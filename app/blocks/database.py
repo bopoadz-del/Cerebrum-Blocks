@@ -28,6 +28,13 @@ class DatabaseBlock(UniversalBlock):
         "connection_string": None,  # resolved at init from DATA_DIR
     }
 
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'rows', 'type': 'json', 'label': 'Rows'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['query', 'insert', 'update', 'delete', 'create_table', 'list_tables'], 'default': 'query'}],
+        'quick_actions': [],
+    }
+
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)
         self.backend = config.get("backend", "sqlite")

@@ -2,8 +2,10 @@
   "id": "library_container",
   "name": "Library Container",
   "version": "1.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Formula backend registry: SymPy, Pint, CoolProp, QuantLib",
+  "layer": 4,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

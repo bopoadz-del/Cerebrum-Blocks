@@ -38,6 +38,13 @@ class PaymentSplitBlock(UniversalBlock):
         "hold_period_days": 14,  # Hold earnings for refunds
         "stripe_connect_enabled": True
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['calculate_split', 'process_sale', 'process_payout', 'register_creator', 'update_creator', 'revenue_report', 'creator_dashboard', 'transfer_ownership', 'get_transaction', 'list_transactions', 'hold_funds', 'release_hold'], 'default': 'calculate_split'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

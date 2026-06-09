@@ -2,8 +2,10 @@
   "id": "notification",
   "name": "Notification",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Send notifications via Telegram, Email, Webhook, or Slack",
+  "layer": 2,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

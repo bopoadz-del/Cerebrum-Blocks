@@ -21,6 +21,13 @@ class ConfigBlock(UniversalBlock):
         "config_file": "config/blocks.json",
         "env_prefix": "CEREBRUM_"
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'Config key/value payload', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['get', 'get_all', 'set'], 'default': 'get'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)

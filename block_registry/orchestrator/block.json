@@ -2,8 +2,13 @@
   "id": "orchestrator",
   "name": "Orchestrator",
   "version": "2.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Chain execution engine with type validation",
+  "layer": 2,
+  "requires": [
+    "memory",
+    "traffic_manager"
+  ],
   "inputs": [
     {
       "name": "input",

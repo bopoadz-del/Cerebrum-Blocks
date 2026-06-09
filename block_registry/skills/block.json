@@ -2,8 +2,10 @@
   "id": "skills",
   "name": "Skills",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Skill knowledge block \u2014 parses CEREBRUM_SKILL.md and serves hints, validation rules, styles, and workflows to the orchestrator",
+  "layer": 2,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

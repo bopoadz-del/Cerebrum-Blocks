@@ -2,8 +2,12 @@
   "id": "agent_swarm",
   "name": "Agent Swarm",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Multi-agent task orchestration with dependency resolution and LLM routing",
+  "layer": 3,
+  "requires": [
+    "vector_search"
+  ],
   "inputs": [
     {
       "name": "input",

@@ -30,6 +30,13 @@ class AuditBlock(UniversalBlock):
         "immutable": True,  # Cannot delete/modify
         "categories": ["auth", "data_access", "system", "admin"]
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'events', 'type': 'json', 'label': 'Audit Events'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['log', 'query', 'export', 'verify_chain', 'get_stats', 'tamper_check'], 'default': 'log'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

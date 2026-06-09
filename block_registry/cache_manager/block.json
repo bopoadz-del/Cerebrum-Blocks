@@ -2,8 +2,10 @@
   "id": "cache_manager",
   "name": "Cache Manager",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Redis wrapper with get/set/delete/stats actions",
+  "layer": 0,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

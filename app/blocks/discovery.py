@@ -47,6 +47,13 @@ class DiscoveryBlock(UniversalBlock):
         "boost_rated": True,
         "include_installed": False
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'Project goal, block query, or indexing payload', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['recommend_for_project', 'find_alternative', 'search_blocks', 'trending', 'get_compatible', 'index_block', 'get_categories', 'smart_stack'], 'default': 'recommend_for_project'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

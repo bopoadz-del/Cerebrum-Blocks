@@ -55,6 +55,13 @@ class ValidationBlock(UniversalBlock):
         "forbidden_imports": ["os.system", "subprocess", "eval", "exec"],
         "auto_certify_threshold": 0.9  # Score needed for auto-certification
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'Pipeline definition to validate', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['validate_pipeline'], 'default': 'validate_pipeline'}],
+        'quick_actions': [],
+    }
     
     # Security patterns to detect
     DANGEROUS_PATTERNS = {

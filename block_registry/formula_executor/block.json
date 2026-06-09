@@ -2,8 +2,10 @@
   "id": "formula_executor",
   "name": "Formula Executor",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Execute construction formulas in sandbox with unit validation",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

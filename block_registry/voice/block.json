@@ -2,8 +2,10 @@
   "id": "voice",
   "name": "Voice",
   "version": "2.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Text-to-speech (gTTS) and speech-to-text (Google STT) \u2014 no API key needed",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

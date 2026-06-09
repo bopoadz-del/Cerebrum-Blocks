@@ -10,6 +10,8 @@ export interface WorkflowNodeData extends Record<string, unknown> {
   block: string;
   params: Record<string, unknown>;
   label?: string;
+  tags?: string[];
+  ui_schema?: Record<string, unknown>;
 }
 
 export interface WorkflowDocument {

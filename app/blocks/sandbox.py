@@ -77,6 +77,13 @@ class SandboxBlock(UniversalBlock):
         "allowed_modules": ["math", "random", "datetime", "json", "re", "string", "collections"],
         "auto_kill": True
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': '{"code": "print(1+1)", "language": "python"}', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['execute', 'validate_code', 'create_policy', 'wrap_block', 'get_stats', 'check_safety'], 'default': 'execute'}, {'name': 'default_level', 'type': 'text', 'label': 'Default Level', 'default': 'strict'}, {'name': 'max_memory_mb', 'type': 'number', 'label': 'Max Memory Mb', 'default': 512}, {'name': 'max_cpu_time', 'type': 'number', 'label': 'Max Cpu Time', 'default': 5}, {'name': 'network_allowed', 'type': 'boolean', 'label': 'Network Allowed', 'default': False}, {'name': 'filesystem_readonly', 'type': 'boolean', 'label': 'Filesystem Readonly', 'default': True}, {'name': 'auto_kill', 'type': 'boolean', 'label': 'Auto Kill', 'default': True}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)

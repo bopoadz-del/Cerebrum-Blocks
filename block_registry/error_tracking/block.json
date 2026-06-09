@@ -2,14 +2,37 @@
   "id": "error_tracking",
   "name": "Error Tracking",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 1,
+  "requires": [
+    "database",
+    "notification"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "capture_exception",
+      "options": [
+        "capture_exception",
+        "capture_message",
+        "get_issue",
+        "resolve_issue",
+        "performance_trace",
+        "end_trace",
+        "get_issues",
+        "get_stats",
+        "add_breadcrumb"
+      ]
     },
     {
       "name": "sample_rate",
@@ -50,7 +73,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -60,8 +84,24 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "capture_exception",
+        "capture_message",
+        "get_issue",
+        "resolve_issue",
+        "performance_trace",
+        "end_trace",
+        "get_issues",
+        "get_stats",
+        "add_breadcrumb"
+      ]
     },
     {
       "name": "sample_rate",

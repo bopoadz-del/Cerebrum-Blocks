@@ -2,8 +2,10 @@
   "id": "primavera_parser",
   "name": "Primavera Parser",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Parse Primavera P6 .xer schedule files: critical path, milestones, resource loading",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

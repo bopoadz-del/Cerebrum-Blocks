@@ -2,14 +2,19 @@
   "id": "failover",
   "name": "Failover",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 2,
+  "requires": [
+    "config",
+    "monitoring"
+  ],
   "inputs": [
     {
       "name": "input",
-      "type": "string",
+      "type": "json",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Structured input payload"
     },
     {
       "name": "circuit_breaker_threshold",
@@ -36,7 +41,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Failover result"
     }
   ],
   "execution": {
@@ -46,8 +52,8 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "Structured input payload"
     },
     {
       "name": "circuit_breaker_threshold",

@@ -2,14 +2,23 @@
   "id": "ocr_v2",
   "name": "Ocr V2",
   "version": "2.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Extract text from images using OCR with typed output",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",
       "type": "file",
       "required": false,
       "description": "Upload image to extract text..."
+    },
+    {
+      "name": "language",
+      "type": "string",
+      "required": false,
+      "description": "OCR language",
+      "default": "eng"
     },
     {
       "name": "languages",
@@ -63,6 +72,11 @@
       "name": "input",
       "widget": "file",
       "label": "Upload image to extract text..."
+    },
+    {
+      "name": "language",
+      "widget": "text",
+      "label": "OCR language"
     },
     {
       "name": "languages",

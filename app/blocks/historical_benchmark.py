@@ -244,17 +244,28 @@ class HistoricalBenchmarkBlock(UniversalBlock):
 
     ui_schema = {
         "input": {
-            "type": "object",
-            "placeholder": "Pass item description + location for benchmark rates",
+            "type": "json",
+            "accept": None,
+            "placeholder": "Item description, unit, location, project type",
+            "multiline": True,
         },
-        "params": {
+        "output": {
+            "type": "json",
             "fields": [
-                {"name": "item", "type": "string", "label": "Item description"},
-                {"name": "unit", "type": "string", "label": "Unit (m2, m3, kg, ea…)"},
-                {"name": "location", "type": "string", "label": "Location / city"},
-                {"name": "project_type", "type": "string", "label": "Project type"},
-            ]
+                {"name": "unit_cost", "type": "number", "label": "Unit cost"},
+                {"name": "range", "type": "json", "label": "Cost range"},
+                {"name": "location_factor", "type": "number", "label": "Location factor"},
+            ],
         },
+        "params": [
+            {"name": "item", "type": "text", "label": "Item description", "default": ""},
+            {"name": "unit", "type": "text", "label": "Unit (m2, m3, kg, ea…)", "default": ""},
+            {"name": "location", "type": "text", "label": "Location / city", "default": ""},
+            {"name": "project_type", "type": "text", "label": "Project type", "default": ""},
+        ],
+        "quick_actions": [
+            {"icon": "💰", "label": "Benchmark cost", "prompt": "Look up benchmark unit cost for this item"},
+        ],
     }
 
     default_config = {

@@ -2,8 +2,10 @@
   "id": "sympy_reasoning",
   "name": "Sympy Reasoning",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Heavy reasoning engine: symbolic variance analysis + data-driven construction recommendations",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

@@ -5,6 +5,8 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from app.block_registry.normalize import registry_block_response
+
 logger = logging.getLogger(__name__)
 
 REGISTRY_ROOT = Path(__file__).parent.parent.parent / "block_registry"
@@ -43,17 +45,7 @@ def list_registry_blocks() -> List[Dict]:
     """Return registry blocks formatted like the existing /blocks response items."""
     blocks = []
     for manifest in scan_registry():
-        blocks.append({
-            "name": manifest["id"],
-            "version": manifest.get("version", "1.0"),
-            "description": manifest.get("description", ""),
-            "layer": 3,  # Default layer for registry blocks
-            "tags": manifest.get("tags", []),
-            "requires": [],
-            "ui_schema": {},  # Registry blocks use ui_schema in block.json, different format
-            "source": "registry",
-            "manifest": manifest,
-        })
+        blocks.append(registry_block_response(manifest))
     return blocks
 
 

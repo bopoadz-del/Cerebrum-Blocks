@@ -28,6 +28,14 @@ class FailoverBlock(UniversalBlock):
         "recovery_timeout": 60,
         "health_check_interval": 30
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'Structured input payload', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Failover result'}]},
+        'params': [],
+        'input_fields': [{'name': 'block', 'type': 'string', 'label': 'Primary block'}, {'name': 'payload', 'type': 'json', 'label': 'Execution payload'}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)

@@ -2,14 +2,49 @@
   "id": "analytics",
   "name": "Analytics",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 2,
+  "requires": [
+    "database",
+    "monitoring"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "track_event",
+      "options": [
+        "track_event",
+        "leaderboard",
+        "usage_report",
+        "predict_failure",
+        "cost_analysis",
+        "get_metrics",
+        "compare_providers"
+      ]
+    },
+    {
+      "name": "window_size",
+      "type": "number",
+      "required": false,
+      "description": "Window Size",
+      "default": 100
+    },
+    {
+      "name": "prediction_threshold",
+      "type": "number",
+      "required": false,
+      "description": "Prediction Threshold",
+      "default": 0.3
     },
     {
       "name": "retention_hours",
@@ -45,7 +80,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -55,8 +91,32 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "track_event",
+        "leaderboard",
+        "usage_report",
+        "predict_failure",
+        "cost_analysis",
+        "get_metrics",
+        "compare_providers"
+      ]
+    },
+    {
+      "name": "window_size",
+      "widget": "number",
+      "label": "Window Size"
+    },
+    {
+      "name": "prediction_threshold",
+      "widget": "number",
+      "label": "Prediction Threshold"
     },
     {
       "name": "retention_hours",

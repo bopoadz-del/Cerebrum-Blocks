@@ -2,8 +2,10 @@
   "id": "file_hasher",
   "name": "File Hasher",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "SHA256/MD5 hashing and metadata extraction for files",
+  "layer": 0,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

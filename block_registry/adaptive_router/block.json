@@ -2,14 +2,37 @@
   "id": "adaptive_router",
   "name": "Adaptive Router",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 2,
+  "requires": [
+    "analytics",
+    "monitoring",
+    "failover"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Task, quality tier, budget, provider constraints..."
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "select_provider",
+      "options": [
+        "select_provider",
+        "record_result",
+        "get_recommendation",
+        "forecast_issues",
+        "get_scores",
+        "reset_scores",
+        "ab_test",
+        "explain_choice"
+      ]
     },
     {
       "name": "learning_enabled",
@@ -57,7 +80,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -67,8 +91,23 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "Task, quality tier, budget, provider constraints..."
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "select_provider",
+        "record_result",
+        "get_recommendation",
+        "forecast_issues",
+        "get_scores",
+        "reset_scores",
+        "ab_test",
+        "explain_choice"
+      ]
     },
     {
       "name": "learning_enabled",

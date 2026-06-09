@@ -2,8 +2,10 @@
   "id": "llm_enhancer",
   "name": "Llm Enhancer",
   "version": "1.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "LLM-augmented enhancement of construction quantities/risks/RFIs",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

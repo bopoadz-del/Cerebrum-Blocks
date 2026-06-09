@@ -2,8 +2,10 @@
   "id": "bim_extractor",
   "name": "Bim Extractor",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Extract building elements, quantities, and clash report from IFC BIM models",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

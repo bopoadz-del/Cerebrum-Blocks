@@ -2,8 +2,10 @@
   "id": "learning_engine",
   "name": "Learning Engine",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Tier promotion + coefficient tuning: learns from user corrections to improve formula accuracy",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",

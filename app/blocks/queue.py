@@ -33,6 +33,13 @@ class QueueBlock(UniversalBlock):
         "redis_url": None,
         "max_workers": 4
     }
+
+    ui_schema = {
+        'input': {'type': 'json', 'accept': None, 'placeholder': 'Job type, payload, queue name', 'multiline': True},
+        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['enqueue', 'dequeue', 'status', 'list'], 'default': 'enqueue'}, {'name': 'backend', 'type': 'text', 'label': 'Backend', 'default': 'memory'}, {'name': 'redis_url', 'type': 'text', 'label': 'Redis Url', 'default': None}, {'name': 'max_workers', 'type': 'number', 'label': 'Max Workers', 'default': 4}],
+        'quick_actions': [],
+    }
     
     def __init__(self, hal_block=None, config: Dict[str, Any] = None):
         super().__init__(hal_block, config)

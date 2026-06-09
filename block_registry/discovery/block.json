@@ -2,14 +2,36 @@
   "id": "discovery",
   "name": "Discovery",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 4,
+  "requires": [
+    "vector",
+    "analytics"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Project goal, block query, or indexing payload"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "recommend_for_project",
+      "options": [
+        "recommend_for_project",
+        "find_alternative",
+        "search_blocks",
+        "trending",
+        "get_compatible",
+        "index_block",
+        "get_categories",
+        "smart_stack"
+      ]
     },
     {
       "name": "recommendation_model",
@@ -57,7 +79,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -67,8 +90,23 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "Project goal, block query, or indexing payload"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "recommend_for_project",
+        "find_alternative",
+        "search_blocks",
+        "trending",
+        "get_compatible",
+        "index_block",
+        "get_categories",
+        "smart_stack"
+      ]
     },
     {
       "name": "recommendation_model",

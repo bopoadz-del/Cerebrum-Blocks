@@ -2,14 +2,41 @@
   "id": "payment_split",
   "name": "Payment Split",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 5,
+  "requires": [
+    "billing",
+    "team",
+    "database"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "calculate_split",
+      "options": [
+        "calculate_split",
+        "process_sale",
+        "process_payout",
+        "register_creator",
+        "update_creator",
+        "revenue_report",
+        "creator_dashboard",
+        "transfer_ownership",
+        "get_transaction",
+        "list_transactions",
+        "hold_funds",
+        "release_hold"
+      ]
     },
     {
       "name": "platform_fee_percent",
@@ -57,7 +84,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -67,8 +95,27 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "calculate_split",
+        "process_sale",
+        "process_payout",
+        "register_creator",
+        "update_creator",
+        "revenue_report",
+        "creator_dashboard",
+        "transfer_ownership",
+        "get_transaction",
+        "list_transactions",
+        "hold_funds",
+        "release_hold"
+      ]
     },
     {
       "name": "platform_fee_percent",

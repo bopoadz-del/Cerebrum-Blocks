@@ -2,14 +2,36 @@
   "id": "billing",
   "name": "Billing",
   "version": "1.0.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "",
+  "layer": 5,
+  "requires": [
+    "config",
+    "auth",
+    "memory"
+  ],
   "inputs": [
     {
       "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Enter your request..."
+      "description": "Action",
+      "default": "record_usage",
+      "options": [
+        "record_usage",
+        "check_quota",
+        "create_customer",
+        "create_subscription",
+        "get_invoice",
+        "upgrade",
+        "webhook"
+      ]
     },
     {
       "name": "stripe_key",
@@ -36,7 +58,8 @@
   "outputs": [
     {
       "name": "result",
-      "type": "json"
+      "type": "json",
+      "description": "Result"
     }
   ],
   "execution": {
@@ -46,8 +69,22 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "text",
-      "label": "Enter your request..."
+      "widget": "json",
+      "label": "JSON payload for the selected action"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "record_usage",
+        "check_quota",
+        "create_customer",
+        "create_subscription",
+        "get_invoice",
+        "upgrade",
+        "webhook"
+      ]
     },
     {
       "name": "stripe_key",

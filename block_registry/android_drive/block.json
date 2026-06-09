@@ -2,8 +2,10 @@
   "id": "android_drive",
   "name": "Android Drive",
   "version": "1.0",
-  "author": "",
+  "author": "Cerebrum Team",
   "description": "Android device storage access via ADB or REST bridge",
+  "layer": 4,
+  "requires": [],
   "inputs": [
     {
       "name": "input",
