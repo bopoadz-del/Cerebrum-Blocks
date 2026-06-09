@@ -1,0 +1,62 @@
+{
+  "id": "event_bus",
+  "name": "Event Bus",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Event bus for synchronous and asynchronous block communication",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"action\": \"publish\", \"topic\": \"chat.response\", \"payload\": {}}"
+    },
+    {
+      "name": "default_timeout",
+      "type": "number",
+      "required": false,
+      "default": 30,
+      "description": "Configuration parameter: default_timeout"
+    },
+    {
+      "name": "max_pending",
+      "type": "number",
+      "required": false,
+      "default": 1000,
+      "description": "Configuration parameter: max_pending"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/event_bus:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"action\": \"publish\", \"topic\": \"chat.response\", \"payload\": {}}"
+    },
+    {
+      "name": "default_timeout",
+      "widget": "number",
+      "label": "Default Timeout"
+    },
+    {
+      "name": "max_pending",
+      "widget": "number",
+      "label": "Max Pending"
+    }
+  ],
+  "tags": [
+    "interface",
+    "messaging",
+    "events",
+    "core"
+  ]
+}

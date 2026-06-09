@@ -1,0 +1,76 @@
+{
+  "id": "chat",
+  "name": "Chat",
+  "version": "2.0.0",
+  "author": "",
+  "description": "AI chat completions with DeepSeek API",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Ask anything..."
+    },
+    {
+      "name": "default_provider",
+      "type": "string",
+      "required": false,
+      "default": "deepseek",
+      "description": "Configuration parameter: default_provider"
+    },
+    {
+      "name": "max_tokens",
+      "type": "number",
+      "required": false,
+      "default": 2048,
+      "description": "Configuration parameter: max_tokens"
+    },
+    {
+      "name": "temperature",
+      "type": "number",
+      "required": false,
+      "default": 0.7,
+      "description": "Configuration parameter: temperature"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "text",
+      "type": "markdown",
+      "description": "Response"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/chat:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Ask anything..."
+    },
+    {
+      "name": "default_provider",
+      "widget": "text",
+      "label": "Default Provider"
+    },
+    {
+      "name": "max_tokens",
+      "widget": "number",
+      "label": "Max Tokens"
+    },
+    {
+      "name": "temperature",
+      "widget": "number",
+      "label": "Temperature"
+    }
+  ],
+  "tags": [
+    "ai",
+    "core",
+    "llm",
+    "chat",
+    "typed"
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "id": "jetson_gateway",
+  "name": "Jetson Gateway",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Edge computing gateway: dispatch construction actions to NVIDIA Jetson fleet with OTA, health monitoring, parallel execution",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"action_name\": \"drawing_qto\", \"file_path\": \"/data/plan.dxf\", \"parameters\": {}}"
+    },
+    {
+      "name": "timeout_seconds",
+      "type": "number",
+      "required": false,
+      "default": 30,
+      "description": "Configuration parameter: timeout_seconds"
+    },
+    {
+      "name": "max_parallel",
+      "type": "number",
+      "required": false,
+      "default": 4,
+      "description": "Configuration parameter: max_parallel"
+    },
+    {
+      "name": "retry_count",
+      "type": "number",
+      "required": false,
+      "default": 2,
+      "description": "Configuration parameter: retry_count"
+    },
+    {
+      "name": "fleet_registry_env",
+      "type": "string",
+      "required": false,
+      "default": "JETSON_FLEET_REGISTRY",
+      "description": "Configuration parameter: fleet_registry_env"
+    },
+    {
+      "name": "fallback_local",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: fallback_local"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "structured_json",
+      "type": "json",
+      "description": "Result"
+    },
+    {
+      "name": "execution_time_ms",
+      "type": "number",
+      "description": "Exec Time (ms)"
+    },
+    {
+      "name": "device_id",
+      "type": "text",
+      "description": "Device"
+    },
+    {
+      "name": "mode",
+      "type": "text",
+      "description": "Mode"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/jetson_gateway:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"action_name\": \"drawing_qto\", \"file_path\": \"/data/plan.dxf\", \"parameters\": {}}"
+    },
+    {
+      "name": "timeout_seconds",
+      "widget": "number",
+      "label": "Timeout Seconds"
+    },
+    {
+      "name": "max_parallel",
+      "widget": "number",
+      "label": "Max Parallel"
+    },
+    {
+      "name": "retry_count",
+      "widget": "number",
+      "label": "Retry Count"
+    },
+    {
+      "name": "fleet_registry_env",
+      "widget": "text",
+      "label": "Fleet Registry Env"
+    },
+    {
+      "name": "fallback_local",
+      "widget": "toggle",
+      "label": "Fallback Local"
+    }
+  ],
+  "tags": [
+    "infrastructure",
+    "edge",
+    "jetson",
+    "iot",
+    "gateway",
+    "construction"
+  ]
+}

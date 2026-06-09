@@ -1,0 +1,98 @@
+{
+  "id": "health_check",
+  "name": "Health Check",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "check_interval",
+      "type": "number",
+      "required": false,
+      "default": 30,
+      "description": "Configuration parameter: check_interval"
+    },
+    {
+      "name": "deep_check_interval",
+      "type": "number",
+      "required": false,
+      "default": 300,
+      "description": "Configuration parameter: deep_check_interval"
+    },
+    {
+      "name": "timeout_per_check",
+      "type": "number",
+      "required": false,
+      "default": 5,
+      "description": "Configuration parameter: timeout_per_check"
+    },
+    {
+      "name": "alert_on_failure",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: alert_on_failure"
+    },
+    {
+      "name": "max_probe_history",
+      "type": "number",
+      "required": false,
+      "default": 100,
+      "description": "Configuration parameter: max_probe_history"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/health_check:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "check_interval",
+      "widget": "number",
+      "label": "Check Interval"
+    },
+    {
+      "name": "deep_check_interval",
+      "widget": "number",
+      "label": "Deep Check Interval"
+    },
+    {
+      "name": "timeout_per_check",
+      "widget": "number",
+      "label": "Timeout Per Check"
+    },
+    {
+      "name": "alert_on_failure",
+      "widget": "toggle",
+      "label": "Alert On Failure"
+    },
+    {
+      "name": "max_probe_history",
+      "widget": "number",
+      "label": "Max Probe History"
+    }
+  ],
+  "tags": [
+    "observability",
+    "infra",
+    "reliability",
+    "health"
+  ]
+}

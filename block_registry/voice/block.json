@@ -1,0 +1,39 @@
+{
+  "id": "voice",
+  "name": "Voice",
+  "version": "2.0",
+  "author": "",
+  "description": "Text-to-speech (gTTS) and speech-to-text (Google STT) \u2014 no API key needed",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "Record or upload audio..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "text",
+      "type": "text",
+      "description": "Transcription"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/voice:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "file",
+      "label": "Record or upload audio..."
+    }
+  ],
+  "tags": [
+    "domain",
+    "audio",
+    "tts",
+    "stt"
+  ]
+}

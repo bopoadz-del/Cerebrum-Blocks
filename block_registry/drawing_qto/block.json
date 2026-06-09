@@ -1,0 +1,92 @@
+{
+  "id": "drawing_qto",
+  "name": "Drawing Qto",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Extract measurements, areas, and volumes from DXF/DWG construction drawings",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "Upload DXF or DWG drawing..."
+    },
+    {
+      "name": "unit_scale",
+      "type": "number",
+      "required": false,
+      "default": 1.0,
+      "description": "Configuration parameter: unit_scale"
+    },
+    {
+      "name": "area_layer_filter",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Configuration parameter: area_layer_filter"
+    },
+    {
+      "name": "min_area_m2",
+      "type": "number",
+      "required": false,
+      "default": 0.01,
+      "description": "Configuration parameter: min_area_m2"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "measurements",
+      "type": "list",
+      "description": "Linear Measurements"
+    },
+    {
+      "name": "areas",
+      "type": "list",
+      "description": "Areas"
+    },
+    {
+      "name": "volumes",
+      "type": "list",
+      "description": "Volumes"
+    },
+    {
+      "name": "total_area_m2",
+      "type": "number",
+      "description": "Total Area"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/drawing_qto:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "file",
+      "label": "Upload DXF or DWG drawing..."
+    },
+    {
+      "name": "unit_scale",
+      "widget": "number",
+      "label": "Unit Scale"
+    },
+    {
+      "name": "area_layer_filter",
+      "widget": "json",
+      "label": "Area Layer Filter"
+    },
+    {
+      "name": "min_area_m2",
+      "widget": "number",
+      "label": "Min Area M2"
+    }
+  ],
+  "tags": [
+    "domain",
+    "construction",
+    "drawing",
+    "qto",
+    "dxf",
+    "quantities"
+  ]
+}

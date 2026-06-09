@@ -1,0 +1,103 @@
+{
+  "id": "audit",
+  "name": "Audit",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "hash_algorithm",
+      "type": "string",
+      "required": false,
+      "default": "sha256",
+      "description": "Configuration parameter: hash_algorithm"
+    },
+    {
+      "name": "chain_verification",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: chain_verification"
+    },
+    {
+      "name": "retention_days",
+      "type": "number",
+      "required": false,
+      "default": 2555,
+      "description": "Configuration parameter: retention_days"
+    },
+    {
+      "name": "immutable",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: immutable"
+    },
+    {
+      "name": "categories",
+      "type": "array",
+      "required": false,
+      "default": [
+        "auth",
+        "data_access",
+        "system",
+        "admin"
+      ],
+      "description": "Configuration parameter: categories"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/audit:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "hash_algorithm",
+      "widget": "text",
+      "label": "Hash Algorithm"
+    },
+    {
+      "name": "chain_verification",
+      "widget": "toggle",
+      "label": "Chain Verification"
+    },
+    {
+      "name": "retention_days",
+      "widget": "number",
+      "label": "Retention Days"
+    },
+    {
+      "name": "immutable",
+      "widget": "toggle",
+      "label": "Immutable"
+    },
+    {
+      "name": "categories",
+      "widget": "json",
+      "label": "Categories"
+    }
+  ],
+  "tags": [
+    "security",
+    "compliance",
+    "audit",
+    "enterprise"
+  ]
+}

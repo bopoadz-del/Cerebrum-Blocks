@@ -1,0 +1,174 @@
+{
+  "id": "knowledge",
+  "name": "Knowledge",
+  "version": "2.0.0",
+  "author": "",
+  "description": "Ask questions across stored captures and swarm runs using RAG",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Ask a question about your knowledge base..."
+    },
+    {
+      "name": "llm_provider",
+      "type": "string",
+      "required": false,
+      "default": "deepseek",
+      "description": "Configuration parameter: llm_provider"
+    },
+    {
+      "name": "ollama_base_url",
+      "type": "string",
+      "required": false,
+      "default": "http://localhost:11434",
+      "description": "Configuration parameter: ollama_base_url"
+    },
+    {
+      "name": "ollama_model",
+      "type": "string",
+      "required": false,
+      "default": "llama3.2:3b",
+      "description": "Configuration parameter: ollama_model"
+    },
+    {
+      "name": "deepseek_api_key",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "Configuration parameter: deepseek_api_key"
+    },
+    {
+      "name": "deepseek_model",
+      "type": "string",
+      "required": false,
+      "default": "deepseek-chat",
+      "description": "Configuration parameter: deepseek_model"
+    },
+    {
+      "name": "openrouter_api_key",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "Configuration parameter: openrouter_api_key"
+    },
+    {
+      "name": "openrouter_model",
+      "type": "string",
+      "required": false,
+      "default": "anthropic/claude-3.5-sonnet",
+      "description": "Configuration parameter: openrouter_model"
+    },
+    {
+      "name": "vector_db_url",
+      "type": "string",
+      "required": false,
+      "default": "http://localhost:8001",
+      "description": "Configuration parameter: vector_db_url"
+    },
+    {
+      "name": "default_top_k",
+      "type": "number",
+      "required": false,
+      "default": 5,
+      "description": "Configuration parameter: default_top_k"
+    },
+    {
+      "name": "default_collections",
+      "type": "array",
+      "required": false,
+      "default": [
+        "cerebrum_captures",
+        "cerebrum_swarm"
+      ],
+      "description": "Configuration parameter: default_collections"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "answer",
+      "type": "text",
+      "description": "Answer"
+    },
+    {
+      "name": "sources",
+      "type": "json",
+      "description": "Sources"
+    },
+    {
+      "name": "confidence",
+      "type": "percentage",
+      "description": "Confidence"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/knowledge:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Ask a question about your knowledge base..."
+    },
+    {
+      "name": "llm_provider",
+      "widget": "text",
+      "label": "Llm Provider"
+    },
+    {
+      "name": "ollama_base_url",
+      "widget": "text",
+      "label": "Ollama Base Url"
+    },
+    {
+      "name": "ollama_model",
+      "widget": "text",
+      "label": "Ollama Model"
+    },
+    {
+      "name": "deepseek_api_key",
+      "widget": "text",
+      "label": "Deepseek Api Key"
+    },
+    {
+      "name": "deepseek_model",
+      "widget": "text",
+      "label": "Deepseek Model"
+    },
+    {
+      "name": "openrouter_api_key",
+      "widget": "text",
+      "label": "Openrouter Api Key"
+    },
+    {
+      "name": "openrouter_model",
+      "widget": "text",
+      "label": "Openrouter Model"
+    },
+    {
+      "name": "vector_db_url",
+      "widget": "text",
+      "label": "Vector Db Url"
+    },
+    {
+      "name": "default_top_k",
+      "widget": "number",
+      "label": "Default Top K"
+    },
+    {
+      "name": "default_collections",
+      "widget": "json",
+      "label": "Default Collections"
+    }
+  ],
+  "tags": [
+    "knowledge",
+    "rag",
+    "retrieval",
+    "qa",
+    "memory",
+    "ai"
+  ]
+}

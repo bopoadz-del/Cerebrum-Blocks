@@ -32,6 +32,33 @@ const API_BASE =
 // must be scoped to client-safe operations on the server. Never inline a master key.
 const API_KEY = import.meta.env.VITE_API_KEY ?? (isLocalHost ? 'cb_dev_key' : '');
 
+export interface BlockMeta {
+  name: string;
+  version: string;
+  description: string;
+  layer: number;
+  tags: string[];
+  requires: string[];
+  ui_schema: Record<string, unknown>;
+}
+
+export interface ChainStep {
+  block: string;
+  params: Record<string, unknown>;
+  label?: string;
+  input_mapping?: Record<string, string>;
+}
+
+export interface ChainResult {
+  success: boolean;
+  status: string;
+  steps_executed: number;
+  final_output?: unknown;
+  results: Array<Record<string, unknown>>;
+  error?: string;
+  validation_errors?: unknown[];
+}
+
 export type ApiErrorKind =
   | 'network'           // status 0 — fetch threw / CORS-stripped failure
   | 'auth'              // 401
@@ -356,6 +383,24 @@ export const api = {
       }),
     });
     return unwrapResult(raw) as Awaited<ReturnType<typeof api.discoverProjects>>;
+  },
+
+  // List all available blocks
+  async listBlocks(): Promise<{ blocks: BlockMeta[]; total: number }> {
+    return fetchApi('/blocks') as Promise<{ blocks: BlockMeta[]; total: number }>;
+  },
+
+  // Execute a chain of blocks
+  async executeChain(steps: ChainStep[], initialInput?: unknown): Promise<ChainResult> {
+    return fetchApi('/chain', {
+      method: 'POST',
+      body: JSON.stringify({
+        steps,
+        initial_input: initialInput ?? {},
+        fail_fast: true,
+        continue_on_error: false,
+      }),
+    }) as Promise<ChainResult>;
   },
 
   // Health check

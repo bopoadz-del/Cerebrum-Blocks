@@ -14,6 +14,10 @@ export default defineConfig({
     proxy: {
       '/v1': 'http://localhost:8000',
       '/health': 'http://localhost:8000',
+      '/blocks': 'http://localhost:8000',
+      '/chain': 'http://localhost:8000',
+      '/chat': 'http://localhost:8000',
+      '/upload': 'http://localhost:8000',
     },
   },
   build: {

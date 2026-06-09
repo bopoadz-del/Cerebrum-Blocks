@@ -1,0 +1,43 @@
+{
+  "id": "local_drive",
+  "name": "Local Drive",
+  "version": "2.0",
+  "author": "",
+  "description": "Sandboxed read-only directory listing within DATA_DIR.",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "Browse server files..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "files",
+      "type": "array",
+      "description": "Files"
+    },
+    {
+      "name": "path",
+      "type": "text",
+      "description": "Path"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/local_drive:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "file",
+      "label": "Browse server files..."
+    }
+  ],
+  "tags": [
+    "integration",
+    "storage",
+    "local"
+  ]
+}

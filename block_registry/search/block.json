@@ -1,0 +1,38 @@
+{
+  "id": "search",
+  "name": "Search",
+  "version": "2.0",
+  "author": "",
+  "description": "Search the web via DuckDuckGo (no key required) or Serper API",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Search the web..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "results",
+      "type": "array",
+      "description": "Results"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/search:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Search the web..."
+    }
+  ],
+  "tags": [
+    "domain",
+    "search",
+    "web"
+  ]
+}

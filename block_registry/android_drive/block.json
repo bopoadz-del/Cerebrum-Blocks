@@ -1,0 +1,38 @@
+{
+  "id": "android_drive",
+  "name": "Android Drive",
+  "version": "1.0",
+  "author": "",
+  "description": "Android device storage access via ADB or REST bridge",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "Access Android device storage..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "files",
+      "type": "array",
+      "description": "Files"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/android_drive:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "file",
+      "label": "Access Android device storage..."
+    }
+  ],
+  "tags": [
+    "integration",
+    "storage",
+    "mobile"
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "id": "failover",
+  "name": "Failover",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "circuit_breaker_threshold",
+      "type": "number",
+      "required": false,
+      "default": 5,
+      "description": "Configuration parameter: circuit_breaker_threshold"
+    },
+    {
+      "name": "recovery_timeout",
+      "type": "number",
+      "required": false,
+      "default": 60,
+      "description": "Configuration parameter: recovery_timeout"
+    },
+    {
+      "name": "health_check_interval",
+      "type": "number",
+      "required": false,
+      "default": 30,
+      "description": "Configuration parameter: health_check_interval"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/failover:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "circuit_breaker_threshold",
+      "widget": "number",
+      "label": "Circuit Breaker Threshold"
+    },
+    {
+      "name": "recovery_timeout",
+      "widget": "number",
+      "label": "Recovery Timeout"
+    },
+    {
+      "name": "health_check_interval",
+      "widget": "number",
+      "label": "Health Check Interval"
+    }
+  ],
+  "tags": [
+    "resilience",
+    "failover",
+    "core"
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "id": "formula_executor",
+  "name": "Formula Executor",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Execute construction formulas in sandbox with unit validation",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"formula_key\": \"concrete_volume_slab\", \"input_values\": {\"length_m\": 10, \"width_m\": 8, \"thickness_m\": 0.2}}"
+    },
+    {
+      "name": "max_code_lines",
+      "type": "number",
+      "required": false,
+      "default": 50,
+      "description": "Configuration parameter: max_code_lines"
+    },
+    {
+      "name": "timeout_seconds",
+      "type": "number",
+      "required": false,
+      "default": 10,
+      "description": "Configuration parameter: timeout_seconds"
+    },
+    {
+      "name": "allow_sympy",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: allow_sympy"
+    },
+    {
+      "name": "allow_numpy",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: allow_numpy"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "generated_code",
+      "type": "code",
+      "description": "Generated Code"
+    },
+    {
+      "name": "execution_result",
+      "type": "text",
+      "description": "Result"
+    },
+    {
+      "name": "unit_validated_output",
+      "type": "json",
+      "description": "Unit Output"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/formula_executor:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"formula_key\": \"concrete_volume_slab\", \"input_values\": {\"length_m\": 10, \"width_m\": 8, \"thickness_m\": 0.2}}"
+    },
+    {
+      "name": "max_code_lines",
+      "widget": "number",
+      "label": "Max Code Lines"
+    },
+    {
+      "name": "timeout_seconds",
+      "widget": "number",
+      "label": "Timeout Seconds"
+    },
+    {
+      "name": "allow_sympy",
+      "widget": "toggle",
+      "label": "Allow Sympy"
+    },
+    {
+      "name": "allow_numpy",
+      "widget": "toggle",
+      "label": "Allow Numpy"
+    }
+  ],
+  "tags": [
+    "domain",
+    "construction",
+    "formula",
+    "math",
+    "code",
+    "units",
+    "sandbox"
+  ]
+}

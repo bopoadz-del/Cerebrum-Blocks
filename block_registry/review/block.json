@@ -1,0 +1,110 @@
+{
+  "id": "review",
+  "name": "Review",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "min_reviews_for_public",
+      "type": "number",
+      "required": false,
+      "default": 3,
+      "description": "Configuration parameter: min_reviews_for_public"
+    },
+    {
+      "name": "trusted_reviewer_threshold",
+      "type": "number",
+      "required": false,
+      "default": 10,
+      "description": "Configuration parameter: trusted_reviewer_threshold"
+    },
+    {
+      "name": "max_review_length",
+      "type": "number",
+      "required": false,
+      "default": 5000,
+      "description": "Configuration parameter: max_review_length"
+    },
+    {
+      "name": "require_verified",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: require_verified"
+    },
+    {
+      "name": "auto_moderate",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: auto_moderate"
+    },
+    {
+      "name": "flag_threshold",
+      "type": "number",
+      "required": false,
+      "default": 3,
+      "description": "Configuration parameter: flag_threshold"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/review:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "min_reviews_for_public",
+      "widget": "number",
+      "label": "Min Reviews For Public"
+    },
+    {
+      "name": "trusted_reviewer_threshold",
+      "widget": "number",
+      "label": "Trusted Reviewer Threshold"
+    },
+    {
+      "name": "max_review_length",
+      "widget": "number",
+      "label": "Max Review Length"
+    },
+    {
+      "name": "require_verified",
+      "widget": "toggle",
+      "label": "Require Verified"
+    },
+    {
+      "name": "auto_moderate",
+      "widget": "toggle",
+      "label": "Auto Moderate"
+    },
+    {
+      "name": "flag_threshold",
+      "widget": "number",
+      "label": "Flag Threshold"
+    }
+  ],
+  "tags": [
+    "store",
+    "community",
+    "quality",
+    "ratings"
+  ]
+}

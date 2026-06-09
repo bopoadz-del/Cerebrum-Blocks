@@ -1,0 +1,73 @@
+{
+  "id": "billing",
+  "name": "Billing",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "stripe_key",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Configuration parameter: stripe_key"
+    },
+    {
+      "name": "free_tier_requests",
+      "type": "number",
+      "required": false,
+      "default": 1000,
+      "description": "Configuration parameter: free_tier_requests"
+    },
+    {
+      "name": "pro_tier_requests",
+      "type": "number",
+      "required": false,
+      "default": 50000,
+      "description": "Configuration parameter: pro_tier_requests"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/billing:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "stripe_key",
+      "widget": "text",
+      "label": "Stripe Key"
+    },
+    {
+      "name": "free_tier_requests",
+      "widget": "number",
+      "label": "Free Tier Requests"
+    },
+    {
+      "name": "pro_tier_requests",
+      "widget": "number",
+      "label": "Pro Tier Requests"
+    }
+  ],
+  "tags": [
+    "billing",
+    "usage",
+    "integration"
+  ]
+}

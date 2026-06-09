@@ -1,0 +1,68 @@
+{
+  "id": "file_hasher",
+  "name": "File Hasher",
+  "version": "1.0.0",
+  "author": "",
+  "description": "SHA256/MD5 hashing and metadata extraction for files",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "/path/to/file.pdf"
+    },
+    {
+      "name": "default_algorithm",
+      "type": "string",
+      "required": false,
+      "default": "sha256",
+      "description": "Configuration parameter: default_algorithm"
+    },
+    {
+      "name": "chunk_size",
+      "type": "number",
+      "required": false,
+      "default": 8192,
+      "description": "Configuration parameter: chunk_size"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "sha256",
+      "type": "text",
+      "description": "SHA256"
+    },
+    {
+      "name": "md5",
+      "type": "text",
+      "description": "MD5"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/file_hasher:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "/path/to/file.pdf"
+    },
+    {
+      "name": "default_algorithm",
+      "widget": "text",
+      "label": "Default Algorithm"
+    },
+    {
+      "name": "chunk_size",
+      "widget": "number",
+      "label": "Chunk Size"
+    }
+  ],
+  "tags": [
+    "infrastructure",
+    "security",
+    "hash",
+    "metadata"
+  ]
+}

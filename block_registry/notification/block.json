@@ -1,0 +1,133 @@
+{
+  "id": "notification",
+  "name": "Notification",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Send notifications via Telegram, Email, Webhook, or Slack",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"channel\": \"telegram\", \"to\": \"123456\", \"message\": \"Hello\"}"
+    },
+    {
+      "name": "sendgrid_api_key",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "Configuration parameter: sendgrid_api_key"
+    },
+    {
+      "name": "smtp_host",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "Configuration parameter: smtp_host"
+    },
+    {
+      "name": "smtp_port",
+      "type": "number",
+      "required": false,
+      "default": 587,
+      "description": "Configuration parameter: smtp_port"
+    },
+    {
+      "name": "smtp_user",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "Configuration parameter: smtp_user"
+    },
+    {
+      "name": "smtp_pass",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "Configuration parameter: smtp_pass"
+    },
+    {
+      "name": "slack_webhook_url",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "Configuration parameter: slack_webhook_url"
+    },
+    {
+      "name": "default_from_email",
+      "type": "string",
+      "required": false,
+      "default": "cerebrum@localhost",
+      "description": "Configuration parameter: default_from_email"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "channel",
+      "type": "text",
+      "description": "Channel"
+    },
+    {
+      "name": "sent",
+      "type": "boolean",
+      "description": "Sent"
+    },
+    {
+      "name": "message_id",
+      "type": "text",
+      "description": "Message ID"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/notification:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"channel\": \"telegram\", \"to\": \"123456\", \"message\": \"Hello\"}"
+    },
+    {
+      "name": "sendgrid_api_key",
+      "widget": "text",
+      "label": "Sendgrid Api Key"
+    },
+    {
+      "name": "smtp_host",
+      "widget": "text",
+      "label": "Smtp Host"
+    },
+    {
+      "name": "smtp_port",
+      "widget": "number",
+      "label": "Smtp Port"
+    },
+    {
+      "name": "smtp_user",
+      "widget": "text",
+      "label": "Smtp User"
+    },
+    {
+      "name": "smtp_pass",
+      "widget": "text",
+      "label": "Smtp Pass"
+    },
+    {
+      "name": "slack_webhook_url",
+      "widget": "text",
+      "label": "Slack Webhook Url"
+    },
+    {
+      "name": "default_from_email",
+      "widget": "text",
+      "label": "Default From Email"
+    }
+  ],
+  "tags": [
+    "notification",
+    "messaging",
+    "integration",
+    "core"
+  ]
+}

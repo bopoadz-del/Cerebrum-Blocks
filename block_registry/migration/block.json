@@ -1,0 +1,86 @@
+{
+  "id": "migration",
+  "name": "Migration",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "auto_migrate",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Configuration parameter: auto_migrate"
+    },
+    {
+      "name": "backup_before_migrate",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: backup_before_migrate"
+    },
+    {
+      "name": "migration_table",
+      "type": "string",
+      "required": false,
+      "default": "schema_migrations",
+      "description": "Configuration parameter: migration_table"
+    },
+    {
+      "name": "migrations_dir",
+      "type": "string",
+      "required": false,
+      "default": "./migrations",
+      "description": "Configuration parameter: migrations_dir"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/migration:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "auto_migrate",
+      "widget": "toggle",
+      "label": "Auto Migrate"
+    },
+    {
+      "name": "backup_before_migrate",
+      "widget": "toggle",
+      "label": "Backup Before Migrate"
+    },
+    {
+      "name": "migration_table",
+      "widget": "text",
+      "label": "Migration Table"
+    },
+    {
+      "name": "migrations_dir",
+      "widget": "text",
+      "label": "Migrations Dir"
+    }
+  ],
+  "tags": [
+    "infra",
+    "database",
+    "devops",
+    "migrations"
+  ]
+}

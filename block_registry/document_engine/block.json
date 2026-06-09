@@ -1,0 +1,130 @@
+{
+  "id": "document_engine",
+  "name": "Document Engine",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Parse \u2192 Reason \u2192 Map pipeline for technical document intelligence",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Upload BOD, RFP, or spec documents..."
+    },
+    {
+      "name": "extract_tables",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: extract_tables"
+    },
+    {
+      "name": "extract_glossary",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: extract_glossary"
+    },
+    {
+      "name": "output_format",
+      "type": "string",
+      "required": false,
+      "default": "yaml",
+      "description": "Configuration parameter: output_format"
+    },
+    {
+      "name": "use_platform_pdf",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: use_platform_pdf"
+    },
+    {
+      "name": "use_platform_ocr",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: use_platform_ocr"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "glossary",
+      "type": "list",
+      "description": "Glossary Terms"
+    },
+    {
+      "name": "requirements",
+      "type": "list",
+      "description": "Requirements"
+    },
+    {
+      "name": "constraints",
+      "type": "list",
+      "description": "Constraints"
+    },
+    {
+      "name": "schedule_targets",
+      "type": "list",
+      "description": "Schedule Targets"
+    },
+    {
+      "name": "equipment_specs",
+      "type": "list",
+      "description": "Equipment Specs"
+    },
+    {
+      "name": "risks",
+      "type": "list",
+      "description": "Risks"
+    },
+    {
+      "name": "downstream",
+      "type": "object",
+      "description": "Downstream Feed"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/document_engine:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Upload BOD, RFP, or spec documents..."
+    },
+    {
+      "name": "extract_tables",
+      "widget": "toggle",
+      "label": "Extract Tables"
+    },
+    {
+      "name": "extract_glossary",
+      "widget": "toggle",
+      "label": "Extract Glossary"
+    },
+    {
+      "name": "output_format",
+      "widget": "text",
+      "label": "Output Format"
+    },
+    {
+      "name": "use_platform_pdf",
+      "widget": "toggle",
+      "label": "Use Platform Pdf"
+    },
+    {
+      "name": "use_platform_ocr",
+      "widget": "toggle",
+      "label": "Use Platform Ocr"
+    }
+  ],
+  "tags": [
+    "domain",
+    "construction",
+    "documents",
+    "reasoning",
+    "scheduling"
+  ]
+}

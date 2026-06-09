@@ -1,0 +1,48 @@
+{
+  "id": "web",
+  "name": "Web",
+  "version": "2.0",
+  "author": "",
+  "description": "Fetch and extract content from any URL",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter URL to scrape..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "title",
+      "type": "text",
+      "description": "Title"
+    },
+    {
+      "name": "text",
+      "type": "markdown",
+      "description": "Content"
+    },
+    {
+      "name": "links",
+      "type": "array",
+      "description": "Links"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/web:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter URL to scrape..."
+    }
+  ],
+  "tags": [
+    "domain",
+    "web",
+    "scraping"
+  ]
+}

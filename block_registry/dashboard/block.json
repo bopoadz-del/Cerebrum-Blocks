@@ -1,0 +1,86 @@
+{
+  "id": "dashboard",
+  "name": "Dashboard",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "default_layout",
+      "type": "string",
+      "required": false,
+      "default": "grid",
+      "description": "Configuration parameter: default_layout"
+    },
+    {
+      "name": "refresh_interval",
+      "type": "number",
+      "required": false,
+      "default": 30,
+      "description": "Configuration parameter: refresh_interval"
+    },
+    {
+      "name": "max_widgets",
+      "type": "number",
+      "required": false,
+      "default": 20,
+      "description": "Configuration parameter: max_widgets"
+    },
+    {
+      "name": "theme",
+      "type": "string",
+      "required": false,
+      "default": "light",
+      "description": "Configuration parameter: theme"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/dashboard:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "default_layout",
+      "widget": "text",
+      "label": "Default Layout"
+    },
+    {
+      "name": "refresh_interval",
+      "widget": "number",
+      "label": "Refresh Interval"
+    },
+    {
+      "name": "max_widgets",
+      "widget": "number",
+      "label": "Max Widgets"
+    },
+    {
+      "name": "theme",
+      "widget": "text",
+      "label": "Theme"
+    }
+  ],
+  "tags": [
+    "ui",
+    "platform",
+    "dashboard",
+    "domain"
+  ]
+}

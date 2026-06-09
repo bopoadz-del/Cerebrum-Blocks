@@ -1,0 +1,48 @@
+{
+  "id": "translate",
+  "name": "Translate",
+  "version": "2.0",
+  "author": "",
+  "description": "Translate text between 20+ languages \u2014 no API key needed",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter text to translate..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "translated",
+      "type": "text",
+      "description": "Translation"
+    },
+    {
+      "name": "source_language",
+      "type": "text",
+      "description": "From"
+    },
+    {
+      "name": "target_language",
+      "type": "text",
+      "description": "To"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/translate:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter text to translate..."
+    }
+  ],
+  "tags": [
+    "domain",
+    "nlp",
+    "translation"
+  ]
+}

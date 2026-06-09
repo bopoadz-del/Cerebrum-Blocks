@@ -1,0 +1,110 @@
+{
+  "id": "payment_split",
+  "name": "Payment Split",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "platform_fee_percent",
+      "type": "number",
+      "required": false,
+      "default": 20,
+      "description": "Configuration parameter: platform_fee_percent"
+    },
+    {
+      "name": "referral_bonus_percent",
+      "type": "number",
+      "required": false,
+      "default": 5,
+      "description": "Configuration parameter: referral_bonus_percent"
+    },
+    {
+      "name": "payout_schedule",
+      "type": "string",
+      "required": false,
+      "default": "monthly",
+      "description": "Configuration parameter: payout_schedule"
+    },
+    {
+      "name": "minimum_payout_cents",
+      "type": "number",
+      "required": false,
+      "default": 5000,
+      "description": "Configuration parameter: minimum_payout_cents"
+    },
+    {
+      "name": "hold_period_days",
+      "type": "number",
+      "required": false,
+      "default": 14,
+      "description": "Configuration parameter: hold_period_days"
+    },
+    {
+      "name": "stripe_connect_enabled",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: stripe_connect_enabled"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/payment_split:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "platform_fee_percent",
+      "widget": "number",
+      "label": "Platform Fee Percent"
+    },
+    {
+      "name": "referral_bonus_percent",
+      "widget": "number",
+      "label": "Referral Bonus Percent"
+    },
+    {
+      "name": "payout_schedule",
+      "widget": "text",
+      "label": "Payout Schedule"
+    },
+    {
+      "name": "minimum_payout_cents",
+      "widget": "number",
+      "label": "Minimum Payout Cents"
+    },
+    {
+      "name": "hold_period_days",
+      "widget": "number",
+      "label": "Hold Period Days"
+    },
+    {
+      "name": "stripe_connect_enabled",
+      "widget": "toggle",
+      "label": "Stripe Connect Enabled"
+    }
+  ],
+  "tags": [
+    "store",
+    "payments",
+    "marketplace",
+    "revenue"
+  ]
+}

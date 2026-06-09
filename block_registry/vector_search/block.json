@@ -1,0 +1,39 @@
+{
+  "id": "vector_search",
+  "name": "Vector Search",
+  "version": "2.0",
+  "author": "",
+  "description": "Semantic search over in-memory document collections \u2014 no external DB needed",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Search knowledge base..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "results",
+      "type": "array",
+      "description": "Matches"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/vector_search:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Search knowledge base..."
+    }
+  ],
+  "tags": [
+    "ai",
+    "core",
+    "vector",
+    "search"
+  ]
+}

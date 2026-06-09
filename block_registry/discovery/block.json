@@ -1,0 +1,110 @@
+{
+  "id": "discovery",
+  "name": "Discovery",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "recommendation_model",
+      "type": "string",
+      "required": false,
+      "default": "embedding_similarity",
+      "description": "Configuration parameter: recommendation_model"
+    },
+    {
+      "name": "max_suggestions",
+      "type": "number",
+      "required": false,
+      "default": 5,
+      "description": "Configuration parameter: max_suggestions"
+    },
+    {
+      "name": "min_similarity_score",
+      "type": "number",
+      "required": false,
+      "default": 0.6,
+      "description": "Configuration parameter: min_similarity_score"
+    },
+    {
+      "name": "boost_popular",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: boost_popular"
+    },
+    {
+      "name": "boost_rated",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: boost_rated"
+    },
+    {
+      "name": "include_installed",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Configuration parameter: include_installed"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/discovery:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "recommendation_model",
+      "widget": "text",
+      "label": "Recommendation Model"
+    },
+    {
+      "name": "max_suggestions",
+      "widget": "number",
+      "label": "Max Suggestions"
+    },
+    {
+      "name": "min_similarity_score",
+      "widget": "number",
+      "label": "Min Similarity Score"
+    },
+    {
+      "name": "boost_popular",
+      "widget": "toggle",
+      "label": "Boost Popular"
+    },
+    {
+      "name": "boost_rated",
+      "widget": "toggle",
+      "label": "Boost Rated"
+    },
+    {
+      "name": "include_installed",
+      "widget": "toggle",
+      "label": "Include Installed"
+    }
+  ],
+  "tags": [
+    "store",
+    "ai",
+    "recommendation",
+    "discovery"
+  ]
+}

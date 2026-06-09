@@ -1,0 +1,39 @@
+{
+  "id": "onedrive",
+  "name": "Onedrive",
+  "version": "2.0",
+  "author": "",
+  "description": "OneDrive file operations \u2014 set ONEDRIVE_CLIENT_ID + ONEDRIVE_CLIENT_SECRET + ONEDRIVE_REFRESH_TOKEN or ONEDRIVE_ACCESS_TOKEN",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "File path, ID, or search query..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "files",
+      "type": "array",
+      "description": "Files"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/onedrive:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "File path, ID, or search query..."
+    }
+  ],
+  "tags": [
+    "integration",
+    "storage",
+    "cloud",
+    "microsoft"
+  ]
+}

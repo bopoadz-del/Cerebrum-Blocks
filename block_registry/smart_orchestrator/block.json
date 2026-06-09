@@ -1,0 +1,69 @@
+{
+  "id": "smart_orchestrator",
+  "name": "Smart Orchestrator",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Construction semantic router: maps user messages to action queues with TF-IDF similarity scoring",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Describe what you need (e.g. 'analyze the BOQ and check specs')..."
+    },
+    {
+      "name": "max_actions",
+      "type": "number",
+      "required": false,
+      "default": 5,
+      "description": "Configuration parameter: max_actions"
+    },
+    {
+      "name": "confidence_threshold",
+      "type": "number",
+      "required": false,
+      "default": 0.15,
+      "description": "Configuration parameter: confidence_threshold"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "action_queue",
+      "type": "list",
+      "description": "Action Queue"
+    },
+    {
+      "name": "parallel_flag",
+      "type": "boolean",
+      "description": "Run Parallel"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/smart_orchestrator:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Describe what you need (e.g. 'analyze the BOQ and check specs')..."
+    },
+    {
+      "name": "max_actions",
+      "widget": "number",
+      "label": "Max Actions"
+    },
+    {
+      "name": "confidence_threshold",
+      "widget": "number",
+      "label": "Confidence Threshold"
+    }
+  ],
+  "tags": [
+    "infrastructure",
+    "construction",
+    "orchestration",
+    "routing",
+    "nlp"
+  ]
+}

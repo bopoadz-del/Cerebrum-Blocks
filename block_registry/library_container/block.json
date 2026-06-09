@@ -1,0 +1,55 @@
+{
+  "id": "library_container",
+  "name": "Library Container",
+  "version": "1.0",
+  "author": "",
+  "description": "Formula backend registry: SymPy, Pint, CoolProp, QuantLib",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"action\": \"evaluate\", \"backend\": \"sympy\", \"expression\": \"a + b\", \"variables\": {\"a\": 1, \"b\": 2}}"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "backend",
+      "type": "string",
+      "description": "Backend"
+    },
+    {
+      "name": "available",
+      "type": "boolean",
+      "description": "Available"
+    },
+    {
+      "name": "version",
+      "type": "string",
+      "description": "Version"
+    },
+    {
+      "name": "result",
+      "type": "any",
+      "description": "Result"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/library_container:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"action\": \"evaluate\", \"backend\": \"sympy\", \"expression\": \"a + b\", \"variables\": {\"a\": 1, \"b\": 2}}"
+    }
+  ],
+  "tags": [
+    "library",
+    "formula",
+    "construction",
+    "domain",
+    "registry"
+  ]
+}

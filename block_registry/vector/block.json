@@ -1,0 +1,86 @@
+{
+  "id": "vector",
+  "name": "Vector",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "backend",
+      "type": "string",
+      "required": false,
+      "default": "chroma",
+      "description": "Configuration parameter: backend"
+    },
+    {
+      "name": "embedding_model",
+      "type": "string",
+      "required": false,
+      "default": "all-MiniLM-L6-v2",
+      "description": "Configuration parameter: embedding_model"
+    },
+    {
+      "name": "collection",
+      "type": "string",
+      "required": false,
+      "default": "default",
+      "description": "Configuration parameter: collection"
+    },
+    {
+      "name": "persist_directory",
+      "type": "string",
+      "required": false,
+      "default": "./data/vector",
+      "description": "Configuration parameter: persist_directory"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/vector:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "backend",
+      "widget": "text",
+      "label": "Backend"
+    },
+    {
+      "name": "embedding_model",
+      "widget": "text",
+      "label": "Embedding Model"
+    },
+    {
+      "name": "collection",
+      "widget": "text",
+      "label": "Collection"
+    },
+    {
+      "name": "persist_directory",
+      "widget": "text",
+      "label": "Persist Directory"
+    }
+  ],
+  "tags": [
+    "ai",
+    "vector",
+    "search",
+    "core"
+  ]
+}

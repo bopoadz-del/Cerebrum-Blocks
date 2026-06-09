@@ -1,0 +1,80 @@
+{
+  "id": "primavera_parser",
+  "name": "Primavera Parser",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Parse Primavera P6 .xer schedule files: critical path, milestones, resource loading",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "Upload Primavera P6 .xer schedule file..."
+    },
+    {
+      "name": "include_resources",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: include_resources"
+    },
+    {
+      "name": "critical_float_days",
+      "type": "number",
+      "required": false,
+      "default": 0,
+      "description": "Configuration parameter: critical_float_days"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "activity_count",
+      "type": "number",
+      "description": "Activities"
+    },
+    {
+      "name": "critical_path",
+      "type": "list",
+      "description": "Critical Path"
+    },
+    {
+      "name": "milestones",
+      "type": "list",
+      "description": "Milestones"
+    },
+    {
+      "name": "schedule_data",
+      "type": "json",
+      "description": "Schedule Summary"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/primavera_parser:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "file",
+      "label": "Upload Primavera P6 .xer schedule file..."
+    },
+    {
+      "name": "include_resources",
+      "widget": "toggle",
+      "label": "Include Resources"
+    },
+    {
+      "name": "critical_float_days",
+      "widget": "number",
+      "label": "Critical Float Days"
+    }
+  ],
+  "tags": [
+    "domain",
+    "construction",
+    "schedule",
+    "primavera",
+    "xer",
+    "cpm"
+  ]
+}

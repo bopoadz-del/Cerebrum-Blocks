@@ -1,0 +1,104 @@
+{
+  "id": "bim_extractor",
+  "name": "Bim Extractor",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Extract building elements, quantities, and clash report from IFC BIM models",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "Upload IFC BIM model..."
+    },
+    {
+      "name": "extract_properties",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: extract_properties"
+    },
+    {
+      "name": "run_clash_detection",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: run_clash_detection"
+    },
+    {
+      "name": "clash_tolerance_mm",
+      "type": "number",
+      "required": false,
+      "default": 10.0,
+      "description": "Configuration parameter: clash_tolerance_mm"
+    },
+    {
+      "name": "max_elements",
+      "type": "number",
+      "required": false,
+      "default": 10000,
+      "description": "Configuration parameter: max_elements"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "building_elements",
+      "type": "list",
+      "description": "Elements"
+    },
+    {
+      "name": "quantities",
+      "type": "json",
+      "description": "Quantities"
+    },
+    {
+      "name": "clash_report",
+      "type": "json",
+      "description": "Clashes"
+    },
+    {
+      "name": "element_count",
+      "type": "number",
+      "description": "Total Elements"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/bim_extractor:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "file",
+      "label": "Upload IFC BIM model..."
+    },
+    {
+      "name": "extract_properties",
+      "widget": "toggle",
+      "label": "Extract Properties"
+    },
+    {
+      "name": "run_clash_detection",
+      "widget": "toggle",
+      "label": "Run Clash Detection"
+    },
+    {
+      "name": "clash_tolerance_mm",
+      "widget": "number",
+      "label": "Clash Tolerance Mm"
+    },
+    {
+      "name": "max_elements",
+      "widget": "number",
+      "label": "Max Elements"
+    }
+  ],
+  "tags": [
+    "domain",
+    "construction",
+    "bim",
+    "ifc",
+    "quantities",
+    "clash"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "id": "skills",
+  "name": "Skills",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Skill knowledge block \u2014 parses CEREBRUM_SKILL.md and serves hints, validation rules, styles, and workflows to the orchestrator",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Deliverable type or workflow name..."
+    },
+    {
+      "name": "skill_file",
+      "type": "string",
+      "required": false,
+      "default": "data/CEREBRUM_SKILL.md",
+      "description": "Configuration parameter: skill_file"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "hints",
+      "type": "object",
+      "description": "Hints"
+    },
+    {
+      "name": "validation",
+      "type": "array",
+      "description": "Validation Rules"
+    },
+    {
+      "name": "style",
+      "type": "object",
+      "description": "Style System"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/skills:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Deliverable type or workflow name..."
+    },
+    {
+      "name": "skill_file",
+      "widget": "text",
+      "label": "Skill File"
+    }
+  ],
+  "tags": [
+    "ai",
+    "core",
+    "skills",
+    "knowledge",
+    "orchestrator"
+  ]
+}

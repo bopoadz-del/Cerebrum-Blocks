@@ -68,3 +68,10 @@ uploads/
 
 # Audit / shell logs written by the shell_audit hook during dev.
 logs/
+
+# Local dev logs
+*.log
+backend.log
+mock_backend.log
+frontend_dev.log
+frontend_e2e.log

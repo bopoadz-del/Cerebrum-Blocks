@@ -1,0 +1,85 @@
+{
+  "id": "llm_enhancer",
+  "name": "Llm Enhancer",
+  "version": "1.0",
+  "author": "",
+  "description": "LLM-augmented enhancement of construction quantities/risks/RFIs",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"action\": \"status\"}  \u2014 or {\"action\": \"enhance_quantities\", \"text\": \"...\", \"baseline\": {...}}"
+    },
+    {
+      "name": "model",
+      "type": "string",
+      "required": false,
+      "default": "claude-sonnet-4-6",
+      "description": "Configuration parameter: model"
+    },
+    {
+      "name": "max_output_tokens",
+      "type": "number",
+      "required": false,
+      "default": 4000,
+      "description": "Configuration parameter: max_output_tokens"
+    },
+    {
+      "name": "timeout_seconds",
+      "type": "number",
+      "required": false,
+      "default": 30.0,
+      "description": "Configuration parameter: timeout_seconds"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "additions",
+      "type": "array",
+      "description": "LLM additions"
+    },
+    {
+      "name": "skipped",
+      "type": "boolean",
+      "description": "Skipped"
+    },
+    {
+      "name": "reason",
+      "type": "string",
+      "description": "Reason"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/llm_enhancer:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"action\": \"status\"}  \u2014 or {\"action\": \"enhance_quantities\", \"text\": \"...\", \"baseline\": {...}}"
+    },
+    {
+      "name": "model",
+      "widget": "text",
+      "label": "Model"
+    },
+    {
+      "name": "max_output_tokens",
+      "widget": "number",
+      "label": "Max Output Tokens"
+    },
+    {
+      "name": "timeout_seconds",
+      "widget": "number",
+      "label": "Timeout Seconds"
+    }
+  ],
+  "tags": [
+    "domain",
+    "construction",
+    "llm",
+    "enhancement"
+  ]
+}

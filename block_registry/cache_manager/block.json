@@ -1,0 +1,74 @@
+{
+  "id": "cache_manager",
+  "name": "Cache Manager",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Redis wrapper with get/set/delete/stats actions",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"action\": \"get\", \"key\": \"my-key\"}"
+    },
+    {
+      "name": "default_ttl",
+      "type": "number",
+      "required": false,
+      "default": 3600,
+      "description": "Configuration parameter: default_ttl"
+    },
+    {
+      "name": "max_local_entries",
+      "type": "number",
+      "required": false,
+      "default": 10000,
+      "description": "Configuration parameter: max_local_entries"
+    },
+    {
+      "name": "redis_url",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Configuration parameter: redis_url"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "value",
+      "type": "json",
+      "description": "Cached Value"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/cache_manager:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"action\": \"get\", \"key\": \"my-key\"}"
+    },
+    {
+      "name": "default_ttl",
+      "widget": "number",
+      "label": "Default Ttl"
+    },
+    {
+      "name": "max_local_entries",
+      "widget": "number",
+      "label": "Max Local Entries"
+    },
+    {
+      "name": "redis_url",
+      "widget": "text",
+      "label": "Redis Url"
+    }
+  ],
+  "tags": [
+    "infrastructure",
+    "cache",
+    "redis"
+  ]
+}

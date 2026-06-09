@@ -4,8 +4,6 @@ import uuid
 from typing import Any, Dict, List
 
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
 from app.core.universal_base import UniversalBlock
 
@@ -19,6 +17,9 @@ def _ensure_collection(name: str):
 
 
 def _search_collection(collection: str, query: str, n: int) -> List[Dict]:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
+
     col = _STORE.get(collection, {})
     docs = col.get("docs", [])
     if not docs:

@@ -1,0 +1,114 @@
+{
+  "id": "construction_v2",
+  "name": "Construction V2",
+  "version": "2.0",
+  "author": "",
+  "description": "Construction document analysis with typed input/output",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Paste construction document text or chain from PDF/OCR..."
+    },
+    {
+      "name": "confidence_threshold",
+      "type": "number",
+      "required": false,
+      "default": 0.85,
+      "description": "Configuration parameter: confidence_threshold"
+    },
+    {
+      "name": "default_trade",
+      "type": "string",
+      "required": false,
+      "default": "concrete",
+      "description": "Configuration parameter: default_trade"
+    },
+    {
+      "name": "extract_measurements",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: extract_measurements"
+    },
+    {
+      "name": "extract_quantities",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: extract_quantities"
+    },
+    {
+      "name": "extract_materials",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: extract_materials"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "concrete_volume_m3",
+      "type": "number",
+      "description": "Concrete"
+    },
+    {
+      "name": "steel_weight_kg",
+      "type": "number",
+      "description": "Steel"
+    },
+    {
+      "name": "floor_area_m2",
+      "type": "number",
+      "description": "Floor Area"
+    },
+    {
+      "name": "confidence",
+      "type": "percentage",
+      "description": "Confidence"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/construction_v2:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Paste construction document text or chain from PDF/OCR..."
+    },
+    {
+      "name": "confidence_threshold",
+      "widget": "number",
+      "label": "Confidence Threshold"
+    },
+    {
+      "name": "default_trade",
+      "widget": "text",
+      "label": "Default Trade"
+    },
+    {
+      "name": "extract_measurements",
+      "widget": "toggle",
+      "label": "Extract Measurements"
+    },
+    {
+      "name": "extract_quantities",
+      "widget": "toggle",
+      "label": "Extract Quantities"
+    },
+    {
+      "name": "extract_materials",
+      "widget": "toggle",
+      "label": "Extract Materials"
+    }
+  ],
+  "tags": [
+    "domain",
+    "construction",
+    "aec",
+    "v2"
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "id": "version",
+  "name": "Version",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "default_strategy",
+      "type": "string",
+      "required": false,
+      "default": "semver",
+      "description": "Configuration parameter: default_strategy"
+    },
+    {
+      "name": "auto_update_patch",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: auto_update_patch"
+    },
+    {
+      "name": "breaking_change_threshold_days",
+      "type": "number",
+      "required": false,
+      "default": 30,
+      "description": "Configuration parameter: breaking_change_threshold_days"
+    },
+    {
+      "name": "max_versions_kept",
+      "type": "number",
+      "required": false,
+      "default": 10,
+      "description": "Configuration parameter: max_versions_kept"
+    },
+    {
+      "name": "require_changelog",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: require_changelog"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/version:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "default_strategy",
+      "widget": "text",
+      "label": "Default Strategy"
+    },
+    {
+      "name": "auto_update_patch",
+      "widget": "toggle",
+      "label": "Auto Update Patch"
+    },
+    {
+      "name": "breaking_change_threshold_days",
+      "widget": "number",
+      "label": "Breaking Change Threshold Days"
+    },
+    {
+      "name": "max_versions_kept",
+      "widget": "number",
+      "label": "Max Versions Kept"
+    },
+    {
+      "name": "require_changelog",
+      "widget": "toggle",
+      "label": "Require Changelog"
+    }
+  ],
+  "tags": [
+    "platform",
+    "devops",
+    "store",
+    "versioning"
+  ]
+}

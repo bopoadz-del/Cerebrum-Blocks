@@ -1,0 +1,98 @@
+{
+  "id": "error_tracking",
+  "name": "Error Tracking",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "sample_rate",
+      "type": "number",
+      "required": false,
+      "default": 1.0,
+      "description": "Configuration parameter: sample_rate"
+    },
+    {
+      "name": "auto_create_issues",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: auto_create_issues"
+    },
+    {
+      "name": "alert_threshold",
+      "type": "number",
+      "required": false,
+      "default": 10,
+      "description": "Configuration parameter: alert_threshold"
+    },
+    {
+      "name": "max_events_per_issue",
+      "type": "number",
+      "required": false,
+      "default": 1000,
+      "description": "Configuration parameter: max_events_per_issue"
+    },
+    {
+      "name": "retention_days",
+      "type": "number",
+      "required": false,
+      "default": 30,
+      "description": "Configuration parameter: retention_days"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/error_tracking:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "sample_rate",
+      "widget": "number",
+      "label": "Sample Rate"
+    },
+    {
+      "name": "auto_create_issues",
+      "widget": "toggle",
+      "label": "Auto Create Issues"
+    },
+    {
+      "name": "alert_threshold",
+      "widget": "number",
+      "label": "Alert Threshold"
+    },
+    {
+      "name": "max_events_per_issue",
+      "widget": "number",
+      "label": "Max Events Per Issue"
+    },
+    {
+      "name": "retention_days",
+      "widget": "number",
+      "label": "Retention Days"
+    }
+  ],
+  "tags": [
+    "observability",
+    "debugging",
+    "devops",
+    "error_tracking"
+  ]
+}

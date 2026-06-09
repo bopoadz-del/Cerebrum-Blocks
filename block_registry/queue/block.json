@@ -1,0 +1,74 @@
+{
+  "id": "queue",
+  "name": "Queue",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "backend",
+      "type": "string",
+      "required": false,
+      "default": "memory",
+      "description": "Configuration parameter: backend"
+    },
+    {
+      "name": "redis_url",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Configuration parameter: redis_url"
+    },
+    {
+      "name": "max_workers",
+      "type": "number",
+      "required": false,
+      "default": 4,
+      "description": "Configuration parameter: max_workers"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/queue:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "backend",
+      "widget": "text",
+      "label": "Backend"
+    },
+    {
+      "name": "redis_url",
+      "widget": "text",
+      "label": "Redis Url"
+    },
+    {
+      "name": "max_workers",
+      "widget": "number",
+      "label": "Max Workers"
+    }
+  ],
+  "tags": [
+    "queue",
+    "jobs",
+    "async",
+    "core"
+  ]
+}

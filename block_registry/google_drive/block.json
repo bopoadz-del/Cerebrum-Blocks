@@ -1,0 +1,39 @@
+{
+  "id": "google_drive",
+  "name": "Google Drive",
+  "version": "2.0",
+  "author": "",
+  "description": "Google Drive file operations \u2014 set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GOOGLE_REFRESH_TOKEN or GOOGLE_ACCESS_TOKEN",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "File ID, folder name, or search query..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "files",
+      "type": "array",
+      "description": "Files"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/google_drive:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "File ID, folder name, or search query..."
+    }
+  ],
+  "tags": [
+    "integration",
+    "storage",
+    "cloud",
+    "google"
+  ]
+}

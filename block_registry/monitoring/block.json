@@ -1,0 +1,76 @@
+{
+  "id": "monitoring",
+  "name": "Monitoring",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "track_providers",
+      "type": "array",
+      "required": false,
+      "default": [
+        "deepseek",
+        "anthropic"
+      ],
+      "description": "Configuration parameter: track_providers"
+    },
+    {
+      "name": "window_size",
+      "type": "number",
+      "required": false,
+      "default": 100,
+      "description": "Configuration parameter: window_size"
+    },
+    {
+      "name": "prediction_threshold",
+      "type": "number",
+      "required": false,
+      "default": 0.3,
+      "description": "Configuration parameter: prediction_threshold"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/monitoring:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "track_providers",
+      "widget": "json",
+      "label": "Track Providers"
+    },
+    {
+      "name": "window_size",
+      "widget": "number",
+      "label": "Window Size"
+    },
+    {
+      "name": "prediction_threshold",
+      "widget": "number",
+      "label": "Prediction Threshold"
+    }
+  ],
+  "tags": [
+    "monitoring",
+    "observability",
+    "core"
+  ]
+}

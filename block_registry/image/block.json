@@ -1,0 +1,43 @@
+{
+  "id": "image",
+  "name": "Image",
+  "version": "2.0",
+  "author": "",
+  "description": "Analyze images with Claude Vision AI, generate images with Stability AI, or extract basic metadata",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "Upload image to analyze..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "description",
+      "type": "markdown",
+      "description": "Analysis"
+    },
+    {
+      "name": "objects_detected",
+      "type": "array",
+      "description": "Objects"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/image:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "file",
+      "label": "Upload image to analyze..."
+    }
+  ],
+  "tags": [
+    "domain",
+    "vision",
+    "image"
+  ]
+}

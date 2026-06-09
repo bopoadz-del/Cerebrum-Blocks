@@ -1,0 +1,91 @@
+{
+  "id": "workflow",
+  "name": "Workflow",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Chain blocks into pipelines with variable interpolation and scheduling",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"pipeline_id\": \"daily-report\", \"steps\": [...]}"
+    },
+    {
+      "name": "max_pipeline_steps",
+      "type": "number",
+      "required": false,
+      "default": 20,
+      "description": "Configuration parameter: max_pipeline_steps"
+    },
+    {
+      "name": "enable_scheduler",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: enable_scheduler"
+    },
+    {
+      "name": "default_timeout",
+      "type": "number",
+      "required": false,
+      "default": 60,
+      "description": "Configuration parameter: default_timeout"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "pipeline_id",
+      "type": "text",
+      "description": "Pipeline ID"
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "description": "Status"
+    },
+    {
+      "name": "results",
+      "type": "json",
+      "description": "Step Results"
+    },
+    {
+      "name": "execution_time_ms",
+      "type": "number",
+      "description": "Time (ms)"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/workflow:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"pipeline_id\": \"daily-report\", \"steps\": [...]}"
+    },
+    {
+      "name": "max_pipeline_steps",
+      "widget": "number",
+      "label": "Max Pipeline Steps"
+    },
+    {
+      "name": "enable_scheduler",
+      "widget": "toggle",
+      "label": "Enable Scheduler"
+    },
+    {
+      "name": "default_timeout",
+      "widget": "number",
+      "label": "Default Timeout"
+    }
+  ],
+  "tags": [
+    "workflow",
+    "pipeline",
+    "orchestration",
+    "automation",
+    "core"
+  ]
+}

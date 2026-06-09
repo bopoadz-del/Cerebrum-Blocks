@@ -1,0 +1,44 @@
+{
+  "id": "zvec",
+  "name": "Zvec",
+  "version": "2.0",
+  "author": "",
+  "description": "Embed text as TF-IDF vectors; compute similarity; zero-shot classify",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Text to embed or compare..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "vector",
+      "type": "array",
+      "description": "Embedding"
+    },
+    {
+      "name": "operation",
+      "type": "text",
+      "description": "Operation"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/zvec:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Text to embed or compare..."
+    }
+  ],
+  "tags": [
+    "ai",
+    "core",
+    "vector",
+    "zero-shot"
+  ]
+}

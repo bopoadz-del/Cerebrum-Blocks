@@ -1,0 +1,56 @@
+{
+  "id": "pdf",
+  "name": "Pdf",
+  "version": "2.0.0",
+  "author": "",
+  "description": "Extract text from PDF files",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "Upload PDF..."
+    },
+    {
+      "name": "extract_tables",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: extract_tables"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "text",
+      "type": "text",
+      "description": "Text"
+    },
+    {
+      "name": "pages",
+      "type": "number",
+      "description": "Pages"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/pdf:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "file",
+      "label": "Upload PDF..."
+    },
+    {
+      "name": "extract_tables",
+      "widget": "toggle",
+      "label": "Extract Tables"
+    }
+  ],
+  "tags": [
+    "domain",
+    "documents",
+    "pdf",
+    "typed"
+  ]
+}

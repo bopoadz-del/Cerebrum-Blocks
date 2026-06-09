@@ -1,0 +1,73 @@
+{
+  "id": "email",
+  "name": "Email",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "provider",
+      "type": "string",
+      "required": false,
+      "default": "smtp",
+      "description": "Configuration parameter: provider"
+    },
+    {
+      "name": "smtp_host",
+      "type": "string",
+      "required": false,
+      "default": "localhost",
+      "description": "Configuration parameter: smtp_host"
+    },
+    {
+      "name": "smtp_port",
+      "type": "number",
+      "required": false,
+      "default": 587,
+      "description": "Configuration parameter: smtp_port"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/email:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "provider",
+      "widget": "text",
+      "label": "Provider"
+    },
+    {
+      "name": "smtp_host",
+      "widget": "text",
+      "label": "Smtp Host"
+    },
+    {
+      "name": "smtp_port",
+      "widget": "number",
+      "label": "Smtp Port"
+    }
+  ],
+  "tags": [
+    "email",
+    "notification",
+    "integration"
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "id": "spec_analyzer",
+  "name": "Spec Analyzer",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Extract grade requirements, material specs, and compliance flags from specification PDFs",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "Upload project specification PDF..."
+    },
+    {
+      "name": "max_pages",
+      "type": "number",
+      "required": false,
+      "default": 100,
+      "description": "Configuration parameter: max_pages"
+    },
+    {
+      "name": "compliance_standards",
+      "type": "array",
+      "required": false,
+      "default": [
+        "astm",
+        "aci",
+        "aisc",
+        "iso",
+        "bs",
+        "en",
+        "saso"
+      ],
+      "description": "Configuration parameter: compliance_standards"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "grade_requirements",
+      "type": "list",
+      "description": "Grade Requirements"
+    },
+    {
+      "name": "material_specs",
+      "type": "list",
+      "description": "Material Specs"
+    },
+    {
+      "name": "compliance_flags",
+      "type": "list",
+      "description": "Compliance Flags"
+    },
+    {
+      "name": "sections_found",
+      "type": "number",
+      "description": "Sections"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/spec_analyzer:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "file",
+      "label": "Upload project specification PDF..."
+    },
+    {
+      "name": "max_pages",
+      "widget": "number",
+      "label": "Max Pages"
+    },
+    {
+      "name": "compliance_standards",
+      "widget": "json",
+      "label": "Compliance Standards"
+    }
+  ],
+  "tags": [
+    "domain",
+    "construction",
+    "specs",
+    "pdf",
+    "compliance",
+    "materials"
+  ]
+}

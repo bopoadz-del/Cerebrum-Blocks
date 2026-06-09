@@ -1,4 +1,6 @@
+import json
 import logging
+import subprocess
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,9 +11,53 @@ from app.dependencies import require_api_key
 from app.dependencies import block_instances, _create_block_instance
 from app.core.input_adapter import adapt_input
 from app.core.security import enforce_block_access
+from app.block_registry import registry_block_exists
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _run_registry_block(block_name: str, input_data: Any, params: Dict) -> dict:
+    """Execute a block via its registry adapter using subprocess.
+    
+    Reads JSON from stdin, parses JSON stdout.
+    Falls back to error dict if subprocess fails.
+    """
+    import os
+    registry_dir = os.path.join(os.path.dirname(__file__), "..", "..", "block_registry", block_name)
+    adapter_path = os.path.join(registry_dir, "block.py")
+    
+    if not os.path.exists(adapter_path):
+        return {"success": False, "error": f"Registry adapter not found for {block_name}"}
+    
+    # Build stdin payload
+    payload = {"input": input_data}
+    if params:
+        payload.update(params)
+    
+    try:
+        proc = subprocess.run(
+            ["python", adapter_path],
+            input=json.dumps(payload),
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=os.path.join(os.path.dirname(__file__), "..", ".."),
+        )
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": f"Block {block_name} timed out after 60s"}
+    except Exception as e:
+        return {"success": False, "error": f"Failed to run block {block_name}: {e}"}
+    
+    if proc.returncode != 0:
+        return {"success": False, "error": proc.stderr or f"Block {block_name} exited with code {proc.returncode}"}
+    
+    try:
+        result = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return {"success": False, "error": f"Invalid JSON output from block {block_name}", "raw_output": proc.stdout}
+    
+    return result
 
 
 class ExecuteRequest(BaseModel):
@@ -28,9 +74,32 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
     /execute as a coroutine, leaving execute()'s `auth` param at its
     default — the Depends sentinel — which then crashed
     enforce_block_access (`'Depends' object has no attribute 'get'`).
+    
+    Now also supports registry blocks via subprocess execution.
     """
     block_name = request.block
 
+    # Check registry first (new plug-and-play path)
+    if registry_block_exists(block_name):
+        enforce_block_access(block_name, auth)
+        registry_result = _run_registry_block(block_name, request.input, request.params or {})
+        
+        if registry_result.get("success"):
+            # Wrap in standard envelope for backward compatibility
+            return {
+                "block": block_name,
+                "request_id": "registry",
+                "status": "success",
+                "result": registry_result.get("output", {}),
+                "confidence": 1.0,
+                "source_id": f"{block_name}-registry",
+                "metadata": {"source": "registry"},
+                "processing_time_ms": 0,
+            }
+        else:
+            raise HTTPException(500, registry_result.get("error", "Registry execution failed"))
+
+    # Fall back to inline execution (original path)
     if block_name not in BLOCK_REGISTRY:
         raise HTTPException(404, f"Block '{block_name}' not found. Available: {list(BLOCK_REGISTRY.keys())}")
 

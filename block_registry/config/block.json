@@ -1,0 +1,60 @@
+{
+  "id": "config",
+  "name": "Config",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "config_file",
+      "type": "string",
+      "required": false,
+      "default": "config/blocks.json",
+      "description": "Configuration parameter: config_file"
+    },
+    {
+      "name": "env_prefix",
+      "type": "string",
+      "required": false,
+      "default": "CEREBRUM_",
+      "description": "Configuration parameter: env_prefix"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/config:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "config_file",
+      "widget": "text",
+      "label": "Config File"
+    },
+    {
+      "name": "env_prefix",
+      "widget": "text",
+      "label": "Env Prefix"
+    }
+  ],
+  "tags": [
+    "infrastructure",
+    "core"
+  ]
+}

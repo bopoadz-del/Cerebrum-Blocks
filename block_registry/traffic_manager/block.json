@@ -1,0 +1,126 @@
+{
+  "id": "traffic_manager",
+  "name": "Traffic Manager",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Governance layer between block-to-block calls",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"source\": \"chat\", \"target\": \"pdf\", \"payload\": {}}"
+    },
+    {
+      "name": "heavy_blocks",
+      "type": "array",
+      "required": false,
+      "default": [
+        "zvec",
+        "pdf",
+        "construction"
+      ],
+      "description": "Configuration parameter: heavy_blocks"
+    },
+    {
+      "name": "rate_limit_enabled",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: rate_limit_enabled"
+    },
+    {
+      "name": "circuit_breaker_enabled",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: circuit_breaker_enabled"
+    },
+    {
+      "name": "queue_enabled",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: queue_enabled"
+    },
+    {
+      "name": "default_quota",
+      "type": "number",
+      "required": false,
+      "default": 1000,
+      "description": "Configuration parameter: default_quota"
+    },
+    {
+      "name": "circuit_threshold",
+      "type": "number",
+      "required": false,
+      "default": 5,
+      "description": "Configuration parameter: circuit_threshold"
+    },
+    {
+      "name": "circuit_timeout",
+      "type": "number",
+      "required": false,
+      "default": 60,
+      "description": "Configuration parameter: circuit_timeout"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/traffic_manager:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"source\": \"chat\", \"target\": \"pdf\", \"payload\": {}}"
+    },
+    {
+      "name": "heavy_blocks",
+      "widget": "json",
+      "label": "Heavy Blocks"
+    },
+    {
+      "name": "rate_limit_enabled",
+      "widget": "toggle",
+      "label": "Rate Limit Enabled"
+    },
+    {
+      "name": "circuit_breaker_enabled",
+      "widget": "toggle",
+      "label": "Circuit Breaker Enabled"
+    },
+    {
+      "name": "queue_enabled",
+      "widget": "toggle",
+      "label": "Queue Enabled"
+    },
+    {
+      "name": "default_quota",
+      "widget": "number",
+      "label": "Default Quota"
+    },
+    {
+      "name": "circuit_threshold",
+      "widget": "number",
+      "label": "Circuit Threshold"
+    },
+    {
+      "name": "circuit_timeout",
+      "widget": "number",
+      "label": "Circuit Timeout"
+    }
+  ],
+  "tags": [
+    "security",
+    "governance",
+    "traffic",
+    "core"
+  ]
+}

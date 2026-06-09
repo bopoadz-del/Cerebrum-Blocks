@@ -1,0 +1,73 @@
+{
+  "id": "webhook",
+  "name": "Webhook",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "timeout",
+      "type": "number",
+      "required": false,
+      "default": 30,
+      "description": "Configuration parameter: timeout"
+    },
+    {
+      "name": "retries",
+      "type": "number",
+      "required": false,
+      "default": 3,
+      "description": "Configuration parameter: retries"
+    },
+    {
+      "name": "verify_ssl",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: verify_ssl"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/webhook:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "timeout",
+      "widget": "number",
+      "label": "Timeout"
+    },
+    {
+      "name": "retries",
+      "widget": "number",
+      "label": "Retries"
+    },
+    {
+      "name": "verify_ssl",
+      "widget": "toggle",
+      "label": "Verify Ssl"
+    }
+  ],
+  "tags": [
+    "webhook",
+    "http",
+    "integration"
+  ]
+}

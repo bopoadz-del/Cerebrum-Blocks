@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.blocks import BLOCK_REGISTRY, get_all_blocks
 from app.core.universal_base import UniversalContainer
 from app.dependencies import block_instances, _create_block_instance, require_api_key
+from app.block_registry import list_registry_blocks
 
 router = APIRouter()
 
@@ -37,6 +38,13 @@ def list_blocks(auth: dict = Depends(require_api_key)):
                 "error": str(e),
                 "status": "failed",
             })
+
+    # Merge registry blocks (additive, no duplicates)
+    registry_blocks = list_registry_blocks()
+    existing_names = {b["name"] for b in blocks}
+    for rb in registry_blocks:
+        if rb["name"] not in existing_names:
+            blocks.append(rb)
 
     return {
         "blocks": blocks,

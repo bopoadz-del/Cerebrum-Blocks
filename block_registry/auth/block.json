@@ -1,0 +1,73 @@
+{
+  "id": "auth",
+  "name": "Auth",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "master_key",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Configuration parameter: master_key"
+    },
+    {
+      "name": "rate_limit_default",
+      "type": "number",
+      "required": false,
+      "default": 100,
+      "description": "Configuration parameter: rate_limit_default"
+    },
+    {
+      "name": "rate_limit_window",
+      "type": "number",
+      "required": false,
+      "default": 3600,
+      "description": "Configuration parameter: rate_limit_window"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/auth:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "master_key",
+      "widget": "text",
+      "label": "Master Key"
+    },
+    {
+      "name": "rate_limit_default",
+      "widget": "number",
+      "label": "Rate Limit Default"
+    },
+    {
+      "name": "rate_limit_window",
+      "widget": "number",
+      "label": "Rate Limit Window"
+    }
+  ],
+  "tags": [
+    "security",
+    "auth",
+    "core"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "id": "storage",
+  "name": "Storage",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "backend",
+      "type": "string",
+      "required": false,
+      "default": "local",
+      "description": "Configuration parameter: backend"
+    },
+    {
+      "name": "data_dir",
+      "type": "string",
+      "required": false,
+      "default": "./data/storage",
+      "description": "Configuration parameter: data_dir"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/storage:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "backend",
+      "widget": "text",
+      "label": "Backend"
+    },
+    {
+      "name": "data_dir",
+      "widget": "text",
+      "label": "Data Dir"
+    }
+  ],
+  "tags": [
+    "storage",
+    "files",
+    "core"
+  ]
+}

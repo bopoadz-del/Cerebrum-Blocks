@@ -1,0 +1,110 @@
+{
+  "id": "adaptive_router",
+  "name": "Adaptive Router",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "learning_enabled",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: learning_enabled"
+    },
+    {
+      "name": "history_window",
+      "type": "number",
+      "required": false,
+      "default": 100,
+      "description": "Configuration parameter: history_window"
+    },
+    {
+      "name": "exploration_rate",
+      "type": "number",
+      "required": false,
+      "default": 0.1,
+      "description": "Configuration parameter: exploration_rate"
+    },
+    {
+      "name": "min_samples",
+      "type": "number",
+      "required": false,
+      "default": 10,
+      "description": "Configuration parameter: min_samples"
+    },
+    {
+      "name": "time_aware",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: time_aware"
+    },
+    {
+      "name": "quality_threshold",
+      "type": "number",
+      "required": false,
+      "default": 0.8,
+      "description": "Configuration parameter: quality_threshold"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/adaptive_router:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "learning_enabled",
+      "widget": "toggle",
+      "label": "Learning Enabled"
+    },
+    {
+      "name": "history_window",
+      "widget": "number",
+      "label": "History Window"
+    },
+    {
+      "name": "exploration_rate",
+      "widget": "number",
+      "label": "Exploration Rate"
+    },
+    {
+      "name": "min_samples",
+      "widget": "number",
+      "label": "Min Samples"
+    },
+    {
+      "name": "time_aware",
+      "widget": "toggle",
+      "label": "Time Aware"
+    },
+    {
+      "name": "quality_threshold",
+      "widget": "number",
+      "label": "Quality Threshold"
+    }
+  ],
+  "tags": [
+    "ai",
+    "optimization",
+    "smart",
+    "routing"
+  ]
+}

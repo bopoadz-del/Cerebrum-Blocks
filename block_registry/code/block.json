@@ -1,0 +1,48 @@
+{
+  "id": "code",
+  "name": "Code",
+  "version": "2.0",
+  "author": "",
+  "description": "Execute Python or JavaScript code; analyze code for issues",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Paste code to execute or describe code to analyze..."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "output",
+      "type": "code",
+      "description": "Result"
+    },
+    {
+      "name": "language",
+      "type": "text",
+      "description": "Language"
+    },
+    {
+      "name": "execution_time_ms",
+      "type": "number",
+      "description": "Time (ms)"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/code:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Paste code to execute or describe code to analyze..."
+    }
+  ],
+  "tags": [
+    "domain",
+    "code",
+    "execution"
+  ]
+}

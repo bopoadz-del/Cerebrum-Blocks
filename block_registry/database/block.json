@@ -1,0 +1,61 @@
+{
+  "id": "database",
+  "name": "Database",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "backend",
+      "type": "string",
+      "required": false,
+      "default": "sqlite",
+      "description": "Configuration parameter: backend"
+    },
+    {
+      "name": "connection_string",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Configuration parameter: connection_string"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/database:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "backend",
+      "widget": "text",
+      "label": "Backend"
+    },
+    {
+      "name": "connection_string",
+      "widget": "text",
+      "label": "Connection String"
+    }
+  ],
+  "tags": [
+    "infrastructure",
+    "database",
+    "storage"
+  ]
+}

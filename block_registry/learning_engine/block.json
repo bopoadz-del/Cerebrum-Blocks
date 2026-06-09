@@ -1,0 +1,87 @@
+{
+  "id": "learning_engine",
+  "name": "Learning Engine",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Tier promotion + coefficient tuning: learns from user corrections to improve formula accuracy",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"correction_data\": {\"formula_id\": \"concrete_cost\", \"predicted\": 125000, \"actual\": 118000}, \"operation\": \"record_correction\"}"
+    },
+    {
+      "name": "promotion_mae_threshold",
+      "type": "number",
+      "required": false,
+      "default": 0.05,
+      "description": "Configuration parameter: promotion_mae_threshold"
+    },
+    {
+      "name": "min_samples_for_training",
+      "type": "number",
+      "required": false,
+      "default": 5,
+      "description": "Configuration parameter: min_samples_for_training"
+    },
+    {
+      "name": "storage_path",
+      "type": "string",
+      "required": false,
+      "default": "/tmp/cerebrum_learning_engine.json",
+      "description": "Configuration parameter: storage_path"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "tier_level",
+      "type": "text",
+      "description": "Tier"
+    },
+    {
+      "name": "updated_coefficients",
+      "type": "json",
+      "description": "Coefficients"
+    },
+    {
+      "name": "promotion_flag",
+      "type": "boolean",
+      "description": "Promoted"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/learning_engine:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"correction_data\": {\"formula_id\": \"concrete_cost\", \"predicted\": 125000, \"actual\": 118000}, \"operation\": \"record_correction\"}"
+    },
+    {
+      "name": "promotion_mae_threshold",
+      "widget": "number",
+      "label": "Promotion Mae Threshold"
+    },
+    {
+      "name": "min_samples_for_training",
+      "widget": "number",
+      "label": "Min Samples For Training"
+    },
+    {
+      "name": "storage_path",
+      "widget": "text",
+      "label": "Storage Path"
+    }
+  ],
+  "tags": [
+    "domain",
+    "construction",
+    "ml",
+    "learning",
+    "coefficients",
+    "tier"
+  ]
+}

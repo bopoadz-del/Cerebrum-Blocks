@@ -1,0 +1,110 @@
+{
+  "id": "team",
+  "name": "Team",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "max_members_per_team",
+      "type": "number",
+      "required": false,
+      "default": 50,
+      "description": "Configuration parameter: max_members_per_team"
+    },
+    {
+      "name": "max_teams_per_org",
+      "type": "number",
+      "required": false,
+      "default": 10,
+      "description": "Configuration parameter: max_teams_per_org"
+    },
+    {
+      "name": "default_role",
+      "type": "string",
+      "required": false,
+      "default": "member",
+      "description": "Configuration parameter: default_role"
+    },
+    {
+      "name": "invitation_expiry_hours",
+      "type": "number",
+      "required": false,
+      "default": 48,
+      "description": "Configuration parameter: invitation_expiry_hours"
+    },
+    {
+      "name": "enable_sso",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Configuration parameter: enable_sso"
+    },
+    {
+      "name": "require_2fa_for_admins",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: require_2fa_for_admins"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/team:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "max_members_per_team",
+      "widget": "number",
+      "label": "Max Members Per Team"
+    },
+    {
+      "name": "max_teams_per_org",
+      "widget": "number",
+      "label": "Max Teams Per Org"
+    },
+    {
+      "name": "default_role",
+      "widget": "text",
+      "label": "Default Role"
+    },
+    {
+      "name": "invitation_expiry_hours",
+      "widget": "number",
+      "label": "Invitation Expiry Hours"
+    },
+    {
+      "name": "enable_sso",
+      "widget": "toggle",
+      "label": "Enable Sso"
+    },
+    {
+      "name": "require_2fa_for_admins",
+      "widget": "toggle",
+      "label": "Require 2Fa For Admins"
+    }
+  ],
+  "tags": [
+    "platform",
+    "multi-tenant",
+    "enterprise",
+    "collaboration"
+  ]
+}

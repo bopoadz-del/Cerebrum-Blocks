@@ -1,0 +1,88 @@
+{
+  "id": "analytics",
+  "name": "Analytics",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "retention_hours",
+      "type": "number",
+      "required": false,
+      "default": 168,
+      "description": "Configuration parameter: retention_hours"
+    },
+    {
+      "name": "aggregation_interval",
+      "type": "number",
+      "required": false,
+      "default": 300,
+      "description": "Configuration parameter: aggregation_interval"
+    },
+    {
+      "name": "prediction_window",
+      "type": "number",
+      "required": false,
+      "default": 10,
+      "description": "Configuration parameter: prediction_window"
+    },
+    {
+      "name": "cost_per_1k_requests",
+      "type": "json",
+      "required": false,
+      "default": {
+        "deepseek": 0.14
+      },
+      "description": "Configuration parameter: cost_per_1k_requests"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/analytics:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "retention_hours",
+      "widget": "number",
+      "label": "Retention Hours"
+    },
+    {
+      "name": "aggregation_interval",
+      "widget": "number",
+      "label": "Aggregation Interval"
+    },
+    {
+      "name": "prediction_window",
+      "widget": "number",
+      "label": "Prediction Window"
+    },
+    {
+      "name": "cost_per_1k_requests",
+      "widget": "json",
+      "label": "Cost Per 1K Requests"
+    }
+  ],
+  "tags": [
+    "metrics",
+    "reporting",
+    "analytics",
+    "platform"
+  ]
+}

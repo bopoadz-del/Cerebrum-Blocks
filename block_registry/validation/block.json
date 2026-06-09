@@ -1,0 +1,137 @@
+{
+  "id": "validation",
+  "name": "Validation",
+  "version": "1.1.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "security_checks",
+      "type": "array",
+      "required": false,
+      "default": [
+        "network",
+        "filesystem",
+        "memory",
+        "imports"
+      ],
+      "description": "Configuration parameter: security_checks"
+    },
+    {
+      "name": "performance_threshold_ms",
+      "type": "number",
+      "required": false,
+      "default": 500,
+      "description": "Configuration parameter: performance_threshold_ms"
+    },
+    {
+      "name": "required_tests",
+      "type": "array",
+      "required": false,
+      "default": [
+        "unit",
+        "integration"
+      ],
+      "description": "Configuration parameter: required_tests"
+    },
+    {
+      "name": "min_test_coverage",
+      "type": "number",
+      "required": false,
+      "default": 70,
+      "description": "Configuration parameter: min_test_coverage"
+    },
+    {
+      "name": "max_complexity",
+      "type": "number",
+      "required": false,
+      "default": 15,
+      "description": "Configuration parameter: max_complexity"
+    },
+    {
+      "name": "forbidden_imports",
+      "type": "array",
+      "required": false,
+      "default": [
+        "os.system",
+        "subprocess",
+        "eval",
+        "exec"
+      ],
+      "description": "Configuration parameter: forbidden_imports"
+    },
+    {
+      "name": "auto_certify_threshold",
+      "type": "number",
+      "required": false,
+      "default": 0.9,
+      "description": "Configuration parameter: auto_certify_threshold"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/validation:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "security_checks",
+      "widget": "json",
+      "label": "Security Checks"
+    },
+    {
+      "name": "performance_threshold_ms",
+      "widget": "number",
+      "label": "Performance Threshold Ms"
+    },
+    {
+      "name": "required_tests",
+      "widget": "json",
+      "label": "Required Tests"
+    },
+    {
+      "name": "min_test_coverage",
+      "widget": "number",
+      "label": "Min Test Coverage"
+    },
+    {
+      "name": "max_complexity",
+      "widget": "number",
+      "label": "Max Complexity"
+    },
+    {
+      "name": "forbidden_imports",
+      "widget": "json",
+      "label": "Forbidden Imports"
+    },
+    {
+      "name": "auto_certify_threshold",
+      "widget": "number",
+      "label": "Auto Certify Threshold"
+    }
+  ],
+  "tags": [
+    "store",
+    "security",
+    "quality",
+    "ci",
+    "testing",
+    "pipeline"
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "id": "recommendation_template",
+  "name": "Recommendation Template",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Data-driven construction recommendation engine: variance data \u2192 severity-ranked recommendations + action items",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"variance_data\": [{\"item\": \"concrete_c30\", \"variance_pct\": 18.5, \"cost_impact_usd\": 42000}]}"
+    },
+    {
+      "name": "max_recommendations",
+      "type": "number",
+      "required": false,
+      "default": 20,
+      "description": "Configuration parameter: max_recommendations"
+    },
+    {
+      "name": "include_action_items",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: include_action_items"
+    },
+    {
+      "name": "custom_rules_env",
+      "type": "string",
+      "required": false,
+      "default": "RECOMMENDATION_RULES_PATH",
+      "description": "Configuration parameter: custom_rules_env"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "recommendation_text",
+      "type": "text",
+      "description": "Recommendation"
+    },
+    {
+      "name": "severity",
+      "type": "text",
+      "description": "Severity"
+    },
+    {
+      "name": "action_items",
+      "type": "list",
+      "description": "Actions"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/recommendation_template:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"variance_data\": [{\"item\": \"concrete_c30\", \"variance_pct\": 18.5, \"cost_impact_usd\": 42000}]}"
+    },
+    {
+      "name": "max_recommendations",
+      "widget": "number",
+      "label": "Max Recommendations"
+    },
+    {
+      "name": "include_action_items",
+      "widget": "toggle",
+      "label": "Include Action Items"
+    },
+    {
+      "name": "custom_rules_env",
+      "widget": "text",
+      "label": "Custom Rules Env"
+    }
+  ],
+  "tags": [
+    "domain",
+    "construction",
+    "recommendations",
+    "analytics",
+    "reporting"
+  ]
+}

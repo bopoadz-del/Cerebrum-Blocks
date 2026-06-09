@@ -1,0 +1,95 @@
+{
+  "id": "ocr",
+  "name": "Ocr",
+  "version": "2.0.0",
+  "author": "",
+  "description": "Extract text from images using OCR with preprocessing",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "Upload image to extract text..."
+    },
+    {
+      "name": "languages",
+      "type": "array",
+      "required": false,
+      "default": [
+        "en"
+      ],
+      "description": "Configuration parameter: languages"
+    },
+    {
+      "name": "preprocess",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: preprocess"
+    },
+    {
+      "name": "deskew",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Configuration parameter: deskew"
+    },
+    {
+      "name": "contrast_factor",
+      "type": "number",
+      "required": false,
+      "default": 1.5,
+      "description": "Configuration parameter: contrast_factor"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "text",
+      "type": "text",
+      "description": "Extracted Text"
+    },
+    {
+      "name": "confidence",
+      "type": "percentage",
+      "description": "Confidence"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/ocr:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "file",
+      "label": "Upload image to extract text..."
+    },
+    {
+      "name": "languages",
+      "widget": "json",
+      "label": "Languages"
+    },
+    {
+      "name": "preprocess",
+      "widget": "toggle",
+      "label": "Preprocess"
+    },
+    {
+      "name": "deskew",
+      "widget": "toggle",
+      "label": "Deskew"
+    },
+    {
+      "name": "contrast_factor",
+      "widget": "number",
+      "label": "Contrast Factor"
+    }
+  ],
+  "tags": [
+    "domain",
+    "vision",
+    "ocr",
+    "documents",
+    "typed"
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "id": "rate_limiter",
+  "name": "Rate Limiter",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "strategy",
+      "type": "string",
+      "required": false,
+      "default": "sliding_window",
+      "description": "Configuration parameter: strategy"
+    },
+    {
+      "name": "default_limit",
+      "type": "number",
+      "required": false,
+      "default": 1000,
+      "description": "Configuration parameter: default_limit"
+    },
+    {
+      "name": "default_window",
+      "type": "number",
+      "required": false,
+      "default": 3600,
+      "description": "Configuration parameter: default_window"
+    },
+    {
+      "name": "burst_allowance",
+      "type": "number",
+      "required": false,
+      "default": 10,
+      "description": "Configuration parameter: burst_allowance"
+    },
+    {
+      "name": "cleanup_interval",
+      "type": "number",
+      "required": false,
+      "default": 300,
+      "description": "Configuration parameter: cleanup_interval"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/rate_limiter:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "strategy",
+      "widget": "text",
+      "label": "Strategy"
+    },
+    {
+      "name": "default_limit",
+      "widget": "number",
+      "label": "Default Limit"
+    },
+    {
+      "name": "default_window",
+      "widget": "number",
+      "label": "Default Window"
+    },
+    {
+      "name": "burst_allowance",
+      "widget": "number",
+      "label": "Burst Allowance"
+    },
+    {
+      "name": "cleanup_interval",
+      "widget": "number",
+      "label": "Cleanup Interval"
+    }
+  ],
+  "tags": [
+    "security",
+    "protection",
+    "infra",
+    "rate_limiting"
+  ]
+}

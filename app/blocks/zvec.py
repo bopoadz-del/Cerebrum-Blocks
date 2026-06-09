@@ -3,13 +3,12 @@
 from typing import Any, Dict, List
 
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
 from app.core.universal_base import UniversalBlock
 
 
 def _vectorize(texts: List[str], char_level: bool = False) -> np.ndarray:
+    from sklearn.feature_extraction.text import TfidfVectorizer
     if char_level:
         vec = TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 4), max_features=512)
     else:
@@ -18,6 +17,7 @@ def _vectorize(texts: List[str], char_level: bool = False) -> np.ndarray:
 
 
 def _cosine(a: np.ndarray, b: np.ndarray) -> float:
+    from sklearn.metrics.pairwise import cosine_similarity
     return float(cosine_similarity(a.reshape(1, -1), b.reshape(1, -1))[0][0])
 
 

@@ -1,0 +1,74 @@
+{
+  "id": "bim",
+  "name": "Bim",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "ifc_enabled",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: ifc_enabled"
+    },
+    {
+      "name": "dwg_enabled",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: dwg_enabled"
+    },
+    {
+      "name": "auto_index",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: auto_index"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/bim:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "ifc_enabled",
+      "widget": "toggle",
+      "label": "Ifc Enabled"
+    },
+    {
+      "name": "dwg_enabled",
+      "widget": "toggle",
+      "label": "Dwg Enabled"
+    },
+    {
+      "name": "auto_index",
+      "widget": "toggle",
+      "label": "Auto Index"
+    }
+  ],
+  "tags": [
+    "construction",
+    "bim",
+    "cad",
+    "domain"
+  ]
+}

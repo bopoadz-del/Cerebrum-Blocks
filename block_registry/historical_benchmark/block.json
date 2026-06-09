@@ -1,0 +1,75 @@
+{
+  "id": "historical_benchmark",
+  "name": "Historical Benchmark",
+  "version": "1.1",
+  "author": "",
+  "description": "RS Means-style benchmark unit costs, cost ranges, and market data for construction items",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Pass item description + location for benchmark rates"
+    },
+    {
+      "name": "rates_env",
+      "type": "string",
+      "required": false,
+      "default": "BENCHMARK_RATES_PATH",
+      "description": "Configuration parameter: rates_env"
+    },
+    {
+      "name": "factors_env",
+      "type": "string",
+      "required": false,
+      "default": "BENCHMARK_FACTORS_PATH",
+      "description": "Configuration parameter: factors_env"
+    },
+    {
+      "name": "database_url_env",
+      "type": "string",
+      "required": false,
+      "default": "DATABASE_URL",
+      "description": "Configuration parameter: database_url_env"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/historical_benchmark:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Pass item description + location for benchmark rates"
+    },
+    {
+      "name": "rates_env",
+      "widget": "text",
+      "label": "Rates Env"
+    },
+    {
+      "name": "factors_env",
+      "widget": "text",
+      "label": "Factors Env"
+    },
+    {
+      "name": "database_url_env",
+      "widget": "text",
+      "label": "Database Url Env"
+    }
+  ],
+  "tags": [
+    "construction",
+    "cost",
+    "benchmark",
+    "rsmeans",
+    "aec"
+  ]
+}

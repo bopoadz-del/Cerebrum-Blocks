@@ -1,0 +1,98 @@
+{
+  "id": "orchestrator",
+  "name": "Orchestrator",
+  "version": "2.0.0",
+  "author": "",
+  "description": "Chain execution engine with type validation",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"steps\": [{\"block\": \"chat\", \"params\": {}}]}"
+    },
+    {
+      "name": "max_steps",
+      "type": "number",
+      "required": false,
+      "default": 50,
+      "description": "Configuration parameter: max_steps"
+    },
+    {
+      "name": "persist_steps",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: persist_steps"
+    },
+    {
+      "name": "fail_fast",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: fail_fast"
+    },
+    {
+      "name": "auto_convert",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: auto_convert"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "steps_executed",
+      "type": "number",
+      "description": "Steps"
+    },
+    {
+      "name": "final_output",
+      "type": "json",
+      "description": "Output"
+    },
+    {
+      "name": "type_conversions",
+      "type": "json",
+      "description": "Conversions"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/orchestrator:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"steps\": [{\"block\": \"chat\", \"params\": {}}]}"
+    },
+    {
+      "name": "max_steps",
+      "widget": "number",
+      "label": "Max Steps"
+    },
+    {
+      "name": "persist_steps",
+      "widget": "toggle",
+      "label": "Persist Steps"
+    },
+    {
+      "name": "fail_fast",
+      "widget": "toggle",
+      "label": "Fail Fast"
+    },
+    {
+      "name": "auto_convert",
+      "widget": "toggle",
+      "label": "Auto Convert"
+    }
+  ],
+  "tags": [
+    "ai",
+    "core",
+    "orchestrator",
+    "chain",
+    "typed"
+  ]
+}

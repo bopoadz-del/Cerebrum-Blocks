@@ -1,0 +1,74 @@
+{
+  "id": "sympy_reasoning",
+  "name": "Sympy Reasoning",
+  "version": "1.0.0",
+  "author": "",
+  "description": "Heavy reasoning engine: symbolic variance analysis + data-driven construction recommendations",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"boq_data\": [...], \"drawing_data\": {}, \"spec_data\": {}, \"historical_benchmarks\": {}}"
+    },
+    {
+      "name": "variance_threshold_pct",
+      "type": "number",
+      "required": false,
+      "default": 10.0,
+      "description": "Configuration parameter: variance_threshold_pct"
+    },
+    {
+      "name": "confidence_floor",
+      "type": "number",
+      "required": false,
+      "default": 0.7,
+      "description": "Configuration parameter: confidence_floor"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "recommendations",
+      "type": "list",
+      "description": "Recommendations"
+    },
+    {
+      "name": "variances",
+      "type": "list",
+      "description": "Variances"
+    },
+    {
+      "name": "cost_impacts",
+      "type": "list",
+      "description": "Cost Impacts"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/sympy_reasoning:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"boq_data\": [...], \"drawing_data\": {}, \"spec_data\": {}, \"historical_benchmarks\": {}}"
+    },
+    {
+      "name": "variance_threshold_pct",
+      "widget": "number",
+      "label": "Variance Threshold Pct"
+    },
+    {
+      "name": "confidence_floor",
+      "widget": "number",
+      "label": "Confidence Floor"
+    }
+  ],
+  "tags": [
+    "domain",
+    "construction",
+    "reasoning",
+    "math",
+    "ai"
+  ]
+}

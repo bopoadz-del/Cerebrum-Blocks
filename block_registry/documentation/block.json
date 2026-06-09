@@ -1,0 +1,98 @@
+{
+  "id": "documentation",
+  "name": "Documentation",
+  "version": "1.0.0",
+  "author": "",
+  "description": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Enter your request..."
+    },
+    {
+      "name": "auto_generate",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: auto_generate"
+    },
+    {
+      "name": "include_playground",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Configuration parameter: include_playground"
+    },
+    {
+      "name": "examples_per_block",
+      "type": "number",
+      "required": false,
+      "default": 3,
+      "description": "Configuration parameter: examples_per_block"
+    },
+    {
+      "name": "doc_format",
+      "type": "string",
+      "required": false,
+      "default": "markdown",
+      "description": "Configuration parameter: doc_format"
+    },
+    {
+      "name": "theme",
+      "type": "string",
+      "required": false,
+      "default": "github",
+      "description": "Configuration parameter: theme"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/documentation:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "text",
+      "label": "Enter your request..."
+    },
+    {
+      "name": "auto_generate",
+      "widget": "toggle",
+      "label": "Auto Generate"
+    },
+    {
+      "name": "include_playground",
+      "widget": "toggle",
+      "label": "Include Playground"
+    },
+    {
+      "name": "examples_per_block",
+      "widget": "number",
+      "label": "Examples Per Block"
+    },
+    {
+      "name": "doc_format",
+      "widget": "text",
+      "label": "Doc Format"
+    },
+    {
+      "name": "theme",
+      "widget": "text",
+      "label": "Theme"
+    }
+  ],
+  "tags": [
+    "platform",
+    "docs",
+    "developer",
+    "developer_tools"
+  ]
+}

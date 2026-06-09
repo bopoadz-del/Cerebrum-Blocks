@@ -1,0 +1,42 @@
+{
+  "id": "sandbox",
+  "version": "1.0.0",
+  "description": "Secure code execution isolation with memory limits, CPU limits, and sandbox policies",
+  "tags": ["security", "isolation", "sandbox", "enterprise"],
+  "layer": 1,
+  "requires": ["memory", "config"],
+  "execution": {
+    "type": "python",
+    "entrypoint": "block.py",
+    "timeout": 30
+  },
+  "ui_schema": {
+    "action": {
+      "type": "select",
+      "options": ["execute", "validate_code", "create_policy", "get_stats", "check_safety"],
+      "default": "execute"
+    },
+    "code": {
+      "type": "textarea",
+      "label": "Code to execute"
+    },
+    "language": {
+      "type": "select",
+      "options": ["python", "javascript", "bash"],
+      "default": "python"
+    },
+    "policy": {
+      "type": "string",
+      "default": "default"
+    }
+  },
+  "default_config": {
+    "default_level": "strict",
+    "max_memory_mb": 512,
+    "max_cpu_time": 5,
+    "network_allowed": false,
+    "filesystem_readonly": true,
+    "allowed_modules": ["math", "random", "datetime", "json", "re", "string", "collections"],
+    "auto_kill": true
+  }
+}
