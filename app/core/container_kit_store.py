@@ -2,6 +2,12 @@
 
 Fork stays the live production runtime. This module publishes Fork-authored
 kits for discovery and installs them into consumer Cerebrum instances.
+
+Skeleton kits (``status`` draft / coming_soon) keep source stubs at the kit root
+(``container.py``, ``knowledge.py``, ``prompts/``, …) and list them in manifest
+``skeleton_artifacts`` for discovery. Install copies only from ``bundle/`` via
+``artifacts``; skeleton kits are not installable until ``status`` is ``available``
+(or legacy published kits with a complete ``bundle/``).
 """
 
 from __future__ import annotations
@@ -52,8 +58,13 @@ def _manifest_path(kit_id: str) -> Path:
 
 def _load_manifest(manifest_path: Path) -> dict[str, Any]:
     manifest = _load_json(manifest_path)
-    manifest.setdefault("id", manifest_path.parent.name)
-    manifest["bundle_ready"] = _bundle_ready(manifest_path.parent, manifest)
+    kit_dir = manifest_path.parent
+    manifest.setdefault("id", kit_dir.name)
+    bundle_ready = _bundle_ready(kit_dir, manifest)
+    skeleton_ready = _skeleton_ready(kit_dir, manifest)
+    manifest["bundle_ready"] = bundle_ready
+    manifest["skeleton_ready"] = skeleton_ready
+    manifest["installable"] = _installable(manifest, bundle_ready)
     manifest["coming_soon"] = manifest.get("status") == "coming_soon"
     return manifest
 
@@ -66,12 +77,30 @@ def _bundle_ready(kit_dir: Path, manifest: dict[str, Any]) -> bool:
     return all((bundle / item["src"]).exists() for item in artifacts)
 
 
+def _skeleton_ready(kit_dir: Path, manifest: dict[str, Any]) -> bool:
+    """True when kit-root skeleton files exist (see ``skeleton_artifacts``)."""
+    skeleton = manifest.get("skeleton_artifacts") or []
+    if not skeleton:
+        return (kit_dir / "container.py").is_file()
+    return all((kit_dir / item["src"]).exists() for item in skeleton)
+
+
+def _installable(manifest: dict[str, Any], bundle_ready: bool) -> bool:
+    status = manifest.get("status")
+    if status in ("draft", "coming_soon"):
+        return False
+    if status == "available":
+        return bundle_ready
+    # Legacy construction kit and future published kits without explicit status
+    return bundle_ready
+
+
 def list_kits() -> list[dict[str, Any]]:
     if not KITS_DIR.exists():
         return []
     kits: list[dict[str, Any]] = []
     for kit_dir in sorted(KITS_DIR.iterdir()):
-        if not kit_dir.is_dir():
+        if not kit_dir.is_dir() or kit_dir.name.startswith("_"):
             continue
         manifest_path = kit_dir / "manifest.json"
         if manifest_path.exists():
@@ -97,6 +126,13 @@ def install_kit(
     force: bool = False,
 ) -> dict[str, Any]:
     manifest = get_kit(kit_id)
+    if not manifest.get("installable"):
+        status = manifest.get("status") or "unknown"
+        raise ContainerKitError(
+            f"Kit '{kit_id}' is not installable (status={status!r}). "
+            "Skeleton kits require publishing to bundle/ and status=available."
+        )
+
     target = (target_root or PROJECT_ROOT).resolve()
     bundle_dir = _kit_dir(kit_id) / "bundle"
     artifacts = manifest.get("artifacts") or []

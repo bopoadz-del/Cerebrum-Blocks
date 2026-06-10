@@ -44,8 +44,11 @@ def store_list_containers():
                 "status": k.get("status"),
                 "coming_soon": k.get("coming_soon", False),
                 "bundle_ready": k.get("bundle_ready", False),
+                "skeleton_ready": k.get("skeleton_ready", False),
+                "installable": k.get("installable", False),
                 "source": k.get("source"),
                 "blocks": k.get("blocks", []),
+                "skeleton_artifacts": k.get("skeleton_artifacts", []),
             }
             for k in kits
         ],

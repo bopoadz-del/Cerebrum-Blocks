@@ -1,11 +1,16 @@
 {
   "id": "medical",
   "name": "Medical & Healthcare Suite",
-  "version": "0.0.0-placeholder",
-  "description": "Clinical workflows, patient records intelligence, and healthcare compliance blocks. Skeleton — not yet published.",
+  "version": "0.0.0-skeleton",
+  "description": "Clinical workflows, patient records intelligence, and healthcare compliance blocks. Skeleton \u2014 not yet published.",
   "status": "draft",
   "author": "bopoadz-del",
-  "tags": ["domain", "container", "medical", "healthcare"],
+  "tags": [
+    "domain",
+    "container",
+    "medical",
+    "healthcare"
+  ],
   "source": {
     "repo": "https://github.com/bopoadz-del/The_Fork",
     "ref": "main",
@@ -21,13 +26,41 @@
     "chat",
     "medical_container"
   ],
-  "prompts": [],
+  "prompts": [
+    "prompts/medical_expert.txt",
+    "prompts/medical_workflow.md"
+  ],
   "data": [],
-  "core_modules": [],
+  "core_modules": [
+    "knowledge.py",
+    "types.py"
+  ],
   "artifacts": [],
   "price_cents": 0,
   "install_requires": {
     "min_platform_version": "2.0.0",
     "python": ">=3.10"
-  }
+  },
+  "skeleton_artifacts": [
+    {
+      "src": "container.py",
+      "dest": "app/containers/medical.py"
+    },
+    {
+      "src": "knowledge.py",
+      "dest": "app/core/medical_knowledge.py"
+    },
+    {
+      "src": "types.py",
+      "dest": "app/core/medical_types.py"
+    },
+    {
+      "src": "prompts/medical_expert.txt",
+      "dest": "app/prompts/medical_expert.txt"
+    },
+    {
+      "src": "prompts/medical_workflow.md",
+      "dest": "app/prompts/medical_workflow.md"
+    }
+  ]
 }

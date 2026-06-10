@@ -1,12 +1,61 @@
 {
   "id": "finance",
   "name": "Finance & Investment Suite",
-  "version": "0.0.0-placeholder",
+  "version": "0.0.0-skeleton",
   "description": "Portfolio analysis, financial modeling, and investment research blocks. Coming soon.",
   "status": "coming_soon",
   "author": "bopoadz-del",
-  "tags": ["domain", "container", "finance", "investment"],
+  "tags": [
+    "domain",
+    "container",
+    "finance",
+    "investment"
+  ],
   "blocks": [],
   "artifacts": [],
-  "price_cents": 0
+  "price_cents": 0,
+  "container": {
+    "class": "app.containers.finance.FinanceContainer",
+    "default_chat_prompt": "finance_expert.txt"
+  },
+  "prompts": [
+    "prompts/finance_expert.txt",
+    "prompts/finance_workflow.md"
+  ],
+  "data": [],
+  "core_modules": [
+    "knowledge.py",
+    "types.py"
+  ],
+  "skeleton_artifacts": [
+    {
+      "src": "container.py",
+      "dest": "app/containers/finance.py"
+    },
+    {
+      "src": "knowledge.py",
+      "dest": "app/core/finance_knowledge.py"
+    },
+    {
+      "src": "types.py",
+      "dest": "app/core/finance_types.py"
+    },
+    {
+      "src": "prompts/finance_expert.txt",
+      "dest": "app/prompts/finance_expert.txt"
+    },
+    {
+      "src": "prompts/finance_workflow.md",
+      "dest": "app/prompts/finance_workflow.md"
+    }
+  ],
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  },
+  "source": {
+    "repo": "https://github.com/bopoadz-del/The_Fork",
+    "ref": "main",
+    "publish_script": null
+  }
 }

@@ -1,12 +1,61 @@
 {
   "id": "maintenance",
   "name": "Maintenance & Facilities Suite",
-  "version": "0.0.0-placeholder",
+  "version": "0.0.0-skeleton",
   "description": "Work orders, asset lifecycle, and preventive maintenance blocks. Coming soon.",
   "status": "coming_soon",
   "author": "bopoadz-del",
-  "tags": ["domain", "container", "maintenance", "facilities"],
+  "tags": [
+    "domain",
+    "container",
+    "maintenance",
+    "facilities"
+  ],
   "blocks": [],
   "artifacts": [],
-  "price_cents": 0
+  "price_cents": 0,
+  "container": {
+    "class": "app.containers.maintenance.MaintenanceContainer",
+    "default_chat_prompt": "maintenance_expert.txt"
+  },
+  "prompts": [
+    "prompts/maintenance_expert.txt",
+    "prompts/maintenance_workflow.md"
+  ],
+  "data": [],
+  "core_modules": [
+    "knowledge.py",
+    "types.py"
+  ],
+  "skeleton_artifacts": [
+    {
+      "src": "container.py",
+      "dest": "app/containers/maintenance.py"
+    },
+    {
+      "src": "knowledge.py",
+      "dest": "app/core/maintenance_knowledge.py"
+    },
+    {
+      "src": "types.py",
+      "dest": "app/core/maintenance_types.py"
+    },
+    {
+      "src": "prompts/maintenance_expert.txt",
+      "dest": "app/prompts/maintenance_expert.txt"
+    },
+    {
+      "src": "prompts/maintenance_workflow.md",
+      "dest": "app/prompts/maintenance_workflow.md"
+    }
+  ],
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  },
+  "source": {
+    "repo": "https://github.com/bopoadz-del/The_Fork",
+    "ref": "main",
+    "publish_script": null
+  }
 }

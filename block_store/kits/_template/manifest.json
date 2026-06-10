@@ -1,0 +1,41 @@
+{
+  "id": "{{domain}}",
+  "name": "{{name}}",
+  "version": "0.0.0-skeleton",
+  "description": "{{description}}",
+  "status": "{{status}}",
+  "author": "bopoadz-del",
+  "tags": {{tags_json}},
+  "source": {
+    "repo": "https://github.com/bopoadz-del/The_Fork",
+    "ref": "main",
+    "publish_script": null
+  },
+  "container": {
+    "class": "app.containers.{{domain}}.{{Domain}}Container",
+    "default_chat_prompt": "{{domain}}_expert.txt"
+  },
+  "blocks": [],
+  "prompts": [
+    "prompts/{{domain}}_expert.txt",
+    "prompts/{{domain}}_workflow.md"
+  ],
+  "data": [],
+  "core_modules": [
+    "knowledge.py",
+    "types.py"
+  ],
+  "artifacts": [],
+  "skeleton_artifacts": [
+    {"src": "container.py", "dest": "app/containers/{{domain}}.py"},
+    {"src": "knowledge.py", "dest": "app/core/{{domain}}_knowledge.py"},
+    {"src": "types.py", "dest": "app/core/{{domain}}_types.py"},
+    {"src": "prompts/{{domain}}_expert.txt", "dest": "app/prompts/{{domain}}_expert.txt"},
+    {"src": "prompts/{{domain}}_workflow.md", "dest": "app/prompts/{{domain}}_workflow.md"}
+  ],
+  "price_cents": 0,
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  }
+}

@@ -1,12 +1,61 @@
 {
   "id": "law",
   "name": "Law & Legal Practice Suite",
-  "version": "0.0.0-placeholder",
+  "version": "0.0.0-skeleton",
   "description": "Contract analysis, case research, and legal document intelligence blocks. Coming soon.",
   "status": "coming_soon",
   "author": "bopoadz-del",
-  "tags": ["domain", "container", "law", "legal"],
+  "tags": [
+    "domain",
+    "container",
+    "law",
+    "legal"
+  ],
   "blocks": [],
   "artifacts": [],
-  "price_cents": 0
+  "price_cents": 0,
+  "container": {
+    "class": "app.containers.law.LawContainer",
+    "default_chat_prompt": "law_expert.txt"
+  },
+  "prompts": [
+    "prompts/law_expert.txt",
+    "prompts/law_workflow.md"
+  ],
+  "data": [],
+  "core_modules": [
+    "knowledge.py",
+    "types.py"
+  ],
+  "skeleton_artifacts": [
+    {
+      "src": "container.py",
+      "dest": "app/containers/law.py"
+    },
+    {
+      "src": "knowledge.py",
+      "dest": "app/core/law_knowledge.py"
+    },
+    {
+      "src": "types.py",
+      "dest": "app/core/law_types.py"
+    },
+    {
+      "src": "prompts/law_expert.txt",
+      "dest": "app/prompts/law_expert.txt"
+    },
+    {
+      "src": "prompts/law_workflow.md",
+      "dest": "app/prompts/law_workflow.md"
+    }
+  ],
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  },
+  "source": {
+    "repo": "https://github.com/bopoadz-del/The_Fork",
+    "ref": "main",
+    "publish_script": null
+  }
 }

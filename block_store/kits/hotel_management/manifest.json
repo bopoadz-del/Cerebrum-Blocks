@@ -1,12 +1,61 @@
 {
   "id": "hotel_management",
   "name": "Hotel Management Suite",
-  "version": "0.0.0-placeholder",
+  "version": "0.0.0-skeleton",
   "description": "Guest services, reservations, housekeeping, and hospitality operations blocks. Coming soon.",
   "status": "coming_soon",
   "author": "bopoadz-del",
-  "tags": ["domain", "container", "hospitality", "hotel"],
+  "tags": [
+    "domain",
+    "container",
+    "hospitality",
+    "hotel"
+  ],
   "blocks": [],
   "artifacts": [],
-  "price_cents": 0
+  "price_cents": 0,
+  "container": {
+    "class": "app.containers.hotel_management.HotelManagementContainer",
+    "default_chat_prompt": "hotel_management_expert.txt"
+  },
+  "prompts": [
+    "prompts/hotel_management_expert.txt",
+    "prompts/hotel_management_workflow.md"
+  ],
+  "data": [],
+  "core_modules": [
+    "knowledge.py",
+    "types.py"
+  ],
+  "skeleton_artifacts": [
+    {
+      "src": "container.py",
+      "dest": "app/containers/hotel_management.py"
+    },
+    {
+      "src": "knowledge.py",
+      "dest": "app/core/hotel_management_knowledge.py"
+    },
+    {
+      "src": "types.py",
+      "dest": "app/core/hotel_management_types.py"
+    },
+    {
+      "src": "prompts/hotel_management_expert.txt",
+      "dest": "app/prompts/hotel_management_expert.txt"
+    },
+    {
+      "src": "prompts/hotel_management_workflow.md",
+      "dest": "app/prompts/hotel_management_workflow.md"
+    }
+  ],
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  },
+  "source": {
+    "repo": "https://github.com/bopoadz-del/The_Fork",
+    "ref": "main",
+    "publish_script": null
+  }
 }
