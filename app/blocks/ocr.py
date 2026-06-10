@@ -7,9 +7,17 @@ from typing import Any, Dict
 from app.core.typed_block import TypedBlock, Schema, ContentType
 
 
+def _ocr_lang() -> str:
+    """Tesseract language code(s). Defaults to 'eng'; set RAG_OCR_LANG to
+    'ara+eng' on the production image where tesseract-ocr-ara is installed
+    (FOLLOW-UP #93) so Arabic BOQ pages stop producing CMAP-less mojibake."""
+    return os.getenv("RAG_OCR_LANG", "eng")
+
+
 class OCRBlock(TypedBlock):
     """Optical Character Recognition from images with typed I/O"""
     
+    auto_validate = False
     name = "ocr"
     version = "2.0.0"
     description = "Extract text from images using OCR with preprocessing"
@@ -20,22 +28,22 @@ class OCRBlock(TypedBlock):
     default_config = {
         "languages": ["en"],
         "preprocess": True,
-        "deskew": False,
+        "deskew": True,
         "contrast_factor": 1.5
     }
     
     # Type schemas for chain validation
     input_schema = Schema(
         content_type=ContentType.IMAGE,
-        required_fields=[],
-        optional_fields=["file_path", "path", "url"],
+        required_fields=["file_path"],
+        optional_fields=["path", "url"],
         format_hints={"accept": [".jpg", ".jpeg", ".png", ".webp"]}
     )
     
     output_schema = Schema(
         content_type=ContentType.TEXT,
         required_fields=["text"],
-        optional_fields=["confidence", "word_count", "engine", "preprocessed", "status"],
+        optional_fields=["confidence", "quality", "has_markup", "markup", "word_count", "engine", "preprocessed", "status"],
         format_hints={}
     )
     
@@ -61,7 +69,7 @@ class OCRBlock(TypedBlock):
     }
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        """Extract text from image (or PDF) with preprocessing using real OCR (pytesseract)."""
+        """Extract text from image (or PDF) with preprocessing"""
         params = params or {}
 
         # Download from URL if needed (handles bare URL strings and InputAdapter {"text": "url"} wrapping)
@@ -74,8 +82,6 @@ class OCRBlock(TypedBlock):
                 raw = input_data.get("text") or input_data.get("input") or ""
                 if raw.startswith("http"):
                     url = raw
-        if not url and isinstance(params, dict):
-            url = params.get("url")
 
         if url:
             import httpx
@@ -95,111 +101,174 @@ class OCRBlock(TypedBlock):
                 return {"status": "error", "text": "", "confidence": 0, "error": f"Download failed: {str(e)}"}
 
         image_path = self._get_image_path(input_data)
-        if not image_path or not os.path.exists(image_path):
-            return {
-                "status": "success",
-                "mode": "demo",
-                "note": "No image provided. Below is demo OCR output.",
-                "text": "Demo OCR text:\nSite Inspection Report\nDate: 2026-05-04\nLocation: Level 3\nConcrete pour in progress. Rebar mesh verified. Formwork alignment checked.",
-                "confidence": 0.82,
-                "pages": 1,
-            }
-        
+        if not image_path:
+            return {"status": "error", "text": "", "confidence": 0, "error": "No image provided"}
+
+        if not os.path.exists(image_path):
+            return {"status": "error", "text": "", "confidence": 0, "error": f"File not found: {image_path}"}
+
+        # Decrypt-to-temp if the stored file is encrypted at rest. PIL /
+        # Tesseract / PyMuPDF all need a real file on disk, so every read below
+        # goes through this plaintext path. No-op for plaintext / legacy files.
+        from app.core.file_crypto import open_plaintext
+        with open_plaintext(image_path) as image_path:
+            return await self._process_image(image_path, params)
+
+    async def _process_image(self, image_path: str, params: Dict) -> Dict:
+        """Run OCR on a plaintext image/PDF path (post-decryption)."""
         preprocess = params.get("preprocess", self.config.get("preprocess", True))
         languages = params.get("languages", self.config.get("languages", ["en"]))
-        
+
+        # Detect coloured markup / redlines BEFORE preprocessing greys the image
+        # out (Roadmap V2 · Epic 5). Annotated regions are flagged, not mangled
+        # into the extracted text.
+        markup = self._detect_markup(image_path)
+
         # Detect if input is a PDF and convert pages to images
         page_images = self._prepare_images(image_path, preprocess)
         if not page_images:
             return {"status": "error", "text": "", "confidence": 0, "error": "Could not process input file"}
         
-        # Real OCR using pytesseract only
-        try:
-            import pytesseract
-            from PIL import Image
-        except ImportError:
-            return {
-                "status": "error",
-                "text": "",
-                "confidence": 0,
-                "error": "pytesseract not installed. Run: pip install pytesseract pillow",
-                "remediation": "Install pytesseract via pip in requirements.txt.",
-            }
-
-        # Render's native Python runtime doesn't honor the Aptfile entry for
-        # tesseract-ocr — the binary isn't on PATH at runtime. Detect this up
-        # front and return a useful error with concrete remediation, instead of
-        # the cryptic "tesseract is not installed or it's not in your PATH"
-        # leaking out of pytesseract.
-        import shutil
-        if shutil.which("tesseract") is None:
-            return {
-                "status": "error",
-                "text": "",
-                "confidence": 0,
-                "error": "ocr_unavailable: the tesseract binary is not installed on this host",
-                "engine": "pytesseract",
-                "remediation": (
-                    "OCR requires the tesseract-ocr system package. On Render's "
-                    "native Python runtime the Aptfile entry isn't being honored; "
-                    "switch the service to the Docker runtime (the repo's "
-                    "Dockerfile installs tesseract-ocr + libtesseract-dev "
-                    "correctly), or use the 'pdf' block for text-based PDFs "
-                    "where OCR isn't needed."
-                ),
-            }
-
+        # Try pytesseract first, then fall back to PyMuPDF text-layer extraction.
         all_texts = []
         all_confs = []
+        engine_used = None
+        tesseract_available = True
 
         try:
-            for page_img_path in page_images:
-                img = Image.open(page_img_path)
-                text = pytesseract.image_to_string(img)
-                if text.strip():
-                    all_texts.append(text.strip())
-                    all_confs.append(0.85)
-        except Exception as e:
-            return {"status": "error", "text": "", "confidence": 0, "error": f"Tesseract OCR failed: {str(e)}"}
+            import pytesseract
+            pytesseract.get_tesseract_version()  # raises if not installed
+        except Exception:
+            tesseract_available = False
+
+        word_confidences = []
+        if tesseract_available:
+            try:
+                import pytesseract
+                from PIL import Image
+                engine_used = "pytesseract"
+
+                for page_img_path in page_images:
+                    img = Image.open(page_img_path)
+                    text = pytesseract.image_to_string(img, lang=_ocr_lang())
+                    if text.strip():
+                        all_texts.append(text.strip())
+                    # Capture REAL per-word confidence (Roadmap V2 · Epic 5 / 1)
+                    # instead of the old hardcoded 0.85.
+                    try:
+                        data = pytesseract.image_to_data(
+                            img, lang=_ocr_lang(), output_type=pytesseract.Output.DICT
+                        )
+                        for conf in data.get("conf", []):
+                            try:
+                                c = float(conf)
+                            except (TypeError, ValueError):
+                                continue
+                            if c >= 0:
+                                word_confidences.append(c / 100.0)
+                    except Exception:
+                        pass
+            except Exception as e:
+                tesseract_available = False
+
+        if not tesseract_available:
+            # Local-only fallback: PyMuPDF text extraction (text-layer PDFs only).
+            # No cloud vision dependency — the OCR block stays fully on-prem.
+            pdf_text = self._extract_pdf_text(image_path)
+            if pdf_text:
+                return {
+                    "status": "success",
+                    "text": pdf_text,
+                    "confidence": 0.95,
+                    "has_markup": markup["has_markup"],
+                    "markup": markup,
+                    "word_count": len(pdf_text.split()),
+                    "engine": "pymupdf_fallback",
+                    "preprocessed": False,
+                    "pages": 1,
+                    "note": "Tesseract not installed; used PyMuPDF text extraction",
+                }
+            return {
+                "status": "error",
+                "text": "",
+                "confidence": 0,
+                "error": "Tesseract not installed and no PDF text layer found. Install tesseract-ocr to enable local OCR.",
+            }
+
+        from app.core.image_quality import summarize_ocr_quality
+        quality = summarize_ocr_quality(word_confidences)
 
         if not all_texts:
-            return {"status": "success", "text": "", "confidence": 0, "message": "No text detected"}
-        
+            return {
+                "status": "success", "text": "", "confidence": 0,
+                "quality": quality, "message": "No text detected",
+                "has_markup": markup["has_markup"],
+                "markup": markup,
+            }
+
         full_text = "\n".join(all_texts)
-        avg_conf = sum(all_confs) / len(all_confs) if all_confs else 0
-        
+
         return {
             "status": "success",
             "text": full_text,
-            "confidence": round(avg_conf, 2),
+            "confidence": quality["ocr_confidence"],
+            "quality": quality,
+            "has_markup": markup["has_markup"],
+            "markup": markup,
             "word_count": len(full_text.split()),
-            "engine": "pytesseract",
+            "engine": engine_used or "unknown",
             "preprocessed": preprocess,
             "pages": len(page_images)
         }
     
     def _get_image_path(self, input_data: Any) -> str:
-        """Extract image path from input, writing bytes to a temp file if needed."""
-        if isinstance(input_data, bytes):
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as f:
-                f.write(input_data)
-                return f.name
+        """Extract image path from input"""
         if isinstance(input_data, str):
             return input_data
-        if isinstance(input_data, dict):
-            file_bytes = input_data.get("file") or input_data.get("image_bytes") or input_data.get("bytes")
-            if isinstance(file_bytes, bytes):
-                ext = ".png"
-                for candidate in [".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp"]:
-                    if candidate in str(input_data.get("filename", "")).lower():
-                        ext = candidate
-                        break
-                with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as f:
-                    f.write(file_bytes)
-                    return f.name
+        elif isinstance(input_data, dict):
             return input_data.get("file_path") or input_data.get("path") or input_data.get("url")
         return None
     
+    def _detect_markup(self, file_path: str) -> Dict:
+        """Detect coloured markup / redlines on the input (Roadmap V2 · Epic 5).
+
+        Run on the ORIGINAL colour image, before preprocessing converts it to
+        greyscale. For PDFs the first page is rendered and checked. Returns the
+        `summarize_markup` verdict (`has_markup`, `coverage`, `region_count`,
+        `regions`, `caveat`) — annotated regions are flagged for the user, not
+        merged into the extracted text. Failures degrade gracefully to "clean".
+        """
+        from app.core.redline import detect_redlines, summarize_markup
+
+        clean = {
+            "has_markup": False, "coverage": 0.0, "region_count": 0,
+            "regions": [], "caveat": None,
+        }
+        try:
+            from PIL import Image
+
+            if file_path.lower().endswith(".pdf"):
+                import fitz  # PyMuPDF
+                doc = fitz.open(file_path)
+                if len(doc) == 0:
+                    doc.close()
+                    return clean
+                pix = doc.load_page(0).get_pixmap(dpi=150)
+                fd, tmp = tempfile.mkstemp(suffix="_markup.png")
+                os.close(fd)
+                pix.save(tmp)
+                doc.close()
+                img = Image.open(tmp)
+            else:
+                img = Image.open(file_path)
+
+            result = detect_redlines(img)
+            summary = summarize_markup(result)
+            summary["regions"] = result["regions"]
+            return summary
+        except Exception:
+            return clean
+
     def _prepare_images(self, file_path: str, preprocess: bool = True) -> list:
         """Convert input to a list of image file paths (handles PDFs and images)."""
         from PIL import Image
@@ -224,7 +293,8 @@ class OCRBlock(TypedBlock):
                 for page_num in range(len(doc)):
                     page = doc.load_page(page_num)
                     pix = page.get_pixmap(dpi=200)
-                    img_path = tempfile.mktemp(suffix=f"_page{page_num + 1}.png")
+                    fd, img_path = tempfile.mkstemp(suffix=f"_page{page_num + 1}.png")
+                    os.close(fd)
                     pix.save(img_path)
                     if preprocess:
                         img_path = self._preprocess_image(img_path)
@@ -237,6 +307,19 @@ class OCRBlock(TypedBlock):
                 return []
         
         return []
+    
+    def _extract_pdf_text(self, file_path: str) -> str:
+        """Extract text from a PDF using PyMuPDF (fallback when OCR is unavailable)."""
+        try:
+            import fitz
+            doc = fitz.open(file_path)
+            text = ""
+            for page in doc:
+                text += page.get_text()
+            doc.close()
+            return text.strip()
+        except Exception:
+            return ""
     
     def _preprocess_image(self, image_path: str) -> str:
         """Enhance image for better OCR quality"""
@@ -257,7 +340,15 @@ class OCRBlock(TypedBlock):
         
         # Convert to grayscale
         gray = img.convert('L')
-        
+
+        # Deskew (Roadmap V2 · Epic 5) — straighten rotated/tilted scans
+        if self.config.get("deskew", True):
+            try:
+                from app.core.image_quality import deskew as _deskew
+                gray, _angle = _deskew(gray)
+            except Exception:
+                pass
+
         # Enhance contrast
         contrast_factor = self.config.get("contrast_factor", 1.5)
         enhancer = ImageEnhance.Contrast(gray)

@@ -1,11 +1,8 @@
-"""Google Drive Block - real OAuth 2.0 + Drive API using refresh tokens"""
+"""Google Drive Block - real OAuth 2.0 + Drive API (service account or user token)"""
 
-import base64
 import json
 import os
 from typing import Any, Dict
-
-import httpx
 
 from app.core.universal_base import UniversalBlock
 
@@ -15,7 +12,20 @@ _OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 _DRIVE_API = "https://www.googleapis.com/drive/v3"
 
 
-def _auth_url() -> str:
+def _build_service(access_token: str = None):
+    """Build an authenticated Drive HTTP client."""
+    import httpx
+    token = access_token or os.getenv("GOOGLE_ACCESS_TOKEN", "")
+    if not token:
+        raise ValueError("No access token — call with operation=auth first")
+    return httpx.AsyncClient(
+        headers={"Authorization": f"Bearer {token}"},
+        base_url=_DRIVE_API,
+        timeout=20,
+    )
+
+
+def _oauth_url() -> str:
     client_id = os.getenv("GOOGLE_CLIENT_ID", "")
     if not client_id:
         return ""
@@ -27,49 +37,16 @@ def _auth_url() -> str:
         f"&response_type=code"
         f"&scope={scope}"
         f"&access_type=offline"
-        f"&prompt=consent"
-    )
-
-
-async def _get_access_token() -> str:
-    """Refresh access token using GOOGLE_REFRESH_TOKEN or fall back to GOOGLE_ACCESS_TOKEN."""
-    refresh_token = os.getenv("GOOGLE_REFRESH_TOKEN")
-    client_id = os.getenv("GOOGLE_CLIENT_ID")
-    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-
-    if refresh_token and client_id and client_secret:
-        async with httpx.AsyncClient(timeout=20) as client:
-            resp = await client.post(
-                _OAUTH_TOKEN_URL,
-                data={
-                    "grant_type": "refresh_token",
-                    "refresh_token": refresh_token,
-                    "client_id": client_id,
-                    "client_secret": client_secret,
-                },
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                return data["access_token"]
-            raise RuntimeError(f"Token refresh failed ({resp.status_code}): {resp.text[:500]}")
-
-    access_token = os.getenv("GOOGLE_ACCESS_TOKEN", "")
-    if access_token:
-        return access_token
-
-    raise RuntimeError(
-        "No Google credentials configured. Set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GOOGLE_REFRESH_TOKEN, "
-        "or set GOOGLE_ACCESS_TOKEN directly."
     )
 
 
 class GoogleDriveBlock(UniversalBlock):
     """Google Drive: list, read, download files via OAuth 2.0"""
 
+    auto_validate = False
     name = "google_drive"
     version = "2.0"
-    description = "Google Drive file operations — set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GOOGLE_REFRESH_TOKEN or GOOGLE_ACCESS_TOKEN"
+    description = "Google Drive file operations — set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET or GOOGLE_ACCESS_TOKEN"
     layer = 4
     tags = ["integration", "storage", "cloud", "google"]
     requires = []
@@ -86,8 +63,8 @@ class GoogleDriveBlock(UniversalBlock):
             "fields": [{"name": "files", "type": "array", "label": "Files"}],
         },
         "quick_actions": [
-            {"icon": "☁️", "label": "Browse Drive", "prompt": "List files from Google Drive"},
-            {"icon": "🔑", "label": "Auth", "prompt": "Authenticate with Google Drive"},
+            {"icon": "️", "label": "Browse Drive", "prompt": "List files from Google Drive"},
+            {"icon": "", "label": "Auth", "prompt": "Authenticate with Google Drive"},
         ],
     }
 
@@ -104,68 +81,68 @@ class GoogleDriveBlock(UniversalBlock):
 
         # ── Auth status / URL ─────────────────────────────────────────────────
         if operation in ("auth", "status"):
-            has_refresh = bool(os.getenv("GOOGLE_REFRESH_TOKEN"))
-            has_access = bool(os.getenv("GOOGLE_ACCESS_TOKEN"))
+            has_token = bool(os.getenv("GOOGLE_ACCESS_TOKEN"))
             has_creds = bool(os.getenv("GOOGLE_CLIENT_ID"))
-            url = _auth_url()
+            url = _oauth_url()
             return {
                 "status": "success",
                 "operation": "auth",
-                "authenticated": has_access or has_refresh,
-                "credentials_configured": has_creds or has_access,
+                "authenticated": has_token,
+                "credentials_configured": has_creds,
                 "auth_url": url or None,
                 "instructions": (
-                    "Visit auth_url in a browser, approve, then capture the code and exchange it for a refresh token. "
-                    "Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN in environment variables."
-                    if url and not (has_access or has_refresh) else
-                    "Set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GOOGLE_REFRESH_TOKEN in env vars to enable OAuth."
-                    if not (has_creds or has_access) else
-                    "Credentials are set. Use operation=list to browse files."
+                    "Visit auth_url in a browser, approve, then set GOOGLE_ACCESS_TOKEN env var with the returned token."
+                    if url and not has_token else
+                    "Set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET as env vars to enable OAuth."
+                    if not has_creds else
+                    "Access token is set. Use operation=list to browse files."
                 ),
             }
 
         # ── List files ────────────────────────────────────────────────────────
         if operation == "list":
-            try:
-                access_token = await _get_access_token()
-            except RuntimeError as e:
+            access_token = params.get("access_token") or os.getenv("GOOGLE_ACCESS_TOKEN", "")
+            if not access_token:
                 return {
-                    "status": "success",
-                    "mode": "unconfigured",
-                    "error": str(e),
-                    "auth_url": _auth_url() or None,
-                    "instructions": "Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN environment variables to enable Google Drive access.",
-                    "files": [],
+                    "status": "error",
+                    "error": "Not authenticated. Run with operation=auth to get the auth URL, then set GOOGLE_ACCESS_TOKEN.",
+                    "auth_url": _oauth_url() or None,
                 }
             try:
-                # Drive Query Language: single quotes terminate the literal,
-                # so an unsanitised `query` lets the caller break out into
-                # arbitrary clauses (e.g. "' or trashed=false or '"). Drive
-                # has no escaping mechanism for q values; the safe move is
-                # to reject any embedded single quote.
-                if query and "'" in query:
-                    return {
-                        "status": "error",
-                        "error": "Search query may not contain single quotes",
-                    }
-                q = f"name contains '{query}'" if query else "trashed=false"
+                import httpx
+                # Build the Drive-API q filter. Search wins if present (name
+                # contains, no folder filter); otherwise list children of a
+                # specific folder (defaults to root so the user sees their
+                # actual top-level Drive, not the 50 newest files at any
+                # depth which was the prior behaviour).
+                folder_id = params.get("folder_id")
+                if query:
+                    q = f"name contains '{query}' and trashed=false"
+                elif folder_id:
+                    q = f"'{folder_id}' in parents and trashed=false"
+                else:
+                    q = "'root' in parents and trashed=false"
                 async with httpx.AsyncClient(timeout=20) as client:
                     resp = await client.get(
                         f"{_DRIVE_API}/files",
                         headers={"Authorization": f"Bearer {access_token}"},
                         params={
                             "q": q,
-                            "pageSize": params.get("limit", 20),
-                            "fields": "files(id,name,mimeType,size,modifiedTime,webViewLink)",
+                            "pageSize": params.get("limit", 100),
+                            "orderBy": "folder,name",  # folders first, then alpha
+                            "fields": "files(id,name,mimeType,size,modifiedTime,webViewLink,parents)",
                         },
                     )
                     resp.raise_for_status()
                     data = resp.json()
 
+                FOLDER_MT = "application/vnd.google-apps.folder"
                 files = [
                     {
                         "id": f.get("id"),
                         "name": f.get("name"),
+                        "mime_type": f.get("mimeType", ""),
+                        "is_folder": f.get("mimeType") == FOLDER_MT,
                         "type": f.get("mimeType", "").split("/")[-1],
                         "size_bytes": int(f.get("size", 0)),
                         "modified": f.get("modifiedTime", "")[:10],
@@ -174,35 +151,63 @@ class GoogleDriveBlock(UniversalBlock):
                     for f in data.get("files", [])
                 ]
                 return {"status": "success", "operation": "list", "files": files, "total": len(files)}
-            except Exception as e:
-                return {"status": "error", "error": str(e), "operation": "list"}
+            except Exception:
+                return {
+                    "status": "error",
+                    "error": "Unable to list Google Drive files at this time.",
+                    "operation": "list",
+                }
 
         # ── Download / read file ──────────────────────────────────────────────
         if operation == "download":
             file_id = query or params.get("file_id", "")
+            access_token = params.get("access_token") or os.getenv("GOOGLE_ACCESS_TOKEN", "")
             if not file_id:
                 return {"status": "error", "error": "file_id required for download"}
+            if not access_token:
+                return {"status": "error", "error": "Not authenticated"}
             try:
-                access_token = await _get_access_token()
-            except RuntimeError as e:
-                return {"status": "error", "error": str(e)}
-            try:
-                async with httpx.AsyncClient(timeout=30) as client:
-                    resp = await client.get(
+                import httpx
+                from app.core import drive_mime
+                async with httpx.AsyncClient(timeout=60) as client:
+                    meta = await client.get(
                         f"{_DRIVE_API}/files/{file_id}",
                         headers={"Authorization": f"Bearer {access_token}"},
-                        params={"alt": "media"},
+                        params={"fields": "mimeType,name"},
                     )
+                    meta.raise_for_status()
+                    mime = meta.json().get("mimeType", "")
+                    target = drive_mime.export_target(mime)
+                    if target is not None:
+                        export_mime, exported_ext = target
+                        resp = await client.get(
+                            f"{_DRIVE_API}/files/{file_id}/export",
+                            headers={"Authorization": f"Bearer {access_token}"},
+                            params={"mimeType": export_mime},
+                        )
+                    else:
+                        exported_ext = None
+                        resp = await client.get(
+                            f"{_DRIVE_API}/files/{file_id}",
+                            headers={"Authorization": f"Bearer {access_token}"},
+                            params={"alt": "media"},
+                        )
                     resp.raise_for_status()
                     content = resp.content
                 return {
                     "status": "success",
                     "operation": "download",
                     "file_id": file_id,
+                    "mime_type": mime,
+                    "exported_extension": exported_ext,
                     "size_bytes": len(content),
-                    "content_base64": base64.b64encode(content).decode(),
+                    "content_base64": __import__("base64").b64encode(content).decode(),
                 }
-            except Exception as e:
-                return {"status": "error", "error": str(e), "operation": "download"}
+            except Exception:
+                return {
+                    "status": "error",
+                    "error": "Unable to download Google Drive file at this time.",
+                    "operation": "download",
+                }
 
         return {"status": "error", "error": f"Unknown operation: {operation}. Use: auth, list, download"}

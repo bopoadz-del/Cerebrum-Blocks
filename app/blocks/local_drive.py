@@ -1,50 +1,52 @@
-"""Local Drive Block - Sandboxed read-only filesystem listing within DATA_DIR.
+"""Local Drive Block - sandboxed local filesystem access.
 
-Previously this block exposed unrestricted read/write to any caller — a
-trivial server compromise vector. Now it:
-  - resolves every requested path through realpath() and rejects anything
-    outside DATA_DIR (default ./data, overridable via DATA_DIR env);
-  - exposes only the `list` op (read/write removed);
-  - returns the resolved path so the SPA can show users where they are.
+All paths are resolved relative to LOCAL_DRIVE_ROOT (default: DATA_DIR, itself
+defaulting to ./data) and confined to it. The block cannot read, write, or
+list anything outside that directory — absolute paths and ``..`` segments that
+would escape the root are rejected.
 """
 
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, Optional
+
 from app.core.universal_base import UniversalBlock
 
 
-def _data_root() -> str:
-    """Realpath of the writable data root, the only directory this block
-    is permitted to traverse. Falls back to ./data if env var is unset."""
-    return os.path.realpath(os.getenv("DATA_DIR", "./data"))
+def _root() -> str:
+    """The directory this block is confined to (resolved at call time)."""
+    root = os.path.realpath(
+        os.getenv("LOCAL_DRIVE_ROOT") or os.getenv("DATA_DIR", "./data")
+    )
+    try:
+        os.makedirs(root, exist_ok=True)
+    except OSError:
+        pass
+    return root
 
 
-def _safe_resolve(path: str) -> str:
-    """Resolve `path` relative to DATA_DIR and reject paths that escape it.
+def _safe_path(requested: str) -> Optional[str]:
+    """Resolve ``requested`` inside the drive root.
 
-    Raises PermissionError if the realpath result is outside the data root,
-    so symlinks, '..' walks, and absolute paths can't be used to read
-    arbitrary files.
+    Returns the absolute path when it stays within the root, or None when the
+    request would escape it. The request is treated as relative to the root;
+    leading slashes are stripped and the realpath check catches ``..`` escapes
+    and (on Windows) drive-absolute paths.
     """
-    root = _data_root()
-    candidate = path if os.path.isabs(path) else os.path.join(root, path)
-    resolved = os.path.realpath(candidate)
-    if resolved != root and not resolved.startswith(root + os.sep):
-        raise PermissionError(f"Path outside permitted data root: {path}")
-    return resolved
+    root = _root()
+    rel = (requested or ".").lstrip("/\\")
+    target = os.path.realpath(os.path.join(root, rel))
+    if target == root or target.startswith(root + os.sep):
+        return target
+    return None
 
 
 class LocalDriveBlock(UniversalBlock):
-    """Local filesystem listing — sandboxed to DATA_DIR.
+    """Local filesystem operations, confined to a configured root directory."""
 
-    Read and write operations were removed because every API key (including
-    the public-tier key shipped in the SPA bundle) reaches this block, and
-    unrestricted reads were sufficient to dump arbitrary server files.
-    """
-
+    auto_validate = False
     name = "local_drive"
-    version = "2.0"
-    description = "Sandboxed read-only directory listing within DATA_DIR."
+    version = "1.1"
+    description = "Sandboxed local filesystem access: list, read, write files"
     layer = 4
     tags = ["integration", "storage", "local"]
     requires = []
@@ -53,7 +55,7 @@ class LocalDriveBlock(UniversalBlock):
         "input": {
             "type": "file",
             "accept": ["*/*"],
-            "placeholder": "Browse server files...",
+            "placeholder": "Browse local files...",
             "multiline": False
         },
         "output": {
@@ -64,60 +66,91 @@ class LocalDriveBlock(UniversalBlock):
             ]
         },
         "quick_actions": [
-            {"icon": "📁", "label": "Browse Server", "prompt": "List server files"}
+            {"icon": "📁", "label": "Browse Local", "prompt": "List local files"}
         ]
     }
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        """List files within DATA_DIR. Other operations are rejected."""
+        """List, read, or write files within the configured drive root."""
         params = params or {}
         operation = params.get("operation", "list")
-
-        if operation != "list":
-            return {
-                "status": "error",
-                "error": f"Operation '{operation}' is not supported. Only 'list' is allowed.",
-            }
-
-        raw_path = input_data if isinstance(input_data, str) else (
+        # Accept the target from input_data or the common param keys.
+        path = input_data if isinstance(input_data, str) else (
             params.get("folder_path") or params.get("path") or "."
         )
 
         try:
-            resolved = _safe_resolve(raw_path)
-        except PermissionError as exc:
-            return {"status": "error", "error": str(exc)}
+            if operation == "write":
+                requested = params.get("file_path", "")
+                target = _safe_path(requested)
+                if target is None:
+                    return {"status": "error", "operation": "write",
+                            "error": f"Path escapes the allowed directory: {requested}"}
+                content = params.get("content", "")
+                parent = os.path.dirname(target)
+                if parent:
+                    os.makedirs(parent, exist_ok=True)
+                with open(target, "w") as f:
+                    f.write(content)
+                return {"status": "success", "operation": "write",
+                        "file_path": requested, "bytes_written": len(content)}
 
-        if not os.path.isdir(resolved):
-            return {
-                "status": "error",
-                "error": f"Path is not a directory: {raw_path}",
-            }
+            elif operation == "read":
+                requested = params.get("file_path", path)
+                target = _safe_path(requested)
+                if target is None:
+                    return {"status": "error", "operation": "read",
+                            "error": f"Path escapes the allowed directory: {requested}"}
+                if not os.path.isfile(target):
+                    return {"status": "error", "operation": "read",
+                            "error": f"Not a file: {requested}"}
+                with open(target, "r") as f:
+                    content = f.read()
+                return {"status": "success", "operation": "read",
+                        "file_path": requested, "content": content}
 
-        try:
-            entries = sorted(os.listdir(resolved))
-        except OSError as exc:
-            return {"status": "error", "error": f"Cannot read directory: {exc}"}
+            else:
+                target = _safe_path(path)
+                if target is None:
+                    return {"status": "error", "operation": "list",
+                            "error": f"Path escapes the allowed directory: {path}"}
+                if not os.path.isdir(target):
+                    return {"status": "error", "operation": "list",
+                            "path": path, "error": f"Not a directory: {path}"}
+                # Caller-tunable cap (default 500). The old hardcoded 20-cap
+                # silently truncated every directory listing, so the sidebar
+                # only ever showed the first ~20 entries alphabetically and
+                # the user reported "doesn't show all the documents".
+                try:
+                    limit = int(params.get("limit", 500))
+                except (TypeError, ValueError):
+                    limit = 500
+                limit = max(1, min(limit, 10000))
 
-        files: List[Dict] = []
-        for name in entries[:200]:
-            full = os.path.join(resolved, name)
-            try:
-                is_dir = os.path.isdir(full)
-                size = os.path.getsize(full) if not is_dir else None
-            except OSError:
-                continue
-            files.append({
-                "name": name,
-                "type": "directory" if is_dir else "file",
-                "path": os.path.relpath(full, _data_root()),
-                "size": size,
-            })
-
-        return {
-            "status": "success",
-            "operation": "list",
-            "path": os.path.relpath(resolved, _data_root()) or ".",
-            "files": files,
-            "truncated": len(entries) > 200,
-        }
+                entries = []
+                with os.scandir(target) as it:
+                    for entry in it:
+                        try:
+                            stat = entry.stat()
+                            entries.append({
+                                "name": entry.name,
+                                "is_folder": entry.is_dir(),
+                                "size_bytes": stat.st_size if entry.is_file() else 0,
+                                "modified": int(stat.st_mtime),
+                            })
+                        except OSError:
+                            continue
+                # Folders first, then alpha (matches the Google Drive ordering).
+                entries.sort(key=lambda e: (not e["is_folder"], e["name"].lower()))
+                truncated = len(entries) > limit
+                entries = entries[:limit]
+                return {
+                    "status": "success",
+                    "operation": "list",
+                    "path": path,
+                    "files": entries,
+                    "total": len(entries),
+                    "truncated": truncated,
+                }
+        except Exception as e:
+            return {"status": "error", "error": str(e)}

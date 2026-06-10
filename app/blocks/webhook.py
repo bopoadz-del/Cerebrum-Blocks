@@ -1,5 +1,6 @@
 """Webhook Block - Outgoing webhooks"""
 from app.core.universal_base import UniversalBlock
+from app.core.url_guard import UnsafeURLError, validate_public_url
 from typing import Dict, Any, List
 import asyncio
 import hmac
@@ -9,7 +10,11 @@ class WebhookBlock(UniversalBlock):
     """Outgoing webhooks with retries and signatures"""
     name = "webhook"
     version = "1.0.0"
-    requires = ["config", "queue"]
+    # `requires = ["config", "queue"]` previously named two blocks that
+    # don't exist in BLOCK_REGISTRY — `config` was never built, and there
+    # is no queue block (async_processor exists but uses a different
+    # interface). Drop both: webhooks send synchronously inline.
+    requires = []
     layer = 5  # Integration layer
     tags = ["webhook", "http", "integration"]
     default_config = {
@@ -18,22 +23,20 @@ class WebhookBlock(UniversalBlock):
         "verify_ssl": True
     }
 
-    ui_schema = {
-        'input': {'type': 'json', 'accept': None, 'placeholder': 'Webhook URL, events, payload', 'multiline': True},
-        'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
-        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['register', 'send', 'trigger', 'list'], 'default': 'register'}, {'name': 'timeout', 'type': 'number', 'label': 'Timeout', 'default': 30}, {'name': 'retries', 'type': 'number', 'label': 'Retries', 'default': 3}, {'name': 'verify_ssl', 'type': 'boolean', 'label': 'Verify Ssl', 'default': True}],
-        'quick_actions': [],
-    }
-    
-    def __init__(self, hal_block=None, config: Dict[str, Any] = None):
+    def __init__(self, hal_block, config: Dict[str, Any]):
         super().__init__(hal_block, config)
-        self.secret = (config or {}).get("secret", "")
-        self.timeout = (config or {}).get("timeout", 30)
-        self.max_retries = (config or {}).get("max_retries", 3)
-        self.queue_block = None
-        
+        self.secret = config.get("secret", "")
+        self.timeout = config.get("timeout", 30)
+        self.max_retries = config.get("max_retries", 3)
         # Registered webhooks
         self.endpoints = {}  # name -> {url, events, secret}
+
+    @property
+    def queue_block(self):
+        # The platform's async_processor block is the closest analogue if
+        # we ever want fire-and-forget delivery; today it stays None and
+        # `_trigger_event` falls through to its synchronous-send branch.
+        return self.get_dep("async_processor")
         
     async def process(self, input_data: Dict, params: Dict = None) -> Dict:
         action = (params or {}).get("action") or (input_data.get("action") if isinstance(input_data, dict) else None)
@@ -75,7 +78,13 @@ class WebhookBlock(UniversalBlock):
         payload = data.get("payload", {})
         secret = data.get("secret", self.secret)
         headers = data.get("headers", {})
-        
+
+        # SSRF guard — only POST to a public host (not loopback / internal).
+        try:
+            url = await asyncio.to_thread(validate_public_url, url)
+        except UnsafeURLError as e:
+            return {"error": f"Unsafe webhook URL: {e}", "url": url}
+
         # Add signature
         payload_str = str(payload)
         signature = hmac.new(
@@ -100,7 +109,8 @@ class WebhookBlock(UniversalBlock):
                         url,
                         json=payload,
                         headers=headers,
-                        timeout=self.timeout
+                        timeout=self.timeout,
+                        allow_redirects=False,
                     ) as resp:
                         if resp.status < 400:
                             return {
@@ -128,7 +138,10 @@ class WebhookBlock(UniversalBlock):
                     "error": f"Failed after {self.max_retries} attempts: {str(e)}",
                     "url": url
                 }
-    
+
+        # Reached only if the retry loop never ran (max_retries <= 0).
+        return {"error": "Webhook not sent — max_retries must be >= 1", "url": url}
+
     async def _trigger_event(self, data: Dict) -> Dict:
         """Trigger event to all registered webhooks"""
         event = data.get("event")  # e.g., "user.created"

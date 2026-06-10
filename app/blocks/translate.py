@@ -37,12 +37,20 @@ def _translate_sync(text: str, source: str, target: str) -> tuple[str, str]:
 class TranslateBlock(UniversalBlock):
     """Multi-language translation via Google Translate (deep-translator, no API key)"""
 
+    auto_validate = False
     name = "translate"
     version = "2.0"
     description = "Translate text between 20+ languages — no API key needed"
     layer = 3
     tags = ["domain", "nlp", "translation"]
     requires = []
+
+    # Canonical text key for chain unwrapping — overrides the orchestrator's
+    # global priority list. Without this, a translate -> chat chain leans on
+    # the fact that "translated" happens to be in _TEXT_OUTPUT_FIELDS; with
+    # this, the contract is explicit and survives any list reordering.
+    # See CONTRIBUTING.md "Block output contracts".
+    text_output_field = "translated"
 
     ui_schema = {
         "input": {

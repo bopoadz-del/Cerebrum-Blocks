@@ -62,7 +62,7 @@ class AsyncProcessorBlock(UniversalBlock):
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Route to appropriate async action."""
         params = params or {}
-        action = params.get("action") or (input_data.get("action") if isinstance(input_data, dict) else None) or "status"
+        action = params.get("action") or (input_data.get("action") if isinstance(input_data, dict) else "status")
         handlers = {
             "dispatch": self.dispatch,
             "status": self.status,
@@ -160,7 +160,7 @@ class AsyncProcessorBlock(UniversalBlock):
         """Get job status."""
         job_id = params.get("job_id") or (input_data.get("job_id") if isinstance(input_data, dict) else None)
         if not job_id:
-            return {"status": "success", "jobs": len(getattr(self, "_tasks", {}))}
+            return {"status": "error", "error": "No job_id provided"}
 
         job = self._jobs.get(job_id)
         if not job:
@@ -182,7 +182,7 @@ class AsyncProcessorBlock(UniversalBlock):
         """Get job result."""
         job_id = params.get("job_id") or (input_data.get("job_id") if isinstance(input_data, dict) else None)
         if not job_id:
-            return {"status": "success", "jobs": len(getattr(self, "_tasks", {}))}
+            return {"status": "error", "error": "No job_id provided"}
 
         job = self._jobs.get(job_id)
         if not job:
@@ -197,7 +197,7 @@ class AsyncProcessorBlock(UniversalBlock):
         """Cancel a queued or running job."""
         job_id = params.get("job_id") or (input_data.get("job_id") if isinstance(input_data, dict) else None)
         if not job_id:
-            return {"status": "success", "jobs": len(getattr(self, "_tasks", {}))}
+            return {"status": "error", "error": "No job_id provided"}
 
         job = self._jobs.get(job_id)
         if not job:

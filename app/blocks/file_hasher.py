@@ -46,7 +46,7 @@ class FileHasherBlock(UniversalBlock):
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Route to appropriate hasher action."""
         params = params or {}
-        action = params.get("action") or (input_data.get("action") if isinstance(input_data, dict) else "hash") or "hash"
+        action = params.get("action") or (input_data.get("action") if isinstance(input_data, dict) else "hash")
         handlers = {
             "hash": self.hash_file,
             "metadata": self.metadata,
@@ -62,13 +62,7 @@ class FileHasherBlock(UniversalBlock):
         """Compute file hash(es)."""
         file_path = self._resolve_path(input_data, params)
         if not file_path:
-            return {
-                "status": "success",
-                "mode": "help",
-                "note": "No file path provided. Pass a file path to compute hashes.",
-                "usage": "Provide file_path as input string or {'file_path': '/path/to/file'}",
-                "supported_actions": ["hash", "metadata", "compare", "health_check"],
-            }
+            return {"status": "error", "error": "No file path provided"}
 
         path = Path(file_path)
         if not path.exists():
