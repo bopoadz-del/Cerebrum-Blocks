@@ -18,7 +18,7 @@ export default defineConfig({
       '/chain': 'http://localhost:8000',
       '/chat': 'http://localhost:8000',
       '/upload': 'http://localhost:8000',
-      '/store': 'http://localhost:8000',
+      '/store/containers': 'http://localhost:8000',
     },
   },
   build: {
