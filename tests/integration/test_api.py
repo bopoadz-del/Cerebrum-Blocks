@@ -1,10 +1,17 @@
 """Integration tests for API endpoints."""
 
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app, headers={"Authorization": "Bearer cb_dev_key"})
+
+requires_extended_blocks = pytest.mark.skipif(
+    os.getenv("CEREBRUM_VIRGIN", "true").strip().lower() in ("1", "true", "yes"),
+    reason="Drive blocks require legacy boot (set CEREBRUM_VIRGIN=false)",
+)
 
 class TestAPIEndpoints:
     """Test suite for API endpoints."""
@@ -166,9 +173,10 @@ class TestChainEndpoint:
         assert response.status_code in [200, 422]
 
 
+@requires_extended_blocks
 class TestDriveEndpoints:
     """Tests for drive-specific endpoints."""
-    
+
     def test_local_drive_list(self):
         """Test local drive via execute endpoint."""
         response = client.post("/execute", json={

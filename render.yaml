@@ -58,6 +58,12 @@ services:
         sync: false
       - key: DEEPSEEK_API_KEY
         sync: false
+      - key: CEREBRUM_MASTER_KEY
+        sync: false
+      - key: CEREBRUM_VIRGIN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
       # Private-network URL of the sandbox runner sibling service.
       # Render resolves this hostname inside the private network only.
       # Port is 10000 because Render assigns that to private services

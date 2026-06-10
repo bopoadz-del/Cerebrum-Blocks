@@ -13,7 +13,8 @@ def manifest_widgets_to_universal_ui(manifest: Dict[str, Any]) -> Dict[str, Any]
         return widgets
 
     primary = next((w for w in widgets if w.get("name") == "input"), widgets[0] if widgets else None)
-    widget_type = (primary or {}).get("widget", "text")
+    ui_input = primary or {}
+    widget_type = ui_input.get("widget", "text")
     input_type = {
         "text": "text",
         "textarea": "text",

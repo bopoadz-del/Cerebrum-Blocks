@@ -1,9 +1,12 @@
 """Minimal mock backend for testing the workflow builder frontend.
-Serves /blocks and /chain with dummy data so the React UI can be verified."""
+Serves /blocks, /chain, /store/containers, and /v1/workflows for local dev."""
 
 import json
 import os
 from pathlib import Path
+
+# Dev key (cb_dev_key) is only registered when ENV is local/test/dev.
+os.environ.setdefault("ENV", "local")
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -164,6 +167,12 @@ def mock_store_install(kit_id: str, body: MockInstallRequest = MockInstallReques
         return install_kit(kit_id, target_root=target, force=body.force)
     except ContainerKitError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+# Reactive workflow triggers — same router as production (app/main.py).
+from app.routers.workflows import router as workflows_router
+
+app.include_router(workflows_router)
 
 
 if __name__ == "__main__":

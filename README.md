@@ -198,8 +198,36 @@ Each block inherits from `UniversalBlock` and implements:
 
 ## 🚀 Deployment
 
-### Render (Production)
-All 4 services auto-deploy on `git push origin main`.
+### Deploy on Render
+
+Production uses **`app/main.py`** (not `mock_backend.py`). The repo ships a blueprint at [`render.yaml`](render.yaml) and a [`Procfile`](Procfile).
+
+| Setting | Value |
+|---------|-------|
+| **Build** | `./render-build.sh` (or `pip install -r requirements.txt`) |
+| **Start** | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+| **Health check** | `GET /health` |
+
+**Required env vars** (set in Render dashboard — never commit secrets):
+
+| Variable | Purpose |
+|----------|---------|
+| `ENV` | `production` |
+| `CEREBRUM_MASTER_KEY` | Admin API key |
+| `CEREBRUM_API_KEY_<USER>` | Per-user API keys (e.g. `CEREBRUM_API_KEY_ALICE`) |
+| `CORS_ORIGINS` | SPA origin(s), comma-separated |
+| `DATA_DIR` | Persistent disk mount (e.g. `/app/data`) |
+
+**Optional env vars:**
+
+| Variable | Purpose |
+|----------|---------|
+| `CEREBRUM_VIRGIN` | `1` = skip auto-loading domain kits at boot |
+| `DATABASE_URL` | Postgres for `historical_benchmark` block |
+| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | LLM providers for chat block |
+| `SENTRY_DSN` | Error tracking |
+
+The frontend is a **separate static site** on Render (build `npm run build` in `frontend/`, set `VITE_API_BASE` to the API URL). Local dev: `python mock_backend.py` on `:8000` + `npm run dev` in `frontend/` on `:5173`.
 
 | Service | URL |
 |---------|-----|
