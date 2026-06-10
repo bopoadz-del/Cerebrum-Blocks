@@ -125,20 +125,31 @@ def get_block_instance(block_name: str) -> Any:
     return block_instances[block_name]
 
 
-# Memory block
+# Memory block — prefer platform BLOCK_REGISTRY (app.blocks.memory), legacy fallback
 _memory_block = None
 
+
+def get_memory_block():
+    """Return the shared memory cache instance (registry-first)."""
+    global _memory_block
+    if "memory" in BLOCK_REGISTRY:
+        return get_block_instance("memory")
+    if _memory_block is None:
+        from blocks.memory.src.block import MemoryBlock
+
+        _memory_block = MemoryBlock(None, {"max_size": 10000, "default_ttl": 3600})
+        asyncio.create_task(_memory_block.initialize())
+    return _memory_block
+
+
 try:
-    from blocks.memory.src.block import MemoryBlock
+    if "memory" in BLOCK_REGISTRY:
+        BLOCK_REGISTRY["memory"]  # verify lazy import
+        MEMORY_AVAILABLE = True
+    else:
+        from blocks.memory.src.block import MemoryBlock  # noqa: F401
 
-    def get_memory_block():
-        global _memory_block
-        if _memory_block is None:
-            _memory_block = MemoryBlock(None, {"max_size": 10000, "default_ttl": 3600})
-            asyncio.create_task(_memory_block.initialize())
-        return _memory_block
-
-    MEMORY_AVAILABLE = True
+        MEMORY_AVAILABLE = True
 except Exception as e:
     MEMORY_AVAILABLE = False
     get_memory_block = None  # type: ignore[assignment]
