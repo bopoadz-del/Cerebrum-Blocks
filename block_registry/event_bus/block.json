@@ -13,27 +13,57 @@
       "name": "input",
       "type": "json",
       "required": false,
-      "description": "{\"action\": \"publish\", \"topic\": \"chat.response\", \"payload\": {}}"
+      "description": "{\"topic\": \"chat.response\", \"payload\": {}}"
+    },
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "description": "Action",
+      "default": "publish",
+      "options": [
+        "publish",
+        "subscribe",
+        "request",
+        "respond",
+        "get_topology"
+      ]
     },
     {
       "name": "default_timeout",
       "type": "number",
       "required": false,
-      "default": 30,
-      "description": "Configuration parameter: default_timeout"
+      "description": "Default Timeout",
+      "default": 30
     },
     {
       "name": "max_pending",
       "type": "number",
       "required": false,
-      "default": 1000,
-      "description": "Configuration parameter: max_pending"
+      "description": "Max Pending",
+      "default": 1000
     }
   ],
   "outputs": [
     {
-      "name": "result",
-      "type": "json"
+      "name": "status",
+      "type": "text",
+      "description": "Status"
+    },
+    {
+      "name": "topic",
+      "type": "text",
+      "description": "Topic"
+    },
+    {
+      "name": "correlation_id",
+      "type": "text",
+      "description": "Correlation ID"
+    },
+    {
+      "name": "delivered",
+      "type": "number",
+      "description": "Delivered"
     }
   ],
   "execution": {
@@ -44,7 +74,19 @@
     {
       "name": "input",
       "widget": "json",
-      "label": "{\"action\": \"publish\", \"topic\": \"chat.response\", \"payload\": {}}"
+      "label": "{\"topic\": \"chat.response\", \"payload\": {}}"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "publish",
+        "subscribe",
+        "request",
+        "respond",
+        "get_topology"
+      ]
     },
     {
       "name": "default_timeout",

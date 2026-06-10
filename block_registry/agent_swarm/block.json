@@ -16,6 +16,33 @@
       "description": "{\"objective\": \"Write a FastAPI endpoint\", \"agents\": [...], \"tasks\": [...]}"
     },
     {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "description": "Action",
+      "default": "execute",
+      "options": [
+        "execute",
+        "execute_async",
+        "status",
+        "health"
+      ]
+    },
+    {
+      "name": "max_concurrent_agents",
+      "type": "number",
+      "required": false,
+      "description": "Max Concurrent Agents",
+      "default": 5
+    },
+    {
+      "name": "default_timeout",
+      "type": "number",
+      "required": false,
+      "description": "Default Timeout",
+      "default": 120
+    },
+    {
       "name": "llm_provider",
       "type": "string",
       "required": false,
@@ -86,20 +113,6 @@
       "description": "Configuration parameter: vector_db_url"
     },
     {
-      "name": "max_concurrent_agents",
-      "type": "number",
-      "required": false,
-      "default": 5,
-      "description": "Configuration parameter: max_concurrent_agents"
-    },
-    {
-      "name": "default_timeout",
-      "type": "number",
-      "required": false,
-      "default": 120,
-      "description": "Configuration parameter: default_timeout"
-    },
-    {
       "name": "store_memory",
       "type": "boolean",
       "required": false,
@@ -150,6 +163,27 @@
       "label": "{\"objective\": \"Write a FastAPI endpoint\", \"agents\": [...], \"tasks\": [...]}"
     },
     {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "execute",
+        "execute_async",
+        "status",
+        "health"
+      ]
+    },
+    {
+      "name": "max_concurrent_agents",
+      "widget": "number",
+      "label": "Max Concurrent Agents"
+    },
+    {
+      "name": "default_timeout",
+      "widget": "number",
+      "label": "Default Timeout"
+    },
+    {
       "name": "llm_provider",
       "widget": "text",
       "label": "Llm Provider"
@@ -198,16 +232,6 @@
       "name": "vector_db_url",
       "widget": "text",
       "label": "Vector Db Url"
-    },
-    {
-      "name": "max_concurrent_agents",
-      "widget": "number",
-      "label": "Max Concurrent Agents"
-    },
-    {
-      "name": "default_timeout",
-      "widget": "number",
-      "label": "Default Timeout"
     },
     {
       "name": "store_memory",

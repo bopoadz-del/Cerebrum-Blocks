@@ -72,6 +72,7 @@ class WorkflowBlock(TypedBlock):
     ui_schema = {
         "input": {
             "type": "json",
+            "accept": None,
             "placeholder": '{"pipeline_id": "daily-report", "steps": [...]}',
             "multiline": True,
         },
@@ -84,6 +85,18 @@ class WorkflowBlock(TypedBlock):
                 {"name": "execution_time_ms", "type": "number", "label": "Time (ms)"},
             ],
         },
+        "params": [
+            {
+                "name": "action",
+                "type": "select",
+                "label": "Action",
+                "options": ["run", "schedule", "unschedule", "list", "get", "history", "status", "health"],
+                "default": "run",
+            },
+            {"name": "max_pipeline_steps", "type": "number", "label": "Max Pipeline Steps", "default": 20},
+            {"name": "enable_scheduler", "type": "boolean", "label": "Enable Scheduler", "default": True},
+            {"name": "default_timeout", "type": "number", "label": "Default Timeout", "default": 60},
+        ],
         "quick_actions": [
             {"icon": "⏩", "label": "Run Pipeline", "prompt": "Run a pipeline"},
             {"icon": "📅", "label": "Schedule", "prompt": "Schedule a recurring pipeline"},

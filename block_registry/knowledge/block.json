@@ -16,6 +16,25 @@
       "description": "Ask a question about your knowledge base..."
     },
     {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "description": "Action",
+      "default": "ask",
+      "options": [
+        "ask",
+        "search",
+        "summarize"
+      ]
+    },
+    {
+      "name": "top_k",
+      "type": "number",
+      "required": false,
+      "description": "Top K",
+      "default": 5
+    },
+    {
       "name": "llm_provider",
       "type": "string",
       "required": false,
@@ -115,6 +134,21 @@
       "name": "input",
       "widget": "text",
       "label": "Ask a question about your knowledge base..."
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "ask",
+        "search",
+        "summarize"
+      ]
+    },
+    {
+      "name": "top_k",
+      "widget": "number",
+      "label": "Top K"
     },
     {
       "name": "llm_provider",

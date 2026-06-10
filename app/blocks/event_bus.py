@@ -28,17 +28,33 @@ class EventBusBlock(UniversalBlock):
         "input": {
             "type": "json",
             "accept": None,
-            "placeholder": '{"action": "publish", "topic": "chat.response", "payload": {}}',
-            "multiline": True
+            "placeholder": '{"topic": "chat.response", "payload": {}}',
+            "multiline": True,
         },
         "output": {
             "type": "json",
-            "fields": []
+            "fields": [
+                {"name": "status", "type": "text", "label": "Status"},
+                {"name": "topic", "type": "text", "label": "Topic"},
+                {"name": "correlation_id", "type": "text", "label": "Correlation ID"},
+                {"name": "delivered", "type": "number", "label": "Delivered"},
+            ],
         },
+        "params": [
+            {
+                "name": "action",
+                "type": "select",
+                "label": "Action",
+                "options": ["publish", "subscribe", "request", "respond", "get_topology"],
+                "default": "publish",
+            },
+            {"name": "default_timeout", "type": "number", "label": "Default Timeout", "default": 30},
+            {"name": "max_pending", "type": "number", "label": "Max Pending", "default": 1000},
+        ],
         "quick_actions": [
-            {"icon": "📢", "label": "Publish Event", "prompt": '{"action":"publish","topic":"chat.response","payload":{}}'},
-            {"icon": "📋", "label": "List Topics", "prompt": '{"action":"list_topics"}'}
-        ]
+            {"icon": "📢", "label": "Publish Event", "prompt": '{"topic":"chat.response","payload":{}}'},
+            {"icon": "📋", "label": "Topology", "prompt": "Get event bus topology"},
+        ],
     }
 
     def __init__(self, hal_block=None, config=None):

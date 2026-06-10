@@ -67,8 +67,9 @@ class KnowledgeBlock(TypedBlock):
     ui_schema = {
         "input": {
             "type": "text",
+            "accept": None,
             "placeholder": "Ask a question about your knowledge base...",
-            "multiline": False,
+            "multiline": True,
         },
         "output": {
             "type": "json",
@@ -78,6 +79,16 @@ class KnowledgeBlock(TypedBlock):
                 {"name": "confidence", "type": "percentage", "label": "Confidence"},
             ],
         },
+        "params": [
+            {
+                "name": "action",
+                "type": "select",
+                "label": "Action",
+                "options": ["ask", "search", "summarize"],
+                "default": "ask",
+            },
+            {"name": "top_k", "type": "number", "label": "Top K", "default": 5},
+        ],
         "quick_actions": [
             {"icon": "❓", "label": "Ask Question", "prompt": "Ask about your data"},
             {"icon": "🔍", "label": "Search Only", "prompt": "Search knowledge base"},

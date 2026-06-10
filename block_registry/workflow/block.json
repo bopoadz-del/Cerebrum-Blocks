@@ -14,25 +14,42 @@
       "description": "{\"pipeline_id\": \"daily-report\", \"steps\": [...]}"
     },
     {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "description": "Action",
+      "default": "run",
+      "options": [
+        "run",
+        "schedule",
+        "unschedule",
+        "list",
+        "get",
+        "history",
+        "status",
+        "health"
+      ]
+    },
+    {
       "name": "max_pipeline_steps",
       "type": "number",
       "required": false,
-      "default": 20,
-      "description": "Configuration parameter: max_pipeline_steps"
+      "description": "Max Pipeline Steps",
+      "default": 20
     },
     {
       "name": "enable_scheduler",
       "type": "boolean",
       "required": false,
-      "default": true,
-      "description": "Configuration parameter: enable_scheduler"
+      "description": "Enable Scheduler",
+      "default": true
     },
     {
       "name": "default_timeout",
       "type": "number",
       "required": false,
-      "default": 60,
-      "description": "Configuration parameter: default_timeout"
+      "description": "Default Timeout",
+      "default": 60
     }
   ],
   "outputs": [
@@ -66,6 +83,21 @@
       "name": "input",
       "widget": "json",
       "label": "{\"pipeline_id\": \"daily-report\", \"steps\": [...]}"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "run",
+        "schedule",
+        "unschedule",
+        "list",
+        "get",
+        "history",
+        "status",
+        "health"
+      ]
     },
     {
       "name": "max_pipeline_steps",

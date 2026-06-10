@@ -14,6 +14,18 @@
       "description": "{\"channel\": \"telegram\", \"to\": \"123456\", \"message\": \"Hello\"}"
     },
     {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "description": "Action",
+      "default": "send",
+      "options": [
+        "send",
+        "broadcast",
+        "health"
+      ]
+    },
+    {
       "name": "sendgrid_api_key",
       "type": "string",
       "required": false,
@@ -89,6 +101,16 @@
       "name": "input",
       "widget": "json",
       "label": "{\"channel\": \"telegram\", \"to\": \"123456\", \"message\": \"Hello\"}"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "send",
+        "broadcast",
+        "health"
+      ]
     },
     {
       "name": "sendgrid_api_key",

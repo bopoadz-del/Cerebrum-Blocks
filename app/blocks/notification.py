@@ -119,6 +119,7 @@ class NotificationBlock(TypedBlock):
     ui_schema = {
         "input": {
             "type": "json",
+            "accept": None,
             "placeholder": '{"channel": "telegram", "to": "123456", "message": "Hello"}',
             "multiline": True,
         },
@@ -130,6 +131,15 @@ class NotificationBlock(TypedBlock):
                 {"name": "message_id", "type": "text", "label": "Message ID"},
             ],
         },
+        "params": [
+            {
+                "name": "action",
+                "type": "select",
+                "label": "Action",
+                "options": ["send", "broadcast", "health"],
+                "default": "send",
+            },
+        ],
         "quick_actions": [
             {"icon": "✉️", "label": "Send Email", "prompt": "Send an email notification"},
             {"icon": "🔗", "label": "Webhook", "prompt": "POST to webhook URL"},

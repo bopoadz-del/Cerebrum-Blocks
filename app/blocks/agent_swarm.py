@@ -82,6 +82,7 @@ class AgentSwarmBlock(TypedBlock):
     ui_schema = {
         "input": {
             "type": "json",
+            "accept": None,
             "placeholder": '{"objective": "Write a FastAPI endpoint", "agents": [...], "tasks": [...]}',
             "multiline": True,
         },
@@ -96,6 +97,17 @@ class AgentSwarmBlock(TypedBlock):
                 {"name": "total_time_ms", "type": "number", "label": "Time (ms)"},
             ],
         },
+        "params": [
+            {
+                "name": "action",
+                "type": "select",
+                "label": "Action",
+                "options": ["execute", "execute_async", "status", "health"],
+                "default": "execute",
+            },
+            {"name": "max_concurrent_agents", "type": "number", "label": "Max Concurrent Agents", "default": 5},
+            {"name": "default_timeout", "type": "number", "label": "Default Timeout", "default": 120},
+        ],
         "quick_actions": [
             {"icon": "🐝", "label": "Run Swarm", "prompt": "Run agent swarm to solve this"},
             {"icon": "📋", "label": "Plan Tasks", "prompt": "Generate a task plan with agents"},
