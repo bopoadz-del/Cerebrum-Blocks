@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
@@ -143,7 +143,7 @@ def mock_store_container_detail(kit_id: str):
     try:
         return get_kit(kit_id)
     except ContainerKitError as exc:
-        return {"error": str(exc)}
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 class MockInstallRequest(BaseModel):
@@ -161,7 +161,7 @@ def mock_store_install(kit_id: str, body: MockInstallRequest = MockInstallReques
     try:
         return install_kit(kit_id, target_root=target, force=body.force)
     except ContainerKitError as exc:
-        return {"status": "error", "detail": str(exc)}
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 if __name__ == "__main__":
