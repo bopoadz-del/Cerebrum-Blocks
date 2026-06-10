@@ -1,0 +1,12 @@
+{
+  "id": "law",
+  "name": "Law & Legal Practice Suite",
+  "version": "0.0.0-placeholder",
+  "description": "Contract analysis, case research, and legal document intelligence blocks. Coming soon.",
+  "status": "coming_soon",
+  "author": "bopoadz-del",
+  "tags": ["domain", "container", "law", "legal"],
+  "blocks": [],
+  "artifacts": [],
+  "price_cents": 0
+}

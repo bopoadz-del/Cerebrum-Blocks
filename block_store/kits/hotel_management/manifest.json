@@ -1,0 +1,12 @@
+{
+  "id": "hotel_management",
+  "name": "Hotel Management Suite",
+  "version": "0.0.0-placeholder",
+  "description": "Guest services, reservations, housekeeping, and hospitality operations blocks. Coming soon.",
+  "status": "coming_soon",
+  "author": "bopoadz-del",
+  "tags": ["domain", "container", "hospitality", "hotel"],
+  "blocks": [],
+  "artifacts": [],
+  "price_cents": 0
+}

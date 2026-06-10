@@ -1,0 +1,12 @@
+{
+  "id": "security",
+  "name": "Security & Surveillance Suite",
+  "version": "0.0.0-placeholder",
+  "description": "Physical security, access control, and threat monitoring blocks. Coming soon.",
+  "status": "coming_soon",
+  "author": "bopoadz-del",
+  "tags": ["domain", "container", "security", "surveillance"],
+  "blocks": [],
+  "artifacts": [],
+  "price_cents": 0
+}

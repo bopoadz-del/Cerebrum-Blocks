@@ -41,6 +41,8 @@ def store_list_containers():
                 "tags": k.get("tags", []),
                 "author": k.get("author"),
                 "price_cents": k.get("price_cents", 0),
+                "status": k.get("status"),
+                "coming_soon": k.get("coming_soon", False),
                 "bundle_ready": k.get("bundle_ready", False),
                 "source": k.get("source"),
                 "blocks": k.get("blocks", []),

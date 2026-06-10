@@ -1,0 +1,12 @@
+{
+  "id": "finance",
+  "name": "Finance & Investment Suite",
+  "version": "0.0.0-placeholder",
+  "description": "Portfolio analysis, financial modeling, and investment research blocks. Coming soon.",
+  "status": "coming_soon",
+  "author": "bopoadz-del",
+  "tags": ["domain", "container", "finance", "investment"],
+  "blocks": [],
+  "artifacts": [],
+  "price_cents": 0
+}

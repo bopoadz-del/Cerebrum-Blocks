@@ -37,8 +37,15 @@ function tagColor(tag: string): string {
   return colors[tag] || 'bg-gray-100 text-gray-700';
 }
 
-function BundleReadyBadge({ ready }: { ready?: boolean }) {
-  if (!ready) {
+function KitStatusBadge({ kit }: { kit: ContainerKitSummary }) {
+  if (kit.coming_soon || kit.status === 'coming_soon') {
+    return (
+      <Badge variant="outline" className="text-slate-600 border-slate-200 bg-slate-50">
+        Coming Soon
+      </Badge>
+    );
+  }
+  if (!kit.bundle_ready) {
     return (
       <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50">
         Bundle pending
@@ -51,6 +58,10 @@ function BundleReadyBadge({ ready }: { ready?: boolean }) {
       Bundle ready
     </Badge>
   );
+}
+
+function isKitInstallable(kit: ContainerKitSummary): boolean {
+  return Boolean(kit.bundle_ready) && !kit.coming_soon && kit.status !== 'coming_soon';
 }
 
 function KitCard({
@@ -73,7 +84,7 @@ function KitCard({
             <CardTitle className="text-base truncate">{kit.name}</CardTitle>
             <CardDescription className="text-xs mt-1">v{kit.version}</CardDescription>
           </div>
-          <BundleReadyBadge ready={kit.bundle_ready} />
+          <KitStatusBadge kit={kit} />
         </div>
       </CardHeader>
       <CardContent className="px-4 pt-0">
@@ -143,10 +154,10 @@ function KitDetailView({
           ) : null}
         </div>
         <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
-          <BundleReadyBadge ready={kit.bundle_ready} />
+          <KitStatusBadge kit={kit} />
           <Button
             onClick={onInstall}
-            disabled={installing || !kit.bundle_ready}
+            disabled={installing || !isKitInstallable(kit)}
             className="gap-2"
           >
             {installing ? (
@@ -166,7 +177,11 @@ function KitDetailView({
               </>
             )}
           </Button>
-          {!kit.bundle_ready ? (
+          {kit.coming_soon || kit.status === 'coming_soon' ? (
+            <p className="text-[10px] text-slate-600 max-w-[200px] text-right">
+              This kit is not available yet. Check back for updates.
+            </p>
+          ) : !kit.bundle_ready ? (
             <p className="text-[10px] text-amber-700 max-w-[200px] text-right">
               Bundle not published yet. Run the publish script before installing.
             </p>

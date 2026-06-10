@@ -1,0 +1,12 @@
+{
+  "id": "medical",
+  "name": "Medical & Healthcare Suite",
+  "version": "0.0.0-placeholder",
+  "description": "Clinical workflows, patient records intelligence, and healthcare compliance blocks. Coming soon.",
+  "status": "coming_soon",
+  "author": "bopoadz-del",
+  "tags": ["domain", "container", "medical", "healthcare"],
+  "blocks": [],
+  "artifacts": [],
+  "price_cents": 0
+}

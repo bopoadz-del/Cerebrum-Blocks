@@ -1,0 +1,12 @@
+{
+  "id": "banking",
+  "name": "Banking Operations Suite",
+  "version": "0.0.0-placeholder",
+  "description": "Retail and commercial banking workflows, KYC, and regulatory compliance blocks. Coming soon.",
+  "status": "coming_soon",
+  "author": "bopoadz-del",
+  "tags": ["domain", "container", "banking", "finance"],
+  "blocks": [],
+  "artifacts": [],
+  "price_cents": 0
+}

@@ -67,6 +67,8 @@ export interface ContainerKitSummary {
   tags?: string[];
   author?: string;
   price_cents?: number;
+  status?: string;
+  coming_soon?: boolean;
   bundle_ready?: boolean;
   source?: ContainerKitSource;
   blocks?: string[];

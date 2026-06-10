@@ -1,0 +1,12 @@
+{
+  "id": "maintenance",
+  "name": "Maintenance & Facilities Suite",
+  "version": "0.0.0-placeholder",
+  "description": "Work orders, asset lifecycle, and preventive maintenance blocks. Coming soon.",
+  "status": "coming_soon",
+  "author": "bopoadz-del",
+  "tags": ["domain", "container", "maintenance", "facilities"],
+  "blocks": [],
+  "artifacts": [],
+  "price_cents": 0
+}

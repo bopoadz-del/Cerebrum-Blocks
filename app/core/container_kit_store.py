@@ -54,6 +54,7 @@ def _load_manifest(manifest_path: Path) -> dict[str, Any]:
     manifest = _load_json(manifest_path)
     manifest.setdefault("id", manifest_path.parent.name)
     manifest["bundle_ready"] = _bundle_ready(manifest_path.parent, manifest)
+    manifest["coming_soon"] = manifest.get("status") == "coming_soon"
     return manifest
 
 
