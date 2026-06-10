@@ -94,6 +94,31 @@ def store_uninstall_container(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+# /store/* aliases (Block Store UI + public discovery docs)
+@router.get("/store/containers")
+def store_list_containers_store_prefix():
+    return store_list_containers()
+
+
+@router.get("/store/containers/installed")
+def store_list_installed_store_prefix(auth: dict = Depends(require_api_key)):
+    return store_list_installed()
+
+
+@router.get("/store/containers/{kit_id}")
+def store_get_container_store_prefix(kit_id: str):
+    return store_get_container(kit_id)
+
+
+@router.post("/store/containers/{kit_id}/install")
+def store_install_container_store_prefix(
+    kit_id: str,
+    body: InstallRequest = InstallRequest(),
+    auth: dict = Depends(require_api_key),
+):
+    return store_install_container(kit_id, body, auth)
+
+
 # Versioned aliases (match /v1/blocks pattern)
 @router.get("/v1/store/containers")
 def store_list_containers_v1():

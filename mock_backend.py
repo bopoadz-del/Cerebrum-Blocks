@@ -116,12 +116,24 @@ def mock_store_containers():
                 "name": k.get("name"),
                 "version": k.get("version"),
                 "description": k.get("description"),
+                "tags": k.get("tags", []),
+                "author": k.get("author"),
+                "price_cents": k.get("price_cents", 0),
                 "bundle_ready": k.get("bundle_ready", False),
+                "source": k.get("source"),
+                "blocks": k.get("blocks", []),
             }
             for k in kits
         ],
         "total": len(kits),
     }
+
+
+@app.get("/store/containers/installed")
+def mock_store_installed():
+    from app.core.container_kit_store import list_installed
+
+    return list_installed()
 
 
 @app.get("/store/containers/{kit_id}")
@@ -132,6 +144,24 @@ def mock_store_container_detail(kit_id: str):
         return get_kit(kit_id)
     except ContainerKitError as exc:
         return {"error": str(exc)}
+
+
+class MockInstallRequest(BaseModel):
+    force: bool = False
+    target_root: Optional[str] = None
+
+
+@app.post("/store/containers/{kit_id}/install")
+def mock_store_install(kit_id: str, body: MockInstallRequest = MockInstallRequest()):
+    from pathlib import Path
+
+    from app.core.container_kit_store import ContainerKitError, install_kit
+
+    target = Path(body.target_root).resolve() if body.target_root else None
+    try:
+        return install_kit(kit_id, target_root=target, force=body.force)
+    except ContainerKitError as exc:
+        return {"status": "error", "detail": str(exc)}
 
 
 if __name__ == "__main__":

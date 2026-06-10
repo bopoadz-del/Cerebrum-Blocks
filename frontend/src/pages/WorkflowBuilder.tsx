@@ -31,6 +31,7 @@ import {
   type WorkflowNodeData,
 } from '@/lib/workflowEngine';
 import { defaultParamsFromFields, extractParamFields } from '@/lib/blockUiSchema';
+import AppHeader from '@/components/AppHeader';
 
 const nodeTypes = {
   cerebrum: CerebrumNode,
@@ -457,16 +458,7 @@ function FlowCanvas() {
 export default function WorkflowBuilder() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-white flex flex-col">
-      {/* Top nav */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white shrink-0">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-gray-800">Workflow Builder</span>
-          <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">Beta</span>
-        </div>
-        <div className="text-[10px] text-gray-400">
-          Drag blocks onto the canvas · Connect · Run
-        </div>
-      </div>
+      <AppHeader title="Workflow Builder" subtitle="Beta" />
       <div className="flex-1 overflow-hidden">
         <ReactFlowProvider>
           <FlowCanvas />

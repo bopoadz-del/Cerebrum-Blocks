@@ -59,6 +59,64 @@ export interface ChainResult {
   validation_errors?: unknown[];
 }
 
+export interface ContainerKitSummary {
+  id: string;
+  name: string;
+  version: string;
+  description?: string;
+  tags?: string[];
+  author?: string;
+  price_cents?: number;
+  bundle_ready?: boolean;
+  source?: ContainerKitSource;
+  blocks?: string[];
+}
+
+export interface ContainerKitSource {
+  repo?: string;
+  ref?: string;
+  publish_script?: string;
+}
+
+export interface ContainerKitArtifact {
+  src: string;
+  dest: string;
+}
+
+export interface ContainerKitDetail extends ContainerKitSummary {
+  container?: {
+    class?: string;
+    default_chat_prompt?: string;
+  };
+  prompts?: string[];
+  data?: string[];
+  core_modules?: string[];
+  artifacts?: ContainerKitArtifact[];
+  install_requires?: Record<string, string>;
+}
+
+export interface ContainerKitInstallResult {
+  status: string;
+  kit_id: string;
+  version?: string;
+  target_root?: string;
+  copied?: string[];
+  skipped?: Array<{ dest: string; reason: string }>;
+  installed_at?: string;
+}
+
+export interface InstalledContainerKits {
+  kits: Record<
+    string,
+    {
+      version?: string;
+      installed_at?: string;
+      target_root?: string;
+      files?: string[];
+    }
+  >;
+}
+
 export type ApiErrorKind =
   | 'network'           // status 0 — fetch threw / CORS-stripped failure
   | 'auth'              // 401
@@ -406,6 +464,32 @@ export const api = {
   // Health check
   async health(): Promise<{ status: string }> {
     return fetchApi('/health') as Promise<{ status: string }>;
+  },
+
+  // Block Store — container kits
+  async listStoreContainers(): Promise<{ containers: ContainerKitSummary[]; total: number }> {
+    return fetchApi('/store/containers') as Promise<{
+      containers: ContainerKitSummary[];
+      total: number;
+    }>;
+  },
+
+  async getStoreContainer(kitId: string): Promise<ContainerKitDetail> {
+    return fetchApi(`/store/containers/${encodeURIComponent(kitId)}`) as Promise<ContainerKitDetail>;
+  },
+
+  async installStoreContainer(
+    kitId: string,
+    options?: { force?: boolean }
+  ): Promise<ContainerKitInstallResult> {
+    return fetchApi(`/store/containers/${encodeURIComponent(kitId)}/install`, {
+      method: 'POST',
+      body: JSON.stringify({ force: options?.force ?? false }),
+    }) as Promise<ContainerKitInstallResult>;
+  },
+
+  async listInstalledContainers(): Promise<InstalledContainerKits> {
+    return fetchApi('/store/containers/installed') as Promise<InstalledContainerKits>;
   },
 };
 
