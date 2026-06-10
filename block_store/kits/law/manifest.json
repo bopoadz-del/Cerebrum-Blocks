@@ -11,7 +11,10 @@
     "law",
     "legal"
   ],
-  "blocks": [],
+  "blocks": [
+    "pacer_connector",
+    "caselaw_connector"
+  ],
   "artifacts": [],
   "price_cents": 0,
   "container": {
@@ -39,6 +42,14 @@
     {
       "src": "types.py",
       "dest": "app/core/law_types.py"
+    },
+    {
+      "src": "blocks/pacer_connector.py",
+      "dest": "app/blocks/pacer_connector.py"
+    },
+    {
+      "src": "blocks/caselaw_connector.py",
+      "dest": "app/blocks/caselaw_connector.py"
     },
     {
       "src": "prompts/law_expert.txt",

@@ -11,7 +11,10 @@
     "maintenance",
     "facilities"
   ],
-  "blocks": [],
+  "blocks": [
+    "cmms_connector",
+    "iot_sensor_connector"
+  ],
   "artifacts": [],
   "price_cents": 0,
   "container": {
@@ -39,6 +42,14 @@
     {
       "src": "types.py",
       "dest": "app/core/maintenance_types.py"
+    },
+    {
+      "src": "blocks/cmms_connector.py",
+      "dest": "app/blocks/cmms_connector.py"
+    },
+    {
+      "src": "blocks/iot_sensor_connector.py",
+      "dest": "app/blocks/iot_sensor_connector.py"
     },
     {
       "src": "prompts/maintenance_expert.txt",

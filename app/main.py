@@ -58,6 +58,7 @@ from app.routers import (
     store,
     upload,
     video,
+    workflows,
 )
 from app.routers.metrics import _record_metrics
 @asynccontextmanager
@@ -211,6 +212,7 @@ app.include_router(skills.router)
 app.include_router(notification.router)
 app.include_router(store.router)
 app.include_router(video.router)
+app.include_router(workflows.router)
 app.include_router(connectors.router)
 
 # Debug routes — only in non-production environments

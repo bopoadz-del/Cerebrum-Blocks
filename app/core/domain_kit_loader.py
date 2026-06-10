@@ -33,6 +33,23 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
     ],
     "medical": [
         ("medical_ehr_connector", "app.blocks.medical_ehr_connector", "MedicalEHRConnectorBlock"),
+        ("clinical_trigger", "app.blocks.clinical_trigger", "ClinicalTriggerBlock"),
+    ],
+    "hotel_management": [
+        ("opera_connector", "app.blocks.opera_connector", "OperaConnectorBlock"),
+        ("hotel_trigger", "app.blocks.hotel_trigger", "HotelTriggerBlock"),
+    ],
+    "law": [
+        ("pacer_connector", "app.blocks.pacer_connector", "PacerConnectorBlock"),
+        ("caselaw_connector", "app.blocks.caselaw_connector", "CaselawConnectorBlock"),
+    ],
+    "finance": [
+        ("market_data_connector", "app.blocks.market_data_connector", "MarketDataConnectorBlock"),
+        ("sec_edgar_connector", "app.blocks.sec_edgar_connector", "SecEdgarConnectorBlock"),
+    ],
+    "maintenance": [
+        ("cmms_connector", "app.blocks.cmms_connector", "CmmsConnectorBlock"),
+        ("iot_sensor_connector", "app.blocks.iot_sensor_connector", "IotSensorConnectorBlock"),
     ],
 }
 

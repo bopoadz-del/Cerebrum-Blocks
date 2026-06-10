@@ -70,6 +70,9 @@ export interface ContainerKitSummary {
   status?: string;
   coming_soon?: boolean;
   bundle_ready?: boolean;
+  skeleton_ready?: boolean;
+  skeleton_installable?: boolean;
+  installable?: boolean;
   source?: ContainerKitSource;
   blocks?: string[];
 }

@@ -65,16 +65,20 @@ async def video_ingest(
         err = result.get("error", "Ingest failed")
         raise HTTPException(status_code=classify_block_error(err), detail=err)
 
-    if result.get("trigger_recommended") and request.auto_trigger:
-        trigger = get_block_instance("video_anomaly_trigger")
-        if trigger is not None:
-            trigger_data = {
-                "metadata": payload,
-                "channel": request.notify_channel or "webhook",
-                "to": request.notify_to,
-                "url": request.notify_to,
-            }
-            trigger_result = await trigger.process(trigger_data, {"action": "evaluate"})
-            result["trigger"] = trigger_result
+    # Reactive engine runs inside video_metadata_ingest when auto_trigger=true.
+    # Legacy manual chaining via video_anomaly_trigger remains available via /execute.
+    if not result.get("workflow") and result.get("trigger_recommended") and request.auto_trigger:
+        from app.core.reactive_workflow import get_reactive_engine
+
+        workflow_result = await get_reactive_engine().dispatch_video_anomaly(
+            payload,
+            result.get("anomalies", []),
+            notify_channel=request.notify_channel,
+            notify_to=request.notify_to,
+            auto_trigger=True,
+            background=False,
+        )
+        if workflow_result:
+            result["workflow"] = workflow_result
 
     return result

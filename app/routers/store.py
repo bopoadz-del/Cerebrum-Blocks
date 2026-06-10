@@ -45,6 +45,7 @@ def store_list_containers():
                 "coming_soon": k.get("coming_soon", False),
                 "bundle_ready": k.get("bundle_ready", False),
                 "skeleton_ready": k.get("skeleton_ready", False),
+                "skeleton_installable": k.get("skeleton_installable", False),
                 "installable": k.get("installable", False),
                 "source": k.get("source"),
                 "blocks": k.get("blocks", []),

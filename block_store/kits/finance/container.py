@@ -1,14 +1,9 @@
-"""Finance & Investment Suite — domain container stub.
-
-Subclasses ``DomainContainer`` (``app/containers/base.py``). When this kit is
-published, ``container.py`` is copied to ``app/containers/finance.py`` per
-manifest ``skeleton_artifacts`` / ``artifacts``.
-"""
+"""Finance & Investment Suite — domain container stub."""
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Dict
+from typing import Any, Callable, Dict
 
 from app.containers.base import DomainContainer
 
@@ -23,5 +18,27 @@ class FinanceContainer(DomainContainer):
         self.kit_root = kit_root or Path(__file__).resolve().parent
 
     def get_actions(self) -> Dict[str, Callable]:
-        # TODO: wire domain actions (e.g. analyze, summarize, route_to_block)
-        return {}
+        return {
+            "market_quote": self._market_quote,
+            "sec_filings": self._sec_filings,
+            "health": self._health,
+        }
+
+    async def _health(self, input_data: Any, params: Dict) -> Dict:
+        return {"status": "healthy", "container": self.name, "version": self.version}
+
+    async def _market_quote(self, input_data: Any, params: Dict) -> Dict:
+        block = self._resolve_block("market_data_connector")
+        if block is None:
+            return {"status": "error", "error": "market_data_connector block unavailable"}
+        data = input_data if isinstance(input_data, dict) else {}
+        merged = {**data, **(params or {})}
+        return await block.process(merged, {"action": "fetch", "symbol": merged.get("symbol")})
+
+    async def _sec_filings(self, input_data: Any, params: Dict) -> Dict:
+        block = self._resolve_block("sec_edgar_connector")
+        if block is None:
+            return {"status": "error", "error": "sec_edgar_connector block unavailable"}
+        data = input_data if isinstance(input_data, dict) else {}
+        merged = {**data, **(params or {})}
+        return await block.process(merged, {"action": "fetch", "cik": merged.get("cik")})

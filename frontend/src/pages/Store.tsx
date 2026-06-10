@@ -91,7 +91,8 @@ function KitStatusBadge({ kit }: { kit: ContainerKitSummary }) {
 }
 
 function isKitInstallable(kit: ContainerKitSummary): boolean {
-  return Boolean(kit.bundle_ready) && !isKitComingSoon(kit);
+  if (kit.bundle_ready && !isKitComingSoon(kit)) return true;
+  return Boolean(kit.skeleton_installable);
 }
 
 function matchesAvailabilityFilter(kit: ContainerKitSummary, filter: AvailabilityFilter): boolean {
@@ -421,9 +422,13 @@ function KitDetailView({
               </>
             )}
           </Button>
-          {isKitComingSoon(kit) ? (
+          {isKitComingSoon(kit) && !kit.skeleton_installable ? (
             <p className="text-[10px] text-slate-600 max-w-[200px] text-right">
               This kit is not available yet. Check back for updates.
+            </p>
+          ) : isKitComingSoon(kit) && kit.skeleton_installable ? (
+            <p className="text-[10px] text-slate-600 max-w-[200px] text-right">
+              Skeleton install — connector stubs and container scaffolding only.
             </p>
           ) : !kit.bundle_ready ? (
             <p className="text-[10px] text-amber-700 max-w-[200px] text-right">

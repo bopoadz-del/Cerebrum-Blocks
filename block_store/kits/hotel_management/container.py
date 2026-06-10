@@ -1,14 +1,9 @@
-"""Hotel Management Suite — domain container stub.
-
-Subclasses ``DomainContainer`` (``app/containers/base.py``). When this kit is
-published, ``container.py`` is copied to ``app/containers/hotel_management.py`` per
-manifest ``skeleton_artifacts`` / ``artifacts``.
-"""
+"""Hotel Management Suite — domain container stub."""
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Dict
+from typing import Any, Callable, Dict
 
 from app.containers.base import DomainContainer
 
@@ -23,5 +18,27 @@ class HotelManagementContainer(DomainContainer):
         self.kit_root = kit_root or Path(__file__).resolve().parent
 
     def get_actions(self) -> Dict[str, Callable]:
-        # TODO: wire domain actions (e.g. analyze, summarize, route_to_block)
-        return {}
+        return {
+            "opera_fetch": self._opera_fetch,
+            "hotel_trigger": self._hotel_trigger,
+            "health": self._health,
+        }
+
+    async def _health(self, input_data: Any, params: Dict) -> Dict:
+        return {"status": "healthy", "container": self.name, "version": self.version}
+
+    async def _opera_fetch(self, input_data: Any, params: Dict) -> Dict:
+        block = self._resolve_block("opera_connector")
+        if block is None:
+            return {"status": "error", "error": "opera_connector block unavailable"}
+        data = input_data if isinstance(input_data, dict) else {}
+        merged = {**data, **(params or {})}
+        merged.setdefault("action", "fetch")
+        return await block.process(merged, {"action": merged["action"]})
+
+    async def _hotel_trigger(self, input_data: Any, params: Dict) -> Dict:
+        block = self._resolve_block("hotel_trigger")
+        if block is None:
+            return {"status": "error", "error": "hotel_trigger block unavailable"}
+        data = input_data if isinstance(input_data, dict) else {}
+        return await block.process(data, params or {})

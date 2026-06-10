@@ -105,5 +105,18 @@ class VideoMetadataIngestBlock(UniversalBlock):
         if metadata.anomalies and data.get("auto_trigger", True):
             result["trigger_recommended"] = True
             result["anomalies"] = [a.model_dump(mode="json") for a in metadata.anomalies]
+            from app.core.reactive_workflow import get_reactive_engine
+
+            workflow_result = await get_reactive_engine().dispatch_video_anomaly(
+                metadata.model_dump(mode="json"),
+                result["anomalies"],
+                notify_channel=data.get("notify_channel"),
+                notify_to=data.get("notify_to") or data.get("url"),
+                message=data.get("message"),
+                auto_trigger=True,
+                background=False,
+            )
+            if workflow_result:
+                result["workflow"] = workflow_result
 
         return result

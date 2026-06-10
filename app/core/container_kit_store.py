@@ -64,7 +64,8 @@ def _load_manifest(manifest_path: Path) -> dict[str, Any]:
     skeleton_ready = _skeleton_ready(kit_dir, manifest)
     manifest["bundle_ready"] = bundle_ready
     manifest["skeleton_ready"] = skeleton_ready
-    manifest["installable"] = _installable(manifest, bundle_ready)
+    manifest["installable"] = _installable(manifest, bundle_ready, skeleton_ready)
+    manifest["skeleton_installable"] = _skeleton_installable(manifest, skeleton_ready)
     manifest["coming_soon"] = manifest.get("status") == "coming_soon"
     return manifest
 
@@ -85,10 +86,20 @@ def _skeleton_ready(kit_dir: Path, manifest: dict[str, Any]) -> bool:
     return all((kit_dir / item["src"]).exists() for item in skeleton)
 
 
-def _installable(manifest: dict[str, Any], bundle_ready: bool) -> bool:
+def _skeleton_installable(manifest: dict[str, Any], skeleton_ready: bool) -> bool:
+    """Coming-soon / draft kits may install skeleton artifacts only."""
+    if not skeleton_ready:
+        return False
+    skeleton = manifest.get("skeleton_artifacts") or []
+    return bool(skeleton)
+
+
+def _installable(
+    manifest: dict[str, Any], bundle_ready: bool, skeleton_ready: bool = False
+) -> bool:
     status = manifest.get("status")
     if status in ("draft", "coming_soon"):
-        return False
+        return _skeleton_installable(manifest, skeleton_ready)
     if status == "available":
         return bundle_ready
     # Legacy construction kit and future published kits without explicit status
@@ -130,12 +141,17 @@ def install_kit(
         status = manifest.get("status") or "unknown"
         raise ContainerKitError(
             f"Kit '{kit_id}' is not installable (status={status!r}). "
-            "Skeleton kits require publishing to bundle/ and status=available."
+            "Skeleton kits require skeleton_artifacts; full kits need bundle/ + status=available."
         )
 
     target = (target_root or PROJECT_ROOT).resolve()
     bundle_dir = _kit_dir(kit_id) / "bundle"
+    kit_dir = _kit_dir(kit_id)
     artifacts = manifest.get("artifacts") or []
+    skeleton_mode = not manifest.get("bundle_ready") and manifest.get("skeleton_installable")
+
+    if skeleton_mode:
+        return _install_skeleton_kit(kit_id, manifest, kit_dir, target, force=force)
 
     if not artifacts:
         raise ContainerKitError(f"Kit '{kit_id}' has no install artifacts")
@@ -186,6 +202,64 @@ def install_kit(
         "skipped": skipped,
         "installed_at": state["kits"][kit_id]["installed_at"],
         "registry": registry_entry,
+        "install_mode": "bundle",
+    }
+
+
+def _install_skeleton_kit(
+    kit_id: str,
+    manifest: dict[str, Any],
+    kit_dir: Path,
+    target: Path,
+    *,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Copy skeleton_artifacts from kit root (coming-soon / draft kits)."""
+    artifacts = manifest.get("skeleton_artifacts") or []
+    if not artifacts:
+        raise ContainerKitError(f"Kit '{kit_id}' has no skeleton artifacts")
+
+    missing = [item["src"] for item in artifacts if not (kit_dir / item["src"]).exists()]
+    if missing:
+        raise ContainerKitError(
+            f"Kit '{kit_id}' skeleton incomplete. Missing: {', '.join(missing[:5])}"
+            + (f" (+{len(missing) - 5} more)" if len(missing) > 5 else "")
+        )
+
+    copied: list[str] = []
+    skipped: list[dict[str, str]] = []
+    for item in artifacts:
+        src = kit_dir / item["src"]
+        dest = target / item["dest"]
+        if dest.exists() and not force:
+            skipped.append({"dest": item["dest"], "reason": "already_exists"})
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+        copied.append(item["dest"])
+
+    state = _load_install_state()
+    state.setdefault("kits", {})
+    state["kits"][kit_id] = {
+        "version": manifest.get("version"),
+        "installed_at": _utc_now(),
+        "target_root": str(target),
+        "files": copied,
+        "install_mode": "skeleton",
+    }
+    _save_install_state(state)
+    registry_entry = _register_kit_on_target(kit_id, manifest, target)
+
+    return {
+        "status": "success",
+        "kit_id": kit_id,
+        "version": manifest.get("version"),
+        "target_root": str(target),
+        "copied": copied,
+        "skipped": skipped,
+        "installed_at": state["kits"][kit_id]["installed_at"],
+        "registry": registry_entry,
+        "install_mode": "skeleton",
     }
 
 

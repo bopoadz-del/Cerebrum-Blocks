@@ -11,7 +11,10 @@
     "finance",
     "investment"
   ],
-  "blocks": [],
+  "blocks": [
+    "market_data_connector",
+    "sec_edgar_connector"
+  ],
   "artifacts": [],
   "price_cents": 0,
   "container": {
@@ -39,6 +42,14 @@
     {
       "src": "types.py",
       "dest": "app/core/finance_types.py"
+    },
+    {
+      "src": "blocks/market_data_connector.py",
+      "dest": "app/blocks/market_data_connector.py"
+    },
+    {
+      "src": "blocks/sec_edgar_connector.py",
+      "dest": "app/blocks/sec_edgar_connector.py"
     },
     {
       "src": "prompts/finance_expert.txt",

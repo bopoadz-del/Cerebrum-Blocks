@@ -1,12 +1,28 @@
-"""Finance & Investment Suite domain types — add dataclasses as the kit matures."""
+"""Finance & Investment Suite domain types."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional
 
-# TODO: domain-specific dataclasses, e.g.:
-#
-# @dataclass
-# class FinanceRecord:
-#     id: str
-#     summary: str
+from pydantic import BaseModel, Field
+
+
+class SecurityQuote(BaseModel):
+    symbol: str
+    price: float
+    currency: str = "USD"
+    change_pct: Optional[float] = None
+    volume: Optional[int] = None
+    exchange: Optional[str] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class SECFiling(BaseModel):
+    accession_number: str
+    cik: str
+    form: str
+    filing_date: Optional[str] = None
+    primary_document: Optional[str] = None
+    company_name: Optional[str] = None
+    url: Optional[str] = None
