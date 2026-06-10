@@ -1,0 +1,62 @@
+name: Publish Construction Kit
+
+on:
+  workflow_dispatch:
+    inputs:
+      fork_ref:
+        description: The_Fork git ref (branch or tag)
+        required: false
+        default: main
+      fork_path:
+        description: >-
+          Optional absolute path to an existing Fork clone on the runner
+          (leave empty to clone bopoadz-del/The_Fork into the workspace)
+        required: false
+        default: ""
+  push:
+    branches: [main]
+    paths:
+      - block_store/kits/construction/manifest.json
+
+concurrency:
+  group: publish-construction-kit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Publish construction kit bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Cerebrum-Blocks
+        uses: actions/checkout@v4
+
+      - name: Clone The Fork
+        if: inputs.fork_path == ''
+        uses: actions/checkout@v4
+        with:
+          repository: bopoadz-del/The_Fork
+          ref: ${{ inputs.fork_ref || 'main' }}
+          path: The_Fork
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Publish construction kit from Fork
+        run: |
+          if [ -n "${{ inputs.fork_path }}" ]; then
+            FORK_ROOT="${{ inputs.fork_path }}"
+          else
+            FORK_ROOT="${{ github.workspace }}/The_Fork"
+          fi
+          echo "Using Fork root: $FORK_ROOT"
+          python scripts/publish_construction_kit.py --fork-root "$FORK_ROOT"
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: construction-kit-bundle-${{ github.sha }}
+          path: block_store/kits/construction/bundle/
+          if-no-files-found: error
+          retention-days: 30
