@@ -104,5 +104,35 @@ def chain_execute(req: ChainRequest):
     }
 
 
+@app.get("/store/containers")
+def mock_store_containers():
+    from app.core.container_kit_store import list_kits
+
+    kits = list_kits()
+    return {
+        "containers": [
+            {
+                "id": k["id"],
+                "name": k.get("name"),
+                "version": k.get("version"),
+                "description": k.get("description"),
+                "bundle_ready": k.get("bundle_ready", False),
+            }
+            for k in kits
+        ],
+        "total": len(kits),
+    }
+
+
+@app.get("/store/containers/{kit_id}")
+def mock_store_container_detail(kit_id: str):
+    from app.core.container_kit_store import ContainerKitError, get_kit
+
+    try:
+        return get_kit(kit_id)
+    except ContainerKitError as exc:
+        return {"error": str(exc)}
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

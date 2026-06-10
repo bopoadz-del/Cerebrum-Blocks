@@ -1,0 +1,63 @@
+{
+  "id": "construction",
+  "name": "Construction AEC Suite",
+  "version": "3.1",
+  "description": "Complete AEC suite: BIM, QA/QC, scheduling, contracts, specs, safety, carbon, procurement, risk. Published from The Fork.",
+  "author": "bopoadz-del",
+  "tags": ["domain", "container", "aec", "construction", "bim"],
+  "source": {
+    "repo": "https://github.com/bopoadz-del/The_Fork",
+    "ref": "main",
+    "publish_script": "scripts/publish_construction_kit.py"
+  },
+  "container": {
+    "class": "app.containers.construction.ConstructionContainer",
+    "default_chat_prompt": "construction_evm.md"
+  },
+  "blocks": [
+    "pdf",
+    "ocr",
+    "image",
+    "boq_processor",
+    "spec_analyzer",
+    "sympy_reasoning",
+    "drawing_qto",
+    "primavera_parser",
+    "smart_orchestrator",
+    "jetson_gateway",
+    "formula_executor",
+    "bim_extractor",
+    "learning_engine",
+    "recommendation_template",
+    "construction_v2"
+  ],
+  "prompts": [
+    "app/prompts/construction_expert.txt",
+    "app/prompts/construction_evm.md"
+  ],
+  "data": [
+    "app/data/procedures/procedures_db.json",
+    "app/knowledge/construction_kb.json"
+  ],
+  "core_modules": [
+    "app/core/construction_knowledge.py",
+    "app/core/construction_types.py",
+    "app/core/construction_constants.py"
+  ],
+  "artifacts": [
+    {"src": "app/containers/construction.py", "dest": "app/containers/construction.py"},
+    {"src": "app/core/construction_knowledge.py", "dest": "app/core/construction_knowledge.py"},
+    {"src": "app/core/construction_types.py", "dest": "app/core/construction_types.py"},
+    {"src": "app/core/construction_constants.py", "dest": "app/core/construction_constants.py"},
+    {"src": "app/blocks/construction_v2.py", "dest": "app/blocks/construction_v2.py"},
+    {"src": "app/prompts/construction_expert.txt", "dest": "app/prompts/construction_expert.txt"},
+    {"src": "app/prompts/construction_evm.md", "dest": "app/prompts/construction_evm.md"},
+    {"src": "app/data/procedures/procedures_db.json", "dest": "app/data/procedures/procedures_db.json"},
+    {"src": "app/knowledge/construction_kb.json", "dest": "app/knowledge/construction_kb.json"}
+  ],
+  "price_cents": 0,
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  }
+}

@@ -1,0 +1,169 @@
+"""Container kit discovery and install — Cerebrum Block Store layer.
+
+Fork stays the live production runtime. This module publishes Fork-authored
+kits for discovery and installs them into consumer Cerebrum instances.
+"""
+
+from __future__ import annotations
+
+import json
+import shutil
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+KITS_DIR = PROJECT_ROOT / "block_store" / "kits"
+INSTALL_STATE_PATH = PROJECT_ROOT / "data" / "installed_container_kits.json"
+
+
+class ContainerKitError(Exception):
+    """Raised when kit lookup or install fails."""
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _save_install_state(state: dict[str, Any]) -> None:
+    INSTALL_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(INSTALL_STATE_PATH, "w", encoding="utf-8") as f:
+        json.dump(state, f, indent=2)
+
+
+def _load_install_state() -> dict[str, Any]:
+    if not INSTALL_STATE_PATH.exists():
+        return {"kits": {}}
+    return _load_json(INSTALL_STATE_PATH)
+
+
+def _kit_dir(kit_id: str) -> Path:
+    return KITS_DIR / kit_id
+
+
+def _manifest_path(kit_id: str) -> Path:
+    return _kit_dir(kit_id) / "manifest.json"
+
+
+def _load_manifest(manifest_path: Path) -> dict[str, Any]:
+    manifest = _load_json(manifest_path)
+    manifest.setdefault("id", manifest_path.parent.name)
+    manifest["bundle_ready"] = _bundle_ready(manifest_path.parent, manifest)
+    return manifest
+
+
+def _bundle_ready(kit_dir: Path, manifest: dict[str, Any]) -> bool:
+    bundle = kit_dir / "bundle"
+    artifacts = manifest.get("artifacts") or []
+    if not artifacts:
+        return False
+    return all((bundle / item["src"]).exists() for item in artifacts)
+
+
+def list_kits() -> list[dict[str, Any]]:
+    if not KITS_DIR.exists():
+        return []
+    kits: list[dict[str, Any]] = []
+    for kit_dir in sorted(KITS_DIR.iterdir()):
+        if not kit_dir.is_dir():
+            continue
+        manifest_path = kit_dir / "manifest.json"
+        if manifest_path.exists():
+            kits.append(_load_manifest(manifest_path))
+    return kits
+
+
+def get_kit(kit_id: str) -> dict[str, Any]:
+    manifest_path = _manifest_path(kit_id)
+    if not manifest_path.exists():
+        raise ContainerKitError(f"Container kit '{kit_id}' not found")
+    return _load_manifest(manifest_path)
+
+
+def list_installed() -> dict[str, Any]:
+    return _load_install_state()
+
+
+def install_kit(
+    kit_id: str,
+    *,
+    target_root: Path | None = None,
+    force: bool = False,
+) -> dict[str, Any]:
+    manifest = get_kit(kit_id)
+    target = (target_root or PROJECT_ROOT).resolve()
+    bundle_dir = _kit_dir(kit_id) / "bundle"
+    artifacts = manifest.get("artifacts") or []
+
+    if not artifacts:
+        raise ContainerKitError(f"Kit '{kit_id}' has no install artifacts")
+
+    missing = [
+        item["src"]
+        for item in artifacts
+        if not (bundle_dir / item["src"]).exists()
+    ]
+    if missing:
+        raise ContainerKitError(
+            f"Kit '{kit_id}' bundle incomplete — run scripts/publish_construction_kit.py. "
+            f"Missing: {', '.join(missing[:5])}"
+            + (f" (+{len(missing) - 5} more)" if len(missing) > 5 else "")
+        )
+
+    copied: list[str] = []
+    skipped: list[dict[str, str]] = []
+
+    for item in artifacts:
+        src = bundle_dir / item["src"]
+        dest = target / item["dest"]
+        if dest.exists() and not force:
+            skipped.append({"dest": item["dest"], "reason": "already_exists"})
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+        copied.append(item["dest"])
+
+    state = _load_install_state()
+    state.setdefault("kits", {})
+    state["kits"][kit_id] = {
+        "version": manifest.get("version"),
+        "installed_at": _utc_now(),
+        "target_root": str(target),
+        "files": copied,
+    }
+    _save_install_state(state)
+
+    return {
+        "status": "success",
+        "kit_id": kit_id,
+        "version": manifest.get("version"),
+        "target_root": str(target),
+        "copied": copied,
+        "skipped": skipped,
+        "installed_at": state["kits"][kit_id]["installed_at"],
+    }
+
+
+def uninstall_kit(kit_id: str, *, target_root: Path | None = None) -> dict[str, Any]:
+    """Remove installed files listed in the last install record."""
+    state = _load_install_state()
+    record = state.get("kits", {}).get(kit_id)
+    if not record:
+        raise ContainerKitError(f"Kit '{kit_id}' is not installed")
+
+    target = Path(record.get("target_root") or target_root or PROJECT_ROOT).resolve()
+    removed: list[str] = []
+    for rel_path in record.get("files", []):
+        path = target / rel_path
+        if path.exists():
+            path.unlink()
+            removed.append(rel_path)
+
+    del state["kits"][kit_id]
+    _save_install_state(state)
+    return {"status": "success", "kit_id": kit_id, "removed": removed}
