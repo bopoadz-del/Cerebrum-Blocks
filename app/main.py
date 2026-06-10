@@ -58,7 +58,6 @@ from app.routers import (
     store,
     upload,
     video,
-    connectors,
 )
 from app.routers.metrics import _record_metrics
 @asynccontextmanager

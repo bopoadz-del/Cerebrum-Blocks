@@ -71,6 +71,18 @@ SKELETON_FILES = [
     "blocks/README.md",
 ]
 
+CONNECTOR_STUBS: dict[str, list[str]] = {
+    "medical": [
+        "blocks/medical_ehr_connector.py",
+        "blocks/clinical_trigger.py",
+    ],
+    "hotel_management": [
+        "blocks/opera_connector.py",
+        "blocks/video_metadata_ingest.py",
+        "blocks/hotel_trigger.py",
+    ],
+}
+
 
 def _pascal_case(domain_id: str) -> str:
     return "".join(part.capitalize() for part in re.split(r"[_-]+", domain_id) if part)
@@ -139,11 +151,49 @@ def _merge_skeleton_manifest(existing: dict[str, Any], generated: dict[str, Any]
     return merged
 
 
+def _connector_stub_content(domain_id: str, rel_path: str, context: dict[str, Any]) -> str | None:
+    """Return stub source for known connector files, or None to skip."""
+    name = Path(rel_path).stem
+    domain = context["Domain"]
+    if name.endswith("_connector"):
+        return (
+            f'"""Kit stub — {name} for {domain} domain."""\n\n'
+            f"from app.blocks.core.base_connector import BaseConnector\n\n\n"
+            f"class {domain}{''.join(p.capitalize() for p in name.split('_'))}Block(BaseConnector):\n"
+            f'    name = "{name}"\n'
+            f'    version = "0.1.0-skeleton"\n'
+            f'    description = "{name.replace("_", " ").title()} (generated stub)"\n'
+            f"    connector_source = \"{domain_id}_{name}\"\n\n"
+            f"    async def fetch_raw(self, input_data, params):\n"
+            f'        return {{"stub": True, "connector": self.name}}\n'
+        )
+    if name.endswith("_trigger"):
+        return (
+            f'"""Kit stub — {name} for {domain} domain."""\n\n'
+            f"from typing import Any, Dict\n"
+            f"from app.core.universal_base import UniversalBlock\n\n\n"
+            f"class {domain}{''.join(p.capitalize() for p in name.split('_'))}Block(UniversalBlock):\n"
+            f'    name = "{name}"\n'
+            f'    version = "0.1.0-skeleton"\n'
+            f"    tags = [\"{domain_id}\", \"trigger\", \"stub\"]\n\n"
+            f"    async def process(self, input_data: Any, params: Dict = None) -> Dict:\n"
+            f'        return {{"status": "success", "triggered": False, "stub": True}}\n'
+        )
+    if name == "video_metadata_ingest":
+        return (
+            '"""Uses platform video_metadata_ingest block."""\n\n'
+            "from app.blocks.video_metadata_ingest import VideoMetadataIngestBlock\n\n"
+            "__all__ = [\"VideoMetadataIngestBlock\"]\n"
+        )
+    return None
+
+
 def generate_domain_kit(
     domain_id: str,
     *,
     force: bool = False,
     coming_soon: bool = False,
+    with_connectors: bool = False,
     quiet: bool = False,
 ) -> list[str]:
     if domain_id in SKIP_KITS:
@@ -189,6 +239,13 @@ def generate_domain_kit(
         if _write_file(dest, content, force=force):
             created.append(rel_rendered)
 
+    if with_connectors:
+        for rel in CONNECTOR_STUBS.get(domain_id, []):
+            dest = kit_dir / rel
+            stub = _connector_stub_content(domain_id, rel, context)
+            if stub and _write_file(dest, stub, force=force):
+                created.append(rel)
+
     if not quiet:
         if created:
             print(f"[{domain_id}] created/updated: {', '.join(created)}")
@@ -215,6 +272,11 @@ def main() -> int:
         action="store_true",
         help='Set manifest status to "coming_soon" (default: draft)',
     )
+    parser.add_argument(
+        "--with-connectors",
+        action="store_true",
+        help="Generate connector/trigger block stubs for supported domains",
+    )
     args = parser.parse_args()
 
     if args.list:
@@ -229,6 +291,7 @@ def main() -> int:
                     domain_id,
                     force=args.force,
                     coming_soon=args.coming_soon,
+                    with_connectors=args.with_connectors,
                 )
             except (ValueError, FileNotFoundError) as exc:
                 print(f"error: {exc}", file=sys.stderr)
@@ -244,6 +307,7 @@ def main() -> int:
             args.domain,
             force=args.force,
             coming_soon=args.coming_soon,
+            with_connectors=args.with_connectors,
         )
     except (ValueError, FileNotFoundError) as exc:
         print(f"error: {exc}", file=sys.stderr)
