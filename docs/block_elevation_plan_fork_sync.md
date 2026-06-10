@@ -170,6 +170,15 @@ pytest tests/blocks/test_{block_id}.py -q
 
 ## Quick reference — copy command pattern
 
+**Bulk platform sync (Category A only):** `scripts/sync_blocks_from_fork.py` copies an explicit allowlist and **skips** all construction kit blocks (`construction_v2`, `boq_processor`, …) plus `app/containers/construction.py` (out of scope — kit publish only). Dry-run first:
+
+```bash
+python scripts/sync_blocks_from_fork.py --dry-run
+python scripts/sync_blocks_from_fork.py --apply   # after review
+```
+
+Single-block manual copy:
+
 ```powershell
 # Example: sync one block from Fork (run from Cerebrum-Blocks root)
 Copy-Item "C:\Users\shimm\The_Fork\app\blocks\ocr.py" "app\blocks\ocr.py"
