@@ -64,6 +64,9 @@ frontend/dist
 
 # Runtime data — uploads, captures, the SQLite db file. Generated at runtime.
 data/
+# Published container kit bundles ship Fork artifacts (override data/ above)
+!block_store/kits/**/bundle/app/data/
+!block_store/kits/**/bundle/app/data/**
 uploads/
 
 # Audit / shell logs written by the shell_audit hook during dev.
