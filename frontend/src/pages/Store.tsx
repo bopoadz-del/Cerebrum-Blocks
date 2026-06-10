@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import {
+  AlertTriangle,
   ArrowLeft,
   Box,
   CheckCircle2,
+  Circle,
+  Clock,
+  Copy,
   ExternalLink,
+  FolderOpen,
   Loader2,
   Package,
   Search,
@@ -21,10 +26,31 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { api, describeError, type ContainerKitDetail, type ContainerKitSummary } from '@/api';
+import {
+  api,
+  describeError,
+  type ContainerKitDetail,
+  type ContainerKitInstallResult,
+  type ContainerKitSummary,
+} from '@/api';
 import { toast } from 'sonner';
+
+const REQUIRED_GENERIC_BLOCKS = ['pdf', 'ocr', 'chat', 'image'] as const;
+const CONSTRUCTION_ARTIFACT_COUNT = 32;
+const DOCS_GENERIC_BLOCKS_URL =
+  'https://github.com/bopoadz-del/Cerebrum-Blocks/blob/main/docs/generic_blocks.md';
+
+type AvailabilityFilter = 'all' | 'available' | 'coming_soon';
 
 function tagColor(tag: string): string {
   const colors: Record<string, string> = {
@@ -37,8 +63,12 @@ function tagColor(tag: string): string {
   return colors[tag] || 'bg-gray-100 text-gray-700';
 }
 
+function isKitComingSoon(kit: ContainerKitSummary): boolean {
+  return Boolean(kit.coming_soon || kit.status === 'coming_soon');
+}
+
 function KitStatusBadge({ kit }: { kit: ContainerKitSummary }) {
-  if (kit.coming_soon || kit.status === 'coming_soon') {
+  if (isKitComingSoon(kit)) {
     return (
       <Badge variant="outline" className="text-slate-600 border-slate-200 bg-slate-50">
         Coming Soon
@@ -61,7 +91,13 @@ function KitStatusBadge({ kit }: { kit: ContainerKitSummary }) {
 }
 
 function isKitInstallable(kit: ContainerKitSummary): boolean {
-  return Boolean(kit.bundle_ready) && !kit.coming_soon && kit.status !== 'coming_soon';
+  return Boolean(kit.bundle_ready) && !isKitComingSoon(kit);
+}
+
+function matchesAvailabilityFilter(kit: ContainerKitSummary, filter: AvailabilityFilter): boolean {
+  if (filter === 'available') return isKitInstallable(kit);
+  if (filter === 'coming_soon') return isKitComingSoon(kit);
+  return true;
 }
 
 function KitCard({
@@ -113,17 +149,221 @@ function KitCard({
   );
 }
 
+function InstallSuccessPanel({
+  kit,
+  result,
+  onDismiss,
+}: {
+  kit: ContainerKitDetail;
+  result: ContainerKitInstallResult;
+  onDismiss: () => void;
+}) {
+  const copiedCount = result.copied?.length ?? 0;
+  const envHint = `CEREBRUM_DOMAIN_KITS=${kit.id}`;
+
+  const copyEnvHint = () => {
+    void navigator.clipboard.writeText(envHint);
+    toast.success('Copied to clipboard', { description: envHint });
+  };
+
+  return (
+    <Card className="border-emerald-200 bg-emerald-50/50 py-4 gap-4">
+      <CardHeader className="px-4 pb-0">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+          <div>
+            <CardTitle className="text-base text-emerald-900">Install complete</CardTitle>
+            <CardDescription className="text-emerald-800/80 mt-1">
+              {kit.name} v{result.version ?? kit.version} — {copiedCount} file
+              {copiedCount === 1 ? '' : 's'} copied
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="px-4 space-y-3">
+        {result.target_root ? (
+          <div className="flex items-start gap-2 text-xs text-emerald-900/80">
+            <FolderOpen className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>
+              Installed to <span className="font-mono">{result.target_root}</span>
+            </span>
+          </div>
+        ) : null}
+        <div className="rounded-md border border-emerald-200 bg-white px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wide text-gray-500 mb-1">
+            Enable on next boot
+          </p>
+          <div className="flex items-center gap-2">
+            <code className="text-xs font-mono text-gray-800 flex-1 truncate">{envHint}</code>
+            <Button variant="ghost" size="sm" className="h-7 px-2 shrink-0" onClick={copyEnvHint}>
+              <Copy className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+        <a
+          href={DOCS_GENERIC_BLOCKS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs text-emerald-800 hover:underline"
+        >
+          Generic blocks &amp; kit enablement docs
+          <ExternalLink className="w-3 h-3" />
+        </a>
+      </CardContent>
+      <CardFooter className="px-4 pt-0">
+        <Button variant="outline" size="sm" onClick={onDismiss}>
+          Dismiss
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function PreInstallChecklistModal({
+  kit,
+  open,
+  installing,
+  genericBlockStatus,
+  onClose,
+  onConfirm,
+}: {
+  kit: ContainerKitDetail;
+  open: boolean;
+  installing: boolean;
+  genericBlockStatus: Record<string, boolean>;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const isConstruction = kit.id === 'construction';
+  const artifactCount = kit.artifacts?.length ?? (isConstruction ? CONSTRUCTION_ARTIFACT_COUNT : 0);
+  const installable = isKitInstallable(kit);
+  const allBlocksPresent = REQUIRED_GENERIC_BLOCKS.every(b => genericBlockStatus[b]);
+
+  return (
+    <Dialog open={open} onOpenChange={v => !v && !installing && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Install checklist</DialogTitle>
+          <DialogDescription>
+            Review prerequisites before installing <span className="font-medium">{kit.name}</span>.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 text-sm">
+          <div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+              Kit status
+            </p>
+            <div className="flex items-center gap-2">
+              <KitStatusBadge kit={kit} />
+              {isKitComingSoon(kit) ? (
+                <span className="text-xs text-slate-600">Not available for install yet</span>
+              ) : kit.bundle_ready ? (
+                <span className="text-xs text-emerald-700">Ready to install</span>
+              ) : (
+                <span className="text-xs text-amber-700">Bundle not published</span>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+              Required generic blocks
+            </p>
+            <ul className="space-y-1.5">
+              {REQUIRED_GENERIC_BLOCKS.map(block => {
+                const present = genericBlockStatus[block];
+                return (
+                  <li key={block} className="flex items-center gap-2 text-xs">
+                    {present ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    ) : (
+                      <Circle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    )}
+                    <span className="font-mono">{block}</span>
+                    <span className="text-muted-foreground">
+                      {present ? 'available' : 'not detected on instance'}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            {!allBlocksPresent ? (
+              <p className="text-[10px] text-amber-700 mt-2">
+                Generic blocks ship with Virgin Fork by default. Missing blocks may indicate a
+                trimmed deployment.
+              </p>
+            ) : null}
+          </div>
+
+          {isConstruction ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 flex gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-xs text-amber-900">
+                <p className="font-medium">Construction AEC Suite</p>
+                <p className="mt-0.5 text-amber-800">
+                  This kit copies <strong>{artifactCount} artifacts</strong> (blocks, prompts,
+                  schemas, and domain modules) into your project root.
+                </p>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 flex gap-2">
+            <FolderOpen className="w-3.5 h-3.5 shrink-0 mt-0.5 text-gray-400" />
+            <span>
+              Files install to the <strong>project root</strong> returned by the API (read-only
+              target — not configurable from this UI).
+            </span>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={installing}>
+            Cancel
+          </Button>
+          <Button onClick={onConfirm} disabled={installing || !installable} className="gap-2">
+            {installing ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Installing…
+              </>
+            ) : (
+              <>
+                <Package className="w-4 h-4" />
+                Confirm install
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function KitDetailView({
   kit,
   installing,
   installed,
-  onInstall,
+  installResult,
+  genericBlockStatus,
+  checklistOpen,
+  onOpenChecklist,
+  onCloseChecklist,
+  onConfirmInstall,
+  onDismissSuccess,
   onBack,
 }: {
   kit: ContainerKitDetail;
   installing: boolean;
   installed: boolean;
-  onInstall: () => void;
+  installResult: ContainerKitInstallResult | null;
+  genericBlockStatus: Record<string, boolean>;
+  checklistOpen: boolean;
+  onOpenChecklist: () => void;
+  onCloseChecklist: () => void;
+  onConfirmInstall: () => void;
+  onDismissSuccess: () => void;
   onBack: () => void;
 }) {
   const sourceRepo = kit.source?.repo;
@@ -134,6 +374,10 @@ function KitDetailView({
         <ArrowLeft className="w-4 h-4" />
         Back to catalog
       </Button>
+
+      {installResult ? (
+        <InstallSuccessPanel kit={kit} result={installResult} onDismiss={onDismissSuccess} />
+      ) : null}
 
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
@@ -156,7 +400,7 @@ function KitDetailView({
         <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
           <KitStatusBadge kit={kit} />
           <Button
-            onClick={onInstall}
+            onClick={onOpenChecklist}
             disabled={installing || !isKitInstallable(kit)}
             className="gap-2"
           >
@@ -177,7 +421,7 @@ function KitDetailView({
               </>
             )}
           </Button>
-          {kit.coming_soon || kit.status === 'coming_soon' ? (
+          {isKitComingSoon(kit) ? (
             <p className="text-[10px] text-slate-600 max-w-[200px] text-right">
               This kit is not available yet. Check back for updates.
             </p>
@@ -188,6 +432,18 @@ function KitDetailView({
           ) : null}
         </div>
       </div>
+
+      <Card className="py-4 gap-2 border-dashed">
+        <CardContent className="px-4 flex items-start gap-2 text-xs text-muted-foreground">
+          <FolderOpen className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>
+            Install copies kit artifacts into the <strong>project root</strong> on the API host
+            (e.g. <span className="font-mono">app/blocks/</span>,{' '}
+            <span className="font-mono">app/containers/</span>). Target path is returned in the
+            install response.
+          </span>
+        </CardContent>
+      </Card>
 
       <Card className="py-4 gap-4">
         <CardHeader className="px-4 pb-0">
@@ -252,6 +508,15 @@ function KitDetailView({
           </CardContent>
         </Card>
       ) : null}
+
+      <PreInstallChecklistModal
+        kit={kit}
+        open={checklistOpen}
+        installing={installing}
+        genericBlockStatus={genericBlockStatus}
+        onClose={onCloseChecklist}
+        onConfirm={onConfirmInstall}
+      />
     </div>
   );
 }
@@ -260,7 +525,9 @@ export default function Store() {
   const { kitId } = useParams<{ kitId?: string }>();
   const navigate = useNavigate();
   const [kits, setKits] = useState<ContainerKitSummary[]>([]);
-  const [installedState, setInstalledState] = useState<Record<string, { version?: string; installed_at?: string }>>({});
+  const [installedState, setInstalledState] = useState<
+    Record<string, { version?: string; installed_at?: string; target_root?: string }>
+  >({});
   const [selectedKit, setSelectedKit] = useState<ContainerKitDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -268,6 +535,10 @@ export default function Store() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'browse' | 'installed'>('browse');
+  const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>('all');
+  const [checklistOpen, setChecklistOpen] = useState(false);
+  const [installResult, setInstallResult] = useState<ContainerKitInstallResult | null>(null);
+  const [genericBlockStatus, setGenericBlockStatus] = useState<Record<string, boolean>>({});
 
   const installedIds = useMemo(() => new Set(Object.keys(installedState)), [installedState]);
 
@@ -285,18 +556,36 @@ export default function Store() {
     }
   }, []);
 
+  const loadGenericBlocks = useCallback(async () => {
+    try {
+      const data = await api.listBlocks();
+      const names = new Set(data.blocks.map(b => b.name));
+      const status: Record<string, boolean> = {};
+      for (const block of REQUIRED_GENERIC_BLOCKS) {
+        status[block] = names.has(block);
+      }
+      setGenericBlockStatus(status);
+    } catch {
+      const fallback: Record<string, boolean> = {};
+      for (const block of REQUIRED_GENERIC_BLOCKS) {
+        fallback[block] = true;
+      }
+      setGenericBlockStatus(fallback);
+    }
+  }, []);
+
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      await Promise.all([loadCatalog(), loadInstalled()]);
+      await Promise.all([loadCatalog(), loadInstalled(), loadGenericBlocks()]);
     } catch (err) {
       const { message } = describeError(err);
       setError(message);
     } finally {
       setLoading(false);
     }
-  }, [loadCatalog, loadInstalled]);
+  }, [loadCatalog, loadInstalled, loadGenericBlocks]);
 
   useEffect(() => {
     refresh();
@@ -305,10 +594,13 @@ export default function Store() {
   useEffect(() => {
     if (!kitId) {
       setSelectedKit(null);
+      setInstallResult(null);
+      setChecklistOpen(false);
       return;
     }
     setDetailLoading(true);
     setError(null);
+    setInstallResult(null);
     api
       .getStoreContainer(kitId)
       .then(setSelectedKit)
@@ -322,25 +614,29 @@ export default function Store() {
 
   const filteredKits = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return kits;
-    return kits.filter(
-      k =>
+    return kits.filter(k => {
+      if (!matchesAvailabilityFilter(k, availabilityFilter)) return false;
+      if (!q) return true;
+      return (
         k.name.toLowerCase().includes(q) ||
         k.id.toLowerCase().includes(q) ||
         (k.description || '').toLowerCase().includes(q) ||
         (k.tags || []).some(t => t.toLowerCase().includes(q))
-    );
-  }, [kits, search]);
+      );
+    });
+  }, [kits, search, availabilityFilter]);
 
   const handleSelectKit = (id: string) => {
     navigate(`/store/${id}`);
   };
 
-  const handleInstall = async () => {
+  const handleConfirmInstall = async () => {
     if (!selectedKit) return;
     setInstalling(true);
     try {
       const result = await api.installStoreContainer(selectedKit.id);
+      setInstallResult(result);
+      setChecklistOpen(false);
       toast.success(`Installed ${selectedKit.name}`, {
         description: `${result.copied?.length ?? 0} files copied`,
       });
@@ -362,6 +658,15 @@ export default function Store() {
     [installedState, kits]
   );
 
+  const availabilityCounts = useMemo(
+    () => ({
+      all: kits.length,
+      available: kits.filter(k => isKitInstallable(k)).length,
+      coming_soon: kits.filter(k => isKitComingSoon(k)).length,
+    }),
+    [kits]
+  );
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-white flex flex-col">
       <AppHeader title="Block Store" subtitle="Container kits" />
@@ -379,7 +684,13 @@ export default function Store() {
                 kit={selectedKit}
                 installing={installing}
                 installed={installedIds.has(selectedKit.id)}
-                onInstall={handleInstall}
+                installResult={installResult}
+                genericBlockStatus={genericBlockStatus}
+                checklistOpen={checklistOpen}
+                onOpenChecklist={() => setChecklistOpen(true)}
+                onCloseChecklist={() => setChecklistOpen(false)}
+                onConfirmInstall={handleConfirmInstall}
+                onDismissSuccess={() => setInstallResult(null)}
                 onBack={() => navigate('/store')}
               />
             ) : (
@@ -432,6 +743,27 @@ export default function Store() {
                 ) : null}
 
                 <TabsContent value="browse" className="mt-0">
+                  <div className="flex items-center gap-1 mb-4">
+                    <Tabs
+                      value={availabilityFilter}
+                      onValueChange={v => setAvailabilityFilter(v as AvailabilityFilter)}
+                    >
+                      <TabsList className="h-8">
+                        <TabsTrigger value="all" className="text-xs px-2.5 h-7">
+                          All ({availabilityCounts.all})
+                        </TabsTrigger>
+                        <TabsTrigger value="available" className="text-xs px-2.5 h-7 gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Available ({availabilityCounts.available})
+                        </TabsTrigger>
+                        <TabsTrigger value="coming_soon" className="text-xs px-2.5 h-7 gap-1">
+                          <Clock className="w-3 h-3" />
+                          Coming Soon ({availabilityCounts.coming_soon})
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+
                   {loading ? (
                     <div className="flex items-center justify-center py-24 text-muted-foreground gap-2">
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -440,7 +772,11 @@ export default function Store() {
                   ) : filteredKits.length === 0 ? (
                     <div className="text-center py-24 text-muted-foreground">
                       <Box className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                      <p>No kits match your search</p>
+                      <p>
+                        {kits.length === 0
+                          ? 'No kits in catalog'
+                          : 'No kits match your search or filter'}
+                      </p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -471,15 +807,18 @@ export default function Store() {
                         <Card key={id} className="py-4 gap-2">
                           <CardContent className="px-4 flex items-center justify-between gap-4">
                             <div className="min-w-0">
-                              <p className="font-medium text-sm truncate">
-                                {meta?.name ?? id}
-                              </p>
+                              <p className="font-medium text-sm truncate">{meta?.name ?? id}</p>
                               <p className="text-xs text-muted-foreground">
                                 v{record.version ?? meta?.version ?? '?'}
                                 {record.installed_at
                                   ? ` · installed ${new Date(record.installed_at).toLocaleString()}`
                                   : ''}
                               </p>
+                              {record.target_root ? (
+                                <p className="text-[10px] text-gray-400 font-mono truncate mt-0.5">
+                                  {record.target_root}
+                                </p>
+                              ) : null}
                             </div>
                             <Button variant="outline" size="sm" onClick={() => handleSelectKit(id)}>
                               View
