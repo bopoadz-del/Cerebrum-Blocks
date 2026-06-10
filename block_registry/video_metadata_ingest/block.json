@@ -1,0 +1,73 @@
+{
+  "id": "video_metadata_ingest",
+  "name": "Video Metadata Ingest",
+  "version": "1.0.0",
+  "author": "Cerebrum Team",
+  "description": "Validate video analytics metadata and persist to the video store",
+  "layer": 2,
+  "requires": [],
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"camera_id\": \"lobby-1\", \"zones\": [], \"anomalies\": []}"
+    },
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "description": "Action",
+      "default": "ingest",
+      "options": [
+        "ingest",
+        "list",
+        "health"
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "event_id",
+      "type": "text",
+      "description": "Event ID"
+    },
+    {
+      "name": "stored",
+      "type": "boolean",
+      "description": "Stored"
+    },
+    {
+      "name": "anomaly_count",
+      "type": "number",
+      "description": "Anomalies"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/video_metadata_ingest:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"camera_id\": \"lobby-1\", \"zones\": [], \"anomalies\": []}"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "ingest",
+        "list",
+        "health"
+      ]
+    }
+  ],
+  "tags": [
+    "connector",
+    "video",
+    "ingest",
+    "analytics"
+  ]
+}

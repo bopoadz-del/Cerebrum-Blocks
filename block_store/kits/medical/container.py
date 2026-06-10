@@ -8,7 +8,7 @@ manifest ``skeleton_artifacts`` / ``artifacts``.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Dict
+from typing import Any, Callable, Dict
 
 from app.containers.base import DomainContainer
 
@@ -23,5 +23,20 @@ class MedicalContainer(DomainContainer):
         self.kit_root = kit_root or Path(__file__).resolve().parent
 
     def get_actions(self) -> Dict[str, Callable]:
-        # TODO: wire domain actions (e.g. analyze, summarize, route_to_block)
-        return {}
+        return {
+            "ehr_fetch": self._ehr_fetch,
+            "health": self._health,
+        }
+
+    async def _health(self, input_data: Any, params: Dict) -> Dict:
+        return {"status": "healthy", "container": self.name, "version": self.version}
+
+    async def _ehr_fetch(self, input_data: Any, params: Dict) -> Dict:
+        """Route to platform medical_ehr_connector."""
+        block = self._resolve_block("medical_ehr_connector")
+        if block is None:
+            return {"status": "error", "error": "medical_ehr_connector block unavailable"}
+        data = input_data if isinstance(input_data, dict) else {}
+        merged = {**data, **(params or {})}
+        merged.setdefault("action", "fetch")
+        return await block.process(merged, {"action": merged["action"], "resource": merged.get("resource", "Patient")})

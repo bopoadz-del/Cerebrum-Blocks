@@ -1,0 +1,154 @@
+{
+  "id": "video_anomaly_trigger",
+  "name": "Video Anomaly Trigger",
+  "version": "1.0.0",
+  "author": "Cerebrum Team",
+  "description": "Watch video metadata for anomalies and chain to notification or workflow triggers",
+  "layer": 2,
+  "requires": [
+    "notification"
+  ],
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"metadata\": {...}} or {\"event_id\": \"...\"}"
+    },
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "description": "Action",
+      "default": "evaluate",
+      "options": [
+        "evaluate",
+        "scan_store",
+        "health"
+      ]
+    },
+    {
+      "name": "channel",
+      "type": "string",
+      "required": false,
+      "description": "Notify Channel",
+      "default": "webhook",
+      "options": [
+        "webhook",
+        "email",
+        "slack"
+      ]
+    },
+    {
+      "name": "send_notification",
+      "type": "string",
+      "required": false,
+      "description": "Send Notification",
+      "default": "true",
+      "options": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "name": "default_channel",
+      "type": "string",
+      "required": false,
+      "default": "webhook",
+      "description": "Configuration parameter: default_channel"
+    },
+    {
+      "name": "min_severity",
+      "type": "string",
+      "required": false,
+      "default": "medium",
+      "description": "Configuration parameter: min_severity"
+    },
+    {
+      "name": "notify_on_types",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Configuration parameter: notify_on_types"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "triggered",
+      "type": "boolean",
+      "description": "Triggered"
+    },
+    {
+      "name": "anomalies",
+      "type": "json",
+      "description": "Anomalies"
+    },
+    {
+      "name": "notification",
+      "type": "json",
+      "description": "Notification Result"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/video_anomaly_trigger:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"metadata\": {...}} or {\"event_id\": \"...\"}"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "evaluate",
+        "scan_store",
+        "health"
+      ]
+    },
+    {
+      "name": "channel",
+      "widget": "select",
+      "label": "Notify Channel",
+      "options": [
+        "webhook",
+        "email",
+        "slack"
+      ]
+    },
+    {
+      "name": "send_notification",
+      "widget": "select",
+      "label": "Send Notification",
+      "options": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "name": "default_channel",
+      "widget": "text",
+      "label": "Default Channel"
+    },
+    {
+      "name": "min_severity",
+      "widget": "text",
+      "label": "Min Severity"
+    },
+    {
+      "name": "notify_on_types",
+      "widget": "json",
+      "label": "Notify On Types"
+    }
+  ],
+  "tags": [
+    "connector",
+    "video",
+    "trigger",
+    "anomaly",
+    "reactive"
+  ]
+}

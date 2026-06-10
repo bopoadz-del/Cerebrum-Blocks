@@ -24,7 +24,9 @@
     "pdf",
     "ocr",
     "chat",
-    "medical_container"
+    "medical_container",
+    "medical_ehr_connector",
+    "clinical_trigger"
   ],
   "prompts": [
     "prompts/medical_expert.txt",
@@ -55,12 +57,20 @@
       "dest": "app/core/medical_types.py"
     },
     {
+      "src": "blocks/medical_ehr_connector.py",
+      "dest": "app/blocks/medical_ehr_connector.py"
+    },
+    {
       "src": "prompts/medical_expert.txt",
       "dest": "app/prompts/medical_expert.txt"
     },
     {
       "src": "prompts/medical_workflow.md",
       "dest": "app/prompts/medical_workflow.md"
+    },
+    {
+      "src": "blocks/clinical_trigger.py",
+      "dest": "app/blocks/clinical_trigger.py"
     }
   ]
 }

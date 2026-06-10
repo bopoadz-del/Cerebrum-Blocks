@@ -31,6 +31,9 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
         ("learning_engine", "app.blocks.learning_engine", "LearningEngineBlock"),
         ("recommendation_template", "app.blocks.recommendation_template", "RecommendationTemplateBlock"),
     ],
+    "medical": [
+        ("medical_ehr_connector", "app.blocks.medical_ehr_connector", "MedicalEHRConnectorBlock"),
+    ],
 }
 
 

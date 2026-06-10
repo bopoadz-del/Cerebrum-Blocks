@@ -11,7 +11,11 @@
     "hospitality",
     "hotel"
   ],
-  "blocks": [],
+  "blocks": [
+    "opera_connector",
+    "video_metadata_ingest",
+    "hotel_trigger"
+  ],
   "artifacts": [],
   "price_cents": 0,
   "container": {
@@ -47,6 +51,14 @@
     {
       "src": "prompts/hotel_management_workflow.md",
       "dest": "app/prompts/hotel_management_workflow.md"
+    },
+    {
+      "src": "blocks/opera_connector.py",
+      "dest": "app/blocks/opera_connector.py"
+    },
+    {
+      "src": "blocks/hotel_trigger.py",
+      "dest": "app/blocks/hotel_trigger.py"
     }
   ],
   "install_requires": {

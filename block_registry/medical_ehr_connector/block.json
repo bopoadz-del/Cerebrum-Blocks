@@ -1,0 +1,196 @@
+{
+  "id": "medical_ehr_connector",
+  "name": "Medical Ehr Connector",
+  "version": "1.0.0",
+  "author": "Cerebrum Team",
+  "description": "Fetch FHIR Patient, Observation, and MedicationRequest resources from an EHR",
+  "layer": 2,
+  "requires": [],
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"resource\": \"Patient\", \"patient_id\": \"123\"}"
+    },
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "description": "Action",
+      "default": "fetch",
+      "options": [
+        "fetch",
+        "auth",
+        "health"
+      ]
+    },
+    {
+      "name": "resource",
+      "type": "string",
+      "required": false,
+      "description": "FHIR Resource",
+      "default": "Patient",
+      "options": [
+        "Patient",
+        "Observation",
+        "MedicationRequest"
+      ]
+    },
+    {
+      "name": "resource_type",
+      "type": "string",
+      "required": false,
+      "description": "Resource type (alias)",
+      "default": "Observation",
+      "options": [
+        "Patient",
+        "Observation",
+        "MedicationRequest"
+      ]
+    },
+    {
+      "name": "patient_id",
+      "type": "string",
+      "required": false,
+      "description": "Patient ID"
+    },
+    {
+      "name": "limit",
+      "type": "number",
+      "required": false,
+      "description": "Max results",
+      "default": 20
+    },
+    {
+      "name": "fhir_base_url",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "Configuration parameter: fhir_base_url"
+    },
+    {
+      "name": "fhir_access_token",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "Configuration parameter: fhir_access_token"
+    },
+    {
+      "name": "fhir_client_id",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "Configuration parameter: fhir_client_id"
+    },
+    {
+      "name": "fhir_client_secret",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "Configuration parameter: fhir_client_secret"
+    },
+    {
+      "name": "timeout_seconds",
+      "type": "number",
+      "required": false,
+      "default": 30,
+      "description": "Configuration parameter: timeout_seconds"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "event",
+      "type": "json",
+      "description": "Connector Event"
+    },
+    {
+      "name": "resources",
+      "type": "json",
+      "description": "FHIR Resources"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/medical_ehr_connector:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "{\"resource\": \"Patient\", \"patient_id\": \"123\"}"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "fetch",
+        "auth",
+        "health"
+      ]
+    },
+    {
+      "name": "resource",
+      "widget": "select",
+      "label": "FHIR Resource",
+      "options": [
+        "Patient",
+        "Observation",
+        "MedicationRequest"
+      ]
+    },
+    {
+      "name": "resource_type",
+      "widget": "select",
+      "label": "Resource type (alias)",
+      "options": [
+        "Patient",
+        "Observation",
+        "MedicationRequest"
+      ]
+    },
+    {
+      "name": "patient_id",
+      "widget": "text",
+      "label": "Patient ID"
+    },
+    {
+      "name": "limit",
+      "widget": "number",
+      "label": "Max results"
+    },
+    {
+      "name": "fhir_base_url",
+      "widget": "text",
+      "label": "Fhir Base Url"
+    },
+    {
+      "name": "fhir_access_token",
+      "widget": "text",
+      "label": "Fhir Access Token"
+    },
+    {
+      "name": "fhir_client_id",
+      "widget": "text",
+      "label": "Fhir Client Id"
+    },
+    {
+      "name": "fhir_client_secret",
+      "widget": "text",
+      "label": "Fhir Client Secret"
+    },
+    {
+      "name": "timeout_seconds",
+      "widget": "number",
+      "label": "Timeout Seconds"
+    }
+  ],
+  "tags": [
+    "connector",
+    "medical",
+    "fhir",
+    "ehr",
+    "healthcare"
+  ]
+}

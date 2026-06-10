@@ -34,6 +34,8 @@ _GENERIC_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "orchestrator": ("app.blocks.orchestrator", "OrchestratorBlock"),
     "validation_pipeline": ("app.blocks.validation_pipeline", "ValidationPipelineBlock"),
     "async_processor": ("app.blocks.async_processor", "AsyncProcessorBlock"),
+    "video_metadata_ingest": ("app.blocks.video_metadata_ingest", "VideoMetadataIngestBlock"),
+    "video_anomaly_trigger": ("app.blocks.video_anomaly_trigger", "VideoAnomalyTriggerBlock"),
 }
 
 _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
@@ -82,6 +84,9 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "secrets": ("app.blocks.secrets", "SecretsBlock"),
     "skills": ("app.blocks.skills", "SkillsBlock"),
     "library_container": ("app.blocks.library_container", "LibraryContainerBlock"),
+    "video_metadata_ingest": ("app.blocks.video_metadata_ingest", "VideoMetadataIngestBlock"),
+    "video_anomaly_trigger": ("app.blocks.video_anomaly_trigger", "VideoAnomalyTriggerBlock"),
+    "medical_ehr_connector": ("app.blocks.medical_ehr_connector", "MedicalEHRConnectorBlock"),
 }
 
 
