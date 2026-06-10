@@ -11,6 +11,7 @@ from app.core.domain_kit_registry import enabled_kit_ids, load_registry
 
 logger = logging.getLogger(__name__)
 
+# Blocks bundled with each store kit (must match manifest.json blocks list).
 _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
     "construction": [
         ("construction", "app.containers.construction", "ConstructionContainer"),
@@ -22,12 +23,13 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
         ("primavera_parser", "app.blocks.primavera_parser", "PrimaveraParserBlock"),
         ("spec_analyzer", "app.blocks.spec_analyzer", "SpecAnalyzerBlock"),
         ("formula_executor", "app.blocks.formula_executor", "FormulaExecutorBlock"),
+        ("formula_executor_v2", "app.blocks.formula_executor_v2", "FormulaExecutorV2Block"),
+        ("project_reasoner", "app.blocks.project_reasoner", "ProjectReasonerBlock"),
         ("sympy_reasoning", "app.blocks.sympy_reasoning", "SymPyReasoningBlock"),
         ("smart_orchestrator", "app.blocks.smart_orchestrator", "SmartOrchestratorBlock"),
         ("jetson_gateway", "app.blocks.jetson_gateway", "JetsonGatewayBlock"),
         ("learning_engine", "app.blocks.learning_engine", "LearningEngineBlock"),
         ("recommendation_template", "app.blocks.recommendation_template", "RecommendationTemplateBlock"),
-        ("historical_benchmark", "app.blocks.historical_benchmark", "HistoricalBenchmarkBlock"),
     ],
 }
 

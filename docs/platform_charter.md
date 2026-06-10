@@ -79,7 +79,7 @@ First published kit. Source of truth: Fork `main`.
 | Publish | `python scripts/publish_construction_kit.py --fork-root <Fork>` |
 | Install | `POST /store/containers/construction/install` |
 
-Nine artifacts copy to consumer `app/` tree; install also registers the container class in `data/domain_kit_registry.json`.
+Thirty-two artifacts copy to consumer `app/` tree (container monolith, 15 domain blocks, reasoning/formula support modules, prompts, and data). Install registers the container plus 18 kit blocks (including `bim`, `formula_executor_v2`, `project_reasoner`) in `data/domain_kit_registry.json`; generic `pdf`/`ocr`/`image` remain platform blocks.
 
 ---
 

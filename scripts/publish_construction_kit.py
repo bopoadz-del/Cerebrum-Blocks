@@ -76,7 +76,15 @@ def main() -> int:
         for m in missing:
             print(f"  - {m}", file=sys.stderr)
 
-    print(f"\n{'Would copy' if args.dry_run else 'Copied'} {copied}/{len(artifacts)} artifacts")
+    total = len(artifacts)
+    print(f"\n{'Would copy' if args.dry_run else 'Copied'} {copied}/{total} artifacts")
+
+    if not args.dry_run and not missing:
+        present = all((BUNDLE_DIR / item["src"]).exists() for item in artifacts)
+        print(f"bundle_ready={present}")
+        blocks = manifest.get("blocks") or []
+        print(f"blocks_registered={len(blocks)}")
+
     if missing:
         return 1
     return 0

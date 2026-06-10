@@ -293,6 +293,8 @@ Kit artifacts land under `block_store/kits/construction/bundle/` with **Fork pat
 
 Run: `python scripts/publish_construction_kit.py`
 
+Full kit scope (32 artifacts): container monolith, `construction_v2` + 14 domain blocks (`boq_processor` … `project_reasoner`), support modules (`plan_executor`, `sandbox`, `pm_computations`, schemas), prompts, and knowledge data. Generic platform blocks (`pdf`, `ocr`, `image`) are declared in the manifest but not bundled.
+
 ### 4.2 Phase B — Blocks by folder
 
 **`app/blocks/core/` (generic, unchanged interface):**
@@ -422,7 +424,7 @@ Each kit ships a **`manifest.json`**:
 **Done:**
 
 1. Store API — `GET/POST /store/containers` + `container_kit_store.py`
-2. Construction kit manifest + `publish_construction_kit.py` (9/9 bundle artifacts)
+2. Construction kit manifest + `publish_construction_kit.py` (32/32 bundle artifacts — full domain block suite)
 3. Fork chat — removed `construction_expert.txt` auto-inject (local; push to GitHub pending)
 
 **Next:**
