@@ -1,9 +1,9 @@
 {
   "id": "chat",
   "name": "Chat",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "author": "Cerebrum Team",
-  "description": "AI chat completions with DeepSeek API",
+  "description": "AI chat completions \u2014 DeepSeek primary, local LLM fallback",
   "layer": 2,
   "requires": [],
   "inputs": [

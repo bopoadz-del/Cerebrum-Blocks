@@ -1,20 +1,45 @@
-"""Chat Block - AI Chat with DeepSeek API and Anthropic fallback"""
+"""Chat Block — DeepSeek primary + local-inference fallback.
+
+The chat must never go completely dark on the user. Order of attempts:
+
+1. **DeepSeek API** when ``DEEPSEEK_API_KEY`` is set and the endpoint is reachable.
+2. **Local LLM** (kept *inside* the platform — no third-party cloud) via:
+   - Ollama HTTP at ``OLLAMA_URL`` (default ``http://localhost:11434``) when a
+     local model is installed. The default local model is
+     ``LOCAL_LLM_MODEL`` (default ``qwen2.5:3b-instruct`` — small, CPU-runnable).
+   - llama.cpp via ``LLAMA_CPP_MODEL_PATH`` when ``llama-cpp-python`` is
+     importable and a GGUF file is provided.
+3. **Graceful template responder** — a deterministic, non-AI fallback that
+   acknowledges the question, surfaces the reason the model layer is down,
+   and points the operator at the env vars that would restore it. This
+   path always succeeds, so the chat never returns an unhandled error.
+
+The block exposes a single ``provider`` field on the response so callers can
+see which path served the answer (``deepseek`` / ``local_ollama`` /
+``local_llama_cpp`` / ``offline_template``).
+"""
 
 import json
 import os
-import re
+import logging
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 import httpx
-from typing import Any, Dict
-
-from app.core.universal_base import UniversalBlock
+from app.core.typed_block import TypedBlock, Schema, ContentType
 
 
-class ChatBlock(UniversalBlock):
-    """AI chat completions with DeepSeek API and typed I/O"""
+DEFAULT_OLLAMA_URL = "http://localhost:11434"
+DEFAULT_LOCAL_MODEL = "qwen2.5:3b-instruct"
 
+
+class ChatBlock(TypedBlock):
+    """AI chat completions — DeepSeek with local-inference fallback."""
+
+    auto_validate = False
     name = "chat"
-    version = "2.0.0"
-    description = "AI chat completions with DeepSeek API"
+    version = "3.0.0"
+    description = "AI chat completions — DeepSeek primary, local LLM fallback"
     layer = 2
     tags = ["ai", "core", "llm", "chat", "typed"]
     requires = []
@@ -22,235 +47,254 @@ class ChatBlock(UniversalBlock):
     default_config = {
         "default_provider": "deepseek",
         "max_tokens": 2048,
-        "temperature": 0.7
+        "temperature": 0.7,
     }
+
+    accepted_input_types = ["Text", "TextContent", "ChatMessage"]
+    produced_output_types = ["Text", "TextContent", "ChatMessage"]
+
+    text_output_field = "text"
+
+    input_schema = Schema(
+        content_type=ContentType.TEXT,
+        required_fields=[],
+        optional_fields=["text", "message", "context"],
+        format_hints={"max_length": 100000},
+    )
+
+    output_schema = Schema(
+        content_type=ContentType.TEXT,
+        required_fields=["text"],
+        optional_fields=["provider", "model", "tokens", "status"],
+        format_hints={},
+    )
 
     ui_schema = {
         "input": {
             "type": "text",
             "accept": None,
             "placeholder": "Ask anything...",
-            "multiline": True
+            "multiline": True,
         },
         "output": {
             "type": "text",
             "fields": [
-                {"name": "text", "type": "markdown", "label": "Response"}
-            ]
+                {"name": "text", "type": "markdown", "label": "Response"},
+            ],
         },
         "quick_actions": [
             {"icon": "💡", "label": "Explain", "prompt": "Explain this in simple terms"},
-            {"icon": "📝", "label": "Summarize", "prompt": "Summarize the key points"}
-        ]
+            {"icon": "📝", "label": "Summarize", "prompt": "Summarize the key points"},
+        ],
     }
 
-    # Common construction keywords for offline fallback
-    CONSTRUCTION_KEYWORDS = [
-        "concrete", "steel", "rebar", "foundation", "slab", "beam", "column",
-        "drawing", "quantity", "boq", "estimate", "cost", "schedule", "programme",
-        "primavera", "bim", "ifc", "contract", "specification", "submittal",
-        "rfi", "change order", "procurement", "safety", "qa", "qc", "inspection"
-    ]
-
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        """Process chat request"""
         params = params or {}
         if isinstance(input_data, dict):
             message = (
-                input_data.get("text") or
-                input_data.get("content") or
-                input_data.get("extracted_text") or
-                str(input_data)
+                input_data.get("text")
+                or input_data.get("content")
+                or input_data.get("extracted_text")
+                or str(input_data)
             )
         else:
             message = str(input_data)
 
-        deepseek_key = os.getenv("DEEPSEEK_API_KEY")
-        anthropic_key = os.getenv("ANTHROPIC_API_KEY")
-        model = params.get("model", "deepseek-chat")
         max_tokens = params.get("max_tokens", self.config.get("max_tokens", 2048))
         temperature = params.get("temperature", self.config.get("temperature", 0.7))
         stream = params.get("stream", False)
+        model = params.get("model", "deepseek-chat")
 
-        if not deepseek_key and not anthropic_key:
-            return self._offline_response(message, "No AI provider configured. Set DEEPSEEK_API_KEY or ANTHROPIC_API_KEY environment variable.")
+        system_prompt_text = self._resolve_system_prompt(input_data, params)
 
-        # Try DeepSeek first, fall back to Anthropic Claude
-        deepseek_error = ""
-        if deepseek_key:
-            result = await self._call_deepseek(message, model, max_tokens, temperature, stream, deepseek_key)
-            if result.get("status") == "success":
-                return result
-            deepseek_error = result.get("error", "DeepSeek failed")
-        else:
-            deepseek_error = "DEEPSEEK_API_KEY not configured"
-
-        if anthropic_key:
-            result = await self._call_anthropic(message, max_tokens, temperature, anthropic_key, fallback_reason=deepseek_error)
-            if result.get("status") == "success":
-                return result
-            anthropic_error = result.get("error", "Anthropic failed")
-        else:
-            anthropic_error = "ANTHROPIC_API_KEY not configured"
-
-        # Both providers failed — check if it's a credit issue
-        combined_error = f"{deepseek_error}. {anthropic_error}"
-        return self._offline_response(message, combined_error)
-
-    def _offline_response(self, message: str, error_detail: str) -> Dict:
-        """Return a graceful offline response when all AI providers fail."""
-        lower_msg = message.lower()
-        is_credit_issue = any(k in error_detail.lower() for k in [
-            "insufficient balance", "credit balance", "credit", "quota exceeded",
-            "rate limit", "billing", "payment required"
-        ])
-
-        credit_notice = ""
-        if is_credit_issue:
-            credit_notice = (
-                "\n\n⚠️ **AI service credits exhausted** — Both DeepSeek and Anthropic "
-                "API keys are currently out of credits. The response below is generated "
-                "locally by the Cerebrum platform using rule-based logic.\n\n---\n\n"
-            )
-        else:
-            credit_notice = (
-                "\n\n⚠️ **AI service unavailable** — "
-                "The response below is generated locally by the Cerebrum platform.\n\n---\n\n"
-            )
-
-        # Try to give a useful rule-based response for construction queries
-        fallback_text = self._generate_fallback_text(message)
-
-        return {
-            "status": "success",
-            "text": credit_notice + fallback_text,
-            "provider": "offline",
-            "model": "cerebrum-local",
-            "offline": True,
-            "fallback": True,
-            "fallback_reason": "credit_exhausted" if is_credit_issue else "providers_unavailable",
-            "error_detail": error_detail,
-            "credit_exhausted": is_credit_issue,
-        }
-
-    def _generate_fallback_text(self, message: str) -> str:
-        """Generate a rule-based response for common construction queries."""
-        lower = message.lower()
-
-        # Quantity / estimation queries
-        if any(k in lower for k in ["concrete volume", "how much concrete", "concrete quantity"]):
-            return (
-                "To calculate concrete volume, you need:\n"
-                "- **Slab**: Length × Width × Thickness (all in same units)\n"
-                "- **Beam**: Length × Width × Depth\n"
-                "- **Column**: Height × Width × Depth × Number of columns\n"
-                "\nAdd 5–10% wastage factor. For reinforced concrete, typical steel is 80–120 kg/m³."
-            )
-        if any(k in lower for k in ["steel weight", "rebar weight", "reinforcement weight"]):
-            return (
-                "Typical reinforcement ratios by element:\n"
-                "- **Slabs**: 80–100 kg/m³ of concrete\n"
-                "- **Beams**: 120–160 kg/m³\n"
-                "- **Columns**: 150–200 kg/m³\n"
-                "- **Foundations**: 80–120 kg/m³\n"
-                "\nMultiply total concrete volume by the ratio for your element type."
-            )
-        if any(k in lower for k in ["cost estimate", "project cost", "building cost"]):
-            return (
-                "Typical construction costs (USD/m² of GFA):\n"
-                "- **Residential (mid-range)**: $1,200–$1,800/m²\n"
-                "- **Commercial office**: $1,500–$2,500/m²\n"
-                "- **Industrial warehouse**: $800–$1,200/m²\n"
-                "- **High-rise luxury**: $2,500–$4,000/m²\n"
-                "\nAdd 10–15% for design fees, permits, and soft costs. Location and market conditions vary significantly."
-            )
-        if any(k in lower for k in ["primavera", "schedule", "cpm", "critical path"]):
-            return (
-                "For schedule analysis:\n"
-                "1. Upload your XER or XML file to the Construction block\n"
-                "2. The platform auto-calculates CPM and identifies the critical path\n"
-                "3. Compare against baseline to detect delays\n"
-                "4. Review recovery options (crash, fast-track, scope reduction)\n"
-                "\nKey metrics: total float < 2 days = high risk."
-            )
-        if any(k in lower for k in ["bim", "ifc", "model"]):
-            return (
-                "BIM / IFC capabilities:\n"
-                "- Upload `.ifc` files for automatic element extraction\n"
-                "- Quantities: walls, columns, beams, slabs, openings\n"
-                "- Compare as-built photos against BIM for progress tracking\n"
-                "- Clash detection and spatial analysis (upcoming)\n"
-                "\nSupported: IFC2X3, IFC4."
-            )
-        if any(k in lower for k in ["contract", "clause", "payment", "liquidated damages", "retention"]):
-            return (
-                "Common contract clauses to review:\n"
-                "- **Payment terms**: milestone vs monthly, currency, advance payment %\n"
-                "- **Liquidated Damages**: rate per day of delay, cap amount\n"
-                "- **Retention**: typically 5–10%, released 50% at PC, 50% at final certificate\n"
-                "- **Force Majeure**: defined events, notice period, time extension only\n"
-                "- **Dispute resolution**: DAB, arbitration, or litigation\n"
-                "\nUpload your contract PDF to the Construction block for automated clause extraction."
-            )
-        if any(k in lower for k in ["safety", "hazard", "risk"]):
-            return (
-                "Construction risk management:\n"
-                "- **Design risks**: late information, design changes, coordination gaps\n"
-                "- **Schedule risks**: weather, labour shortage, material delays\n"
-                "- **Financial risks**: cash flow, price escalation, currency fluctuation\n"
-                "- **Regulatory risks**: permit delays, authority approvals\n"
-                "\nUse the Risk Register auto-populate feature in the Construction block to generate a full register from your documents."
-            )
-        if any(k in lower for k in ["submittal", "shop drawing", "material approval"]):
-            return (
-                "Submittal log essentials:\n"
-                "- **Shop drawings**: structural steel, precast, MEP coordination\n"
-                "- **Material submittals**: concrete mix, finishes, waterproofing membranes\n"
-                "- **Method statements**: excavation, concrete pours, crane lifts\n"
-                "- **Test certificates**: concrete cubes, steel mill certs, soil reports\n"
-                "\nAllow 14 days for Engineer review per typical contract terms."
-            )
-        if any(k in lower for k in ["drawing", "qto", "quantity takeoff", "measurement"]):
-            return (
-                "Quantity take-off from drawings:\n"
-                "1. Upload PDF drawings to the Construction block for auto-extraction\n"
-                "2. For DXF files, use the Drawing QTO block for precise CAD measurements\n"
-                "3. The platform extracts: linear dims, areas, counts, and schedules\n"
-                "4. Results feed directly into BOQ and cost estimation\n"
-                "\nTypical accuracy: ±5% for well-dimensioned drawings."
-            )
-
-        # Generic helpful response
-        return (
-            "I'm operating in **offline mode** right now because the AI service providers "
-            "(DeepSeek / Anthropic) are unavailable or out of credits.\n\n"
-            "I can still help with construction-specific queries using built-in knowledge. "
-            "Try asking about:\n"
-            "- Concrete or steel quantities\n"
-            "- Cost estimation benchmarks\n"
-            "- Schedule / Primavera analysis\n"
-            "- Contract clause review\n"
-            "- BIM / IFC processing\n"
-            "- Risk management\n"
-            "- Submittals and shop drawings\n"
-            "- Quantity take-offs from drawings\n\n"
-            "Or upload a document to the Construction block for automated analysis."
+        use_rag = bool(
+            params.get("use_rag")
+            or (isinstance(input_data, dict) and input_data.get("use_rag"))
         )
+        rag_project_id = (
+            params.get("project_id")
+            or (isinstance(input_data, dict) and input_data.get("project_id"))
+        )
+        if use_rag and rag_project_id:
+            try:
+                from app.core.rag.retriever import retrieve as _retrieve
+                rag_k = int(params.get("rag_k", 5))
+                chunks = _retrieve(message, str(rag_project_id), k=rag_k)
+                if chunks:
+                    context = "\n\n".join(
+                        f"[{c.doc_id}#{c.chunk_index}] {c.text}" for c in chunks
+                    )
+                    message = (
+                        f"Relevant project context:\n{context}\n\n"
+                        f"---\n\nUser question: {message}"
+                    )
+            except Exception as exc:  # noqa: BLE001
+                _logging = logging.getLogger(__name__)
+                _logging.warning(
+                    "RAG retrieval failed for project %s: %s", rag_project_id, exc
+                )
 
-    async def _call_deepseek(self, message: str, model: str, max_tokens: int, temperature: float, stream: bool, api_key: str) -> Dict:
+        use_local_model = bool(
+            params.get("use_local_model")
+            or (isinstance(input_data, dict) and input_data.get("use_local_model"))
+        )
+        if use_local_model:
+            try:
+                from app.core.learning import local_model as _local
+            except ImportError:
+                _local = None  # type: ignore
+
+            if _local is not None and _local.available():
+                local_text = _local.generate(
+                    message,
+                    max_new_tokens=int(max_tokens),
+                    temperature=float(temperature),
+                )
+                if local_text:
+                    return {
+                        "status": "success",
+                        "response": local_text,
+                        "provider": "local_lora",
+                        "model": os.getenv("LOCAL_BASE_MODEL") or "Qwen/Qwen2.5-3B-Instruct",
+                        "adapter": os.getenv("LOCAL_ADAPTER_DIR") or "data/learning/adapters/default",
+                    }
+                logging.getLogger(__name__).info(
+                    "use_local_model requested but generate() returned None; falling back to cloud"
+                )
+            else:
+                logging.getLogger(__name__).info(
+                    "use_local_model requested but local stack unavailable; falling back to cloud"
+                )
+
+        from app.core.llm_config import _llm_config  # local import: avoid cycle at module load
+        cfg = _llm_config()
+        primary_error = None
+
+        api_key = os.getenv(cfg["env_key"]) if cfg["env_key"] else ""
+        if cfg["provider"] == "ollama" or (cfg["env_key"] and api_key):
+            effective_model = model
+            if cfg["provider"] != "deepseek" and effective_model.startswith("deepseek-"):
+                effective_model = cfg["default_model"]
+            extra_kwargs = {"system_prompt": system_prompt_text} if system_prompt_text else {}
+            result = await self._call_cloud(
+                message, effective_model, max_tokens, temperature, stream,
+                api_key, cfg,
+                **extra_kwargs,
+            )
+            if result.get("status") == "success":
+                return result
+            primary_error = result.get("error", f"{cfg['provider']} call failed")
+        else:
+            primary_error = f"{cfg['env_key']} not configured"
+
+        local = await self._call_local(
+            message, max_tokens, temperature, primary_error,
+            system_prompt=system_prompt_text,
+        )
+        if local.get("status") == "success":
+            return local
+
+        return self._offline_template(message, primary_error, local.get("error"))
+
+    @staticmethod
+    def _build_messages(message: str, system_prompt: Optional[str]) -> list:
+        msgs = []
+        if system_prompt and system_prompt.strip():
+            msgs.append({"role": "system", "content": system_prompt})
+        msgs.append({"role": "user", "content": message})
+        return msgs
+
+    def _resolve_system_prompt(
+        self, input_data: Any, params: Dict
+    ) -> Optional[str]:
+        literal = None
+        if isinstance(input_data, dict):
+            literal = input_data.get("system_prompt")
+        if not literal:
+            literal = params.get("system_prompt")
+        if isinstance(literal, str) and literal.strip():
+            return literal
+
+        fname = None
+        if isinstance(input_data, dict):
+            fname = input_data.get("system_prompt_file")
+        if not fname:
+            fname = params.get("system_prompt_file")
+        if not fname:
+            return None
+        if not isinstance(fname, str):
+            return None
+
+        log = logging.getLogger(__name__)
+        prompts_dir = (Path(__file__).parent.parent / "prompts").resolve()
+        try:
+            candidate = (prompts_dir / fname).resolve()
+        except (OSError, ValueError) as exc:
+            log.warning("system_prompt_file %r could not be resolved: %s", fname, exc)
+            return None
+
+        try:
+            inside = candidate.is_relative_to(prompts_dir)
+        except AttributeError:
+            inside = str(candidate).startswith(str(prompts_dir) + os.sep)
+        if not inside or candidate == prompts_dir:
+            log.warning(
+                "system_prompt_file %r rejected — resolves outside app/prompts/",
+                fname,
+            )
+            return None
+        if not candidate.is_file():
+            log.warning(
+                "system_prompt_file %r not found at %s", fname, candidate,
+            )
+            return None
+        try:
+            return candidate.read_text(encoding="utf-8")
+        except OSError as exc:
+            log.warning(
+                "system_prompt_file %r failed to read: %s", fname, exc,
+            )
+            return None
+
+    async def _call_cloud(
+        self,
+        message: str,
+        model: str,
+        max_tokens: int,
+        temperature: float,
+        stream: bool,
+        api_key: str,
+        cfg: Dict[str, str],
+        system_prompt: Optional[str] = None,
+    ) -> Dict:
+        url = cfg["url"]
+        provider_name = cfg["provider"]
+        messages = self._build_messages(message, system_prompt)
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+
         if stream:
             async def _stream_generator():
                 async with httpx.AsyncClient(timeout=60.0) as client:
                     async with client.stream(
                         "POST",
-                        "https://api.deepseek.com/v1/chat/completions",
-                        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                        json={"model": model, "messages": [{"role": "user", "content": message}],
-                              "max_tokens": max_tokens, "temperature": temperature, "stream": True},
+                        url,
+                        headers=headers,
+                        json={
+                            "model": model,
+                            "messages": messages,
+                            "max_tokens": max_tokens,
+                            "temperature": temperature,
+                            "stream": True,
+                        },
                     ) as response:
                         if response.status_code != 200:
                             err = await response.aread()
-                            yield json.dumps({"type": "error", "message": f"DeepSeek error {response.status_code}: {err[:200]}"})
+                            yield json.dumps({
+                                "type": "error",
+                                "message": f"{provider_name} error {response.status_code}: {err[:200]}",
+                            })
                             return
                         async for line in response.aiter_lines():
                             if not line.startswith("data: "):
@@ -265,45 +309,188 @@ class ChatBlock(UniversalBlock):
                                     yield content
                             except Exception:
                                 continue
-            return {"status": "success", "text": "", "provider": "deepseek", "model": model, "stream": _stream_generator()}
+
+            return {
+                "status": "success",
+                "text": "",
+                "provider": provider_name,
+                "model": model,
+                "stream": _stream_generator(),
+            }
 
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(
-                    "https://api.deepseek.com/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                    json={"model": model, "messages": [{"role": "user", "content": message}],
-                          "max_tokens": max_tokens, "temperature": temperature},
+                    url,
+                    headers=headers,
+                    json={
+                        "model": model,
+                        "messages": messages,
+                        "max_tokens": max_tokens,
+                        "temperature": temperature,
+                    },
                 )
                 if response.status_code != 200:
-                    body = response.text[:500]
-                    return {"status": "error", "error": f"DeepSeek API error (HTTP {response.status_code}): {body}"}
+                    return {
+                        "status": "error",
+                        "error": f"{provider_name} API error (HTTP {response.status_code}): {response.text[:200]}",
+                    }
                 data = response.json()
-                return {"status": "success", "text": data["choices"][0]["message"]["content"],
-                        "provider": "deepseek", "model": model, "tokens": data.get("usage", {})}
+                return {
+                    "status": "success",
+                    "text": data["choices"][0]["message"]["content"],
+                    "provider": provider_name,
+                    "model": model,
+                    "tokens": data.get("usage", {}),
+                }
         except httpx.TimeoutException:
-            return {"status": "error", "error": "DeepSeek request timed out"}
+            return {"status": "error", "error": f"{provider_name} request timed out"}
         except Exception as e:
-            return {"status": "error", "error": f"DeepSeek failed: {str(e)}"}
+            return {"status": "error", "error": f"{provider_name} failed: {e}"}
 
-    async def _call_anthropic(self, message: str, max_tokens: int, temperature: float, api_key: str, fallback_reason: str = "") -> Dict:
+    async def _call_local(
+        self,
+        message: str,
+        max_tokens: int,
+        temperature: float,
+        primary_error: str,
+        system_prompt: Optional[str] = None,
+    ) -> Dict:
+        ollama_url = os.getenv("OLLAMA_URL", DEFAULT_OLLAMA_URL)
+        local_model = os.getenv("LOCAL_LLM_MODEL", DEFAULT_LOCAL_MODEL)
+        ollama_result = await self._call_ollama(
+            message, local_model, max_tokens, temperature, ollama_url,
+            system_prompt=system_prompt,
+        )
+        if ollama_result.get("status") == "success":
+            ollama_result["fallback_reason"] = primary_error
+            return ollama_result
+
+        gguf_path = os.getenv("LLAMA_CPP_MODEL_PATH")
+        if gguf_path and os.path.exists(gguf_path):
+            llama_result = self._call_llama_cpp(
+                message, gguf_path, max_tokens, temperature,
+                system_prompt=system_prompt,
+            )
+            if llama_result.get("status") == "success":
+                llama_result["fallback_reason"] = primary_error
+                return llama_result
+            return {
+                "status": "error",
+                "error": f"ollama: {ollama_result.get('error')}; llama_cpp: {llama_result.get('error')}",
+            }
+
+        return {
+            "status": "error",
+            "error": f"ollama unavailable ({ollama_result.get('error')}); no LLAMA_CPP_MODEL_PATH set",
+        }
+
+    async def _call_ollama(
+        self,
+        message: str,
+        model: str,
+        max_tokens: int,
+        temperature: float,
+        base_url: str,
+        system_prompt: Optional[str] = None,
+    ) -> Dict:
         try:
-            import anthropic
-            client = anthropic.AsyncAnthropic(api_key=api_key)
-            response = await client.messages.create(
-                model="claude-haiku-4-5-20251001",
+            messages = self._build_messages(message, system_prompt)
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    f"{base_url.rstrip('/')}/api/chat",
+                    json={
+                        "model": model,
+                        "messages": messages,
+                        "options": {
+                            "temperature": temperature,
+                            "num_predict": max_tokens,
+                        },
+                        "stream": False,
+                    },
+                )
+                if response.status_code != 200:
+                    return {
+                        "status": "error",
+                        "error": f"ollama HTTP {response.status_code}: {response.text[:200]}",
+                    }
+                data = response.json()
+                text = (data.get("message") or {}).get("content", "")
+                if not text:
+                    return {"status": "error", "error": "ollama returned empty content"}
+                return {
+                    "status": "success",
+                    "text": text,
+                    "provider": "local_ollama",
+                    "model": model,
+                    "tokens": {
+                        "input_tokens": data.get("prompt_eval_count"),
+                        "output_tokens": data.get("eval_count"),
+                    },
+                }
+        except httpx.ConnectError:
+            return {"status": "error", "error": f"ollama not reachable at {base_url}"}
+        except httpx.TimeoutException:
+            return {"status": "error", "error": "ollama request timed out"}
+        except Exception as e:
+            return {"status": "error", "error": f"ollama failed: {e}"}
+
+    def _call_llama_cpp(
+        self,
+        message: str,
+        gguf_path: str,
+        max_tokens: int,
+        temperature: float,
+        system_prompt: Optional[str] = None,
+    ) -> Dict:
+        try:
+            from llama_cpp import Llama  # type: ignore
+        except Exception as e:
+            return {"status": "error", "error": f"llama-cpp-python not importable: {e}"}
+
+        try:
+            llm = Llama(model_path=gguf_path, n_ctx=4096, verbose=False)
+            messages = self._build_messages(message, system_prompt)
+            out = llm.create_chat_completion(
+                messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                messages=[{"role": "user", "content": message}],
             )
-            text = response.content[0].text if response.content else ""
+            text = (out.get("choices") or [{}])[0].get("message", {}).get("content", "")
+            if not text:
+                return {"status": "error", "error": "llama.cpp returned empty content"}
             return {
                 "status": "success",
                 "text": text,
-                "provider": "anthropic",
-                "model": "claude-haiku-4-5-20251001",
-                "tokens": {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens},
-                "fallback_reason": fallback_reason or None,
+                "provider": "local_llama_cpp",
+                "model": os.path.basename(gguf_path),
+                "tokens": out.get("usage", {}),
             }
         except Exception as e:
-            return {"status": "error", "error": f"Anthropic fallback also failed: {str(e)}"}
+            return {"status": "error", "error": f"llama.cpp failed: {e}"}
+
+    def _offline_template(self, message: str, primary_error: str, local_error: str) -> Dict:
+        snippet = (message or "").strip()
+        if len(snippet) > 240:
+            snippet = snippet[:237] + "..."
+        body = (
+            "**Chat is running in offline mode.**\n\n"
+            "No cloud or local language model is currently reachable, so I can't "
+            "generate an AI response right now. Your message was received intact:\n\n"
+            f"> {snippet or '(empty)'}\n\n"
+            "**How to restore full chat:**\n"
+            "- Set `GROQ_API_KEY` (free tier) or `DEEPSEEK_API_KEY` in `.env` to use a cloud provider, **or**\n"
+            "- Run a local model: `ollama serve` + `ollama pull qwen2.5:3b-instruct`\n"
+            "  (optionally set `OLLAMA_URL` and `LOCAL_LLM_MODEL`), **or**\n"
+            "- Provide a GGUF file via `LLAMA_CPP_MODEL_PATH` with `llama-cpp-python` installed.\n\n"
+            f"_Primary provider: {primary_error}_  \n"
+            f"_Local inference: {local_error}_"
+        )
+        return {
+            "status": "success",
+            "text": body,
+            "provider": "offline_template",
+            "model": "template:v1",
+            "primary_error": primary_error,
+            "local_error": local_error,
+        }

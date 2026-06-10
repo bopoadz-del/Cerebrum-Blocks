@@ -31,7 +31,7 @@ _GENERIC_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "cache_manager": ("app.blocks.cache_manager", "CacheManagerBlock"),
     "file_hasher": ("app.blocks.file_hasher", "FileHasherBlock"),
     "orchestrator": ("app.blocks.orchestrator", "OrchestratorBlock"),
-    "validation": ("app.blocks.validation", "ValidationBlock"),
+    "validation_pipeline": ("app.blocks.validation_pipeline", "ValidationPipelineBlock"),
     "async_processor": ("app.blocks.async_processor", "AsyncProcessorBlock"),
 }
 

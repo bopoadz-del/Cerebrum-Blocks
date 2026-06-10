@@ -3,7 +3,7 @@
   "name": "Validation",
   "version": "1.1.0",
   "author": "Cerebrum Team",
-  "description": "",
+  "description": "Block store certification and 5-stage item validation pipeline. Virgin boot alias: validation_pipeline (see docs/validation_block_mapping.md).",
   "layer": 3,
   "requires": [
     "sandbox",

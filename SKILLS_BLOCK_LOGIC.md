@@ -1,5 +1,10 @@
 # Skills Block Logic
 
+> **Platform note:** The `skills` block is extended-boot / store-only (`CEREBRUM_VIRGIN=false`).
+> Example deliverables below skew construction because the bundled `CEREBRUM_SKILL.md`
+> ships with the construction kit. Virgin platform boot does not load this block;
+> domain kits may supply their own skill files via `skill_file` config.
+
 ## Overview
 
 The `skills` block parses `data/CEREBRUM_SKILL.md` and serves structured hints to the orchestrator so that construction deliverables are produced with the correct tooling, styles, and validation gates.

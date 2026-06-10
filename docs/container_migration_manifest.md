@@ -459,6 +459,7 @@ GitHub file SHA (2026-06-10): `876a6446fba0072eaf8bb087c10e6f54d2692765` — `ap
 | 4 | CB role | **Store layer** — publish / discover / install, not full Fork migration |
 | 5 | Fork chat | **Keep Fork v3 chat**; remove prompt auto-inject only — **not** CB chat swap |
 | 6 | Kit install model | **Copy-on-install** from `block_store/kits/{id}/bundle/` → consumer `app/` tree |
+| 7 | `container` meta-block | **Orphan** — `app/blocks/container.py` has no `block_registry/` entry. Superseded by `app/containers/` (`DomainContainer` / kit containers). Kept for legacy `ContainerBlock` API; not elevated to registry. |
 
 ---
 

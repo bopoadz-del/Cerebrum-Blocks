@@ -3,7 +3,7 @@
   "name": "Skills",
   "version": "1.0.0",
   "author": "Cerebrum Team",
-  "description": "Skill knowledge block \u2014 parses CEREBRUM_SKILL.md and serves hints, validation rules, styles, and workflows to the orchestrator",
+  "description": "Extended-boot skill knowledge block — parses CEREBRUM_SKILL.md (domain file configurable via skill_file). Not loaded in virgin boot.",
   "layer": 2,
   "requires": [],
   "inputs": [
