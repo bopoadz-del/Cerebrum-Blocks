@@ -1,13 +1,13 @@
-"""Platform Blocks — Construction Intelligence Platform.
+"""Platform Blocks — Cerebrum Block Store runtime.
 
-Block classes are imported lazily on first access from BLOCK_REGISTRY.
-This keeps cold-start memory low — Render Starter (512MB) was OOMing on the
-old eager-import path because each block module pulled in heavy ML deps
-(sklearn, sympy, ezdxf, ifcopenshell, opencv, etc.).
+Virgin boot (default): ~17 generic blocks. Domain kits register via store
+install or ``CEREBRUM_DOMAIN_KITS``. Set ``CEREBRUM_VIRGIN=false`` for legacy
+full-platform boot.
 """
 
 import importlib
 import logging
+import os
 from typing import Any, Dict, Iterator, Tuple
 
 from app.core.universal_base import UniversalBlock, UniversalContainer
@@ -15,113 +15,92 @@ from app.core.typed_block import TypedBlock
 
 logger = logging.getLogger(__name__)
 
-
-# Map block name → (module path, class name). Modules import only on first access.
-_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
-    # Document Extraction
-    "pdf":              ("app.blocks.pdf", "PDFBlock"),
-    "pdf_v2":           ("app.blocks.pdf_v2", "PDFBlockV2"),
-    "ocr":              ("app.blocks.ocr", "OCRBlock"),
-    "ocr_v2":           ("app.blocks.ocr_v2", "OCRBlockV2"),
-    "image":            ("app.blocks.image", "ImageBlock"),
-    "document_engine":  ("app.blocks.document_engine", "DocumentEngineBlock"),
-
-    # AI / Language
-    "chat":             ("app.blocks.chat", "ChatBlock"),
-    "translate":        ("app.blocks.translate", "TranslateBlock"),
-    "voice":            ("app.blocks.voice", "VoiceBlock"),
-    "web":              ("app.blocks.web", "WebBlock"),
-    "search":           ("app.blocks.search", "SearchBlock"),
-    "llm_enhancer":     ("app.blocks.llm_enhancer", "LLMEnhancerBlock"),
-
-    # Construction Intelligence
-    "construction":         ("app.containers", "ConstructionContainer"),
-    "construction_v2":      ("app.blocks.construction_v2", "ConstructionBlockV2"),
-    "boq_processor":        ("app.blocks.boq_processor", "BOQProcessorBlock"),
-    "bim":                  ("app.blocks.bim", "BIMBlock"),
-    "bim_extractor":        ("app.blocks.bim_extractor", "BIMExtractorBlock"),
-    "drawing_qto":          ("app.blocks.drawing_qto", "DrawingQTOBlock"),
-    "primavera_parser":     ("app.blocks.primavera_parser", "PrimaveraParserBlock"),
-    "spec_analyzer":        ("app.blocks.spec_analyzer", "SpecAnalyzerBlock"),
-    "formula_executor":     ("app.blocks.formula_executor", "FormulaExecutorBlock"),
-    "sympy_reasoning":      ("app.blocks.sympy_reasoning", "SymPyReasoningBlock"),
-    "library_container":    ("app.blocks.library_container", "LibraryContainerBlock"),
-    "historical_benchmark": ("app.blocks.historical_benchmark", "HistoricalBenchmarkBlock"),
-    "smart_orchestrator":   ("app.blocks.smart_orchestrator", "SmartOrchestratorBlock"),
-    "skills":               ("app.blocks.skills", "SkillsBlock"),
-    "recommendation_template": ("app.blocks.recommendation_template", "RecommendationTemplateBlock"),
-
-    # File Access
-    "local_drive":      ("app.blocks.local_drive", "LocalDriveBlock"),
-    "google_drive":     ("app.blocks.google_drive", "GoogleDriveBlock"),
-    "onedrive":         ("app.blocks.onedrive", "OneDriveBlock"),
-    "android_drive":    ("app.blocks.android_drive", "AndroidDriveBlock"),
-    "storage":          ("app.blocks.storage", "StorageBlock"),
-    "file_hasher":      ("app.blocks.file_hasher", "FileHasherBlock"),
-
-    # Search & Memory
-    "vector_search":    ("app.blocks.vector_search", "VectorSearchBlock"),
-    "zvec":             ("app.blocks.zvec", "ZvecBlock"),
-    "cache_manager":    ("app.blocks.cache_manager", "CacheManagerBlock"),
-    "context_broker":   ("app.blocks.context_broker", "ContextBrokerBlock"),
-
-    # Integration
-    "capture":          ("app.blocks.capture", "CaptureBlock"),
-    "agent_swarm":      ("app.blocks.agent_swarm", "AgentSwarmBlock"),
-    "workflow":         ("app.blocks.workflow", "WorkflowBlock"),
-    "knowledge":        ("app.blocks.knowledge", "KnowledgeBlock"),
-    "orchestrator":     ("app.blocks.orchestrator", "OrchestratorBlock"),
-    "queue":            ("app.blocks.queue", "QueueBlock"),
-
-    # Platform / Admin
-    "auth":             ("app.blocks.auth", "AuthBlock"),
-    "audit":            ("app.blocks.audit", "AuditBlock"),
-    "team":             ("app.blocks.team", "TeamBlock"),
-    "version":          ("app.blocks.version", "VersionBlock"),
-    "health_check":     ("app.blocks.health_check", "HealthCheckBlock"),
-    "monitoring":       ("app.blocks.monitoring", "MonitoringBlock"),
-    "rate_limiter":     ("app.blocks.rate_limiter", "RateLimiterBlock"),
-    "validation":       ("app.blocks.validation", "ValidationBlock"),
-    "error_tracking":   ("app.blocks.error_tracking", "ErrorTrackingBlock"),
-
-    # Communication
-    "webhook":          ("app.blocks.webhook", "WebhookBlock"),
-    "notification":     ("app.blocks.notification", "NotificationBlock"),
-
-    # Intelligence / Analytics
-    "analytics":        ("app.blocks.analytics", "AnalyticsBlock"),
-    "discovery":        ("app.blocks.discovery", "DiscoveryBlock"),
-    "learning_engine":  ("app.blocks.learning_engine", "LearningEngineBlock"),
-    "dashboard":        ("app.blocks.dashboard", "DashboardBlock"),
-
-    # Utilities
-    "code":             ("app.blocks.code", "CodeBlock"),
-    "sandbox":          ("app.blocks.sandbox", "SandboxBlock"),
-    "async_processor":  ("app.blocks.async_processor", "AsyncProcessorBlock"),
-    "failover":         ("app.blocks.failover", "FailoverBlock"),
-    "traffic_manager":  ("app.blocks.traffic_manager", "TrafficManagerBlock"),
-    "adaptive_router":  ("app.blocks.adaptive_router", "AdaptiveRouterBlock"),
-    "jetson_gateway":   ("app.blocks.jetson_gateway", "JetsonGatewayBlock"),
-
-    # Marketplace
-    "review":           ("app.blocks.review", "ReviewBlock"),
-    "payment_split":    ("app.blocks.payment_split", "PaymentSplitBlock"),
-    "documentation":    ("app.blocks.documentation", "DocumentationBlock"),
-
-    # Infrastructure — these block files existed in app/blocks/ but were
-    # never registered, so 31 dependent blocks (auth, audit, secrets, team,
-    # validation, version, etc.) silently lost their `requires` deps.
-    # Registered here as part of the same lazy mapping so dep wiring can
-    # find them. They each have UniversalBlock-compatible signatures.
-    "config":           ("app.blocks.config", "ConfigBlock"),
-    "database":         ("app.blocks.database", "DatabaseBlock"),
-    "vector":           ("app.blocks.vector", "VectorBlock"),
-    "billing":          ("app.blocks.billing", "BillingBlock"),
-    "email":            ("app.blocks.email", "EmailBlock"),
-    "migration":        ("app.blocks.migration", "MigrationBlock"),
-    "event_bus":        ("app.blocks.event_bus", "EventBusBlock"),
-    "secrets":          ("app.blocks.secrets", "SecretsBlock"),
+_GENERIC_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
+    "pdf": ("app.blocks.pdf", "PDFBlock"),
+    "ocr": ("app.blocks.ocr", "OCRBlock"),
+    "image": ("app.blocks.image", "ImageBlock"),
+    "document_engine": ("app.blocks.document_engine", "DocumentEngineBlock"),
+    "chat": ("app.blocks.chat", "ChatBlock"),
+    "translate": ("app.blocks.translate", "TranslateBlock"),
+    "voice": ("app.blocks.voice", "VoiceBlock"),
+    "web": ("app.blocks.web", "WebBlock"),
+    "search": ("app.blocks.search", "SearchBlock"),
+    "code": ("app.blocks.code", "CodeBlock"),
+    "vector_search": ("app.blocks.vector_search", "VectorSearchBlock"),
+    "zvec": ("app.blocks.zvec", "ZvecBlock"),
+    "cache_manager": ("app.blocks.cache_manager", "CacheManagerBlock"),
+    "file_hasher": ("app.blocks.file_hasher", "FileHasherBlock"),
+    "orchestrator": ("app.blocks.orchestrator", "OrchestratorBlock"),
+    "validation": ("app.blocks.validation", "ValidationBlock"),
+    "async_processor": ("app.blocks.async_processor", "AsyncProcessorBlock"),
 }
+
+_EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
+    "pdf_v2": ("app.blocks.pdf_v2", "PDFBlockV2"),
+    "ocr_v2": ("app.blocks.ocr_v2", "OCRBlockV2"),
+    "llm_enhancer": ("app.blocks.llm_enhancer", "LLMEnhancerBlock"),
+    "local_drive": ("app.blocks.local_drive", "LocalDriveBlock"),
+    "google_drive": ("app.blocks.google_drive", "GoogleDriveBlock"),
+    "onedrive": ("app.blocks.onedrive", "OneDriveBlock"),
+    "android_drive": ("app.blocks.android_drive", "AndroidDriveBlock"),
+    "storage": ("app.blocks.storage", "StorageBlock"),
+    "context_broker": ("app.blocks.context_broker", "ContextBrokerBlock"),
+    "capture": ("app.blocks.capture", "CaptureBlock"),
+    "agent_swarm": ("app.blocks.agent_swarm", "AgentSwarmBlock"),
+    "workflow": ("app.blocks.workflow", "WorkflowBlock"),
+    "knowledge": ("app.blocks.knowledge", "KnowledgeBlock"),
+    "queue": ("app.blocks.queue", "QueueBlock"),
+    "auth": ("app.blocks.auth", "AuthBlock"),
+    "audit": ("app.blocks.audit", "AuditBlock"),
+    "team": ("app.blocks.team", "TeamBlock"),
+    "version": ("app.blocks.version", "VersionBlock"),
+    "health_check": ("app.blocks.health_check", "HealthCheckBlock"),
+    "monitoring": ("app.blocks.monitoring", "MonitoringBlock"),
+    "rate_limiter": ("app.blocks.rate_limiter", "RateLimiterBlock"),
+    "validation": ("app.blocks.validation", "ValidationBlock"),
+    "error_tracking": ("app.blocks.error_tracking", "ErrorTrackingBlock"),
+    "webhook": ("app.blocks.webhook", "WebhookBlock"),
+    "notification": ("app.blocks.notification", "NotificationBlock"),
+    "analytics": ("app.blocks.analytics", "AnalyticsBlock"),
+    "discovery": ("app.blocks.discovery", "DiscoveryBlock"),
+    "dashboard": ("app.blocks.dashboard", "DashboardBlock"),
+    "sandbox": ("app.blocks.sandbox", "SandboxBlock"),
+    "failover": ("app.blocks.failover", "FailoverBlock"),
+    "traffic_manager": ("app.blocks.traffic_manager", "TrafficManagerBlock"),
+    "adaptive_router": ("app.blocks.adaptive_router", "AdaptiveRouterBlock"),
+    "review": ("app.blocks.review", "ReviewBlock"),
+    "payment_split": ("app.blocks.payment_split", "PaymentSplitBlock"),
+    "documentation": ("app.blocks.documentation", "DocumentationBlock"),
+    "config": ("app.blocks.config", "ConfigBlock"),
+    "database": ("app.blocks.database", "DatabaseBlock"),
+    "vector": ("app.blocks.vector", "VectorBlock"),
+    "billing": ("app.blocks.billing", "BillingBlock"),
+    "email": ("app.blocks.email", "EmailBlock"),
+    "migration": ("app.blocks.migration", "MigrationBlock"),
+    "event_bus": ("app.blocks.event_bus", "EventBusBlock"),
+    "secrets": ("app.blocks.secrets", "SecretsBlock"),
+    "skills": ("app.blocks.skills", "SkillsBlock"),
+    "library_container": ("app.blocks.library_container", "LibraryContainerBlock"),
+}
+
+
+def _legacy_boot() -> bool:
+    return os.getenv("CEREBRUM_VIRGIN", "true").strip().lower() in ("0", "false", "no")
+
+
+def _build_block_defs() -> Dict[str, Tuple[str, str]]:
+    from app.core.domain_kit_loader import kit_block_specs, verify_installed_containers
+
+    verify_installed_containers()
+    defs = dict(_GENERIC_BLOCK_DEFS)
+    if _legacy_boot():
+        defs.update(_EXTENDED_BLOCK_DEFS)
+    for name, module, class_name in kit_block_specs():
+        defs[name] = (module, class_name)
+    return defs
+
+
+_BLOCK_DEFS: Dict[str, Tuple[str, str]] = _build_block_defs()
 
 
 class _LazyBlockRegistry:

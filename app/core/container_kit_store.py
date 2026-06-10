@@ -138,6 +138,8 @@ def install_kit(
     }
     _save_install_state(state)
 
+    registry_entry = _register_kit_on_target(kit_id, manifest, target)
+
     return {
         "status": "success",
         "kit_id": kit_id,
@@ -146,7 +148,47 @@ def install_kit(
         "copied": copied,
         "skipped": skipped,
         "installed_at": state["kits"][kit_id]["installed_at"],
+        "registry": registry_entry,
     }
+
+
+def _register_kit_on_target(
+    kit_id: str, manifest: dict[str, Any], target: Path
+) -> dict[str, Any]:
+    """Write domain_kit_registry.json on the install target for boot-time registration."""
+    container = manifest.get("container") or {}
+    container_class = container.get("class", "")
+    blocks = manifest.get("blocks") or []
+    version = manifest.get("version")
+
+    registry_path = target / "data" / "domain_kit_registry.json"
+    if registry_path.exists():
+        with open(registry_path, encoding="utf-8") as f:
+            registry = json.load(f)
+    else:
+        registry = {"kits": {}}
+    registry.setdefault("kits", {})
+    registry["kits"][kit_id] = {
+        "container_class": container_class,
+        "blocks": blocks,
+        "version": version,
+    }
+    registry_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(registry_path, "w", encoding="utf-8") as f:
+        json.dump(registry, f, indent=2)
+
+    return registry["kits"][kit_id]
+
+
+def _unregister_kit_on_target(kit_id: str, target: Path) -> None:
+    registry_path = target / "data" / "domain_kit_registry.json"
+    if not registry_path.exists():
+        return
+    with open(registry_path, encoding="utf-8") as f:
+        registry = json.load(f)
+    registry.get("kits", {}).pop(kit_id, None)
+    with open(registry_path, "w", encoding="utf-8") as f:
+        json.dump(registry, f, indent=2)
 
 
 def uninstall_kit(kit_id: str, *, target_root: Path | None = None) -> dict[str, Any]:
@@ -163,6 +205,8 @@ def uninstall_kit(kit_id: str, *, target_root: Path | None = None) -> dict[str, 
         if path.exists():
             path.unlink()
             removed.append(rel_path)
+
+    _unregister_kit_on_target(kit_id, target)
 
     del state["kits"][kit_id]
     _save_install_state(state)
