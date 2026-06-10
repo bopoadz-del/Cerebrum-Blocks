@@ -14,13 +14,6 @@
       "description": "Upload image to extract text..."
     },
     {
-      "name": "language",
-      "type": "string",
-      "required": false,
-      "description": "OCR language",
-      "default": "eng"
-    },
-    {
       "name": "languages",
       "type": "array",
       "required": false,
@@ -72,11 +65,6 @@
       "name": "input",
       "widget": "file",
       "label": "Upload image to extract text..."
-    },
-    {
-      "name": "language",
-      "widget": "text",
-      "label": "OCR language"
     },
     {
       "name": "languages",

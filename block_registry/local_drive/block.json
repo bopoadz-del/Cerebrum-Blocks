@@ -1,9 +1,9 @@
 {
   "id": "local_drive",
   "name": "Local Drive",
-  "version": "2.0",
+  "version": "1.1",
   "author": "Cerebrum Team",
-  "description": "Sandboxed read-only directory listing within DATA_DIR.",
+  "description": "Sandboxed local filesystem access: list, read, write files",
   "layer": 4,
   "requires": [],
   "inputs": [
@@ -11,7 +11,7 @@
       "name": "input",
       "type": "file",
       "required": false,
-      "description": "Browse server files..."
+      "description": "Browse local files..."
     }
   ],
   "outputs": [
@@ -34,7 +34,7 @@
     {
       "name": "input",
       "widget": "file",
-      "label": "Browse server files..."
+      "label": "Browse local files..."
     }
   ],
   "tags": [

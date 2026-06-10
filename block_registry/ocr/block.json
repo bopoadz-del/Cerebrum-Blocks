@@ -33,7 +33,7 @@
       "name": "deskew",
       "type": "boolean",
       "required": false,
-      "default": false,
+      "default": true,
       "description": "Configuration parameter: deskew"
     },
     {

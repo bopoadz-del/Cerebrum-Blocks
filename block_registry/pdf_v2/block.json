@@ -5,7 +5,9 @@
   "author": "Cerebrum Team",
   "description": "Extract text from PDF files with typed output",
   "layer": 3,
-  "requires": [],
+  "requires": [
+    "ocr"
+  ],
   "inputs": [
     {
       "name": "input",
@@ -17,22 +19,29 @@
       "name": "extract_tables",
       "type": "boolean",
       "required": false,
-      "description": "Extract tables",
-      "default": true
+      "default": true,
+      "description": "Configuration parameter: extract_tables"
     },
     {
       "name": "max_pages",
       "type": "number",
       "required": false,
-      "description": "Max pages",
-      "default": 100
+      "default": 100,
+      "description": "Configuration parameter: max_pages"
     },
     {
       "name": "text_limit",
       "type": "number",
       "required": false,
-      "description": "Text limit",
-      "default": 20000
+      "default": 20000,
+      "description": "Configuration parameter: text_limit"
+    },
+    {
+      "name": "ocr_fallback_min_chars",
+      "type": "number",
+      "required": false,
+      "default": 200,
+      "description": "Configuration parameter: ocr_fallback_min_chars"
     }
   ],
   "outputs": [
@@ -65,17 +74,22 @@
     {
       "name": "extract_tables",
       "widget": "toggle",
-      "label": "Extract tables"
+      "label": "Extract Tables"
     },
     {
       "name": "max_pages",
       "widget": "number",
-      "label": "Max pages"
+      "label": "Max Pages"
     },
     {
       "name": "text_limit",
       "widget": "number",
-      "label": "Text limit"
+      "label": "Text Limit"
+    },
+    {
+      "name": "ocr_fallback_min_chars",
+      "widget": "number",
+      "label": "Ocr Fallback Min Chars"
     }
   ],
   "tags": [

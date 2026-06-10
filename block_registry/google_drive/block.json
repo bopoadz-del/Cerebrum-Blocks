@@ -3,7 +3,7 @@
   "name": "Google Drive",
   "version": "2.0",
   "author": "Cerebrum Team",
-  "description": "Google Drive file operations \u2014 set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + GOOGLE_REFRESH_TOKEN or GOOGLE_ACCESS_TOKEN",
+  "description": "Google Drive file operations \u2014 set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET or GOOGLE_ACCESS_TOKEN",
   "layer": 4,
   "requires": [],
   "inputs": [

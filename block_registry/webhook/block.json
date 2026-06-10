@@ -5,57 +5,40 @@
   "author": "Cerebrum Team",
   "description": "",
   "layer": 5,
-  "requires": [
-    "config",
-    "queue"
-  ],
+  "requires": [],
   "inputs": [
     {
       "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "Webhook URL, events, payload"
-    },
-    {
-      "name": "action",
       "type": "string",
       "required": false,
-      "description": "Action",
-      "default": "register",
-      "options": [
-        "register",
-        "send",
-        "trigger",
-        "list"
-      ]
+      "description": "Enter your request..."
     },
     {
       "name": "timeout",
       "type": "number",
       "required": false,
-      "description": "Timeout",
-      "default": 30
+      "default": 30,
+      "description": "Configuration parameter: timeout"
     },
     {
       "name": "retries",
       "type": "number",
       "required": false,
-      "description": "Retries",
-      "default": 3
+      "default": 3,
+      "description": "Configuration parameter: retries"
     },
     {
       "name": "verify_ssl",
       "type": "boolean",
       "required": false,
-      "description": "Verify Ssl",
-      "default": true
+      "default": true,
+      "description": "Configuration parameter: verify_ssl"
     }
   ],
   "outputs": [
     {
       "name": "result",
-      "type": "json",
-      "description": "Result"
+      "type": "json"
     }
   ],
   "execution": {
@@ -65,19 +48,8 @@
   "ui_schema": [
     {
       "name": "input",
-      "widget": "json",
-      "label": "Webhook URL, events, payload"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "register",
-        "send",
-        "trigger",
-        "list"
-      ]
+      "widget": "text",
+      "label": "Enter your request..."
     },
     {
       "name": "timeout",

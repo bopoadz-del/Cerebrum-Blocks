@@ -1,9 +1,11 @@
 {
   "id": "image",
   "name": "Image",
-  "version": "2.0",
+  "version": "3.0",
   "author": "Cerebrum Team",
-  "description": "Analyze images with Claude Vision AI, generate images with Stability AI, or extract basic metadata",
+  "description": "Local image analysis \u2014 metadata + OCR (no cloud vision)",
+  "layer": 3,
+  "requires": [],
   "inputs": [
     {
       "name": "input",
@@ -19,9 +21,14 @@
       "description": "Analysis"
     },
     {
-      "name": "objects_detected",
-      "type": "array",
-      "description": "Objects"
+      "name": "extracted_text",
+      "type": "text",
+      "description": "Text"
+    },
+    {
+      "name": "metadata",
+      "type": "object",
+      "description": "Metadata"
     }
   ],
   "execution": {
@@ -38,8 +45,7 @@
   "tags": [
     "domain",
     "vision",
-    "image"
-  ],
-  "layer": 3,
-  "requires": []
+    "image",
+    "local"
+  ]
 }

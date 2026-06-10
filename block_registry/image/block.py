@@ -24,6 +24,11 @@ def _run_async(coro):
 
 
 def run(**kwargs):
+    """
+    Execute the image block.
+    Accepts keyword args matching the block's inputs/params.
+    Returns the standardized block result payload.
+    """
     block_cls = BLOCK_REGISTRY["image"]
     instance = block_cls()
 
@@ -34,6 +39,6 @@ def run(**kwargs):
     if envelope.get("status") == "error":
         inner = envelope.get("result", {})
         message = inner.get("error") if isinstance(inner, dict) else str(inner)
-        raise RuntimeError(message or "image block failed")
+        raise RuntimeError(message or f"image block failed")
 
     return envelope.get("result", envelope)
