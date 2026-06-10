@@ -29,6 +29,7 @@ _GENERIC_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "vector_search": ("app.blocks.vector_search", "VectorSearchBlock"),
     "zvec": ("app.blocks.zvec", "ZvecBlock"),
     "cache_manager": ("app.blocks.cache_manager", "CacheManagerBlock"),
+    "memory": ("app.blocks.memory", "MemoryBlock"),
     "file_hasher": ("app.blocks.file_hasher", "FileHasherBlock"),
     "orchestrator": ("app.blocks.orchestrator", "OrchestratorBlock"),
     "validation_pipeline": ("app.blocks.validation_pipeline", "ValidationPipelineBlock"),

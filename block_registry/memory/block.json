@@ -1,0 +1,108 @@
+{
+  "id": "memory",
+  "name": "Memory",
+  "version": "1.0.0",
+  "author": "Cerebrum Team",
+  "description": "High-speed TTL/LRU cache — session storage and Redis alternative for edge deployments",
+  "layer": 1,
+  "requires": [
+    "config"
+  ],
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Cache key/value payload, e.g. {\"key\": \"session\", \"value\": {...}}"
+    },
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "description": "Action",
+      "default": "get",
+      "options": [
+        "get",
+        "set",
+        "delete",
+        "exists",
+        "flush",
+        "stats",
+        "keys"
+      ]
+    },
+    {
+      "name": "max_size",
+      "type": "number",
+      "required": false,
+      "description": "Max Size",
+      "default": 10000
+    },
+    {
+      "name": "default_ttl",
+      "type": "number",
+      "required": false,
+      "description": "Default Ttl",
+      "default": 3600
+    },
+    {
+      "name": "cleanup_interval",
+      "type": "number",
+      "required": false,
+      "description": "Cleanup Interval",
+      "default": 300
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Result"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/memory:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "json",
+      "label": "Cache key/value payload, e.g. {\"key\": \"session\", \"value\": {...}}"
+    },
+    {
+      "name": "action",
+      "widget": "select",
+      "label": "Action",
+      "options": [
+        "get",
+        "set",
+        "delete",
+        "exists",
+        "flush",
+        "stats",
+        "keys"
+      ]
+    },
+    {
+      "name": "max_size",
+      "widget": "number",
+      "label": "Max Size"
+    },
+    {
+      "name": "default_ttl",
+      "widget": "number",
+      "label": "Default Ttl"
+    },
+    {
+      "name": "cleanup_interval",
+      "widget": "number",
+      "label": "Cleanup Interval"
+    }
+  ],
+  "tags": [
+    "security",
+    "cache",
+    "infrastructure"
+  ]
+}
