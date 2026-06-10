@@ -3,9 +3,11 @@
 import pytest
 import os
 import sys
+from pathlib import Path
 
 # Add app to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 # Activate dev mode for the test session so cb_dev_key is loaded.
 # The auth module no longer auto-detects pytest via sys.modules (that
@@ -13,6 +15,25 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Tests that need an authenticated client must declare themselves
 # tests via this env var.
 os.environ.setdefault("ENV", "test")
+
+CONSTRUCTION_CONTAINER_PATH = ROOT / "app" / "containers" / "construction.py"
+CONSTRUCTION_V2_PATH = ROOT / "app" / "blocks" / "construction_v2.py"
+
+requires_construction_kit = pytest.mark.skipif(
+    not CONSTRUCTION_CONTAINER_PATH.exists(),
+    reason=(
+        "Construction kit not installed — run POST /store/containers/construction/install "
+        "or copy from block_store/kits/construction/bundle/"
+    ),
+)
+
+requires_construction_v2 = pytest.mark.skipif(
+    not CONSTRUCTION_V2_PATH.exists(),
+    reason=(
+        "construction_v2 not installed — install construction kit from block_store "
+        "or set CEREBRUM_DOMAIN_KITS=construction after install"
+    ),
+)
 
 @pytest.fixture
 def sample_text():

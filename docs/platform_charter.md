@@ -74,12 +74,13 @@ First published kit. Source of truth: Fork `main`.
 
 | Item | Path |
 |------|------|
-| Container | `app/containers/construction.py` (v3.1, monolith) |
+| Bundle (source of truth) | `block_store/kits/construction/bundle/` |
+| Container (after install) | `app/containers/construction.py` (v3.1, monolith) |
 | Manifest | `block_store/kits/construction/manifest.json` |
 | Publish | `python scripts/publish_construction_kit.py --fork-root <Fork>` |
 | Install | `POST /store/containers/construction/install` |
 
-Thirty-two artifacts copy to consumer `app/` tree (container monolith, 15 domain blocks, reasoning/formula support modules, prompts, and data). Install registers the container plus 18 kit blocks (including `bim`, `formula_executor_v2`, `project_reasoner`) in `data/domain_kit_registry.json`; generic `pdf`/`ocr`/`image` remain platform blocks.
+Virgin CB ships **no** construction code under `app/` — only the kit bundle in `block_store/kits/construction/`. Install copies thirty-two artifacts into the consumer `app/` tree (container monolith, 15 domain blocks, reasoning/formula support modules, prompts, and data) and registers the container plus 18 kit blocks in `data/domain_kit_registry.json`; generic `pdf`/`ocr`/`image` remain platform blocks.
 
 ---
 

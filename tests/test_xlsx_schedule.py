@@ -16,6 +16,15 @@ from datetime import datetime
 import pytest
 from openpyxl import Workbook
 
+from tests.conftest import CONSTRUCTION_CONTAINER_PATH
+
+if not CONSTRUCTION_CONTAINER_PATH.exists():
+    pytest.skip(
+        "Construction kit not installed — run store install or copy from "
+        "block_store/kits/construction/bundle/",
+        allow_module_level=True,
+    )
+
 from app.containers.construction import ConstructionContainer
 
 

@@ -2,11 +2,22 @@
 
 Pinned against the bugs the audits found and fixed in commits b97e208d
 and 61de979e. Each test names the issue tag (C1, C2, etc.) it guards.
+
+Requires construction kit install (virgin CB ships bundle only).
 """
 
 from __future__ import annotations
 
 import pytest
+
+from tests.conftest import CONSTRUCTION_CONTAINER_PATH
+
+if not CONSTRUCTION_CONTAINER_PATH.exists():
+    pytest.skip(
+        "Construction kit not installed — run store install or copy from "
+        "block_store/kits/construction/bundle/",
+        allow_module_level=True,
+    )
 
 from app.containers.construction import (
     ConstructionContainer,

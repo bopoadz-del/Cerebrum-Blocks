@@ -229,8 +229,7 @@ async def init_blocks():
         targets = list(BLOCK_REGISTRY.keys())
     else:
         targets = [
-            "chat", "pdf", "ocr", "construction", "zvec",
-            "smart_orchestrator", "skills",
+            "chat", "pdf", "ocr", "zvec", "skills",
         ]
 
     def _warm_target(name: str) -> None:

@@ -9,8 +9,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from app.blocks.pdf_v2 import PDFBlockV2
 from app.blocks.ocr_v2 import OCRBlockV2
-from app.blocks.construction_v2 import ConstructionBlockV2
 from app.blocks.chat import ChatBlock
+
+from tests.conftest import CONSTRUCTION_V2_PATH
+
+
+def _construction_v2_or_skip():
+    if not CONSTRUCTION_V2_PATH.exists():
+        print("\n⏭️  Skipping construction_v2 tests — kit not installed")
+        return None
+    from app.blocks.construction_v2 import ConstructionBlockV2
+    return ConstructionBlockV2
 
 
 async def test_pdf_v2():
@@ -83,6 +92,10 @@ async def test_ocr_v2():
 
 async def test_construction_v2():
     """Test Construction v2 block accepts TextContent and outputs ConstructionAnalysis"""
+    ConstructionBlockV2 = _construction_v2_or_skip()
+    if ConstructionBlockV2 is None:
+        return None
+
     print("\n" + "=" * 60)
     print("TEST 3: Construction v2 Block")
     print("=" * 60)
@@ -145,6 +158,10 @@ async def test_construction_v2():
 
 async def test_chain_pdf_construction():
     """Test the chain: PDF → Construction → Chat"""
+    ConstructionBlockV2 = _construction_v2_or_skip()
+    if ConstructionBlockV2 is None:
+        return None
+
     print("\n" + "=" * 60)
     print("TEST 4: Chain - pdf_v2 → construction_v2")
     print("=" * 60)
@@ -196,6 +213,10 @@ async def test_chain_pdf_construction():
 
 async def test_type_compatibility():
     """Test type compatibility between blocks"""
+    ConstructionBlockV2 = _construction_v2_or_skip()
+    if ConstructionBlockV2 is None:
+        return None
+
     print("\n" + "=" * 60)
     print("TEST 5: Type Compatibility")
     print("=" * 60)
@@ -247,8 +268,11 @@ async def run_all_tests():
         print("\nSummary:")
         print("- pdf_v2: Returns TextContent format ✓")
         print("- ocr_v2: Returns TextContent format ✓")
-        print("- construction_v2: Accepts TextContent, outputs ConstructionAnalysis ✓")
-        print("- Chain pdf_v2 → construction_v2: Compatible ✓")
+        if CONSTRUCTION_V2_PATH.exists():
+            print("- construction_v2: Accepts TextContent, outputs ConstructionAnalysis ✓")
+            print("- Chain pdf_v2 → construction_v2: Compatible ✓")
+        else:
+            print("- construction_v2: skipped (kit not installed)")
         
     except Exception as e:
         print(f"\n❌ TEST FAILED: {e}")
