@@ -32,8 +32,8 @@ if str(ROOT) not in sys.path:
 
 asyncpg = pytest.importorskip("asyncpg")
 
-from app.blocks import historical_benchmark as hb_mod  # noqa: E402
-from app.blocks.historical_benchmark import (  # noqa: E402
+from tests._fixtures import historical_benchmark as hb_mod  # noqa: E402
+from tests._fixtures.historical_benchmark import (  # noqa: E402
     HistoricalBenchmarkBlock,
     _PostgresStore,
 )

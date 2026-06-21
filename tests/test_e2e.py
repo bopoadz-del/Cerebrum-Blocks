@@ -236,11 +236,14 @@ class TestCoreBlocks:
         assert "status" in r
 
     @pytest.mark.asyncio
-    async def test_local_drive_block(self):
+    async def test_local_drive_block(self, monkeypatch):
+        import tempfile
         from app.blocks.local_drive import LocalDriveBlock
-        b = LocalDriveBlock()
-        r = await b.execute("/tmp", {"action": "list"})
-        assert r.get("status") == "success"
+        with tempfile.TemporaryDirectory() as tmp:
+            monkeypatch.setenv("LOCAL_DRIVE_ROOT", tmp)
+            b = LocalDriveBlock()
+            r = await b.execute(".", {"action": "list"})
+            assert r.get("status") == "success"
 
     @pytest.mark.asyncio
     async def test_code_block(self):
@@ -373,7 +376,7 @@ class TestConstructionBlocks:
 
     @pytest.mark.asyncio
     async def test_historical_benchmark_lookup(self):
-        from app.blocks.historical_benchmark import HistoricalBenchmarkBlock
+        from tests._fixtures.historical_benchmark import HistoricalBenchmarkBlock
         b = HistoricalBenchmarkBlock()
         r = await b.execute({"items": [{"item_key": "concrete_c35"}, {"item_key": "rebar_500"}]}, {})
         assert r["status"] == "success"
@@ -386,7 +389,7 @@ class TestConstructionBlocks:
 
     @pytest.mark.asyncio
     async def test_historical_benchmark_all_packages(self):
-        from app.blocks.historical_benchmark import HistoricalBenchmarkBlock
+        from tests._fixtures.historical_benchmark import HistoricalBenchmarkBlock
         b = HistoricalBenchmarkBlock()
         r = await b.execute({}, {"operation": "all"})
         inner = _r(r)
