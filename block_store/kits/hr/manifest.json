@@ -1,0 +1,68 @@
+{
+  "id": "hr",
+  "name": "Human Resources & Recruitment Suite",
+  "version": "1.0.0",
+  "description": "Human Resources & Recruitment Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the hr domain.",
+  "status": "available",
+  "author": "bopoadz-del",
+  "tags": [
+    "domain",
+    "container",
+    "hr"
+  ],
+  "source": {
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
+    "ref": "main",
+    "publish_script": "scripts/publish_kit.py"
+  },
+  "container": {
+    "class": "app.containers.hr.HRContainer",
+    "default_chat_prompt": null
+  },
+  "blocks": [
+    "pdf",
+    "ocr",
+    "chat",
+    "image",
+    "hr_v2"
+  ],
+  "prompts": [],
+  "data": [],
+  "core_modules": [
+    "app/core/hr_knowledge.py",
+    "app/core/hr_types.py",
+    "app/core/confidence.py",
+    "app/core/schema_registry.py"
+  ],
+  "artifacts": [
+    {
+      "src": "app/containers/hr.py",
+      "dest": "app/containers/hr.py"
+    },
+    {
+      "src": "app/blocks/hr_v2.py",
+      "dest": "app/blocks/hr_v2.py"
+    },
+    {
+      "src": "app/core/hr_knowledge.py",
+      "dest": "app/core/hr_knowledge.py"
+    },
+    {
+      "src": "app/core/hr_types.py",
+      "dest": "app/core/hr_types.py"
+    },
+    {
+      "src": "app/core/confidence.py",
+      "dest": "app/core/confidence.py"
+    },
+    {
+      "src": "app/core/schema_registry.py",
+      "dest": "app/core/schema_registry.py"
+    }
+  ],
+  "price_cents": 0,
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  }
+}

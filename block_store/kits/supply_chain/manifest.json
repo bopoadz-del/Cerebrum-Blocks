@@ -1,0 +1,68 @@
+{
+  "id": "supply_chain",
+  "name": "Supply Chain & Logistics Suite",
+  "version": "1.0.0",
+  "description": "Supply Chain & Logistics Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the supply chain domain.",
+  "status": "available",
+  "author": "bopoadz-del",
+  "tags": [
+    "domain",
+    "container",
+    "supply_chain"
+  ],
+  "source": {
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
+    "ref": "main",
+    "publish_script": "scripts/publish_kit.py"
+  },
+  "container": {
+    "class": "app.containers.supply_chain.SupplyChainContainer",
+    "default_chat_prompt": null
+  },
+  "blocks": [
+    "pdf",
+    "ocr",
+    "chat",
+    "image",
+    "supply_chain_v2"
+  ],
+  "prompts": [],
+  "data": [],
+  "core_modules": [
+    "app/core/supply_chain_knowledge.py",
+    "app/core/supply_chain_types.py",
+    "app/core/confidence.py",
+    "app/core/schema_registry.py"
+  ],
+  "artifacts": [
+    {
+      "src": "app/containers/supply_chain.py",
+      "dest": "app/containers/supply_chain.py"
+    },
+    {
+      "src": "app/blocks/supply_chain_v2.py",
+      "dest": "app/blocks/supply_chain_v2.py"
+    },
+    {
+      "src": "app/core/supply_chain_knowledge.py",
+      "dest": "app/core/supply_chain_knowledge.py"
+    },
+    {
+      "src": "app/core/supply_chain_types.py",
+      "dest": "app/core/supply_chain_types.py"
+    },
+    {
+      "src": "app/core/confidence.py",
+      "dest": "app/core/confidence.py"
+    },
+    {
+      "src": "app/core/schema_registry.py",
+      "dest": "app/core/schema_registry.py"
+    }
+  ],
+  "price_cents": 0,
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  }
+}

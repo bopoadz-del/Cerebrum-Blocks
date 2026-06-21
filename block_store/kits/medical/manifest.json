@@ -1,20 +1,19 @@
 {
   "id": "medical",
   "name": "Medical & Healthcare Suite",
-  "version": "0.0.0-skeleton",
-  "description": "Clinical workflows, patient records intelligence, and healthcare compliance blocks. Skeleton \u2014 not yet published.",
-  "status": "draft",
+  "version": "1.0.0",
+  "description": "Medical & Healthcare Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the medical domain.",
+  "status": "available",
   "author": "bopoadz-del",
   "tags": [
     "domain",
     "container",
-    "medical",
-    "healthcare"
+    "medical"
   ],
   "source": {
-    "repo": "https://github.com/bopoadz-del/The_Fork",
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
     "ref": "main",
-    "publish_script": null
+    "publish_script": "scripts/publish_kit.py"
   },
   "container": {
     "class": "app.containers.medical.MedicalContainer",
@@ -24,53 +23,46 @@
     "pdf",
     "ocr",
     "chat",
-    "medical_container",
-    "medical_ehr_connector",
-    "clinical_trigger"
+    "image",
+    "medical_v2"
   ],
-  "prompts": [
-    "prompts/medical_expert.txt",
-    "prompts/medical_workflow.md"
-  ],
+  "prompts": [],
   "data": [],
   "core_modules": [
-    "knowledge.py",
-    "types.py"
+    "app/core/medical_knowledge.py",
+    "app/core/medical_types.py",
+    "app/core/confidence.py",
+    "app/core/schema_registry.py"
   ],
-  "artifacts": [],
+  "artifacts": [
+    {
+      "src": "app/containers/medical.py",
+      "dest": "app/containers/medical.py"
+    },
+    {
+      "src": "app/blocks/medical_v2.py",
+      "dest": "app/blocks/medical_v2.py"
+    },
+    {
+      "src": "app/core/medical_knowledge.py",
+      "dest": "app/core/medical_knowledge.py"
+    },
+    {
+      "src": "app/core/medical_types.py",
+      "dest": "app/core/medical_types.py"
+    },
+    {
+      "src": "app/core/confidence.py",
+      "dest": "app/core/confidence.py"
+    },
+    {
+      "src": "app/core/schema_registry.py",
+      "dest": "app/core/schema_registry.py"
+    }
+  ],
   "price_cents": 0,
   "install_requires": {
     "min_platform_version": "2.0.0",
     "python": ">=3.10"
-  },
-  "skeleton_artifacts": [
-    {
-      "src": "container.py",
-      "dest": "app/containers/medical.py"
-    },
-    {
-      "src": "knowledge.py",
-      "dest": "app/core/medical_knowledge.py"
-    },
-    {
-      "src": "types.py",
-      "dest": "app/core/medical_types.py"
-    },
-    {
-      "src": "blocks/medical_ehr_connector.py",
-      "dest": "app/blocks/medical_ehr_connector.py"
-    },
-    {
-      "src": "prompts/medical_expert.txt",
-      "dest": "app/prompts/medical_expert.txt"
-    },
-    {
-      "src": "prompts/medical_workflow.md",
-      "dest": "app/prompts/medical_workflow.md"
-    },
-    {
-      "src": "blocks/clinical_trigger.py",
-      "dest": "app/blocks/clinical_trigger.py"
-    }
-  ]
+  }
 }

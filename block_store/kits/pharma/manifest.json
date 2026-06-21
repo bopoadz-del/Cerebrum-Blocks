@@ -1,0 +1,68 @@
+{
+  "id": "pharma",
+  "name": "Pharmaceuticals & Life Sciences Suite",
+  "version": "1.0.0",
+  "description": "Pharmaceuticals & Life Sciences Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the pharma domain.",
+  "status": "available",
+  "author": "bopoadz-del",
+  "tags": [
+    "domain",
+    "container",
+    "pharma"
+  ],
+  "source": {
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
+    "ref": "main",
+    "publish_script": "scripts/publish_kit.py"
+  },
+  "container": {
+    "class": "app.containers.pharma.PharmaContainer",
+    "default_chat_prompt": null
+  },
+  "blocks": [
+    "pdf",
+    "ocr",
+    "chat",
+    "image",
+    "pharma_v2"
+  ],
+  "prompts": [],
+  "data": [],
+  "core_modules": [
+    "app/core/pharma_knowledge.py",
+    "app/core/pharma_types.py",
+    "app/core/confidence.py",
+    "app/core/schema_registry.py"
+  ],
+  "artifacts": [
+    {
+      "src": "app/containers/pharma.py",
+      "dest": "app/containers/pharma.py"
+    },
+    {
+      "src": "app/blocks/pharma_v2.py",
+      "dest": "app/blocks/pharma_v2.py"
+    },
+    {
+      "src": "app/core/pharma_knowledge.py",
+      "dest": "app/core/pharma_knowledge.py"
+    },
+    {
+      "src": "app/core/pharma_types.py",
+      "dest": "app/core/pharma_types.py"
+    },
+    {
+      "src": "app/core/confidence.py",
+      "dest": "app/core/confidence.py"
+    },
+    {
+      "src": "app/core/schema_registry.py",
+      "dest": "app/core/schema_registry.py"
+    }
+  ],
+  "price_cents": 0,
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  }
+}

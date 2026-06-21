@@ -1,0 +1,68 @@
+{
+  "id": "aviation",
+  "name": "Aviation & Aerospace Suite",
+  "version": "1.0.0",
+  "description": "Aviation & Aerospace Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the aviation domain.",
+  "status": "available",
+  "author": "bopoadz-del",
+  "tags": [
+    "domain",
+    "container",
+    "aviation"
+  ],
+  "source": {
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
+    "ref": "main",
+    "publish_script": "scripts/publish_kit.py"
+  },
+  "container": {
+    "class": "app.containers.aviation.AviationContainer",
+    "default_chat_prompt": null
+  },
+  "blocks": [
+    "pdf",
+    "ocr",
+    "chat",
+    "image",
+    "aviation_v2"
+  ],
+  "prompts": [],
+  "data": [],
+  "core_modules": [
+    "app/core/aviation_knowledge.py",
+    "app/core/aviation_types.py",
+    "app/core/confidence.py",
+    "app/core/schema_registry.py"
+  ],
+  "artifacts": [
+    {
+      "src": "app/containers/aviation.py",
+      "dest": "app/containers/aviation.py"
+    },
+    {
+      "src": "app/blocks/aviation_v2.py",
+      "dest": "app/blocks/aviation_v2.py"
+    },
+    {
+      "src": "app/core/aviation_knowledge.py",
+      "dest": "app/core/aviation_knowledge.py"
+    },
+    {
+      "src": "app/core/aviation_types.py",
+      "dest": "app/core/aviation_types.py"
+    },
+    {
+      "src": "app/core/confidence.py",
+      "dest": "app/core/confidence.py"
+    },
+    {
+      "src": "app/core/schema_registry.py",
+      "dest": "app/core/schema_registry.py"
+    }
+  ],
+  "price_cents": 0,
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  }
+}

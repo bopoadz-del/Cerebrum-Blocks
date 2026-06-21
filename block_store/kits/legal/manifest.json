@@ -1,0 +1,68 @@
+{
+  "id": "legal",
+  "name": "Legal & Contracts Suite",
+  "version": "1.0.0",
+  "description": "Legal & Contracts Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the legal domain.",
+  "status": "available",
+  "author": "bopoadz-del",
+  "tags": [
+    "domain",
+    "container",
+    "legal"
+  ],
+  "source": {
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
+    "ref": "main",
+    "publish_script": "scripts/publish_kit.py"
+  },
+  "container": {
+    "class": "app.containers.legal.LegalContainer",
+    "default_chat_prompt": null
+  },
+  "blocks": [
+    "pdf",
+    "ocr",
+    "chat",
+    "image",
+    "legal_v2"
+  ],
+  "prompts": [],
+  "data": [],
+  "core_modules": [
+    "app/core/legal_knowledge.py",
+    "app/core/legal_types.py",
+    "app/core/confidence.py",
+    "app/core/schema_registry.py"
+  ],
+  "artifacts": [
+    {
+      "src": "app/containers/legal.py",
+      "dest": "app/containers/legal.py"
+    },
+    {
+      "src": "app/blocks/legal_v2.py",
+      "dest": "app/blocks/legal_v2.py"
+    },
+    {
+      "src": "app/core/legal_knowledge.py",
+      "dest": "app/core/legal_knowledge.py"
+    },
+    {
+      "src": "app/core/legal_types.py",
+      "dest": "app/core/legal_types.py"
+    },
+    {
+      "src": "app/core/confidence.py",
+      "dest": "app/core/confidence.py"
+    },
+    {
+      "src": "app/core/schema_registry.py",
+      "dest": "app/core/schema_registry.py"
+    }
+  ],
+  "price_cents": 0,
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  }
+}

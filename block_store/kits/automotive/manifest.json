@@ -1,0 +1,68 @@
+{
+  "id": "automotive",
+  "name": "Automotive & Mobility Suite",
+  "version": "1.0.0",
+  "description": "Automotive & Mobility Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the automotive domain.",
+  "status": "available",
+  "author": "bopoadz-del",
+  "tags": [
+    "domain",
+    "container",
+    "automotive"
+  ],
+  "source": {
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
+    "ref": "main",
+    "publish_script": "scripts/publish_kit.py"
+  },
+  "container": {
+    "class": "app.containers.automotive.AutomotiveContainer",
+    "default_chat_prompt": null
+  },
+  "blocks": [
+    "pdf",
+    "ocr",
+    "chat",
+    "image",
+    "automotive_v2"
+  ],
+  "prompts": [],
+  "data": [],
+  "core_modules": [
+    "app/core/automotive_knowledge.py",
+    "app/core/automotive_types.py",
+    "app/core/confidence.py",
+    "app/core/schema_registry.py"
+  ],
+  "artifacts": [
+    {
+      "src": "app/containers/automotive.py",
+      "dest": "app/containers/automotive.py"
+    },
+    {
+      "src": "app/blocks/automotive_v2.py",
+      "dest": "app/blocks/automotive_v2.py"
+    },
+    {
+      "src": "app/core/automotive_knowledge.py",
+      "dest": "app/core/automotive_knowledge.py"
+    },
+    {
+      "src": "app/core/automotive_types.py",
+      "dest": "app/core/automotive_types.py"
+    },
+    {
+      "src": "app/core/confidence.py",
+      "dest": "app/core/confidence.py"
+    },
+    {
+      "src": "app/core/schema_registry.py",
+      "dest": "app/core/schema_registry.py"
+    }
+  ],
+  "price_cents": 0,
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  }
+}

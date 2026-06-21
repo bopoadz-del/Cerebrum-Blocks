@@ -1,72 +1,68 @@
 {
   "id": "finance",
   "name": "Finance & Investment Suite",
-  "version": "0.0.0-skeleton",
-  "description": "Portfolio analysis, financial modeling, and investment research blocks. Coming soon.",
-  "status": "coming_soon",
+  "version": "1.0.0",
+  "description": "Finance & Investment Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the finance domain.",
+  "status": "available",
   "author": "bopoadz-del",
   "tags": [
     "domain",
     "container",
-    "finance",
-    "investment"
+    "finance"
   ],
-  "blocks": [
-    "market_data_connector",
-    "sec_edgar_connector"
-  ],
-  "artifacts": [],
-  "price_cents": 0,
+  "source": {
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
+    "ref": "main",
+    "publish_script": "scripts/publish_kit.py"
+  },
   "container": {
     "class": "app.containers.finance.FinanceContainer",
-    "default_chat_prompt": "finance_expert.txt"
+    "default_chat_prompt": null
   },
-  "prompts": [
-    "prompts/finance_expert.txt",
-    "prompts/finance_workflow.md"
+  "blocks": [
+    "pdf",
+    "ocr",
+    "chat",
+    "image",
+    "finance_v2"
   ],
+  "prompts": [],
   "data": [],
   "core_modules": [
-    "knowledge.py",
-    "types.py"
+    "app/core/finance_knowledge.py",
+    "app/core/finance_types.py",
+    "app/core/confidence.py",
+    "app/core/schema_registry.py"
   ],
-  "skeleton_artifacts": [
+  "artifacts": [
     {
-      "src": "container.py",
+      "src": "app/containers/finance.py",
       "dest": "app/containers/finance.py"
     },
     {
-      "src": "knowledge.py",
+      "src": "app/blocks/finance_v2.py",
+      "dest": "app/blocks/finance_v2.py"
+    },
+    {
+      "src": "app/core/finance_knowledge.py",
       "dest": "app/core/finance_knowledge.py"
     },
     {
-      "src": "types.py",
+      "src": "app/core/finance_types.py",
       "dest": "app/core/finance_types.py"
     },
     {
-      "src": "blocks/market_data_connector.py",
-      "dest": "app/blocks/market_data_connector.py"
+      "src": "app/core/confidence.py",
+      "dest": "app/core/confidence.py"
     },
     {
-      "src": "blocks/sec_edgar_connector.py",
-      "dest": "app/blocks/sec_edgar_connector.py"
-    },
-    {
-      "src": "prompts/finance_expert.txt",
-      "dest": "app/prompts/finance_expert.txt"
-    },
-    {
-      "src": "prompts/finance_workflow.md",
-      "dest": "app/prompts/finance_workflow.md"
+      "src": "app/core/schema_registry.py",
+      "dest": "app/core/schema_registry.py"
     }
   ],
+  "price_cents": 0,
   "install_requires": {
     "min_platform_version": "2.0.0",
     "python": ">=3.10"
-  },
-  "source": {
-    "repo": "https://github.com/bopoadz-del/The_Fork",
-    "ref": "main",
-    "publish_script": null
   }
 }

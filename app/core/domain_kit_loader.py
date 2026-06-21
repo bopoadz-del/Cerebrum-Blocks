@@ -32,10 +32,14 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
         ("recommendation_template", "app.blocks.recommendation_template", "RecommendationTemplateBlock"),
     ],
     "medical": [
+        ("medical", "app.containers.medical", "MedicalContainer"),
+        ("medical_v2", "app.blocks.medical_v2", "MedicalBlockV2"),
         ("medical_ehr_connector", "app.blocks.medical_ehr_connector", "MedicalEHRConnectorBlock"),
         ("clinical_trigger", "app.blocks.clinical_trigger", "ClinicalTriggerBlock"),
     ],
     "hotel_management": [
+        ("hotel_management", "app.containers.hotel_management", "HotelManagementContainer"),
+        ("hotel_v2", "app.blocks.hotel_v2", "HotelBlockV2"),
         ("opera_connector", "app.blocks.opera_connector", "OperaConnectorBlock"),
         ("hotel_trigger", "app.blocks.hotel_trigger", "HotelTriggerBlock"),
     ],
@@ -43,7 +47,63 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
         ("pacer_connector", "app.blocks.pacer_connector", "PacerConnectorBlock"),
         ("caselaw_connector", "app.blocks.caselaw_connector", "CaselawConnectorBlock"),
     ],
+    "legal": [
+        ("legal", "app.containers.legal", "LegalContainer"),
+        ("legal_v2", "app.blocks.legal_v2", "LegalBlockV2"),
+        ("pacer_connector", "app.blocks.pacer_connector", "PacerConnectorBlock"),
+        ("caselaw_connector", "app.blocks.caselaw_connector", "CaselawConnectorBlock"),
+    ],
+    "retail": [
+        ("retail", "app.containers.retail", "RetailContainer"),
+        ("retail_v2", "app.blocks.retail_v2", "RetailBlockV2"),
+    ],
+    "pharma": [
+        ("pharma", "app.containers.pharma", "PharmaContainer"),
+        ("pharma_v2", "app.blocks.pharma_v2", "PharmaBlockV2"),
+    ],
+    "insurance": [
+        ("insurance", "app.containers.insurance", "InsuranceContainer"),
+        ("insurance_v2", "app.blocks.insurance_v2", "InsuranceBlockV2"),
+    ],
+    "supply_chain": [
+        ("supply_chain", "app.containers.supply_chain", "SupplyChainContainer"),
+        ("supply_chain_v2", "app.blocks.supply_chain_v2", "SupplyChainBlockV2"),
+    ],
+    "real_estate": [
+        ("real_estate", "app.containers.real_estate", "RealEstateContainer"),
+        ("real_estate_v2", "app.blocks.real_estate_v2", "RealEstateBlockV2"),
+    ],
+    "automotive": [
+        ("automotive", "app.containers.automotive", "AutomotiveContainer"),
+        ("automotive_v2", "app.blocks.automotive_v2", "AutomotiveBlockV2"),
+    ],
+    "education": [
+        ("education", "app.containers.education", "EducationContainer"),
+        ("education_v2", "app.blocks.education_v2", "EducationBlockV2"),
+    ],
+    "agriculture": [
+        ("agriculture", "app.containers.agriculture", "AgricultureContainer"),
+        ("agriculture_v2", "app.blocks.agriculture_v2", "AgricultureBlockV2"),
+    ],
+    "hr": [
+        ("hr", "app.containers.hr", "HRContainer"),
+        ("hr_v2", "app.blocks.hr_v2", "HRBlockV2"),
+    ],
+    "manufacturing": [
+        ("manufacturing", "app.containers.manufacturing", "ManufacturingContainer"),
+        ("manufacturing_v2", "app.blocks.manufacturing_v2", "ManufacturingBlockV2"),
+    ],
+    "aviation": [
+        ("aviation", "app.containers.aviation", "AviationContainer"),
+        ("aviation_v2", "app.blocks.aviation_v2", "AviationBlockV2"),
+    ],
+    "oil_gas": [
+        ("oil_gas", "app.containers.oil_gas", "OilGasContainer"),
+        ("oil_gas_v2", "app.blocks.oil_gas_v2", "OilGasBlockV2"),
+    ],
     "finance": [
+        ("finance", "app.containers.finance", "FinanceContainer"),
+        ("finance_v2", "app.blocks.finance_v2", "FinanceBlockV2"),
         ("market_data_connector", "app.blocks.market_data_connector", "MarketDataConnectorBlock"),
         ("sec_edgar_connector", "app.blocks.sec_edgar_connector", "SecEdgarConnectorBlock"),
     ],

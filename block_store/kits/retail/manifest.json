@@ -1,0 +1,68 @@
+{
+  "id": "retail",
+  "name": "Retail & E-commerce Suite",
+  "version": "1.0.0",
+  "description": "Retail & E-commerce Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the retail domain.",
+  "status": "available",
+  "author": "bopoadz-del",
+  "tags": [
+    "domain",
+    "container",
+    "retail"
+  ],
+  "source": {
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
+    "ref": "main",
+    "publish_script": "scripts/publish_kit.py"
+  },
+  "container": {
+    "class": "app.containers.retail.RetailContainer",
+    "default_chat_prompt": null
+  },
+  "blocks": [
+    "pdf",
+    "ocr",
+    "chat",
+    "image",
+    "retail_v2"
+  ],
+  "prompts": [],
+  "data": [],
+  "core_modules": [
+    "app/core/retail_knowledge.py",
+    "app/core/retail_types.py",
+    "app/core/confidence.py",
+    "app/core/schema_registry.py"
+  ],
+  "artifacts": [
+    {
+      "src": "app/containers/retail.py",
+      "dest": "app/containers/retail.py"
+    },
+    {
+      "src": "app/blocks/retail_v2.py",
+      "dest": "app/blocks/retail_v2.py"
+    },
+    {
+      "src": "app/core/retail_knowledge.py",
+      "dest": "app/core/retail_knowledge.py"
+    },
+    {
+      "src": "app/core/retail_types.py",
+      "dest": "app/core/retail_types.py"
+    },
+    {
+      "src": "app/core/confidence.py",
+      "dest": "app/core/confidence.py"
+    },
+    {
+      "src": "app/core/schema_registry.py",
+      "dest": "app/core/schema_registry.py"
+    }
+  ],
+  "price_cents": 0,
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "id": "education",
+  "name": "Education & E-learning Suite",
+  "version": "1.0.0",
+  "description": "Education & E-learning Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the education domain.",
+  "status": "available",
+  "author": "bopoadz-del",
+  "tags": [
+    "domain",
+    "container",
+    "education"
+  ],
+  "source": {
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
+    "ref": "main",
+    "publish_script": "scripts/publish_kit.py"
+  },
+  "container": {
+    "class": "app.containers.education.EducationContainer",
+    "default_chat_prompt": null
+  },
+  "blocks": [
+    "pdf",
+    "ocr",
+    "chat",
+    "image",
+    "education_v2"
+  ],
+  "prompts": [],
+  "data": [],
+  "core_modules": [
+    "app/core/education_knowledge.py",
+    "app/core/education_types.py",
+    "app/core/confidence.py",
+    "app/core/schema_registry.py"
+  ],
+  "artifacts": [
+    {
+      "src": "app/containers/education.py",
+      "dest": "app/containers/education.py"
+    },
+    {
+      "src": "app/blocks/education_v2.py",
+      "dest": "app/blocks/education_v2.py"
+    },
+    {
+      "src": "app/core/education_knowledge.py",
+      "dest": "app/core/education_knowledge.py"
+    },
+    {
+      "src": "app/core/education_types.py",
+      "dest": "app/core/education_types.py"
+    },
+    {
+      "src": "app/core/confidence.py",
+      "dest": "app/core/confidence.py"
+    },
+    {
+      "src": "app/core/schema_registry.py",
+      "dest": "app/core/schema_registry.py"
+    }
+  ],
+  "price_cents": 0,
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  }
+}
