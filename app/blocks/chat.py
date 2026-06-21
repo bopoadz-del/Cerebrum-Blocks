@@ -1,22 +1,25 @@
-"""Chat Block — DeepSeek primary + local-inference fallback.
+"""Chat Block — Qwen primary with OpenAI-compatible fallbacks.
 
 The chat must never go completely dark on the user. Order of attempts:
 
-1. **DeepSeek API** when ``DEEPSEEK_API_KEY`` is set and the endpoint is reachable.
-2. **Local LLM** (kept *inside* the platform — no third-party cloud) via:
+1. **Qwen API (DashScope)** when ``QWEN_API_KEY`` is set and the endpoint is
+   reachable. Configure via ``QWEN_BASE_URL`` and ``QWEN_MODEL``.
+2. **Groq** when ``GROQ_API_KEY`` is set.
+3. **DeepSeek** when ``DEEPSEEK_API_KEY`` is set.
+4. **Local LLM** (kept *inside* the platform — no third-party cloud) via:
    - Ollama HTTP at ``OLLAMA_URL`` (default ``http://localhost:11434``) when a
      local model is installed. The default local model is
      ``LOCAL_LLM_MODEL`` (default ``qwen2.5:3b-instruct`` — small, CPU-runnable).
    - llama.cpp via ``LLAMA_CPP_MODEL_PATH`` when ``llama-cpp-python`` is
      importable and a GGUF file is provided.
-3. **Graceful template responder** — a deterministic, non-AI fallback that
+5. **Graceful template responder** — a deterministic, non-AI fallback that
    acknowledges the question, surfaces the reason the model layer is down,
    and points the operator at the env vars that would restore it. This
    path always succeeds, so the chat never returns an unhandled error.
 
 The block exposes a single ``provider`` field on the response so callers can
-see which path served the answer (``deepseek`` / ``local_ollama`` /
-``local_llama_cpp`` / ``offline_template``).
+see which path served the answer (``qwen`` / ``groq`` / ``deepseek`` /
+``local_ollama`` / ``local_llama_cpp`` / ``offline_template``).
 """
 
 import json
@@ -45,7 +48,7 @@ class ChatBlock(TypedBlock):
     requires = []
 
     default_config = {
-        "default_provider": "deepseek",
+        "default_provider": "qwen",
         "max_tokens": 2048,
         "temperature": 0.7,
     }
@@ -479,7 +482,8 @@ class ChatBlock(TypedBlock):
             "generate an AI response right now. Your message was received intact:\n\n"
             f"> {snippet or '(empty)'}\n\n"
             "**How to restore full chat:**\n"
-            "- Set `GROQ_API_KEY` (free tier) or `DEEPSEEK_API_KEY` in `.env` to use a cloud provider, **or**\n"
+            "- Set `QWEN_API_KEY` (DashScope) in `.env` to use Qwen, **or**\n"
+            "- Set `GROQ_API_KEY` (free tier) or `DEEPSEEK_API_KEY` to use another cloud provider, **or**\n"
             "- Run a local model: `ollama serve` + `ollama pull qwen2.5:3b-instruct`\n"
             "  (optionally set `OLLAMA_URL` and `LOCAL_LLM_MODEL`), **or**\n"
             "- Provide a GGUF file via `LLAMA_CPP_MODEL_PATH` with `llama-cpp-python` installed.\n\n"
