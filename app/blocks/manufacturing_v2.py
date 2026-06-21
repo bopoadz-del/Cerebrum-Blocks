@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, ManufacturingAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.manufacturing_types import ManufacturingEntity, ManufacturingMetric, ComplianceFlag, RiskScore
+from app.core.manufacturing_types import RiskScore
+
 from app.core.manufacturing_knowledge import ManufacturingKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = ManufacturingKnowledge()
 
 
-class ManufacturingBlockV2(TypedBlock):
+class ManufacturingBlockV2(DomainBlockV2):
     """
     Manufacturing Block v2 - TypedBlock implementation for manufacturing document analysis.
 
@@ -114,34 +113,6 @@ class ManufacturingBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -289,21 +260,6 @@ class ManufacturingBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_plant_name(self, text: str) -> Optional[str]:
         """Best-effort extraction of plant name."""
         pattern = r"(?:plant name|plant_name)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -444,7 +400,7 @@ class ManufacturingBlockV2(TypedBlock):
     def _extract_first_pass_yield(self, good_units=None, total_units=None) -> Dict[str, Any]:
         """Calculate first pass yield."""
         try:
-            value = (good_units / total_units * 100) if total_units else None
+            value = self._safe_divide(good_units, total_units, scale=100) if (good_units is not None and total_units is not None) else None
             if value is None:
                 return {"name": "first_pass_yield", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "first_pass_yield", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -454,7 +410,7 @@ class ManufacturingBlockV2(TypedBlock):
     def _extract_scrap_rate(self, scrap_units=None, total_units=None) -> Dict[str, Any]:
         """Calculate scrap rate."""
         try:
-            value = (scrap_units / total_units * 100) if total_units else None
+            value = self._safe_divide(scrap_units, total_units, scale=100) if (scrap_units is not None and total_units is not None) else None
             if value is None:
                 return {"name": "scrap_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "scrap_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -464,7 +420,7 @@ class ManufacturingBlockV2(TypedBlock):
     def _extract_rework_rate(self, rework_units=None, total_units=None) -> Dict[str, Any]:
         """Calculate rework rate."""
         try:
-            value = (rework_units / total_units * 100) if total_units else None
+            value = self._safe_divide(rework_units, total_units, scale=100) if (rework_units is not None and total_units is not None) else None
             if value is None:
                 return {"name": "rework_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "rework_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -474,7 +430,7 @@ class ManufacturingBlockV2(TypedBlock):
     def _extract_downtime_percentage(self, downtime_minutes=None, total_minutes=None) -> Dict[str, Any]:
         """Calculate downtime percentage."""
         try:
-            value = (downtime_minutes / total_minutes * 100) if total_minutes else None
+            value = self._safe_divide(downtime_minutes, total_minutes, scale=100) if (downtime_minutes is not None and total_minutes is not None) else None
             if value is None:
                 return {"name": "downtime_percentage", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "downtime_percentage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -484,7 +440,7 @@ class ManufacturingBlockV2(TypedBlock):
     def _extract_cycle_time(self, production_time=None, units_produced=None) -> Dict[str, Any]:
         """Calculate cycle time."""
         try:
-            value = (production_time / units_produced) if units_produced else None
+            value = self._safe_divide(production_time, units_produced) if (production_time is not None and units_produced is not None) else None
             if value is None:
                 return {"name": "cycle_time", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "cycle_time", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -494,7 +450,7 @@ class ManufacturingBlockV2(TypedBlock):
     def _extract_takt_time(self, available_time=None, customer_demand=None) -> Dict[str, Any]:
         """Calculate takt time."""
         try:
-            value = (available_time / customer_demand) if customer_demand else None
+            value = self._safe_divide(available_time, customer_demand) if (available_time is not None and customer_demand is not None) else None
             if value is None:
                 return {"name": "takt_time", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "takt_time", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -504,7 +460,7 @@ class ManufacturingBlockV2(TypedBlock):
     def _extract_cost_per_unit(self, total_cost=None, units_produced=None) -> Dict[str, Any]:
         """Calculate cost per unit."""
         try:
-            value = (total_cost / units_produced) if units_produced else None
+            value = self._safe_divide(total_cost, units_produced) if (total_cost is not None and units_produced is not None) else None
             if value is None:
                 return {"name": "cost_per_unit", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "cost_per_unit", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -657,14 +613,3 @@ class ManufacturingBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique

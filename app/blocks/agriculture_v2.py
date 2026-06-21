@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, AgricultureAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.agriculture_types import AgricultureEntity, AgricultureMetric, ComplianceFlag, RiskScore
+from app.core.agriculture_types import RiskScore
+
 from app.core.agriculture_knowledge import AgricultureKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = AgricultureKnowledge()
 
 
-class AgricultureBlockV2(TypedBlock):
+class AgricultureBlockV2(DomainBlockV2):
     """
     Agriculture Block v2 - TypedBlock implementation for agriculture document analysis.
 
@@ -114,34 +113,6 @@ class AgricultureBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -289,21 +260,6 @@ class AgricultureBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_farm_name(self, text: str) -> Optional[str]:
         """Best-effort extraction of farm name."""
         pattern = r"(?:farm name|farm_name)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -434,7 +390,7 @@ class AgricultureBlockV2(TypedBlock):
     def _calculate_yield_per_acre(self, total_yield=None, total_acres=None) -> Dict[str, Any]:
         """Calculate yield per acre."""
         try:
-            value = (total_yield / total_acres) if total_acres else None
+            value = self._safe_divide(total_yield, total_acres) if (total_yield is not None and total_acres is not None) else None
             if value is None:
                 return {"name": "yield_per_acre", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "yield_per_acre", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -444,7 +400,7 @@ class AgricultureBlockV2(TypedBlock):
     def _extract_moisture_adjusted_yield(self, yield_at_moisture=None, moisture_percent=None) -> Dict[str, Any]:
         """Calculate moisture adjusted yield."""
         try:
-            value = (yield_at_moisture * (1 - moisture_percent / 100) / (1 - 0.155)) if yield_at_moisture else None
+            value = self._safe_divide(yield_at_moisture * (1 - moisture_percent / 100), (1 - 0.155)) if (yield_at_moisture is not None and moisture_percent is not None) else None
             if value is None:
                 return {"name": "moisture_adjusted_yield", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "moisture_adjusted_yield", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -454,7 +410,7 @@ class AgricultureBlockV2(TypedBlock):
     def _extract_protein_content(self, protein_weight=None, total_sample_weight=None) -> Dict[str, Any]:
         """Calculate protein content."""
         try:
-            value = (protein_weight / total_sample_weight * 100) if total_sample_weight else None
+            value = self._safe_divide(protein_weight, total_sample_weight, scale=100) if (protein_weight is not None and total_sample_weight is not None) else None
             if value is None:
                 return {"name": "protein_content", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "protein_content", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -464,7 +420,7 @@ class AgricultureBlockV2(TypedBlock):
     def _extract_feed_conversion_ratio(self, feed_consumed=None, weight_gain=None) -> Dict[str, Any]:
         """Calculate feed conversion ratio."""
         try:
-            value = (feed_consumed / weight_gain) if weight_gain else None
+            value = self._safe_divide(feed_consumed, weight_gain) if (feed_consumed is not None and weight_gain is not None) else None
             if value is None:
                 return {"name": "feed_conversion_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "feed_conversion_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -474,7 +430,7 @@ class AgricultureBlockV2(TypedBlock):
     def _extract_weaning_weight(self, piglet_weight=None, age_days=None) -> Dict[str, Any]:
         """Calculate weaning weight."""
         try:
-            value = (piglet_weight / age_days * 21) if age_days else None
+            value = self._safe_divide(piglet_weight, age_days, scale=21) if (piglet_weight is not None and age_days is not None) else None
             if value is None:
                 return {"name": "weaning_weight", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "weaning_weight", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -484,7 +440,7 @@ class AgricultureBlockV2(TypedBlock):
     def _extract_water_use_efficiency(self, total_yield=None, water_applied=None) -> Dict[str, Any]:
         """Calculate water use efficiency."""
         try:
-            value = (total_yield / water_applied) if water_applied else None
+            value = self._safe_divide(total_yield, water_applied) if (total_yield is not None and water_applied is not None) else None
             if value is None:
                 return {"name": "water_use_efficiency", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "water_use_efficiency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -494,7 +450,7 @@ class AgricultureBlockV2(TypedBlock):
     def _extract_nutrient_use_efficiency(self, total_yield=None, nutrient_applied=None) -> Dict[str, Any]:
         """Calculate nutrient use efficiency."""
         try:
-            value = (total_yield / nutrient_applied) if nutrient_applied else None
+            value = self._safe_divide(total_yield, nutrient_applied) if (total_yield is not None and nutrient_applied is not None) else None
             if value is None:
                 return {"name": "nutrient_use_efficiency", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "nutrient_use_efficiency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -504,7 +460,7 @@ class AgricultureBlockV2(TypedBlock):
     def _extract_cost_per_acre(self, total_cost=None, acres=None) -> Dict[str, Any]:
         """Calculate cost per acre."""
         try:
-            value = (total_cost / acres) if acres else None
+            value = self._safe_divide(total_cost, acres) if (total_cost is not None and acres is not None) else None
             if value is None:
                 return {"name": "cost_per_acre", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "cost_per_acre", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -657,14 +613,3 @@ class AgricultureBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique

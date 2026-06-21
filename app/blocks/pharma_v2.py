@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, PharmaAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.pharma_types import PharmaEntity, PharmaMetric, ComplianceFlag, RiskScore
+from app.core.pharma_types import RiskScore
+
 from app.core.pharma_knowledge import PharmaKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = PharmaKnowledge()
 
 
-class PharmaBlockV2(TypedBlock):
+class PharmaBlockV2(DomainBlockV2):
     """
     Pharma Block v2 - TypedBlock implementation for pharma document analysis.
 
@@ -114,34 +113,6 @@ class PharmaBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -289,21 +260,6 @@ class PharmaBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_product_name(self, text: str) -> Optional[str]:
         """Best-effort extraction of product name."""
         pattern = r"(?:product name|product_name)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -434,7 +390,7 @@ class PharmaBlockV2(TypedBlock):
     def _extract_batch_yield(self, theoretical_yield=None, actual_yield=None) -> Dict[str, Any]:
         """Calculate batch yield."""
         try:
-            value = (actual_yield / theoretical_yield * 100) if theoretical_yield else None
+            value = self._safe_divide(actual_yield, theoretical_yield, scale=100) if (actual_yield is not None and theoretical_yield is not None) else None
             if value is None:
                 return {"name": "batch_yield", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "batch_yield", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -444,7 +400,7 @@ class PharmaBlockV2(TypedBlock):
     def _extract_assay_purity(self, assay_result=None, specification=None) -> Dict[str, Any]:
         """Calculate assay purity."""
         try:
-            value = ((assay_result - specification) / specification * 100) if specification else None
+            value = self._safe_divide(assay_result - specification, specification, scale=100) if (assay_result is not None and specification is not None) else None
             if value is None:
                 return {"name": "assay_purity", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "assay_purity", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -464,7 +420,7 @@ class PharmaBlockV2(TypedBlock):
     def _extract_dissolution_rate(self, dissolved=None, total=None) -> Dict[str, Any]:
         """Calculate dissolution rate."""
         try:
-            value = (dissolved / total * 100) if total else None
+            value = self._safe_divide(dissolved, total, scale=100) if (dissolved is not None and total is not None) else None
             if value is None:
                 return {"name": "dissolution_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "dissolution_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -484,7 +440,7 @@ class PharmaBlockV2(TypedBlock):
     def _extract_stability_degradation(self, initial_assay=None, final_assay=None, time_months=None) -> Dict[str, Any]:
         """Calculate stability degradation."""
         try:
-            value = ((initial_assay - final_assay) / time_months) if time_months else None
+            value = self._safe_divide(initial_assay - final_assay, time_months) if (initial_assay is not None and final_assay is not None and time_months is not None) else None
             if value is None:
                 return {"name": "stability_degradation", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "stability_degradation", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -494,7 +450,7 @@ class PharmaBlockV2(TypedBlock):
     def _extract_shelf_life(self, degradation_rate=None, specification_limit=None) -> Dict[str, Any]:
         """Calculate shelf life."""
         try:
-            value = (specification_limit / degradation_rate) if degradation_rate else None
+            value = self._safe_divide(specification_limit, degradation_rate) if (specification_limit is not None and degradation_rate is not None) else None
             if value is None:
                 return {"name": "shelf_life", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "shelf_life", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -504,7 +460,7 @@ class PharmaBlockV2(TypedBlock):
     def _extract_signal_strength(self, report_count=None, background_rate=None) -> Dict[str, Any]:
         """Calculate signal strength."""
         try:
-            value = (report_count / background_rate) if background_rate else None
+            value = self._safe_divide(report_count, background_rate) if (report_count is not None and background_rate is not None) else None
             if value is None:
                 return {"name": "signal_strength", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "signal_strength", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -657,14 +613,3 @@ class PharmaBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique

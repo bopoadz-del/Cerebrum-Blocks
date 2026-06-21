@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, AviationAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.aviation_types import AviationEntity, AviationMetric, ComplianceFlag, RiskScore
+from app.core.aviation_types import RiskScore
+
 from app.core.aviation_knowledge import AviationKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = AviationKnowledge()
 
 
-class AviationBlockV2(TypedBlock):
+class AviationBlockV2(DomainBlockV2):
     """
     Aviation Block v2 - TypedBlock implementation for aviation document analysis.
 
@@ -114,34 +113,6 @@ class AviationBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -289,21 +260,6 @@ class AviationBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_aircraft_type(self, text: str) -> Optional[str]:
         """Best-effort extraction of aircraft type."""
         pattern = r"(?:aircraft type|aircraft_type)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -434,7 +390,7 @@ class AviationBlockV2(TypedBlock):
     def _extract_utilization_rate(self, flight_hours=None, available_hours=None) -> Dict[str, Any]:
         """Calculate utilization rate."""
         try:
-            value = (flight_hours / available_hours * 100) if available_hours else None
+            value = self._safe_divide(flight_hours, available_hours, scale=100) if (flight_hours is not None and available_hours is not None) else None
             if value is None:
                 return {"name": "utilization_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "utilization_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -444,7 +400,7 @@ class AviationBlockV2(TypedBlock):
     def _extract_dispatch_reliability(self, dispatched_flights=None, scheduled_flights=None) -> Dict[str, Any]:
         """Calculate dispatch reliability."""
         try:
-            value = (dispatched_flights / scheduled_flights * 100) if scheduled_flights else None
+            value = self._safe_divide(dispatched_flights, scheduled_flights, scale=100) if (dispatched_flights is not None and scheduled_flights is not None) else None
             if value is None:
                 return {"name": "dispatch_reliability", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "dispatch_reliability", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -454,7 +410,7 @@ class AviationBlockV2(TypedBlock):
     def _extract_on_time_performance(self, on_time=None, total=None) -> Dict[str, Any]:
         """Calculate on time performance."""
         try:
-            value = (on_time / total * 100) if total else None
+            value = self._safe_divide(on_time, total, scale=100) if (on_time is not None and total is not None) else None
             if value is None:
                 return {"name": "on_time_performance", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "on_time_performance", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -464,7 +420,7 @@ class AviationBlockV2(TypedBlock):
     def _extract_mtbf(self, total_hours=None, failures=None) -> Dict[str, Any]:
         """Calculate mtbf."""
         try:
-            value = (total_hours / failures) if failures else None
+            value = self._safe_divide(total_hours, failures) if (total_hours is not None and failures is not None) else None
             if value is None:
                 return {"name": "mtbf", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "mtbf", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -474,7 +430,7 @@ class AviationBlockV2(TypedBlock):
     def _extract_mttr(self, total_repair_time=None, repairs=None) -> Dict[str, Any]:
         """Calculate mttr."""
         try:
-            value = (total_repair_time / repairs) if repairs else None
+            value = self._safe_divide(total_repair_time, repairs) if (total_repair_time is not None and repairs is not None) else None
             if value is None:
                 return {"name": "mttr", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "mttr", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -484,7 +440,7 @@ class AviationBlockV2(TypedBlock):
     def _extract_fuel_burn_per_hour(self, total_fuel=None, flight_hours=None) -> Dict[str, Any]:
         """Calculate fuel burn per hour."""
         try:
-            value = (total_fuel / flight_hours) if flight_hours else None
+            value = self._safe_divide(total_fuel, flight_hours) if (total_fuel is not None and flight_hours is not None) else None
             if value is None:
                 return {"name": "fuel_burn_per_hour", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "fuel_burn_per_hour", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -494,7 +450,7 @@ class AviationBlockV2(TypedBlock):
     def _extract_payload_utilization(self, actual_payload=None, max_payload=None) -> Dict[str, Any]:
         """Calculate payload utilization."""
         try:
-            value = (actual_payload / max_payload * 100) if max_payload else None
+            value = self._safe_divide(actual_payload, max_payload, scale=100) if (actual_payload is not None and max_payload is not None) else None
             if value is None:
                 return {"name": "payload_utilization", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "payload_utilization", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -504,7 +460,7 @@ class AviationBlockV2(TypedBlock):
     def _extract_lease_rate_factor(self, monthly_lease=None, aircraft_value=None) -> Dict[str, Any]:
         """Calculate lease rate factor."""
         try:
-            value = (monthly_lease / aircraft_value * 100) if aircraft_value else None
+            value = self._safe_divide(monthly_lease, aircraft_value, scale=100) if (monthly_lease is not None and aircraft_value is not None) else None
             if value is None:
                 return {"name": "lease_rate_factor", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "lease_rate_factor", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -657,14 +613,3 @@ class AviationBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique

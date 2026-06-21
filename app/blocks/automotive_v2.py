@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, AutomotiveAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.automotive_types import AutomotiveEntity, AutomotiveMetric, ComplianceFlag, RiskScore
+from app.core.automotive_types import RiskScore
+
 from app.core.automotive_knowledge import AutomotiveKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = AutomotiveKnowledge()
 
 
-class AutomotiveBlockV2(TypedBlock):
+class AutomotiveBlockV2(DomainBlockV2):
     """
     Automotive Block v2 - TypedBlock implementation for automotive document analysis.
 
@@ -114,34 +113,6 @@ class AutomotiveBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -289,21 +260,6 @@ class AutomotiveBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_vehicle_type(self, text: str) -> Optional[str]:
         """Best-effort extraction of vehicle type."""
         pattern = r"(?:vehicle type|vehicle_type)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -444,7 +400,7 @@ class AutomotiveBlockV2(TypedBlock):
     def _extract_depreciation_rate(self, initial_value=None, current_value=None, years=None) -> Dict[str, Any]:
         """Calculate depreciation rate."""
         try:
-            value = ((initial_value - current_value) / initial_value / years * 100) if initial_value and years else None
+            value = self._safe_divide(self._safe_divide(initial_value - current_value, initial_value), years, scale=100) if (initial_value is not None and current_value is not None and years is not None) else None
             if value is None:
                 return {"name": "depreciation_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "depreciation_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -454,7 +410,7 @@ class AutomotiveBlockV2(TypedBlock):
     def _extract_fuel_efficiency(self, distance=None, fuel_consumed=None) -> Dict[str, Any]:
         """Calculate fuel efficiency."""
         try:
-            value = (distance / fuel_consumed) if fuel_consumed else None
+            value = self._safe_divide(distance, fuel_consumed) if (distance is not None and fuel_consumed is not None) else None
             if value is None:
                 return {"name": "fuel_efficiency", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "fuel_efficiency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -464,7 +420,7 @@ class AutomotiveBlockV2(TypedBlock):
     def _extract_utilization_rate(self, operating_hours=None, available_hours=None) -> Dict[str, Any]:
         """Calculate utilization rate."""
         try:
-            value = (operating_hours / available_hours * 100) if available_hours else None
+            value = self._safe_divide(operating_hours, available_hours, scale=100) if (operating_hours is not None and available_hours is not None) else None
             if value is None:
                 return {"name": "utilization_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "utilization_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -474,7 +430,7 @@ class AutomotiveBlockV2(TypedBlock):
     def _extract_downtime_rate(self, downtime_hours=None, total_hours=None) -> Dict[str, Any]:
         """Calculate downtime rate."""
         try:
-            value = (downtime_hours / total_hours * 100) if total_hours else None
+            value = self._safe_divide(downtime_hours, total_hours, scale=100) if (downtime_hours is not None and total_hours is not None) else None
             if value is None:
                 return {"name": "downtime_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "downtime_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -484,7 +440,7 @@ class AutomotiveBlockV2(TypedBlock):
     def _extract_defect_rate(self, defective_units=None, total_units=None) -> Dict[str, Any]:
         """Calculate defect rate."""
         try:
-            value = (defective_units / total_units * 1_000_000) if total_units else None
+            value = self._safe_divide(defective_units, total_units, scale=1_000_000) if (defective_units is not None and total_units is not None) else None
             if value is None:
                 return {"name": "defect_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "defect_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -494,7 +450,7 @@ class AutomotiveBlockV2(TypedBlock):
     def _extract_warranty_claim_rate(self, claims=None, units_sold=None) -> Dict[str, Any]:
         """Calculate warranty claim rate."""
         try:
-            value = (claims / units_sold * 100) if units_sold else None
+            value = self._safe_divide(claims, units_sold, scale=100) if (claims is not None and units_sold is not None) else None
             if value is None:
                 return {"name": "warranty_claim_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "warranty_claim_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -504,7 +460,7 @@ class AutomotiveBlockV2(TypedBlock):
     def _extract_recall_rate(self, recalled_units=None, total_produced=None) -> Dict[str, Any]:
         """Calculate recall rate."""
         try:
-            value = (recalled_units / total_produced * 100) if total_produced else None
+            value = self._safe_divide(recalled_units, total_produced, scale=100) if (recalled_units is not None and total_produced is not None) else None
             if value is None:
                 return {"name": "recall_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "recall_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -657,14 +613,3 @@ class AutomotiveBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique

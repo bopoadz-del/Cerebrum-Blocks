@@ -13,18 +13,16 @@ This is the v2 implementation that:
 import re
 import math
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, MedicalAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.medical_types import MedicalEntity, ClinicalMetric, ComplianceFlag, RiskScore
+
 from app.core.medical_knowledge import MedicalKnowledge
 
 _mk = MedicalKnowledge()
 
 
-class MedicalBlockV2(TypedBlock):
+class MedicalBlockV2(DomainBlockV2):
     """
     Medical Block v2 - TypedBlock implementation for healthcare document analysis.
 
@@ -135,16 +133,6 @@ class MedicalBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -316,21 +304,6 @@ class MedicalBlockV2(TypedBlock):
                 "phi_redacted": params.get("redact_phi", self.default_config["redact_phi"]),
             },
         }
-
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "clinical_metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
 
     # ------------------------------------------------------------------
     # PHI-SAFE HELPERS
@@ -1088,63 +1061,10 @@ class MedicalBlockV2(TypedBlock):
             "confidence": round(min(readmission["confidence"], med["confidence"], infection["confidence"], fall["confidence"], mortality["confidence"]), 2),
         }
 
-    def _risk_level(self, score: float) -> str:
-        if score < 0.33:
-            return "low"
-        if score < 0.66:
-            return "medium"
-        return "high"
-
     # ------------------------------------------------------------------
     # HELPERS
     # ------------------------------------------------------------------
 
-    def _deduplicate_entities(self, items: List[Dict]) -> List[Dict]:
-        """Deduplicate entities by value, keeping first occurrence."""
-        seen = set()
-        unique = []
-        for item in items:
-            key = item.get("value", "").strip().lower()
-            if key and key not in seen:
-                seen.add(key)
-                unique.append(item)
-        return unique[:50]
-
     # ------------------------------------------------------------------
     # EMPTY RESULT
     # ------------------------------------------------------------------
-
-    def _empty_analysis(self, message: str) -> Dict:
-        """Return empty analysis with error message."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {
-                "patient_id": [],
-                "dob": [],
-                "diagnoses": [],
-                "medications": [],
-                "allergies": [],
-                "vitals": [],
-                "procedures": [],
-                "providers": [],
-                "facilities": [],
-            },
-            "clinical_metrics": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0,
-            "raw_text": "",
-            "metadata": {
-                "error": message,
-                "extracted_at": self._timestamp(),
-                "entity_count": 0,
-                "metric_count": 0,
-                "phi_redacted": True,
-            },
-        }
-
-    def _timestamp(self) -> str:
-        """Get current ISO timestamp."""
-        return datetime.now(timezone.utc).isoformat()

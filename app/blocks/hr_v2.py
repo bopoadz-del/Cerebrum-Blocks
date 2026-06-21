@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, HRAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.hr_types import HREntity, HRMetric, ComplianceFlag, RiskScore
+from app.core.hr_types import RiskScore
+
 from app.core.hr_knowledge import HRKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = HRKnowledge()
 
 
-class HRBlockV2(TypedBlock):
+class HRBlockV2(DomainBlockV2):
     """
     HR Block v2 - TypedBlock implementation for hr document analysis.
 
@@ -114,34 +113,6 @@ class HRBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -289,21 +260,6 @@ class HRBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_company_name(self, text: str) -> Optional[str]:
         """Best-effort extraction of company name."""
         pattern = r"(?:company name|company_name)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -434,7 +390,7 @@ class HRBlockV2(TypedBlock):
     def _extract_time_to_fill(self, open_date=None, fill_date=None) -> Dict[str, Any]:
         """Calculate time to fill."""
         try:
-            value = (fill_date - open_date).days if open_date and fill_date else None
+            value = self._days_between(open_date, fill_date) if (open_date is not None and fill_date is not None) else None
             if value is None:
                 return {"name": "time_to_fill", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "time_to_fill", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -444,7 +400,7 @@ class HRBlockV2(TypedBlock):
     def _extract_cost_per_hire(self, total_recruitment_cost=None, hires=None) -> Dict[str, Any]:
         """Calculate cost per hire."""
         try:
-            value = (total_recruitment_cost / hires) if hires else None
+            value = self._safe_divide(total_recruitment_cost, hires) if (total_recruitment_cost is not None and hires is not None) else None
             if value is None:
                 return {"name": "cost_per_hire", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "cost_per_hire", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -454,7 +410,7 @@ class HRBlockV2(TypedBlock):
     def _extract_offer_acceptance_rate(self, accepted_offers=None, total_offers=None) -> Dict[str, Any]:
         """Calculate offer acceptance rate."""
         try:
-            value = (accepted_offers / total_offers * 100) if total_offers else None
+            value = self._safe_divide(accepted_offers, total_offers, scale=100) if (accepted_offers is not None and total_offers is not None) else None
             if value is None:
                 return {"name": "offer_acceptance_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "offer_acceptance_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -464,7 +420,7 @@ class HRBlockV2(TypedBlock):
     def _extract_turnover_rate(self, terminations=None, average_headcount=None) -> Dict[str, Any]:
         """Calculate turnover rate."""
         try:
-            value = (terminations / average_headcount * 100) if average_headcount else None
+            value = self._safe_divide(terminations, average_headcount, scale=100) if (terminations is not None and average_headcount is not None) else None
             if value is None:
                 return {"name": "turnover_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "turnover_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -474,7 +430,7 @@ class HRBlockV2(TypedBlock):
     def _extract_voluntary_turnover(self, voluntary_terms=None, total_terms=None) -> Dict[str, Any]:
         """Calculate voluntary turnover."""
         try:
-            value = (voluntary_terms / total_terms * 100) if total_terms else None
+            value = self._safe_divide(voluntary_terms, total_terms, scale=100) if (voluntary_terms is not None and total_terms is not None) else None
             if value is None:
                 return {"name": "voluntary_turnover", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "voluntary_turnover", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -484,7 +440,7 @@ class HRBlockV2(TypedBlock):
     def _extract_absenteeism_rate(self, absent_days=None, total_work_days=None) -> Dict[str, Any]:
         """Calculate absenteeism rate."""
         try:
-            value = (absent_days / total_work_days * 100) if total_work_days else None
+            value = self._safe_divide(absent_days, total_work_days, scale=100) if (absent_days is not None and total_work_days is not None) else None
             if value is None:
                 return {"name": "absenteeism_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "absenteeism_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -494,7 +450,7 @@ class HRBlockV2(TypedBlock):
     def _extract_overtime_rate(self, overtime_hours=None, total_hours=None) -> Dict[str, Any]:
         """Calculate overtime rate."""
         try:
-            value = (overtime_hours / total_hours * 100) if total_hours else None
+            value = self._safe_divide(overtime_hours, total_hours, scale=100) if (overtime_hours is not None and total_hours is not None) else None
             if value is None:
                 return {"name": "overtime_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "overtime_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -504,7 +460,7 @@ class HRBlockV2(TypedBlock):
     def _extract_compensation_ratio(self, employee_salary=None, market_median=None) -> Dict[str, Any]:
         """Calculate compensation ratio."""
         try:
-            value = (employee_salary / market_median * 100) if market_median else None
+            value = self._safe_divide(employee_salary, market_median, scale=100) if (employee_salary is not None and market_median is not None) else None
             if value is None:
                 return {"name": "compensation_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "compensation_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -657,14 +613,3 @@ class HRBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique

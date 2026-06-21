@@ -14,14 +14,12 @@ import json
 import math
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import asdict
-from datetime import datetime, timezone
 
 import sympy as sp
 from sympy import Eq, N, solve, symbols
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, FinanceAnalysis
-from app.core.confidence import assess_extraction_confidence
 from app.core.finance_types import (
     FinancialEntity,
     FormulaResult,
@@ -33,7 +31,7 @@ from app.core.finance_knowledge import FinanceKnowledge
 _fk = FinanceKnowledge()
 
 
-class FinanceBlockV2(TypedBlock):
+class FinanceBlockV2(DomainBlockV2):
     """
     Finance Block v2 - TypedBlock implementation for financial document analysis.
 
@@ -142,16 +140,6 @@ class FinanceBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -302,21 +290,6 @@ class FinanceBlockV2(TypedBlock):
                 "formula_count": sum(1 for v in formulas.values() if v and v.get("value") is not None),
             },
         }
-
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "financials", "formulas", "regulatory_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
 
     # ------------------------------------------------------------------
     # ENTITY EXTRACTION (private)
@@ -680,45 +653,6 @@ class FinanceBlockV2(TypedBlock):
             "confidence": round(min(credit["confidence"], market["confidence"], operational["confidence"]), 2),
         }
 
-    def _risk_level(self, score: float) -> str:
-        if score < 0.33:
-            return "low"
-        if score < 0.66:
-            return "medium"
-        return "high"
-
     # ------------------------------------------------------------------
     # EMPTY RESULT
     # ------------------------------------------------------------------
-
-    def _empty_analysis(self, message: str) -> Dict:
-        """Return empty analysis with error message."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {"isins": [], "tickers": [], "currency_pairs": [], "counterparties": []},
-            "financials": {
-                "revenue": None,
-                "net_income": None,
-                "total_assets": None,
-                "total_liabilities": None,
-                "equity": None,
-                "cash_flow": None,
-            },
-            "formulas": {},
-            "regulatory_flags": {},
-            "risk_scores": {},
-            "confidence": 0,
-            "raw_text": "",
-            "metadata": {
-                "error": message,
-                "extracted_at": self._timestamp(),
-                "entity_count": 0,
-                "formula_count": 0,
-            },
-        }
-
-    def _timestamp(self) -> str:
-        """Get current ISO timestamp."""
-        return datetime.now(timezone.utc).isoformat()

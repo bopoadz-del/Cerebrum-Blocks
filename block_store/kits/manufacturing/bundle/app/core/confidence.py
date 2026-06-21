@@ -7,6 +7,54 @@ TypedBlock extraction pipelines. Keeps scoring deterministic and fast.
 from typing import Any, Dict, List, Optional
 
 
+def _is_meaningful(value: Any) -> bool:
+    """Return True if a value contains real extracted data (not placeholder/empty)."""
+    if value is None:
+        return False
+    if isinstance(value, str):
+        cleaned = value.strip().lower()
+        if not cleaned:
+            return False
+        return cleaned not in {"n/a", "na", "none", "unknown", "null", "missing", "--", "-"}
+    if isinstance(value, (list, tuple)):
+        return any(_is_meaningful(item) for item in value)
+    if isinstance(value, dict):
+        if not value:
+            return False
+        return any(_is_meaningful(v) for v in value.values())
+    if isinstance(value, bool):
+        return True
+    if isinstance(value, (int, float)):
+        return value != 0
+    return True
+
+
+def _score_value(value: Any) -> float:
+    """Score a single field value 0-1 based on content quality."""
+    if not _is_meaningful(value):
+        return 0.0
+
+    if isinstance(value, list):
+        meaningful = [item for item in value if _is_meaningful(item)]
+        if not meaningful:
+            return 0.0
+        # Reward up to 5 meaningful items, then cap.
+        return round(min(1.0, len(meaningful) / 5.0), 2)
+
+    if isinstance(value, dict):
+        meaningful = {k: v for k, v in value.items() if _is_meaningful(v)}
+        if not meaningful:
+            return 0.0
+        return round(min(1.0, len(meaningful) / 3.0), 2)
+
+    if isinstance(value, str):
+        # Slight boost for longer strings (more extracted content).
+        return round(min(1.0, 0.6 + len(value.strip()) / 500.0), 2)
+
+    # Numbers, booleans, etc.
+    return 1.0
+
+
 def assess_extraction_confidence(
     result: Dict[str, Any],
     expected_fields: List[str],
@@ -27,20 +75,7 @@ def assess_extraction_confidence(
     field_scores: Dict[str, float] = {}
 
     for field in expected_fields:
-        value = result.get(field)
-        if value is None:
-            score = 0.0
-        elif isinstance(value, list):
-            score = min(1.0, len(value) / 5.0)
-        elif isinstance(value, dict):
-            score = min(1.0, len(value) / 3.0)
-        elif isinstance(value, (int, float)):
-            score = 1.0 if value else 0.0
-        elif isinstance(value, str):
-            score = 1.0 if value.strip() else 0.0
-        else:
-            score = 0.8 if value else 0.0
-
+        score = _score_value(result.get(field))
         scores.append(score)
         field_scores[field] = round(score, 2)
 

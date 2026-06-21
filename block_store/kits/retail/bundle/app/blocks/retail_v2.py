@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, RetailAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.retail_types import RetailEntity, RetailMetric, ComplianceFlag, RiskScore
+from app.core.retail_types import RiskScore
+
 from app.core.retail_knowledge import RetailKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = RetailKnowledge()
 
 
-class RetailBlockV2(TypedBlock):
+class RetailBlockV2(DomainBlockV2):
     """
     Retail Block v2 - TypedBlock implementation for retail document analysis.
 
@@ -114,34 +113,6 @@ class RetailBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -296,21 +267,6 @@ class RetailBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_store_name(self, text: str) -> Optional[str]:
         """Best-effort extraction of store name."""
         pattern = r"(?:store name|store_name)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -441,7 +397,7 @@ class RetailBlockV2(TypedBlock):
     def _extract_gross_margin(self, selling_price=None, cost_price=None) -> Dict[str, Any]:
         """Calculate gross margin."""
         try:
-            value = ((selling_price - cost_price) / selling_price * 100) if selling_price else None
+            value = self._safe_divide(selling_price - cost_price, selling_price, scale=100) if (selling_price is not None and cost_price is not None) else None
             if value is None:
                 return {"name": "gross_margin", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "gross_margin", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -451,7 +407,7 @@ class RetailBlockV2(TypedBlock):
     def _extract_inventory_turnover(self, cogs=None, average_inventory=None) -> Dict[str, Any]:
         """Calculate inventory turnover."""
         try:
-            value = (cogs / average_inventory) if average_inventory else None
+            value = self._safe_divide(cogs, average_inventory) if (cogs is not None and average_inventory is not None) else None
             if value is None:
                 return {"name": "inventory_turnover", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "inventory_turnover", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -461,7 +417,7 @@ class RetailBlockV2(TypedBlock):
     def _extract_sell_through_rate(self, units_sold=None, units_received=None) -> Dict[str, Any]:
         """Calculate sell through rate."""
         try:
-            value = (units_sold / units_received * 100) if units_received else None
+            value = self._safe_divide(units_sold, units_received, scale=100) if (units_sold is not None and units_received is not None) else None
             if value is None:
                 return {"name": "sell_through_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "sell_through_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -471,7 +427,7 @@ class RetailBlockV2(TypedBlock):
     def _extract_shrinkage(self, recorded_inventory=None, actual_inventory=None) -> Dict[str, Any]:
         """Calculate shrinkage."""
         try:
-            value = ((recorded_inventory - actual_inventory) / recorded_inventory * 100) if recorded_inventory else None
+            value = self._safe_divide(recorded_inventory - actual_inventory, recorded_inventory, scale=100) if (recorded_inventory is not None and actual_inventory is not None) else None
             if value is None:
                 return {"name": "shrinkage", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "shrinkage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -481,7 +437,7 @@ class RetailBlockV2(TypedBlock):
     def _extract_return_rate(self, returns=None, total_sales=None) -> Dict[str, Any]:
         """Calculate return rate."""
         try:
-            value = (returns / total_sales * 100) if total_sales else None
+            value = self._safe_divide(returns, total_sales, scale=100) if (returns is not None and total_sales is not None) else None
             if value is None:
                 return {"name": "return_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "return_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -491,7 +447,7 @@ class RetailBlockV2(TypedBlock):
     def _extract_conversion_rate(self, orders=None, visitors=None) -> Dict[str, Any]:
         """Calculate conversion rate."""
         try:
-            value = (orders / visitors * 100) if visitors else None
+            value = self._safe_divide(orders, visitors, scale=100) if (orders is not None and visitors is not None) else None
             if value is None:
                 return {"name": "conversion_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "conversion_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -501,7 +457,7 @@ class RetailBlockV2(TypedBlock):
     def _extract_aov(self, total_revenue=None, orders=None) -> Dict[str, Any]:
         """Calculate aov."""
         try:
-            value = (total_revenue / orders) if orders else None
+            value = self._safe_divide(total_revenue, orders) if (total_revenue is not None and orders is not None) else None
             if value is None:
                 return {"name": "aov", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "aov", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -511,7 +467,7 @@ class RetailBlockV2(TypedBlock):
     def _extract_cart_abandonment(self, carts_created=None, orders_completed=None) -> Dict[str, Any]:
         """Calculate cart abandonment."""
         try:
-            value = ((carts_created - orders_completed) / carts_created * 100) if carts_created else None
+            value = self._safe_divide(carts_created - orders_completed, carts_created, scale=100) if (carts_created is not None and orders_completed is not None) else None
             if value is None:
                 return {"name": "cart_abandonment", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "cart_abandonment", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -681,14 +637,3 @@ class RetailBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique

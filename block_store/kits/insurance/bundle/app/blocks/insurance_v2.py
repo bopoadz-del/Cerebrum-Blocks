@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, InsuranceAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.insurance_types import InsuranceEntity, InsuranceMetric, ComplianceFlag, RiskScore
+from app.core.insurance_types import RiskScore
+
 from app.core.insurance_knowledge import InsuranceKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = InsuranceKnowledge()
 
 
-class InsuranceBlockV2(TypedBlock):
+class InsuranceBlockV2(DomainBlockV2):
     """
     Insurance Block v2 - TypedBlock implementation for insurance document analysis.
 
@@ -114,34 +113,6 @@ class InsuranceBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -289,21 +260,6 @@ class InsuranceBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_carrier_name(self, text: str) -> Optional[str]:
         """Best-effort extraction of carrier name."""
         pattern = r"(?:carrier name|carrier_name)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -434,7 +390,7 @@ class InsuranceBlockV2(TypedBlock):
     def _extract_loss_ratio(self, incurred_losses=None, earned_premium=None) -> Dict[str, Any]:
         """Calculate loss ratio."""
         try:
-            value = (incurred_losses / earned_premium * 100) if earned_premium else None
+            value = self._safe_divide(incurred_losses, earned_premium, scale=100) if (incurred_losses is not None and earned_premium is not None) else None
             if value is None:
                 return {"name": "loss_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "loss_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -474,7 +430,7 @@ class InsuranceBlockV2(TypedBlock):
     def _extract_rate_on_line(self, premium=None, limit=None) -> Dict[str, Any]:
         """Calculate rate on line."""
         try:
-            value = (premium / limit * 100) if limit else None
+            value = self._safe_divide(premium, limit, scale=100) if (premium is not None and limit is not None) else None
             if value is None:
                 return {"name": "rate_on_line", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "rate_on_line", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -494,7 +450,7 @@ class InsuranceBlockV2(TypedBlock):
     def _extract_retention_ratio(self, ceded_premium=None, gross_premium=None) -> Dict[str, Any]:
         """Calculate retention ratio."""
         try:
-            value = ((gross_premium - ceded_premium) / gross_premium * 100) if gross_premium else None
+            value = self._safe_divide(gross_premium - ceded_premium, gross_premium, scale=100) if (gross_premium is not None and ceded_premium is not None) else None
             if value is None:
                 return {"name": "retention_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "retention_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -504,7 +460,7 @@ class InsuranceBlockV2(TypedBlock):
     def _extract_claim_frequency(self, claims=None, exposure_units=None) -> Dict[str, Any]:
         """Calculate claim frequency."""
         try:
-            value = (claims / exposure_units * 100) if exposure_units else None
+            value = self._safe_divide(claims, exposure_units, scale=100) if (claims is not None and exposure_units is not None) else None
             if value is None:
                 return {"name": "claim_frequency", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "claim_frequency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -657,14 +613,3 @@ class InsuranceBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique

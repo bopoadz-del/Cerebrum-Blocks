@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, SupplyChainAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.supply_chain_types import SupplyChainEntity, SupplyChainMetric, ComplianceFlag, RiskScore
+from app.core.supply_chain_types import RiskScore
+
 from app.core.supply_chain_knowledge import SupplyChainKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = SupplyChainKnowledge()
 
 
-class SupplyChainBlockV2(TypedBlock):
+class SupplyChainBlockV2(DomainBlockV2):
     """
     SupplyChain Block v2 - TypedBlock implementation for supply_chain document analysis.
 
@@ -114,34 +113,6 @@ class SupplyChainBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -289,21 +260,6 @@ class SupplyChainBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_shipment_id(self, text: str) -> Optional[str]:
         """Best-effort extraction of shipment id."""
         pattern = r"(?:shipment id|shipment_id)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -434,7 +390,7 @@ class SupplyChainBlockV2(TypedBlock):
     def _extract_freight_cost_per_kg(self, total_freight=None, total_weight_kg=None) -> Dict[str, Any]:
         """Calculate freight cost per kg."""
         try:
-            value = (total_freight / total_weight_kg) if total_weight_kg else None
+            value = self._safe_divide(total_freight, total_weight_kg) if (total_freight is not None and total_weight_kg is not None) else None
             if value is None:
                 return {"name": "freight_cost_per_kg", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "freight_cost_per_kg", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -444,7 +400,7 @@ class SupplyChainBlockV2(TypedBlock):
     def _extract_cubic_meter_rate(self, total_freight=None, total_cbm=None) -> Dict[str, Any]:
         """Calculate cubic meter rate."""
         try:
-            value = (total_freight / total_cbm) if total_cbm else None
+            value = self._safe_divide(total_freight, total_cbm) if (total_freight is not None and total_cbm is not None) else None
             if value is None:
                 return {"name": "cubic_meter_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "cubic_meter_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -474,7 +430,7 @@ class SupplyChainBlockV2(TypedBlock):
     def _extract_lead_time(self, order_date=None, delivery_date=None) -> Dict[str, Any]:
         """Calculate lead time."""
         try:
-            value = (delivery_date - order_date).days if order_date and delivery_date else None
+            value = self._days_between(order_date, delivery_date) if (order_date is not None and delivery_date is not None) else None
             if value is None:
                 return {"name": "lead_time", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "lead_time", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -484,7 +440,7 @@ class SupplyChainBlockV2(TypedBlock):
     def _extract_on_time_delivery_rate(self, on_time_deliveries=None, total_deliveries=None) -> Dict[str, Any]:
         """Calculate on time delivery rate."""
         try:
-            value = (on_time_deliveries / total_deliveries * 100) if total_deliveries else None
+            value = self._safe_divide(on_time_deliveries, total_deliveries, scale=100) if (on_time_deliveries is not None and total_deliveries is not None) else None
             if value is None:
                 return {"name": "on_time_delivery_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "on_time_delivery_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -494,7 +450,7 @@ class SupplyChainBlockV2(TypedBlock):
     def _extract_order_accuracy_rate(self, accurate_orders=None, total_orders=None) -> Dict[str, Any]:
         """Calculate order accuracy rate."""
         try:
-            value = (accurate_orders / total_orders * 100) if total_orders else None
+            value = self._safe_divide(accurate_orders, total_orders, scale=100) if (accurate_orders is not None and total_orders is not None) else None
             if value is None:
                 return {"name": "order_accuracy_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "order_accuracy_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -504,7 +460,7 @@ class SupplyChainBlockV2(TypedBlock):
     def _extract_inventory_days(self, inventory=None, daily_usage=None) -> Dict[str, Any]:
         """Calculate inventory days."""
         try:
-            value = (inventory / daily_usage) if daily_usage else None
+            value = self._safe_divide(inventory, daily_usage) if (inventory is not None and daily_usage is not None) else None
             if value is None:
                 return {"name": "inventory_days", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "inventory_days", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -657,14 +613,3 @@ class SupplyChainBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique

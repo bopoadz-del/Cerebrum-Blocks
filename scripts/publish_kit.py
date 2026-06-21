@@ -79,6 +79,10 @@ def _build_manifest(domain: str) -> dict[str, object]:
     shared_files = [
         "app/core/confidence.py",
         "app/core/schema_registry.py",
+        "app/core/domain_block_v2.py",
+        "app/core/metric_utils.py",
+        "app/core/typed_block.py",
+        "app/containers/base.py",
     ]
 
     artifacts = [_artifact(path) for path in source_files + shared_files]
@@ -114,6 +118,10 @@ def _build_manifest(domain: str) -> dict[str, object]:
             f"app/core/{domain}_types.py",
             "app/core/confidence.py",
             "app/core/schema_registry.py",
+            "app/core/domain_block_v2.py",
+            "app/core/metric_utils.py",
+            "app/core/typed_block.py",
+            "app/containers/base.py",
         ],
         "artifacts": artifacts,
         "price_cents": 0,

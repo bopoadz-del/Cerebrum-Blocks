@@ -32,7 +32,11 @@
     "app/core/retail_knowledge.py",
     "app/core/retail_types.py",
     "app/core/confidence.py",
-    "app/core/schema_registry.py"
+    "app/core/schema_registry.py",
+    "app/core/domain_block_v2.py",
+    "app/core/metric_utils.py",
+    "app/core/typed_block.py",
+    "app/containers/base.py"
   ],
   "artifacts": [
     {
@@ -58,6 +62,22 @@
     {
       "src": "app/core/schema_registry.py",
       "dest": "app/core/schema_registry.py"
+    },
+    {
+      "src": "app/core/domain_block_v2.py",
+      "dest": "app/core/domain_block_v2.py"
+    },
+    {
+      "src": "app/core/metric_utils.py",
+      "dest": "app/core/metric_utils.py"
+    },
+    {
+      "src": "app/core/typed_block.py",
+      "dest": "app/core/typed_block.py"
+    },
+    {
+      "src": "app/containers/base.py",
+      "dest": "app/containers/base.py"
     }
   ],
   "price_cents": 0,

@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, RealEstateAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.real_estate_types import RealEstateEntity, RealEstateMetric, ComplianceFlag, RiskScore
+from app.core.real_estate_types import RiskScore
+
 from app.core.real_estate_knowledge import RealEstateKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = RealEstateKnowledge()
 
 
-class RealEstateBlockV2(TypedBlock):
+class RealEstateBlockV2(DomainBlockV2):
     """
     RealEstate Block v2 - TypedBlock implementation for real_estate document analysis.
 
@@ -114,34 +113,6 @@ class RealEstateBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -289,21 +260,6 @@ class RealEstateBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_property_type(self, text: str) -> Optional[str]:
         """Best-effort extraction of property type."""
         pattern = r"(?:property type|property_type)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -434,7 +390,7 @@ class RealEstateBlockV2(TypedBlock):
     def _extract_cap_rate(self, net_operating_income=None, property_value=None) -> Dict[str, Any]:
         """Calculate cap rate."""
         try:
-            value = (net_operating_income / property_value * 100) if property_value else None
+            value = self._safe_divide(net_operating_income, property_value, scale=100) if (net_operating_income is not None and property_value is not None) else None
             if value is None:
                 return {"name": "cap_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "cap_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -444,7 +400,7 @@ class RealEstateBlockV2(TypedBlock):
     def _extract_gross_rent_multiplier(self, property_price=None, gross_annual_rent=None) -> Dict[str, Any]:
         """Calculate gross rent multiplier."""
         try:
-            value = (property_price / gross_annual_rent) if gross_annual_rent else None
+            value = self._safe_divide(property_price, gross_annual_rent) if (property_price is not None and gross_annual_rent is not None) else None
             if value is None:
                 return {"name": "gross_rent_multiplier", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "gross_rent_multiplier", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -454,7 +410,7 @@ class RealEstateBlockV2(TypedBlock):
     def _extract_cash_on_cash_return(self, annual_cash_flow=None, total_cash_invested=None) -> Dict[str, Any]:
         """Calculate cash on cash return."""
         try:
-            value = (annual_cash_flow / total_cash_invested * 100) if total_cash_invested else None
+            value = self._safe_divide(annual_cash_flow, total_cash_invested, scale=100) if (annual_cash_flow is not None and total_cash_invested is not None) else None
             if value is None:
                 return {"name": "cash_on_cash_return", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "cash_on_cash_return", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -464,7 +420,7 @@ class RealEstateBlockV2(TypedBlock):
     def _extract_dscr(self, noi=None, debt_service=None) -> Dict[str, Any]:
         """Calculate dscr."""
         try:
-            value = (noi / debt_service) if debt_service else None
+            value = self._safe_divide(noi, debt_service) if (noi is not None and debt_service is not None) else None
             if value is None:
                 return {"name": "dscr", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "dscr", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -474,7 +430,7 @@ class RealEstateBlockV2(TypedBlock):
     def _extract_loan_to_value(self, loan_amount=None, property_value=None) -> Dict[str, Any]:
         """Calculate loan to value."""
         try:
-            value = (loan_amount / property_value * 100) if property_value else None
+            value = self._safe_divide(loan_amount, property_value, scale=100) if (loan_amount is not None and property_value is not None) else None
             if value is None:
                 return {"name": "loan_to_value", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "loan_to_value", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -494,7 +450,7 @@ class RealEstateBlockV2(TypedBlock):
     def _extract_vacancy_rate(self, vacant_units=None, total_units=None) -> Dict[str, Any]:
         """Calculate vacancy rate."""
         try:
-            value = (vacant_units / total_units * 100) if total_units else None
+            value = self._safe_divide(vacant_units, total_units, scale=100) if (vacant_units is not None and total_units is not None) else None
             if value is None:
                 return {"name": "vacancy_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "vacancy_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -504,7 +460,7 @@ class RealEstateBlockV2(TypedBlock):
     def _extract_price_per_sqft(self, price=None, sqft=None) -> Dict[str, Any]:
         """Calculate price per sqft."""
         try:
-            value = (price / sqft) if sqft else None
+            value = self._safe_divide(price, sqft) if (price is not None and sqft is not None) else None
             if value is None:
                 return {"name": "price_per_sqft", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "price_per_sqft", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -657,14 +613,3 @@ class RealEstateBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique

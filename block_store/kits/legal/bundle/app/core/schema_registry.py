@@ -476,12 +476,12 @@ class SchemaRegistry:
     """
     
     _instance = None
-    _types: Dict[str, TypeInfo] = {}
-    
+
     def __new__(cls):
         """Singleton pattern - only one registry instance."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._instance._types: Dict[str, TypeInfo] = {}
             cls._instance._register_standard_types()
         return cls._instance
     

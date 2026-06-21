@@ -5,14 +5,14 @@ injection through params["custom_rules"].
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict
 
-from app.core.universal_base import UniversalContainer
+from app.containers.base import DomainContainer
 
 logger = logging.getLogger(__name__)
 
 
-class SupplyChainContainer(UniversalContainer):
+class SupplyChainContainer(DomainContainer):
     """
     SupplyChain Container: supply_chain document analysis, entity extraction,
     metrics, compliance checks, and risk scoring.
@@ -56,36 +56,6 @@ class SupplyChainContainer(UniversalContainer):
         ],
     }
 
-    # ------------------------------------------------------------------
-    # ACTION ROUTING
-    # ------------------------------------------------------------------
-
-    async def route(self, action: str, input_data: Any, params: Dict) -> Dict:
-        """Route to internal supply_chain action handlers."""
-        data = input_data if isinstance(input_data, dict) else {}
-        p = params or {}
-        action = action or p.get("action") or data.get("action")
-
-        handlers = {
-            "analyze": self._analyze,
-            "extract_entities": self._extract_entities,
-            "calculate_metrics": self._calculate_metrics,
-            "check_compliance": self._check_compliance,
-            "score_risk": self._score_risk,
-            "health": self._health,
-            "status": self._health,
-        }
-
-        handler = handlers.get(action)
-        if not handler:
-            return {
-                "status": "error",
-                "error": f"Unknown action: {action}",
-                "known_actions": sorted(handlers.keys()),
-            }
-
-        return await handler(input_data, p)
-
     def get_actions(self) -> Dict[str, Callable]:
         """Return action name → handler mapping."""
         return {
@@ -96,28 +66,6 @@ class SupplyChainContainer(UniversalContainer):
             "score_risk": self._score_risk,
             "health": self._health,
         }
-
-    # ------------------------------------------------------------------
-    # BLOCK RESOLUTION
-    # ------------------------------------------------------------------
-
-    def _resolve_block(self, name: str):
-        """Resolve a block by dependency injection, platform singleton, or registry."""
-        block = self.get_dep(name)
-        if block is not None:
-            return block
-        try:
-            from app.dependencies import get_block_instance
-            return get_block_instance(name)
-        except Exception:
-            pass
-        try:
-            from app.blocks import BLOCK_REGISTRY
-
-            block_cls = BLOCK_REGISTRY.get(name)
-            return block_cls() if block_cls else None
-        except Exception:
-            return None
 
     # ------------------------------------------------------------------
     # HANDLERS
@@ -183,15 +131,3 @@ class SupplyChainContainer(UniversalContainer):
             "container": self.name,
             "version": self.version,
         }
-
-    # ------------------------------------------------------------------
-    # CUSTOM RULES INJECTION
-    # ------------------------------------------------------------------
-
-    def _load_custom_rules(self, input_data: Any, params: Dict) -> List[Dict]:
-        """Collect user custom rules from params or input_data."""
-        data = input_data if isinstance(input_data, dict) else {}
-        rules = params.get("custom_rules") or params.get("rules") or data.get("custom_rules") or data.get("rules")
-        if isinstance(rules, list):
-            return rules
-        return []

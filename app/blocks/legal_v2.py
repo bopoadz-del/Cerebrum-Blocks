@@ -11,18 +11,16 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, LegalAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.legal_types import LegalEntity, LegalAnalysisItem, ComplianceFlag, RiskScore
+
 from app.core.legal_knowledge import LegalKnowledge
 
 _lk = LegalKnowledge()
 
 
-class LegalBlockV2(TypedBlock):
+class LegalBlockV2(DomainBlockV2):
     """
     Legal Block v2 - TypedBlock implementation for legal document analysis.
 
@@ -126,16 +124,6 @@ class LegalBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -304,21 +292,6 @@ class LegalBlockV2(TypedBlock):
                 "jurisdiction": jurisdiction,
             },
         }
-
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "legal_analysis", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
 
     # ------------------------------------------------------------------
     # ENTITY EXTRACTION (private)
@@ -784,71 +757,10 @@ class LegalBlockV2(TypedBlock):
             "confidence": round(min(litigation["confidence"], regulatory["confidence"], reputational["confidence"], financial["confidence"], ip["confidence"]), 2),
         }
 
-    def _risk_level(self, score: float) -> str:
-        if score < 0.33:
-            return "low"
-        if score < 0.66:
-            return "medium"
-        return "high"
-
     # ------------------------------------------------------------------
     # HELPERS
     # ------------------------------------------------------------------
 
-    def _deduplicate_entities(self, items: List[Dict]) -> List[Dict]:
-        """Deduplicate entities by value, keeping first occurrence."""
-        seen = set()
-        unique = []
-        for item in items:
-            key = item.get("value", "")
-            if isinstance(key, str):
-                key = key.strip().lower()
-            if key and key not in seen:
-                seen.add(key)
-                unique.append(item)
-        return unique[:50]
-
     # ------------------------------------------------------------------
     # EMPTY RESULT
     # ------------------------------------------------------------------
-
-    def _empty_analysis(self, message: str) -> Dict:
-        """Return empty analysis with error message."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {
-                "parties": [],
-                "counsel": [],
-                "courts": [],
-                "case_numbers": [],
-                "citations": [],
-                "statutes": [],
-                "dates": [],
-                "monetary_values": [],
-            },
-            "legal_analysis": {
-                "contract_value": None,
-                "liquidated_damages": None,
-                "limitation_periods": None,
-                "termination_provisions": None,
-                "indemnification_scope": None,
-                "governing_law": None,
-                "ip_ownership": None,
-            },
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0,
-            "raw_text": "",
-            "metadata": {
-                "error": message,
-                "extracted_at": self._timestamp(),
-                "entity_count": 0,
-                "analysis_count": 0,
-            },
-        }
-
-    def _timestamp(self) -> str:
-        """Get current ISO timestamp."""
-        return datetime.now(timezone.utc).isoformat()

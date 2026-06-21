@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, OilGasAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.oil_gas_types import OilGasEntity, OilGasMetric, ComplianceFlag, RiskScore
+from app.core.oil_gas_types import RiskScore
+
 from app.core.oil_gas_knowledge import OilGasKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = OilGasKnowledge()
 
 
-class OilGasBlockV2(TypedBlock):
+class OilGasBlockV2(DomainBlockV2):
     """
     OilGas Block v2 - TypedBlock implementation for oil_gas document analysis.
 
@@ -114,34 +113,6 @@ class OilGasBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -289,21 +260,6 @@ class OilGasBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_basin_name(self, text: str) -> Optional[str]:
         """Best-effort extraction of basin name."""
         pattern = r"(?:basin name|basin_name)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -434,7 +390,7 @@ class OilGasBlockV2(TypedBlock):
     def _extract_rop(self, total_drilled_length=None, drilling_time=None) -> Dict[str, Any]:
         """Calculate rop."""
         try:
-            value = (total_drilled_length / drilling_time) if drilling_time else None
+            value = self._safe_divide(total_drilled_length, drilling_time) if (total_drilled_length is not None and drilling_time is not None) else None
             if value is None:
                 return {"name": "rop", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "rop", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -444,7 +400,7 @@ class OilGasBlockV2(TypedBlock):
     def _extract_npt_percentage(self, npt_hours=None, total_hours=None) -> Dict[str, Any]:
         """Calculate npt percentage."""
         try:
-            value = (npt_hours / total_hours * 100) if total_hours else None
+            value = self._safe_divide(npt_hours, total_hours, scale=100) if (npt_hours is not None and total_hours is not None) else None
             if value is None:
                 return {"name": "npt_percentage", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "npt_percentage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -454,7 +410,7 @@ class OilGasBlockV2(TypedBlock):
     def _extract_water_cut(self, water_production=None, total_liquid_production=None) -> Dict[str, Any]:
         """Calculate water cut."""
         try:
-            value = (water_production / total_liquid_production * 100) if total_liquid_production else None
+            value = self._safe_divide(water_production, total_liquid_production, scale=100) if (water_production is not None and total_liquid_production is not None) else None
             if value is None:
                 return {"name": "water_cut", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "water_cut", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -464,7 +420,7 @@ class OilGasBlockV2(TypedBlock):
     def _extract_gas_oil_ratio(self, gas_production=None, oil_production=None) -> Dict[str, Any]:
         """Calculate gas oil ratio."""
         try:
-            value = (gas_production / oil_production) if oil_production else None
+            value = self._safe_divide(gas_production, oil_production) if (gas_production is not None and oil_production is not None) else None
             if value is None:
                 return {"name": "gas_oil_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "gas_oil_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -474,7 +430,7 @@ class OilGasBlockV2(TypedBlock):
     def _extract_recovery_factor(self, recovered=None, original_in_place=None) -> Dict[str, Any]:
         """Calculate recovery factor."""
         try:
-            value = (recovered / original_in_place * 100) if original_in_place else None
+            value = self._safe_divide(recovered, original_in_place, scale=100) if (recovered is not None and original_in_place is not None) else None
             if value is None:
                 return {"name": "recovery_factor", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "recovery_factor", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -484,7 +440,7 @@ class OilGasBlockV2(TypedBlock):
     def _extract_npv_10(self, cash_flows=None, discount_rate=None) -> Dict[str, Any]:
         """Calculate npv 10."""
         try:
-            value = sum(cf / ((1 + 0.10) ** i) for i, cf in enumerate(cash_flows or [])) if cash_flows else None
+            value = sum(self._safe_divide(cf, (1 + 0.10) ** i) for i, cf in enumerate(cash_flows or [])) if cash_flows else None
             if value is None:
                 return {"name": "npv_10", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "npv_10", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -494,7 +450,7 @@ class OilGasBlockV2(TypedBlock):
     def _extract_finding_cost(self, exploration_cost=None, reserves_added=None) -> Dict[str, Any]:
         """Calculate finding cost."""
         try:
-            value = (exploration_cost / reserves_added) if reserves_added else None
+            value = self._safe_divide(exploration_cost, reserves_added) if (exploration_cost is not None and reserves_added is not None) else None
             if value is None:
                 return {"name": "finding_cost", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "finding_cost", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -504,7 +460,7 @@ class OilGasBlockV2(TypedBlock):
     def _extract_lifting_cost(self, operating_cost=None, production_volume=None) -> Dict[str, Any]:
         """Calculate lifting cost."""
         try:
-            value = (operating_cost / production_volume) if production_volume else None
+            value = self._safe_divide(operating_cost, production_volume) if (operating_cost is not None and production_volume is not None) else None
             if value is None:
                 return {"name": "lifting_cost", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "lifting_cost", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -657,14 +613,3 @@ class OilGasBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique

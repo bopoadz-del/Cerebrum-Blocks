@@ -12,18 +12,17 @@ This is the v2 implementation that:
 import re
 import math
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime, timezone, date
+from datetime import datetime, date
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, HotelAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.hotel_types import HotelEntity, HotelMetric, ComplianceFlag, RiskScore
+
 from app.core.hotel_knowledge import HotelKnowledge
 
 _hk = HotelKnowledge()
 
 
-class HotelBlockV2(TypedBlock):
+class HotelBlockV2(DomainBlockV2):
     """
     Hotel Block v2 - TypedBlock implementation for hospitality document analysis.
 
@@ -128,16 +127,6 @@ class HotelBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -296,21 +285,6 @@ class HotelBlockV2(TypedBlock):
                 "hotel_name": hotel_name,
             },
         }
-
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "financials", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
 
     # ------------------------------------------------------------------
     # ENTITY EXTRACTION (private)
@@ -796,66 +770,10 @@ class HotelBlockV2(TypedBlock):
             "confidence": round(min(overbooking["confidence"], revenue["confidence"], fraud["confidence"], maintenance["confidence"], reputation["confidence"]), 2),
         }
 
-    def _risk_level(self, score: float) -> str:
-        if score < 0.33:
-            return "low"
-        if score < 0.66:
-            return "medium"
-        return "high"
-
     # ------------------------------------------------------------------
     # HELPERS
     # ------------------------------------------------------------------
 
-    def _deduplicate_entities(self, items: List[Dict]) -> List[Dict]:
-        """Deduplicate entities by value, keeping first occurrence."""
-        seen = set()
-        unique = []
-        for item in items:
-            key = item.get("value", "").strip().lower()
-            if key and key not in seen:
-                seen.add(key)
-                unique.append(item)
-        return unique[:50]
-
     # ------------------------------------------------------------------
     # EMPTY RESULT
     # ------------------------------------------------------------------
-
-    def _empty_analysis(self, message: str) -> Dict:
-        """Return empty analysis with error message."""
-        return {
-            "document_type": "unknown",
-            "entities": {
-                "guest_names": [],
-                "reservation_numbers": [],
-                "room_numbers": [],
-                "rate_codes": [],
-                "confirmation_numbers": [],
-                "loyalty_numbers": [],
-                "ota_names": [],
-            },
-            "metrics": {},
-            "financials": {
-                "total_revenue": None,
-                "room_revenue": None,
-                "f_b_revenue": None,
-                "other_revenue": None,
-                "taxes": None,
-                "total_charges": None,
-            },
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0,
-            "raw_text": "",
-            "metadata": {
-                "error": message,
-                "extracted_at": self._timestamp(),
-                "entity_count": 0,
-                "metric_count": 0,
-            },
-        }
-
-    def _timestamp(self) -> str:
-        """Get current ISO timestamp."""
-        return datetime.now(timezone.utc).isoformat()

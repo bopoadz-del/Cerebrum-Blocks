@@ -11,18 +11,17 @@ This is the v2 implementation that:
 
 import re
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 
-from app.core.typed_block import TypedBlock
+from app.core.domain_block_v2 import DomainBlockV2
 from app.core.schema_registry import TextContent, EducationAnalysis
-from app.core.confidence import assess_extraction_confidence
-from app.core.education_types import EducationEntity, EducationMetric, ComplianceFlag, RiskScore
+from app.core.education_types import RiskScore
+
 from app.core.education_knowledge import EducationKnowledge, COMPLIANCE_KEYWORDS
 
 _rk = EducationKnowledge()
 
 
-class EducationBlockV2(TypedBlock):
+class EducationBlockV2(DomainBlockV2):
     """
     Education Block v2 - TypedBlock implementation for education document analysis.
 
@@ -114,34 +113,6 @@ class EducationBlockV2(TypedBlock):
     # ------------------------------------------------------------------
     # TEXT EXTRACTION
     # ------------------------------------------------------------------
-
-    def _extract_text(self, input_data: Any) -> str:
-        """Extract text from TextContent or plain string."""
-        if isinstance(input_data, str):
-            return input_data
-        elif isinstance(input_data, dict):
-            if "text" in input_data:
-                return input_data["text"]
-            return input_data.get("content", "")
-        return ""
-
-    def _empty_analysis(self, message: str) -> Dict[str, Any]:
-        """Return a minimal failed/empty analysis."""
-        return {
-            "status": "error",
-            "error": message,
-            "document_type": "unknown",
-            "entities": {},
-            "metrics": {},
-            "financials": {},
-            "compliance_flags": {},
-            "risk_scores": {},
-            "confidence": 0.0,
-            "metadata": {"extracted_at": self._timestamp()},
-        }
-
-    def _timestamp(self) -> str:
-        return datetime.now(timezone.utc).isoformat()
 
     # ------------------------------------------------------------------
     # DOCUMENT TYPE DETECTION
@@ -289,21 +260,6 @@ class EducationBlockV2(TypedBlock):
             },
         }
 
-    def _finalize_result(self, result: Dict, params: Dict) -> Dict:
-        """Score confidence and strip working fields."""
-        conf_report = assess_extraction_confidence(
-            result,
-            expected_fields=["entities", "metrics", "compliance_flags", "risk_scores"],
-        )
-        result["confidence"] = conf_report["overall"]
-        result["confidence_report"] = conf_report
-        result["metadata"]["confidence_threshold"] = params.get(
-            "confidence_threshold", self.default_config["confidence_threshold"]
-        )
-        if "text" in result:
-            del result["text"]
-        return result
-
     def _extract_institution_name(self, text: str) -> Optional[str]:
         """Best-effort extraction of institution name."""
         pattern = r"(?:institution name|institution_name)[:\s]+([A-Z][A-Za-z0-9\s&.,-]{2,60})"
@@ -434,7 +390,7 @@ class EducationBlockV2(TypedBlock):
     def _extract_gpa(self, grade_points=None, credit_hours=None) -> Dict[str, Any]:
         """Calculate gpa."""
         try:
-            value = (grade_points / credit_hours) if credit_hours else None
+            value = self._safe_divide(grade_points, credit_hours) if (grade_points is not None and credit_hours is not None) else None
             if value is None:
                 return {"name": "gpa", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "gpa", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -444,7 +400,7 @@ class EducationBlockV2(TypedBlock):
     def _extract_completion_rate(self, completed_credits=None, attempted_credits=None) -> Dict[str, Any]:
         """Calculate completion rate."""
         try:
-            value = (completed_credits / attempted_credits * 100) if attempted_credits else None
+            value = self._safe_divide(completed_credits, attempted_credits, scale=100) if (completed_credits is not None and attempted_credits is not None) else None
             if value is None:
                 return {"name": "completion_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "completion_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -454,7 +410,7 @@ class EducationBlockV2(TypedBlock):
     def _extract_retention_rate(self, returned_students=None, previous_cohort=None) -> Dict[str, Any]:
         """Calculate retention rate."""
         try:
-            value = (returned_students / previous_cohort * 100) if previous_cohort else None
+            value = self._safe_divide(returned_students, previous_cohort, scale=100) if (returned_students is not None and previous_cohort is not None) else None
             if value is None:
                 return {"name": "retention_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "retention_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -464,7 +420,7 @@ class EducationBlockV2(TypedBlock):
     def _extract_graduation_rate(self, graduated=None, started=None) -> Dict[str, Any]:
         """Calculate graduation rate."""
         try:
-            value = (graduated / started * 100) if started else None
+            value = self._safe_divide(graduated, started, scale=100) if (graduated is not None and started is not None) else None
             if value is None:
                 return {"name": "graduation_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "graduation_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -474,7 +430,7 @@ class EducationBlockV2(TypedBlock):
     def _extract_student_faculty_ratio(self, total_students=None, total_faculty=None) -> Dict[str, Any]:
         """Calculate student faculty ratio."""
         try:
-            value = (total_students / total_faculty) if total_faculty else None
+            value = self._safe_divide(total_students, total_faculty) if (total_students is not None and total_faculty is not None) else None
             if value is None:
                 return {"name": "student_faculty_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "student_faculty_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -484,7 +440,7 @@ class EducationBlockV2(TypedBlock):
     def _extract_average_class_size(self, total_students=None, total_classes=None) -> Dict[str, Any]:
         """Calculate average class size."""
         try:
-            value = (total_students / total_classes) if total_classes else None
+            value = self._safe_divide(total_students, total_classes) if (total_students is not None and total_classes is not None) else None
             if value is None:
                 return {"name": "average_class_size", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "average_class_size", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -494,7 +450,7 @@ class EducationBlockV2(TypedBlock):
     def _extract_tuition_per_credit(self, total_tuition=None, credits=None) -> Dict[str, Any]:
         """Calculate tuition per credit."""
         try:
-            value = (total_tuition / credits) if credits else None
+            value = self._safe_divide(total_tuition, credits) if (total_tuition is not None and credits is not None) else None
             if value is None:
                 return {"name": "tuition_per_credit", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "tuition_per_credit", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -504,7 +460,7 @@ class EducationBlockV2(TypedBlock):
     def _extract_aid_percentage(self, aid_received=None, total_cost=None) -> Dict[str, Any]:
         """Calculate aid percentage."""
         try:
-            value = (aid_received / total_cost * 100) if total_cost else None
+            value = self._safe_divide(aid_received, total_cost, scale=100) if (aid_received is not None and total_cost is not None) else None
             if value is None:
                 return {"name": "aid_percentage", "value": None, "inputs": {}, "error": "Insufficient inputs"}
             return {"name": "aid_percentage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
@@ -657,14 +613,3 @@ class EducationBlockV2(TypedBlock):
             indicators=[],
             confidence=round(min(1.0, score + 0.1), 2),
         )
-
-    def _deduplicate_entities(self, entities: List[Dict]) -> List[Dict]:
-        """Remove duplicate entities by value."""
-        seen = set()
-        unique = []
-        for e in entities:
-            key = (e.get("type"), str(e.get("value", "")).strip().lower())
-            if key[1] and key not in seen:
-                seen.add(key)
-                unique.append(e)
-        return unique
