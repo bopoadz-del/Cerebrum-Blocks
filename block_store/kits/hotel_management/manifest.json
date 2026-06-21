@@ -1,73 +1,88 @@
 {
   "id": "hotel_management",
-  "name": "Hotel Management Suite",
-  "version": "0.0.0-skeleton",
-  "description": "Guest services, reservations, housekeeping, and hospitality operations blocks. Coming soon.",
-  "status": "coming_soon",
+  "name": "Hotel Management & Hospitality Suite",
+  "version": "1.0.0",
+  "description": "Hotel Management & Hospitality Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the hotel management domain.",
+  "status": "available",
   "author": "bopoadz-del",
   "tags": [
     "domain",
     "container",
-    "hospitality",
-    "hotel"
+    "hotel_management"
   ],
-  "blocks": [
-    "opera_connector",
-    "video_metadata_ingest",
-    "hotel_trigger"
-  ],
-  "artifacts": [],
-  "price_cents": 0,
+  "source": {
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
+    "ref": "main",
+    "publish_script": "scripts/publish_kit.py"
+  },
   "container": {
     "class": "app.containers.hotel_management.HotelManagementContainer",
-    "default_chat_prompt": "hotel_management_expert.txt"
+    "default_chat_prompt": null
   },
-  "prompts": [
-    "prompts/hotel_management_expert.txt",
-    "prompts/hotel_management_workflow.md"
+  "blocks": [
+    "pdf",
+    "ocr",
+    "chat",
+    "image",
+    "hotel_management_v2"
   ],
+  "prompts": [],
   "data": [],
   "core_modules": [
-    "knowledge.py",
-    "types.py"
+    "app/core/hotel_knowledge.py",
+    "app/core/hotel_types.py",
+    "app/core/confidence.py",
+    "app/core/schema_registry.py",
+    "app/core/domain_block_v2.py",
+    "app/core/metric_utils.py",
+    "app/core/typed_block.py",
+    "app/containers/base.py"
   ],
-  "skeleton_artifacts": [
+  "artifacts": [
     {
-      "src": "container.py",
+      "src": "app/containers/hotel_management.py",
       "dest": "app/containers/hotel_management.py"
     },
     {
-      "src": "knowledge.py",
-      "dest": "app/core/hotel_management_knowledge.py"
+      "src": "app/blocks/hotel_v2.py",
+      "dest": "app/blocks/hotel_v2.py"
     },
     {
-      "src": "types.py",
-      "dest": "app/core/hotel_management_types.py"
+      "src": "app/core/hotel_knowledge.py",
+      "dest": "app/core/hotel_knowledge.py"
     },
     {
-      "src": "prompts/hotel_management_expert.txt",
-      "dest": "app/prompts/hotel_management_expert.txt"
+      "src": "app/core/hotel_types.py",
+      "dest": "app/core/hotel_types.py"
     },
     {
-      "src": "prompts/hotel_management_workflow.md",
-      "dest": "app/prompts/hotel_management_workflow.md"
+      "src": "app/core/confidence.py",
+      "dest": "app/core/confidence.py"
     },
     {
-      "src": "blocks/opera_connector.py",
-      "dest": "app/blocks/opera_connector.py"
+      "src": "app/core/schema_registry.py",
+      "dest": "app/core/schema_registry.py"
     },
     {
-      "src": "blocks/hotel_trigger.py",
-      "dest": "app/blocks/hotel_trigger.py"
+      "src": "app/core/domain_block_v2.py",
+      "dest": "app/core/domain_block_v2.py"
+    },
+    {
+      "src": "app/core/metric_utils.py",
+      "dest": "app/core/metric_utils.py"
+    },
+    {
+      "src": "app/core/typed_block.py",
+      "dest": "app/core/typed_block.py"
+    },
+    {
+      "src": "app/containers/base.py",
+      "dest": "app/containers/base.py"
     }
   ],
+  "price_cents": 0,
   "install_requires": {
     "min_platform_version": "2.0.0",
     "python": ">=3.10"
-  },
-  "source": {
-    "repo": "https://github.com/bopoadz-del/The_Fork",
-    "ref": "main",
-    "publish_script": null
   }
 }

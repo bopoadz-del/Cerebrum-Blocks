@@ -43,6 +43,19 @@ _CLASS_NAME_OVERRIDES = {
     "hr": "HR",
 }
 
+# Domains whose source filenames don't follow the default pattern.
+_FILE_NAME_OVERRIDES = {
+    "hotel_management": {
+        "block": "hotel",
+        "knowledge": "hotel",
+        "types": "hotel",
+    },
+}
+
+
+def _file_prefix(domain: str, component: str) -> str:
+    return _FILE_NAME_OVERRIDES.get(domain, {}).get(component, domain)
+
 
 def _pascal_name(domain: str) -> str:
     """Convert domain id to a PascalCase prefix (e.g. oil_gas -> OilGas, hr -> HR)."""
@@ -68,11 +81,14 @@ def _build_manifest(domain: str) -> dict[str, object]:
     )
 
     # Source files that make up the full domain kit.
+    block_prefix = _file_prefix(domain, "block")
+    knowledge_prefix = _file_prefix(domain, "knowledge")
+    types_prefix = _file_prefix(domain, "types")
     source_files = [
         f"app/containers/{domain}.py",
-        f"app/blocks/{domain}_v2.py",
-        f"app/core/{domain}_knowledge.py",
-        f"app/core/{domain}_types.py",
+        f"app/blocks/{block_prefix}_v2.py",
+        f"app/core/{knowledge_prefix}_knowledge.py",
+        f"app/core/{types_prefix}_types.py",
     ]
 
     # Shared infrastructure required by all v2 domain blocks.
@@ -114,8 +130,8 @@ def _build_manifest(domain: str) -> dict[str, object]:
         "prompts": [],
         "data": [],
         "core_modules": [
-            f"app/core/{domain}_knowledge.py",
-            f"app/core/{domain}_types.py",
+            f"app/core/{knowledge_prefix}_knowledge.py",
+            f"app/core/{types_prefix}_types.py",
             "app/core/confidence.py",
             "app/core/schema_registry.py",
             "app/core/domain_block_v2.py",
