@@ -437,7 +437,7 @@ class ManufacturingBlockV2(TypedBlock):
             value = (availability * performance * quality) if (availability is not None and performance is not None and quality is not None) else None
             if value is None:
                 return {"name": "oee", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "oee", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "oee", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "oee", "value": None, "inputs": {}, "error": str(e)}
 
@@ -447,7 +447,7 @@ class ManufacturingBlockV2(TypedBlock):
             value = (good_units / total_units * 100) if total_units else None
             if value is None:
                 return {"name": "first_pass_yield", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "first_pass_yield", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "first_pass_yield", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "first_pass_yield", "value": None, "inputs": {}, "error": str(e)}
 
@@ -457,7 +457,7 @@ class ManufacturingBlockV2(TypedBlock):
             value = (scrap_units / total_units * 100) if total_units else None
             if value is None:
                 return {"name": "scrap_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "scrap_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "scrap_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "scrap_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -467,7 +467,7 @@ class ManufacturingBlockV2(TypedBlock):
             value = (rework_units / total_units * 100) if total_units else None
             if value is None:
                 return {"name": "rework_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "rework_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "rework_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "rework_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -477,7 +477,7 @@ class ManufacturingBlockV2(TypedBlock):
             value = (downtime_minutes / total_minutes * 100) if total_minutes else None
             if value is None:
                 return {"name": "downtime_percentage", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "downtime_percentage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "downtime_percentage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "downtime_percentage", "value": None, "inputs": {}, "error": str(e)}
 
@@ -487,7 +487,7 @@ class ManufacturingBlockV2(TypedBlock):
             value = (production_time / units_produced) if units_produced else None
             if value is None:
                 return {"name": "cycle_time", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "cycle_time", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "cycle_time", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "cycle_time", "value": None, "inputs": {}, "error": str(e)}
 
@@ -497,7 +497,7 @@ class ManufacturingBlockV2(TypedBlock):
             value = (available_time / customer_demand) if customer_demand else None
             if value is None:
                 return {"name": "takt_time", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "takt_time", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "takt_time", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "takt_time", "value": None, "inputs": {}, "error": str(e)}
 
@@ -507,7 +507,7 @@ class ManufacturingBlockV2(TypedBlock):
             value = (total_cost / units_produced) if units_produced else None
             if value is None:
                 return {"name": "cost_per_unit", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "cost_per_unit", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "cost_per_unit", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "cost_per_unit", "value": None, "inputs": {}, "error": str(e)}
 

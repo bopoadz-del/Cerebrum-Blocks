@@ -437,7 +437,7 @@ class SupplyChainBlockV2(TypedBlock):
             value = (total_freight / total_weight_kg) if total_weight_kg else None
             if value is None:
                 return {"name": "freight_cost_per_kg", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "freight_cost_per_kg", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "freight_cost_per_kg", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "freight_cost_per_kg", "value": None, "inputs": {}, "error": str(e)}
 
@@ -447,7 +447,7 @@ class SupplyChainBlockV2(TypedBlock):
             value = (total_freight / total_cbm) if total_cbm else None
             if value is None:
                 return {"name": "cubic_meter_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "cubic_meter_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "cubic_meter_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "cubic_meter_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -457,7 +457,7 @@ class SupplyChainBlockV2(TypedBlock):
             value = (dutiable_value * duty_rate) if dutiable_value is not None and duty_rate is not None else None
             if value is None:
                 return {"name": "duty_amount", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "duty_amount", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "duty_amount", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "duty_amount", "value": None, "inputs": {}, "error": str(e)}
 
@@ -467,7 +467,7 @@ class SupplyChainBlockV2(TypedBlock):
             value = (unit_cost + freight + insurance + duty + handling) if unit_cost is not None else None
             if value is None:
                 return {"name": "landed_cost", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "landed_cost", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "landed_cost", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "landed_cost", "value": None, "inputs": {}, "error": str(e)}
 
@@ -477,7 +477,7 @@ class SupplyChainBlockV2(TypedBlock):
             value = (delivery_date - order_date).days if order_date and delivery_date else None
             if value is None:
                 return {"name": "lead_time", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "lead_time", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "lead_time", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "lead_time", "value": None, "inputs": {}, "error": str(e)}
 
@@ -487,7 +487,7 @@ class SupplyChainBlockV2(TypedBlock):
             value = (on_time_deliveries / total_deliveries * 100) if total_deliveries else None
             if value is None:
                 return {"name": "on_time_delivery_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "on_time_delivery_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "on_time_delivery_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "on_time_delivery_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -497,7 +497,7 @@ class SupplyChainBlockV2(TypedBlock):
             value = (accurate_orders / total_orders * 100) if total_orders else None
             if value is None:
                 return {"name": "order_accuracy_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "order_accuracy_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "order_accuracy_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "order_accuracy_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -507,7 +507,7 @@ class SupplyChainBlockV2(TypedBlock):
             value = (inventory / daily_usage) if daily_usage else None
             if value is None:
                 return {"name": "inventory_days", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "inventory_days", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "inventory_days", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "inventory_days", "value": None, "inputs": {}, "error": str(e)}
 

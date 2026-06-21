@@ -437,7 +437,7 @@ class InsuranceBlockV2(TypedBlock):
             value = (incurred_losses / earned_premium * 100) if earned_premium else None
             if value is None:
                 return {"name": "loss_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "loss_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "loss_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "loss_ratio", "value": None, "inputs": {}, "error": str(e)}
 
@@ -447,7 +447,7 @@ class InsuranceBlockV2(TypedBlock):
             value = (loss_ratio + expense_ratio) if (loss_ratio is not None and expense_ratio is not None) else None
             if value is None:
                 return {"name": "combined_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "combined_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "combined_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "combined_ratio", "value": None, "inputs": {}, "error": str(e)}
 
@@ -457,7 +457,7 @@ class InsuranceBlockV2(TypedBlock):
             value = (incurred - paid) if incurred is not None and paid is not None else None
             if value is None:
                 return {"name": "loss_reserve", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "loss_reserve", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "loss_reserve", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "loss_reserve", "value": None, "inputs": {}, "error": str(e)}
 
@@ -467,7 +467,7 @@ class InsuranceBlockV2(TypedBlock):
             value = (total_reserve - known_reserve) if total_reserve is not None and known_reserve is not None else None
             if value is None:
                 return {"name": "ibnr_estimate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "ibnr_estimate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "ibnr_estimate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "ibnr_estimate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -477,7 +477,7 @@ class InsuranceBlockV2(TypedBlock):
             value = (premium / limit * 100) if limit else None
             if value is None:
                 return {"name": "rate_on_line", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "rate_on_line", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "rate_on_line", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "rate_on_line", "value": None, "inputs": {}, "error": str(e)}
 
@@ -487,7 +487,7 @@ class InsuranceBlockV2(TypedBlock):
             value = (excess_limit + underlying_limit) if (excess_limit is not None and underlying_limit is not None) else None
             if value is None:
                 return {"name": "attachment_point", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "attachment_point", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "attachment_point", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "attachment_point", "value": None, "inputs": {}, "error": str(e)}
 
@@ -497,7 +497,7 @@ class InsuranceBlockV2(TypedBlock):
             value = ((gross_premium - ceded_premium) / gross_premium * 100) if gross_premium else None
             if value is None:
                 return {"name": "retention_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "retention_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "retention_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "retention_ratio", "value": None, "inputs": {}, "error": str(e)}
 
@@ -507,7 +507,7 @@ class InsuranceBlockV2(TypedBlock):
             value = (claims / exposure_units * 100) if exposure_units else None
             if value is None:
                 return {"name": "claim_frequency", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "claim_frequency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "claim_frequency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "claim_frequency", "value": None, "inputs": {}, "error": str(e)}
 

@@ -437,7 +437,7 @@ class RealEstateBlockV2(TypedBlock):
             value = (net_operating_income / property_value * 100) if property_value else None
             if value is None:
                 return {"name": "cap_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "cap_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "cap_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "cap_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -447,7 +447,7 @@ class RealEstateBlockV2(TypedBlock):
             value = (property_price / gross_annual_rent) if gross_annual_rent else None
             if value is None:
                 return {"name": "gross_rent_multiplier", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "gross_rent_multiplier", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "gross_rent_multiplier", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "gross_rent_multiplier", "value": None, "inputs": {}, "error": str(e)}
 
@@ -457,7 +457,7 @@ class RealEstateBlockV2(TypedBlock):
             value = (annual_cash_flow / total_cash_invested * 100) if total_cash_invested else None
             if value is None:
                 return {"name": "cash_on_cash_return", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "cash_on_cash_return", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "cash_on_cash_return", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "cash_on_cash_return", "value": None, "inputs": {}, "error": str(e)}
 
@@ -467,7 +467,7 @@ class RealEstateBlockV2(TypedBlock):
             value = (noi / debt_service) if debt_service else None
             if value is None:
                 return {"name": "dscr", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "dscr", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "dscr", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "dscr", "value": None, "inputs": {}, "error": str(e)}
 
@@ -477,7 +477,7 @@ class RealEstateBlockV2(TypedBlock):
             value = (loan_amount / property_value * 100) if property_value else None
             if value is None:
                 return {"name": "loan_to_value", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "loan_to_value", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "loan_to_value", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "loan_to_value", "value": None, "inputs": {}, "error": str(e)}
 
@@ -487,7 +487,7 @@ class RealEstateBlockV2(TypedBlock):
             value = (gross_income - operating_expenses) if gross_income is not None and operating_expenses is not None else None
             if value is None:
                 return {"name": "net_operating_income", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "net_operating_income", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "net_operating_income", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "net_operating_income", "value": None, "inputs": {}, "error": str(e)}
 
@@ -497,7 +497,7 @@ class RealEstateBlockV2(TypedBlock):
             value = (vacant_units / total_units * 100) if total_units else None
             if value is None:
                 return {"name": "vacancy_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "vacancy_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "vacancy_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "vacancy_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -507,7 +507,7 @@ class RealEstateBlockV2(TypedBlock):
             value = (price / sqft) if sqft else None
             if value is None:
                 return {"name": "price_per_sqft", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "price_per_sqft", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "price_per_sqft", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "price_per_sqft", "value": None, "inputs": {}, "error": str(e)}
 

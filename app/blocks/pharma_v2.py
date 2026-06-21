@@ -437,7 +437,7 @@ class PharmaBlockV2(TypedBlock):
             value = (actual_yield / theoretical_yield * 100) if theoretical_yield else None
             if value is None:
                 return {"name": "batch_yield", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "batch_yield", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "batch_yield", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "batch_yield", "value": None, "inputs": {}, "error": str(e)}
 
@@ -447,7 +447,7 @@ class PharmaBlockV2(TypedBlock):
             value = ((assay_result - specification) / specification * 100) if specification else None
             if value is None:
                 return {"name": "assay_purity", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "assay_purity", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "assay_purity", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "assay_purity", "value": None, "inputs": {}, "error": str(e)}
 
@@ -457,7 +457,7 @@ class PharmaBlockV2(TypedBlock):
             value = total_impurities if total_impurities is not None else None
             if value is None:
                 return {"name": "impurity_profile", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "impurity_profile", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "impurity_profile", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "impurity_profile", "value": None, "inputs": {}, "error": str(e)}
 
@@ -467,7 +467,7 @@ class PharmaBlockV2(TypedBlock):
             value = (dissolved / total * 100) if total else None
             if value is None:
                 return {"name": "dissolution_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "dissolution_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "dissolution_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "dissolution_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -477,7 +477,7 @@ class PharmaBlockV2(TypedBlock):
             value = mean if mean is not None else None
             if value is None:
                 return {"name": "content_uniformity", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "content_uniformity", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "content_uniformity", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "content_uniformity", "value": None, "inputs": {}, "error": str(e)}
 
@@ -487,7 +487,7 @@ class PharmaBlockV2(TypedBlock):
             value = ((initial_assay - final_assay) / time_months) if time_months else None
             if value is None:
                 return {"name": "stability_degradation", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "stability_degradation", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "stability_degradation", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "stability_degradation", "value": None, "inputs": {}, "error": str(e)}
 
@@ -497,7 +497,7 @@ class PharmaBlockV2(TypedBlock):
             value = (specification_limit / degradation_rate) if degradation_rate else None
             if value is None:
                 return {"name": "shelf_life", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "shelf_life", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "shelf_life", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "shelf_life", "value": None, "inputs": {}, "error": str(e)}
 
@@ -507,7 +507,7 @@ class PharmaBlockV2(TypedBlock):
             value = (report_count / background_rate) if background_rate else None
             if value is None:
                 return {"name": "signal_strength", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "signal_strength", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "signal_strength", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "signal_strength", "value": None, "inputs": {}, "error": str(e)}
 

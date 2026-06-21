@@ -694,6 +694,8 @@ class FinanceBlockV2(TypedBlock):
     def _empty_analysis(self, message: str) -> Dict:
         """Return empty analysis with error message."""
         return {
+            "status": "error",
+            "error": message,
             "document_type": "unknown",
             "entities": {"isins": [], "tickers": [], "currency_pairs": [], "counterparties": []},
             "financials": {

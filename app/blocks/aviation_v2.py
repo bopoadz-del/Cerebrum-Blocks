@@ -437,7 +437,7 @@ class AviationBlockV2(TypedBlock):
             value = (flight_hours / available_hours * 100) if available_hours else None
             if value is None:
                 return {"name": "utilization_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "utilization_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "utilization_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "utilization_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -447,7 +447,7 @@ class AviationBlockV2(TypedBlock):
             value = (dispatched_flights / scheduled_flights * 100) if scheduled_flights else None
             if value is None:
                 return {"name": "dispatch_reliability", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "dispatch_reliability", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "dispatch_reliability", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "dispatch_reliability", "value": None, "inputs": {}, "error": str(e)}
 
@@ -457,7 +457,7 @@ class AviationBlockV2(TypedBlock):
             value = (on_time / total * 100) if total else None
             if value is None:
                 return {"name": "on_time_performance", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "on_time_performance", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "on_time_performance", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "on_time_performance", "value": None, "inputs": {}, "error": str(e)}
 
@@ -467,7 +467,7 @@ class AviationBlockV2(TypedBlock):
             value = (total_hours / failures) if failures else None
             if value is None:
                 return {"name": "mtbf", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "mtbf", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "mtbf", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "mtbf", "value": None, "inputs": {}, "error": str(e)}
 
@@ -477,7 +477,7 @@ class AviationBlockV2(TypedBlock):
             value = (total_repair_time / repairs) if repairs else None
             if value is None:
                 return {"name": "mttr", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "mttr", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "mttr", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "mttr", "value": None, "inputs": {}, "error": str(e)}
 
@@ -487,7 +487,7 @@ class AviationBlockV2(TypedBlock):
             value = (total_fuel / flight_hours) if flight_hours else None
             if value is None:
                 return {"name": "fuel_burn_per_hour", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "fuel_burn_per_hour", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "fuel_burn_per_hour", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "fuel_burn_per_hour", "value": None, "inputs": {}, "error": str(e)}
 
@@ -497,7 +497,7 @@ class AviationBlockV2(TypedBlock):
             value = (actual_payload / max_payload * 100) if max_payload else None
             if value is None:
                 return {"name": "payload_utilization", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "payload_utilization", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "payload_utilization", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "payload_utilization", "value": None, "inputs": {}, "error": str(e)}
 
@@ -507,7 +507,7 @@ class AviationBlockV2(TypedBlock):
             value = (monthly_lease / aircraft_value * 100) if aircraft_value else None
             if value is None:
                 return {"name": "lease_rate_factor", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "lease_rate_factor", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "lease_rate_factor", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "lease_rate_factor", "value": None, "inputs": {}, "error": str(e)}
 

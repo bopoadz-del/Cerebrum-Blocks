@@ -437,7 +437,7 @@ class OilGasBlockV2(TypedBlock):
             value = (total_drilled_length / drilling_time) if drilling_time else None
             if value is None:
                 return {"name": "rop", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "rop", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "rop", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "rop", "value": None, "inputs": {}, "error": str(e)}
 
@@ -447,7 +447,7 @@ class OilGasBlockV2(TypedBlock):
             value = (npt_hours / total_hours * 100) if total_hours else None
             if value is None:
                 return {"name": "npt_percentage", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "npt_percentage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "npt_percentage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "npt_percentage", "value": None, "inputs": {}, "error": str(e)}
 
@@ -457,7 +457,7 @@ class OilGasBlockV2(TypedBlock):
             value = (water_production / total_liquid_production * 100) if total_liquid_production else None
             if value is None:
                 return {"name": "water_cut", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "water_cut", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "water_cut", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "water_cut", "value": None, "inputs": {}, "error": str(e)}
 
@@ -467,7 +467,7 @@ class OilGasBlockV2(TypedBlock):
             value = (gas_production / oil_production) if oil_production else None
             if value is None:
                 return {"name": "gas_oil_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "gas_oil_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "gas_oil_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "gas_oil_ratio", "value": None, "inputs": {}, "error": str(e)}
 
@@ -477,7 +477,7 @@ class OilGasBlockV2(TypedBlock):
             value = (recovered / original_in_place * 100) if original_in_place else None
             if value is None:
                 return {"name": "recovery_factor", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "recovery_factor", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "recovery_factor", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "recovery_factor", "value": None, "inputs": {}, "error": str(e)}
 
@@ -487,7 +487,7 @@ class OilGasBlockV2(TypedBlock):
             value = sum(cf / ((1 + 0.10) ** i) for i, cf in enumerate(cash_flows or [])) if cash_flows else None
             if value is None:
                 return {"name": "npv_10", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "npv_10", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "npv_10", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "npv_10", "value": None, "inputs": {}, "error": str(e)}
 
@@ -497,7 +497,7 @@ class OilGasBlockV2(TypedBlock):
             value = (exploration_cost / reserves_added) if reserves_added else None
             if value is None:
                 return {"name": "finding_cost", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "finding_cost", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "finding_cost", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "finding_cost", "value": None, "inputs": {}, "error": str(e)}
 
@@ -507,7 +507,7 @@ class OilGasBlockV2(TypedBlock):
             value = (operating_cost / production_volume) if production_volume else None
             if value is None:
                 return {"name": "lifting_cost", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "lifting_cost", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "lifting_cost", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "lifting_cost", "value": None, "inputs": {}, "error": str(e)}
 

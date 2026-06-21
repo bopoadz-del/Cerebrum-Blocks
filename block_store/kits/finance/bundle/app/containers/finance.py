@@ -66,7 +66,7 @@ class FinanceContainer(UniversalContainer):
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
         # Allow action to come from input_data or params
-        action = data.get("action") or p.get("action") or action
+        action = action or p.get("action") or data.get("action")
 
         handlers = {
             "analyze": self._analyze,

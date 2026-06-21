@@ -437,7 +437,7 @@ class HRBlockV2(TypedBlock):
             value = (fill_date - open_date).days if open_date and fill_date else None
             if value is None:
                 return {"name": "time_to_fill", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "time_to_fill", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "time_to_fill", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "time_to_fill", "value": None, "inputs": {}, "error": str(e)}
 
@@ -447,7 +447,7 @@ class HRBlockV2(TypedBlock):
             value = (total_recruitment_cost / hires) if hires else None
             if value is None:
                 return {"name": "cost_per_hire", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "cost_per_hire", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "cost_per_hire", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "cost_per_hire", "value": None, "inputs": {}, "error": str(e)}
 
@@ -457,7 +457,7 @@ class HRBlockV2(TypedBlock):
             value = (accepted_offers / total_offers * 100) if total_offers else None
             if value is None:
                 return {"name": "offer_acceptance_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "offer_acceptance_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "offer_acceptance_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "offer_acceptance_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -467,7 +467,7 @@ class HRBlockV2(TypedBlock):
             value = (terminations / average_headcount * 100) if average_headcount else None
             if value is None:
                 return {"name": "turnover_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "turnover_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "turnover_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "turnover_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -477,7 +477,7 @@ class HRBlockV2(TypedBlock):
             value = (voluntary_terms / total_terms * 100) if total_terms else None
             if value is None:
                 return {"name": "voluntary_turnover", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "voluntary_turnover", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "voluntary_turnover", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "voluntary_turnover", "value": None, "inputs": {}, "error": str(e)}
 
@@ -487,7 +487,7 @@ class HRBlockV2(TypedBlock):
             value = (absent_days / total_work_days * 100) if total_work_days else None
             if value is None:
                 return {"name": "absenteeism_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "absenteeism_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "absenteeism_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "absenteeism_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -497,7 +497,7 @@ class HRBlockV2(TypedBlock):
             value = (overtime_hours / total_hours * 100) if total_hours else None
             if value is None:
                 return {"name": "overtime_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "overtime_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "overtime_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "overtime_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -507,7 +507,7 @@ class HRBlockV2(TypedBlock):
             value = (employee_salary / market_median * 100) if market_median else None
             if value is None:
                 return {"name": "compensation_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "compensation_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "compensation_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "compensation_ratio", "value": None, "inputs": {}, "error": str(e)}
 

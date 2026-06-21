@@ -444,7 +444,7 @@ class RetailBlockV2(TypedBlock):
             value = ((selling_price - cost_price) / selling_price * 100) if selling_price else None
             if value is None:
                 return {"name": "gross_margin", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "gross_margin", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "gross_margin", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "gross_margin", "value": None, "inputs": {}, "error": str(e)}
 
@@ -454,7 +454,7 @@ class RetailBlockV2(TypedBlock):
             value = (cogs / average_inventory) if average_inventory else None
             if value is None:
                 return {"name": "inventory_turnover", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "inventory_turnover", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "inventory_turnover", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "inventory_turnover", "value": None, "inputs": {}, "error": str(e)}
 
@@ -464,7 +464,7 @@ class RetailBlockV2(TypedBlock):
             value = (units_sold / units_received * 100) if units_received else None
             if value is None:
                 return {"name": "sell_through_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "sell_through_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "sell_through_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "sell_through_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -474,7 +474,7 @@ class RetailBlockV2(TypedBlock):
             value = ((recorded_inventory - actual_inventory) / recorded_inventory * 100) if recorded_inventory else None
             if value is None:
                 return {"name": "shrinkage", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "shrinkage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "shrinkage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "shrinkage", "value": None, "inputs": {}, "error": str(e)}
 
@@ -484,7 +484,7 @@ class RetailBlockV2(TypedBlock):
             value = (returns / total_sales * 100) if total_sales else None
             if value is None:
                 return {"name": "return_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "return_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "return_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "return_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -494,7 +494,7 @@ class RetailBlockV2(TypedBlock):
             value = (orders / visitors * 100) if visitors else None
             if value is None:
                 return {"name": "conversion_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "conversion_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "conversion_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "conversion_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -504,7 +504,7 @@ class RetailBlockV2(TypedBlock):
             value = (total_revenue / orders) if orders else None
             if value is None:
                 return {"name": "aov", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "aov", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "aov", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "aov", "value": None, "inputs": {}, "error": str(e)}
 
@@ -514,7 +514,7 @@ class RetailBlockV2(TypedBlock):
             value = ((carts_created - orders_completed) / carts_created * 100) if carts_created else None
             if value is None:
                 return {"name": "cart_abandonment", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "cart_abandonment", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "cart_abandonment", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "cart_abandonment", "value": None, "inputs": {}, "error": str(e)}
 

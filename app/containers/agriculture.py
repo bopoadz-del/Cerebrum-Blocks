@@ -64,7 +64,7 @@ class AgricultureContainer(UniversalContainer):
         """Route to internal agriculture action handlers."""
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
-        action = data.get("action") or p.get("action") or action
+        action = action or p.get("action") or data.get("action")
 
         handlers = {
             "analyze": self._analyze,

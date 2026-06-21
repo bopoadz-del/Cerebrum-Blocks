@@ -10,7 +10,7 @@ This module provides TypedBlock which extends UniversalBlock with:
 
 from abc import ABC
 from typing import Any, Dict, List, Optional, Union
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, is_dataclass, asdict
 from enum import Enum
 import time
 import uuid
@@ -401,8 +401,23 @@ class TypedBlock(UniversalBlock):
                 if "metadata" not in result:
                     result["metadata"] = {}
                 result["metadata"]["output_validation_warnings"] = output_validation["errors"]
-        
+
+        # Ensure result is JSON-serializable (convert dataclasses, enums, etc.)
+        result = self._serialize_value(result)
+
         return result
+
+    def _serialize_value(self, obj: Any) -> Any:
+        """Recursively convert dataclass instances and other non-JSON types to plain Python objects."""
+        if is_dataclass(obj) and not isinstance(obj, type):
+            obj = asdict(obj)
+        if isinstance(obj, dict):
+            return {k: self._serialize_value(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [self._serialize_value(v) for v in obj]
+        if isinstance(obj, Enum):
+            return obj.value
+        return obj
     
     def get_schema_info(self) -> Dict[str, Any]:
         """Get schema information for this block."""

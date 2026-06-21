@@ -437,7 +437,7 @@ class EducationBlockV2(TypedBlock):
             value = (grade_points / credit_hours) if credit_hours else None
             if value is None:
                 return {"name": "gpa", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "gpa", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "gpa", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "gpa", "value": None, "inputs": {}, "error": str(e)}
 
@@ -447,7 +447,7 @@ class EducationBlockV2(TypedBlock):
             value = (completed_credits / attempted_credits * 100) if attempted_credits else None
             if value is None:
                 return {"name": "completion_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "completion_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "completion_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "completion_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -457,7 +457,7 @@ class EducationBlockV2(TypedBlock):
             value = (returned_students / previous_cohort * 100) if previous_cohort else None
             if value is None:
                 return {"name": "retention_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "retention_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "retention_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "retention_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -467,7 +467,7 @@ class EducationBlockV2(TypedBlock):
             value = (graduated / started * 100) if started else None
             if value is None:
                 return {"name": "graduation_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "graduation_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "graduation_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "graduation_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -477,7 +477,7 @@ class EducationBlockV2(TypedBlock):
             value = (total_students / total_faculty) if total_faculty else None
             if value is None:
                 return {"name": "student_faculty_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "student_faculty_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "student_faculty_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "student_faculty_ratio", "value": None, "inputs": {}, "error": str(e)}
 
@@ -487,7 +487,7 @@ class EducationBlockV2(TypedBlock):
             value = (total_students / total_classes) if total_classes else None
             if value is None:
                 return {"name": "average_class_size", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "average_class_size", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "average_class_size", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "average_class_size", "value": None, "inputs": {}, "error": str(e)}
 
@@ -497,7 +497,7 @@ class EducationBlockV2(TypedBlock):
             value = (total_tuition / credits) if credits else None
             if value is None:
                 return {"name": "tuition_per_credit", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "tuition_per_credit", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "tuition_per_credit", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "tuition_per_credit", "value": None, "inputs": {}, "error": str(e)}
 
@@ -507,7 +507,7 @@ class EducationBlockV2(TypedBlock):
             value = (aid_received / total_cost * 100) if total_cost else None
             if value is None:
                 return {"name": "aid_percentage", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "aid_percentage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "aid_percentage", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "aid_percentage", "value": None, "inputs": {}, "error": str(e)}
 

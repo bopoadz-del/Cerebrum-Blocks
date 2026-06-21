@@ -437,7 +437,7 @@ class AutomotiveBlockV2(TypedBlock):
             value = (purchase_price + fuel + maintenance + insurance + depreciation) if purchase_price is not None else None
             if value is None:
                 return {"name": "total_cost_of_ownership", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "total_cost_of_ownership", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "total_cost_of_ownership", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "total_cost_of_ownership", "value": None, "inputs": {}, "error": str(e)}
 
@@ -447,7 +447,7 @@ class AutomotiveBlockV2(TypedBlock):
             value = ((initial_value - current_value) / initial_value / years * 100) if initial_value and years else None
             if value is None:
                 return {"name": "depreciation_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "depreciation_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "depreciation_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "depreciation_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -457,7 +457,7 @@ class AutomotiveBlockV2(TypedBlock):
             value = (distance / fuel_consumed) if fuel_consumed else None
             if value is None:
                 return {"name": "fuel_efficiency", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "fuel_efficiency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "fuel_efficiency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "fuel_efficiency", "value": None, "inputs": {}, "error": str(e)}
 
@@ -467,7 +467,7 @@ class AutomotiveBlockV2(TypedBlock):
             value = (operating_hours / available_hours * 100) if available_hours else None
             if value is None:
                 return {"name": "utilization_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "utilization_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "utilization_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "utilization_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -477,7 +477,7 @@ class AutomotiveBlockV2(TypedBlock):
             value = (downtime_hours / total_hours * 100) if total_hours else None
             if value is None:
                 return {"name": "downtime_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "downtime_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "downtime_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "downtime_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -487,7 +487,7 @@ class AutomotiveBlockV2(TypedBlock):
             value = (defective_units / total_units * 1_000_000) if total_units else None
             if value is None:
                 return {"name": "defect_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "defect_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "defect_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "defect_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -497,7 +497,7 @@ class AutomotiveBlockV2(TypedBlock):
             value = (claims / units_sold * 100) if units_sold else None
             if value is None:
                 return {"name": "warranty_claim_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "warranty_claim_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "warranty_claim_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "warranty_claim_rate", "value": None, "inputs": {}, "error": str(e)}
 
@@ -507,7 +507,7 @@ class AutomotiveBlockV2(TypedBlock):
             value = (recalled_units / total_produced * 100) if total_produced else None
             if value is None:
                 return {"name": "recall_rate", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "recall_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "recall_rate", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "recall_rate", "value": None, "inputs": {}, "error": str(e)}
 

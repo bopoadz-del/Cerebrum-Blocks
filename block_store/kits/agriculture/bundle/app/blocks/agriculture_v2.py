@@ -245,7 +245,7 @@ class AgricultureBlockV2(TypedBlock):
             "livestock_counts": self._extract_livestock_counts(text),
         }
         metrics = {
-            "yield_per_acre": self._extract_yield_per_acre(**params.get("yield_per_acre", {})),
+            "yield_per_acre": self._calculate_yield_per_acre(**params.get("yield_per_acre", {})),
             "moisture_adjusted_yield": self._extract_moisture_adjusted_yield(**params.get("moisture_adjusted_yield", {})),
             "protein_content": self._extract_protein_content(**params.get("protein_content", {})),
             "feed_conversion_ratio": self._extract_feed_conversion_ratio(**params.get("feed_conversion_ratio", {})),
@@ -431,13 +431,13 @@ class AgricultureBlockV2(TypedBlock):
     # METRICS & FORMULA EXTRACTION (private)
     # ------------------------------------------------------------------
 
-    def _extract_yield_per_acre(self, total_yield=None, total_acres=None) -> Dict[str, Any]:
+    def _calculate_yield_per_acre(self, total_yield=None, total_acres=None) -> Dict[str, Any]:
         """Calculate yield per acre."""
         try:
             value = (total_yield / total_acres) if total_acres else None
             if value is None:
                 return {"name": "yield_per_acre", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "yield_per_acre", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "yield_per_acre", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "yield_per_acre", "value": None, "inputs": {}, "error": str(e)}
 
@@ -447,7 +447,7 @@ class AgricultureBlockV2(TypedBlock):
             value = (yield_at_moisture * (1 - moisture_percent / 100) / (1 - 0.155)) if yield_at_moisture else None
             if value is None:
                 return {"name": "moisture_adjusted_yield", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "moisture_adjusted_yield", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "moisture_adjusted_yield", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "moisture_adjusted_yield", "value": None, "inputs": {}, "error": str(e)}
 
@@ -457,7 +457,7 @@ class AgricultureBlockV2(TypedBlock):
             value = (protein_weight / total_sample_weight * 100) if total_sample_weight else None
             if value is None:
                 return {"name": "protein_content", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "protein_content", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "protein_content", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "protein_content", "value": None, "inputs": {}, "error": str(e)}
 
@@ -467,7 +467,7 @@ class AgricultureBlockV2(TypedBlock):
             value = (feed_consumed / weight_gain) if weight_gain else None
             if value is None:
                 return {"name": "feed_conversion_ratio", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "feed_conversion_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "feed_conversion_ratio", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "feed_conversion_ratio", "value": None, "inputs": {}, "error": str(e)}
 
@@ -477,7 +477,7 @@ class AgricultureBlockV2(TypedBlock):
             value = (piglet_weight / age_days * 21) if age_days else None
             if value is None:
                 return {"name": "weaning_weight", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "weaning_weight", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "weaning_weight", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "weaning_weight", "value": None, "inputs": {}, "error": str(e)}
 
@@ -487,7 +487,7 @@ class AgricultureBlockV2(TypedBlock):
             value = (total_yield / water_applied) if water_applied else None
             if value is None:
                 return {"name": "water_use_efficiency", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "water_use_efficiency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "water_use_efficiency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "water_use_efficiency", "value": None, "inputs": {}, "error": str(e)}
 
@@ -497,7 +497,7 @@ class AgricultureBlockV2(TypedBlock):
             value = (total_yield / nutrient_applied) if nutrient_applied else None
             if value is None:
                 return {"name": "nutrient_use_efficiency", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "nutrient_use_efficiency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "nutrient_use_efficiency", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "nutrient_use_efficiency", "value": None, "inputs": {}, "error": str(e)}
 
@@ -507,7 +507,7 @@ class AgricultureBlockV2(TypedBlock):
             value = (total_cost / acres) if acres else None
             if value is None:
                 return {"name": "cost_per_acre", "value": None, "inputs": {}, "error": "Insufficient inputs"}
-            return {"name": "cost_per_acre", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k != "value"}, "confidence": 0.85}
+            return {"name": "cost_per_acre", "value": round(value, 2), "inputs": {k: v for k, v in locals().items() if k not in ("value", "self")}, "confidence": 0.85}
         except Exception as e:
             return {"name": "cost_per_acre", "value": None, "inputs": {}, "error": str(e)}
 
