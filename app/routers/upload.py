@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import sys
 import uuid
 from typing import Optional
 
@@ -49,12 +50,19 @@ _EXT_MIME_PREFIXES = {
     ".webm": ("video/webm", "audio/webm"),
 }
 
-try:
-    import magic  # python-magic, requires libmagic
-    _mime_detector = magic.Magic(mime=True)
-except Exception as exc:  # ImportError, libmagic missing, etc.
+if sys.platform == "win32":
+    # python-magic on Windows frequently segfaults when the libmagic DLL is
+    # missing/incompatible. Disabling MIME detection keeps the upload router
+    # importable and the rest of the test suite runnable.
     _mime_detector = None
-    logger.warning("python-magic unavailable, MIME validation disabled: %s", exc)
+    logger.warning("python-magic disabled on Windows; MIME validation unavailable")
+else:
+    try:
+        import magic  # python-magic, requires libmagic
+        _mime_detector = magic.Magic(mime=True)
+    except Exception as exc:  # ImportError, libmagic missing, etc.
+        _mime_detector = None
+        logger.warning("python-magic unavailable, MIME validation disabled: %s", exc)
 
 
 def _detect_mime(head: bytes) -> Optional[str]:
