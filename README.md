@@ -6,18 +6,18 @@ Cerebrum is a **block store for AI**. Instead of building pipelines from scratch
 
 ---
 
-## 🏪 The Store: 28+ Plug & Play Blocks
+## 🏪 The Store: 94+ Blocks & 17 Domain Kits
 
-Think of it as an app store, but every "app" is an AI block you can wire into your own system. We ship **50+ blocks** across 6 categories, all with the same universal API:
+Think of it as an app store, but every "app" is an AI block you can wire into your own system. The repo ships **76 generic platform blocks** and **18 domain v2 extraction blocks** across the categories below, all with the same universal API:
 
 | Category | Blocks |
 |----------|--------|
-| **🤖 AI Core** | `chat`, `code`, `search`, `translate`, `voice`, `web`, `zvec` |
+| **🤖 AI Core** | `chat`, `code`, `search`, `translate`, `voice`, `web`, `zvec`, `image`, `ocr`, `pdf`, `vector_search` |
 | **👁️ Vision & Media** | `image`, `ocr`, `vector_search` |
 | **📄 Documents** | `pdf`, `web`, `ocr` |
 | **🔌 Integrations** | `google_drive`, `onedrive`, `local_drive`, `android_drive`, `email`, `webhook`, `voice` |
 | **🛡️ Infrastructure** | `memory`, `auth`, `monitoring`, `queue`, `rate_limiter`, `sandbox`, `audit`, `secrets`, `health_check`, `failover`, `event_bus` |
-| **🏗️ Domain Containers** | `construction`, `medical`, `legal`, `finance`, `security`, `ai_core`, `store` |
+| **🏗️ Domain Kits** | `agriculture`, `automotive`, `aviation`, `construction`, `education`, `finance`, `hotel_management`, `hr`, `insurance`, `legal`, `manufacturing`, `medical`, `oil_gas`, `pharma`, `real_estate`, `retail`, `supply_chain` |
 
 Each block exposes:
 - One `execute()` endpoint
@@ -33,10 +33,13 @@ Each block exposes:
 ```bash
 git clone https://github.com/bopoadz-del/Cerebrum-Blocks.git
 cd Cerebrum-Blocks
+# Optional: enable domain kits at boot
+export CEREBRUM_DOMAIN_KITS=1
+export CEREBRUM_VIRGIN=false
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Open `http://localhost:8000` and you can immediately run any block.
+Open `http://localhost:8000` and you can immediately run any block. Browse available kits at `GET /store/containers`.
 
 ---
 
@@ -48,16 +51,13 @@ The Cerebrum Platform is **itself built from these blocks**. It is a live demo o
 - **File upload + analysis** → `pdf` → `ocr` → `chat` chain
 - **Drive connect** → `local_drive` / `google_drive` / `onedrive` / `android_drive` blocks
 - **ZVec indexing** → `zvec` block embeds file lists so search works across drives
-- **Domain assistants** → `construction`, `medical`, `legal`, `finance` containers
+- **Domain assistants** → `medical`, `legal`, `finance`, `construction`, … domain kits
 
 ### Live Architecture
 
 | Product | What it is | Live URL |
 |---------|-----------|----------|
-| **Platform API** | FastAPI backend executing 28+ blocks | [cerebrum-platform-api.onrender.com](https://cerebrum-platform-api.onrender.com) |
-| **Platform UI** | Chat interface, drive connect, chain builder | [cerebrum-platform.onrender.com](https://cerebrum-platform.onrender.com) |
-| **Store API** | Catalog of all blocks | [cerebrum-store-api.onrender.com](https://cerebrum-store-api.onrender.com) |
-| **Store UI** | Browse and discover blocks | [cerebrum-store.onrender.com](https://cerebrum-store.onrender.com) |
+| **Cerebrum Blocks API** | FastAPI backend + block store | [cerebrum-blocks.onrender.com](https://cerebrum-blocks.onrender.com) |
 
 ---
 
@@ -66,7 +66,7 @@ The Cerebrum Platform is **itself built from these blocks**. It is a live demo o
 Blocks are designed to be chained. The output of one block becomes the input of the next.
 
 ```bash
-curl -X POST https://cerebrum-platform-api.onrender.com/v1/chain \
+curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
   -H "Content-Type: application/json" \
   -d '{
     "steps": [
@@ -81,7 +81,7 @@ curl -X POST https://cerebrum-platform-api.onrender.com/v1/chain \
 Another example — analyze a contract:
 
 ```bash
-curl -X POST https://cerebrum-platform-api.onrender.com/v1/execute \
+curl -X POST https://cerebrum-blocks.onrender.com/v1/execute \
   -H "Content-Type: application/json" \
   -d '{"block": "legal", "params": {"action": "process_contract"}}'
 ```
@@ -89,7 +89,7 @@ curl -X POST https://cerebrum-platform-api.onrender.com/v1/execute \
 Or search across your connected drives with ZVec:
 
 ```bash
-curl -X POST https://cerebrum-platform-api.onrender.com/v1/execute \
+curl -X POST https://cerebrum-blocks.onrender.com/v1/execute \
   -H "Content-Type: application/json" \
   -d '{"block": "zvec", "input": "budget report", "params": {"operation": "search"}}'
 ```
@@ -150,16 +150,26 @@ curl -X POST https://cerebrum-platform-api.onrender.com/v1/execute \
 - `billing` — Usage tracking
 - `payment_split` — Revenue sharing logic
 
-### Domain Containers (7)
+### Domain Kits (17)
+- `agriculture` — Crop health, yield, and supply-chain extraction
+- `automotive` — Vehicle diagnostics, recall, and compliance analysis
+- `aviation` — Maintenance logs, safety, and regulatory extraction
 - `construction` — BIM, QA, progress tracking, material extraction
-- `medical` — DICOM, HIPAA validation, clinical entities
-- `legal` — Contract analysis, precedent matching
+- `education` — Curriculum, assessment, and student-record extraction
 - `finance` — Risk analysis, compliance reporting
-- `security` — Auth, rate limits, sandbox, audit
-- `ai_core` — Adaptive routing & provider leaderboard
-- `store` — Catalog & discovery logic
+- `hotel_management` — Booking, occupancy, and guest-service extraction
+- `hr` — Resume, compliance, and workforce analytics
+- `insurance` — Claims, policy, and risk extraction
+- `legal` — Contract analysis, precedent matching
+- `manufacturing` — Quality, production, and defect extraction
+- `medical` — DICOM, HIPAA validation, clinical entities
+- `oil_gas` — Well logs, safety, and regulatory extraction
+- `pharma` — Trial, batch, and regulatory extraction
+- `real_estate` — Property, lease, and valuation extraction
+- `retail` — Inventory, pricing, and sales extraction
+- `supply_chain` — Shipment, vendor, and logistics extraction
 
-**Total: 50+ blocks, all with the same universal API.**
+**Total: 94+ blocks across 17 verticals, all with the same universal API.**
 
 ---
 
@@ -186,13 +196,28 @@ curl -X POST https://cerebrum-platform-api.onrender.com/v1/execute \
     ┌─────────┴─────────┐
     ▼                   ▼
 ┌───────────┐     ┌───────────┐
-│construction│     │  medical  │  ← Domain Containers
+│construction│     │  medical  │  ← Domain Kits
 └───────────┘     └───────────┘
 ```
 
-Each block inherits from `UniversalBlock` and implements:
+Each block inherits from `UniversalBlock` (or `TypedBlock`/`DomainBlockV2` for schema-aware domain blocks) and implements:
 - `process(input_data, params)` — the actual logic
 - `execute(input_data, params)` — standardized wrapper with timing, error handling, and `source_id`
+
+---
+
+## 🛠️ Store Helpers
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/publish_kit.py --domain <name>` | Bundle a domain container, v2 block, knowledge module, types, and shared core files into `block_store/kits/<name>/` |
+| `scripts/audit_store.py` | Inventory `app/blocks/` against published kits and flag stale files |
+
+Publish a new domain kit:
+
+```bash
+python scripts/publish_kit.py --domain healthcare
+```
 
 ---
 
@@ -222,8 +247,9 @@ Production uses **`app/main.py`** (not `mock_backend.py`). The repo ships a blue
 
 | Variable | Purpose |
 |----------|---------|
-| `CEREBRUM_VIRGIN` | `1` = skip auto-loading domain kits at boot |
-| `DATABASE_URL` | Postgres for `historical_benchmark` block |
+| `CEREBRUM_DOMAIN_KITS` | `1` = enable the domain-kit store |
+| `CEREBRUM_VIRGIN` | `false` = auto-load domain kits at boot |
+| `DATABASE_URL` | Postgres backend for the `historical_benchmark` test fixture |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | LLM providers for chat block |
 | `SENTRY_DSN` | Error tracking |
 
@@ -231,10 +257,7 @@ The frontend is a **separate static site** on Render (build `npm run build` in `
 
 | Service | URL |
 |---------|-----|
-| Platform API | https://cerebrum-platform-api.onrender.com |
-| Platform UI | https://cerebrum-platform.onrender.com |
-| Store API | https://cerebrum-store-api.onrender.com |
-| Store UI | https://cerebrum-store.onrender.com |
+| Cerebrum Blocks API | https://cerebrum-blocks.onrender.com |
 
 ### Docker
 ```bash
@@ -249,22 +272,21 @@ Then open http://localhost:8000.
 | Document | Description |
 |----------|-------------|
 | **[API.md](API.md)** | Full API reference |
-
 | **[RENDER_DEPLOY.md](RENDER_DEPLOY.md)** | Deployment guide |
 
 ---
 
 ## 🌐 Links
 
-- **Platform:** https://cerebrum-platform.onrender.com
-- **Store:** https://cerebrum-store.onrender.com
+- **Live API:** https://cerebrum-blocks.onrender.com
 - **GitHub:** https://github.com/bopoadz-del/Cerebrum-Blocks
 - **Docker Hub:** https://hub.docker.com/r/bopoadz-del/cerebrum-blocks
 
 ---
 
-**Version:** 2.0.0 — Domain Adapter Protocol  
-**Blocks:** 50+ plug & play modules  
+**Version:** 2.1.0 — Domain Kit Store  
+**Blocks:** 94+ plug & play modules  
+**Domain Kits:** 17 verticals  
 **Status:** ✅ **Production Ready**
 
 ---
