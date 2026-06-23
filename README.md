@@ -8,7 +8,7 @@ Cerebrum is a **block store for AI**. Instead of building pipelines from scratch
 
 ## 🏪 The Store: 94+ Blocks & 17 Domain Kits
 
-Think of it as an app store, but every "app" is an AI block you can wire into your own system. The repo ships **76 generic platform blocks** and **18 domain v2 extraction blocks** across the categories below, all with the same universal API:
+Think of it as an app store, but every "app" is an AI block you can wire into your own system. The repo ships **76 generic platform blocks** and **17 Domain Kits** — pre-packaged vertical solutions that each bundle a container, an extraction block, a knowledge module, and typed schemas. All blocks share the same universal API:
 
 | Category | Blocks |
 |----------|--------|
@@ -25,6 +25,8 @@ Each block exposes:
 - Standardized JSON output you can pass to the next block
 
 **Swap one block. Change the provider. Chain 10 of them. It all just works.**
+
+> Categories overlap for discoverability; totals count unique published blocks and kits.
 
 ---
 
@@ -64,6 +66,10 @@ The Cerebrum Platform is **itself built from these blocks**. It is a live demo o
 ## 🔗 Chaining Blocks: The Killer Feature
 
 Blocks are designed to be chained. The output of one block becomes the input of the next.
+
+```
+Input → [pdf] → text → [construction] → measurements → [chat] → answer
+```
 
 ```bash
 curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
@@ -206,11 +212,19 @@ Each block inherits from `UniversalBlock` (or `TypedBlock`/`DomainBlockV2` for s
 
 ---
 
+## 🏢 Built on by CerebrumDev.ai
+
+Cerebrum Blocks is the open-core engine behind **[CerebrumDev.ai](https://cerebrumdev.ai)** — the enterprise builder for vertical AI products. The block store is open source; CerebrumDev.ai adds hosted infrastructure, team collaboration, managed deployments, and premium enterprise kits on top.
+
+If you are building a product on Cerebrum Blocks, you are using the same primitives that power CerebrumDev.ai.
+
+---
+
 ## 🛠️ Store Helpers
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/publish_kit.py --domain <name>` | Bundle a domain container, v2 block, knowledge module, types, and shared core files into `block_store/kits/<name>/` |
+| `scripts/publish_kit.py --domain <name>` | Bundle a Domain Kit (container + extraction block + knowledge module + types + shared core files) into `block_store/kits/<name>/` |
 | `scripts/audit_store.py` | Inventory `app/blocks/` against published kits and flag stale files |
 
 Publish a new domain kit:
@@ -287,7 +301,7 @@ Then open http://localhost:8000.
 **Version:** 2.1.0 — Domain Kit Store  
 **Blocks:** 94+ plug & play modules  
 **Domain Kits:** 17 verticals  
-**Status:** ✅ **Production Ready**
+**Status:** 🟢 **Live, deployable, and actively hardening**
 
 ---
 
