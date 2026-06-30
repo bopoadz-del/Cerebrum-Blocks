@@ -1,0 +1,59 @@
+{
+  "id": "marker",
+  "name": "Marker PDF",
+  "version": "1.0.0",
+  "author": "Cerebrum Team",
+  "description": "High-quality PDF to Markdown extraction using Marker",
+  "layer": 3,
+  "requires": [],
+  "inputs": [
+    {
+      "name": "input",
+      "type": "file",
+      "required": false,
+      "description": "Upload PDF..."
+    },
+    {
+      "name": "max_chars",
+      "type": "number",
+      "required": false,
+      "default": 200000,
+      "description": "Maximum characters to return"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "text",
+      "type": "text",
+      "description": "Markdown text"
+    },
+    {
+      "name": "pages",
+      "type": "number",
+      "description": "Pages"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/marker:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "widget": "file",
+      "label": "Upload PDF..."
+    },
+    {
+      "name": "max_chars",
+      "widget": "number",
+      "label": "Max characters"
+    }
+  ],
+  "tags": [
+    "domain",
+    "documents",
+    "pdf",
+    "markdown",
+    "typed"
+  ]
+}

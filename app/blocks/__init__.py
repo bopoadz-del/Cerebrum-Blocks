@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 _GENERIC_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "pdf": ("app.blocks.pdf", "PDFBlock"),
+    "marker": ("app.blocks.marker", "MarkerBlock"),
     "ocr": ("app.blocks.ocr", "OCRBlock"),
     "image": ("app.blocks.image", "ImageBlock"),
     "document_engine": ("app.blocks.document_engine", "DocumentEngineBlock"),

@@ -9,6 +9,32 @@ from app.core.typed_block import TypedBlock, Schema, ContentType
 logger = logging.getLogger(__name__)
 
 
+def _try_marker(pdf_path: str) -> Optional[Dict[str, Any]]:
+    """Convert PDF to Markdown using Marker if available.
+
+    Returns a dict with ``text`` and ``pages`` on success, or ``None`` if
+    marker-pdf is not installed or fails. This lets the existing PDF block
+    opt into high-quality extraction via ``params={"use_marker": true}``.
+    """
+    try:
+        from marker.converters.pdf_converter import PdfConverter
+        from marker.models import create_model_dict
+        from marker.output import text_from_rendered
+    except ImportError as e:
+        logger.info("Marker not installed: %s", e)
+        return None
+
+    try:
+        converter = PdfConverter(artifact_dict=create_model_dict())
+        rendered = converter(pdf_path)
+        text, _, _ = text_from_rendered(rendered)
+        pages = getattr(rendered, "page_count", len(getattr(rendered, "pages", [])))
+        return {"text": text or "", "pages": pages or 1}
+    except Exception as e:
+        logger.warning("Marker conversion failed for %s: %s", pdf_path, e)
+        return None
+
+
 def _try_ocr_fallback(
     pdf_path: str,
     original_text: str,
@@ -155,6 +181,19 @@ class PDFBlock(TypedBlock):
             return {"status": "error", "text": "", "pages": 0, "error": f"File not found: {pdf_path}"}
 
         ext = os.path.splitext(pdf_path)[1].lower()
+
+        # Optional Marker pass: high-quality PDF -> Markdown.
+        if params.get("use_marker") and ext == ".pdf":
+            marker_result = _try_marker(pdf_path)
+            if marker_result is not None:
+                return {
+                    "status": "success",
+                    "text": marker_result["text"][:200000],
+                    "pages": marker_result["pages"],
+                    "filename": os.path.basename(pdf_path),
+                    "file_path": pdf_path,
+                    "engine": "marker",
+                }
 
         # Handle Excel spreadsheets (XLS/XLSX)
         if ext in ('.xls', '.xlsx'):
