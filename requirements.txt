@@ -111,10 +111,11 @@ PyMuPDF>=1.27.0
 PyPDF2>=3.0.0
 pypdf>=5.0.0
 
-# High-quality PDF -> Markdown extraction (optional; pulls torch/transformers).
+# High-quality PDF -> Markdown extraction is optional and local-only.
+# See requirements-marker.txt. The platform base image does NOT install it
+# because it pulls torch, transformers, and ~1.35 GB of model weights.
 # If not installed, the `marker` block returns a helpful error and callers
 # can fall back to the generic `pdf` block.
-marker-pdf>=1.10.0
 
 # Image processing (capture, OCR, image blocks)
 opencv-python-headless>=4.9.0

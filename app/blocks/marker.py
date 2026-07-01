@@ -24,7 +24,7 @@ def _try_marker(pdf_path: str) -> Optional[Dict[str, Any]]:
     other parsers when Marker is unavailable.
     """
     try:
-        from marker.converters.pdf_converter import PdfConverter
+        from marker.converters.pdf import PdfConverter
         from marker.models import create_model_dict
         from marker.output import text_from_rendered
     except ImportError as e:

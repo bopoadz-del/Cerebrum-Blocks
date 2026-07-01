@@ -1,6 +1,7 @@
 """Tests for Marker PDF Block."""
 
 import os
+import sys
 import tempfile
 
 import pytest
@@ -33,15 +34,17 @@ async def test_marker_block_file_not_found(marker_block):
     assert "File not found" in str(inner.get("error", ""))
 
 
-def test_try_marker_returns_none_when_not_installed():
-    """If marker-pdf is not installed, _try_marker returns None gracefully."""
+def test_try_marker_returns_none_when_not_installed(monkeypatch):
+    """If marker-pdf is not importable, _try_marker returns None gracefully."""
+    monkeypatch.setitem(sys.modules, "marker.converters.pdf", None)
     result = _try_marker("/tmp/any.pdf")
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_marker_block_missing_dependency(marker_block):
-    """When marker-pdf is not installed the block returns a helpful error."""
+async def test_marker_block_missing_dependency(marker_block, monkeypatch):
+    """When marker-pdf is not importable the block returns a helpful error."""
+    monkeypatch.setitem(sys.modules, "marker.converters.pdf", None)
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
         f.write(b"%PDF-1.4 fake")
         path = f.name
