@@ -2,8 +2,11 @@
 """Test Auth Block - API keys, rate limiting, RBAC."""
 
 import asyncio
+import os
 import sys
 sys.path.insert(0, '.')
+
+os.environ.setdefault("ENV", "test")
 
 import pytest
 from blocks.auth.src.block import AuthBlock

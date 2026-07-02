@@ -148,7 +148,11 @@ class DocumentEngineBlock(UniversalBlock):
         # Load config
         try:
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            config_path = os.path.join(project_root, "blocks", "document_engine", "config.yaml")
+            # Prefer the migrated app/blocks/document_engine/ location.
+            config_path = os.path.join(project_root, "app", "blocks", "document_engine", "config.yaml")
+            if not os.path.exists(config_path):
+                # Fallback to the legacy blocks/document_engine/ location.
+                config_path = os.path.join(project_root, "blocks", "document_engine", "config.yaml")
             if not os.path.exists(config_path):
                 config_path = os.path.join(os.path.dirname(__file__), "..", "..", "blocks", "document_engine", "config.yaml")
                 config_path = os.path.abspath(config_path)
@@ -176,14 +180,14 @@ class DocumentEngineBlock(UniversalBlock):
 
             if pdf_text is not None:
                 try:
-                    from blocks.document_engine.parsers.pdf_parser import PDFDocument
+                    from app.blocks.document_engine.parsers.pdf_parser import PDFDocument
                     doc = PDFDocument(source=file_paths["pdf"], text=pdf_text)
                     documents.append(doc)
                 except ImportError as e:
                     parse_errors.append(f"PDFDocument class import failed: {e}")
             else:
                 try:
-                    from blocks.document_engine.parsers.pdf_parser import PDFParser
+                    from app.blocks.document_engine.parsers.pdf_parser import PDFParser
                     parser = PDFParser(config)
                     documents.append(parser.parse(file_paths["pdf"]))
                 except ImportError as e:
@@ -194,7 +198,7 @@ class DocumentEngineBlock(UniversalBlock):
         # DOCX → own parser (no platform block available)
         if file_paths.get("docx"):
             try:
-                from blocks.document_engine.parsers.docx_parser import DOCXParser
+                from app.blocks.document_engine.parsers.docx_parser import DOCXParser
                 parser = DOCXParser(config)
                 documents.append(parser.parse(file_paths["docx"]))
             except ImportError as e:
@@ -205,7 +209,7 @@ class DocumentEngineBlock(UniversalBlock):
         # XLSX → own parser (no platform block available)
         if file_paths.get("xlsx"):
             try:
-                from blocks.document_engine.parsers.xlsx_parser import XLSXParser
+                from app.blocks.document_engine.parsers.xlsx_parser import XLSXParser
                 parser = XLSXParser(config)
                 documents.append(parser.parse(file_paths["xlsx"]))
             except ImportError as e:
@@ -223,7 +227,7 @@ class DocumentEngineBlock(UniversalBlock):
         # Layer 2: Reason
         # ------------------------------------------------------------------
         try:
-            from blocks.document_engine.reasoner import DocumentReasoner
+            from app.blocks.document_engine.reasoner import DocumentReasoner
             reasoner = DocumentReasoner(config)
             reasoned = reasoner.reason(documents)
         except ImportError as e:
@@ -235,7 +239,7 @@ class DocumentEngineBlock(UniversalBlock):
         # Layer 3: Map
         # ------------------------------------------------------------------
         try:
-            from blocks.document_engine.mapper import DocumentMapper
+            from app.blocks.document_engine.mapper import DocumentMapper
             mapper = DocumentMapper(config)
             structured = mapper.map_to_structured(reasoned)
         except ImportError as e:

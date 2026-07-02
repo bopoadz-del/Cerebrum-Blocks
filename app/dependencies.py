@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # HAL initialization
 try:
-    from blocks.hal.src.detector import HALBlock
+    from app.core.hal import HALBlock
     _hal = HALBlock()
 
     def get_hal_block():
@@ -39,13 +39,13 @@ except Exception as e:
 block_instances: Dict[str, Any] = {}
 
 
-def _create_block_instance(block_class):
+def _create_block_instance(block_class, config: Optional[Dict] = None):
     """Create block instance with proper arguments."""
     sig = inspect.signature(block_class.__init__)
     params = list(sig.parameters.keys())
 
     if "hal_block" in params and "config" in params:
-        instance = block_class(hal_block=_hal, config={})
+        instance = block_class(hal_block=_hal, config=config or {})
     else:
         instance = block_class()
 
@@ -56,6 +56,40 @@ def _create_block_instance(block_class):
             pass
 
     return instance
+
+
+async def _legacy_initialize_once(instance: Any) -> None:
+    """Call _legacy_initialize exactly once per instance."""
+    if getattr(instance, "_legacy_initialized", False):
+        return
+    init = getattr(instance, "_legacy_initialize", None)
+    if init is None:
+        instance._legacy_initialized = True  # nothing to do
+        return
+    try:
+        await init()
+    except Exception:
+        logger.exception(
+            "Legacy initialization failed for %s",
+            getattr(instance, "name", type(instance).__name__),
+        )
+    finally:
+        instance._legacy_initialized = True
+
+
+def _schedule_legacy_initialize(instance: Any) -> None:
+    """Schedule _legacy_initialize on the running event loop if available."""
+    if getattr(instance, "_legacy_initialized", False):
+        return
+    if getattr(instance, "_legacy_initialize_task", None) is not None:
+        return
+    if not hasattr(instance, "_legacy_initialize"):
+        return
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return
+    instance._legacy_initialize_task = loop.create_task(_legacy_initialize_once(instance))
 
 
 def _resolve_dep(dep_name: str):
@@ -113,93 +147,52 @@ def _wire_block_dependencies(instance, block_class, name: str = None):
             instance.wire(dep_name, dep_instance)
         elif hasattr(instance, "inject"):
             instance.inject(dep_name, dep_instance)
-        else:
-            setattr(instance, f"{dep_name}_block", dep_instance)
+        # Always set the legacy attribute as well (e.g. self.memory_block)
+        attr_name = f"{dep_name}_block"
+        if hasattr(instance, attr_name) or dep_name in requires:
+            setattr(instance, attr_name, dep_instance)
 
 
-def get_block_instance(block_name: str) -> Any:
+def get_block_instance(block_name: str, config: Optional[Dict] = None) -> Any:
     if block_name not in block_instances:
         block_class = BLOCK_REGISTRY[block_name]
-        block_instances[block_name] = _create_block_instance(block_class)
+        block_instances[block_name] = _create_block_instance(block_class, config)
         _wire_block_dependencies(block_instances[block_name], block_class, block_name)
+        _schedule_legacy_initialize(block_instances[block_name])
     return block_instances[block_name]
 
 
-# Memory block — prefer platform BLOCK_REGISTRY (app.blocks.memory), legacy fallback
-_memory_block = None
-
-
+# Memory block
 def get_memory_block():
     """Return the shared memory cache instance (registry-first)."""
-    global _memory_block
-    if "memory" in BLOCK_REGISTRY:
-        return get_block_instance("memory")
-    if _memory_block is None:
-        from blocks.memory.src.block import MemoryBlock
-
-        _memory_block = MemoryBlock(None, {"max_size": 10000, "default_ttl": 3600})
-        asyncio.create_task(_memory_block.initialize())
-    return _memory_block
-
-
-try:
-    if "memory" in BLOCK_REGISTRY:
-        BLOCK_REGISTRY["memory"]  # verify lazy import
-        MEMORY_AVAILABLE = True
-    else:
-        from blocks.memory.src.block import MemoryBlock  # noqa: F401
-
-        MEMORY_AVAILABLE = True
-except Exception as e:
-    MEMORY_AVAILABLE = False
-    get_memory_block = None  # type: ignore[assignment]
-    logger.warning("Memory block not available: %s", e)
+    return get_block_instance("memory")
 
 
 # Monitoring block
-_monitoring_block = None
-
-try:
-    from blocks.monitoring.src.block import MonitoringBlock
-
-    def get_monitoring_block():
-        global _monitoring_block
-        if _monitoring_block is None:
-            _monitoring_block = MonitoringBlock(None, {})
-            _monitoring_block.memory_block = get_memory_block()
-            asyncio.create_task(_monitoring_block.initialize())
-        return _monitoring_block
-
-    MONITORING_AVAILABLE = True
-except Exception as e:
-    MONITORING_AVAILABLE = False
-    get_monitoring_block = None  # type: ignore[assignment]
-    logger.warning("Monitoring block not available: %s", e)
+def get_monitoring_block():
+    """Return the shared monitoring block instance."""
+    return get_block_instance("monitoring")
 
 
 # Auth block
-_auth_block = None
+def get_auth_block():
+    """Return the shared auth block instance."""
+    master_key = os.getenv("CEREBRUM_MASTER_KEY")
+    if "auth" in block_instances:
+        instance = block_instances["auth"]
+        if master_key and instance.config.get("master_key") != master_key:
+            instance.config["master_key"] = master_key
+            instance.master_key = master_key
+        return instance
+    config = {"master_key": master_key} if master_key else {}
+    return get_block_instance("auth", config)
 
-try:
-    from blocks.auth.src.block import AuthBlock
 
-    def get_auth_block():
-        global _auth_block
-        if _auth_block is None:
-            _auth_block = AuthBlock(None, {
-                "rate_limit_default": 100,
-                "rate_limit_window": 60,
-                "master_key": os.getenv("CEREBRUM_MASTER_KEY"),
-            })
-            _auth_block.memory_block = get_memory_block()
-            asyncio.create_task(_auth_block.initialize())
-        return _auth_block
-
-    AUTH_AVAILABLE = True
-except Exception as e:
-    AUTH_AVAILABLE = False
-    get_auth_block = None  # type: ignore[assignment]
-    logger.warning("Auth block not available: %s", e)
+# Availability flags — the modern blocks are registered lazily, so presence in
+# BLOCK_REGISTRY is enough to know they are available.
+MEMORY_AVAILABLE = "memory" in BLOCK_REGISTRY
+MONITORING_AVAILABLE = "monitoring" in BLOCK_REGISTRY
+AUTH_AVAILABLE = "auth" in BLOCK_REGISTRY
 
 
 security = HTTPBearer(auto_error=False)
@@ -264,10 +257,8 @@ async def init_blocks():
         if block_class:
             _wire_block_dependencies(instance, block_class, name)
 
-    # The legacy accessors below internally call asyncio.create_task(...)
-    # which REQUIRES a running event loop — must be invoked from the loop,
-    # not via to_thread. Their imports already happened above; this is just
-    # the instance creation, which is cheap.
+    # The accessors below schedule async _legacy_initialize which REQUIRES a
+    # running event loop — must be invoked from the loop, not via to_thread.
     if get_memory_block:
         try: get_memory_block()
         except Exception: logger.exception("get_memory_block init failed")

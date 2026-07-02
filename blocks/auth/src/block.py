@@ -1,6 +1,7 @@
 from blocks.base import LegoBlock
 from typing import Dict, Any, Optional, List
 import hashlib
+import os
 import time
 import secrets
 from enum import Enum

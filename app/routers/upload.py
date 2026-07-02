@@ -233,15 +233,20 @@ async def ingest(
             raise HTTPException(400, "No valid files provided. Upload at least one PDF/DOCX/XLSX")
 
         # --- Layer 1-3: Run pipeline ---
-        from blocks.document_engine.main import parse_all
-        from blocks.document_engine.reasoner import DocumentReasoner
-        from blocks.document_engine.mapper import DocumentMapper
+        from app.blocks.document_engine.main import parse_all
+        from app.blocks.document_engine.reasoner import DocumentReasoner
+        from app.blocks.document_engine.mapper import DocumentMapper
         import yaml
 
-        config_path = os.path.join(DATA_DIR, "..", "blocks", "document_engine", "config.yaml")
+        # Prefer the migrated app/blocks/document_engine/ location.
+        config_path = os.path.join(os.path.dirname(__file__), "..", "..", "app", "blocks", "document_engine", "config.yaml")
         config_path = os.path.abspath(config_path)
         if not os.path.exists(config_path):
-            # Fallback: resolve from project root
+            # Fallback: resolve from project root via DATA_DIR.
+            config_path = os.path.join(DATA_DIR, "..", "app", "blocks", "document_engine", "config.yaml")
+            config_path = os.path.abspath(config_path)
+        if not os.path.exists(config_path):
+            # Legacy fallback for P3 transition.
             config_path = os.path.join(os.path.dirname(__file__), "..", "..", "blocks", "document_engine", "config.yaml")
             config_path = os.path.abspath(config_path)
 
