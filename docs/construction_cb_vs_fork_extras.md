@@ -190,7 +190,6 @@ Comments in CB explicitly reference **audit findings** (unsafe `float()`, `datet
 ### Present in both repos
 - `app/containers/construction.py`
 - `app/blocks/construction_v2.py`
-- `app/containers_legacy/construction.py`
 - `app/prompts/construction_expert.txt`
 - `app/prompts/construction_evm.md`
 - `app/knowledge/construction_kb.json`

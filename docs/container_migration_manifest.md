@@ -71,7 +71,7 @@ The Fork (main)  ──publish──►  block_store/kits/construction/bundle/
 
 The Fork is the production-hardened reference for domain containers. Its construction kit is a **7,330-line monolith** (`app/containers/construction.py`) that delegates to **15 required blocks** via `BLOCK_REGISTRY`, routes **47 public actions**, and keeps domain knowledge **outside** the container file in separate modules and prompts.
 
-Cerebrum-Blocks has a **larger** local copy of `construction.py` (8,020 lines) plus `containers_legacy/`, but is **missing** the knowledge layer (`construction_knowledge.py`, `construction_types.py`, procedure DB, expert prompts). CB does not publish runtime code — it publishes Fork-authored kits via `block_store/kits/`.
+Cerebrum-Blocks has a **larger** local copy of `construction.py` (8,020 lines), but is **missing** the knowledge layer (`construction_knowledge.py`, `construction_types.py`, procedure DB, expert prompts). CB does not publish runtime code — it publishes Fork-authored kits via `block_store/kits/`.
 
 **Key architectural finding:** `ConstructionContainer` does **not** import `construction_knowledge`. Domain rules enter through these paths:
 

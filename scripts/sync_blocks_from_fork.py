@@ -99,7 +99,6 @@ COPY_BLOCKS: tuple[str, ...] = (
 # Documented out-of-scope paths (never touched by this script).
 SKIP_PATHS_NOTE: tuple[str, ...] = (
     "app/containers/construction.py",
-    "app/containers_legacy/construction.py",
     "block_store/kits/construction/bundle/",
 )
 
