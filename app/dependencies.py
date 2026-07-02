@@ -11,7 +11,9 @@ from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.blocks import BLOCK_REGISTRY
+from app.blocks.memory import MemoryBlock, MemoryNamespaceProxy
 from app.core.auth import auth as auth_manager
+from app.core.domain_kit_loader import _KIT_BLOCK_SPECS
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +39,27 @@ except Exception as e:
 
 # Shared block instances
 block_instances: Dict[str, Any] = {}
+
+# Block names that come from third-party domain kits (vs. core platform blocks).
+_KIT_BLOCK_NAMES = {
+    name for specs in _KIT_BLOCK_SPECS.values() for name, _, _ in specs
+}
+
+_PRIVATE_NAMESPACES = {
+    "auth": "__auth",
+    "monitoring": "__monitoring",
+    "secrets": "__secrets",
+}
+
+
+def _memory_namespace_for_block(name: str) -> str:
+    """Return the private memory namespace a block instance should use."""
+    if name in _PRIVATE_NAMESPACES:
+        return _PRIVATE_NAMESPACES[name]
+    if name in _KIT_BLOCK_NAMES:
+        return f"block:{name}"
+    return f"system:{name}"
+
 
 
 def _create_block_instance(block_class, config: Optional[Dict] = None):
@@ -143,6 +166,12 @@ def _wire_block_dependencies(instance, block_class, name: str = None):
                 name or "?", dep_name, dep_name, dep_name,
             )
             continue
+        # Scope memory dependencies to a per-block namespace so blocks cannot
+        # read each other's keys or the global cache.
+        if dep_name == "memory" and isinstance(dep_instance, MemoryBlock):
+            dep_instance = MemoryNamespaceProxy(
+                dep_instance, _memory_namespace_for_block(name or "unknown")
+            )
         if hasattr(instance, "wire"):
             instance.wire(dep_name, dep_instance)
         elif hasattr(instance, "inject"):
