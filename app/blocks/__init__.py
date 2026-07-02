@@ -88,6 +88,10 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "video_metadata_ingest": ("app.blocks.video_metadata_ingest", "VideoMetadataIngestBlock"),
     "video_anomaly_trigger": ("app.blocks.video_anomaly_trigger", "VideoAnomalyTriggerBlock"),
     "medical_ehr_connector": ("app.blocks.medical_ehr_connector", "MedicalEHRConnectorBlock"),
+    "construction_advisor": ("app.blocks.construction_advisor", "ConstructionAdvisorBlock"),
+    "historical_benchmark": ("app.blocks.historical_benchmark", "HistoricalBenchmarkBlock"),
+    "mcp_adapter": ("app.blocks.mcp_adapter", "MCPAdapterBlock"),
+    "mcp_consumer": ("app.blocks.mcp_consumer", "MCPConsumerBlock"),
 }
 
 

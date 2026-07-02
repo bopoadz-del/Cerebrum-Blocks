@@ -16,6 +16,7 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
     "construction": [
         ("construction", "app.containers.construction", "ConstructionContainer"),
         ("construction_v2", "app.blocks.construction_v2", "ConstructionBlockV2"),
+        ("construction_advisor", "app.blocks.construction_advisor", "ConstructionAdvisorBlock"),
         ("boq_processor", "app.blocks.boq_processor", "BOQProcessorBlock"),
         ("bim", "app.blocks.bim", "BIMBlock"),
         ("bim_extractor", "app.blocks.bim_extractor", "BIMExtractorBlock"),
@@ -30,6 +31,7 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
         ("jetson_gateway", "app.blocks.jetson_gateway", "JetsonGatewayBlock"),
         ("learning_engine", "app.blocks.learning_engine", "LearningEngineBlock"),
         ("recommendation_template", "app.blocks.recommendation_template", "RecommendationTemplateBlock"),
+        ("historical_benchmark", "app.blocks.historical_benchmark", "HistoricalBenchmarkBlock"),
     ],
     "medical": [
         ("medical", "app.containers.medical", "MedicalContainer"),
