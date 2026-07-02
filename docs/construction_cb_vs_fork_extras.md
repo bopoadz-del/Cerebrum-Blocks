@@ -29,7 +29,7 @@ Neither tree is a strict superset of the other.
 | Artifact | CB lines | Fork lines | Version |
 |----------|----------|------------|---------|
 | `containers/construction.py` | 8,019 | 7,329 | 3.1 / 3.1 |
-| `blocks/construction_v2.py` | 497 | 520 | 2.0 / 2.0 |
+| `app/blocks/construction_v2.py` | 497 | 520 | 2.0 / 2.0 |
 | CB function count (container) | 287 | 263 | — |
 | CB function count (v2) | 20 | 20 | — |
 

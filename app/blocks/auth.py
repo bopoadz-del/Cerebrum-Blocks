@@ -66,7 +66,7 @@ class AuthBlock(UniversalBlock):
         
         # Create default admin key if none exists
         if self.memory_block:
-            admin_exists = await self.memory_block.execute({
+            admin_exists = await self.memory_block.process({
                 "action": "exists",
                 "key": "auth:keys:admin"
             })
@@ -119,7 +119,7 @@ class AuthBlock(UniversalBlock):
         
         # Check if revoked/blocked
         if self.memory_block:
-            revoked = await self.memory_block.execute({
+            revoked = await self.memory_block.process({
                 "action": "exists",
                 "key": f"auth:revoked:{api_key}"
             })
@@ -127,7 +127,7 @@ class AuthBlock(UniversalBlock):
                 return {"valid": False, "reason": "key_revoked"}
             
             # Get key metadata
-            key_data = await self.memory_block.execute({
+            key_data = await self.memory_block.process({
                 "action": "get",
                 "key": f"auth:keys:{api_key}"
             })
@@ -162,7 +162,7 @@ class AuthBlock(UniversalBlock):
         # Window-based counter (sliding window approximation)
         window_key = f"auth:ratelimit:{api_key}:{int(time.time() / limit['window'])}"
         
-        current = await self.memory_block.execute({
+        current = await self.memory_block.process({
             "action": "get",
             "key": window_key
         })
@@ -179,7 +179,7 @@ class AuthBlock(UniversalBlock):
             }
         
         # Increment counter
-        await self.memory_block.execute({
+        await self.memory_block.process({
             "action": "set",
             "key": window_key,
             "value": {"count": count + 1, "last_request": time.time()},
@@ -243,7 +243,7 @@ class AuthBlock(UniversalBlock):
         
         if self.memory_block:
             # Store key metadata
-            await self.memory_block.execute({
+            await self.memory_block.process({
                 "action": "set",
                 "key": f"auth:keys:{api_key}",
                 "value": metadata,
@@ -251,7 +251,7 @@ class AuthBlock(UniversalBlock):
             })
             
             # Add to owner's key list
-            owner_keys = await self.memory_block.execute({
+            owner_keys = await self.memory_block.process({
                 "action": "get",
                 "key": f"auth:owner:{owner}"
             })
@@ -259,7 +259,7 @@ class AuthBlock(UniversalBlock):
             keys_list = owner_keys.get("value", {}).get("keys", []) if owner_keys.get("hit") else []
             keys_list.append(api_key)
             
-            await self.memory_block.execute({
+            await self.memory_block.process({
                 "action": "set",
                 "key": f"auth:owner:{owner}",
                 "value": {"keys": keys_list},
@@ -282,7 +282,7 @@ class AuthBlock(UniversalBlock):
             return {"revoked": False, "reason": "no_memory_backend"}
         
         # Add to revoked list (prevents reuse)
-        await self.memory_block.execute({
+        await self.memory_block.process({
             "action": "set",
             "key": f"auth:revoked:{api_key}",
             "value": {"revoked_at": time.time()},
@@ -290,7 +290,7 @@ class AuthBlock(UniversalBlock):
         })
         
         # Delete key metadata
-        await self.memory_block.execute({
+        await self.memory_block.process({
             "action": "delete",
             "key": f"auth:keys:{api_key}"
         })
@@ -318,7 +318,7 @@ class AuthBlock(UniversalBlock):
             return {"keys": []}
         
         target_owner = owner or "system"
-        owner_data = await self.memory_block.execute({
+        owner_data = await self.memory_block.process({
             "action": "get",
             "key": f"auth:owner:{target_owner}"
         })
@@ -330,7 +330,7 @@ class AuthBlock(UniversalBlock):
         key_details = []
         
         for key in keys:
-            metadata = await self.memory_block.execute({
+            metadata = await self.memory_block.process({
                 "action": "get",
                 "key": f"auth:keys:{key}"
             })
@@ -354,7 +354,7 @@ class AuthBlock(UniversalBlock):
             return {"error": "no_memory_backend"}
         
         # Get old metadata
-        old_data = await self.memory_block.execute({
+        old_data = await self.memory_block.process({
             "action": "get",
             "key": f"auth:keys:{api_key}"
         })

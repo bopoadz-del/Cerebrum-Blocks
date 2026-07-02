@@ -31,5 +31,7 @@ The_Fork contains practical, hardened improvements that should flow **back upstr
 ## Current Status
 
 - Marker PDF integration: complete, local-only.
-- P3 cleanup: `app/blocks_legacy/` and `app/containers_legacy/` removed.
-- Next: P0 + P1 — port modular construction container and missing Fork blocks.
+- P3 cleanup: `app/blocks_legacy/`, `app/containers_legacy/`, and the legacy `blocks/` root removed.
+- P0 + P1 complete: modular construction container and missing Fork blocks ported.
+- Next: P2 (RAG/chat/agent back-port) and P4 (CerebrumDev.ai configurator alignment).
+- Security layer (auth/memory/monitoring) is now a generic, always-loaded trust layer to support third-party blocks in the store.

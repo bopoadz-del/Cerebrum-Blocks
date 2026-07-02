@@ -96,7 +96,7 @@ class MonitoringBlock(UniversalBlock):
         
         # Store in memory block for persistence
         if self.memory_block:
-            await self.memory_block.execute({
+            await self.memory_block.process({
                 "action": "set",
                 "key": f"metrics:{provider}:{int(timestamp)}",
                 "value": {
