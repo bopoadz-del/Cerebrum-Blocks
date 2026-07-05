@@ -65,6 +65,7 @@ def test_module_singleton_is_tracker_instance() -> None:
 # ---------------------------------------------------------------------
 
 
+@pytest.mark.mlflow
 def test_real_backend_round_trip(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     """If mlflow is installed, exercise a real start_run + log_metric.
 
