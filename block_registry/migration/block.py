@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 """
 Auto-generated adapter for Cerebrum block: migration
-Wraps app.blocks.migration.MigrationBlock.execute() into a synchronous run() function.
+Wraps app.blocks.migration into a synchronous run() function.
 """
 
-import sys
 import asyncio
-
-sys.path.insert(0, "/app")
-
-from app.blocks import BLOCK_REGISTRY
+from app.blocks import get_block
 
 
 def _run_async(coro):
@@ -29,7 +25,7 @@ def run(**kwargs):
     Accepts keyword args matching the block's inputs/params.
     Returns the standardized block result payload.
     """
-    block_cls = BLOCK_REGISTRY["migration"]
+    block_cls = get_block("migration")
     instance = block_cls()
 
     input_data = kwargs.get("input", kwargs)
@@ -39,6 +35,6 @@ def run(**kwargs):
     if envelope.get("status") == "error":
         inner = envelope.get("result", {})
         message = inner.get("error") if isinstance(inner, dict) else str(inner)
-        raise RuntimeError(message or f"migration block failed")
+        raise RuntimeError(message or "migration block failed")
 
     return envelope.get("result", envelope)

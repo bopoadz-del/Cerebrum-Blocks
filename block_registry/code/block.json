@@ -1,50 +1,63 @@
 {
-  "id": "code",
-  "name": "Code",
-  "version": "2.0",
   "author": "Cerebrum Team",
   "description": "Execute Python or JavaScript code; analyze code for issues",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "a239ad221646ead2ca0fa81a38f22c04f4f5c69f628261e9ee53d00a05cf6a13",
+    "block.py": "b60d5fc8a4e0880a7024d183486b3f9e2843a436dd54b21a6405193235d6bf2e"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/code:latest",
+    "type": "docker"
+  },
+  "id": "code",
   "inputs": [
     {
+      "description": "Paste code to execute or describe code to analyze...",
       "name": "input",
-      "type": "string",
       "required": false,
-      "description": "Paste code to execute or describe code to analyze..."
+      "type": "string"
     }
   ],
+  "layer": 3,
+  "name": "Code",
   "outputs": [
     {
+      "description": "Result",
       "name": "output",
-      "type": "code",
-      "description": "Result"
+      "type": "code"
     },
     {
+      "description": "Language",
       "name": "language",
-      "type": "text",
-      "description": "Language"
+      "type": "text"
     },
     {
+      "description": "Time (ms)",
       "name": "execution_time_ms",
-      "type": "number",
-      "description": "Time (ms)"
+      "type": "number"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/code:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "text",
-      "label": "Paste code to execute or describe code to analyze..."
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "Py0EdWQIEWqceCSLCK0l9vvqPTagUUMevEbzaU2oPziP6pSAwmJ2h3Q9ewGreaeh03hjbtDG38YAYo5HudiWCA==",
   "tags": [
     "domain",
     "code",
     "execution"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Paste code to execute or describe code to analyze...",
+      "name": "input",
+      "widget": "text"
+    }
+  ],
+  "version": "2.0"
 }

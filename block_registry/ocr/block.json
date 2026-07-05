@@ -1,97 +1,110 @@
 {
-  "id": "ocr",
-  "name": "Ocr",
-  "version": "2.0.0",
   "author": "Cerebrum Team",
   "description": "Extract text from images using OCR with preprocessing",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "1c9664be641a4f295e70a760a0cbb3099d430d6c28a1088088b18b4cc62350e8",
+    "block.py": "d4a67cc6ece35dbef0fc035ca659502b9587ab598729f8f15acd448c44931d8d"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/ocr:latest",
+    "type": "docker"
+  },
+  "id": "ocr",
   "inputs": [
     {
+      "description": "Upload image to extract text...",
       "name": "input",
-      "type": "file",
       "required": false,
-      "description": "Upload image to extract text..."
+      "type": "file"
     },
     {
-      "name": "languages",
-      "type": "array",
-      "required": false,
       "default": [
         "en"
       ],
-      "description": "Configuration parameter: languages"
+      "description": "Configuration parameter: languages",
+      "name": "languages",
+      "required": false,
+      "type": "array"
     },
     {
+      "default": true,
+      "description": "Configuration parameter: preprocess",
       "name": "preprocess",
-      "type": "boolean",
       "required": false,
-      "default": true,
-      "description": "Configuration parameter: preprocess"
+      "type": "boolean"
     },
     {
+      "default": true,
+      "description": "Configuration parameter: deskew",
       "name": "deskew",
-      "type": "boolean",
       "required": false,
-      "default": true,
-      "description": "Configuration parameter: deskew"
+      "type": "boolean"
     },
     {
-      "name": "contrast_factor",
-      "type": "number",
-      "required": false,
       "default": 1.5,
-      "description": "Configuration parameter: contrast_factor"
+      "description": "Configuration parameter: contrast_factor",
+      "name": "contrast_factor",
+      "required": false,
+      "type": "number"
     }
   ],
+  "layer": 3,
+  "name": "Ocr",
   "outputs": [
     {
+      "description": "Extracted Text",
       "name": "text",
-      "type": "text",
-      "description": "Extracted Text"
+      "type": "text"
     },
     {
+      "description": "Confidence",
       "name": "confidence",
-      "type": "percentage",
-      "description": "Confidence"
+      "type": "percentage"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/ocr:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "file",
-      "label": "Upload image to extract text..."
-    },
-    {
-      "name": "languages",
-      "widget": "json",
-      "label": "Languages"
-    },
-    {
-      "name": "preprocess",
-      "widget": "toggle",
-      "label": "Preprocess"
-    },
-    {
-      "name": "deskew",
-      "widget": "toggle",
-      "label": "Deskew"
-    },
-    {
-      "name": "contrast_factor",
-      "widget": "number",
-      "label": "Contrast Factor"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "JMKWZgjB9mkE2QjRQ6RQGZFu1JMSrZu2CMtmSfJCFzqvrs6vcfyqhTZzjT2UrXGFW8Gk/sAd9BZr6M1YMromDA==",
   "tags": [
     "domain",
     "vision",
     "ocr",
     "documents",
     "typed"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Upload image to extract text...",
+      "name": "input",
+      "widget": "file"
+    },
+    {
+      "label": "Languages",
+      "name": "languages",
+      "widget": "json"
+    },
+    {
+      "label": "Preprocess",
+      "name": "preprocess",
+      "widget": "toggle"
+    },
+    {
+      "label": "Deskew",
+      "name": "deskew",
+      "widget": "toggle"
+    },
+    {
+      "label": "Contrast Factor",
+      "name": "contrast_factor",
+      "widget": "number"
+    }
+  ],
+  "version": "2.0.0"
 }

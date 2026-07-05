@@ -1,124 +1,137 @@
 {
-  "id": "migration",
-  "name": "Migration",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "0ed9456f4df91bfbfe2832ccfd91d8505c475988f62d3b2b280424b0836db0e2",
+    "block.py": "9d97a3b7dcc20550e29342b9b491da594e6cc67be5002892537f0ea5d5723459"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/migration:latest",
+    "type": "docker"
+  },
+  "id": "migration",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected action",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "migrate",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "migrate",
+        "rollback",
+        "status",
+        "create_migration",
+        "seed_data",
+        "list_pending",
+        "verify",
+        "force_version"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": false,
+      "description": "Configuration parameter: auto_migrate",
+      "name": "auto_migrate",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: backup_before_migrate",
+      "name": "backup_before_migrate",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": "schema_migrations",
+      "description": "Configuration parameter: migration_table",
+      "name": "migration_table",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "./migrations",
+      "description": "Configuration parameter: migrations_dir",
+      "name": "migrations_dir",
+      "required": false,
+      "type": "string"
+    }
+  ],
   "layer": 0,
+  "name": "Migration",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "database",
     "version"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "migrate",
-      "options": [
-        "migrate",
-        "rollback",
-        "status",
-        "create_migration",
-        "seed_data",
-        "list_pending",
-        "verify",
-        "force_version"
-      ]
-    },
-    {
-      "name": "auto_migrate",
-      "type": "boolean",
-      "required": false,
-      "default": false,
-      "description": "Configuration parameter: auto_migrate"
-    },
-    {
-      "name": "backup_before_migrate",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: backup_before_migrate"
-    },
-    {
-      "name": "migration_table",
-      "type": "string",
-      "required": false,
-      "default": "schema_migrations",
-      "description": "Configuration parameter: migration_table"
-    },
-    {
-      "name": "migrations_dir",
-      "type": "string",
-      "required": false,
-      "default": "./migrations",
-      "description": "Configuration parameter: migrations_dir"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/migration:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "migrate",
-        "rollback",
-        "status",
-        "create_migration",
-        "seed_data",
-        "list_pending",
-        "verify",
-        "force_version"
-      ]
-    },
-    {
-      "name": "auto_migrate",
-      "widget": "toggle",
-      "label": "Auto Migrate"
-    },
-    {
-      "name": "backup_before_migrate",
-      "widget": "toggle",
-      "label": "Backup Before Migrate"
-    },
-    {
-      "name": "migration_table",
-      "widget": "text",
-      "label": "Migration Table"
-    },
-    {
-      "name": "migrations_dir",
-      "widget": "text",
-      "label": "Migrations Dir"
-    }
-  ],
+  "signature": "d7T9wjzA+WCDyXRaS58wOKQjuOWoHr4LGN6uKXuOTqENl2jdYhP0dCqeE/6VVfMgu6agYS1wr6ybRDqUqiTgAg==",
   "tags": [
     "infra",
     "database",
     "devops",
     "migrations"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected action",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "migrate",
+        "rollback",
+        "status",
+        "create_migration",
+        "seed_data",
+        "list_pending",
+        "verify",
+        "force_version"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Auto Migrate",
+      "name": "auto_migrate",
+      "widget": "toggle"
+    },
+    {
+      "label": "Backup Before Migrate",
+      "name": "backup_before_migrate",
+      "widget": "toggle"
+    },
+    {
+      "label": "Migration Table",
+      "name": "migration_table",
+      "widget": "text"
+    },
+    {
+      "label": "Migrations Dir",
+      "name": "migrations_dir",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0"
 }

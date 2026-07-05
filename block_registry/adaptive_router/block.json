@@ -1,149 +1,162 @@
 {
-  "id": "adaptive_router",
-  "name": "Adaptive Router",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "dcee11b8b9f9d9f4a20e9c2df2193765c384ef888adc7555c523937dadd8237a",
+    "block.py": "fef886a6313a7b3c31ee4a22301a3201b359e4ee397e33c609b0aa27d6b743eb"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/adaptive_router:latest",
+    "type": "docker"
+  },
+  "id": "adaptive_router",
+  "inputs": [
+    {
+      "description": "Task, quality tier, budget, provider constraints...",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "select_provider",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "select_provider",
+        "record_result",
+        "get_recommendation",
+        "forecast_issues",
+        "get_scores",
+        "reset_scores",
+        "ab_test",
+        "explain_choice"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: learning_enabled",
+      "name": "learning_enabled",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": 100,
+      "description": "Configuration parameter: history_window",
+      "name": "history_window",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 0.1,
+      "description": "Configuration parameter: exploration_rate",
+      "name": "exploration_rate",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 10,
+      "description": "Configuration parameter: min_samples",
+      "name": "min_samples",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: time_aware",
+      "name": "time_aware",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": 0.8,
+      "description": "Configuration parameter: quality_threshold",
+      "name": "quality_threshold",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 2,
+  "name": "Adaptive Router",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "analytics",
     "monitoring",
     "failover"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "Task, quality tier, budget, provider constraints..."
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "select_provider",
-      "options": [
-        "select_provider",
-        "record_result",
-        "get_recommendation",
-        "forecast_issues",
-        "get_scores",
-        "reset_scores",
-        "ab_test",
-        "explain_choice"
-      ]
-    },
-    {
-      "name": "learning_enabled",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: learning_enabled"
-    },
-    {
-      "name": "history_window",
-      "type": "number",
-      "required": false,
-      "default": 100,
-      "description": "Configuration parameter: history_window"
-    },
-    {
-      "name": "exploration_rate",
-      "type": "number",
-      "required": false,
-      "default": 0.1,
-      "description": "Configuration parameter: exploration_rate"
-    },
-    {
-      "name": "min_samples",
-      "type": "number",
-      "required": false,
-      "default": 10,
-      "description": "Configuration parameter: min_samples"
-    },
-    {
-      "name": "time_aware",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: time_aware"
-    },
-    {
-      "name": "quality_threshold",
-      "type": "number",
-      "required": false,
-      "default": 0.8,
-      "description": "Configuration parameter: quality_threshold"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/adaptive_router:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "Task, quality tier, budget, provider constraints..."
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "select_provider",
-        "record_result",
-        "get_recommendation",
-        "forecast_issues",
-        "get_scores",
-        "reset_scores",
-        "ab_test",
-        "explain_choice"
-      ]
-    },
-    {
-      "name": "learning_enabled",
-      "widget": "toggle",
-      "label": "Learning Enabled"
-    },
-    {
-      "name": "history_window",
-      "widget": "number",
-      "label": "History Window"
-    },
-    {
-      "name": "exploration_rate",
-      "widget": "number",
-      "label": "Exploration Rate"
-    },
-    {
-      "name": "min_samples",
-      "widget": "number",
-      "label": "Min Samples"
-    },
-    {
-      "name": "time_aware",
-      "widget": "toggle",
-      "label": "Time Aware"
-    },
-    {
-      "name": "quality_threshold",
-      "widget": "number",
-      "label": "Quality Threshold"
-    }
-  ],
+  "signature": "xI+CZPHI8lssX0JhGulSxhxKsVOPezM1ZIfsWVSw5Hj0LZQwUW+ez1G9v1p5GMMyLEq3kChZv7lZSy6s+dstAQ==",
   "tags": [
     "ai",
     "optimization",
     "smart",
     "routing"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Task, quality tier, budget, provider constraints...",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "select_provider",
+        "record_result",
+        "get_recommendation",
+        "forecast_issues",
+        "get_scores",
+        "reset_scores",
+        "ab_test",
+        "explain_choice"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Learning Enabled",
+      "name": "learning_enabled",
+      "widget": "toggle"
+    },
+    {
+      "label": "History Window",
+      "name": "history_window",
+      "widget": "number"
+    },
+    {
+      "label": "Exploration Rate",
+      "name": "exploration_rate",
+      "widget": "number"
+    },
+    {
+      "label": "Min Samples",
+      "name": "min_samples",
+      "widget": "number"
+    },
+    {
+      "label": "Time Aware",
+      "name": "time_aware",
+      "widget": "toggle"
+    },
+    {
+      "label": "Quality Threshold",
+      "name": "quality_threshold",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

@@ -1,95 +1,80 @@
 {
-  "id": "formula_executor",
-  "name": "Formula Executor",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Execute construction formulas in sandbox with unit validation",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "cbfbb1b1df92c4d2f1d5dcd0afdcfdb2ed6d03d160b35e74321d6a477fa81321",
+    "block.py": "f5ea5ef47979c57aace042d2033074dad3b7f78690aba6a0c9bb2fba2623b300"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/formula_executor:latest",
+    "type": "docker"
+  },
+  "id": "formula_executor",
   "inputs": [
     {
+      "description": "{\"formula_key\": \"concrete_volume_slab\", \"input_values\": {\"length_m\": 10, \"width_m\": 8, \"thickness_m\": 0.2}}",
       "name": "input",
-      "type": "json",
       "required": false,
-      "description": "{\"formula_key\": \"concrete_volume_slab\", \"input_values\": {\"length_m\": 10, \"width_m\": 8, \"thickness_m\": 0.2}}"
+      "type": "json"
     },
     {
-      "name": "max_code_lines",
-      "type": "number",
-      "required": false,
       "default": 50,
-      "description": "Configuration parameter: max_code_lines"
+      "description": "Configuration parameter: max_code_lines",
+      "name": "max_code_lines",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "timeout_seconds",
-      "type": "number",
-      "required": false,
       "default": 10,
-      "description": "Configuration parameter: timeout_seconds"
+      "description": "Configuration parameter: timeout_seconds",
+      "name": "timeout_seconds",
+      "required": false,
+      "type": "number"
     },
     {
+      "default": true,
+      "description": "Configuration parameter: allow_sympy",
       "name": "allow_sympy",
-      "type": "boolean",
       "required": false,
-      "default": true,
-      "description": "Configuration parameter: allow_sympy"
+      "type": "boolean"
     },
     {
-      "name": "allow_numpy",
-      "type": "boolean",
-      "required": false,
       "default": true,
-      "description": "Configuration parameter: allow_numpy"
+      "description": "Configuration parameter: allow_numpy",
+      "name": "allow_numpy",
+      "required": false,
+      "type": "boolean"
     }
   ],
+  "layer": 3,
+  "name": "Formula Executor",
   "outputs": [
     {
+      "description": "Generated Code",
       "name": "generated_code",
-      "type": "code",
-      "description": "Generated Code"
+      "type": "code"
     },
     {
+      "description": "Result",
       "name": "execution_result",
-      "type": "text",
-      "description": "Result"
+      "type": "text"
     },
     {
+      "description": "Unit Output",
       "name": "unit_validated_output",
-      "type": "json",
-      "description": "Unit Output"
+      "type": "json"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/formula_executor:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "{\"formula_key\": \"concrete_volume_slab\", \"input_values\": {\"length_m\": 10, \"width_m\": 8, \"thickness_m\": 0.2}}"
-    },
-    {
-      "name": "max_code_lines",
-      "widget": "number",
-      "label": "Max Code Lines"
-    },
-    {
-      "name": "timeout_seconds",
-      "widget": "number",
-      "label": "Timeout Seconds"
-    },
-    {
-      "name": "allow_sympy",
-      "widget": "toggle",
-      "label": "Allow Sympy"
-    },
-    {
-      "name": "allow_numpy",
-      "widget": "toggle",
-      "label": "Allow Numpy"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "iTSyUqzPZIWVjPH9WvIWhiLd9gL2rxi7UiGDGfw3NvLlEJk0okocKPq4V89Hnh7rln4iFECX1vbfj3yX5bt9Cg==",
   "tags": [
     "domain",
     "construction",
@@ -98,5 +83,33 @@
     "code",
     "units",
     "sandbox"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "{\"formula_key\": \"concrete_volume_slab\", \"input_values\": {\"length_m\": 10, \"width_m\": 8, \"thickness_m\": 0.2}}",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Max Code Lines",
+      "name": "max_code_lines",
+      "widget": "number"
+    },
+    {
+      "label": "Timeout Seconds",
+      "name": "timeout_seconds",
+      "widget": "number"
+    },
+    {
+      "label": "Allow Sympy",
+      "name": "allow_sympy",
+      "widget": "toggle"
+    },
+    {
+      "label": "Allow Numpy",
+      "name": "allow_numpy",
+      "widget": "toggle"
+    }
+  ],
+  "version": "1.0.0"
 }

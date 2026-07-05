@@ -1,45 +1,58 @@
 {
-  "id": "local_drive",
-  "name": "Local Drive",
-  "version": "1.1",
   "author": "Cerebrum Team",
   "description": "Sandboxed local filesystem access: list, read, write files",
-  "layer": 4,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "1dff2ec4a9c17e1de4d98c086d70f6022109c48ccad595dd7ab7f838dab886a1",
+    "block.py": "384804b645af779157f000f7fe1ef966f8961825d9b6db701519159dd3a1fa73"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/local_drive:latest",
+    "type": "docker"
+  },
+  "id": "local_drive",
   "inputs": [
     {
+      "description": "Browse local files...",
       "name": "input",
-      "type": "file",
       "required": false,
-      "description": "Browse local files..."
+      "type": "file"
     }
   ],
+  "layer": 4,
+  "name": "Local Drive",
   "outputs": [
     {
+      "description": "Files",
       "name": "files",
-      "type": "array",
-      "description": "Files"
+      "type": "array"
     },
     {
+      "description": "Path",
       "name": "path",
-      "type": "text",
-      "description": "Path"
+      "type": "text"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/local_drive:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "file",
-      "label": "Browse local files..."
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "BPGFzcowJTMXQ42fPtBMu6sCTbcL9t1PLx+AMX2PSOTczhYsd4vJm7uW6GGoMViKBru6vUfNI1/YYe2P7T4EDw==",
   "tags": [
     "integration",
     "storage",
     "local"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Browse local files...",
+      "name": "input",
+      "widget": "file"
+    }
+  ],
+  "version": "1.1"
 }

@@ -1,139 +1,152 @@
 {
-  "id": "review",
-  "name": "Review",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "f27797f00f5aae547e6565a09c9ef0c03e659cd54d2b1f428d2fc196bfe96547",
+    "block.py": "38590db674d87d628a9c0ba6dc1c3af17fef5815877dfe70ba94b1758134a155"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/review:latest",
+    "type": "docker"
+  },
+  "id": "review",
+  "inputs": [
+    {
+      "description": "Review item id and metadata",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "approve",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "approve",
+        "reject",
+        "hide"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 3,
+      "description": "Configuration parameter: min_reviews_for_public",
+      "name": "min_reviews_for_public",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 10,
+      "description": "Configuration parameter: trusted_reviewer_threshold",
+      "name": "trusted_reviewer_threshold",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 5000,
+      "description": "Configuration parameter: max_review_length",
+      "name": "max_review_length",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: require_verified",
+      "name": "require_verified",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: auto_moderate",
+      "name": "auto_moderate",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": 3,
+      "description": "Configuration parameter: flag_threshold",
+      "name": "flag_threshold",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 4,
+  "name": "Review",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "database",
     "auth",
     "team"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "Review item id and metadata"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "approve",
-      "options": [
-        "approve",
-        "reject",
-        "hide"
-      ]
-    },
-    {
-      "name": "min_reviews_for_public",
-      "type": "number",
-      "required": false,
-      "default": 3,
-      "description": "Configuration parameter: min_reviews_for_public"
-    },
-    {
-      "name": "trusted_reviewer_threshold",
-      "type": "number",
-      "required": false,
-      "default": 10,
-      "description": "Configuration parameter: trusted_reviewer_threshold"
-    },
-    {
-      "name": "max_review_length",
-      "type": "number",
-      "required": false,
-      "default": 5000,
-      "description": "Configuration parameter: max_review_length"
-    },
-    {
-      "name": "require_verified",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: require_verified"
-    },
-    {
-      "name": "auto_moderate",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: auto_moderate"
-    },
-    {
-      "name": "flag_threshold",
-      "type": "number",
-      "required": false,
-      "default": 3,
-      "description": "Configuration parameter: flag_threshold"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/review:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "Review item id and metadata"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "approve",
-        "reject",
-        "hide"
-      ]
-    },
-    {
-      "name": "min_reviews_for_public",
-      "widget": "number",
-      "label": "Min Reviews For Public"
-    },
-    {
-      "name": "trusted_reviewer_threshold",
-      "widget": "number",
-      "label": "Trusted Reviewer Threshold"
-    },
-    {
-      "name": "max_review_length",
-      "widget": "number",
-      "label": "Max Review Length"
-    },
-    {
-      "name": "require_verified",
-      "widget": "toggle",
-      "label": "Require Verified"
-    },
-    {
-      "name": "auto_moderate",
-      "widget": "toggle",
-      "label": "Auto Moderate"
-    },
-    {
-      "name": "flag_threshold",
-      "widget": "number",
-      "label": "Flag Threshold"
-    }
-  ],
+  "signature": "FHa6xYygJRuLiOZXHHrvqHRtkaO3o+yUVYjfyHxD6Kg0tTG+LwYcAjd7htGDotjM50Estm+DvU7coFUSVp+cAQ==",
   "tags": [
     "store",
     "community",
     "quality",
     "ratings"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Review item id and metadata",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "approve",
+        "reject",
+        "hide"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Min Reviews For Public",
+      "name": "min_reviews_for_public",
+      "widget": "number"
+    },
+    {
+      "label": "Trusted Reviewer Threshold",
+      "name": "trusted_reviewer_threshold",
+      "widget": "number"
+    },
+    {
+      "label": "Max Review Length",
+      "name": "max_review_length",
+      "widget": "number"
+    },
+    {
+      "label": "Require Verified",
+      "name": "require_verified",
+      "widget": "toggle"
+    },
+    {
+      "label": "Auto Moderate",
+      "name": "auto_moderate",
+      "widget": "toggle"
+    },
+    {
+      "label": "Flag Threshold",
+      "name": "flag_threshold",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

@@ -6,9 +6,13 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.blocks import BLOCK_REGISTRY
+import os
+
+import httpx
+
+from app.blocks import BLOCK_REGISTRY, get_block_capabilities
 from app.dependencies import require_api_key
-from app.dependencies import block_instances, _create_block_instance
+from app.dependencies import block_instances, get_block_instance
 from app.core.input_adapter import adapt_input
 from app.core.security import enforce_block_access
 from app.block_registry import registry_block_exists
@@ -72,6 +76,59 @@ class ExecuteRequest(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Block parameters")
 
 
+def _get_sandbox_runner_url() -> str:
+    return os.getenv("SANDBOX_RUNNER_URL", "http://localhost:8001").rstrip("/")
+
+
+def should_run_out_of_process(block_name: str) -> bool:
+    """Return True when ``block_name`` must be executed via the sandbox runner.
+
+    Core blocks default to in-process. Non-core blocks use their manifest
+    capabilities: any network, filesystem, privileged import, or cross-block
+    access forces out-of-process execution.
+    """
+    return not get_block_capabilities(block_name).is_safe_for_in_process
+
+
+async def _run_block_via_runner(block_name: str, input_data: Any, params: Dict) -> dict:
+    """Execute a block out-of-process via the sandbox runner service."""
+    url = f"{_get_sandbox_runner_url()}/run_block"
+    payload = {
+        "block_name": block_name,
+        "input": input_data,
+        "params": params or {},
+        "timeout_s": 60,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=70) as client:
+            response = await client.post(url, json=payload)
+    except httpx.ConnectError as exc:
+        logger.warning("sandbox runner unavailable at %s: %s", url, exc)
+        raise HTTPException(503, f"Sandbox runner unavailable at {url}")
+    except httpx.TimeoutException:
+        raise HTTPException(504, f"Sandbox runner timed out for block '{block_name}'")
+
+    if response.status_code >= 400:
+        detail = response.text or f"Sandbox runner returned {response.status_code}"
+        raise HTTPException(502, detail)
+
+    runner_result = response.json()
+    if runner_result.get("status") != "ok":
+        error = runner_result.get("stderr") or runner_result.get("result") or "Sandbox execution failed"
+        raise HTTPException(500, error)
+
+    return {
+        "block": block_name,
+        "request_id": "sandbox",
+        "status": "success",
+        "result": runner_result.get("result", {}),
+        "confidence": 1.0,
+        "source_id": f"{block_name}-sandbox",
+        "metadata": {"source": "sandbox-runner"},
+        "processing_time_ms": runner_result.get("elapsed_ms", 0),
+    }
+
+
 async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
     """Shared body for /execute and /v1/execute.
 
@@ -80,8 +137,10 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
     /execute as a coroutine, leaving execute()'s `auth` param at its
     default — the Depends sentinel — which then crashed
     enforce_block_access (`'Depends' object has no attribute 'get'`).
-    
-    Now also supports registry blocks via subprocess execution.
+
+    Blocks with elevated capabilities (network, filesystem, privileged
+    imports, cross-block access) are dispatched to the sandbox runner.
+    Safe blocks run in-process as before.
     """
     block_name = request.block
 
@@ -93,15 +152,16 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
 
     enforce_block_access(block_name, auth)
 
-    # Prefer inline execution for blocks wired in app.blocks. Registry
-    # adapters hardcode Docker's /app path and subprocess overhead — use
-    # them only for registry-only blocks not present in BLOCK_REGISTRY.
+    capabilities = get_block_capabilities(block_name)
+    use_runner = not capabilities.is_safe_for_in_process
+
+    if use_runner:
+        return await _run_block_via_runner(block_name, request.input, request.params or {})
+
+    # In-process execution path for safe blocks.
     if block_name in BLOCK_REGISTRY:
         try:
-            if block_name not in block_instances:
-                block_instances[block_name] = _create_block_instance(BLOCK_REGISTRY[block_name])
-
-            block = block_instances[block_name]
+            block = get_block_instance(block_name)
             adapted_input = adapt_input(request.input, block)
             return await block.execute(adapted_input, request.params or {})
         except HTTPException:
@@ -115,6 +175,7 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
                 status = 500
             raise HTTPException(status, err)
 
+    # Registry-only blocks with safe capabilities fall back to local subprocess.
     registry_result = _run_registry_block(block_name, request.input, request.params or {})
     if registry_result.get("success"):
         return {

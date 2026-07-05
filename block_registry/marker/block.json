@@ -1,59 +1,73 @@
 {
-  "id": "marker",
-  "name": "Marker PDF",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "High-quality PDF to Markdown extraction using Marker",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "70e53651ddc62a3acfa3095348f6a77ee5fff1dd809a6d5c4f0f10801059c54e",
+    "block.json": "fc389eacd87524c2df4380bf7d0ca969435bb86a1b4277868c7839848314ce0d",
+    "block.py": "44933172363867354a0e3c07b59c2b5c4b925b854fcdf5f285284604e95ed652",
+    "requirements.txt": "e6ecee1aa9bf3bf97901a1ae6f660cf1e46ca92b1d35c4581cf4c21ac3a346ad"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/marker:latest",
+    "type": "docker"
+  },
+  "id": "marker",
   "inputs": [
     {
+      "description": "Upload PDF...",
       "name": "input",
-      "type": "file",
       "required": false,
-      "description": "Upload PDF..."
+      "type": "file"
     },
     {
-      "name": "max_chars",
-      "type": "number",
-      "required": false,
       "default": 200000,
-      "description": "Maximum characters to return"
+      "description": "Maximum characters to return",
+      "name": "max_chars",
+      "required": false,
+      "type": "number"
     }
   ],
+  "layer": 3,
+  "name": "Marker PDF",
   "outputs": [
     {
+      "description": "Markdown text",
       "name": "text",
-      "type": "text",
-      "description": "Markdown text"
+      "type": "text"
     },
     {
+      "description": "Pages",
       "name": "pages",
-      "type": "number",
-      "description": "Pages"
+      "type": "number"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/marker:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "file",
-      "label": "Upload PDF..."
-    },
-    {
-      "name": "max_chars",
-      "widget": "number",
-      "label": "Max characters"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "SDSi0i24R/Om8MiAvhOLbtf11Ncgf+czN4ouPi1Zhnl5+5BBC/JWLXZnG7rDlvKz2WGwwMLKwWe+lcvK27ThAQ==",
   "tags": [
     "domain",
     "documents",
     "pdf",
     "markdown",
     "typed"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Upload PDF...",
+      "name": "input",
+      "widget": "file"
+    },
+    {
+      "label": "Max characters",
+      "name": "max_chars",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

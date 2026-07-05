@@ -1,94 +1,107 @@
 {
-  "id": "database",
-  "name": "Database",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "182e57cc74fa992f9069d49ae4aaa6ba3f19085c7f6372ffcfa23783bcfab7aa",
+    "block.py": "261fb2b0f06f9987f6748979db162192c0328dd2d7cf3157acf6dac1fd30d27d"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/database:latest",
+    "type": "docker"
+  },
+  "id": "database",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected action",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "query",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "query",
+        "insert",
+        "update",
+        "delete",
+        "create_table",
+        "list_tables"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "sqlite",
+      "description": "Configuration parameter: backend",
+      "name": "backend",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": null,
+      "description": "Configuration parameter: connection_string",
+      "name": "connection_string",
+      "required": false,
+      "type": "string"
+    }
+  ],
   "layer": 0,
+  "name": "Database",
+  "outputs": [
+    {
+      "description": "Rows",
+      "name": "rows",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "config"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "query",
-      "options": [
-        "query",
-        "insert",
-        "update",
-        "delete",
-        "create_table",
-        "list_tables"
-      ]
-    },
-    {
-      "name": "backend",
-      "type": "string",
-      "required": false,
-      "default": "sqlite",
-      "description": "Configuration parameter: backend"
-    },
-    {
-      "name": "connection_string",
-      "type": "string",
-      "required": false,
-      "default": null,
-      "description": "Configuration parameter: connection_string"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "rows",
-      "type": "json",
-      "description": "Rows"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/database:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "query",
-        "insert",
-        "update",
-        "delete",
-        "create_table",
-        "list_tables"
-      ]
-    },
-    {
-      "name": "backend",
-      "widget": "text",
-      "label": "Backend"
-    },
-    {
-      "name": "connection_string",
-      "widget": "text",
-      "label": "Connection String"
-    }
-  ],
+  "signature": "6vvAWYtJP38XXHvvJJPq7t1YIsJQutXsyIfml6EBfhBm/iF++WRwjyyaXWaWpgecBoBXu0zbYLDuWSgwCmgaBQ==",
   "tags": [
     "infrastructure",
     "database",
     "storage"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected action",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "query",
+        "insert",
+        "update",
+        "delete",
+        "create_table",
+        "list_tables"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Backend",
+      "name": "backend",
+      "widget": "text"
+    },
+    {
+      "label": "Connection String",
+      "name": "connection_string",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0"
 }

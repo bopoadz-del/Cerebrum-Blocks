@@ -14,12 +14,17 @@ RUN useradd --system --uid 999 --shell /usr/sbin/nologin sandbox \
     && mkdir -p /scratch && chown sandbox:sandbox /scratch
 USER sandbox
 
-COPY --chown=sandbox:sandbox server.py .
+# Copy the sandbox runner service and the block registry/adapters it needs to
+# execute arbitrary blocks out-of-process.
+COPY --chown=sandbox:sandbox sandbox-runner/server.py .
+COPY --chown=sandbox:sandbox block_registry ./block_registry
+COPY --chown=sandbox:sandbox app ./app
 
 # PORT is set by the orchestrator (Render injects 10000 by default;
 # docker-compose / local dev defaults to 8001). $PORT respected here so
 # the same image works in both environments.
 ENV PORT=8001
+ENV BLOCK_REGISTRY_ROOT=/app/block_registry
 EXPOSE 8001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f "http://localhost:${PORT}/health" || exit 1

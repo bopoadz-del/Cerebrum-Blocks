@@ -1,110 +1,123 @@
 {
-  "id": "billing",
-  "name": "Billing",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "309028156fe68befea8e508ab535feaabc044dc24ce7bfe7c1aadc85db294a1f",
+    "block.py": "b9f02ac26e10c627469217dd1b28a2e1352617482899666f81e956c6da8e65fd"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/billing:latest",
+    "type": "docker"
+  },
+  "id": "billing",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected action",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "record_usage",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "record_usage",
+        "check_quota",
+        "create_customer",
+        "create_subscription",
+        "get_invoice",
+        "upgrade",
+        "webhook"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": null,
+      "description": "Configuration parameter: stripe_key",
+      "name": "stripe_key",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 1000,
+      "description": "Configuration parameter: free_tier_requests",
+      "name": "free_tier_requests",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 50000,
+      "description": "Configuration parameter: pro_tier_requests",
+      "name": "pro_tier_requests",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 5,
+  "name": "Billing",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "config",
     "auth",
     "memory"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "record_usage",
-      "options": [
-        "record_usage",
-        "check_quota",
-        "create_customer",
-        "create_subscription",
-        "get_invoice",
-        "upgrade",
-        "webhook"
-      ]
-    },
-    {
-      "name": "stripe_key",
-      "type": "string",
-      "required": false,
-      "default": null,
-      "description": "Configuration parameter: stripe_key"
-    },
-    {
-      "name": "free_tier_requests",
-      "type": "number",
-      "required": false,
-      "default": 1000,
-      "description": "Configuration parameter: free_tier_requests"
-    },
-    {
-      "name": "pro_tier_requests",
-      "type": "number",
-      "required": false,
-      "default": 50000,
-      "description": "Configuration parameter: pro_tier_requests"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/billing:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "record_usage",
-        "check_quota",
-        "create_customer",
-        "create_subscription",
-        "get_invoice",
-        "upgrade",
-        "webhook"
-      ]
-    },
-    {
-      "name": "stripe_key",
-      "widget": "text",
-      "label": "Stripe Key"
-    },
-    {
-      "name": "free_tier_requests",
-      "widget": "number",
-      "label": "Free Tier Requests"
-    },
-    {
-      "name": "pro_tier_requests",
-      "widget": "number",
-      "label": "Pro Tier Requests"
-    }
-  ],
+  "signature": "CmevW13RG8+KBrn5NdKtx3Ox1K/eHYrwBdFxqAHsPkbBLgnpe9ryeWyfwBbuE9Qu6WeaswGzY/G3Yr8P0M4+Aw==",
   "tags": [
     "billing",
     "usage",
     "integration"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected action",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "record_usage",
+        "check_quota",
+        "create_customer",
+        "create_subscription",
+        "get_invoice",
+        "upgrade",
+        "webhook"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Stripe Key",
+      "name": "stripe_key",
+      "widget": "text"
+    },
+    {
+      "label": "Free Tier Requests",
+      "name": "free_tier_requests",
+      "widget": "number"
+    },
+    {
+      "label": "Pro Tier Requests",
+      "name": "pro_tier_requests",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

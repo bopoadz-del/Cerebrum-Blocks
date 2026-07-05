@@ -1,41 +1,54 @@
 {
-  "id": "vector_search",
-  "name": "Vector Search",
-  "version": "2.0",
   "author": "Cerebrum Team",
   "description": "Semantic search over in-memory document collections \u2014 no external DB needed",
-  "layer": 2,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "ac2a9c5dc70804172e8d8592e440e5f4356c415ff6d3a0c94ee54768fc672394",
+    "block.py": "dba571484469220b47050b105cbcf92ece2c5905fa80f269b5cf0a6679e7943d"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/vector_search:latest",
+    "type": "docker"
+  },
+  "id": "vector_search",
   "inputs": [
     {
+      "description": "Search knowledge base...",
       "name": "input",
-      "type": "string",
       "required": false,
-      "description": "Search knowledge base..."
+      "type": "string"
     }
   ],
+  "layer": 2,
+  "name": "Vector Search",
   "outputs": [
     {
+      "description": "Matches",
       "name": "results",
-      "type": "array",
-      "description": "Matches"
+      "type": "array"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/vector_search:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "text",
-      "label": "Search knowledge base..."
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "25wdFRZQPlf847EOcOEQoRcZGYWPsm0Qvmyj7ZPGWJryKhioO0OpXVkYYObdM2FsN9EDDEEJDEimC4jO40pGCg==",
   "tags": [
     "ai",
     "core",
     "vector",
     "search"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Search knowledge base...",
+      "name": "input",
+      "widget": "text"
+    }
+  ],
+  "version": "2.0"
 }

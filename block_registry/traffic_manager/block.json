@@ -1,132 +1,145 @@
 {
-  "id": "traffic_manager",
-  "name": "Traffic Manager",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Governance layer between block-to-block calls",
-  "layer": 1,
-  "requires": [
-    "rate_limiter",
-    "failover",
-    "queue"
-  ],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "3a473e7cb8acd3e5aa83fe97a4f2a434f726fabbc0b51ea957b1ef9067c2bef3",
+    "block.py": "ab24c9ee3c482c5a0ccc2569de2785c4a5de74dafcc7c9da9f4bbce293572c95"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/traffic_manager:latest",
+    "type": "docker"
+  },
+  "id": "traffic_manager",
   "inputs": [
     {
+      "description": "{\"source\": \"chat\", \"target\": \"pdf\", \"payload\": {}}",
       "name": "input",
-      "type": "json",
       "required": false,
-      "description": "{\"source\": \"chat\", \"target\": \"pdf\", \"payload\": {}}"
+      "type": "json"
     },
     {
-      "name": "heavy_blocks",
-      "type": "array",
-      "required": false,
       "default": [
         "zvec",
         "pdf",
         "construction"
       ],
-      "description": "Configuration parameter: heavy_blocks"
+      "description": "Configuration parameter: heavy_blocks",
+      "name": "heavy_blocks",
+      "required": false,
+      "type": "array"
     },
     {
+      "default": true,
+      "description": "Configuration parameter: rate_limit_enabled",
       "name": "rate_limit_enabled",
-      "type": "boolean",
       "required": false,
-      "default": true,
-      "description": "Configuration parameter: rate_limit_enabled"
+      "type": "boolean"
     },
     {
+      "default": true,
+      "description": "Configuration parameter: circuit_breaker_enabled",
       "name": "circuit_breaker_enabled",
-      "type": "boolean",
       "required": false,
-      "default": true,
-      "description": "Configuration parameter: circuit_breaker_enabled"
+      "type": "boolean"
     },
     {
+      "default": true,
+      "description": "Configuration parameter: queue_enabled",
       "name": "queue_enabled",
-      "type": "boolean",
       "required": false,
-      "default": true,
-      "description": "Configuration parameter: queue_enabled"
+      "type": "boolean"
     },
     {
-      "name": "default_quota",
-      "type": "number",
-      "required": false,
       "default": 1000,
-      "description": "Configuration parameter: default_quota"
+      "description": "Configuration parameter: default_quota",
+      "name": "default_quota",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "circuit_threshold",
-      "type": "number",
-      "required": false,
       "default": 5,
-      "description": "Configuration parameter: circuit_threshold"
+      "description": "Configuration parameter: circuit_threshold",
+      "name": "circuit_threshold",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "circuit_timeout",
-      "type": "number",
-      "required": false,
       "default": 60,
-      "description": "Configuration parameter: circuit_timeout"
+      "description": "Configuration parameter: circuit_timeout",
+      "name": "circuit_timeout",
+      "required": false,
+      "type": "number"
     }
   ],
+  "layer": 1,
+  "name": "Traffic Manager",
   "outputs": [
     {
       "name": "result",
       "type": "json"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/traffic_manager:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "{\"source\": \"chat\", \"target\": \"pdf\", \"payload\": {}}"
-    },
-    {
-      "name": "heavy_blocks",
-      "widget": "json",
-      "label": "Heavy Blocks"
-    },
-    {
-      "name": "rate_limit_enabled",
-      "widget": "toggle",
-      "label": "Rate Limit Enabled"
-    },
-    {
-      "name": "circuit_breaker_enabled",
-      "widget": "toggle",
-      "label": "Circuit Breaker Enabled"
-    },
-    {
-      "name": "queue_enabled",
-      "widget": "toggle",
-      "label": "Queue Enabled"
-    },
-    {
-      "name": "default_quota",
-      "widget": "number",
-      "label": "Default Quota"
-    },
-    {
-      "name": "circuit_threshold",
-      "widget": "number",
-      "label": "Circuit Threshold"
-    },
-    {
-      "name": "circuit_timeout",
-      "widget": "number",
-      "label": "Circuit Timeout"
-    }
+  "publisher_id": "cerebrum_platform",
+  "requires": [
+    "rate_limiter",
+    "failover",
+    "queue"
   ],
+  "signature": "hlISBm+X+3r5iZTWmGsHs0keFl23DrmLAz/ODUBDEjHKUl1MtkXN9K/MuzVdhSzDfm/YOp9LaNFElJYuVJnZAQ==",
   "tags": [
     "security",
     "governance",
     "traffic",
     "core"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "{\"source\": \"chat\", \"target\": \"pdf\", \"payload\": {}}",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Heavy Blocks",
+      "name": "heavy_blocks",
+      "widget": "json"
+    },
+    {
+      "label": "Rate Limit Enabled",
+      "name": "rate_limit_enabled",
+      "widget": "toggle"
+    },
+    {
+      "label": "Circuit Breaker Enabled",
+      "name": "circuit_breaker_enabled",
+      "widget": "toggle"
+    },
+    {
+      "label": "Queue Enabled",
+      "name": "queue_enabled",
+      "widget": "toggle"
+    },
+    {
+      "label": "Default Quota",
+      "name": "default_quota",
+      "widget": "number"
+    },
+    {
+      "label": "Circuit Threshold",
+      "name": "circuit_threshold",
+      "widget": "number"
+    },
+    {
+      "label": "Circuit Timeout",
+      "name": "circuit_timeout",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

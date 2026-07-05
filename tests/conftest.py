@@ -16,6 +16,9 @@ sys.path.insert(0, str(ROOT))
 # tests via this env var.
 os.environ.setdefault("ENV", "test")
 
+# Extended blocks are only registered when the platform boots in legacy mode.
+os.environ.setdefault("CEREBRUM_VIRGIN", "false")
+
 CONSTRUCTION_CONTAINER_PATH = ROOT / "app" / "containers" / "construction.py"
 CONSTRUCTION_V2_PATH = ROOT / "app" / "blocks" / "construction_v2.py"
 

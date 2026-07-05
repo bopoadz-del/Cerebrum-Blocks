@@ -10,8 +10,9 @@ from typing import Any, Dict, Optional
 from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from app.blocks import BLOCK_REGISTRY
+from app.blocks import BLOCK_REGISTRY, get_block_capabilities
 from app.blocks.memory import MemoryBlock, MemoryNamespaceProxy
+from app.core.block_proxy import CapabilityProxy
 from app.core.auth import auth as auth_manager
 from app.core.domain_kit_loader import _KIT_BLOCK_SPECS
 
@@ -62,8 +63,13 @@ def _memory_namespace_for_block(name: str) -> str:
 
 
 
-def _create_block_instance(block_class, config: Optional[Dict] = None):
-    """Create block instance with proper arguments."""
+def _create_block_instance(block_class, config: Optional[Dict] = None, allow_platform: bool = True):
+    """Create block instance with proper arguments.
+
+    ``allow_platform`` controls whether ``set_platform`` is called. Core blocks
+    receive the platform registry; third-party blocks do not, to prevent them
+    from obtaining unmediated access to other blocks or the memory cache.
+    """
     sig = inspect.signature(block_class.__init__)
     params = list(sig.parameters.keys())
 
@@ -72,7 +78,7 @@ def _create_block_instance(block_class, config: Optional[Dict] = None):
     else:
         instance = block_class()
 
-    if hasattr(instance, "set_platform"):
+    if allow_platform and hasattr(instance, "set_platform"):
         try:
             instance.set_platform(BLOCK_REGISTRY, block_instances, _create_block_instance, get_memory_block)
         except Exception:
@@ -146,7 +152,7 @@ def _resolve_dep(dep_name: str):
     return None
 
 
-def _wire_block_dependencies(instance, block_class, name: str = None):
+def _wire_block_dependencies(instance, block_class, name: str = None, caps=None):
     """Wire requires=[] dependencies into a platform block instance.
 
     The audit found 31 blocks with requires=["config"|"database"|"memory"|...]
@@ -154,9 +160,19 @@ def _wire_block_dependencies(instance, block_class, name: str = None):
     skipped — the block then crashed on first use of self.X_block. Now we
     resolve via four sources (registry → lazy instance → legacy accessor →
     cached global) and only skip + log when none has it.
+
+    If ``caps`` is provided, dependencies not listed in ``permissions.blocks``
+    are skipped. This prevents a third-party block from obtaining references
+    to blocks it did not declare.
     """
     requires = getattr(block_class, "requires", []) or []
     for dep_name in requires:
+        if caps is not None and not caps.allows_block_access(dep_name):
+            logger.warning(
+                "block %s is not permitted to access '%s' (not in permissions.blocks); skipping",
+                name or "?", dep_name,
+            )
+            continue
         dep_instance = _resolve_dep(dep_name)
         if dep_instance is None:
             logger.warning(
@@ -185,8 +201,18 @@ def _wire_block_dependencies(instance, block_class, name: str = None):
 def get_block_instance(block_name: str, config: Optional[Dict] = None) -> Any:
     if block_name not in block_instances:
         block_class = BLOCK_REGISTRY[block_name]
-        block_instances[block_name] = _create_block_instance(block_class, config)
-        _wire_block_dependencies(block_instances[block_name], block_class, block_name)
+        caps = get_block_capabilities(block_name)
+        from app.blocks import _is_core_block
+        is_core = _is_core_block(block_name)
+        # Core blocks are trusted and receive the platform registry.
+        # Third-party blocks do not, to prevent unmediated access.
+        instance = _create_block_instance(block_class, config, allow_platform=is_core)
+        # Non-core blocks get a capability proxy so unsafe caps cannot run
+        # inside the main process.
+        if not is_core:
+            instance = CapabilityProxy(instance, caps)
+        block_instances[block_name] = instance
+        _wire_block_dependencies(block_instances[block_name], block_class, block_name, caps)
         _schedule_legacy_initialize(block_instances[block_name])
     return block_instances[block_name]
 

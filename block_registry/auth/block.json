@@ -1,110 +1,123 @@
 {
-  "id": "auth",
-  "name": "Auth",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "708886f39827b65022349242c6dc5d747376ac0d0177b015819a0d29eca535b8",
+    "block.py": "00eb1cfff4410394b4ddbbbcb2308cb2fa5e9d4ece4c829dbc0c715a681db442"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/auth:latest",
+    "type": "docker"
+  },
+  "id": "auth",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected action",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "validate",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "validate",
+        "check_rate_limit",
+        "check_permission",
+        "create_key",
+        "revoke_key",
+        "rotate_key",
+        "get_usage",
+        "list_keys"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": null,
+      "description": "Configuration parameter: master_key",
+      "name": "master_key",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 100,
+      "description": "Configuration parameter: rate_limit_default",
+      "name": "rate_limit_default",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 3600,
+      "description": "Configuration parameter: rate_limit_window",
+      "name": "rate_limit_window",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 1,
+  "name": "Auth",
+  "outputs": [
+    {
+      "description": "Authorized",
+      "name": "authorized",
+      "type": "boolean"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "memory"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "validate",
-      "options": [
-        "validate",
-        "check_rate_limit",
-        "check_permission",
-        "create_key",
-        "revoke_key",
-        "rotate_key",
-        "get_usage",
-        "list_keys"
-      ]
-    },
-    {
-      "name": "master_key",
-      "type": "string",
-      "required": false,
-      "default": null,
-      "description": "Configuration parameter: master_key"
-    },
-    {
-      "name": "rate_limit_default",
-      "type": "number",
-      "required": false,
-      "default": 100,
-      "description": "Configuration parameter: rate_limit_default"
-    },
-    {
-      "name": "rate_limit_window",
-      "type": "number",
-      "required": false,
-      "default": 3600,
-      "description": "Configuration parameter: rate_limit_window"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "authorized",
-      "type": "boolean",
-      "description": "Authorized"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/auth:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "validate",
-        "check_rate_limit",
-        "check_permission",
-        "create_key",
-        "revoke_key",
-        "rotate_key",
-        "get_usage",
-        "list_keys"
-      ]
-    },
-    {
-      "name": "master_key",
-      "widget": "text",
-      "label": "Master Key"
-    },
-    {
-      "name": "rate_limit_default",
-      "widget": "number",
-      "label": "Rate Limit Default"
-    },
-    {
-      "name": "rate_limit_window",
-      "widget": "number",
-      "label": "Rate Limit Window"
-    }
-  ],
+  "signature": "+LvS7uAD5JOHpJKfSCkzoXHalUKwCoCnYasRHlzoiu64TtfEgeGqfiCBSQjjgqqkzkXTeLjBJSTOLiqvyJRsCA==",
   "tags": [
     "security",
     "auth",
     "core"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected action",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "validate",
+        "check_rate_limit",
+        "check_permission",
+        "create_key",
+        "revoke_key",
+        "rotate_key",
+        "get_usage",
+        "list_keys"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Master Key",
+      "name": "master_key",
+      "widget": "text"
+    },
+    {
+      "label": "Rate Limit Default",
+      "name": "rate_limit_default",
+      "widget": "number"
+    },
+    {
+      "label": "Rate Limit Window",
+      "name": "rate_limit_window",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

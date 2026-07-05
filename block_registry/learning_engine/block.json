@@ -1,83 +1,73 @@
 {
-  "id": "learning_engine",
-  "name": "Learning Engine",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Tier promotion + coefficient tuning: learns from user corrections to improve formula accuracy",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "c8ea0c8412b185546e9a7c8c85f4035f6ad68001a99a9a117a9db16e14f4c182",
+    "block.py": "97d18aa6c76974241e1eee6cf6f6f64af619a519fe073fddba5a415a88860c0c"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/learning_engine:latest",
+    "type": "docker"
+  },
+  "id": "learning_engine",
   "inputs": [
     {
+      "description": "{\"correction_data\": {\"formula_id\": \"concrete_cost\", \"predicted\": 125000, \"actual\": 118000}, \"operation\": \"record_correction\"}",
       "name": "input",
-      "type": "json",
       "required": false,
-      "description": "{\"correction_data\": {\"formula_id\": \"concrete_cost\", \"predicted\": 125000, \"actual\": 118000}, \"operation\": \"record_correction\"}"
+      "type": "json"
     },
     {
-      "name": "promotion_mae_threshold",
-      "type": "number",
-      "required": false,
       "default": 0.05,
-      "description": "Configuration parameter: promotion_mae_threshold"
+      "description": "Configuration parameter: promotion_mae_threshold",
+      "name": "promotion_mae_threshold",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "min_samples_for_training",
-      "type": "number",
-      "required": false,
       "default": 5,
-      "description": "Configuration parameter: min_samples_for_training"
+      "description": "Configuration parameter: min_samples_for_training",
+      "name": "min_samples_for_training",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "storage_path",
-      "type": "string",
-      "required": false,
       "default": "/tmp/cerebrum_learning_engine.json",
-      "description": "Configuration parameter: storage_path"
+      "description": "Configuration parameter: storage_path",
+      "name": "storage_path",
+      "required": false,
+      "type": "string"
     }
   ],
+  "layer": 3,
+  "name": "Learning Engine",
   "outputs": [
     {
+      "description": "Tier",
       "name": "tier_level",
-      "type": "text",
-      "description": "Tier"
+      "type": "text"
     },
     {
+      "description": "Coefficients",
       "name": "updated_coefficients",
-      "type": "json",
-      "description": "Coefficients"
+      "type": "json"
     },
     {
+      "description": "Promoted",
       "name": "promotion_flag",
-      "type": "boolean",
-      "description": "Promoted"
+      "type": "boolean"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/learning_engine:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "{\"correction_data\": {\"formula_id\": \"concrete_cost\", \"predicted\": 125000, \"actual\": 118000}, \"operation\": \"record_correction\"}"
-    },
-    {
-      "name": "promotion_mae_threshold",
-      "widget": "number",
-      "label": "Promotion Mae Threshold"
-    },
-    {
-      "name": "min_samples_for_training",
-      "widget": "number",
-      "label": "Min Samples For Training"
-    },
-    {
-      "name": "storage_path",
-      "widget": "text",
-      "label": "Storage Path"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "4mt+u+aczuMd4LcJyYgk2MsrKGENmp0dsF1LVp26JLIV5HypOogWo5oKqWJfbbMJmWLtvYL1dI9Y9Dh1j0jLBA==",
   "tags": [
     "domain",
     "construction",
@@ -85,5 +75,28 @@
     "learning",
     "coefficients",
     "tier"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "{\"correction_data\": {\"formula_id\": \"concrete_cost\", \"predicted\": 125000, \"actual\": 118000}, \"operation\": \"record_correction\"}",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Promotion Mae Threshold",
+      "name": "promotion_mae_threshold",
+      "widget": "number"
+    },
+    {
+      "label": "Min Samples For Training",
+      "name": "min_samples_for_training",
+      "widget": "number"
+    },
+    {
+      "label": "Storage Path",
+      "name": "storage_path",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0"
 }

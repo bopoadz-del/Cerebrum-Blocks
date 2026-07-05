@@ -1,76 +1,71 @@
 {
-  "id": "primavera_parser",
-  "name": "Primavera Parser",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Parse Primavera P6 .xer schedule files: critical path, milestones, resource loading",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "f2315e31411b752829e0264f368f8c37a234d717c4e10f45da41d2a055753fc3",
+    "block.py": "06fbcd27ec0bf1aca7b49cc75781b5138db67db3c8f6cb0fac790b33cf0f0c9b"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/primavera_parser:latest",
+    "type": "docker"
+  },
+  "id": "primavera_parser",
   "inputs": [
     {
+      "description": "Upload Primavera P6 .xer schedule file...",
       "name": "input",
-      "type": "file",
       "required": false,
-      "description": "Upload Primavera P6 .xer schedule file..."
+      "type": "file"
     },
     {
-      "name": "include_resources",
-      "type": "boolean",
-      "required": false,
       "default": true,
-      "description": "Configuration parameter: include_resources"
+      "description": "Configuration parameter: include_resources",
+      "name": "include_resources",
+      "required": false,
+      "type": "boolean"
     },
     {
-      "name": "critical_float_days",
-      "type": "number",
-      "required": false,
       "default": 0,
-      "description": "Configuration parameter: critical_float_days"
+      "description": "Configuration parameter: critical_float_days",
+      "name": "critical_float_days",
+      "required": false,
+      "type": "number"
     }
   ],
+  "layer": 3,
+  "name": "Primavera Parser",
   "outputs": [
     {
+      "description": "Activities",
       "name": "activity_count",
-      "type": "number",
-      "description": "Activities"
+      "type": "number"
     },
     {
+      "description": "Critical Path",
       "name": "critical_path",
-      "type": "list",
-      "description": "Critical Path"
+      "type": "list"
     },
     {
+      "description": "Milestones",
       "name": "milestones",
-      "type": "list",
-      "description": "Milestones"
+      "type": "list"
     },
     {
+      "description": "Schedule Summary",
       "name": "schedule_data",
-      "type": "json",
-      "description": "Schedule Summary"
+      "type": "json"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/primavera_parser:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "file",
-      "label": "Upload Primavera P6 .xer schedule file..."
-    },
-    {
-      "name": "include_resources",
-      "widget": "toggle",
-      "label": "Include Resources"
-    },
-    {
-      "name": "critical_float_days",
-      "widget": "number",
-      "label": "Critical Float Days"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "3j8kwLMOg1iClYwyzGUFD9mGzIk7/kjhD2wkSbPTLlfREgED6S/vCi7PnFU4oHKTcYkhTDHe8JLsUaXuVA/+Bw==",
   "tags": [
     "domain",
     "construction",
@@ -78,5 +73,23 @@
     "primavera",
     "xer",
     "cpm"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Upload Primavera P6 .xer schedule file...",
+      "name": "input",
+      "widget": "file"
+    },
+    {
+      "label": "Include Resources",
+      "name": "include_resources",
+      "widget": "toggle"
+    },
+    {
+      "label": "Critical Float Days",
+      "name": "critical_float_days",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

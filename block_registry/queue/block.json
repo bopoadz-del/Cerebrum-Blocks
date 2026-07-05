@@ -1,104 +1,117 @@
 {
-  "id": "queue",
-  "name": "Queue",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "e768d27afadf29e05a729df5ebe71194b3dc3071d4a460f84f74d5e7bc57cf7e",
+    "block.py": "19ecf6e4cd2129241e337e80ba87cadf737dfffc53de2d647de142dcdf34ed15"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/queue:latest",
+    "type": "docker"
+  },
+  "id": "queue",
+  "inputs": [
+    {
+      "description": "Job type, payload, queue name",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "enqueue",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "enqueue",
+        "dequeue",
+        "status",
+        "list"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "memory",
+      "description": "Backend",
+      "name": "backend",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": null,
+      "description": "Redis Url",
+      "name": "redis_url",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 4,
+      "description": "Max Workers",
+      "name": "max_workers",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 2,
+  "name": "Queue",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "config",
     "memory"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "Job type, payload, queue name"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "enqueue",
-      "options": [
-        "enqueue",
-        "dequeue",
-        "status",
-        "list"
-      ]
-    },
-    {
-      "name": "backend",
-      "type": "string",
-      "required": false,
-      "description": "Backend",
-      "default": "memory"
-    },
-    {
-      "name": "redis_url",
-      "type": "string",
-      "required": false,
-      "description": "Redis Url",
-      "default": null
-    },
-    {
-      "name": "max_workers",
-      "type": "number",
-      "required": false,
-      "description": "Max Workers",
-      "default": 4
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/queue:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "Job type, payload, queue name"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "enqueue",
-        "dequeue",
-        "status",
-        "list"
-      ]
-    },
-    {
-      "name": "backend",
-      "widget": "text",
-      "label": "Backend"
-    },
-    {
-      "name": "redis_url",
-      "widget": "text",
-      "label": "Redis Url"
-    },
-    {
-      "name": "max_workers",
-      "widget": "number",
-      "label": "Max Workers"
-    }
-  ],
+  "signature": "MV04DC/lwX1mdvA1QAxosJD7/KA/xXFw1NLC7vrfj4C5UssiKDwgP5vnajenrJ7v808zjth0ezoGHR8ZkDHKCw==",
   "tags": [
     "queue",
     "jobs",
     "async",
     "core"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Job type, payload, queue name",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "enqueue",
+        "dequeue",
+        "status",
+        "list"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Backend",
+      "name": "backend",
+      "widget": "text"
+    },
+    {
+      "label": "Redis Url",
+      "name": "redis_url",
+      "widget": "text"
+    },
+    {
+      "label": "Max Workers",
+      "name": "max_workers",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

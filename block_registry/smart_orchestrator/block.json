@@ -1,71 +1,84 @@
 {
-  "id": "smart_orchestrator",
-  "name": "Smart Orchestrator",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Construction semantic router: maps user messages to action queues with TF-IDF similarity scoring",
-  "layer": 2,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "31d986b505172e80a8d8704db4660fa642abbd3a75522619f6e69c86b9f8e845",
+    "block.py": "f35f43b91c42019c7ed62b1575e1468bbab09f20be50400536526b716f007ff5"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/smart_orchestrator:latest",
+    "type": "docker"
+  },
+  "id": "smart_orchestrator",
   "inputs": [
     {
+      "description": "Describe what you need (e.g. 'analyze the BOQ and check specs')...",
       "name": "input",
-      "type": "string",
       "required": false,
-      "description": "Describe what you need (e.g. 'analyze the BOQ and check specs')..."
+      "type": "string"
     },
     {
-      "name": "max_actions",
-      "type": "number",
-      "required": false,
       "default": 5,
-      "description": "Configuration parameter: max_actions"
+      "description": "Configuration parameter: max_actions",
+      "name": "max_actions",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "confidence_threshold",
-      "type": "number",
-      "required": false,
       "default": 0.15,
-      "description": "Configuration parameter: confidence_threshold"
+      "description": "Configuration parameter: confidence_threshold",
+      "name": "confidence_threshold",
+      "required": false,
+      "type": "number"
     }
   ],
+  "layer": 2,
+  "name": "Smart Orchestrator",
   "outputs": [
     {
+      "description": "Action Queue",
       "name": "action_queue",
-      "type": "list",
-      "description": "Action Queue"
+      "type": "list"
     },
     {
+      "description": "Run Parallel",
       "name": "parallel_flag",
-      "type": "boolean",
-      "description": "Run Parallel"
+      "type": "boolean"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/smart_orchestrator:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "text",
-      "label": "Describe what you need (e.g. 'analyze the BOQ and check specs')..."
-    },
-    {
-      "name": "max_actions",
-      "widget": "number",
-      "label": "Max Actions"
-    },
-    {
-      "name": "confidence_threshold",
-      "widget": "number",
-      "label": "Confidence Threshold"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "GQK8rRjXBtjYmhvK5G0BcAu9lJnI/Xzf+R8bNmXuflosLx3GmA6i60HMBhTOKFKbi2Q3xhUTl47ytiG2TbJOAg==",
   "tags": [
     "infrastructure",
     "construction",
     "orchestration",
     "routing",
     "nlp"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Describe what you need (e.g. 'analyze the BOQ and check specs')...",
+      "name": "input",
+      "widget": "text"
+    },
+    {
+      "label": "Max Actions",
+      "name": "max_actions",
+      "widget": "number"
+    },
+    {
+      "label": "Confidence Threshold",
+      "name": "confidence_threshold",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

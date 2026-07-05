@@ -1,70 +1,83 @@
 {
-  "id": "file_hasher",
-  "name": "File Hasher",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "SHA256/MD5 hashing and metadata extraction for files",
-  "layer": 0,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "9a44860e234df898f3719a3bd6984138a6a011eee044a155efde5248b9574a3d",
+    "block.py": "180a532674c85919a1043a98f6d29acd9f09661635e0f58ca04a69d569e45f10"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/file_hasher:latest",
+    "type": "docker"
+  },
+  "id": "file_hasher",
   "inputs": [
     {
+      "description": "/path/to/file.pdf",
       "name": "input",
-      "type": "string",
       "required": false,
-      "description": "/path/to/file.pdf"
+      "type": "string"
     },
     {
-      "name": "default_algorithm",
-      "type": "string",
-      "required": false,
       "default": "sha256",
-      "description": "Configuration parameter: default_algorithm"
+      "description": "Configuration parameter: default_algorithm",
+      "name": "default_algorithm",
+      "required": false,
+      "type": "string"
     },
     {
-      "name": "chunk_size",
-      "type": "number",
-      "required": false,
       "default": 8192,
-      "description": "Configuration parameter: chunk_size"
+      "description": "Configuration parameter: chunk_size",
+      "name": "chunk_size",
+      "required": false,
+      "type": "number"
     }
   ],
+  "layer": 0,
+  "name": "File Hasher",
   "outputs": [
     {
+      "description": "SHA256",
       "name": "sha256",
-      "type": "text",
-      "description": "SHA256"
+      "type": "text"
     },
     {
+      "description": "MD5",
       "name": "md5",
-      "type": "text",
-      "description": "MD5"
+      "type": "text"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/file_hasher:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "text",
-      "label": "/path/to/file.pdf"
-    },
-    {
-      "name": "default_algorithm",
-      "widget": "text",
-      "label": "Default Algorithm"
-    },
-    {
-      "name": "chunk_size",
-      "widget": "number",
-      "label": "Chunk Size"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "0PpGzcdvY/oMicU2vFqS66yZKoAs+NV8qE55Bc1evheeP9oLINYU7Krp579BcuJKTnBxUuMkF0ql/et+Tz8DDQ==",
   "tags": [
     "infrastructure",
     "security",
     "hash",
     "metadata"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "/path/to/file.pdf",
+      "name": "input",
+      "widget": "text"
+    },
+    {
+      "label": "Default Algorithm",
+      "name": "default_algorithm",
+      "widget": "text"
+    },
+    {
+      "label": "Chunk Size",
+      "name": "chunk_size",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

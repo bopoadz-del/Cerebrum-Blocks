@@ -1,100 +1,113 @@
 {
-  "id": "email",
-  "name": "Email",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "2e8118e0f58a006bb685b7a4ed3a6e645ee4e68a5aeeb2e5beb0a59fb280c55f",
+    "block.py": "170eb05a0256fdd35b327b3cd0328569f4e8b09356a7872aa38b0ddcb2cb41ed"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/email:latest",
+    "type": "docker"
+  },
+  "id": "email",
+  "inputs": [
+    {
+      "description": "Recipient, subject, body, template data",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "send",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "send",
+        "send_template",
+        "validate_address"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "smtp",
+      "description": "Configuration parameter: provider",
+      "name": "provider",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "localhost",
+      "description": "Configuration parameter: smtp_host",
+      "name": "smtp_host",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 587,
+      "description": "Configuration parameter: smtp_port",
+      "name": "smtp_port",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 5,
+  "name": "Email",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "config"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "Recipient, subject, body, template data"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "send",
-      "options": [
-        "send",
-        "send_template",
-        "validate_address"
-      ]
-    },
-    {
-      "name": "provider",
-      "type": "string",
-      "required": false,
-      "default": "smtp",
-      "description": "Configuration parameter: provider"
-    },
-    {
-      "name": "smtp_host",
-      "type": "string",
-      "required": false,
-      "default": "localhost",
-      "description": "Configuration parameter: smtp_host"
-    },
-    {
-      "name": "smtp_port",
-      "type": "number",
-      "required": false,
-      "default": 587,
-      "description": "Configuration parameter: smtp_port"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/email:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "Recipient, subject, body, template data"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "send",
-        "send_template",
-        "validate_address"
-      ]
-    },
-    {
-      "name": "provider",
-      "widget": "text",
-      "label": "Provider"
-    },
-    {
-      "name": "smtp_host",
-      "widget": "text",
-      "label": "Smtp Host"
-    },
-    {
-      "name": "smtp_port",
-      "widget": "number",
-      "label": "Smtp Port"
-    }
-  ],
+  "signature": "t9HdgzF7v9UlqVZabFdabG3htEKDhuSyc5t11P06rXaMlAJgnEQUikW4AdQi41xvgGlFR5P00OHL3nSOcL7mBA==",
   "tags": [
     "email",
     "notification",
     "integration"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Recipient, subject, body, template data",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "send",
+        "send_template",
+        "validate_address"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Provider",
+      "name": "provider",
+      "widget": "text"
+    },
+    {
+      "label": "Smtp Host",
+      "name": "smtp_host",
+      "widget": "text"
+    },
+    {
+      "label": "Smtp Port",
+      "name": "smtp_port",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

@@ -1,87 +1,100 @@
 {
-  "id": "config",
-  "name": "Config",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "6a35b7d89ad67fde3a6bfbaf33508b50966ff6bcccb979e5d2b17be3cb612db1",
+    "block.py": "c158fd7f5f8527cc1bf61de2e5fa8f5e828124a5859dd74a6e6c393abd3feac7"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/config:latest",
+    "type": "docker"
+  },
+  "id": "config",
+  "inputs": [
+    {
+      "description": "Config key/value payload",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "get",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "get",
+        "get_all",
+        "set"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "config/blocks.json",
+      "description": "Configuration parameter: config_file",
+      "name": "config_file",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "CEREBRUM_",
+      "description": "Configuration parameter: env_prefix",
+      "name": "env_prefix",
+      "required": false,
+      "type": "string"
+    }
+  ],
   "layer": 0,
+  "name": "Config",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "hal"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "Config key/value payload"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "get",
-      "options": [
-        "get",
-        "get_all",
-        "set"
-      ]
-    },
-    {
-      "name": "config_file",
-      "type": "string",
-      "required": false,
-      "default": "config/blocks.json",
-      "description": "Configuration parameter: config_file"
-    },
-    {
-      "name": "env_prefix",
-      "type": "string",
-      "required": false,
-      "default": "CEREBRUM_",
-      "description": "Configuration parameter: env_prefix"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/config:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "Config key/value payload"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "get",
-        "get_all",
-        "set"
-      ]
-    },
-    {
-      "name": "config_file",
-      "widget": "text",
-      "label": "Config File"
-    },
-    {
-      "name": "env_prefix",
-      "widget": "text",
-      "label": "Env Prefix"
-    }
-  ],
+  "signature": "d/5F3Q+C5G8pPhD2P3yLznWt0yg7HqLp0z8o+c5KRRw04OyRtl0IdxZQo1LarjSxjfSYNIc3ze6t4KCcPp0ACQ==",
   "tags": [
     "infrastructure",
     "core"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Config key/value payload",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "get",
+        "get_all",
+        "set"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Config File",
+      "name": "config_file",
+      "widget": "text"
+    },
+    {
+      "label": "Env Prefix",
+      "name": "env_prefix",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0"
 }

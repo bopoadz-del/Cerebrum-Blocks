@@ -1,88 +1,101 @@
 {
-  "id": "recommendation_template",
-  "name": "Recommendation Template",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Data-driven construction recommendation engine: variance data \u2192 severity-ranked recommendations + action items",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "5bbd0fbf9ee0629f059f513bf3e8b08430aec872fdb657b3053f1d8b70013b67",
+    "block.py": "0189f6783d742c1a314b066a886d0dd64f476028ab0f13b8fba93ef75cce1116"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/recommendation_template:latest",
+    "type": "docker"
+  },
+  "id": "recommendation_template",
   "inputs": [
     {
+      "description": "{\"variance_data\": [{\"item\": \"concrete_c30\", \"variance_pct\": 18.5, \"cost_impact_usd\": 42000}]}",
       "name": "input",
-      "type": "json",
       "required": false,
-      "description": "{\"variance_data\": [{\"item\": \"concrete_c30\", \"variance_pct\": 18.5, \"cost_impact_usd\": 42000}]}"
+      "type": "json"
     },
     {
-      "name": "max_recommendations",
-      "type": "number",
-      "required": false,
       "default": 20,
-      "description": "Configuration parameter: max_recommendations"
+      "description": "Configuration parameter: max_recommendations",
+      "name": "max_recommendations",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "include_action_items",
-      "type": "boolean",
-      "required": false,
       "default": true,
-      "description": "Configuration parameter: include_action_items"
+      "description": "Configuration parameter: include_action_items",
+      "name": "include_action_items",
+      "required": false,
+      "type": "boolean"
     },
     {
-      "name": "custom_rules_env",
-      "type": "string",
-      "required": false,
       "default": "RECOMMENDATION_RULES_PATH",
-      "description": "Configuration parameter: custom_rules_env"
+      "description": "Configuration parameter: custom_rules_env",
+      "name": "custom_rules_env",
+      "required": false,
+      "type": "string"
     }
   ],
+  "layer": 3,
+  "name": "Recommendation Template",
   "outputs": [
     {
+      "description": "Recommendation",
       "name": "recommendation_text",
-      "type": "text",
-      "description": "Recommendation"
+      "type": "text"
     },
     {
+      "description": "Severity",
       "name": "severity",
-      "type": "text",
-      "description": "Severity"
+      "type": "text"
     },
     {
+      "description": "Actions",
       "name": "action_items",
-      "type": "list",
-      "description": "Actions"
+      "type": "list"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/recommendation_template:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "{\"variance_data\": [{\"item\": \"concrete_c30\", \"variance_pct\": 18.5, \"cost_impact_usd\": 42000}]}"
-    },
-    {
-      "name": "max_recommendations",
-      "widget": "number",
-      "label": "Max Recommendations"
-    },
-    {
-      "name": "include_action_items",
-      "widget": "toggle",
-      "label": "Include Action Items"
-    },
-    {
-      "name": "custom_rules_env",
-      "widget": "text",
-      "label": "Custom Rules Env"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "O0Z8AfJDCD+z6ty+uMPW2l2EzzUoJPluVd3vqKLqp8cd5XyeIGECcjI8GDFu+Z2JbToGPPCXtQORpluaLc0fAg==",
   "tags": [
     "domain",
     "construction",
     "recommendations",
     "analytics",
     "reporting"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "{\"variance_data\": [{\"item\": \"concrete_c30\", \"variance_pct\": 18.5, \"cost_impact_usd\": 42000}]}",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Max Recommendations",
+      "name": "max_recommendations",
+      "widget": "number"
+    },
+    {
+      "label": "Include Action Items",
+      "name": "include_action_items",
+      "widget": "toggle"
+    },
+    {
+      "label": "Custom Rules Env",
+      "name": "custom_rules_env",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0"
 }

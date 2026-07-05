@@ -1,137 +1,150 @@
 {
-  "id": "health_check",
-  "name": "Health Check",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "09d4282e5c5a2a24010e802bce6a6d0a76862f007d086ac42f95608a845851e2",
+    "block.py": "37e0ad3d80b559c5931c6fb8b514d7f95d56be41bbfc3789941dedff9be032df"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/health_check:latest",
+    "type": "docker"
+  },
+  "id": "health_check",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected action",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "ping",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "ping",
+        "deep_check",
+        "check_dependency",
+        "register_probe",
+        "unregister_probe",
+        "get_status",
+        "get_history",
+        "simulate_failure"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 30,
+      "description": "Configuration parameter: check_interval",
+      "name": "check_interval",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 300,
+      "description": "Configuration parameter: deep_check_interval",
+      "name": "deep_check_interval",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 5,
+      "description": "Configuration parameter: timeout_per_check",
+      "name": "timeout_per_check",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: alert_on_failure",
+      "name": "alert_on_failure",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": 100,
+      "description": "Configuration parameter: max_probe_history",
+      "name": "max_probe_history",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 1,
+  "name": "Health Check",
+  "outputs": [
+    {
+      "description": "Health status",
+      "name": "status",
+      "type": "text"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "database",
     "memory",
     "config"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "ping",
-      "options": [
-        "ping",
-        "deep_check",
-        "check_dependency",
-        "register_probe",
-        "unregister_probe",
-        "get_status",
-        "get_history",
-        "simulate_failure"
-      ]
-    },
-    {
-      "name": "check_interval",
-      "type": "number",
-      "required": false,
-      "default": 30,
-      "description": "Configuration parameter: check_interval"
-    },
-    {
-      "name": "deep_check_interval",
-      "type": "number",
-      "required": false,
-      "default": 300,
-      "description": "Configuration parameter: deep_check_interval"
-    },
-    {
-      "name": "timeout_per_check",
-      "type": "number",
-      "required": false,
-      "default": 5,
-      "description": "Configuration parameter: timeout_per_check"
-    },
-    {
-      "name": "alert_on_failure",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: alert_on_failure"
-    },
-    {
-      "name": "max_probe_history",
-      "type": "number",
-      "required": false,
-      "default": 100,
-      "description": "Configuration parameter: max_probe_history"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "status",
-      "type": "text",
-      "description": "Health status"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/health_check:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "ping",
-        "deep_check",
-        "check_dependency",
-        "register_probe",
-        "unregister_probe",
-        "get_status",
-        "get_history",
-        "simulate_failure"
-      ]
-    },
-    {
-      "name": "check_interval",
-      "widget": "number",
-      "label": "Check Interval"
-    },
-    {
-      "name": "deep_check_interval",
-      "widget": "number",
-      "label": "Deep Check Interval"
-    },
-    {
-      "name": "timeout_per_check",
-      "widget": "number",
-      "label": "Timeout Per Check"
-    },
-    {
-      "name": "alert_on_failure",
-      "widget": "toggle",
-      "label": "Alert On Failure"
-    },
-    {
-      "name": "max_probe_history",
-      "widget": "number",
-      "label": "Max Probe History"
-    }
-  ],
+  "signature": "HVObT2xTl8TVVpeQ8RHfplEBRbtj53IhD/uv0nUs2oTTfn8atb4g0u9O+hCrSxfAVL4SyQ1VIJn7faBZMq4QDQ==",
   "tags": [
     "observability",
     "infra",
     "reliability",
     "health"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected action",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "ping",
+        "deep_check",
+        "check_dependency",
+        "register_probe",
+        "unregister_probe",
+        "get_status",
+        "get_history",
+        "simulate_failure"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Check Interval",
+      "name": "check_interval",
+      "widget": "number"
+    },
+    {
+      "label": "Deep Check Interval",
+      "name": "deep_check_interval",
+      "widget": "number"
+    },
+    {
+      "label": "Timeout Per Check",
+      "name": "timeout_per_check",
+      "widget": "number"
+    },
+    {
+      "label": "Alert On Failure",
+      "name": "alert_on_failure",
+      "widget": "toggle"
+    },
+    {
+      "label": "Max Probe History",
+      "name": "max_probe_history",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

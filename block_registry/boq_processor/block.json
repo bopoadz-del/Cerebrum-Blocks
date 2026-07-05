@@ -1,81 +1,94 @@
 {
-  "id": "boq_processor",
-  "name": "Boq Processor",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Parse Excel/CSV Bills of Quantities into structured quantities and cost breakdown",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "6ce2bc0a68d2f8a2041519d11f44d8adc15a4de59a7693365a54f72516d3bc3d",
+    "block.py": "9202cfbc6055d81422007bd2a6dd6f8d7c43384d2ce768dafd206f6493769321"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/boq_processor:latest",
+    "type": "docker"
+  },
+  "id": "boq_processor",
   "inputs": [
     {
+      "description": "Upload BOQ spreadsheet (.xlsx or .csv)...",
       "name": "input",
-      "type": "file",
       "required": false,
-      "description": "Upload BOQ spreadsheet (.xlsx or .csv)..."
+      "type": "file"
     },
     {
-      "name": "currency",
-      "type": "string",
-      "required": false,
       "default": "USD",
-      "description": "Configuration parameter: currency"
+      "description": "Configuration parameter: currency",
+      "name": "currency",
+      "required": false,
+      "type": "string"
     },
     {
-      "name": "include_zero_qty",
-      "type": "boolean",
-      "required": false,
       "default": false,
-      "description": "Configuration parameter: include_zero_qty"
+      "description": "Configuration parameter: include_zero_qty",
+      "name": "include_zero_qty",
+      "required": false,
+      "type": "boolean"
     }
   ],
+  "layer": 3,
+  "name": "Boq Processor",
   "outputs": [
     {
+      "description": "Line Items",
       "name": "item_count",
-      "type": "number",
-      "description": "Line Items"
+      "type": "number"
     },
     {
+      "description": "Total Cost",
       "name": "total_cost",
-      "type": "number",
-      "description": "Total Cost"
+      "type": "number"
     },
     {
+      "description": "Line Items",
       "name": "line_items",
-      "type": "list",
-      "description": "Line Items"
+      "type": "list"
     },
     {
+      "description": "Cost Breakdown",
       "name": "cost_breakdown",
-      "type": "json",
-      "description": "Cost Breakdown"
+      "type": "json"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/boq_processor:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "file",
-      "label": "Upload BOQ spreadsheet (.xlsx or .csv)..."
-    },
-    {
-      "name": "currency",
-      "widget": "text",
-      "label": "Currency"
-    },
-    {
-      "name": "include_zero_qty",
-      "widget": "toggle",
-      "label": "Include Zero Qty"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "v1PQB4jmAcuYVuyRfuzP7jytg2+9aOvyJnW2ix8G1eQjN1a4GnIi57Ns2RHW/iVDaapZC6AWoZIMfh0/xoD0AA==",
   "tags": [
     "domain",
     "construction",
     "boq",
     "quantities",
     "excel"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Upload BOQ spreadsheet (.xlsx or .csv)...",
+      "name": "input",
+      "widget": "file"
+    },
+    {
+      "label": "Currency",
+      "name": "currency",
+      "widget": "text"
+    },
+    {
+      "label": "Include Zero Qty",
+      "name": "include_zero_qty",
+      "widget": "toggle"
+    }
+  ],
+  "version": "1.0.0"
 }

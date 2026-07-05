@@ -1,70 +1,83 @@
 {
-  "id": "context_broker",
-  "name": "Context Broker",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Memory coordinator for cross-block session state",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "dc99f30c95c35dc7163cbb05c26b6cc2715f487fc851e4fe57e2863383569d5a",
+    "block.py": "5b7ccca4b3f55b141bbd8e274b8eb6e2bd57d20cce5769813f9bd33c966915c5"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/context_broker:latest",
+    "type": "docker"
+  },
+  "id": "context_broker",
+  "inputs": [
+    {
+      "description": "{\"action\": \"get_context\", \"session_id\": \"user_123\"}",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": 3600,
+      "description": "Configuration parameter: default_ttl",
+      "name": "default_ttl",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 0,
+  "name": "Context Broker",
+  "outputs": [
+    {
+      "description": "Memory",
+      "name": "memory",
+      "type": "json"
+    },
+    {
+      "description": "Drive Files",
+      "name": "drive_files",
+      "type": "json"
+    },
+    {
+      "description": "Chat History",
+      "name": "chat_history",
+      "type": "json"
+    },
+    {
+      "description": "Construction Data",
+      "name": "construction_data",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "memory"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "{\"action\": \"get_context\", \"session_id\": \"user_123\"}"
-    },
-    {
-      "name": "default_ttl",
-      "type": "number",
-      "required": false,
-      "default": 3600,
-      "description": "Configuration parameter: default_ttl"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "memory",
-      "type": "json",
-      "description": "Memory"
-    },
-    {
-      "name": "drive_files",
-      "type": "json",
-      "description": "Drive Files"
-    },
-    {
-      "name": "chat_history",
-      "type": "json",
-      "description": "Chat History"
-    },
-    {
-      "name": "construction_data",
-      "type": "json",
-      "description": "Construction Data"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/context_broker:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "{\"action\": \"get_context\", \"session_id\": \"user_123\"}"
-    },
-    {
-      "name": "default_ttl",
-      "widget": "number",
-      "label": "Default Ttl"
-    }
-  ],
+  "signature": "rcu8MratZ+Hysbed7iJJNI3O1W10YdsEvi/9A4YGNZovret0psEXH6e2ZHTsq4Vb/GkTUpW+mk9cqGd6d2N7CA==",
   "tags": [
     "infrastructure",
     "memory",
     "session",
     "core"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "{\"action\": \"get_context\", \"session_id\": \"user_123\"}",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Default Ttl",
+      "name": "default_ttl",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

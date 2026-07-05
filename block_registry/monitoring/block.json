@@ -1,110 +1,123 @@
 {
-  "id": "monitoring",
-  "name": "Monitoring",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "779110f545dcff52b2e279284f2aef7ce24abd493ec98090d75909cd1854143d",
+    "block.py": "4c83d79b9e384a8e0c274dcaa6e4ed88ca7431b7303b503abbedd48689994293"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/monitoring:latest",
+    "type": "docker"
+  },
+  "id": "monitoring",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected action",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "record_call",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "record_call",
+        "leaderboard",
+        "provider_status",
+        "recommend",
+        "health_report",
+        "predictive_failover"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": [
+        "deepseek",
+        "anthropic"
+      ],
+      "description": "Track Providers",
+      "name": "track_providers",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": 100,
+      "description": "Window Size",
+      "name": "window_size",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 0.3,
+      "description": "Prediction Threshold",
+      "name": "prediction_threshold",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 2,
+  "name": "Monitoring",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "config",
     "memory"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "record_call",
-      "options": [
-        "record_call",
-        "leaderboard",
-        "provider_status",
-        "recommend",
-        "health_report",
-        "predictive_failover"
-      ]
-    },
-    {
-      "name": "track_providers",
-      "type": "json",
-      "required": false,
-      "description": "Track Providers",
-      "default": [
-        "deepseek",
-        "anthropic"
-      ]
-    },
-    {
-      "name": "window_size",
-      "type": "number",
-      "required": false,
-      "description": "Window Size",
-      "default": 100
-    },
-    {
-      "name": "prediction_threshold",
-      "type": "number",
-      "required": false,
-      "description": "Prediction Threshold",
-      "default": 0.3
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/monitoring:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "record_call",
-        "leaderboard",
-        "provider_status",
-        "recommend",
-        "health_report",
-        "predictive_failover"
-      ]
-    },
-    {
-      "name": "track_providers",
-      "widget": "json",
-      "label": "Track Providers"
-    },
-    {
-      "name": "window_size",
-      "widget": "number",
-      "label": "Window Size"
-    },
-    {
-      "name": "prediction_threshold",
-      "widget": "number",
-      "label": "Prediction Threshold"
-    }
-  ],
+  "signature": "iuY6DMo5nnnDd07iKE9Hn5QEQwv+vqVWxhL7CGAzujqGE5rSZnzqzTeHlkHcHnNYwEO2+9/4m00YgZ/8CzDqDQ==",
   "tags": [
     "monitoring",
     "observability",
     "core"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected action",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "record_call",
+        "leaderboard",
+        "provider_status",
+        "recommend",
+        "health_report",
+        "predictive_failover"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Track Providers",
+      "name": "track_providers",
+      "widget": "json"
+    },
+    {
+      "label": "Window Size",
+      "name": "window_size",
+      "widget": "number"
+    },
+    {
+      "label": "Prediction Threshold",
+      "name": "prediction_threshold",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

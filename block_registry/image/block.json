@@ -1,51 +1,64 @@
 {
-  "id": "image",
-  "name": "Image",
-  "version": "3.0",
   "author": "Cerebrum Team",
   "description": "Local image analysis \u2014 metadata + OCR (no cloud vision)",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "1feb70aa1e7f19ed87d6c0b1a5fddb38387719c39a7768d95affb556e1c07092",
+    "block.py": "4c802db285cf40bacb093e9d20a3de79eff719f7b3ff3bfb85daea399710976b"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/image:latest",
+    "type": "docker"
+  },
+  "id": "image",
   "inputs": [
     {
+      "description": "Upload image to analyze...",
       "name": "input",
-      "type": "file",
       "required": false,
-      "description": "Upload image to analyze..."
+      "type": "file"
     }
   ],
+  "layer": 3,
+  "name": "Image",
   "outputs": [
     {
+      "description": "Analysis",
       "name": "description",
-      "type": "markdown",
-      "description": "Analysis"
+      "type": "markdown"
     },
     {
+      "description": "Text",
       "name": "extracted_text",
-      "type": "text",
-      "description": "Text"
+      "type": "text"
     },
     {
+      "description": "Metadata",
       "name": "metadata",
-      "type": "object",
-      "description": "Metadata"
+      "type": "object"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/image:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "file",
-      "label": "Upload image to analyze..."
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "rYrwYVZGtIIECEWvsCVnda0F+8TVbFwnUIuvUtmj94sv+TZtLU4RRip0U5Tc0RoBblFBzNgkRA1i/gRqqGZUDw==",
   "tags": [
     "domain",
     "vision",
     "image",
     "local"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Upload image to analyze...",
+      "name": "input",
+      "widget": "file"
+    }
+  ],
+  "version": "3.0"
 }

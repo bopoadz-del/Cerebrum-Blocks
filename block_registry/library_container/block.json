@@ -1,57 +1,70 @@
 {
-  "id": "library_container",
-  "name": "Library Container",
-  "version": "1.0",
   "author": "Cerebrum Team",
   "description": "Formula backend registry: SymPy, Pint, CoolProp, QuantLib",
-  "layer": 4,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "5b234e72645f04bf5990e7ae00db08db3ef1d6855b2364ba0d993b17fb71e501",
+    "block.py": "1527e447ec099e57c281af656a0586b8cd513b04967faefbb8cafb64f7b9a75f"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/library_container:latest",
+    "type": "docker"
+  },
+  "id": "library_container",
   "inputs": [
     {
+      "description": "{\"action\": \"evaluate\", \"backend\": \"sympy\", \"expression\": \"a + b\", \"variables\": {\"a\": 1, \"b\": 2}}",
       "name": "input",
-      "type": "json",
       "required": false,
-      "description": "{\"action\": \"evaluate\", \"backend\": \"sympy\", \"expression\": \"a + b\", \"variables\": {\"a\": 1, \"b\": 2}}"
+      "type": "json"
     }
   ],
+  "layer": 4,
+  "name": "Library Container",
   "outputs": [
     {
+      "description": "Backend",
       "name": "backend",
-      "type": "string",
-      "description": "Backend"
+      "type": "string"
     },
     {
+      "description": "Available",
       "name": "available",
-      "type": "boolean",
-      "description": "Available"
+      "type": "boolean"
     },
     {
+      "description": "Version",
       "name": "version",
-      "type": "string",
-      "description": "Version"
+      "type": "string"
     },
     {
+      "description": "Result",
       "name": "result",
-      "type": "any",
-      "description": "Result"
+      "type": "any"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/library_container:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "{\"action\": \"evaluate\", \"backend\": \"sympy\", \"expression\": \"a + b\", \"variables\": {\"a\": 1, \"b\": 2}}"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "AcGxQZsD6nxL5D/1DGnd7TnqzHKEdsNDbgZetP5a4q2Gqw9pnlaUvVkMGF8qQepT8PcOYp9MMtFkgwnMpKKyCg==",
   "tags": [
     "library",
     "formula",
     "construction",
     "domain",
     "registry"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "{\"action\": \"evaluate\", \"backend\": \"sympy\", \"expression\": \"a + b\", \"variables\": {\"a\": 1, \"b\": 2}}",
+      "name": "input",
+      "widget": "json"
+    }
+  ],
+  "version": "1.0"
 }

@@ -1,154 +1,167 @@
 {
-  "id": "video_anomaly_trigger",
-  "name": "Video Anomaly Trigger",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Watch video metadata for anomalies and chain to notification or workflow triggers",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "0b758dfcccdcfa348691be0ea7f79b4d633581a645cb98952bd0608dc2c9aed3",
+    "block.py": "b36b87be6259ec7f271be7e7a1ef0fe091eaa2bd2f8faba4c83e09b6f0804fc4"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/video_anomaly_trigger:latest",
+    "type": "docker"
+  },
+  "id": "video_anomaly_trigger",
+  "inputs": [
+    {
+      "description": "{\"metadata\": {...}} or {\"event_id\": \"...\"}",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "evaluate",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "evaluate",
+        "scan_store",
+        "health"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "webhook",
+      "description": "Notify Channel",
+      "name": "channel",
+      "options": [
+        "webhook",
+        "email",
+        "slack"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "true",
+      "description": "Send Notification",
+      "name": "send_notification",
+      "options": [
+        "true",
+        "false"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "webhook",
+      "description": "Configuration parameter: default_channel",
+      "name": "default_channel",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "medium",
+      "description": "Configuration parameter: min_severity",
+      "name": "min_severity",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": [],
+      "description": "Configuration parameter: notify_on_types",
+      "name": "notify_on_types",
+      "required": false,
+      "type": "array"
+    }
+  ],
   "layer": 2,
+  "name": "Video Anomaly Trigger",
+  "outputs": [
+    {
+      "description": "Triggered",
+      "name": "triggered",
+      "type": "boolean"
+    },
+    {
+      "description": "Anomalies",
+      "name": "anomalies",
+      "type": "json"
+    },
+    {
+      "description": "Notification Result",
+      "name": "notification",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "notification"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "{\"metadata\": {...}} or {\"event_id\": \"...\"}"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "evaluate",
-      "options": [
-        "evaluate",
-        "scan_store",
-        "health"
-      ]
-    },
-    {
-      "name": "channel",
-      "type": "string",
-      "required": false,
-      "description": "Notify Channel",
-      "default": "webhook",
-      "options": [
-        "webhook",
-        "email",
-        "slack"
-      ]
-    },
-    {
-      "name": "send_notification",
-      "type": "string",
-      "required": false,
-      "description": "Send Notification",
-      "default": "true",
-      "options": [
-        "true",
-        "false"
-      ]
-    },
-    {
-      "name": "default_channel",
-      "type": "string",
-      "required": false,
-      "default": "webhook",
-      "description": "Configuration parameter: default_channel"
-    },
-    {
-      "name": "min_severity",
-      "type": "string",
-      "required": false,
-      "default": "medium",
-      "description": "Configuration parameter: min_severity"
-    },
-    {
-      "name": "notify_on_types",
-      "type": "array",
-      "required": false,
-      "default": [],
-      "description": "Configuration parameter: notify_on_types"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "triggered",
-      "type": "boolean",
-      "description": "Triggered"
-    },
-    {
-      "name": "anomalies",
-      "type": "json",
-      "description": "Anomalies"
-    },
-    {
-      "name": "notification",
-      "type": "json",
-      "description": "Notification Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/video_anomaly_trigger:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "{\"metadata\": {...}} or {\"event_id\": \"...\"}"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "evaluate",
-        "scan_store",
-        "health"
-      ]
-    },
-    {
-      "name": "channel",
-      "widget": "select",
-      "label": "Notify Channel",
-      "options": [
-        "webhook",
-        "email",
-        "slack"
-      ]
-    },
-    {
-      "name": "send_notification",
-      "widget": "select",
-      "label": "Send Notification",
-      "options": [
-        "true",
-        "false"
-      ]
-    },
-    {
-      "name": "default_channel",
-      "widget": "text",
-      "label": "Default Channel"
-    },
-    {
-      "name": "min_severity",
-      "widget": "text",
-      "label": "Min Severity"
-    },
-    {
-      "name": "notify_on_types",
-      "widget": "json",
-      "label": "Notify On Types"
-    }
-  ],
+  "signature": "FyFUUunMGpTXvZ4jVCBWsiJbX1vrimNMzluS/skJ11sYpy+ouj8GGtzyf6FX/Y+LoxlGBd41TefIF2QjhqZMCw==",
   "tags": [
     "connector",
     "video",
     "trigger",
     "anomaly",
     "reactive"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "{\"metadata\": {...}} or {\"event_id\": \"...\"}",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "evaluate",
+        "scan_store",
+        "health"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Notify Channel",
+      "name": "channel",
+      "options": [
+        "webhook",
+        "email",
+        "slack"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Send Notification",
+      "name": "send_notification",
+      "options": [
+        "true",
+        "false"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Default Channel",
+      "name": "default_channel",
+      "widget": "text"
+    },
+    {
+      "label": "Min Severity",
+      "name": "min_severity",
+      "widget": "text"
+    },
+    {
+      "label": "Notify On Types",
+      "name": "notify_on_types",
+      "widget": "json"
+    }
+  ],
+  "version": "1.0.0"
 }

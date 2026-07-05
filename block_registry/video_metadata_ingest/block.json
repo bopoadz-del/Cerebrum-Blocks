@@ -1,73 +1,86 @@
 {
-  "id": "video_metadata_ingest",
-  "name": "Video Metadata Ingest",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Validate video analytics metadata and persist to the video store",
-  "layer": 2,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "9a7823a34ab68a5ae0c0a08445c25d2a795fafc03ffce1485c3b42019ee47e60",
+    "block.py": "2dbff34b81dcb09bdb1e0448a960d05325302011b3e4f046192a583e2b1ebcf3"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/video_metadata_ingest:latest",
+    "type": "docker"
+  },
+  "id": "video_metadata_ingest",
   "inputs": [
     {
+      "description": "{\"camera_id\": \"lobby-1\", \"zones\": [], \"anomalies\": []}",
       "name": "input",
-      "type": "json",
       "required": false,
-      "description": "{\"camera_id\": \"lobby-1\", \"zones\": [], \"anomalies\": []}"
+      "type": "json"
     },
     {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
       "default": "ingest",
+      "description": "Action",
+      "name": "action",
       "options": [
         "ingest",
         "list",
         "health"
-      ]
+      ],
+      "required": false,
+      "type": "string"
     }
   ],
+  "layer": 2,
+  "name": "Video Metadata Ingest",
   "outputs": [
     {
+      "description": "Event ID",
       "name": "event_id",
-      "type": "text",
-      "description": "Event ID"
+      "type": "text"
     },
     {
+      "description": "Stored",
       "name": "stored",
-      "type": "boolean",
-      "description": "Stored"
+      "type": "boolean"
     },
     {
+      "description": "Anomalies",
       "name": "anomaly_count",
-      "type": "number",
-      "description": "Anomalies"
+      "type": "number"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/video_metadata_ingest:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "{\"camera_id\": \"lobby-1\", \"zones\": [], \"anomalies\": []}"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "ingest",
-        "list",
-        "health"
-      ]
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "u0TxvPLyOLrizayQVecIc1djN60GJJBnyoT2PPy3I205fijOQD2PurT82izpcDDT+LoqLmRSF49RVllxuh2WBw==",
   "tags": [
     "connector",
     "video",
     "ingest",
     "analytics"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "{\"camera_id\": \"lobby-1\", \"zones\": [], \"anomalies\": []}",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "ingest",
+        "list",
+        "health"
+      ],
+      "widget": "select"
+    }
+  ],
+  "version": "1.0.0"
 }

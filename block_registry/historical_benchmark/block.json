@@ -1,136 +1,149 @@
 {
-  "id": "historical_benchmark",
-  "name": "Historical Benchmark",
-  "version": "1.1",
   "author": "Cerebrum Team",
   "description": "RS Means-style benchmark unit costs, cost ranges, and market data for construction items",
-  "layer": 2,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "4b10c965e0cbf672e67c74d37f0be646aef39923fcf86d2022fad8f1672c3f68",
+    "block.py": "3be52a3ce89a5624a8a5476148da50ba01a91171ad6e0cb858bb8af9e9e8557c"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/historical_benchmark:latest",
+    "type": "docker"
+  },
+  "id": "historical_benchmark",
   "inputs": [
     {
+      "description": "Item description, unit, location, project type",
       "name": "input",
-      "type": "json",
       "required": false,
-      "description": "Item description, unit, location, project type"
+      "type": "json"
     },
     {
-      "name": "item",
-      "type": "string",
-      "required": false,
+      "default": "",
       "description": "Item description",
-      "default": ""
+      "name": "item",
+      "required": false,
+      "type": "string"
     },
     {
-      "name": "unit",
-      "type": "string",
-      "required": false,
+      "default": "",
       "description": "Unit (m2, m3, kg, ea\u2026)",
-      "default": ""
+      "name": "unit",
+      "required": false,
+      "type": "string"
     },
     {
-      "name": "location",
-      "type": "string",
-      "required": false,
+      "default": "",
       "description": "Location / city",
-      "default": ""
+      "name": "location",
+      "required": false,
+      "type": "string"
     },
     {
-      "name": "project_type",
-      "type": "string",
-      "required": false,
+      "default": "",
       "description": "Project type",
-      "default": ""
+      "name": "project_type",
+      "required": false,
+      "type": "string"
     },
     {
-      "name": "rates_env",
-      "type": "string",
-      "required": false,
       "default": "BENCHMARK_RATES_PATH",
-      "description": "Configuration parameter: rates_env"
+      "description": "Configuration parameter: rates_env",
+      "name": "rates_env",
+      "required": false,
+      "type": "string"
     },
     {
-      "name": "factors_env",
-      "type": "string",
-      "required": false,
       "default": "BENCHMARK_FACTORS_PATH",
-      "description": "Configuration parameter: factors_env"
+      "description": "Configuration parameter: factors_env",
+      "name": "factors_env",
+      "required": false,
+      "type": "string"
     },
     {
-      "name": "database_url_env",
-      "type": "string",
-      "required": false,
       "default": "DATABASE_URL",
-      "description": "Configuration parameter: database_url_env"
+      "description": "Configuration parameter: database_url_env",
+      "name": "database_url_env",
+      "required": false,
+      "type": "string"
     }
   ],
+  "layer": 2,
+  "name": "Historical Benchmark",
   "outputs": [
     {
+      "description": "Unit cost",
       "name": "unit_cost",
-      "type": "number",
-      "description": "Unit cost"
+      "type": "number"
     },
     {
+      "description": "Cost range",
       "name": "range",
-      "type": "json",
-      "description": "Cost range"
+      "type": "json"
     },
     {
+      "description": "Location factor",
       "name": "location_factor",
-      "type": "number",
-      "description": "Location factor"
+      "type": "number"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/historical_benchmark:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "Item description, unit, location, project type"
-    },
-    {
-      "name": "item",
-      "widget": "text",
-      "label": "Item description"
-    },
-    {
-      "name": "unit",
-      "widget": "text",
-      "label": "Unit (m2, m3, kg, ea\u2026)"
-    },
-    {
-      "name": "location",
-      "widget": "text",
-      "label": "Location / city"
-    },
-    {
-      "name": "project_type",
-      "widget": "text",
-      "label": "Project type"
-    },
-    {
-      "name": "rates_env",
-      "widget": "text",
-      "label": "Rates Env"
-    },
-    {
-      "name": "factors_env",
-      "widget": "text",
-      "label": "Factors Env"
-    },
-    {
-      "name": "database_url_env",
-      "widget": "text",
-      "label": "Database Url Env"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "/I+DM156g9Pov4mE43rZeon2FWBG5fsuFl7ZuabRbwc2kK3vL+ETDntoc1qABUxeyZ75iYc2pcsCpKNoHK2jAw==",
   "tags": [
     "construction",
     "cost",
     "benchmark",
     "rsmeans",
     "aec"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Item description, unit, location, project type",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Item description",
+      "name": "item",
+      "widget": "text"
+    },
+    {
+      "label": "Unit (m2, m3, kg, ea\u2026)",
+      "name": "unit",
+      "widget": "text"
+    },
+    {
+      "label": "Location / city",
+      "name": "location",
+      "widget": "text"
+    },
+    {
+      "label": "Project type",
+      "name": "project_type",
+      "widget": "text"
+    },
+    {
+      "label": "Rates Env",
+      "name": "rates_env",
+      "widget": "text"
+    },
+    {
+      "label": "Factors Env",
+      "name": "factors_env",
+      "widget": "text"
+    },
+    {
+      "label": "Database Url Env",
+      "name": "database_url_env",
+      "widget": "text"
+    }
+  ],
+  "version": "1.1"
 }
