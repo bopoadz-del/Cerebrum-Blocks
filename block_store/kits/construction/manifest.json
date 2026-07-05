@@ -185,8 +185,48 @@
     {
       "src": "app/knowledge/construction_kb.json",
       "dest": "app/knowledge/construction_kb.json"
+    },
+    {
+      "src": "cli/config.toml.example",
+      "dest": "cli/config.toml.example"
+    },
+    {
+      "src": "cli/pyproject.toml",
+      "dest": "cli/pyproject.toml"
+    },
+    {
+      "src": "cli/README.md",
+      "dest": "cli/README.md"
+    },
+    {
+      "src": "cli/cerebrum_cli/__init__.py",
+      "dest": "cli/cerebrum_cli/__init__.py"
+    },
+    {
+      "src": "cli/cerebrum_cli/__main__.py",
+      "dest": "cli/cerebrum_cli/__main__.py"
+    },
+    {
+      "src": "cli/cerebrum_cli/auth.py",
+      "dest": "cli/cerebrum_cli/auth.py"
+    },
+    {
+      "src": "cli/cerebrum_cli/config.py",
+      "dest": "cli/cerebrum_cli/config.py"
+    },
+    {
+      "src": "cli/cerebrum_cli/main.py",
+      "dest": "cli/cerebrum_cli/main.py"
+    },
+    {
+      "src": "cli/cerebrum_cli/sse.py",
+      "dest": "cli/cerebrum_cli/sse.py"
     }
   ],
+  "cli": {
+    "command": "cerebrum",
+    "config_template": "cli/config.toml.example"
+  },
   "price_cents": 0,
   "install_requires": {
     "min_platform_version": "2.0.0",

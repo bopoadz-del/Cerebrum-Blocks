@@ -26,12 +26,25 @@
     "types.py"
   ],
   "artifacts": [],
+  "cli": {
+    "command": "cerebrum",
+    "config_template": "cli/config.toml.example"
+  },
   "skeleton_artifacts": [
     {"src": "container.py", "dest": "app/containers/{{domain}}.py"},
     {"src": "knowledge.py", "dest": "app/core/{{domain}}_knowledge.py"},
     {"src": "types.py", "dest": "app/core/{{domain}}_types.py"},
     {"src": "prompts/{{domain}}_expert.txt", "dest": "app/prompts/{{domain}}_expert.txt"},
-    {"src": "prompts/{{domain}}_workflow.md", "dest": "app/prompts/{{domain}}_workflow.md"}
+    {"src": "prompts/{{domain}}_workflow.md", "dest": "app/prompts/{{domain}}_workflow.md"},
+    {"src": "cli/config.toml.example", "dest": "cli/config.toml.example"},
+    {"src": "cli/pyproject.toml", "dest": "cli/pyproject.toml"},
+    {"src": "cli/README.md", "dest": "cli/README.md"},
+    {"src": "cli/cerebrum_cli/__init__.py", "dest": "cli/cerebrum_cli/__init__.py"},
+    {"src": "cli/cerebrum_cli/__main__.py", "dest": "cli/cerebrum_cli/__main__.py"},
+    {"src": "cli/cerebrum_cli/auth.py", "dest": "cli/cerebrum_cli/auth.py"},
+    {"src": "cli/cerebrum_cli/config.py", "dest": "cli/cerebrum_cli/config.py"},
+    {"src": "cli/cerebrum_cli/main.py", "dest": "cli/cerebrum_cli/main.py"},
+    {"src": "cli/cerebrum_cli/sse.py", "dest": "cli/cerebrum_cli/sse.py"}
   ],
   "price_cents": 0,
   "install_requires": {

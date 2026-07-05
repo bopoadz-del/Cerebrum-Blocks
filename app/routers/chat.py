@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Optional
+from typing import Any, AsyncIterator, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -17,6 +17,101 @@ class ChatRequest(BaseModel):
     message: str
     model: str = "deepseek-chat"
     stream: bool = False
+
+
+SSE_MEDIA_TYPE = "text/event-stream"
+SSE_HEADERS = {
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "X-Accel-Buffering": "no",
+}
+
+VALID_ENVELOPE_TYPES = {
+    "route", "start", "token", "tool_call", "tool_result",
+    "sources", "heartbeat", "end", "error",
+}
+
+
+def _sse_event(payload: dict[str, Any]) -> str:
+    """Serialize a canonical envelope event to an SSE data line."""
+    return f"data: {json.dumps(payload)}\n\n"
+
+
+async def _canonical_stream(
+    stream_gen: AsyncIterator[Any],
+    *,
+    session_id: Optional[str] = None,
+    heartbeat_interval: float = 5.0,
+) -> AsyncIterator[str]:
+    """Convert a block's stream into the canonical SSE envelope.
+
+    Emits:
+      - start (first)
+      - token / tool_call / tool_result / sources / heartbeat (zero or more)
+      - exactly one end or error (last)
+
+    The block may yield either raw content strings or dicts with a ``type``
+    field. Raw strings become ``token`` events. Dicts with a recognized type
+    pass through; unrecognized dicts are serialized as-is. Heartbeats are
+    emitted when no event arrives for ``heartbeat_interval`` seconds during
+    long tool waits.
+    """
+    yield _sse_event({"type": "start", "session_id": session_id})
+
+    last_activity = asyncio.get_event_loop().time()
+    ended = False
+
+    try:
+        while True:
+            timeout = heartbeat_interval - (asyncio.get_event_loop().time() - last_activity)
+            try:
+                item = await asyncio.wait_for(stream_gen.__anext__(), timeout=max(timeout, 0.01))
+            except asyncio.TimeoutError:
+                now = asyncio.get_event_loop().time()
+                if now - last_activity >= heartbeat_interval:
+                    yield _sse_event({"type": "heartbeat"})
+                    last_activity = now
+                continue
+
+            last_activity = asyncio.get_event_loop().time()
+
+            if isinstance(item, dict):
+                etype = item.get("type")
+                if etype in VALID_ENVELOPE_TYPES:
+                    if etype in ("end", "error"):
+                        ended = True
+                    yield _sse_event(item)
+                    if ended:
+                        return
+                else:
+                    # Pass through unknown dicts defensively.
+                    yield _sse_event(item)
+            elif isinstance(item, str):
+                # Support legacy JSON-encoded error strings emitted by ChatBlock.
+                if item.startswith('{"type":'):
+                    try:
+                        payload = json.loads(item)
+                        if payload.get("type") in VALID_ENVELOPE_TYPES:
+                            if payload["type"] in ("end", "error"):
+                                ended = True
+                            yield _sse_event(payload)
+                            if ended:
+                                return
+                            continue
+                    except json.JSONDecodeError:
+                        pass
+                yield _sse_event({"type": "token", "content": item})
+            else:
+                yield _sse_event({"type": "token", "content": str(item)})
+
+    except StopAsyncIteration:
+        pass
+    except Exception as e:
+        yield _sse_event({"type": "error", "message": str(e)})
+        return
+
+    if not ended:
+        yield _sse_event({"type": "end", "complete": True})
 
 
 @router.post("/chat")
@@ -60,51 +155,40 @@ async def chat(request: ChatRequest, auth: dict = Depends(require_api_key)):
 
 @router.post("/chat/stream")
 async def chat_stream(request: ChatRequest, auth: dict = Depends(require_api_key)):
-    """Streaming chat endpoint."""
+    """Streaming chat endpoint using the canonical SSE envelope."""
     if "chat" not in BLOCK_REGISTRY:
         raise HTTPException(500, "Chat block not available")
 
     async def event_stream():
-        try:
-            if "chat" not in block_instances:
-                block_instances["chat"] = BLOCK_REGISTRY["chat"]()
+        if "chat" not in block_instances:
+            block_instances["chat"] = BLOCK_REGISTRY["chat"]()
 
-            block = block_instances["chat"]
-            result = await block.execute(request.message, {
-                "model": request.model,
-                "stream": True,
-            })
+        block = block_instances["chat"]
+        result = await block.execute(request.message, {
+            "model": request.model,
+            "stream": True,
+        })
 
-            # Get stream generator
-            stream_gen = result.get("result", {}).get("stream")
-            if stream_gen:
-                async for token in stream_gen:
-                    # Support both raw strings and JSON-encoded error objects
-                    if isinstance(token, str) and token.startswith('{"type": "error"'):
-                        yield f"data: {token}\n\n"
-                        return
-                    yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
-            else:
-                # Fallback: simulate streaming
-                text = result.get("result", {}).get("text", "")
-                words = text.split()
+        stream_gen = result.get("result", {}).get("stream")
+        if stream_gen is None:
+            # Fallback: simulate streaming from complete text.
+            text = result.get("result", {}).get("text", "")
+            words = text.split()
+
+            async def _fallback_gen():
                 for word in words:
-                    yield f"data: {json.dumps({'type': 'token', 'content': word + ' '})}\n\n"
+                    yield word + " "
                     await asyncio.sleep(0.05)
 
-            yield f"data: {json.dumps({'type': 'end', 'complete': True})}\n\n"
+            stream_gen = _fallback_gen()
 
-        except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        async for event in _canonical_stream(stream_gen):
+            yield event
 
     return StreamingResponse(
         event_stream(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        }
+        media_type=SSE_MEDIA_TYPE,
+        headers=SSE_HEADERS,
     )
 
 
@@ -131,45 +215,31 @@ async def chat_stream_v1(request: Request, auth: dict = Depends(require_api_key)
     history = body.get("history", [])
 
     async def event_stream():
-        yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
+        if "chat" not in block_instances:
+            block_instances["chat"] = BLOCK_REGISTRY["chat"]()
 
-        try:
-            if "chat" not in block_instances:
-                block_instances["chat"] = BLOCK_REGISTRY["chat"]()
+        block = block_instances["chat"]
+        result = await block.execute(
+            {"text": prompt, "history": history} if history else prompt,
+            {"model": model, "stream": True}
+        )
 
-            block = block_instances["chat"]
-            # Pass history if the block supports it in future; for now just use prompt
-            result = await block.execute(
-                {"text": prompt, "history": history} if history else prompt,
-                {"model": model, "stream": True}
-            )
+        stream_gen = result.get("result", {}).get("stream")
+        if stream_gen is None:
+            text = result.get("result", {}).get("text", "")
 
-            stream_gen = result.get("result", {}).get("stream")
-            if stream_gen:
-                async for token in stream_gen:
-                    if isinstance(token, str) and token.startswith('{"type": "error"'):
-                        yield f"data: {token}\n\n"
-                        return
-                    yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
-                    await asyncio.sleep(0.01)
-            else:
-                text = result.get("result", {}).get("text", "")
-                words = text.split()
-                for word in words:
-                    yield f"data: {json.dumps({'type': 'token', 'content': word + ' '})}\n\n"
+            async def _fallback_gen():
+                for word in text.split():
+                    yield word + " "
                     await asyncio.sleep(0.05)
 
-            yield f"data: {json.dumps({'type': 'end', 'complete': True})}\n\n"
+            stream_gen = _fallback_gen()
 
-        except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        async for event in _canonical_stream(stream_gen, session_id=session_id):
+            yield event
 
     return StreamingResponse(
         event_stream(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        }
+        media_type=SSE_MEDIA_TYPE,
+        headers=SSE_HEADERS,
     )
