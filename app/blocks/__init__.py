@@ -266,20 +266,26 @@ def _resolve_publisher_tier(name: str, validator: Any) -> Optional[str]:
     return "community"
 
 
-def _build_block_caps(defs: Dict[str, Tuple[str, str]]) -> Dict[str, BlockCapabilities]:
+def _build_block_caps(
+    defs: Dict[str, Tuple[str, str]],
+    validator: Any = None,
+) -> Dict[str, BlockCapabilities]:
     """Build a capability map for all registered blocks.
 
     Core blocks are trusted and default to safe (no network/fs/cross-block).
     Non-core blocks with a registry folder parse their manifest and resolve
     the publisher tier from the certification store or publisher registry.
-    """
-    from app.core.block_validation import BlockValidator
 
-    validator: Any = None
-    try:
-        validator = BlockValidator()
-    except Exception as exc:
-        logger.warning("validation gate unavailable for tier resolution: %s", exc)
+    An optional ``validator`` may be supplied for testing; when omitted a
+    default ``BlockValidator`` is constructed.
+    """
+    if validator is None:
+        from app.core.block_validation import BlockValidator
+
+        try:
+            validator = BlockValidator()
+        except Exception as exc:
+            logger.warning("validation gate unavailable for tier resolution: %s", exc)
 
     caps: Dict[str, BlockCapabilities] = {}
     for name in defs:
