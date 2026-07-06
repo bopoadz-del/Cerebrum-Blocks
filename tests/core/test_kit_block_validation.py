@@ -76,3 +76,16 @@ def test_construction_kit_blocks_have_declarations(block_name: str):
     assert manifest_path.exists(), f"missing declaration for {block_name}"
     ok, reason = _validate_block_capabilities(block_name)
     assert ok is True, reason
+
+
+def test_legacy_extended_block_without_declaration_is_admitted():
+    """Legacy extended blocks (e.g. drive adapters) load without a declaration.
+
+    The fail-closed capability gate targets kit-loaded blocks only. Legacy
+    _EXTENDED_BLOCK_DEFS blocks retain their pre-gate behavior so existing
+    integrations keep working while the kit path is hardened.
+    """
+    from app.blocks import _BLOCK_DEFS
+
+    for name in ("local_drive", "google_drive", "onedrive", "android_drive"):
+        assert name in _BLOCK_DEFS, f"legacy block '{name}' was excluded"

@@ -143,15 +143,17 @@ def _validate_block_capabilities(name: str) -> Tuple[bool, str]:
     return True, ""
 
 
-def _validate_registry_block(name: str, validator: Any) -> bool:
+def _validate_registry_block(name: str, validator: Any, *, require_capabilities: bool) -> bool:
     """Validate a non-core block before it is admitted to ``_BLOCK_DEFS``.
 
     - Core blocks are trusted and admitted without validation.
     - Blocks with a registry folder go through the full ``BlockValidator`` gate
       (manifest, signature/digest, AST scan) plus capability parsing.
-    - Kit / Python-only blocks must still provide a parseable capability
-      declaration in ``block_registry/<name>/block.json``. A missing or invalid
-      declaration causes the block to be excluded with a clear log line.
+    - Kit / store-install / Python-only blocks must provide a parseable
+      capability declaration in ``block_registry/<name>/block.json``. A missing
+      or invalid declaration causes the block to be excluded with a clear log
+      line. Legacy extended blocks are admitted without a registry folder, as
+      before this gate existed.
     """
     if _is_core_block(name):
         return True
@@ -175,10 +177,11 @@ def _validate_registry_block(name: str, validator: Any) -> bool:
         return True
 
     # Kit / store-install / Python-only block: require a capability declaration.
-    ok, reason = _validate_block_capabilities(name)
-    if not ok:
-        logger.warning("validation failed for '%s': %s; excluding block", name, reason)
-        return False
+    if require_capabilities:
+        ok, reason = _validate_block_capabilities(name)
+        if not ok:
+            logger.warning("validation failed for '%s': %s; excluding block", name, reason)
+            return False
     return True
 
 
@@ -189,10 +192,12 @@ def _build_block_defs() -> Dict[str, Tuple[str, str]]:
     defs: Dict[str, Tuple[str, str]] = dict(_GENERIC_BLOCK_DEFS)
 
     candidate_blocks: Dict[str, Tuple[str, str]] = {}
+    kit_block_names: set[str] = set()
     if _legacy_boot():
         candidate_blocks.update(_EXTENDED_BLOCK_DEFS)
     for name, module, class_name in kit_block_specs():
         candidate_blocks[name] = (module, class_name)
+        kit_block_names.add(name)
 
     validator: Any = None
     if candidate_blocks:
@@ -208,7 +213,9 @@ def _build_block_defs() -> Dict[str, Tuple[str, str]]:
             )
 
     for name, spec in candidate_blocks.items():
-        if validator is not None and not _validate_registry_block(name, validator):
+        if validator is not None and not _validate_registry_block(
+            name, validator, require_capabilities=name in kit_block_names
+        ):
             continue
         defs[name] = spec
 
