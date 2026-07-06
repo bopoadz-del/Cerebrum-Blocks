@@ -127,6 +127,41 @@ def test_passing_validation_for_signed_block(
     assert validator.is_certified("test_block") is True
 
 
+def test_signed_block_verifies_across_line_endings(
+    test_publisher: PublisherRegistry,
+    temp_block: Path,
+    private_key: Ed25519PrivateKey,
+):
+    """Signatures produced on a CRLF checkout must verify on an LF checkout."""
+    # Sign with CRLF line endings (typical of a Windows working tree).
+    (temp_block / "block.py").write_bytes(
+        b"def run(inputs):\r\n    return {'result': 'ok'}\r\n"
+    )
+    BlockSigner.sign_block(
+        block_path=temp_block,
+        publisher_id="test_corp",
+        private_key=private_key,
+    )
+
+    # Simulate a Linux CI checkout: convert the source files to LF.
+    (temp_block / "block.py").write_bytes(
+        b"def run(inputs):\n    return {'result': 'ok'}\n"
+    )
+    if (temp_block / "Dockerfile").exists():
+        (temp_block / "Dockerfile").write_bytes(
+            b"FROM python:3.11\n"
+        )
+
+    validator = BlockValidator(
+        publisher_registry=test_publisher,
+        certification_store_path=temp_block.parent / "certifications.json",
+    )
+    result = validator.validate_block(temp_block)
+
+    assert result.status == "passed"
+    assert result.reasons == []
+
+
 def test_validation_records_publisher_tier(
     test_publisher: PublisherRegistry,
     temp_block: Path,
