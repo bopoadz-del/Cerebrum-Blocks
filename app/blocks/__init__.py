@@ -6,10 +6,11 @@ full-platform boot.
 """
 
 import importlib
+import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Iterator, Tuple
+from typing import Any, Dict, Iterator, Optional, Tuple
 
 from app.core.block_capabilities import BlockCapabilities
 from app.core.universal_base import UniversalBlock, UniversalContainer
@@ -109,39 +110,85 @@ def _legacy_boot() -> bool:
     return os.getenv("CEREBRUM_VIRGIN", "true").strip().lower() in ("0", "false", "no")
 
 
-def _validate_registry_block(name: str, validator: Any) -> bool:
-    """Validate a non-core block that has a directory in ``block_registry/``.
+def _load_manifest(name: str) -> Optional[Dict[str, Any]]:
+    """Load ``block_registry/<name>/block.json`` if it exists and is valid."""
+    manifest_path = _REGISTRY_ROOT / name / "block.json"
+    if not manifest_path.exists():
+        return None
+    try:
+        return json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("invalid manifest for '%s': %s", name, exc)
+        return None
 
-    Returns ``True`` if the block passes the validation gate or has no on-disk
-    registry folder (Python-only blocks are allowed for backward compatibility
-    but logged). Returns ``False`` when validation fails and the block must be
-    excluded from ``_BLOCK_DEFS``.
+
+def _validate_block_capabilities(name: str) -> Tuple[bool, str]:
+    """Parse the block's declared capabilities.
+
+    Returns ``(True, "")`` when a ``permissions`` declaration exists and is
+    parseable. Returns ``(False, reason)`` when the declaration is missing or
+    malformed. This is the fail-closed gate used for every non-core block,
+    whether it comes from the registry, a kit bundle, or a store install.
+    """
+    manifest = _load_manifest(name)
+    if manifest is None:
+        return False, f"no block.json declaration found for '{name}'"
+    permissions = manifest.get("permissions")
+    if not isinstance(permissions, dict):
+        return False, f"permissions declaration missing or invalid in block.json for '{name}'"
+    try:
+        BlockCapabilities.from_manifest(manifest)
+    except Exception as exc:
+        return False, f"failed to parse capabilities for '{name}': {exc}"
+    return True, ""
+
+
+def _validate_registry_block(name: str, validator: Any, *, require_capabilities: bool) -> bool:
+    """Validate a non-core block before it is admitted to ``_BLOCK_DEFS``.
+
+    - Core blocks are trusted and admitted without validation.
+    - Legacy extended blocks and store-install blocks without a registry folder
+      retain their pre-gate behavior.
+    - Kit-loaded blocks must provide a parseable ``permissions`` declaration in
+      ``block_registry/<name>/block.json``. A missing or invalid declaration
+      causes the block to be excluded with a clear log line.
+    - Blocks with a registry folder that are NOT kit-loaded (i.e. genuine
+      registry blocks) still go through the full ``BlockValidator`` gate
+      (manifest, signature/digest, AST scan).
     """
     if _is_core_block(name):
         return True
 
     block_path = _REGISTRY_ROOT / name
-    if not block_path.is_dir():
-        logger.debug(
-            "third-party block '%s' has no registry folder; loading unvalidated",
-            name,
-        )
+    is_kit_block = require_capabilities
+
+    # Kit-loaded block: enforce capability declaration only. Do not subject
+    # kit bundles to the full registry validation gate; their security
+    # contract is the capability declaration, not publisher signatures.
+    if is_kit_block:
+        ok, reason = _validate_block_capabilities(name)
+        if not ok:
+            logger.warning("validation failed for '%s': %s; excluding block", name, reason)
+            return False
         return True
 
-    try:
-        result = validator.validate_block(block_path)
-    except Exception as exc:
-        logger.warning("validation gate crashed for '%s': %s; excluding block", name, exc)
-        return False
+    # Non-kit block with a registry folder: run the full validator gate.
+    if block_path.is_dir():
+        try:
+            result = validator.validate_block(block_path)
+        except Exception as exc:
+            logger.warning("validation gate crashed for '%s': %s; excluding block", name, exc)
+            return False
 
-    if result.status != "passed":
-        logger.warning(
-            "validation failed for '%s' (%s): %s; excluding block",
-            name,
-            result.status,
-            result.reasons,
-        )
-        return False
+        if result.status != "passed":
+            logger.warning(
+                "validation failed for '%s' (%s): %s; excluding block",
+                name,
+                result.status,
+                result.reasons,
+            )
+            return False
+        return True
 
     return True
 
@@ -153,10 +200,12 @@ def _build_block_defs() -> Dict[str, Tuple[str, str]]:
     defs: Dict[str, Tuple[str, str]] = dict(_GENERIC_BLOCK_DEFS)
 
     candidate_blocks: Dict[str, Tuple[str, str]] = {}
+    kit_block_names: set[str] = set()
     if _legacy_boot():
         candidate_blocks.update(_EXTENDED_BLOCK_DEFS)
     for name, module, class_name in kit_block_specs():
         candidate_blocks[name] = (module, class_name)
+        kit_block_names.add(name)
 
     validator: Any = None
     if candidate_blocks:
@@ -172,7 +221,9 @@ def _build_block_defs() -> Dict[str, Tuple[str, str]]:
             )
 
     for name, spec in candidate_blocks.items():
-        if validator is not None and not _validate_registry_block(name, validator):
+        if validator is not None and not _validate_registry_block(
+            name, validator, require_capabilities=name in kit_block_names
+        ):
             continue
         defs[name] = spec
 
