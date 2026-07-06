@@ -147,18 +147,32 @@ def _validate_registry_block(name: str, validator: Any, *, require_capabilities:
     """Validate a non-core block before it is admitted to ``_BLOCK_DEFS``.
 
     - Core blocks are trusted and admitted without validation.
-    - Blocks with a registry folder go through the full ``BlockValidator`` gate
-      (manifest, signature/digest, AST scan) plus capability parsing.
-    - Kit / store-install / Python-only blocks must provide a parseable
-      capability declaration in ``block_registry/<name>/block.json``. A missing
-      or invalid declaration causes the block to be excluded with a clear log
-      line. Legacy extended blocks are admitted without a registry folder, as
-      before this gate existed.
+    - Legacy extended blocks and store-install blocks without a registry folder
+      retain their pre-gate behavior.
+    - Kit-loaded blocks must provide a parseable ``permissions`` declaration in
+      ``block_registry/<name>/block.json``. A missing or invalid declaration
+      causes the block to be excluded with a clear log line.
+    - Blocks with a registry folder that are NOT kit-loaded (i.e. genuine
+      registry blocks) still go through the full ``BlockValidator`` gate
+      (manifest, signature/digest, AST scan).
     """
     if _is_core_block(name):
         return True
 
     block_path = _REGISTRY_ROOT / name
+    is_kit_block = require_capabilities
+
+    # Kit-loaded block: enforce capability declaration only. Do not subject
+    # kit bundles to the full registry validation gate; their security
+    # contract is the capability declaration, not publisher signatures.
+    if is_kit_block:
+        ok, reason = _validate_block_capabilities(name)
+        if not ok:
+            logger.warning("validation failed for '%s': %s; excluding block", name, reason)
+            return False
+        return True
+
+    # Non-kit block with a registry folder: run the full validator gate.
     if block_path.is_dir():
         try:
             result = validator.validate_block(block_path)
@@ -176,12 +190,6 @@ def _validate_registry_block(name: str, validator: Any, *, require_capabilities:
             return False
         return True
 
-    # Kit / store-install / Python-only block: require a capability declaration.
-    if require_capabilities:
-        ok, reason = _validate_block_capabilities(name)
-        if not ok:
-            logger.warning("validation failed for '%s': %s; excluding block", name, reason)
-            return False
     return True
 
 
