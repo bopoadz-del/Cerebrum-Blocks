@@ -177,6 +177,19 @@ class TestChainEndpoint:
 class TestDriveEndpoints:
     """Tests for drive-specific endpoints."""
 
+    def test_debug_local_drive_validation(self):
+        from pathlib import Path
+        from app.core.block_validation import BlockValidator
+        p = Path("block_registry/local_drive/block.py")
+        data = p.read_bytes()
+        has_crlf = b"\r\n" in data
+        has_lf = b"\n" in data.replace(b"\r\n", b"")
+        result = BlockValidator().validate_block(p.parent)
+        assert False, (
+            f"DEBUG: has_crlf={has_crlf} has_lf={has_lf} "
+            f"status={result.status} reasons={result.reasons}"
+        )
+
     def test_local_drive_list(self):
         """Test local drive via execute endpoint."""
         response = client.post("/execute", json={
