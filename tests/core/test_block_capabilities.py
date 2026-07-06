@@ -88,7 +88,8 @@ def test_tier_revoked_forces_out_of_process():
     assert caps.must_run_out_of_process is True
 
 
-def test_from_manifest_reads_publisher_tier():
+def test_from_manifest_ignores_self_declared_publisher_tier():
+    """Tier is a platform assertion, not a block declaration."""
     manifest = {
         "permissions": {
             "network": False,
@@ -99,4 +100,4 @@ def test_from_manifest_reads_publisher_tier():
         }
     }
     caps = BlockCapabilities.from_manifest(manifest)
-    assert caps.publisher_tier == "verified"
+    assert caps.publisher_tier is None

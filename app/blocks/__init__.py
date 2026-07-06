@@ -193,7 +193,22 @@ def _validate_registry_block(name: str, validator: Any, *, require_capabilities:
     return True
 
 
-def _build_block_defs() -> Dict[str, Tuple[str, str]]:
+def _create_validator() -> Any:
+    """Construct a shared BlockValidator for admission and tier resolution."""
+    try:
+        from app.core.block_validation import BlockValidator
+
+        return BlockValidator()
+    except Exception as exc:  # pragma: no cover - defensive import guard
+        logger.warning(
+            "validation gate unavailable for non-core blocks: %s; "
+            "third-party blocks will be excluded if they have registry folders",
+            exc,
+        )
+    return None
+
+
+def _build_block_defs(validator: Any = None) -> Dict[str, Tuple[str, str]]:
     from app.core.domain_kit_loader import kit_block_specs, verify_installed_containers
 
     verify_installed_containers()
@@ -207,18 +222,8 @@ def _build_block_defs() -> Dict[str, Tuple[str, str]]:
         candidate_blocks[name] = (module, class_name)
         kit_block_names.add(name)
 
-    validator: Any = None
-    if candidate_blocks:
-        try:
-            from app.core.block_validation import BlockValidator
-
-            validator = BlockValidator()
-        except Exception as exc:  # pragma: no cover - defensive import guard
-            logger.warning(
-                "validation gate unavailable for non-core blocks: %s; "
-                "third-party blocks will be excluded if they have registry folders",
-                exc,
-            )
+    if validator is None and candidate_blocks:
+        validator = _create_validator()
 
     for name, spec in candidate_blocks.items():
         if validator is not None and not _validate_registry_block(
@@ -234,26 +239,17 @@ def _resolve_publisher_tier(name: str, validator: Any) -> Optional[str]:
     """Return the publisher tier for a non-core block.
 
     Priority:
-      1. Existing passing certification in the certification store.
-      2. Publisher registry lookup by manifest publisher_id.
+      1. Live publisher registry lookup by manifest publisher_id. This takes
+         precedence over cached certifications so revocation is honored
+         immediately without waiting for certification TTL expiration.
+      2. Existing passing certification in the certification store, if the
+         registry is unavailable.
       3. Default to "community" if unknown.
-
-    Revoked publishers are handled by returning "revoked"; callers should
-    exclude the block from admission.
     """
     manifest = _load_manifest(name)
     publisher_id = (manifest or {}).get("publisher_id")
 
-    # 1. Certification store
-    if validator is not None:
-        try:
-            result = validator.certification_store.get(name)
-            if result is not None and result.status == "passed" and result.publisher_tier:
-                return result.publisher_tier
-        except Exception as exc:
-            logger.warning("could not read certification for '%s': %s", name, exc)
-
-    # 2. Publisher registry direct lookup
+    # 1. Live publisher registry (revocation must be immediate)
     if publisher_id and validator is not None and validator.publisher_registry is not None:
         try:
             record = validator.publisher_registry.get(publisher_id)
@@ -261,6 +257,15 @@ def _resolve_publisher_tier(name: str, validator: Any) -> Optional[str]:
                 return record.tier
         except Exception as exc:
             logger.warning("could not lookup publisher '%s' for '%s': %s", publisher_id, name, exc)
+
+    # 2. Certification store fallback
+    if validator is not None:
+        try:
+            result = validator.certification_store.get(name)
+            if result is not None and result.status == "passed" and result.publisher_tier:
+                return result.publisher_tier
+        except Exception as exc:
+            logger.warning("could not read certification for '%s': %s", name, exc)
 
     # 3. Fail closed
     return "community"
@@ -304,8 +309,9 @@ def _build_block_caps(
     return caps
 
 
-_BLOCK_DEFS: Dict[str, Tuple[str, str]] = _build_block_defs()
-_BLOCK_CAPS: Dict[str, BlockCapabilities] = _build_block_caps(_BLOCK_DEFS)
+_BLOCK_VALIDATOR: Any = _create_validator()
+_BLOCK_DEFS: Dict[str, Tuple[str, str]] = _build_block_defs(_BLOCK_VALIDATOR)
+_BLOCK_CAPS: Dict[str, BlockCapabilities] = _build_block_caps(_BLOCK_DEFS, _BLOCK_VALIDATOR)
 
 
 class _LazyBlockRegistry:

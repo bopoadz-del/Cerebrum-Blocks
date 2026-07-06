@@ -85,7 +85,12 @@ class BlockCapabilities:
 
     @classmethod
     def from_manifest(cls, manifest: Dict[str, Any]) -> "BlockCapabilities":
-        """Parse capabilities from a block manifest."""
+        """Parse capabilities from a block manifest.
+
+        ``publisher_tier`` is NOT read from the manifest; it is a platform
+        assertion set by ``app.blocks`` after consulting the publisher registry
+        and certification store.
+        """
         permissions = manifest.get("permissions") or {}
         network = bool(permissions.get("network", False))
         filesystem = permissions.get("filesystem", False)
@@ -93,13 +98,11 @@ class BlockCapabilities:
             filesystem = False
         imports = permissions.get("imports", []) or []
         blocks = permissions.get("blocks", []) or []
-        publisher_tier = permissions.get("publisher_tier")
         return cls(
             network=network,
             filesystem=filesystem,
             imports=list(imports),
             blocks=list(blocks),
-            publisher_tier=publisher_tier,
         )
 
     @classmethod
