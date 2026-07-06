@@ -36,7 +36,21 @@ api_key = "cb_prod_..."
 domain = "construction"
 instance_name = "prod"
 session_id = "sess_..."
+mode = "configurator"   # or "deployed"
 ```
+
+## Modes
+
+The CLI operates in one of two modes:
+
+- **`configurator`** (default): targets a live configurator session. `cerebrum chat`
+  POSTs to `/v1/sessions/{session_id}/chat` and requires `--session` or a
+  configured `session_id`.
+- **`deployed`**: targets a packaged/deployed instance. `cerebrum chat` POSTs to
+  `/v1/deployed/chat` with body `{"message": ..., "history": []}`. No session
+  ID is required; any provided session ID is ignored.
+
+Set the mode interactively with `cerebrum init` or override with `--mode`.
 
 ## Usage
 
@@ -46,6 +60,10 @@ cerebrum chat "list blocks" --session sess_abc123
 cerebrum chat --repl --session sess_abc123
 cerebrum chat "list blocks" --events   # show heartbeats/first-token marks, suppress tokens
 cerebrum chat "list blocks" --raw      # dump raw SSE data lines
+
+# deployed mode: no session id required
+cerebrum --mode deployed chat "list blocks"
+
 cerebrum upload file1.pdf file2.txt --session sess_abc123
 cerebrum chain show --session sess_abc123
 cerebrum deploy status --session sess_abc123

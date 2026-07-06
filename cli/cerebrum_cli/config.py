@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+
+Mode = Literal["configurator", "deployed"]
 
 try:
     import tomllib  # Python 3.11+
@@ -24,7 +26,15 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "domain": "construction",
     "instance_name": "local",
     "session_id": "",
+    "mode": "configurator",
 }
+
+
+def resolve_mode(value: Any) -> Mode:
+    """Normalize mode; missing/invalid values fall back to configurator."""
+    if value == "deployed":
+        return "deployed"
+    return "configurator"
 
 
 def _load_file(path: Path) -> dict[str, Any]:
@@ -44,6 +54,7 @@ def load_config(
     domain: str | None = None,
     instance_name: str | None = None,
     session_id: str | None = None,
+    mode: str | None = None,
 ) -> dict[str, Any]:
     """Merge config sources: flag > env > config file > defaults."""
     cfg = DEFAULT_CONFIG.copy()
@@ -55,6 +66,7 @@ def load_config(
         "domain": os.getenv("CEREBRUM_DOMAIN"),
         "instance_name": os.getenv("CEREBRUM_INSTANCE_NAME"),
         "session_id": os.getenv("CEREBRUM_SESSION_ID"),
+        "mode": os.getenv("CEREBRUM_MODE"),
     }
     cfg.update({k: v for k, v in env_overrides.items() if v is not None})
 
@@ -64,9 +76,11 @@ def load_config(
         "domain": domain,
         "instance_name": instance_name,
         "session_id": session_id,
+        "mode": mode,
     }
     cfg.update({k: v for k, v in flag_overrides.items() if v is not None})
 
+    cfg["mode"] = resolve_mode(cfg.get("mode"))
     return cfg
 
 

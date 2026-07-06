@@ -18,3 +18,8 @@ instance_name = "your-instance"
 # Optional default session ID. If empty, commands that need a session require
 # the --session flag.
 session_id = ""
+
+# CLI mode. "configurator" (default) talks to a configurator session and
+# requires a session_id. "deployed" talks to a packaged instance endpoint and
+# ignores session_id.
+mode = "configurator"

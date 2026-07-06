@@ -4,13 +4,19 @@ from unittest import mock
 import httpx
 import pytest
 
-from cerebrum_cli import auth
+from cerebrum_cli import auth, config
 
 
 @pytest.fixture(autouse=True)
 def _clear_env(monkeypatch):
     for key in ("CEREBRUM_TOKEN", "CEREBRUM_API_KEY", "CEREBRUM_EMAIL", "CEREBRUM_PASSWORD"):
         monkeypatch.delenv(key, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _isolated_config_path(tmp_path, monkeypatch):
+    """Point CONFIG_PATH at a non-existent temp file so tests don't see ~/.cerebrum."""
+    monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "not_exists.toml")
 
 
 def test_resolve_auth_prefers_flag_token():
