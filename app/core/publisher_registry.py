@@ -220,6 +220,7 @@ class BlockSigner:
     def _compute_digests(
         block_path: Path,
         manifest: Optional[Dict[str, Any]] = None,
+        normalize_eol: Optional[str] = None,
     ) -> Dict[str, str]:
         """Compute SHA-256 digests of the files covered by the signature.
 
@@ -228,6 +229,11 @@ class BlockSigner:
         signing operations. If ``manifest`` is supplied, it is used instead
         of reading ``block.json`` from disk (useful during signing before the
         manifest has been persisted).
+
+        ``normalize_eol`` (``'\\n'`` or ``'\\r\\n'``) makes the digest
+        calculation independent of the checkout's line endings. This is
+        required because signatures produced on a Windows CRLF checkout must
+        still verify on a Linux LF checkout, and vice versa.
         """
         digests: Dict[str, str] = {}
 
@@ -247,8 +253,14 @@ class BlockSigner:
             if filename == "block.json":
                 continue
             file_path = block_path / filename
-            if file_path.exists():
-                digests[filename] = _sha256_file(file_path)
+            if not file_path.exists():
+                continue
+            data = file_path.read_bytes()
+            if normalize_eol is not None:
+                # Normalize any line-ending convention to the target convention.
+                data = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+                data = data.replace(b"\n", normalize_eol.encode("utf-8"))
+            digests[filename] = hashlib.sha256(data).hexdigest().lower()
 
         return digests
 
@@ -359,7 +371,20 @@ class BlockVerifier:
         # Verify file digests.
         stored_digests: Dict[str, str] = manifest["digests"]
         computed_digests = BlockSigner._compute_digests(block_path)
-        if computed_digests != stored_digests:
+        digests_match = computed_digests == stored_digests
+
+        # Line-ending tolerance: a signature produced on a Windows CRLF
+        # checkout must still verify on a Linux LF checkout (and vice versa).
+        if not digests_match:
+            for target_eol in ("\n", "\r\n"):
+                normalized = BlockSigner._compute_digests(
+                    block_path, normalize_eol=target_eol
+                )
+                if normalized == stored_digests:
+                    digests_match = True
+                    break
+
+        if not digests_match:
             mismatches = []
             for name in set(stored_digests) | set(computed_digests):
                 if stored_digests.get(name) != computed_digests.get(name):

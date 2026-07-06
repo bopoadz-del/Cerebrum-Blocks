@@ -83,11 +83,11 @@ def _get_sandbox_runner_url() -> str:
 def should_run_out_of_process(block_name: str) -> bool:
     """Return True when ``block_name`` must be executed via the sandbox runner.
 
-    Core blocks default to in-process. Non-core blocks use their manifest
-    capabilities: any network, filesystem, privileged import, or cross-block
-    access forces out-of-process execution.
+    Core blocks default to capability-based dispatch. Non-core blocks apply
+    publisher tier policy: community and revoked publishers are always
+    out-of-process; verified publishers follow capability safety.
     """
-    return not get_block_capabilities(block_name).is_safe_for_in_process
+    return get_block_capabilities(block_name).must_run_out_of_process
 
 
 async def _run_block_via_runner(block_name: str, input_data: Any, params: Dict) -> dict:
@@ -153,7 +153,13 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
     enforce_block_access(block_name, auth)
 
     capabilities = get_block_capabilities(block_name)
-    use_runner = not capabilities.is_safe_for_in_process
+    if capabilities.publisher_tier == "revoked":
+        raise HTTPException(
+            status_code=403,
+            detail=f"Block '{block_name}' is from a revoked publisher and cannot be executed",
+        )
+
+    use_runner = capabilities.must_run_out_of_process
 
     if use_runner:
         return await _run_block_via_runner(block_name, request.input, request.params or {})

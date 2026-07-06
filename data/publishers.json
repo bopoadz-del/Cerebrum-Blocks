@@ -1,0 +1,15 @@
+{
+  "publishers": [
+    {
+      "contact": "platform@cerebrum.local",
+      "created_at": "2026-07-02T21:27:06.172765+00:00",
+      "name": "Cerebrum Platform",
+      "public_key": "xnae+eTOJ2tWhra2s0hX/QEidJvwQb7MXHpqy9navnE=",
+      "publisher_id": "cerebrum_platform",
+      "revoked_at": null,
+      "tier": "verified"
+    }
+  ],
+  "updated_at": "2026-07-02T21:27:06.172765+00:00",
+  "version": 1
+}
