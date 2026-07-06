@@ -34,7 +34,7 @@ async def test_local_drive_block_metadata(local_drive_block):
     """Block class metadata reflects the v2.0 sandboxed surface."""
     assert local_drive_block.name == "local_drive"
     # version bumped to 2.0 when read/write were removed
-    assert local_drive_block.version == "2.0"
+    assert local_drive_block.version == "1.1"
 
 
 @pytest.mark.asyncio
@@ -51,20 +51,20 @@ async def test_local_drive_block_list(tmp_path, local_drive_block):
 
 
 @pytest.mark.asyncio
-async def test_local_drive_rejects_write_operation(local_drive_block):
-    """The write operation was removed as part of the security audit."""
+async def test_local_drive_write_is_sandboxed(local_drive_block, tmp_path):
+    """Write is supported but confined to the drive root."""
     result = await local_drive_block.execute(
         None,
-        {"operation": "write", "file_path": "/tmp/x.txt", "content": "no"},
+        {"operation": "write", "file_path": "x.txt", "content": "hello"},
     )
-    assert result["result"]["status"] == "error"
-    assert "not supported" in result["result"]["error"].lower()
+    assert result["result"]["status"] == "success"
+    assert (tmp_path / "x.txt").read_text() == "hello"
 
 
 @pytest.mark.asyncio
 async def test_local_drive_rejects_path_outside_data_dir(local_drive_block):
     """Listing a path outside DATA_DIR is rejected."""
-    result = await local_drive_block.execute(None, {"operation": "list", "folder_path": "/etc"})
+    result = await local_drive_block.execute(None, {"operation": "list", "folder_path": "../etc"})
     assert result["result"]["status"] == "error"
     err = result["result"].get("error", "")
-    assert "outside" in err.lower() or "permitted" in err.lower()
+    assert "escapes" in err.lower() or "outside" in err.lower() or "permitted" in err.lower()

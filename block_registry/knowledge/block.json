@@ -1,206 +1,146 @@
 {
-  "id": "knowledge",
-  "name": "Knowledge",
-  "version": "2.0.0",
   "author": "Cerebrum Team",
   "description": "Ask questions across stored captures and swarm runs using RAG",
-  "layer": 3,
-  "requires": [
-    "vector_search"
-  ],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "b3c2795999fa2e6e9aa3f872aa9e092a2f19819dd7864c456ed7def5390a597a",
+    "block.py": "72304573d58ca6ba564631b53d105ac69c23cabe26a1528d3cdd320d2a3a01bf"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/knowledge:latest",
+    "type": "docker"
+  },
+  "id": "knowledge",
   "inputs": [
     {
+      "description": "Ask a question about your knowledge base...",
       "name": "input",
-      "type": "string",
       "required": false,
-      "description": "Ask a question about your knowledge base..."
+      "type": "string"
     },
     {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
       "default": "ask",
+      "description": "Action",
+      "name": "action",
       "options": [
         "ask",
         "search",
         "summarize"
-      ]
+      ],
+      "required": false,
+      "type": "string"
     },
     {
-      "name": "top_k",
-      "type": "number",
-      "required": false,
-      "description": "Top K",
-      "default": 5
-    },
-    {
-      "name": "llm_provider",
-      "type": "string",
-      "required": false,
-      "default": "deepseek",
-      "description": "Configuration parameter: llm_provider"
-    },
-    {
-      "name": "ollama_base_url",
-      "type": "string",
-      "required": false,
-      "default": "http://localhost:11434",
-      "description": "Configuration parameter: ollama_base_url"
-    },
-    {
-      "name": "ollama_model",
-      "type": "string",
-      "required": false,
-      "default": "llama3.2:3b",
-      "description": "Configuration parameter: ollama_model"
-    },
-    {
-      "name": "deepseek_api_key",
-      "type": "string",
-      "required": false,
-      "default": "",
-      "description": "Configuration parameter: deepseek_api_key"
-    },
-    {
-      "name": "deepseek_model",
-      "type": "string",
-      "required": false,
-      "default": "deepseek-chat",
-      "description": "Configuration parameter: deepseek_model"
-    },
-    {
-      "name": "openrouter_api_key",
-      "type": "string",
-      "required": false,
-      "default": "",
-      "description": "Configuration parameter: openrouter_api_key"
-    },
-    {
-      "name": "openrouter_model",
-      "type": "string",
-      "required": false,
-      "default": "anthropic/claude-3.5-sonnet",
-      "description": "Configuration parameter: openrouter_model"
-    },
-    {
-      "name": "vector_db_url",
-      "type": "string",
-      "required": false,
-      "default": "http://localhost:8001",
-      "description": "Configuration parameter: vector_db_url"
-    },
-    {
-      "name": "default_top_k",
-      "type": "number",
-      "required": false,
       "default": 5,
-      "description": "Configuration parameter: default_top_k"
+      "description": "Top K",
+      "name": "top_k",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "default_collections",
-      "type": "array",
+      "default": "deepseek",
+      "description": "Configuration parameter: llm_provider",
+      "name": "llm_provider",
       "required": false,
+      "type": "string"
+    },
+    {
+      "default": "http://localhost:11434",
+      "description": "Configuration parameter: ollama_base_url",
+      "name": "ollama_base_url",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "llama3.2:3b",
+      "description": "Configuration parameter: ollama_model",
+      "name": "ollama_model",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Configuration parameter: deepseek_api_key",
+      "name": "deepseek_api_key",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "deepseek-chat",
+      "description": "Configuration parameter: deepseek_model",
+      "name": "deepseek_model",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Configuration parameter: openrouter_api_key",
+      "name": "openrouter_api_key",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "anthropic/claude-3.5-sonnet",
+      "description": "Configuration parameter: openrouter_model",
+      "name": "openrouter_model",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "http://localhost:8001",
+      "description": "Configuration parameter: vector_db_url",
+      "name": "vector_db_url",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 5,
+      "description": "Configuration parameter: default_top_k",
+      "name": "default_top_k",
+      "required": false,
+      "type": "number"
+    },
+    {
       "default": [
         "cerebrum_captures",
         "cerebrum_swarm"
       ],
-      "description": "Configuration parameter: default_collections"
+      "description": "Configuration parameter: default_collections",
+      "name": "default_collections",
+      "required": false,
+      "type": "array"
     }
   ],
+  "layer": 3,
+  "name": "Knowledge",
   "outputs": [
     {
+      "description": "Answer",
       "name": "answer",
-      "type": "text",
-      "description": "Answer"
+      "type": "text"
     },
     {
+      "description": "Sources",
       "name": "sources",
-      "type": "json",
-      "description": "Sources"
+      "type": "json"
     },
     {
+      "description": "Confidence",
       "name": "confidence",
-      "type": "percentage",
-      "description": "Confidence"
+      "type": "percentage"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/knowledge:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "text",
-      "label": "Ask a question about your knowledge base..."
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "ask",
-        "search",
-        "summarize"
-      ]
-    },
-    {
-      "name": "top_k",
-      "widget": "number",
-      "label": "Top K"
-    },
-    {
-      "name": "llm_provider",
-      "widget": "text",
-      "label": "Llm Provider"
-    },
-    {
-      "name": "ollama_base_url",
-      "widget": "text",
-      "label": "Ollama Base Url"
-    },
-    {
-      "name": "ollama_model",
-      "widget": "text",
-      "label": "Ollama Model"
-    },
-    {
-      "name": "deepseek_api_key",
-      "widget": "text",
-      "label": "Deepseek Api Key"
-    },
-    {
-      "name": "deepseek_model",
-      "widget": "text",
-      "label": "Deepseek Model"
-    },
-    {
-      "name": "openrouter_api_key",
-      "widget": "text",
-      "label": "Openrouter Api Key"
-    },
-    {
-      "name": "openrouter_model",
-      "widget": "text",
-      "label": "Openrouter Model"
-    },
-    {
-      "name": "vector_db_url",
-      "widget": "text",
-      "label": "Vector Db Url"
-    },
-    {
-      "name": "default_top_k",
-      "widget": "number",
-      "label": "Default Top K"
-    },
-    {
-      "name": "default_collections",
-      "widget": "json",
-      "label": "Default Collections"
-    }
+  "publisher_id": "cerebrum_platform",
+  "requires": [
+    "vector_search"
   ],
+  "signature": "0OvC9EcDnz/bkBSMdhNLRO6yRFgOCUITNs6N2TjjxJKJNLUzdyaTSGmlQ4UWGNVnLBmydUpnKiHlUc9L8JSEBw==",
   "tags": [
     "knowledge",
     "rag",
@@ -208,5 +148,78 @@
     "qa",
     "memory",
     "ai"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Ask a question about your knowledge base...",
+      "name": "input",
+      "widget": "text"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "ask",
+        "search",
+        "summarize"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Top K",
+      "name": "top_k",
+      "widget": "number"
+    },
+    {
+      "label": "Llm Provider",
+      "name": "llm_provider",
+      "widget": "text"
+    },
+    {
+      "label": "Ollama Base Url",
+      "name": "ollama_base_url",
+      "widget": "text"
+    },
+    {
+      "label": "Ollama Model",
+      "name": "ollama_model",
+      "widget": "text"
+    },
+    {
+      "label": "Deepseek Api Key",
+      "name": "deepseek_api_key",
+      "widget": "text"
+    },
+    {
+      "label": "Deepseek Model",
+      "name": "deepseek_model",
+      "widget": "text"
+    },
+    {
+      "label": "Openrouter Api Key",
+      "name": "openrouter_api_key",
+      "widget": "text"
+    },
+    {
+      "label": "Openrouter Model",
+      "name": "openrouter_model",
+      "widget": "text"
+    },
+    {
+      "label": "Vector Db Url",
+      "name": "vector_db_url",
+      "widget": "text"
+    },
+    {
+      "label": "Default Top K",
+      "name": "default_top_k",
+      "widget": "number"
+    },
+    {
+      "label": "Default Collections",
+      "name": "default_collections",
+      "widget": "json"
+    }
+  ],
+  "version": "2.0.0"
 }

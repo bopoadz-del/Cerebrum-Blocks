@@ -8,6 +8,10 @@ Run from repository root:
 """
 
 import json
+
+import pytest
+
+pytestmark = pytest.mark.manual_script
 import subprocess
 import sys
 from pathlib import Path

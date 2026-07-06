@@ -1,50 +1,63 @@
 {
-  "id": "translate",
-  "name": "Translate",
-  "version": "2.0",
   "author": "Cerebrum Team",
   "description": "Translate text between 20+ languages \u2014 no API key needed",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "9ddd03d080681dc2ae8519d13ae65c84598c3f92913cee764c06fadfaa2df7cb",
+    "block.py": "06936bb16cb2807f63c47e8469baf31d2d51256a103f9763cfedb8faf8425ed6"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/translate:latest",
+    "type": "docker"
+  },
+  "id": "translate",
   "inputs": [
     {
+      "description": "Enter text to translate...",
       "name": "input",
-      "type": "string",
       "required": false,
-      "description": "Enter text to translate..."
+      "type": "string"
     }
   ],
+  "layer": 3,
+  "name": "Translate",
   "outputs": [
     {
+      "description": "Translation",
       "name": "translated",
-      "type": "text",
-      "description": "Translation"
+      "type": "text"
     },
     {
+      "description": "From",
       "name": "source_language",
-      "type": "text",
-      "description": "From"
+      "type": "text"
     },
     {
+      "description": "To",
       "name": "target_language",
-      "type": "text",
-      "description": "To"
+      "type": "text"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/translate:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "text",
-      "label": "Enter text to translate..."
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "iRAccqhwnyfWqQas+BmaoOMAi1Q33k+ts3gnHuOYusF0VaJ0mZu6ccIHiNFY41gJ8EKmnAGuPBgbYXnR76czAg==",
   "tags": [
     "domain",
     "nlp",
     "translation"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Enter text to translate...",
+      "name": "input",
+      "widget": "text"
+    }
+  ],
+  "version": "2.0"
 }

@@ -1,78 +1,91 @@
 {
-  "id": "chat",
-  "name": "Chat",
-  "version": "3.0.0",
   "author": "Cerebrum Team",
   "description": "AI chat completions \u2014 DeepSeek primary, local LLM fallback",
-  "layer": 2,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "02a12ac13e8da2b3afa6e298a2a2a758c35b2e50df5a977415800b14286095e6",
+    "block.py": "45e93aa526f4fa7c46b8814896d95a8fe4d3af4cca75f3568e877b5279b310a1"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/chat:latest",
+    "type": "docker"
+  },
+  "id": "chat",
   "inputs": [
     {
+      "description": "Ask anything...",
       "name": "input",
-      "type": "string",
       "required": false,
-      "description": "Ask anything..."
+      "type": "string"
     },
     {
-      "name": "default_provider",
-      "type": "string",
-      "required": false,
       "default": "deepseek",
-      "description": "Configuration parameter: default_provider"
+      "description": "Configuration parameter: default_provider",
+      "name": "default_provider",
+      "required": false,
+      "type": "string"
     },
     {
-      "name": "max_tokens",
-      "type": "number",
-      "required": false,
       "default": 2048,
-      "description": "Configuration parameter: max_tokens"
+      "description": "Configuration parameter: max_tokens",
+      "name": "max_tokens",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "temperature",
-      "type": "number",
-      "required": false,
       "default": 0.7,
-      "description": "Configuration parameter: temperature"
+      "description": "Configuration parameter: temperature",
+      "name": "temperature",
+      "required": false,
+      "type": "number"
     }
   ],
+  "layer": 2,
+  "name": "Chat",
   "outputs": [
     {
+      "description": "Response",
       "name": "text",
-      "type": "markdown",
-      "description": "Response"
+      "type": "markdown"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/chat:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "text",
-      "label": "Ask anything..."
-    },
-    {
-      "name": "default_provider",
-      "widget": "text",
-      "label": "Default Provider"
-    },
-    {
-      "name": "max_tokens",
-      "widget": "number",
-      "label": "Max Tokens"
-    },
-    {
-      "name": "temperature",
-      "widget": "number",
-      "label": "Temperature"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "P6w/tZjidEE8pnBu+wqTVK9poiKA/plPOQdkCQ59Cy6uhjv5eYwXQMlE1ocElz4Yl6xgy+mtwnToP/GP+Z/1DA==",
   "tags": [
     "ai",
     "core",
     "llm",
     "chat",
     "typed"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Ask anything...",
+      "name": "input",
+      "widget": "text"
+    },
+    {
+      "label": "Default Provider",
+      "name": "default_provider",
+      "widget": "text"
+    },
+    {
+      "label": "Max Tokens",
+      "name": "max_tokens",
+      "widget": "number"
+    },
+    {
+      "label": "Temperature",
+      "name": "temperature",
+      "widget": "number"
+    }
+  ],
+  "version": "3.0.0"
 }

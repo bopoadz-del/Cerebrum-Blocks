@@ -1,79 +1,92 @@
 {
-  "id": "failover",
-  "name": "Failover",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "c4459fcec05e8e47ace95589296f458fedd7dc7608c4d34c24824a0b8b7cf8f2",
+    "block.py": "881cf9b2baa4fd9105cbcadf161151569e0cfaf132afc067db686a56125fe170"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/failover:latest",
+    "type": "docker"
+  },
+  "id": "failover",
+  "inputs": [
+    {
+      "description": "Structured input payload",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": 5,
+      "description": "Configuration parameter: circuit_breaker_threshold",
+      "name": "circuit_breaker_threshold",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 60,
+      "description": "Configuration parameter: recovery_timeout",
+      "name": "recovery_timeout",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 30,
+      "description": "Configuration parameter: health_check_interval",
+      "name": "health_check_interval",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 2,
+  "name": "Failover",
+  "outputs": [
+    {
+      "description": "Failover result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "config",
     "monitoring"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "Structured input payload"
-    },
-    {
-      "name": "circuit_breaker_threshold",
-      "type": "number",
-      "required": false,
-      "default": 5,
-      "description": "Configuration parameter: circuit_breaker_threshold"
-    },
-    {
-      "name": "recovery_timeout",
-      "type": "number",
-      "required": false,
-      "default": 60,
-      "description": "Configuration parameter: recovery_timeout"
-    },
-    {
-      "name": "health_check_interval",
-      "type": "number",
-      "required": false,
-      "default": 30,
-      "description": "Configuration parameter: health_check_interval"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Failover result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/failover:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "Structured input payload"
-    },
-    {
-      "name": "circuit_breaker_threshold",
-      "widget": "number",
-      "label": "Circuit Breaker Threshold"
-    },
-    {
-      "name": "recovery_timeout",
-      "widget": "number",
-      "label": "Recovery Timeout"
-    },
-    {
-      "name": "health_check_interval",
-      "widget": "number",
-      "label": "Health Check Interval"
-    }
-  ],
+  "signature": "khpbAaldTcM+r24eGvRvxjoqPl66DFnjRM+kFoGrDV2DLtsMzCrKmuElEf3KfU6TgRTo63hs6zfGGDG64uheCA==",
   "tags": [
     "resilience",
     "failover",
     "core"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Structured input payload",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Circuit Breaker Threshold",
+      "name": "circuit_breaker_threshold",
+      "widget": "number"
+    },
+    {
+      "label": "Recovery Timeout",
+      "name": "recovery_timeout",
+      "widget": "number"
+    },
+    {
+      "label": "Health Check Interval",
+      "name": "health_check_interval",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

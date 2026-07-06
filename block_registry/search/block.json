@@ -1,40 +1,53 @@
 {
-  "id": "search",
-  "name": "Search",
-  "version": "2.0",
   "author": "Cerebrum Team",
   "description": "Search the web via DuckDuckGo (no key required) or Serper API",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "434de1bbbbad54e87dd9e1c1bf8ccc178b589d09fd9a2f16e0e0b36e7156d72d",
+    "block.py": "0f91ebfba21e1aa179d28ce114b4866a61c0e3a0357872bd94118e319e328f56"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/search:latest",
+    "type": "docker"
+  },
+  "id": "search",
   "inputs": [
     {
+      "description": "Search the web...",
       "name": "input",
-      "type": "string",
       "required": false,
-      "description": "Search the web..."
+      "type": "string"
     }
   ],
+  "layer": 3,
+  "name": "Search",
   "outputs": [
     {
+      "description": "Results",
       "name": "results",
-      "type": "array",
-      "description": "Results"
+      "type": "array"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/search:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "text",
-      "label": "Search the web..."
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "It6FZwBWmR98bKCzJDYTeJ6j39+Xye1DMd1PxzZ+j+rRyQHAlJ6RGNZvx1lnEUT+D4DoVWSGFAxsbZmfvb4tAw==",
   "tags": [
     "domain",
     "search",
     "web"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Search the web...",
+      "name": "input",
+      "widget": "text"
+    }
+  ],
+  "version": "2.0"
 }

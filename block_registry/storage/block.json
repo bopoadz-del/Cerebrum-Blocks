@@ -1,92 +1,105 @@
 {
-  "id": "storage",
-  "name": "Storage",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "2911de6d516cd8153c978d6c0c50b3b3e8f3905475fdeec2e83dc4f6922dcde2",
+    "block.py": "097da05debf525c21b893bcbf0178fc4746792d2b2e366caa63cf9128598b144"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/storage:latest",
+    "type": "docker"
+  },
+  "id": "storage",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected action",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "store",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "store",
+        "retrieve",
+        "delete",
+        "exists",
+        "list"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "local",
+      "description": "Configuration parameter: backend",
+      "name": "backend",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "./data/storage",
+      "description": "Configuration parameter: data_dir",
+      "name": "data_dir",
+      "required": false,
+      "type": "string"
+    }
+  ],
   "layer": 2,
+  "name": "Storage",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "config"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "store",
-      "options": [
-        "store",
-        "retrieve",
-        "delete",
-        "exists",
-        "list"
-      ]
-    },
-    {
-      "name": "backend",
-      "type": "string",
-      "required": false,
-      "default": "local",
-      "description": "Configuration parameter: backend"
-    },
-    {
-      "name": "data_dir",
-      "type": "string",
-      "required": false,
-      "default": "./data/storage",
-      "description": "Configuration parameter: data_dir"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/storage:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "store",
-        "retrieve",
-        "delete",
-        "exists",
-        "list"
-      ]
-    },
-    {
-      "name": "backend",
-      "widget": "text",
-      "label": "Backend"
-    },
-    {
-      "name": "data_dir",
-      "widget": "text",
-      "label": "Data Dir"
-    }
-  ],
+  "signature": "nfS4Zd9zDpM8Sw+rpFrghHyKOAH2LyZDxk2qf4Dj1+V3sskesLmjGJwjP6uaoqz5N7AOC3I5r00BGm5y4/5GAw==",
   "tags": [
     "storage",
     "files",
     "core"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected action",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "store",
+        "retrieve",
+        "delete",
+        "exists",
+        "list"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Backend",
+      "name": "backend",
+      "widget": "text"
+    },
+    {
+      "label": "Data Dir",
+      "name": "data_dir",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0"
 }

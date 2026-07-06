@@ -1,101 +1,114 @@
 {
-  "id": "pdf_v2",
-  "name": "Pdf V2",
-  "version": "2.0",
   "author": "Cerebrum Team",
   "description": "Extract text from PDF files with typed output",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "4f04e6d5378e5376aad52f84ef261026fe750e7909a6276de8494bd13b590bde",
+    "block.py": "7feae01133855f18553ea6ef5ae5ba71a374ed10de7051111a2d9af9f99fc227"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/pdf_v2:latest",
+    "type": "docker"
+  },
+  "id": "pdf_v2",
+  "inputs": [
+    {
+      "description": "Upload PDF...",
+      "name": "input",
+      "required": false,
+      "type": "file"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: extract_tables",
+      "name": "extract_tables",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": 100,
+      "description": "Configuration parameter: max_pages",
+      "name": "max_pages",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 20000,
+      "description": "Configuration parameter: text_limit",
+      "name": "text_limit",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 200,
+      "description": "Configuration parameter: ocr_fallback_min_chars",
+      "name": "ocr_fallback_min_chars",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 3,
+  "name": "Pdf V2",
+  "outputs": [
+    {
+      "description": "Text",
+      "name": "text",
+      "type": "text"
+    },
+    {
+      "description": "Pages",
+      "name": "pages",
+      "type": "number"
+    },
+    {
+      "description": "Source",
+      "name": "source",
+      "type": "string"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "ocr"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "file",
-      "required": false,
-      "description": "Upload PDF..."
-    },
-    {
-      "name": "extract_tables",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: extract_tables"
-    },
-    {
-      "name": "max_pages",
-      "type": "number",
-      "required": false,
-      "default": 100,
-      "description": "Configuration parameter: max_pages"
-    },
-    {
-      "name": "text_limit",
-      "type": "number",
-      "required": false,
-      "default": 20000,
-      "description": "Configuration parameter: text_limit"
-    },
-    {
-      "name": "ocr_fallback_min_chars",
-      "type": "number",
-      "required": false,
-      "default": 200,
-      "description": "Configuration parameter: ocr_fallback_min_chars"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "text",
-      "type": "text",
-      "description": "Text"
-    },
-    {
-      "name": "pages",
-      "type": "number",
-      "description": "Pages"
-    },
-    {
-      "name": "source",
-      "type": "string",
-      "description": "Source"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/pdf_v2:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "file",
-      "label": "Upload PDF..."
-    },
-    {
-      "name": "extract_tables",
-      "widget": "toggle",
-      "label": "Extract Tables"
-    },
-    {
-      "name": "max_pages",
-      "widget": "number",
-      "label": "Max Pages"
-    },
-    {
-      "name": "text_limit",
-      "widget": "number",
-      "label": "Text Limit"
-    },
-    {
-      "name": "ocr_fallback_min_chars",
-      "widget": "number",
-      "label": "Ocr Fallback Min Chars"
-    }
-  ],
+  "signature": "I0F97gkth4pPzaUKFlJfORk68qZBMX1mXpTjjv2fHQPzyEqs1/ovBY6rDVhzEoeT7SZ1lBayXcNnM9O7ltRXAQ==",
   "tags": [
     "domain",
     "documents",
     "pdf",
     "v2"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Upload PDF...",
+      "name": "input",
+      "widget": "file"
+    },
+    {
+      "label": "Extract Tables",
+      "name": "extract_tables",
+      "widget": "toggle"
+    },
+    {
+      "label": "Max Pages",
+      "name": "max_pages",
+      "widget": "number"
+    },
+    {
+      "label": "Text Limit",
+      "name": "text_limit",
+      "widget": "number"
+    },
+    {
+      "label": "Ocr Fallback Min Chars",
+      "name": "ocr_fallback_min_chars",
+      "widget": "number"
+    }
+  ],
+  "version": "2.0"
 }

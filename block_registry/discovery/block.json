@@ -1,148 +1,161 @@
 {
-  "id": "discovery",
-  "name": "Discovery",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "9b489199da01491f80162eccd60c9c05d4c502168eabfd873e725836374b5aef",
+    "block.py": "ca9abf32a07c41744027ee8f636be031dc88ce06662566ba532f1105f2c0f58d"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/discovery:latest",
+    "type": "docker"
+  },
+  "id": "discovery",
+  "inputs": [
+    {
+      "description": "Project goal, block query, or indexing payload",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "recommend_for_project",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "recommend_for_project",
+        "find_alternative",
+        "search_blocks",
+        "trending",
+        "get_compatible",
+        "index_block",
+        "get_categories",
+        "smart_stack"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "embedding_similarity",
+      "description": "Configuration parameter: recommendation_model",
+      "name": "recommendation_model",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 5,
+      "description": "Configuration parameter: max_suggestions",
+      "name": "max_suggestions",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 0.6,
+      "description": "Configuration parameter: min_similarity_score",
+      "name": "min_similarity_score",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: boost_popular",
+      "name": "boost_popular",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: boost_rated",
+      "name": "boost_rated",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": false,
+      "description": "Configuration parameter: include_installed",
+      "name": "include_installed",
+      "required": false,
+      "type": "boolean"
+    }
+  ],
   "layer": 4,
+  "name": "Discovery",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "vector",
     "analytics"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "Project goal, block query, or indexing payload"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "recommend_for_project",
-      "options": [
-        "recommend_for_project",
-        "find_alternative",
-        "search_blocks",
-        "trending",
-        "get_compatible",
-        "index_block",
-        "get_categories",
-        "smart_stack"
-      ]
-    },
-    {
-      "name": "recommendation_model",
-      "type": "string",
-      "required": false,
-      "default": "embedding_similarity",
-      "description": "Configuration parameter: recommendation_model"
-    },
-    {
-      "name": "max_suggestions",
-      "type": "number",
-      "required": false,
-      "default": 5,
-      "description": "Configuration parameter: max_suggestions"
-    },
-    {
-      "name": "min_similarity_score",
-      "type": "number",
-      "required": false,
-      "default": 0.6,
-      "description": "Configuration parameter: min_similarity_score"
-    },
-    {
-      "name": "boost_popular",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: boost_popular"
-    },
-    {
-      "name": "boost_rated",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: boost_rated"
-    },
-    {
-      "name": "include_installed",
-      "type": "boolean",
-      "required": false,
-      "default": false,
-      "description": "Configuration parameter: include_installed"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/discovery:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "Project goal, block query, or indexing payload"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "recommend_for_project",
-        "find_alternative",
-        "search_blocks",
-        "trending",
-        "get_compatible",
-        "index_block",
-        "get_categories",
-        "smart_stack"
-      ]
-    },
-    {
-      "name": "recommendation_model",
-      "widget": "text",
-      "label": "Recommendation Model"
-    },
-    {
-      "name": "max_suggestions",
-      "widget": "number",
-      "label": "Max Suggestions"
-    },
-    {
-      "name": "min_similarity_score",
-      "widget": "number",
-      "label": "Min Similarity Score"
-    },
-    {
-      "name": "boost_popular",
-      "widget": "toggle",
-      "label": "Boost Popular"
-    },
-    {
-      "name": "boost_rated",
-      "widget": "toggle",
-      "label": "Boost Rated"
-    },
-    {
-      "name": "include_installed",
-      "widget": "toggle",
-      "label": "Include Installed"
-    }
-  ],
+  "signature": "js9ZpmGfdzgCeCryou276P5eJcO8D39ykd5rZXUN/q2YUHcKxIM9pUbksARbFr4P4a/EeUOAPKLUH0U4Dbs2Ag==",
   "tags": [
     "store",
     "ai",
     "recommendation",
     "discovery"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Project goal, block query, or indexing payload",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "recommend_for_project",
+        "find_alternative",
+        "search_blocks",
+        "trending",
+        "get_compatible",
+        "index_block",
+        "get_categories",
+        "smart_stack"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Recommendation Model",
+      "name": "recommendation_model",
+      "widget": "text"
+    },
+    {
+      "label": "Max Suggestions",
+      "name": "max_suggestions",
+      "widget": "number"
+    },
+    {
+      "label": "Min Similarity Score",
+      "name": "min_similarity_score",
+      "widget": "number"
+    },
+    {
+      "label": "Boost Popular",
+      "name": "boost_popular",
+      "widget": "toggle"
+    },
+    {
+      "label": "Boost Rated",
+      "name": "boost_rated",
+      "widget": "toggle"
+    },
+    {
+      "label": "Include Installed",
+      "name": "include_installed",
+      "widget": "toggle"
+    }
+  ],
+  "version": "1.0.0"
 }

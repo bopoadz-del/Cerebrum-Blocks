@@ -1,100 +1,85 @@
 {
-  "id": "bim_extractor",
-  "name": "Bim Extractor",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Extract building elements, quantities, and clash report from IFC BIM models",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "b8713f52269c774e1db3187ae60074010a20388a03c8d366f0a619374f8d14b5",
+    "block.py": "0828740fd12c5df4d07be7cf99ff7c6efa7ec814df85a78f29d4e018b234809f"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/bim_extractor:latest",
+    "type": "docker"
+  },
+  "id": "bim_extractor",
   "inputs": [
     {
+      "description": "Upload IFC BIM model...",
       "name": "input",
-      "type": "file",
       "required": false,
-      "description": "Upload IFC BIM model..."
+      "type": "file"
     },
     {
+      "default": true,
+      "description": "Configuration parameter: extract_properties",
       "name": "extract_properties",
-      "type": "boolean",
       "required": false,
-      "default": true,
-      "description": "Configuration parameter: extract_properties"
+      "type": "boolean"
     },
     {
+      "default": true,
+      "description": "Configuration parameter: run_clash_detection",
       "name": "run_clash_detection",
-      "type": "boolean",
       "required": false,
-      "default": true,
-      "description": "Configuration parameter: run_clash_detection"
+      "type": "boolean"
     },
     {
-      "name": "clash_tolerance_mm",
-      "type": "number",
-      "required": false,
       "default": 10.0,
-      "description": "Configuration parameter: clash_tolerance_mm"
+      "description": "Configuration parameter: clash_tolerance_mm",
+      "name": "clash_tolerance_mm",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "max_elements",
-      "type": "number",
-      "required": false,
       "default": 10000,
-      "description": "Configuration parameter: max_elements"
+      "description": "Configuration parameter: max_elements",
+      "name": "max_elements",
+      "required": false,
+      "type": "number"
     }
   ],
+  "layer": 3,
+  "name": "Bim Extractor",
   "outputs": [
     {
+      "description": "Elements",
       "name": "building_elements",
-      "type": "list",
-      "description": "Elements"
+      "type": "list"
     },
     {
+      "description": "Quantities",
       "name": "quantities",
-      "type": "json",
-      "description": "Quantities"
+      "type": "json"
     },
     {
+      "description": "Clashes",
       "name": "clash_report",
-      "type": "json",
-      "description": "Clashes"
+      "type": "json"
     },
     {
+      "description": "Total Elements",
       "name": "element_count",
-      "type": "number",
-      "description": "Total Elements"
+      "type": "number"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/bim_extractor:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "file",
-      "label": "Upload IFC BIM model..."
-    },
-    {
-      "name": "extract_properties",
-      "widget": "toggle",
-      "label": "Extract Properties"
-    },
-    {
-      "name": "run_clash_detection",
-      "widget": "toggle",
-      "label": "Run Clash Detection"
-    },
-    {
-      "name": "clash_tolerance_mm",
-      "widget": "number",
-      "label": "Clash Tolerance Mm"
-    },
-    {
-      "name": "max_elements",
-      "widget": "number",
-      "label": "Max Elements"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "jtVykMOqJy+H+cfig4u9dCssIEABmI/9TyqreFs0JmPCEK0iIsfKx1thB3Qogv5L+SFEPkhKcAtGky+ZgBM2Bw==",
   "tags": [
     "domain",
     "construction",
@@ -102,5 +87,33 @@
     "ifc",
     "quantities",
     "clash"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Upload IFC BIM model...",
+      "name": "input",
+      "widget": "file"
+    },
+    {
+      "label": "Extract Properties",
+      "name": "extract_properties",
+      "widget": "toggle"
+    },
+    {
+      "label": "Run Clash Detection",
+      "name": "run_clash_detection",
+      "widget": "toggle"
+    },
+    {
+      "label": "Clash Tolerance Mm",
+      "name": "clash_tolerance_mm",
+      "widget": "number"
+    },
+    {
+      "label": "Max Elements",
+      "name": "max_elements",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

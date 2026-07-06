@@ -1,97 +1,110 @@
 {
-  "id": "ocr_v2",
-  "name": "Ocr V2",
-  "version": "2.0",
   "author": "Cerebrum Team",
   "description": "Extract text from images using OCR with typed output",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "1b3ba619dc6b4133405d0ef0eecbe6a7f0b43db03c263cab1ff003d760fe2765",
+    "block.py": "48548373575b20b1037b59e1ff9bda9107d4ff2505479215a3ba1ba63280f4de"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/ocr_v2:latest",
+    "type": "docker"
+  },
+  "id": "ocr_v2",
   "inputs": [
     {
+      "description": "Upload image to extract text...",
       "name": "input",
-      "type": "file",
       "required": false,
-      "description": "Upload image to extract text..."
+      "type": "file"
     },
     {
-      "name": "languages",
-      "type": "array",
-      "required": false,
       "default": [
         "en"
       ],
-      "description": "Configuration parameter: languages"
+      "description": "Configuration parameter: languages",
+      "name": "languages",
+      "required": false,
+      "type": "array"
     },
     {
-      "name": "preprocess",
-      "type": "boolean",
-      "required": false,
       "default": true,
-      "description": "Configuration parameter: preprocess"
+      "description": "Configuration parameter: preprocess",
+      "name": "preprocess",
+      "required": false,
+      "type": "boolean"
     },
     {
-      "name": "deskew",
-      "type": "boolean",
-      "required": false,
       "default": false,
-      "description": "Configuration parameter: deskew"
+      "description": "Configuration parameter: deskew",
+      "name": "deskew",
+      "required": false,
+      "type": "boolean"
     },
     {
-      "name": "contrast_factor",
-      "type": "number",
-      "required": false,
       "default": 1.5,
-      "description": "Configuration parameter: contrast_factor"
+      "description": "Configuration parameter: contrast_factor",
+      "name": "contrast_factor",
+      "required": false,
+      "type": "number"
     }
   ],
+  "layer": 3,
+  "name": "Ocr V2",
   "outputs": [
     {
+      "description": "Extracted Text",
       "name": "text",
-      "type": "text",
-      "description": "Extracted Text"
+      "type": "text"
     },
     {
+      "description": "Confidence",
       "name": "confidence",
-      "type": "percentage",
-      "description": "Confidence"
+      "type": "percentage"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/ocr_v2:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "file",
-      "label": "Upload image to extract text..."
-    },
-    {
-      "name": "languages",
-      "widget": "json",
-      "label": "Languages"
-    },
-    {
-      "name": "preprocess",
-      "widget": "toggle",
-      "label": "Preprocess"
-    },
-    {
-      "name": "deskew",
-      "widget": "toggle",
-      "label": "Deskew"
-    },
-    {
-      "name": "contrast_factor",
-      "widget": "number",
-      "label": "Contrast Factor"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "71UQ6lEmwM9rprzYh1w0faDUty5BIDpsq3+YoDnM/MVUZ5Zwogjf8IybW59Tzp1Vfatc79m5ioXDnWIVP+5QAA==",
   "tags": [
     "domain",
     "vision",
     "ocr",
     "documents",
     "v2"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Upload image to extract text...",
+      "name": "input",
+      "widget": "file"
+    },
+    {
+      "label": "Languages",
+      "name": "languages",
+      "widget": "json"
+    },
+    {
+      "label": "Preprocess",
+      "name": "preprocess",
+      "widget": "toggle"
+    },
+    {
+      "label": "Deskew",
+      "name": "deskew",
+      "widget": "toggle"
+    },
+    {
+      "label": "Contrast Factor",
+      "name": "contrast_factor",
+      "widget": "number"
+    }
+  ],
+  "version": "2.0"
 }

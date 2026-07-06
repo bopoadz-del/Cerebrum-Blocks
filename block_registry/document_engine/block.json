@@ -1,135 +1,148 @@
 {
-  "id": "document_engine",
-  "name": "Document Engine",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Parse \u2192 Reason \u2192 Map pipeline for technical document intelligence",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "6ff2f9d92d673561dcfffe1527bc00a8e43f98133fe194c92c8878eb44601c28",
+    "block.py": "22dee3ffd46d2fef0e9da5eaeba4cb8823ac5c8bda3f4a1359b7b6e47c5d3346"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/document_engine:latest",
+    "type": "docker"
+  },
+  "id": "document_engine",
+  "inputs": [
+    {
+      "description": "Upload BOD, RFP, or spec documents...",
+      "name": "input",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: extract_tables",
+      "name": "extract_tables",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: extract_glossary",
+      "name": "extract_glossary",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": "yaml",
+      "description": "Configuration parameter: output_format",
+      "name": "output_format",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: use_platform_pdf",
+      "name": "use_platform_pdf",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: use_platform_ocr",
+      "name": "use_platform_ocr",
+      "required": false,
+      "type": "boolean"
+    }
+  ],
   "layer": 3,
+  "name": "Document Engine",
+  "outputs": [
+    {
+      "description": "Glossary Terms",
+      "name": "glossary",
+      "type": "list"
+    },
+    {
+      "description": "Requirements",
+      "name": "requirements",
+      "type": "list"
+    },
+    {
+      "description": "Constraints",
+      "name": "constraints",
+      "type": "list"
+    },
+    {
+      "description": "Schedule Targets",
+      "name": "schedule_targets",
+      "type": "list"
+    },
+    {
+      "description": "Equipment Specs",
+      "name": "equipment_specs",
+      "type": "list"
+    },
+    {
+      "description": "Risks",
+      "name": "risks",
+      "type": "list"
+    },
+    {
+      "description": "Downstream Feed",
+      "name": "downstream",
+      "type": "object"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "pdf",
     "ocr"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "string",
-      "required": false,
-      "description": "Upload BOD, RFP, or spec documents..."
-    },
-    {
-      "name": "extract_tables",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: extract_tables"
-    },
-    {
-      "name": "extract_glossary",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: extract_glossary"
-    },
-    {
-      "name": "output_format",
-      "type": "string",
-      "required": false,
-      "default": "yaml",
-      "description": "Configuration parameter: output_format"
-    },
-    {
-      "name": "use_platform_pdf",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: use_platform_pdf"
-    },
-    {
-      "name": "use_platform_ocr",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: use_platform_ocr"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "glossary",
-      "type": "list",
-      "description": "Glossary Terms"
-    },
-    {
-      "name": "requirements",
-      "type": "list",
-      "description": "Requirements"
-    },
-    {
-      "name": "constraints",
-      "type": "list",
-      "description": "Constraints"
-    },
-    {
-      "name": "schedule_targets",
-      "type": "list",
-      "description": "Schedule Targets"
-    },
-    {
-      "name": "equipment_specs",
-      "type": "list",
-      "description": "Equipment Specs"
-    },
-    {
-      "name": "risks",
-      "type": "list",
-      "description": "Risks"
-    },
-    {
-      "name": "downstream",
-      "type": "object",
-      "description": "Downstream Feed"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/document_engine:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "text",
-      "label": "Upload BOD, RFP, or spec documents..."
-    },
-    {
-      "name": "extract_tables",
-      "widget": "toggle",
-      "label": "Extract Tables"
-    },
-    {
-      "name": "extract_glossary",
-      "widget": "toggle",
-      "label": "Extract Glossary"
-    },
-    {
-      "name": "output_format",
-      "widget": "text",
-      "label": "Output Format"
-    },
-    {
-      "name": "use_platform_pdf",
-      "widget": "toggle",
-      "label": "Use Platform Pdf"
-    },
-    {
-      "name": "use_platform_ocr",
-      "widget": "toggle",
-      "label": "Use Platform Ocr"
-    }
-  ],
+  "signature": "npQ/C3EWI9IyCqjqjMZkGXa4pGK9NjMtapfSDZr3cLFjM58MuuGH+etBv7uGeB4BDThhvWDQPXd7+kDlS8uUDQ==",
   "tags": [
     "domain",
     "construction",
     "documents",
     "reasoning",
     "scheduling"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Upload BOD, RFP, or spec documents...",
+      "name": "input",
+      "widget": "text"
+    },
+    {
+      "label": "Extract Tables",
+      "name": "extract_tables",
+      "widget": "toggle"
+    },
+    {
+      "label": "Extract Glossary",
+      "name": "extract_glossary",
+      "widget": "toggle"
+    },
+    {
+      "label": "Output Format",
+      "name": "output_format",
+      "widget": "text"
+    },
+    {
+      "label": "Use Platform Pdf",
+      "name": "use_platform_pdf",
+      "widget": "toggle"
+    },
+    {
+      "label": "Use Platform Ocr",
+      "name": "use_platform_ocr",
+      "widget": "toggle"
+    }
+  ],
+  "version": "1.0.0"
 }

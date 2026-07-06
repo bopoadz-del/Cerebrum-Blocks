@@ -1,118 +1,131 @@
 {
-  "id": "vector",
-  "name": "Vector",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "8d870abf6c1f265979941b6311a4edcaacabf9719c883b234f4b46227de7c11e",
+    "block.py": "ba5364144561c0ac754c16ab0bd44a6d4fb09539068ce8757f5f76f4a07cdc50"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/vector:latest",
+    "type": "docker"
+  },
+  "id": "vector",
+  "inputs": [
+    {
+      "description": "Vector id, embedding, or query",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "add",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "add",
+        "search",
+        "delete",
+        "get",
+        "count"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "chroma",
+      "description": "Configuration parameter: backend",
+      "name": "backend",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "all-MiniLM-L6-v2",
+      "description": "Configuration parameter: embedding_model",
+      "name": "embedding_model",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "default",
+      "description": "Configuration parameter: collection",
+      "name": "collection",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "./data/vector",
+      "description": "Configuration parameter: persist_directory",
+      "name": "persist_directory",
+      "required": false,
+      "type": "string"
+    }
+  ],
   "layer": 3,
+  "name": "Vector",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "config",
     "memory"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "Vector id, embedding, or query"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "add",
-      "options": [
-        "add",
-        "search",
-        "delete",
-        "get",
-        "count"
-      ]
-    },
-    {
-      "name": "backend",
-      "type": "string",
-      "required": false,
-      "default": "chroma",
-      "description": "Configuration parameter: backend"
-    },
-    {
-      "name": "embedding_model",
-      "type": "string",
-      "required": false,
-      "default": "all-MiniLM-L6-v2",
-      "description": "Configuration parameter: embedding_model"
-    },
-    {
-      "name": "collection",
-      "type": "string",
-      "required": false,
-      "default": "default",
-      "description": "Configuration parameter: collection"
-    },
-    {
-      "name": "persist_directory",
-      "type": "string",
-      "required": false,
-      "default": "./data/vector",
-      "description": "Configuration parameter: persist_directory"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/vector:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "Vector id, embedding, or query"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "add",
-        "search",
-        "delete",
-        "get",
-        "count"
-      ]
-    },
-    {
-      "name": "backend",
-      "widget": "text",
-      "label": "Backend"
-    },
-    {
-      "name": "embedding_model",
-      "widget": "text",
-      "label": "Embedding Model"
-    },
-    {
-      "name": "collection",
-      "widget": "text",
-      "label": "Collection"
-    },
-    {
-      "name": "persist_directory",
-      "widget": "text",
-      "label": "Persist Directory"
-    }
-  ],
+  "signature": "owS3JdWNzd64bavDNWCuaOxGvWPOBmGWPlowRRQnVQDJ6/YxT5VVGVlh00C60d0hODcaw7TrSwZMN8o7OPoBCQ==",
   "tags": [
     "ai",
     "vector",
     "search",
     "core"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Vector id, embedding, or query",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "add",
+        "search",
+        "delete",
+        "get",
+        "count"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Backend",
+      "name": "backend",
+      "widget": "text"
+    },
+    {
+      "label": "Embedding Model",
+      "name": "embedding_model",
+      "widget": "text"
+    },
+    {
+      "label": "Collection",
+      "name": "collection",
+      "widget": "text"
+    },
+    {
+      "label": "Persist Directory",
+      "name": "persist_directory",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0"
 }

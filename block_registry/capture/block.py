@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 """
 Auto-generated adapter for Cerebrum block: capture
-Wraps app.blocks.capture.CaptureBlock.execute() into a synchronous run() function.
+Wraps app.blocks.capture into a synchronous run() function.
 """
 
-import sys
 import asyncio
-
-sys.path.insert(0, "/app")
-
-from app.blocks import BLOCK_REGISTRY
+from app.blocks import get_block
 
 
 def _run_async(coro):
@@ -29,7 +25,7 @@ def run(**kwargs):
     Accepts keyword args matching the block's inputs/params.
     Returns the standardized block result payload.
     """
-    block_cls = BLOCK_REGISTRY["capture"]
+    block_cls = get_block("capture")
     instance = block_cls()
 
     input_data = kwargs.get("input", kwargs)
@@ -39,6 +35,6 @@ def run(**kwargs):
     if envelope.get("status") == "error":
         inner = envelope.get("result", {})
         message = inner.get("error") if isinstance(inner, dict) else str(inner)
-        raise RuntimeError(message or f"capture block failed")
+        raise RuntimeError(message or "capture block failed")
 
     return envelope.get("result", envelope)

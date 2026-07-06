@@ -1,46 +1,59 @@
 {
-  "id": "zvec",
-  "name": "Zvec",
-  "version": "2.0",
   "author": "Cerebrum Team",
   "description": "Embed text as TF-IDF vectors; compute similarity; zero-shot classify",
-  "layer": 2,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "af10601b2d9ea0345fbcd30b9e596b4eb7ac7263f322c111050bf037ef8408f3",
+    "block.py": "a94d22fe8e4a85555549e97846a68e10f4727e7a5392d2f1196ab2f904dab65c"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/zvec:latest",
+    "type": "docker"
+  },
+  "id": "zvec",
   "inputs": [
     {
+      "description": "Text to embed or compare...",
       "name": "input",
-      "type": "string",
       "required": false,
-      "description": "Text to embed or compare..."
+      "type": "string"
     }
   ],
+  "layer": 2,
+  "name": "Zvec",
   "outputs": [
     {
+      "description": "Embedding",
       "name": "vector",
-      "type": "array",
-      "description": "Embedding"
+      "type": "array"
     },
     {
+      "description": "Operation",
       "name": "operation",
-      "type": "text",
-      "description": "Operation"
+      "type": "text"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/zvec:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "text",
-      "label": "Text to embed or compare..."
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "/cN4D5jlIlsNHJURhbeZ2l4RRWCHImd5s0+FFICfJWLyqzOptCIDAnfXCfVXwsbYlv147I23tmwFSdp6DeYMBQ==",
   "tags": [
     "ai",
     "core",
     "vector",
     "zero-shot"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Text to embed or compare...",
+      "name": "input",
+      "widget": "text"
+    }
+  ],
+  "version": "2.0"
 }

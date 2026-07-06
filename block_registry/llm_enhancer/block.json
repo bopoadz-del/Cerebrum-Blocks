@@ -1,87 +1,100 @@
 {
-  "id": "llm_enhancer",
-  "name": "Llm Enhancer",
-  "version": "1.0",
   "author": "Cerebrum Team",
   "description": "LLM-augmented enhancement of construction quantities/risks/RFIs",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "b1b5e6646fef44d4af937aa673d4da849c5ab754df3933db8f0f90cab4be9688",
+    "block.py": "c9ecd057ce96c0e405cbd07174ecbb998e2c9a0d5d3e6071a1bd50d0ad5d3360"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/llm_enhancer:latest",
+    "type": "docker"
+  },
+  "id": "llm_enhancer",
   "inputs": [
     {
+      "description": "{\"action\": \"status\"}  \u2014 or {\"action\": \"enhance_quantities\", \"text\": \"...\", \"baseline\": {...}}",
       "name": "input",
-      "type": "json",
       "required": false,
-      "description": "{\"action\": \"status\"}  \u2014 or {\"action\": \"enhance_quantities\", \"text\": \"...\", \"baseline\": {...}}"
+      "type": "json"
     },
     {
-      "name": "model",
-      "type": "string",
-      "required": false,
       "default": "claude-sonnet-4-6",
-      "description": "Configuration parameter: model"
+      "description": "Configuration parameter: model",
+      "name": "model",
+      "required": false,
+      "type": "string"
     },
     {
-      "name": "max_output_tokens",
-      "type": "number",
-      "required": false,
       "default": 4000,
-      "description": "Configuration parameter: max_output_tokens"
+      "description": "Configuration parameter: max_output_tokens",
+      "name": "max_output_tokens",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "timeout_seconds",
-      "type": "number",
-      "required": false,
       "default": 30.0,
-      "description": "Configuration parameter: timeout_seconds"
+      "description": "Configuration parameter: timeout_seconds",
+      "name": "timeout_seconds",
+      "required": false,
+      "type": "number"
     }
   ],
+  "layer": 3,
+  "name": "Llm Enhancer",
   "outputs": [
     {
+      "description": "LLM additions",
       "name": "additions",
-      "type": "array",
-      "description": "LLM additions"
+      "type": "array"
     },
     {
+      "description": "Skipped",
       "name": "skipped",
-      "type": "boolean",
-      "description": "Skipped"
+      "type": "boolean"
     },
     {
+      "description": "Reason",
       "name": "reason",
-      "type": "string",
-      "description": "Reason"
+      "type": "string"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/llm_enhancer:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "{\"action\": \"status\"}  \u2014 or {\"action\": \"enhance_quantities\", \"text\": \"...\", \"baseline\": {...}}"
-    },
-    {
-      "name": "model",
-      "widget": "text",
-      "label": "Model"
-    },
-    {
-      "name": "max_output_tokens",
-      "widget": "number",
-      "label": "Max Output Tokens"
-    },
-    {
-      "name": "timeout_seconds",
-      "widget": "number",
-      "label": "Timeout Seconds"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "hgymZn7qSx6z2umc95q8fULTMy1BO6NuRDFkXuIhQuKEMJIyfOOYYoSlYvA2SMRhSKeGm2Ttnov3bOT/btO3Dg==",
   "tags": [
     "domain",
     "construction",
     "llm",
     "enhancement"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "{\"action\": \"status\"}  \u2014 or {\"action\": \"enhance_quantities\", \"text\": \"...\", \"baseline\": {...}}",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Model",
+      "name": "model",
+      "widget": "text"
+    },
+    {
+      "label": "Max Output Tokens",
+      "name": "max_output_tokens",
+      "widget": "number"
+    },
+    {
+      "label": "Timeout Seconds",
+      "name": "timeout_seconds",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0"
 }

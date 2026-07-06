@@ -1,40 +1,53 @@
 {
-  "id": "android_drive",
-  "name": "Android Drive",
-  "version": "1.0",
   "author": "Cerebrum Team",
   "description": "Android device storage access via ADB or REST bridge",
-  "layer": 4,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "dff31091875f9eb73a8715e4e51c2c3e45305dfb8febd16680d64ce7568e261f",
+    "block.py": "1598bf56b6234d9afbb5e4f5b9ce6eb7b6cc539e31f612c968e124e3f73ca58a"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/android_drive:latest",
+    "type": "docker"
+  },
+  "id": "android_drive",
   "inputs": [
     {
+      "description": "Access Android device storage...",
       "name": "input",
-      "type": "file",
       "required": false,
-      "description": "Access Android device storage..."
+      "type": "file"
     }
   ],
+  "layer": 4,
+  "name": "Android Drive",
   "outputs": [
     {
+      "description": "Files",
       "name": "files",
-      "type": "array",
-      "description": "Files"
+      "type": "array"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/android_drive:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "file",
-      "label": "Access Android device storage..."
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "Uh+kFFZ6Jnbmr5OoJ+uJQ7vQparHy6Npg0JlWC32EWBFojLbgK/NhfhNZ+PEWHznmHvySkdX6KNKrf198z58AQ==",
   "tags": [
     "integration",
     "storage",
     "mobile"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Access Android device storage...",
+      "name": "input",
+      "widget": "file"
+    }
+  ],
+  "version": "1.0"
 }

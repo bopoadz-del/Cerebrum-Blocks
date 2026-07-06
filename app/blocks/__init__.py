@@ -8,8 +8,10 @@ full-platform boot.
 import importlib
 import logging
 import os
+from pathlib import Path
 from typing import Any, Dict, Iterator, Tuple
 
+from app.core.block_capabilities import BlockCapabilities
 from app.core.universal_base import UniversalBlock, UniversalContainer
 from app.core.typed_block import TypedBlock
 
@@ -40,6 +42,14 @@ _GENERIC_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "video_metadata_ingest": ("app.blocks.video_metadata_ingest", "VideoMetadataIngestBlock"),
     "video_anomaly_trigger": ("app.blocks.video_anomaly_trigger", "VideoAnomalyTriggerBlock"),
 }
+
+_REGISTRY_ROOT = Path(__file__).resolve().parents[2] / "block_registry"
+
+
+def _is_core_block(block_name: str) -> bool:
+    """Return ``True`` for trusted platform core blocks."""
+    return block_name in _GENERIC_BLOCK_DEFS
+
 
 _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "pdf_v2": ("app.blocks.pdf_v2", "PDFBlockV2"),
@@ -99,19 +109,93 @@ def _legacy_boot() -> bool:
     return os.getenv("CEREBRUM_VIRGIN", "true").strip().lower() in ("0", "false", "no")
 
 
+def _validate_registry_block(name: str, validator: Any) -> bool:
+    """Validate a non-core block that has a directory in ``block_registry/``.
+
+    Returns ``True`` if the block passes the validation gate or has no on-disk
+    registry folder (Python-only blocks are allowed for backward compatibility
+    but logged). Returns ``False`` when validation fails and the block must be
+    excluded from ``_BLOCK_DEFS``.
+    """
+    if _is_core_block(name):
+        return True
+
+    block_path = _REGISTRY_ROOT / name
+    if not block_path.is_dir():
+        logger.debug(
+            "third-party block '%s' has no registry folder; loading unvalidated",
+            name,
+        )
+        return True
+
+    try:
+        result = validator.validate_block(block_path)
+    except Exception as exc:
+        logger.warning("validation gate crashed for '%s': %s; excluding block", name, exc)
+        return False
+
+    if result.status != "passed":
+        logger.warning(
+            "validation failed for '%s' (%s): %s; excluding block",
+            name,
+            result.status,
+            result.reasons,
+        )
+        return False
+
+    return True
+
+
 def _build_block_defs() -> Dict[str, Tuple[str, str]]:
     from app.core.domain_kit_loader import kit_block_specs, verify_installed_containers
 
     verify_installed_containers()
-    defs = dict(_GENERIC_BLOCK_DEFS)
+    defs: Dict[str, Tuple[str, str]] = dict(_GENERIC_BLOCK_DEFS)
+
+    candidate_blocks: Dict[str, Tuple[str, str]] = {}
     if _legacy_boot():
-        defs.update(_EXTENDED_BLOCK_DEFS)
+        candidate_blocks.update(_EXTENDED_BLOCK_DEFS)
     for name, module, class_name in kit_block_specs():
-        defs[name] = (module, class_name)
+        candidate_blocks[name] = (module, class_name)
+
+    validator: Any = None
+    if candidate_blocks:
+        try:
+            from app.core.block_validation import BlockValidator
+
+            validator = BlockValidator()
+        except Exception as exc:  # pragma: no cover - defensive import guard
+            logger.warning(
+                "validation gate unavailable for non-core blocks: %s; "
+                "third-party blocks will be excluded if they have registry folders",
+                exc,
+            )
+
+    for name, spec in candidate_blocks.items():
+        if validator is not None and not _validate_registry_block(name, validator):
+            continue
+        defs[name] = spec
+
     return defs
 
 
+def _build_block_caps(defs: Dict[str, Tuple[str, str]]) -> Dict[str, BlockCapabilities]:
+    """Build a capability map for all registered blocks.
+
+    Core blocks are trusted and default to safe (no network/fs/cross-block).
+    Non-core blocks with a registry folder parse their manifest.
+    """
+    caps: Dict[str, BlockCapabilities] = {}
+    for name in defs:
+        if _is_core_block(name):
+            caps[name] = BlockCapabilities()
+        else:
+            caps[name] = BlockCapabilities.from_registry(name, _REGISTRY_ROOT)
+    return caps
+
+
 _BLOCK_DEFS: Dict[str, Tuple[str, str]] = _build_block_defs()
+_BLOCK_CAPS: Dict[str, BlockCapabilities] = _build_block_caps(_BLOCK_DEFS)
 
 
 class _LazyBlockRegistry:
@@ -186,13 +270,24 @@ def get_all_blocks():
     return BLOCK_REGISTRY
 
 
+def get_block_capabilities(name: str) -> BlockCapabilities:
+    """Return the runtime capabilities declared for ``name``.
+
+    Core blocks default to safe (no network/filesystem/cross-block) capabilities.
+    Non-core blocks return the parsed manifest permissions.
+    """
+    return _BLOCK_CAPS.get(name, BlockCapabilities())
+
+
 __all__ = [
     "UniversalBlock",
     "UniversalContainer",
     "TypedBlock",
     "BLOCK_REGISTRY",
+    "BlockCapabilities",
     "get_block",
     "get_all_blocks",
+    "get_block_capabilities",
 ]
 
 

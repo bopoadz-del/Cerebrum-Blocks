@@ -1,77 +1,90 @@
 {
-  "id": "async_processor",
-  "name": "Async Processor",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Celery-style task dispatcher with in-process fallback queue",
-  "layer": 0,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "188180a8ccbfe009a5ef4f9ed8077bfd85beffdfbe4d1a99aec8c2e2e77d9b62",
+    "block.py": "6cad5c835ff968e3e2b796cc78093111677f183d19f886f2744cdf1be9e5fe2c"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/async_processor:latest",
+    "type": "docker"
+  },
+  "id": "async_processor",
   "inputs": [
     {
+      "description": "{\"action\": \"dispatch\", \"task\": \"process_pdf\", \"args\": {}}",
       "name": "input",
-      "type": "json",
       "required": false,
-      "description": "{\"action\": \"dispatch\", \"task\": \"process_pdf\", \"args\": {}}"
+      "type": "json"
     },
     {
-      "name": "max_concurrent",
-      "type": "number",
-      "required": false,
       "default": 4,
-      "description": "Configuration parameter: max_concurrent"
+      "description": "Configuration parameter: max_concurrent",
+      "name": "max_concurrent",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "default_timeout",
-      "type": "number",
-      "required": false,
       "default": 300,
-      "description": "Configuration parameter: default_timeout"
+      "description": "Configuration parameter: default_timeout",
+      "name": "default_timeout",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "celery_app",
-      "type": "string",
-      "required": false,
       "default": null,
-      "description": "Configuration parameter: celery_app"
+      "description": "Configuration parameter: celery_app",
+      "name": "celery_app",
+      "required": false,
+      "type": "string"
     }
   ],
+  "layer": 0,
+  "name": "Async Processor",
   "outputs": [
     {
+      "description": "Job ID",
       "name": "job_id",
-      "type": "text",
-      "description": "Job ID"
+      "type": "text"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/async_processor:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "{\"action\": \"dispatch\", \"task\": \"process_pdf\", \"args\": {}}"
-    },
-    {
-      "name": "max_concurrent",
-      "widget": "number",
-      "label": "Max Concurrent"
-    },
-    {
-      "name": "default_timeout",
-      "widget": "number",
-      "label": "Default Timeout"
-    },
-    {
-      "name": "celery_app",
-      "widget": "text",
-      "label": "Celery App"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "80DnzC7QQptLoEAX/GWsuo/E1x+3EUuYoICR9fxQYyeK+wS9JC2DXwk/KbjcS9TlrAZRT1b9dK2XZ63dVRdbBA==",
   "tags": [
     "infrastructure",
     "async",
     "queue",
     "worker"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "{\"action\": \"dispatch\", \"task\": \"process_pdf\", \"args\": {}}",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Max Concurrent",
+      "name": "max_concurrent",
+      "widget": "number"
+    },
+    {
+      "label": "Default Timeout",
+      "name": "default_timeout",
+      "widget": "number"
+    },
+    {
+      "label": "Celery App",
+      "name": "celery_app",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0"
 }

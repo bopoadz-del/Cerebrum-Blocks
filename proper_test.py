@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """PROPER TEST: Structural integrity + graceful error handling."""
 import sys, asyncio
+
+import pytest
+
 sys.path.insert(0, '.')
 from app.blocks import BLOCK_REGISTRY
+
+pytestmark = pytest.mark.manual_script
 
 async def test_block(name, block_class):
     errors = []

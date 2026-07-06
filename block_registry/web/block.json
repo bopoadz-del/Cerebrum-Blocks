@@ -1,50 +1,63 @@
 {
-  "id": "web",
-  "name": "Web",
-  "version": "2.0",
   "author": "Cerebrum Team",
   "description": "Fetch and extract content from any URL",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "baf4ce27c35278ef8a616b0b687ab7d381aab81c4f5ebfb76aa152549862dd9f",
+    "block.py": "fe1cc40c64f9fd43c976c873c7844d602cf2501c47cc027171f7f3fd1b0e9902"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/web:latest",
+    "type": "docker"
+  },
+  "id": "web",
   "inputs": [
     {
+      "description": "Enter URL to scrape...",
       "name": "input",
-      "type": "string",
       "required": false,
-      "description": "Enter URL to scrape..."
+      "type": "string"
     }
   ],
+  "layer": 3,
+  "name": "Web",
   "outputs": [
     {
+      "description": "Title",
       "name": "title",
-      "type": "text",
-      "description": "Title"
+      "type": "text"
     },
     {
+      "description": "Content",
       "name": "text",
-      "type": "markdown",
-      "description": "Content"
+      "type": "markdown"
     },
     {
+      "description": "Links",
       "name": "links",
-      "type": "array",
-      "description": "Links"
+      "type": "array"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/web:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "text",
-      "label": "Enter URL to scrape..."
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "MpTNnBtDwIlNkSRXlSyOvjpKnjHDZVv4qTWqk+jgwiS3/TpBVQZuATprukxX5Bui/c6eIhI3gazuNxJn9B48Cg==",
   "tags": [
     "domain",
     "web",
     "scraping"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Enter URL to scrape...",
+      "name": "input",
+      "widget": "text"
+    }
+  ],
+  "version": "2.0"
 }

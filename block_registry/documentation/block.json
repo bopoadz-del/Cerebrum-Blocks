@@ -1,136 +1,149 @@
 {
-  "id": "documentation",
-  "name": "Documentation",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "fbf76ba89e29ea1b48d7815569846e0db900149d0ff25a803ce093e0d7de334c",
+    "block.py": "51eb3abeab4e06b6ced343a9f5303d1ee8e66782acbf2796c4a0f6e9e603dc93"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/documentation:latest",
+    "type": "docker"
+  },
+  "id": "documentation",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected action",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "generate_docs",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "generate_docs",
+        "extract_signature",
+        "create_playground",
+        "search_docs",
+        "add_example",
+        "get_examples",
+        "render_markdown",
+        "validate_docs"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: auto_generate",
+      "name": "auto_generate",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: include_playground",
+      "name": "include_playground",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": 3,
+      "description": "Configuration parameter: examples_per_block",
+      "name": "examples_per_block",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": "markdown",
+      "description": "Configuration parameter: doc_format",
+      "name": "doc_format",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "github",
+      "description": "Configuration parameter: theme",
+      "name": "theme",
+      "required": false,
+      "type": "string"
+    }
+  ],
   "layer": 4,
+  "name": "Documentation",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "code",
     "vector"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "generate_docs",
-      "options": [
-        "generate_docs",
-        "extract_signature",
-        "create_playground",
-        "search_docs",
-        "add_example",
-        "get_examples",
-        "render_markdown",
-        "validate_docs"
-      ]
-    },
-    {
-      "name": "auto_generate",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: auto_generate"
-    },
-    {
-      "name": "include_playground",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: include_playground"
-    },
-    {
-      "name": "examples_per_block",
-      "type": "number",
-      "required": false,
-      "default": 3,
-      "description": "Configuration parameter: examples_per_block"
-    },
-    {
-      "name": "doc_format",
-      "type": "string",
-      "required": false,
-      "default": "markdown",
-      "description": "Configuration parameter: doc_format"
-    },
-    {
-      "name": "theme",
-      "type": "string",
-      "required": false,
-      "default": "github",
-      "description": "Configuration parameter: theme"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/documentation:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "generate_docs",
-        "extract_signature",
-        "create_playground",
-        "search_docs",
-        "add_example",
-        "get_examples",
-        "render_markdown",
-        "validate_docs"
-      ]
-    },
-    {
-      "name": "auto_generate",
-      "widget": "toggle",
-      "label": "Auto Generate"
-    },
-    {
-      "name": "include_playground",
-      "widget": "toggle",
-      "label": "Include Playground"
-    },
-    {
-      "name": "examples_per_block",
-      "widget": "number",
-      "label": "Examples Per Block"
-    },
-    {
-      "name": "doc_format",
-      "widget": "text",
-      "label": "Doc Format"
-    },
-    {
-      "name": "theme",
-      "widget": "text",
-      "label": "Theme"
-    }
-  ],
+  "signature": "uAoAPNDdJRz3UrF3+aawG83AQj/bYD9Q1nFjCwCwlHo5vmvTNdQn0ciYEe9qaCjzveXxVJny0iPUgX6Dm9yhBg==",
   "tags": [
     "platform",
     "docs",
     "developer",
     "developer_tools"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected action",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "generate_docs",
+        "extract_signature",
+        "create_playground",
+        "search_docs",
+        "add_example",
+        "get_examples",
+        "render_markdown",
+        "validate_docs"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Auto Generate",
+      "name": "auto_generate",
+      "widget": "toggle"
+    },
+    {
+      "label": "Include Playground",
+      "name": "include_playground",
+      "widget": "toggle"
+    },
+    {
+      "label": "Examples Per Block",
+      "name": "examples_per_block",
+      "widget": "number"
+    },
+    {
+      "label": "Doc Format",
+      "name": "doc_format",
+      "widget": "text"
+    },
+    {
+      "label": "Theme",
+      "name": "theme",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0"
 }

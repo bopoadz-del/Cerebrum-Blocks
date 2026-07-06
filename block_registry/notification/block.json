@@ -1,157 +1,170 @@
 {
-  "id": "notification",
-  "name": "Notification",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Send notifications via Telegram, Email, Webhook, or Slack",
-  "layer": 2,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "107a38ce9a9daa1a9304832876de9343f5e20aa68c3048a692b37962bc3ed15b",
+    "block.py": "4b153a38df9a8ded0e0204520c26cedd6a947f266b828981324ac4038f3305ce"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/notification:latest",
+    "type": "docker"
+  },
+  "id": "notification",
   "inputs": [
     {
+      "description": "{\"channel\": \"telegram\", \"to\": \"123456\", \"message\": \"Hello\"}",
       "name": "input",
-      "type": "json",
       "required": false,
-      "description": "{\"channel\": \"telegram\", \"to\": \"123456\", \"message\": \"Hello\"}"
+      "type": "json"
     },
     {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
       "default": "send",
+      "description": "Action",
+      "name": "action",
       "options": [
         "send",
         "broadcast",
         "health"
-      ]
+      ],
+      "required": false,
+      "type": "string"
     },
     {
+      "default": "",
+      "description": "Configuration parameter: sendgrid_api_key",
       "name": "sendgrid_api_key",
-      "type": "string",
       "required": false,
-      "default": "",
-      "description": "Configuration parameter: sendgrid_api_key"
+      "type": "string"
     },
     {
+      "default": "",
+      "description": "Configuration parameter: smtp_host",
       "name": "smtp_host",
-      "type": "string",
       "required": false,
-      "default": "",
-      "description": "Configuration parameter: smtp_host"
+      "type": "string"
     },
     {
-      "name": "smtp_port",
-      "type": "number",
-      "required": false,
       "default": 587,
-      "description": "Configuration parameter: smtp_port"
+      "description": "Configuration parameter: smtp_port",
+      "name": "smtp_port",
+      "required": false,
+      "type": "number"
     },
     {
+      "default": "",
+      "description": "Configuration parameter: smtp_user",
       "name": "smtp_user",
-      "type": "string",
       "required": false,
-      "default": "",
-      "description": "Configuration parameter: smtp_user"
+      "type": "string"
     },
     {
+      "default": "",
+      "description": "Configuration parameter: smtp_pass",
       "name": "smtp_pass",
-      "type": "string",
       "required": false,
-      "default": "",
-      "description": "Configuration parameter: smtp_pass"
+      "type": "string"
     },
     {
+      "default": "",
+      "description": "Configuration parameter: slack_webhook_url",
       "name": "slack_webhook_url",
-      "type": "string",
       "required": false,
-      "default": "",
-      "description": "Configuration parameter: slack_webhook_url"
+      "type": "string"
     },
     {
-      "name": "default_from_email",
-      "type": "string",
-      "required": false,
       "default": "cerebrum@localhost",
-      "description": "Configuration parameter: default_from_email"
+      "description": "Configuration parameter: default_from_email",
+      "name": "default_from_email",
+      "required": false,
+      "type": "string"
     }
   ],
+  "layer": 2,
+  "name": "Notification",
   "outputs": [
     {
+      "description": "Channel",
       "name": "channel",
-      "type": "text",
-      "description": "Channel"
+      "type": "text"
     },
     {
+      "description": "Sent",
       "name": "sent",
-      "type": "boolean",
-      "description": "Sent"
+      "type": "boolean"
     },
     {
+      "description": "Message ID",
       "name": "message_id",
-      "type": "text",
-      "description": "Message ID"
+      "type": "text"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/notification:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "{\"channel\": \"telegram\", \"to\": \"123456\", \"message\": \"Hello\"}"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "send",
-        "broadcast",
-        "health"
-      ]
-    },
-    {
-      "name": "sendgrid_api_key",
-      "widget": "text",
-      "label": "Sendgrid Api Key"
-    },
-    {
-      "name": "smtp_host",
-      "widget": "text",
-      "label": "Smtp Host"
-    },
-    {
-      "name": "smtp_port",
-      "widget": "number",
-      "label": "Smtp Port"
-    },
-    {
-      "name": "smtp_user",
-      "widget": "text",
-      "label": "Smtp User"
-    },
-    {
-      "name": "smtp_pass",
-      "widget": "text",
-      "label": "Smtp Pass"
-    },
-    {
-      "name": "slack_webhook_url",
-      "widget": "text",
-      "label": "Slack Webhook Url"
-    },
-    {
-      "name": "default_from_email",
-      "widget": "text",
-      "label": "Default From Email"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "VnRKwXpdWTG6j4GpkWIjpdnOxbCKZN4kSAfvrnXqcJZiwuQaP82n/txFEm4+x39N4+4VJts8KCp0uk3B98lgBg==",
   "tags": [
     "notification",
     "messaging",
     "integration",
     "core"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "{\"channel\": \"telegram\", \"to\": \"123456\", \"message\": \"Hello\"}",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "send",
+        "broadcast",
+        "health"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Sendgrid Api Key",
+      "name": "sendgrid_api_key",
+      "widget": "text"
+    },
+    {
+      "label": "Smtp Host",
+      "name": "smtp_host",
+      "widget": "text"
+    },
+    {
+      "label": "Smtp Port",
+      "name": "smtp_port",
+      "widget": "number"
+    },
+    {
+      "label": "Smtp User",
+      "name": "smtp_user",
+      "widget": "text"
+    },
+    {
+      "label": "Smtp Pass",
+      "name": "smtp_pass",
+      "widget": "text"
+    },
+    {
+      "label": "Slack Webhook Url",
+      "name": "slack_webhook_url",
+      "widget": "text"
+    },
+    {
+      "label": "Default From Email",
+      "name": "default_from_email",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0"
 }

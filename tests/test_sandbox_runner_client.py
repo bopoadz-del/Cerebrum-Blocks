@@ -17,6 +17,11 @@ from typing import Any, Dict
 
 import pytest
 
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Unix-only 'resource' module required by app.blocks.sandbox",
+)
+
 
 # ── Helpers ──────────────────────────────────────────────────────────────
 

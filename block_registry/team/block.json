@@ -1,157 +1,170 @@
 {
-  "id": "team",
-  "name": "Team",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "0c92fa20630846c1cc283dc31e54f3ff10cdd31cba6289ebfadcc01fb824560b",
+    "block.py": "95c044c574332ecdbb32795a9b3562fa98c6eff10bd8ecdfa41152e4f2676c5d"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/team:latest",
+    "type": "docker"
+  },
+  "id": "team",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected action",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "create_team",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "create_team",
+        "delete_team",
+        "invite_member",
+        "accept_invitation",
+        "remove_member",
+        "set_role",
+        "get_team",
+        "list_teams",
+        "get_members",
+        "get_team_context",
+        "switch_team",
+        "check_permission"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 50,
+      "description": "Configuration parameter: max_members_per_team",
+      "name": "max_members_per_team",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 10,
+      "description": "Configuration parameter: max_teams_per_org",
+      "name": "max_teams_per_org",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": "member",
+      "description": "Configuration parameter: default_role",
+      "name": "default_role",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 48,
+      "description": "Configuration parameter: invitation_expiry_hours",
+      "name": "invitation_expiry_hours",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": false,
+      "description": "Configuration parameter: enable_sso",
+      "name": "enable_sso",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "default": true,
+      "description": "Configuration parameter: require_2fa_for_admins",
+      "name": "require_2fa_for_admins",
+      "required": false,
+      "type": "boolean"
+    }
+  ],
   "layer": 3,
+  "name": "Team",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "auth",
     "database",
     "billing"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "create_team",
-      "options": [
-        "create_team",
-        "delete_team",
-        "invite_member",
-        "accept_invitation",
-        "remove_member",
-        "set_role",
-        "get_team",
-        "list_teams",
-        "get_members",
-        "get_team_context",
-        "switch_team",
-        "check_permission"
-      ]
-    },
-    {
-      "name": "max_members_per_team",
-      "type": "number",
-      "required": false,
-      "default": 50,
-      "description": "Configuration parameter: max_members_per_team"
-    },
-    {
-      "name": "max_teams_per_org",
-      "type": "number",
-      "required": false,
-      "default": 10,
-      "description": "Configuration parameter: max_teams_per_org"
-    },
-    {
-      "name": "default_role",
-      "type": "string",
-      "required": false,
-      "default": "member",
-      "description": "Configuration parameter: default_role"
-    },
-    {
-      "name": "invitation_expiry_hours",
-      "type": "number",
-      "required": false,
-      "default": 48,
-      "description": "Configuration parameter: invitation_expiry_hours"
-    },
-    {
-      "name": "enable_sso",
-      "type": "boolean",
-      "required": false,
-      "default": false,
-      "description": "Configuration parameter: enable_sso"
-    },
-    {
-      "name": "require_2fa_for_admins",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "description": "Configuration parameter: require_2fa_for_admins"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/team:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "create_team",
-        "delete_team",
-        "invite_member",
-        "accept_invitation",
-        "remove_member",
-        "set_role",
-        "get_team",
-        "list_teams",
-        "get_members",
-        "get_team_context",
-        "switch_team",
-        "check_permission"
-      ]
-    },
-    {
-      "name": "max_members_per_team",
-      "widget": "number",
-      "label": "Max Members Per Team"
-    },
-    {
-      "name": "max_teams_per_org",
-      "widget": "number",
-      "label": "Max Teams Per Org"
-    },
-    {
-      "name": "default_role",
-      "widget": "text",
-      "label": "Default Role"
-    },
-    {
-      "name": "invitation_expiry_hours",
-      "widget": "number",
-      "label": "Invitation Expiry Hours"
-    },
-    {
-      "name": "enable_sso",
-      "widget": "toggle",
-      "label": "Enable Sso"
-    },
-    {
-      "name": "require_2fa_for_admins",
-      "widget": "toggle",
-      "label": "Require 2Fa For Admins"
-    }
-  ],
+  "signature": "V8EGnEfjp6KfmQBBSMDBv7uERO3c8hJ2wnhy6F+kUBjkeEHKV15KrCh9kgYmFxoMNq6DoCCmNvAEogJyYda5DQ==",
   "tags": [
     "platform",
     "multi-tenant",
     "enterprise",
     "collaboration"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected action",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "create_team",
+        "delete_team",
+        "invite_member",
+        "accept_invitation",
+        "remove_member",
+        "set_role",
+        "get_team",
+        "list_teams",
+        "get_members",
+        "get_team_context",
+        "switch_team",
+        "check_permission"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Max Members Per Team",
+      "name": "max_members_per_team",
+      "widget": "number"
+    },
+    {
+      "label": "Max Teams Per Org",
+      "name": "max_teams_per_org",
+      "widget": "number"
+    },
+    {
+      "label": "Default Role",
+      "name": "default_role",
+      "widget": "text"
+    },
+    {
+      "label": "Invitation Expiry Hours",
+      "name": "invitation_expiry_hours",
+      "widget": "number"
+    },
+    {
+      "label": "Enable Sso",
+      "name": "enable_sso",
+      "widget": "toggle"
+    },
+    {
+      "label": "Require 2Fa For Admins",
+      "name": "require_2fa_for_admins",
+      "widget": "toggle"
+    }
+  ],
+  "version": "1.0.0"
 }

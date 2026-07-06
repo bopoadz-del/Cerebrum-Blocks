@@ -1,132 +1,145 @@
 {
-  "id": "rate_limiter",
-  "name": "Rate Limiter",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "",
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "e0b8c2819dff5a73f0b8f608aab2cbcbe559eab491e79969d679466aa7d50e0c",
+    "block.py": "26b3a308765d306370ca7da2ac9f921f1ca3b62d45da6b4aef96d4ad12a103ce"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/rate_limiter:latest",
+    "type": "docker"
+  },
+  "id": "rate_limiter",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected action",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "check_limit",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "check_limit",
+        "record_hit",
+        "set_custom_limit",
+        "get_usage_stats",
+        "reset_limit",
+        "get_limit_info"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": "sliding_window",
+      "description": "Configuration parameter: strategy",
+      "name": "strategy",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 1000,
+      "description": "Configuration parameter: default_limit",
+      "name": "default_limit",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 3600,
+      "description": "Configuration parameter: default_window",
+      "name": "default_window",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 10,
+      "description": "Configuration parameter: burst_allowance",
+      "name": "burst_allowance",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": 300,
+      "description": "Configuration parameter: cleanup_interval",
+      "name": "cleanup_interval",
+      "required": false,
+      "type": "number"
+    }
+  ],
   "layer": 1,
+  "name": "Rate Limiter",
+  "outputs": [
+    {
+      "description": "Result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
   "requires": [
     "memory",
     "database"
   ],
-  "inputs": [
-    {
-      "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "description": "Action",
-      "default": "check_limit",
-      "options": [
-        "check_limit",
-        "record_hit",
-        "set_custom_limit",
-        "get_usage_stats",
-        "reset_limit",
-        "get_limit_info"
-      ]
-    },
-    {
-      "name": "strategy",
-      "type": "string",
-      "required": false,
-      "default": "sliding_window",
-      "description": "Configuration parameter: strategy"
-    },
-    {
-      "name": "default_limit",
-      "type": "number",
-      "required": false,
-      "default": 1000,
-      "description": "Configuration parameter: default_limit"
-    },
-    {
-      "name": "default_window",
-      "type": "number",
-      "required": false,
-      "default": 3600,
-      "description": "Configuration parameter: default_window"
-    },
-    {
-      "name": "burst_allowance",
-      "type": "number",
-      "required": false,
-      "default": 10,
-      "description": "Configuration parameter: burst_allowance"
-    },
-    {
-      "name": "cleanup_interval",
-      "type": "number",
-      "required": false,
-      "default": 300,
-      "description": "Configuration parameter: cleanup_interval"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Result"
-    }
-  ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/rate_limiter:latest"
-  },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "json",
-      "label": "JSON payload for the selected action"
-    },
-    {
-      "name": "action",
-      "widget": "select",
-      "label": "Action",
-      "options": [
-        "check_limit",
-        "record_hit",
-        "set_custom_limit",
-        "get_usage_stats",
-        "reset_limit",
-        "get_limit_info"
-      ]
-    },
-    {
-      "name": "strategy",
-      "widget": "text",
-      "label": "Strategy"
-    },
-    {
-      "name": "default_limit",
-      "widget": "number",
-      "label": "Default Limit"
-    },
-    {
-      "name": "default_window",
-      "widget": "number",
-      "label": "Default Window"
-    },
-    {
-      "name": "burst_allowance",
-      "widget": "number",
-      "label": "Burst Allowance"
-    },
-    {
-      "name": "cleanup_interval",
-      "widget": "number",
-      "label": "Cleanup Interval"
-    }
-  ],
+  "signature": "qVrmMVmbbMjGJBdeKhpG2lJSAYwCIQ0xlpYfEZlSTda4+vLDwtO6c1/D+vgY1ZdFTHHjc0WT1z5v0GTA3Z9PCQ==",
   "tags": [
     "security",
     "protection",
     "infra",
     "rate_limiting"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected action",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "check_limit",
+        "record_hit",
+        "set_custom_limit",
+        "get_usage_stats",
+        "reset_limit",
+        "get_limit_info"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Strategy",
+      "name": "strategy",
+      "widget": "text"
+    },
+    {
+      "label": "Default Limit",
+      "name": "default_limit",
+      "widget": "number"
+    },
+    {
+      "label": "Default Window",
+      "name": "default_window",
+      "widget": "number"
+    },
+    {
+      "label": "Burst Allowance",
+      "name": "burst_allowance",
+      "widget": "number"
+    },
+    {
+      "label": "Cleanup Interval",
+      "name": "cleanup_interval",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }

@@ -1,88 +1,78 @@
 {
-  "id": "drawing_qto",
-  "name": "Drawing Qto",
-  "version": "1.0.0",
   "author": "Cerebrum Team",
   "description": "Extract measurements, areas, and volumes from DXF/DWG construction drawings",
-  "layer": 3,
-  "requires": [],
+  "digests": {
+    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "block.json": "dc7c9e8e8eeec39d618746656e2f9f5baaa229a0cd757f5e0a0ee6abd2e5366c",
+    "block.py": "08b586840e979c80cd2ecff0af20138dfaf00006ec0c1f4f15f5bc88652c438c"
+  },
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/drawing_qto:latest",
+    "type": "docker"
+  },
+  "id": "drawing_qto",
   "inputs": [
     {
+      "description": "Upload DXF or DWG drawing...",
       "name": "input",
-      "type": "file",
       "required": false,
-      "description": "Upload DXF or DWG drawing..."
+      "type": "file"
     },
     {
-      "name": "unit_scale",
-      "type": "number",
-      "required": false,
       "default": 1.0,
-      "description": "Configuration parameter: unit_scale"
+      "description": "Configuration parameter: unit_scale",
+      "name": "unit_scale",
+      "required": false,
+      "type": "number"
     },
     {
-      "name": "area_layer_filter",
-      "type": "array",
-      "required": false,
       "default": [],
-      "description": "Configuration parameter: area_layer_filter"
+      "description": "Configuration parameter: area_layer_filter",
+      "name": "area_layer_filter",
+      "required": false,
+      "type": "array"
     },
     {
-      "name": "min_area_m2",
-      "type": "number",
-      "required": false,
       "default": 0.01,
-      "description": "Configuration parameter: min_area_m2"
+      "description": "Configuration parameter: min_area_m2",
+      "name": "min_area_m2",
+      "required": false,
+      "type": "number"
     }
   ],
+  "layer": 3,
+  "name": "Drawing Qto",
   "outputs": [
     {
+      "description": "Linear Measurements",
       "name": "measurements",
-      "type": "list",
-      "description": "Linear Measurements"
+      "type": "list"
     },
     {
+      "description": "Areas",
       "name": "areas",
-      "type": "list",
-      "description": "Areas"
+      "type": "list"
     },
     {
+      "description": "Volumes",
       "name": "volumes",
-      "type": "list",
-      "description": "Volumes"
+      "type": "list"
     },
     {
+      "description": "Total Area",
       "name": "total_area_m2",
-      "type": "number",
-      "description": "Total Area"
+      "type": "number"
     }
   ],
-  "execution": {
-    "type": "docker",
-    "image": "ghcr.io/cerebrum-blocks/drawing_qto:latest"
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
   },
-  "ui_schema": [
-    {
-      "name": "input",
-      "widget": "file",
-      "label": "Upload DXF or DWG drawing..."
-    },
-    {
-      "name": "unit_scale",
-      "widget": "number",
-      "label": "Unit Scale"
-    },
-    {
-      "name": "area_layer_filter",
-      "widget": "json",
-      "label": "Area Layer Filter"
-    },
-    {
-      "name": "min_area_m2",
-      "widget": "number",
-      "label": "Min Area M2"
-    }
-  ],
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "g27zbsqiLQrvfcsIK8hpOF9Nyo7rsx46oXYhhXzO8xaaHxOQr2lghgRXTgL3Cv3VvC1W2J1SQLGQ0TwyeNu4DA==",
   "tags": [
     "domain",
     "construction",
@@ -90,5 +80,28 @@
     "qto",
     "dxf",
     "quantities"
-  ]
+  ],
+  "ui_schema": [
+    {
+      "label": "Upload DXF or DWG drawing...",
+      "name": "input",
+      "widget": "file"
+    },
+    {
+      "label": "Unit Scale",
+      "name": "unit_scale",
+      "widget": "number"
+    },
+    {
+      "label": "Area Layer Filter",
+      "name": "area_layer_filter",
+      "widget": "json"
+    },
+    {
+      "label": "Min Area M2",
+      "name": "min_area_m2",
+      "widget": "number"
+    }
+  ],
+  "version": "1.0.0"
 }
