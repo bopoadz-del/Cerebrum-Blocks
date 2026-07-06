@@ -11,6 +11,7 @@ import pytest
 
 # Import the block init functions under test.
 from app.blocks import _build_block_caps, _validate_registry_block
+from app.blocks import _EXTENDED_BLOCK_DEFS as _REAL_EXTENDED_BLOCK_DEFS
 from app.core.block_capabilities import BlockCapabilities
 from app.core.block_validation import BlockValidator
 from app.core.publisher_registry import BlockSigner, PublisherRegistry
@@ -120,3 +121,17 @@ def test_validate_registry_block_excludes_revoked_publisher(
             require_capabilities=False,
         )
     assert admitted is False
+
+
+def test_platform_extended_block_defaults_to_verified_tier(tmp_path: Path):
+    """Bundled platform extended blocks without a publisher are treated as verified."""
+    registry_root = _make_registry_block(tmp_path, "local_drive", "unknown_pub", None)
+    defs = {"local_drive": _REAL_EXTENDED_BLOCK_DEFS["local_drive"]}
+
+    with patch("app.blocks._REGISTRY_ROOT", registry_root), \
+         patch("app.blocks._is_core_block", return_value=False), \
+         patch("app.blocks._EXTENDED_BLOCK_DEFS", {"local_drive": defs["local_drive"]}):
+        caps = _build_block_caps(defs)
+
+    assert caps["local_drive"].publisher_tier == "verified"
+    assert caps["local_drive"].must_run_out_of_process is False

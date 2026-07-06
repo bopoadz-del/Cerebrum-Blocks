@@ -52,6 +52,16 @@ def _is_core_block(block_name: str) -> bool:
     return block_name in _GENERIC_BLOCK_DEFS
 
 
+def _is_platform_extended_block(block_name: str) -> bool:
+    """Return ``True`` for bundled platform extended blocks.
+
+    These blocks ship with the platform (like core blocks) but are loaded
+    through the extended block list. They receive the ``verified`` tier unless
+    the publisher registry or certification store says otherwise.
+    """
+    return block_name in _EXTENDED_BLOCK_DEFS
+
+
 _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "pdf_v2": ("app.blocks.pdf_v2", "PDFBlockV2"),
     "ocr_v2": ("app.blocks.ocr_v2", "OCRBlockV2"),
@@ -299,6 +309,12 @@ def _build_block_caps(
         else:
             base_caps = BlockCapabilities.from_registry(name, _REGISTRY_ROOT)
             tier = _resolve_publisher_tier(name, validator)
+            # Platform extended blocks ship with the platform and are treated
+            # as verified unless a publisher registry / certification record
+            # says otherwise. Third-party kit blocks and store installs remain
+            # community by default.
+            if tier == "community" and _is_platform_extended_block(name):
+                tier = "verified"
             caps[name] = BlockCapabilities(
                 network=base_caps.network,
                 filesystem=base_caps.filesystem,
