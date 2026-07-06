@@ -177,24 +177,6 @@ class TestChainEndpoint:
 class TestDriveEndpoints:
     """Tests for drive-specific endpoints."""
 
-    def test_debug_local_drive_validation(self):
-        from pathlib import Path
-        from app.core.block_validation import BlockValidator
-        from app.core.publisher_registry import PublisherRegistry
-        p = Path("block_registry/local_drive/block.py")
-        data = p.read_bytes()
-        has_crlf = b"\r\n" in data
-        has_lf = b"\n" in data.replace(b"\r\n", b"")
-        reg_path = PublisherRegistry().path
-        reg_exists = reg_path.exists()
-        reg_content = reg_path.read_text(encoding="utf-8") if reg_exists else "MISSING"
-        result = BlockValidator().validate_block(p.parent)
-        assert False, (
-            f"DEBUG: has_crlf={has_crlf} has_lf={has_lf} "
-            f"reg_path={reg_path} reg_exists={reg_exists} reg_content={reg_content!r} "
-            f"status={result.status} reasons={result.reasons}"
-        )
-
     def test_local_drive_list(self):
         """Test local drive via execute endpoint."""
         response = client.post("/execute", json={
@@ -202,8 +184,7 @@ class TestDriveEndpoints:
             "input": "/",
             "params": {"operation": "list"}
         })
-        if response.status_code != 200:
-            print(f"[DEBUG local_drive] status={response.status_code} body={response.text}")
+        
         assert response.status_code == 200
         data = response.json()
         assert data["block"] == "local_drive"
@@ -215,8 +196,7 @@ class TestDriveEndpoints:
             "input": {},
             "params": {"operation": "list"}
         })
-        if response.status_code != 200:
-            print(f"[DEBUG google_drive] status={response.status_code} body={response.text}")
+        
         assert response.status_code == 200
         data = response.json()
         assert data["block"] == "google_drive"
@@ -228,8 +208,7 @@ class TestDriveEndpoints:
             "input": {},
             "params": {"operation": "list"}
         })
-        if response.status_code != 200:
-            print(f"[DEBUG onedrive] status={response.status_code} body={response.text}")
+        
         assert response.status_code == 200
         data = response.json()
         assert data["block"] == "onedrive"
@@ -241,8 +220,7 @@ class TestDriveEndpoints:
             "input": {},
             "params": {"operation": "get_paths"}
         })
-        if response.status_code != 200:
-            print(f"[DEBUG android_drive] status={response.status_code} body={response.text}")
+        
         assert response.status_code == 200
         data = response.json()
         assert data["block"] == "android_drive"
