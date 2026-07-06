@@ -184,7 +184,8 @@ class TestDriveEndpoints:
             "input": "/",
             "params": {"operation": "list"}
         })
-        
+        if response.status_code != 200:
+            print(f"[DEBUG local_drive] status={response.status_code} body={response.text}")
         assert response.status_code == 200
         data = response.json()
         assert data["block"] == "local_drive"
@@ -196,7 +197,8 @@ class TestDriveEndpoints:
             "input": {},
             "params": {"operation": "list"}
         })
-        
+        if response.status_code != 200:
+            print(f"[DEBUG google_drive] status={response.status_code} body={response.text}")
         assert response.status_code == 200
         data = response.json()
         assert data["block"] == "google_drive"
@@ -208,7 +210,8 @@ class TestDriveEndpoints:
             "input": {},
             "params": {"operation": "list"}
         })
-        
+        if response.status_code != 200:
+            print(f"[DEBUG onedrive] status={response.status_code} body={response.text}")
         assert response.status_code == 200
         data = response.json()
         assert data["block"] == "onedrive"
@@ -220,7 +223,8 @@ class TestDriveEndpoints:
             "input": {},
             "params": {"operation": "get_paths"}
         })
-        
+        if response.status_code != 200:
+            print(f"[DEBUG android_drive] status={response.status_code} body={response.text}")
         assert response.status_code == 200
         data = response.json()
         assert data["block"] == "android_drive"
