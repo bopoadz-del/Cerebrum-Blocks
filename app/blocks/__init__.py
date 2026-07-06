@@ -230,18 +230,71 @@ def _build_block_defs() -> Dict[str, Tuple[str, str]]:
     return defs
 
 
+def _resolve_publisher_tier(name: str, validator: Any) -> Optional[str]:
+    """Return the publisher tier for a non-core block.
+
+    Priority:
+      1. Existing passing certification in the certification store.
+      2. Publisher registry lookup by manifest publisher_id.
+      3. Default to "community" if unknown.
+
+    Revoked publishers are handled by returning "revoked"; callers should
+    exclude the block from admission.
+    """
+    manifest = _load_manifest(name)
+    publisher_id = (manifest or {}).get("publisher_id")
+
+    # 1. Certification store
+    if validator is not None:
+        try:
+            result = validator.certification_store.get(name)
+            if result is not None and result.status == "passed" and result.publisher_tier:
+                return result.publisher_tier
+        except Exception as exc:
+            logger.warning("could not read certification for '%s': %s", name, exc)
+
+    # 2. Publisher registry direct lookup
+    if publisher_id and validator is not None and validator.publisher_registry is not None:
+        try:
+            record = validator.publisher_registry.get(publisher_id)
+            if record is not None:
+                return record.tier
+        except Exception as exc:
+            logger.warning("could not lookup publisher '%s' for '%s': %s", publisher_id, name, exc)
+
+    # 3. Fail closed
+    return "community"
+
+
 def _build_block_caps(defs: Dict[str, Tuple[str, str]]) -> Dict[str, BlockCapabilities]:
     """Build a capability map for all registered blocks.
 
     Core blocks are trusted and default to safe (no network/fs/cross-block).
-    Non-core blocks with a registry folder parse their manifest.
+    Non-core blocks with a registry folder parse their manifest and resolve
+    the publisher tier from the certification store or publisher registry.
     """
+    from app.core.block_validation import BlockValidator
+
+    validator: Any = None
+    try:
+        validator = BlockValidator()
+    except Exception as exc:
+        logger.warning("validation gate unavailable for tier resolution: %s", exc)
+
     caps: Dict[str, BlockCapabilities] = {}
     for name in defs:
         if _is_core_block(name):
             caps[name] = BlockCapabilities()
         else:
-            caps[name] = BlockCapabilities.from_registry(name, _REGISTRY_ROOT)
+            base_caps = BlockCapabilities.from_registry(name, _REGISTRY_ROOT)
+            tier = _resolve_publisher_tier(name, validator)
+            caps[name] = BlockCapabilities(
+                network=base_caps.network,
+                filesystem=base_caps.filesystem,
+                imports=base_caps.imports,
+                blocks=base_caps.blocks,
+                publisher_tier=tier,
+            )
     return caps
 
 
