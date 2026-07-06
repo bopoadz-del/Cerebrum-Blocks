@@ -67,6 +67,12 @@ data/
 # Published container kit bundles ship Fork artifacts (override data/ above)
 !block_store/kits/**/bundle/app/data/
 !block_store/kits/**/bundle/app/data/**
+# Platform publisher identity is required for block signature verification.
+!data/publishers.json
+!data/publishers/
+!data/publishers/*.pub
+# Never commit publisher private keys.
+data/publishers/*.key
 uploads/
 
 # Audit / shell logs written by the shell_audit hook during dev.
