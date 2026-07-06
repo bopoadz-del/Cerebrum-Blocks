@@ -1,0 +1,12 @@
+{
+  "id": "construction",
+  "name": "Construction Container",
+  "version": "1.0.0",
+  "description": "Construction domain container adapter.",
+  "permissions": {
+    "network": false,
+    "filesystem": false,
+    "imports": [],
+    "blocks": []
+  }
+}

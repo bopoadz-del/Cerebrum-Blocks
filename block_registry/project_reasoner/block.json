@@ -1,0 +1,12 @@
+{
+  "id": "project_reasoner",
+  "name": "Project Reasoner",
+  "version": "1.0.0",
+  "description": "LLM agent for project planning and reasoning.",
+  "permissions": {
+    "network": true,
+    "filesystem": true,
+    "imports": ["httpx", "json", "logging", "os"],
+    "blocks": []
+  }
+}

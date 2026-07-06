@@ -6,10 +6,11 @@ full-platform boot.
 """
 
 import importlib
+import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Iterator, Tuple
+from typing import Any, Dict, Iterator, Optional, Tuple
 
 from app.core.block_capabilities import BlockCapabilities
 from app.core.universal_base import UniversalBlock, UniversalContainer
@@ -109,40 +110,75 @@ def _legacy_boot() -> bool:
     return os.getenv("CEREBRUM_VIRGIN", "true").strip().lower() in ("0", "false", "no")
 
 
-def _validate_registry_block(name: str, validator: Any) -> bool:
-    """Validate a non-core block that has a directory in ``block_registry/``.
+def _load_manifest(name: str) -> Optional[Dict[str, Any]]:
+    """Load ``block_registry/<name>/block.json`` if it exists and is valid."""
+    manifest_path = _REGISTRY_ROOT / name / "block.json"
+    if not manifest_path.exists():
+        return None
+    try:
+        return json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("invalid manifest for '%s': %s", name, exc)
+        return None
 
-    Returns ``True`` if the block passes the validation gate or has no on-disk
-    registry folder (Python-only blocks are allowed for backward compatibility
-    but logged). Returns ``False`` when validation fails and the block must be
-    excluded from ``_BLOCK_DEFS``.
+
+def _validate_block_capabilities(name: str) -> Tuple[bool, str]:
+    """Parse the block's declared capabilities.
+
+    Returns ``(True, "")`` when a ``permissions`` declaration exists and is
+    parseable. Returns ``(False, reason)`` when the declaration is missing or
+    malformed. This is the fail-closed gate used for every non-core block,
+    whether it comes from the registry, a kit bundle, or a store install.
+    """
+    manifest = _load_manifest(name)
+    if manifest is None:
+        return False, f"no block.json declaration found for '{name}'"
+    permissions = manifest.get("permissions")
+    if not isinstance(permissions, dict):
+        return False, f"permissions declaration missing or invalid in block.json for '{name}'"
+    try:
+        BlockCapabilities.from_manifest(manifest)
+    except Exception as exc:
+        return False, f"failed to parse capabilities for '{name}': {exc}"
+    return True, ""
+
+
+def _validate_registry_block(name: str, validator: Any) -> bool:
+    """Validate a non-core block before it is admitted to ``_BLOCK_DEFS``.
+
+    - Core blocks are trusted and admitted without validation.
+    - Blocks with a registry folder go through the full ``BlockValidator`` gate
+      (manifest, signature/digest, AST scan) plus capability parsing.
+    - Kit / Python-only blocks must still provide a parseable capability
+      declaration in ``block_registry/<name>/block.json``. A missing or invalid
+      declaration causes the block to be excluded with a clear log line.
     """
     if _is_core_block(name):
         return True
 
     block_path = _REGISTRY_ROOT / name
-    if not block_path.is_dir():
-        logger.debug(
-            "third-party block '%s' has no registry folder; loading unvalidated",
-            name,
-        )
+    if block_path.is_dir():
+        try:
+            result = validator.validate_block(block_path)
+        except Exception as exc:
+            logger.warning("validation gate crashed for '%s': %s; excluding block", name, exc)
+            return False
+
+        if result.status != "passed":
+            logger.warning(
+                "validation failed for '%s' (%s): %s; excluding block",
+                name,
+                result.status,
+                result.reasons,
+            )
+            return False
         return True
 
-    try:
-        result = validator.validate_block(block_path)
-    except Exception as exc:
-        logger.warning("validation gate crashed for '%s': %s; excluding block", name, exc)
+    # Kit / store-install / Python-only block: require a capability declaration.
+    ok, reason = _validate_block_capabilities(name)
+    if not ok:
+        logger.warning("validation failed for '%s': %s; excluding block", name, reason)
         return False
-
-    if result.status != "passed":
-        logger.warning(
-            "validation failed for '%s' (%s): %s; excluding block",
-            name,
-            result.status,
-            result.reasons,
-        )
-        return False
-
     return True
 
 

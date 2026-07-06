@@ -1,0 +1,12 @@
+{
+  "id": "formula_executor_v2",
+  "name": "Formula Executor V2",
+  "version": "2.0.0",
+  "description": "LLM code generation and sandboxed execution for construction formulas.",
+  "permissions": {
+    "network": true,
+    "filesystem": true,
+    "imports": ["httpx", "os", "re", "threading"],
+    "blocks": []
+  }
+}

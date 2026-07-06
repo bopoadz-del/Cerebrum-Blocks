@@ -1,0 +1,12 @@
+{
+  "id": "construction_advisor",
+  "name": "Construction Advisor",
+  "version": "1.0.0",
+  "description": "Natural-language access to the construction knowledge base.",
+  "permissions": {
+    "network": false,
+    "filesystem": false,
+    "imports": [],
+    "blocks": []
+  }
+}
