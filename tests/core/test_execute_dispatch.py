@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
+from unittest.mock import patch
 
-from app.routers.execute import should_run_out_of_process
+import pytest
+from fastapi import HTTPException
+
+from app.routers.execute import should_run_out_of_process, _run_block, ExecuteRequest
 
 
 def test_core_blocks_run_in_process():
@@ -73,3 +76,59 @@ def test_block_with_privileged_import_runs_out_of_process(tmp_path):
     caps = BlockCapabilities.from_registry("os_block", registry_root)
     assert "os" in caps.privileged_imports
     assert not caps.is_safe_for_in_process
+
+
+def test_revoked_block_runs_out_of_process():
+    """Revoked publishers are always forced out-of-process by tier policy."""
+    from app.core.block_capabilities import BlockCapabilities
+
+    with patch("app.routers.execute.get_block_capabilities") as mock_caps:
+        mock_caps.return_value = BlockCapabilities(publisher_tier="revoked")
+        assert should_run_out_of_process("revoked_block") is True
+
+
+@pytest.mark.asyncio
+async def test_revoked_block_rejected_before_dispatch():
+    """Revoked blocks are rejected with HTTP 403 before any dispatch."""
+    from app.core.block_capabilities import BlockCapabilities
+
+    request = ExecuteRequest(block="revoked_block")
+    with (
+        patch("app.routers.execute.get_block_capabilities") as mock_caps,
+        patch("app.routers.execute.registry_block_exists", return_value=True),
+        patch("app.routers.execute.enforce_block_access"),
+    ):
+        mock_caps.return_value = BlockCapabilities(publisher_tier="revoked")
+        with pytest.raises(HTTPException) as exc_info:
+            await _run_block(request, auth={})
+        assert exc_info.value.status_code == 403
+
+
+def test_community_safe_block_runs_out_of_process():
+    """Community-tier publishers are sandboxed even with safe capabilities."""
+    from app.core.block_capabilities import BlockCapabilities
+
+    with patch("app.routers.execute.get_block_capabilities") as mock_caps:
+        mock_caps.return_value = BlockCapabilities(
+            publisher_tier="community",
+            network=False,
+            filesystem=False,
+            imports=[],
+            blocks=[],
+        )
+        assert should_run_out_of_process("community_safe_block") is True
+
+
+def test_verified_safe_block_runs_in_process():
+    """Verified publishers with safe capabilities run in-process."""
+    from app.core.block_capabilities import BlockCapabilities
+
+    with patch("app.routers.execute.get_block_capabilities") as mock_caps:
+        mock_caps.return_value = BlockCapabilities(
+            publisher_tier="verified",
+            network=False,
+            filesystem=False,
+            imports=[],
+            blocks=[],
+        )
+        assert should_run_out_of_process("verified_safe_block") is False
