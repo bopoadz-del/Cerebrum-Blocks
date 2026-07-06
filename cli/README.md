@@ -25,6 +25,7 @@ Email/password mode POSTs to `/v1/users/login` and caches the returned token in-
 
 ```bash
 cerebrum init              # interactive config writer
+cerebrum init --mode deployed  # non-interactive mode selection
 cerebrum config            # show resolved config (api_key masked)
 ```
 
@@ -71,6 +72,9 @@ cerebrum deploy status --session sess_abc123
 
 ## Notes
 
+- `cerebrum init` can run from a pipe: when stdin is not a TTY and `--mode`
+  is omitted, it defaults to `configurator` and prints an informational message
+  to stderr. Use `--mode deployed` to choose deployed mode non-interactively.
 - The CLI targets the canonical SSE envelope (`data:` lines with JSON `type`).
 - CerebrumDev's configurator router currently uses a different named-event format; a future Spec 2 PR standardizes the servers.
 - `reindex` and `rules list` are reserved for deployed-instance endpoints and print a clear "not available" message until those endpoints exist.
