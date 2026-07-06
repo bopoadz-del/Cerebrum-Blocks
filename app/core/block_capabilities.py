@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 
 # Imports that are forbidden by the static validator unless explicitly declared.
@@ -35,6 +35,7 @@ class BlockCapabilities:
     filesystem: bool | List[str] = False
     imports: List[str] = field(default_factory=list)
     blocks: List[str] = field(default_factory=list)
+    publisher_tier: Optional[str] = None
 
     @property
     def has_network(self) -> bool:
@@ -66,6 +67,18 @@ class BlockCapabilities:
             return False
         return True
 
+    @property
+    def must_run_out_of_process(self) -> bool:
+        """Return True when this block must run outside the main process.
+
+        Community-tier and revoked publishers are always sandboxed, even if
+        their declared capabilities look safe. Verified publishers follow the
+        capability-based safety decision.
+        """
+        if self.publisher_tier in ("community", "revoked"):
+            return True
+        return not self.is_safe_for_in_process
+
     def allows_block_access(self, name: str) -> bool:
         """Return True if the block is permitted to access another block."""
         return name in self.blocks
@@ -80,11 +93,13 @@ class BlockCapabilities:
             filesystem = False
         imports = permissions.get("imports", []) or []
         blocks = permissions.get("blocks", []) or []
+        publisher_tier = permissions.get("publisher_tier")
         return cls(
             network=network,
             filesystem=filesystem,
             imports=list(imports),
             blocks=list(blocks),
+            publisher_tier=publisher_tier,
         )
 
     @classmethod
