@@ -127,6 +127,80 @@ def test_passing_validation_for_signed_block(
     assert validator.is_certified("test_block") is True
 
 
+def test_validation_records_publisher_tier(
+    test_publisher: PublisherRegistry,
+    temp_block: Path,
+    private_key: Ed25519PrivateKey,
+    public_key_b64: str,
+):
+    test_publisher.register(
+        publisher_id="test_corp",
+        name="Test Corp",
+        contact="security@testcorp.example",
+        public_key=public_key_b64,
+        tier="verified",
+    )
+    BlockSigner.sign_block(
+        block_path=temp_block,
+        publisher_id="test_corp",
+        private_key=private_key,
+    )
+    validator = BlockValidator(
+        publisher_registry=test_publisher,
+        certification_store_path=temp_block.parent / "certifications.json",
+    )
+    result = validator.validate_block(temp_block)
+    assert result.status == "passed"
+    assert result.publisher_tier == "verified"
+
+
+def test_revoked_publisher_fails_validation(
+    test_publisher: PublisherRegistry,
+    temp_block: Path,
+    private_key: Ed25519PrivateKey,
+    public_key_b64: str,
+):
+    test_publisher.register(
+        publisher_id="test_corp",
+        name="Test Corp",
+        contact="security@testcorp.example",
+        public_key=public_key_b64,
+        tier="verified",
+    )
+    BlockSigner.sign_block(
+        block_path=temp_block,
+        publisher_id="test_corp",
+        private_key=private_key,
+    )
+    test_publisher.revoke("test_corp")
+    validator = BlockValidator(
+        publisher_registry=test_publisher,
+        certification_store_path=temp_block.parent / "certifications.json",
+    )
+    result = validator.validate_block(temp_block)
+    assert result.status == "failed"
+    assert result.publisher_tier == "revoked"
+    assert any("revoked" in reason.lower() for reason in result.reasons)
+
+
+def test_unknown_publisher_defaults_to_community_tier(
+    temp_block: Path,
+    private_key: Ed25519PrivateKey,
+):
+    """A publisher not in the registry defaults to community tier."""
+    BlockSigner.sign_block(
+        block_path=temp_block,
+        publisher_id="unknown_pub",
+        private_key=private_key,
+    )
+    validator = BlockValidator(
+        publisher_registry=None,
+        certification_store_path=temp_block.parent / "certifications.json",
+    )
+    result = validator.validate_block(temp_block)
+    assert result.publisher_tier == "community"
+
+
 def test_failing_validation_for_missing_permissions(
     test_publisher: PublisherRegistry,
     temp_block: Path,

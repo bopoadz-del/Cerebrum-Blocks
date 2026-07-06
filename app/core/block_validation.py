@@ -97,6 +97,7 @@ class BlockValidationResult:
     reasons: List[str] = field(default_factory=list)
     certified_at: str = field(default_factory=_now_iso)
     expires_at: str = field(default_factory=_default_expires_at)
+    publisher_tier: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to a JSON-friendly dict."""
@@ -374,6 +375,18 @@ class BlockValidator:
         manifest_publisher = manifest.get("publisher_id")
         resolved_publisher = publisher_id or manifest_publisher
 
+        publisher_tier: Optional[str] = None
+        if resolved_publisher and self.publisher_registry is not None:
+            record = self.publisher_registry.get(resolved_publisher)
+            if record is not None:
+                publisher_tier = record.tier
+                if record.tier == "revoked":
+                    reasons.append(f"publisher revoked: {resolved_publisher}")
+            else:
+                publisher_tier = "community"
+        else:
+            publisher_tier = "community"
+
         if not reasons:
             reasons.extend(self._check_required_fields(manifest))
 
@@ -407,6 +420,7 @@ class BlockValidator:
             reasons=reasons,
             certified_at=_now_iso(),
             expires_at=_default_expires_at(),
+            publisher_tier=publisher_tier,
         )
         self.certification_store.save_result(result)
         return result
