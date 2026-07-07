@@ -76,16 +76,30 @@ def test_tier_community_forces_out_of_process():
     assert caps.must_run_out_of_process is True
 
 
-def test_tier_verified_respects_capabilities():
-    safe = BlockCapabilities(publisher_tier="verified")
-    unsafe = BlockCapabilities(publisher_tier="verified", network=True)
+def test_tier_reviewed_respects_capabilities():
+    safe = BlockCapabilities(publisher_tier="reviewed")
+    unsafe = BlockCapabilities(publisher_tier="reviewed", network=True)
     assert safe.must_run_out_of_process is False
     assert unsafe.must_run_out_of_process is True
+
+
+def test_tier_certified_runs_in_process_even_unsafe():
+    safe = BlockCapabilities(publisher_tier="certified")
+    unsafe = BlockCapabilities(publisher_tier="certified", network=True)
+    assert safe.must_run_out_of_process is False
+    assert unsafe.must_run_out_of_process is False
 
 
 def test_tier_revoked_forces_out_of_process():
     caps = BlockCapabilities(publisher_tier="revoked")
     assert caps.must_run_out_of_process is True
+
+
+def test_tier_unknown_uses_capability_safety():
+    safe = BlockCapabilities(publisher_tier=None)
+    unsafe = BlockCapabilities(publisher_tier=None, network=True)
+    assert safe.must_run_out_of_process is False
+    assert unsafe.must_run_out_of_process is True
 
 
 def test_from_manifest_ignores_self_declared_publisher_tier():
@@ -96,7 +110,7 @@ def test_from_manifest_ignores_self_declared_publisher_tier():
             "filesystem": False,
             "imports": [],
             "blocks": [],
-            "publisher_tier": "verified",
+            "publisher_tier": "certified",
         }
     }
     caps = BlockCapabilities.from_manifest(manifest)

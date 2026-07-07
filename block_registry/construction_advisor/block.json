@@ -2,6 +2,7 @@
   "id": "construction_advisor",
   "name": "Construction Advisor",
   "version": "1.0.0",
+  "publisher_id": "cerebrum_platform",
   "description": "Natural-language access to the construction knowledge base.",
   "permissions": {
     "network": false,

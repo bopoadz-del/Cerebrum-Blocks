@@ -34,7 +34,7 @@ class CapabilityProxy:
     @property
     def requires_out_of_process(self) -> bool:
         """Return True when this block must not run in the main process."""
-        return not self._capabilities.is_safe_for_in_process
+        return self._capabilities.must_run_out_of_process
 
     def allows_dependency(self, dep_name: str) -> bool:
         """Return True if the block is permitted to access ``dep_name``."""

@@ -49,7 +49,7 @@ def test_publisher(
         name="Test Corp",
         contact="security@testcorp.example",
         public_key=public_key_b64,
-        tier="verified",
+        tier="reviewed",
     )
     return temp_registry
 
@@ -173,7 +173,7 @@ def test_validation_records_publisher_tier(
         name="Test Corp",
         contact="security@testcorp.example",
         public_key=public_key_b64,
-        tier="verified",
+        tier="reviewed",
     )
     BlockSigner.sign_block(
         block_path=temp_block,
@@ -186,7 +186,7 @@ def test_validation_records_publisher_tier(
     )
     result = validator.validate_block(temp_block)
     assert result.status == "passed"
-    assert result.publisher_tier == "verified"
+    assert result.publisher_tier == "reviewed"
 
 
 def test_revoked_publisher_fails_validation(
@@ -200,7 +200,7 @@ def test_revoked_publisher_fails_validation(
         name="Test Corp",
         contact="security@testcorp.example",
         public_key=public_key_b64,
-        tier="verified",
+        tier="reviewed",
     )
     BlockSigner.sign_block(
         block_path=temp_block,

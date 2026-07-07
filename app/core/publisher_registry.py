@@ -35,7 +35,13 @@ except ImportError as exc:  # pragma: no cover - dependency guard
     ) from exc
 
 
-TIER = Literal["verified", "community", "revoked"]
+TIER = Literal["community", "reviewed", "certified", "revoked"]
+
+# Tier semantics:
+#   community  = sandbox-only execution (default for unknown publishers)
+#   reviewed   = may run in-process when capabilities are safe
+#   certified  = pilot-proven; may run in-process even with elevated capabilities
+#   revoked    = rejected at admission and runtime
 
 DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 DEFAULT_PUBLISHERS_PATH = DEFAULT_DATA_DIR / "publishers.json"
