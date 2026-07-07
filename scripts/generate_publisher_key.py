@@ -42,7 +42,7 @@ def main() -> int:
     parser.add_argument("--contact", help="Contact email or URL")
     parser.add_argument(
         "--tier",
-        choices=("verified", "community", "revoked"),
+        choices=("community", "reviewed", "certified", "revoked"),
         default="community",
         help="Trust tier (default: community)",
     )

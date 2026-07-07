@@ -109,7 +109,7 @@ class PublisherRecord:
 
 
 class PublisherRegistry:
-    """Thread-safe JSON-backed registry of verified block publishers.
+    """Thread-safe JSON-backed registry of block publishers.
 
     The registry stores publisher identity records in ``data/publishers.json``.
     Writes are atomic (temp file + rename) and protected by an in-process lock.
@@ -323,7 +323,9 @@ class BlockVerifier:
         If ``publisher_id`` is supplied, it must match the manifest. If omitted,
         the manifest's own ``publisher_id`` is used.
 
-        Returns a dict with ``verified`` (bool), ``publisher_id``, and ``reason``.
+        Returns a dict with ``verified`` (bool, signature-verification result),
+        ``publisher_id``, and ``reason``. ``verified`` here means the signature
+        and digests are valid; it is unrelated to the publisher's trust tier.
         """
         block_path = Path(block_path)
         manifest_path = block_path / "block.json"
