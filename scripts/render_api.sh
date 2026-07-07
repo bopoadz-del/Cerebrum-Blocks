@@ -1,6 +1,16 @@
 #!/bin/bash
-# Render API helper — saved so we don't lose the key again
-RENDER_API_KEY="rnd_QqJ5qS97qrfF0IwAVrJhmKpJyNX0"
+# Render API helper.
+# The Render API key must come from your password manager / vault.
+# Set RENDER_API_KEY as an env var, or write it to .render/api-key (ignored by git).
+if [ -z "$RENDER_API_KEY" ] && [ -f .render/api-key ]; then
+  RENDER_API_KEY=$(cat .render/api-key)
+fi
+if [ -z "$RENDER_API_KEY" ]; then
+  echo "Error: RENDER_API_KEY is not set and .render/api-key does not exist." >&2
+  echo "Paste the key from your vault into RENDER_API_KEY or .render/api-key." >&2
+  exit 1
+fi
+
 PLATFORM_API_SERVICE="srv-d7dd87n7f7vs73es12kg"
 PLATFORM_SERVICE="srv-d7s2f2f7f7vs73dbiq20"
 STORE_API_SERVICE="srv-d7s2f2f7f7vs73dbiq30"

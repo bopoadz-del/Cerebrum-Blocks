@@ -56,17 +56,17 @@ docker run -p 8000:8000 --runtime nvidia cerebrum:jetson
 Create `.env` file:
 
 ```bash
-# AI Providers
-DEEPSEEK_API_KEY=sk-...
-GROQ_API_KEY=gsk-...
-OPENAI_API_KEY=sk-...
+# AI Providers (paste from your vault)
+DEEPSEEK_API_KEY=
+GROQ_API_KEY=
+OPENAI_API_KEY=
 
 # Database
 DATABASE_URL=postgresql://...
 REDIS_URL=redis://...
 
-# Auth
-JWT_SECRET=your-secret-key
+# Auth (generate in your vault)
+JWT_SECRET=
 ```
 
 ## 🏥 Health Checks

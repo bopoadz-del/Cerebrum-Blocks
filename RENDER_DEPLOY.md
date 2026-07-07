@@ -47,17 +47,17 @@ LOG_LEVEL=INFO
 LOG_FORMAT=json
 CORS_ORIGINS=https://cerebrum-platform.onrender.com   # SPA origin
 
-# API Keys (master + per-user — see "Managing users" below)
-CEREBRUM_MASTER_KEY=cb_master_<random-hex>
-CEREBRUM_API_KEY_ALICE=sk-cb-<random>
-CEREBRUM_API_KEY_BOB=sk-cb-<random>
+# API Keys (master + per-user — generate in your vault, paste into Render env vars)
+CEREBRUM_MASTER_KEY=
+CEREBRUM_API_KEY_ALICE=
+CEREBRUM_API_KEY_BOB=
 
 # Optional - AI providers (chat block falls back to rule-based offline if both missing)
-DEEPSEEK_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
+DEEPSEEK_API_KEY=
+ANTHROPIC_API_KEY=
 
 # Optional - error tracking
-SENTRY_DSN=https://...
+SENTRY_DSN=
 ```
 
 `scripts/render-rotate.sh` applies the non-secret vars (`CORS_ORIGINS`,
