@@ -47,7 +47,7 @@ def test_publisher(
         name="Test Corp",
         contact="security@testcorp.example",
         public_key=public_key_b64,
-        tier="verified",
+        tier="reviewed",
     )
     return temp_registry
 
@@ -86,10 +86,10 @@ def test_register_and_get_publisher(temp_registry: PublisherRegistry, public_key
         name="Acme Blocks",
         contact="ops@acme.example",
         public_key=public_key_b64,
-        tier="verified",
+        tier="reviewed",
     )
     assert record.publisher_id == "acme"
-    assert record.tier == "verified"
+    assert record.tier == "reviewed"
     assert record == temp_registry.get("acme")
 
 
@@ -101,7 +101,7 @@ def test_is_trusted_and_revoke(
         name="Acme Blocks",
         contact="ops@acme.example",
         public_key=public_key_b64,
-        tier="verified",
+        tier="reviewed",
     )
     assert temp_registry.is_trusted("acme") is True
 

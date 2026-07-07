@@ -119,16 +119,31 @@ def test_community_safe_block_runs_out_of_process():
         assert should_run_out_of_process("community_safe_block") is True
 
 
-def test_verified_safe_block_runs_in_process():
-    """Verified publishers with safe capabilities run in-process."""
+def test_reviewed_safe_block_runs_in_process():
+    """Reviewed publishers with safe capabilities run in-process."""
     from app.core.block_capabilities import BlockCapabilities
 
     with patch("app.routers.execute.get_block_capabilities") as mock_caps:
         mock_caps.return_value = BlockCapabilities(
-            publisher_tier="verified",
+            publisher_tier="reviewed",
             network=False,
             filesystem=False,
             imports=[],
             blocks=[],
         )
-        assert should_run_out_of_process("verified_safe_block") is False
+        assert should_run_out_of_process("reviewed_safe_block") is False
+
+
+def test_certified_unsafe_block_runs_in_process():
+    """Certified publishers are never forced to sandbox, even with unsafe caps."""
+    from app.core.block_capabilities import BlockCapabilities
+
+    with patch("app.routers.execute.get_block_capabilities") as mock_caps:
+        mock_caps.return_value = BlockCapabilities(
+            publisher_tier="certified",
+            network=True,
+            filesystem=False,
+            imports=[],
+            blocks=[],
+        )
+        assert should_run_out_of_process("certified_unsafe_block") is False

@@ -38,16 +38,16 @@ def _make_registry_block(tmp_path: Path, name: str, publisher_id: str, tier: str
     return registry_root
 
 
-def test_build_block_caps_assigns_verified_tier(tmp_path: Path):
+def test_build_block_caps_assigns_reviewed_tier(tmp_path: Path):
     pub_registry = PublisherRegistry(path=tmp_path / "publishers.json")
     pub_registry.register(
-        publisher_id="verified_pub",
-        name="Verified Pub",
+        publisher_id="reviewed_pub",
+        name="Reviewed Pub",
         contact="v@example.com",
         public_key="6W/TmQG3HokVwwLHlKlK9wGVFrlbEqpD7PPO29XySh4=",
-        tier="verified",
+        tier="reviewed",
     )
-    registry_root = _make_registry_block(tmp_path, "verified_block", "verified_pub", None)
+    registry_root = _make_registry_block(tmp_path, "reviewed_block", "reviewed_pub", None)
 
     validator = BlockValidator(
         publisher_registry=pub_registry,
@@ -55,13 +55,13 @@ def test_build_block_caps_assigns_verified_tier(tmp_path: Path):
     )
 
     # Build a minimal defs dict for the one non-core block.
-    defs = {"verified_block": ("app.blocks.not_real", "NotReal")}
+    defs = {"reviewed_block": ("app.blocks.not_real", "NotReal")}
     with patch("app.blocks._REGISTRY_ROOT", registry_root), \
          patch("app.blocks._is_core_block", return_value=False):
         caps = _build_block_caps(defs, validator=validator)
 
-    assert caps["verified_block"].publisher_tier == "verified"
-    assert caps["verified_block"].must_run_out_of_process is False
+    assert caps["reviewed_block"].publisher_tier == "reviewed"
+    assert caps["reviewed_block"].must_run_out_of_process is False
 
 
 def test_build_block_caps_defaults_unknown_to_community(tmp_path: Path):
@@ -97,7 +97,7 @@ def test_validate_registry_block_excludes_revoked_publisher(
         name="Revoked Pub",
         contact="r@example.com",
         public_key=public_key_b64,
-        tier="verified",
+        tier="reviewed",
     )
     pub_registry.revoke("revoked_pub")
 
@@ -123,9 +123,9 @@ def test_validate_registry_block_excludes_revoked_publisher(
     assert admitted is False
 
 
-def test_platform_extended_block_defaults_to_verified_tier(tmp_path: Path):
-    """Bundled platform extended blocks without a publisher are treated as verified."""
-    registry_root = _make_registry_block(tmp_path, "local_drive", "unknown_pub", None)
+def test_platform_extended_block_uses_registry_tier(tmp_path: Path):
+    """Platform extended blocks with the platform publisher_id inherit its certified tier."""
+    registry_root = _make_registry_block(tmp_path, "local_drive", "cerebrum_platform", None)
     defs = {"local_drive": _REAL_EXTENDED_BLOCK_DEFS["local_drive"]}
 
     with patch("app.blocks._REGISTRY_ROOT", registry_root), \
@@ -133,5 +133,23 @@ def test_platform_extended_block_defaults_to_verified_tier(tmp_path: Path):
          patch("app.blocks._EXTENDED_BLOCK_DEFS", {"local_drive": defs["local_drive"]}):
         caps = _build_block_caps(defs)
 
-    assert caps["local_drive"].publisher_tier == "verified"
+    assert caps["local_drive"].publisher_tier == "certified"
     assert caps["local_drive"].must_run_out_of_process is False
+
+
+def test_kit_block_without_publisher_defaults_to_community(tmp_path: Path):
+    """A third-party kit block with no declared publisher is sandboxed by default."""
+    registry_root = _make_registry_block(tmp_path, "kit_block", "", None)
+    # Ensure no publisher_id key is in the manifest.
+    manifest_path = registry_root / "kit_block" / "block.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest.pop("publisher_id", None)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    defs = {"kit_block": ("app.blocks.not_real", "NotReal")}
+    with patch("app.blocks._REGISTRY_ROOT", registry_root), \
+         patch("app.blocks._is_core_block", return_value=False):
+        caps = _build_block_caps(defs)
+
+    assert caps["kit_block"].publisher_tier == "community"
+    assert caps["kit_block"].must_run_out_of_process is True

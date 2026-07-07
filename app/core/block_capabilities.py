@@ -71,12 +71,19 @@ class BlockCapabilities:
     def must_run_out_of_process(self) -> bool:
         """Return True when this block must run outside the main process.
 
-        Community-tier and revoked publishers are always sandboxed, even if
-        their declared capabilities look safe. Verified publishers follow the
-        capability-based safety decision.
+        Tiers override capability declarations:
+          - community / revoked: always sandboxed
+          - reviewed: capability-based (safe = in-process, unsafe = sandbox)
+          - certified: pilot-proven; never forced to sandbox
+          - unknown / None: capability-based, but unknown non-core blocks are
+            resolved to "community" at load time
         """
         if self.publisher_tier in ("community", "revoked"):
             return True
+        if self.publisher_tier == "certified":
+            return False
+        if self.publisher_tier == "reviewed":
+            return not self.is_safe_for_in_process
         return not self.is_safe_for_in_process
 
     def allows_block_access(self, name: str) -> bool:
