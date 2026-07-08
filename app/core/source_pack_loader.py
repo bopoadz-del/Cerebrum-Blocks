@@ -86,6 +86,10 @@ class SourcePack:
     def blocks(self) -> list[str]:
         return list(self._data["blocks"])
 
+    @property
+    def support_blocks(self) -> list[str]:
+        return list(self._data.get("support_blocks", []))
+
     def to_dict(self) -> dict[str, Any]:
         return dict(self._data)
 
@@ -166,6 +170,13 @@ def validate_shelf(path: Path | str | None = None) -> list[str]:
             value = pack.get(list_key)
             if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
                 errors.append(f"{prefix} '{list_key}' must be a list of strings")
+
+        support_blocks = pack.get("support_blocks")
+        if support_blocks is not None and (
+            not isinstance(support_blocks, list)
+            or not all(isinstance(v, str) for v in support_blocks)
+        ):
+            errors.append(f"{prefix} 'support_blocks' must be a list of strings when present")
 
         if not isinstance(pack.get("expert_prompt"), str) or not pack["expert_prompt"]:
             errors.append(f"{prefix} 'expert_prompt' must be a non-empty string")
