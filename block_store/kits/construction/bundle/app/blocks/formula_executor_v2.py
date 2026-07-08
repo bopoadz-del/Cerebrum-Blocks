@@ -105,11 +105,20 @@ class FormulaExecutorV2Block(UniversalBlock):
     name = "formula_executor_v2"
     version = "2.0.0"
     description = (
-        "LLM code-generation: describe a task, an LLM writes Python, it runs "
-        "sandboxed, results are cached, failures retried."
+        "LLM code-generation for deterministic, auditable domain calculations; "
+        "generated Python runs inside the restricted sandbox."
     )
     layer = 3
-    tags = ["domain", "construction", "codegen", "llm", "sandbox", "reasoning"]
+    tags = [
+        "domain",
+        "reasoning",
+        "calculation",
+        "codegen",
+        "llm",
+        "sandbox",
+        "deterministic",
+        "auditable",
+    ]
     requires = []
 
     default_config = {

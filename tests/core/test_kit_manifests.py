@@ -62,3 +62,57 @@ def test_template_skeleton_ready():
     rendered = text.replace('"tags": {{tags_json}},', '"tags": [],')
     manifest = json.loads(rendered)
     assert _skeleton_ready(KITS_DIR / "_template", manifest)
+
+
+@pytest.mark.parametrize(
+    "kit_id",
+    [
+        "agriculture",
+        "automotive",
+        "aviation",
+        "construction",
+        "education",
+        "finance",
+        "hotel_management",
+        "hr",
+        "insurance",
+        "legal",
+        "manufacturing",
+        "medical",
+        "oil_gas",
+        "pharma",
+        "real_estate",
+        "retail",
+        "supply_chain",
+    ],
+)
+def test_kit_manifest_exposes_formula_executor_v2(kit_id: str):
+    manifest = _load_manifest(kit_id)
+    assert "formula_executor_v2" in manifest.get("blocks", []), f"{kit_id} missing formula_executor_v2"
+
+
+@pytest.mark.parametrize(
+    "kit_id",
+    [
+        "agriculture",
+        "automotive",
+        "aviation",
+        "construction",
+        "education",
+        "finance",
+        "hotel_management",
+        "hr",
+        "insurance",
+        "legal",
+        "manufacturing",
+        "medical",
+        "oil_gas",
+        "pharma",
+        "real_estate",
+        "retail",
+        "supply_chain",
+    ],
+)
+def test_kit_bundle_includes_formula_executor_v2(kit_id: str):
+    bundle_file = KITS_DIR / kit_id / "bundle" / "app" / "blocks" / "formula_executor_v2.py"
+    assert bundle_file.exists(), f"{kit_id} bundle missing formula_executor_v2.py"
