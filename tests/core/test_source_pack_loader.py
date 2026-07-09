@@ -71,7 +71,8 @@ def test_each_pack_has_valid_block_lists():
     for pack in list_packs():
         blocks = set(pack.blocks)
         assert base.issubset(blocks), f"{pack.id} missing base blocks"
-        domain_blocks = blocks - base
+        assert "formula_executor_v2" in blocks, f"{pack.id} missing shared formula_executor_v2"
+        domain_blocks = blocks - base - {"formula_executor_v2"}
         assert len(domain_blocks) == 1, f"{pack.id} must have exactly one domain block"
         assert pack.id in domain_blocks.pop(), f"{pack.id} domain block mismatch"
 

@@ -98,7 +98,11 @@ def _build_manifest(domain: str) -> dict[str, object]:
         "app/core/domain_block_v2.py",
         "app/core/metric_utils.py",
         "app/core/typed_block.py",
+        "app/core/universal_base.py",
         "app/containers/base.py",
+        "app/core/sandbox.py",
+        "app/prompts/codegen_system.py",
+        "app/blocks/formula_executor_v2.py",
     ]
 
     artifacts = [_artifact(path) for path in source_files + shared_files]
@@ -126,6 +130,7 @@ def _build_manifest(domain: str) -> dict[str, object]:
             "chat",
             "image",
             block_name,
+            "formula_executor_v2",
         ],
         "prompts": [],
         "data": [],
@@ -137,7 +142,10 @@ def _build_manifest(domain: str) -> dict[str, object]:
             "app/core/domain_block_v2.py",
             "app/core/metric_utils.py",
             "app/core/typed_block.py",
+            "app/core/universal_base.py",
             "app/containers/base.py",
+            "app/core/sandbox.py",
+            "app/prompts/codegen_system.py",
         ],
         "artifacts": artifacts,
         "price_cents": 0,

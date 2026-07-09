@@ -55,7 +55,8 @@
     "app/core/construction_types.py",
     "app/core/construction_constants.py",
     "app/core/plan_executor.py",
-    "app/core/sandbox.py"
+    "app/core/sandbox.py",
+    "app/core/universal_base.py"
   ],
   "artifacts": [
     {
@@ -81,6 +82,10 @@
     {
       "src": "app/core/sandbox.py",
       "dest": "app/core/sandbox.py"
+    },
+    {
+      "src": "app/core/universal_base.py",
+      "dest": "app/core/universal_base.py"
     },
     {
       "src": "app/lib/pm_computations.py",

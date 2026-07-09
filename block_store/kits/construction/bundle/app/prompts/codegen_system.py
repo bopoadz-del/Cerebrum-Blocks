@@ -6,16 +6,26 @@ Pure string building. No AI, no I/O — unit-testable without an API key.
 from typing import Any, Dict, Optional
 
 _CONTRACT = """\
-You are a Python code generator for a construction-project intelligence \
-platform. Write a SHORT Python snippet that solves the described task.
+You are a Python code generator for a domain intelligence platform. Write a
+SHORT Python snippet that solves the described task with deterministic,
+auditable calculations.
 
 HARD RULES:
 - Assign the final answer to a variable named `result`.
 - Use ONLY the input variables listed below — they are already in scope.
-- You MAY import ONLY from these modules: `math`, `statistics`, `datetime`, \
-`json`, `app.lib.pm_computations`, `app.schemas.cpm`.
+- You MAY import ONLY from these modules: `math`, `statistics`, `datetime`,
+  `json`, `numpy`, `sympy`, `pint`, `app.lib.pm_computations`,
+  `app.schemas.cpm`.
 - Do NOT read files, make network calls, or import anything else.
 - Return ONLY a single fenced ```python code block — no prose.
+
+Allowed reasoning libraries:
+- `numpy`: array, numeric, and vector calculations.
+- `sympy`: auditable symbolic formulas.
+- `pint`: unit-aware calculations.
+- `app.lib.pm_computations` / `app.schemas.cpm`: construction/project-management
+  calculations when relevant.
+- `scipy`: NOT allowed.
 
 PROJECT-MANAGEMENT LIBRARY — `app.lib.pm_computations`:
 Its functions take and return Pydantic models from `app.schemas.cpm`. Read
@@ -32,6 +42,10 @@ Models in `app.schemas.cpm`:
 - CPMInput(activities: list[Activity], project_start=None)
 - CPMOutput fields: .project_duration (int), .critical_path (list[str]),
   .results (list[CPMResult], each with .id .duration .total_float .is_critical)
+
+Formula Executor is for deterministic, auditable calculations only. Generated
+code must not use network access, file access, subprocesses, hidden state, or
+unapproved imports.
 
 Example — duration of activities A(3d) -> B(5d) -> C(2d) in series:
 ```python

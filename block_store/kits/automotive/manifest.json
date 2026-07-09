@@ -24,7 +24,8 @@
     "ocr",
     "chat",
     "image",
-    "automotive_v2"
+    "automotive_v2",
+    "formula_executor_v2"
   ],
   "prompts": [],
   "data": [],
@@ -36,7 +37,10 @@
     "app/core/domain_block_v2.py",
     "app/core/metric_utils.py",
     "app/core/typed_block.py",
-    "app/containers/base.py"
+    "app/core/universal_base.py",
+    "app/containers/base.py",
+    "app/core/sandbox.py",
+    "app/prompts/codegen_system.py"
   ],
   "artifacts": [
     {
@@ -76,8 +80,24 @@
       "dest": "app/core/typed_block.py"
     },
     {
+      "src": "app/core/universal_base.py",
+      "dest": "app/core/universal_base.py"
+    },
+    {
       "src": "app/containers/base.py",
       "dest": "app/containers/base.py"
+    },
+    {
+      "src": "app/core/sandbox.py",
+      "dest": "app/core/sandbox.py"
+    },
+    {
+      "src": "app/prompts/codegen_system.py",
+      "dest": "app/prompts/codegen_system.py"
+    },
+    {
+      "src": "app/blocks/formula_executor_v2.py",
+      "dest": "app/blocks/formula_executor_v2.py"
     }
   ],
   "price_cents": 0,
