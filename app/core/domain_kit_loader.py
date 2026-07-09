@@ -11,6 +11,13 @@ from app.core.domain_kit_registry import enabled_kit_ids, load_registry
 
 logger = logging.getLogger(__name__)
 
+# Shared deterministic reasoning/calculation block available in every real domain kit.
+_FORMULA_EXECUTOR_V2_SPEC = (
+    "formula_executor_v2",
+    "app.blocks.formula_executor_v2",
+    "FormulaExecutorV2Block",
+)
+
 # Blocks bundled with each store kit (must match manifest.json blocks list).
 _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
     "construction": [
@@ -36,69 +43,85 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
     "medical": [
         ("medical", "app.containers.medical", "MedicalContainer"),
         ("medical_v2", "app.blocks.medical_v2", "MedicalBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
         ("medical_ehr_connector", "app.blocks.medical_ehr_connector", "MedicalEHRConnectorBlock"),
     ],
     "hotel_management": [
         ("hotel_management", "app.containers.hotel_management", "HotelManagementContainer"),
         ("hotel_v2", "app.blocks.hotel_v2", "HotelBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "legal": [
         ("legal", "app.containers.legal", "LegalContainer"),
         ("legal_v2", "app.blocks.legal_v2", "LegalBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
         ("pacer_connector", "app.blocks.pacer_connector", "PacerConnectorBlock"),
         ("caselaw_connector", "app.blocks.caselaw_connector", "CaselawConnectorBlock"),
     ],
     "retail": [
         ("retail", "app.containers.retail", "RetailContainer"),
         ("retail_v2", "app.blocks.retail_v2", "RetailBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "pharma": [
         ("pharma", "app.containers.pharma", "PharmaContainer"),
         ("pharma_v2", "app.blocks.pharma_v2", "PharmaBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "insurance": [
         ("insurance", "app.containers.insurance", "InsuranceContainer"),
         ("insurance_v2", "app.blocks.insurance_v2", "InsuranceBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "supply_chain": [
         ("supply_chain", "app.containers.supply_chain", "SupplyChainContainer"),
         ("supply_chain_v2", "app.blocks.supply_chain_v2", "SupplyChainBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "real_estate": [
         ("real_estate", "app.containers.real_estate", "RealEstateContainer"),
         ("real_estate_v2", "app.blocks.real_estate_v2", "RealEstateBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "automotive": [
         ("automotive", "app.containers.automotive", "AutomotiveContainer"),
         ("automotive_v2", "app.blocks.automotive_v2", "AutomotiveBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "education": [
         ("education", "app.containers.education", "EducationContainer"),
         ("education_v2", "app.blocks.education_v2", "EducationBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "agriculture": [
         ("agriculture", "app.containers.agriculture", "AgricultureContainer"),
         ("agriculture_v2", "app.blocks.agriculture_v2", "AgricultureBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "hr": [
         ("hr", "app.containers.hr", "HRContainer"),
         ("hr_v2", "app.blocks.hr_v2", "HRBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "manufacturing": [
         ("manufacturing", "app.containers.manufacturing", "ManufacturingContainer"),
         ("manufacturing_v2", "app.blocks.manufacturing_v2", "ManufacturingBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "aviation": [
         ("aviation", "app.containers.aviation", "AviationContainer"),
         ("aviation_v2", "app.blocks.aviation_v2", "AviationBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "oil_gas": [
         ("oil_gas", "app.containers.oil_gas", "OilGasContainer"),
         ("oil_gas_v2", "app.blocks.oil_gas_v2", "OilGasBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "finance": [
         ("finance", "app.containers.finance", "FinanceContainer"),
         ("finance_v2", "app.blocks.finance_v2", "FinanceBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "maintenance": [
         ("cmms_connector", "app.blocks.cmms_connector", "CmmsConnectorBlock"),

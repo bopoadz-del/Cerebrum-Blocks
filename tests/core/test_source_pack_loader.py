@@ -71,23 +71,10 @@ def test_each_pack_has_valid_block_lists():
     for pack in list_packs():
         blocks = set(pack.blocks)
         assert base.issubset(blocks), f"{pack.id} missing base blocks"
-        domain_blocks = blocks - base
+        assert "formula_executor_v2" in blocks, f"{pack.id} missing shared formula_executor_v2"
+        domain_blocks = blocks - base - {"formula_executor_v2"}
         assert len(domain_blocks) == 1, f"{pack.id} must have exactly one domain block"
         assert pack.id in domain_blocks.pop(), f"{pack.id} domain block mismatch"
-
-
-def test_each_pack_exposes_formula_executor_v2_as_support_block():
-    for pack in list_packs():
-        assert "formula_executor_v2" in pack.support_blocks, (
-            f"{pack.id} missing formula_executor_v2 in support_blocks"
-        )
-
-
-def test_formula_executor_v2_is_not_in_main_blocks():
-    for pack in list_packs():
-        assert "formula_executor_v2" not in pack.blocks, (
-            f"{pack.id} should not list formula_executor_v2 in main blocks"
-        )
 
 
 def test_get_pack_for_each_domain():
@@ -160,39 +147,6 @@ def test_validate_shelf_detects_duplicate_id(tmp_path: Path):
     )
     errors = validate_shelf(bad_shelf)
     assert any("duplicate pack id" in e for e in errors)
-
-
-def test_validate_shelf_detects_invalid_support_blocks(tmp_path: Path):
-    bad_shelf = tmp_path / "bad_support.json"
-    bad_shelf.write_text(
-        json.dumps(
-            {
-                "schema_version": "1.0.0",
-                "shelf_id": "bad",
-                "name": "Bad Shelf",
-                "description": "test",
-                "packs": [
-                    {
-                        "id": "bad",
-                        "domain": "bad",
-                        "name": "Bad",
-                        "description": "test",
-                        "expert_prompt": "You are bad.",
-                        "workflow": "test",
-                        "use_cases": ["test"],
-                        "example_prompts": ["test"],
-                        "expected_inputs": ["test"],
-                        "expected_outputs": ["test"],
-                        "blocks": ["pdf", "ocr", "chat", "image", "bad_v2"],
-                        "support_blocks": "not a list",
-                    }
-                ],
-            }
-        ),
-        encoding="utf-8",
-    )
-    errors = validate_shelf(bad_shelf)
-    assert any("support_blocks" in e for e in errors)
 
 
 def test_validate_shelf_detects_invalid_list_field(tmp_path: Path):

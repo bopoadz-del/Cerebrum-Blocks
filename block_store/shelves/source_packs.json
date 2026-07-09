@@ -39,9 +39,7 @@
         "ocr",
         "chat",
         "image",
-        "agriculture_v2"
-      ],
-      "support_blocks": [
+        "agriculture_v2",
         "formula_executor_v2"
       ]
     },
@@ -80,9 +78,7 @@
         "ocr",
         "chat",
         "image",
-        "automotive_v2"
-      ],
-      "support_blocks": [
+        "automotive_v2",
         "formula_executor_v2"
       ]
     },
@@ -121,9 +117,7 @@
         "ocr",
         "chat",
         "image",
-        "aviation_v2"
-      ],
-      "support_blocks": [
+        "aviation_v2",
         "formula_executor_v2"
       ]
     },
@@ -163,9 +157,7 @@
         "ocr",
         "chat",
         "image",
-        "construction_v2"
-      ],
-      "support_blocks": [
+        "construction_v2",
         "formula_executor_v2"
       ]
     },
@@ -204,9 +196,7 @@
         "ocr",
         "chat",
         "image",
-        "education_v2"
-      ],
-      "support_blocks": [
+        "education_v2",
         "formula_executor_v2"
       ]
     },
@@ -245,9 +235,7 @@
         "ocr",
         "chat",
         "image",
-        "finance_v2"
-      ],
-      "support_blocks": [
+        "finance_v2",
         "formula_executor_v2"
       ]
     },
@@ -286,9 +274,7 @@
         "ocr",
         "chat",
         "image",
-        "hotel_management_v2"
-      ],
-      "support_blocks": [
+        "hotel_management_v2",
         "formula_executor_v2"
       ]
     },
@@ -327,9 +313,7 @@
         "ocr",
         "chat",
         "image",
-        "hr_v2"
-      ],
-      "support_blocks": [
+        "hr_v2",
         "formula_executor_v2"
       ]
     },
@@ -368,9 +352,7 @@
         "ocr",
         "chat",
         "image",
-        "insurance_v2"
-      ],
-      "support_blocks": [
+        "insurance_v2",
         "formula_executor_v2"
       ]
     },
@@ -409,9 +391,7 @@
         "ocr",
         "chat",
         "image",
-        "legal_v2"
-      ],
-      "support_blocks": [
+        "legal_v2",
         "formula_executor_v2"
       ]
     },
@@ -450,9 +430,7 @@
         "ocr",
         "chat",
         "image",
-        "manufacturing_v2"
-      ],
-      "support_blocks": [
+        "manufacturing_v2",
         "formula_executor_v2"
       ]
     },
@@ -491,9 +469,7 @@
         "ocr",
         "chat",
         "image",
-        "medical_v2"
-      ],
-      "support_blocks": [
+        "medical_v2",
         "formula_executor_v2"
       ]
     },
@@ -532,9 +508,7 @@
         "ocr",
         "chat",
         "image",
-        "oil_gas_v2"
-      ],
-      "support_blocks": [
+        "oil_gas_v2",
         "formula_executor_v2"
       ]
     },
@@ -573,9 +547,7 @@
         "ocr",
         "chat",
         "image",
-        "pharma_v2"
-      ],
-      "support_blocks": [
+        "pharma_v2",
         "formula_executor_v2"
       ]
     },
@@ -614,9 +586,7 @@
         "ocr",
         "chat",
         "image",
-        "real_estate_v2"
-      ],
-      "support_blocks": [
+        "real_estate_v2",
         "formula_executor_v2"
       ]
     },
@@ -655,9 +625,7 @@
         "ocr",
         "chat",
         "image",
-        "retail_v2"
-      ],
-      "support_blocks": [
+        "retail_v2",
         "formula_executor_v2"
       ]
     },
@@ -696,9 +664,7 @@
         "ocr",
         "chat",
         "image",
-        "supply_chain_v2"
-      ],
-      "support_blocks": [
+        "supply_chain_v2",
         "formula_executor_v2"
       ]
     }
