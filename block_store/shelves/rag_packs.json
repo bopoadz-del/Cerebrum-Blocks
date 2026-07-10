@@ -32,8 +32,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "automotive_core_rag",
@@ -63,8 +89,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "aviation_core_rag",
@@ -94,8 +146,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "construction_core_rag",
@@ -125,8 +203,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "education_core_rag",
@@ -156,8 +260,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "finance_core_rag",
@@ -187,8 +317,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "hotel_management_core_rag",
@@ -218,8 +374,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "hr_core_rag",
@@ -249,8 +431,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "insurance_core_rag",
@@ -280,8 +488,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "legal_core_rag",
@@ -311,8 +545,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "manufacturing_core_rag",
@@ -342,8 +602,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "medical_core_rag",
@@ -373,8 +659,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "oil_gas_core_rag",
@@ -404,8 +716,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "pharma_core_rag",
@@ -435,8 +773,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "real_estate_core_rag",
@@ -466,8 +830,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "retail_core_rag",
@@ -497,8 +887,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     },
     {
       "id": "supply_chain_core_rag",
@@ -528,8 +944,34 @@
       "expected_queries": [],
       "expected_outputs": [],
       "fetch_mode": "metadata_only",
-      "ingestion_status": "not_ingested",
-      "notes": []
+      "ingestion_status": {
+        "state": "not_ingested",
+        "documents_total": 0,
+        "documents_indexed": 0,
+        "chunks_total": 0,
+        "last_ingested_at": null,
+        "last_error": null
+      },
+      "notes": [],
+      "source_policy": {
+        "allowed_source_classes": [
+          "public_domain",
+          "open_license",
+          "official_statute_or_regulation",
+          "official_guidance",
+          "platform_curated_template"
+        ],
+        "precluded_source_classes": [
+          "private_enterprise_data",
+          "confidential_client_data",
+          "copyrighted_commercial_content_without_license",
+          "user_uploaded_project_records",
+          "unknown_license"
+        ],
+        "requires_source_record": true,
+        "requires_license_review": true,
+        "requires_authority_rating": true
+      }
     }
   ]
 }

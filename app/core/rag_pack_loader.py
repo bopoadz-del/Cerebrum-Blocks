@@ -32,6 +32,7 @@ _REQUIRED_PACK_KEYS = {
     "expected_queries",
     "expected_outputs",
     "fetch_mode",
+    "source_policy",
     "ingestion_status",
     "notes",
 }
@@ -108,8 +109,12 @@ class RagPack:
         return self._data["fetch_mode"]
 
     @property
-    def ingestion_status(self) -> str:
-        return self._data["ingestion_status"]
+    def source_policy(self) -> dict[str, Any]:
+        return dict(self._data["source_policy"])
+
+    @property
+    def ingestion_status(self) -> dict[str, Any]:
+        return dict(self._data["ingestion_status"])
 
     @property
     def notes(self) -> list[str]:
@@ -236,8 +241,55 @@ def validate_shelf(path: Path | str | None = None) -> list[str]:
         if pack.get("fetch_mode") != "metadata_only":
             errors.append(f"{prefix} 'fetch_mode' must be 'metadata_only'")
 
-        if pack.get("ingestion_status") != "not_ingested":
-            errors.append(f"{prefix} 'ingestion_status' must be 'not_ingested'")
+        source_policy = pack.get("source_policy")
+        if not isinstance(source_policy, dict):
+            errors.append(f"{prefix} 'source_policy' must be an object")
+        else:
+            for key in (
+                "allowed_source_classes",
+                "precluded_source_classes",
+                "requires_source_record",
+                "requires_license_review",
+                "requires_authority_rating",
+            ):
+                if key not in source_policy:
+                    errors.append(f"{prefix} 'source_policy' missing '{key}'")
+
+            if source_policy.get("requires_source_record") is not True:
+                errors.append(f"{prefix} 'source_policy.requires_source_record' must be true")
+            if source_policy.get("requires_license_review") is not True:
+                errors.append(f"{prefix} 'source_policy.requires_license_review' must be true")
+            if source_policy.get("requires_authority_rating") is not True:
+                errors.append(f"{prefix} 'source_policy.requires_authority_rating' must be true")
+
+            allowed = source_policy.get("allowed_source_classes", [])
+            if not isinstance(allowed, list) or len(allowed) == 0:
+                errors.append(f"{prefix} 'source_policy.allowed_source_classes' must be a non-empty list")
+
+            precluded = set(source_policy.get("precluded_source_classes", []))
+            for required_precluded in (
+                "private_enterprise_data",
+                "confidential_client_data",
+                "unknown_license",
+            ):
+                if required_precluded not in precluded:
+                    errors.append(
+                        f"{prefix} 'source_policy.precluded_source_classes' must include '{required_precluded}'"
+                    )
+
+        ingestion_status = pack.get("ingestion_status")
+        if not isinstance(ingestion_status, dict):
+            errors.append(f"{prefix} 'ingestion_status' must be an object")
+        else:
+            if ingestion_status.get("state") != "not_ingested":
+                errors.append(f"{prefix} 'ingestion_status.state' must be 'not_ingested'")
+            for key in ("documents_total", "documents_indexed", "chunks_total"):
+                if ingestion_status.get(key) != 0:
+                    errors.append(f"{prefix} 'ingestion_status.{key}' must be 0")
+            if ingestion_status.get("last_ingested_at") is not None:
+                errors.append(f"{prefix} 'ingestion_status.last_ingested_at' must be null")
+            if ingestion_status.get("last_error") is not None:
+                errors.append(f"{prefix} 'ingestion_status.last_error' must be null")
 
         if pack.get("enterprise_specific") is not False:
             errors.append(f"{prefix} 'enterprise_specific' must be false")
