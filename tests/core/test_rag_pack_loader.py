@@ -90,8 +90,36 @@ def test_each_pack_recommends_domain_v2_and_formula_executor():
 def test_each_pack_is_metadata_only_and_not_ingested():
     for pack in list_packs():
         assert pack.fetch_mode == "metadata_only", f"{pack.id} fetch_mode mismatch"
-        assert pack.ingestion_status == "not_ingested", f"{pack.id} ingestion_status mismatch"
+        assert isinstance(pack.ingestion_status, dict), f"{pack.id} ingestion_status must be an object"
+        assert pack.ingestion_status["state"] == "not_ingested", f"{pack.id} ingestion_status.state mismatch"
+        assert pack.ingestion_status["documents_total"] == 0, f"{pack.id} documents_total must be 0"
+        assert pack.ingestion_status["documents_indexed"] == 0, f"{pack.id} documents_indexed must be 0"
+        assert pack.ingestion_status["chunks_total"] == 0, f"{pack.id} chunks_total must be 0"
+        assert pack.ingestion_status["last_ingested_at"] is None, f"{pack.id} last_ingested_at must be null"
+        assert pack.ingestion_status["last_error"] is None, f"{pack.id} last_error must be null"
         assert pack.enterprise_specific is False, f"{pack.id} enterprise_specific must be false"
+
+
+def test_each_pack_has_source_policy():
+    for pack in list_packs():
+        assert isinstance(pack.source_policy, dict), f"{pack.id} source_policy must be an object"
+        assert pack.source_policy.get("requires_source_record") is True
+        assert pack.source_policy.get("requires_license_review") is True
+        assert pack.source_policy.get("requires_authority_rating") is True
+        allowed = pack.source_policy.get("allowed_source_classes", [])
+        assert isinstance(allowed, list) and len(allowed) > 0
+        precluded = set(pack.source_policy.get("precluded_source_classes", []))
+        assert "private_enterprise_data" in precluded
+        assert "confidential_client_data" in precluded
+        assert "unknown_license" in precluded
+
+
+def test_legal_core_rag_has_expected_new_shape():
+    pack = get_pack("legal")
+    assert pack.id == "legal_core_rag"
+    assert pack.source_policy["requires_source_record"] is True
+    assert pack.ingestion_status["state"] == "not_ingested"
+    assert pack.ingestion_status["documents_total"] == 0
 
 
 def test_pack_collection_ids_are_unique():
@@ -168,25 +196,7 @@ def test_validate_shelf_detects_missing_knowledge_block(tmp_path: Path):
                 "name": "Bad Shelf",
                 "description": "test",
                 "packs": [
-                    {
-                        "id": "bad_core_rag",
-                        "domain": "bad",
-                        "name": "Bad",
-                        "description": "test",
-                        "status": "metadata_only",
-                        "collection_id": "prebuilt_bad_core",
-                        "visibility": "platform_prebuilt",
-                        "data_class": "public_or_licensed_reference",
-                        "enterprise_specific": False,
-                        "requires_blocks": ["vector_search"],
-                        "recommended_with_blocks": ["bad_v2", "formula_executor_v2"],
-                        "source_types": ["guidance"],
-                        "expected_queries": [],
-                        "expected_outputs": [],
-                        "fetch_mode": "metadata_only",
-                        "ingestion_status": "not_ingested",
-                        "notes": [],
-                    }
+                    _make_bad_pack(requires_blocks=["vector_search"])
                 ],
             }
         ),
@@ -206,25 +216,7 @@ def test_validate_shelf_detects_enterprise_specific_true(tmp_path: Path):
                 "name": "Bad Shelf",
                 "description": "test",
                 "packs": [
-                    {
-                        "id": "bad_core_rag",
-                        "domain": "bad",
-                        "name": "Bad",
-                        "description": "test",
-                        "status": "metadata_only",
-                        "collection_id": "prebuilt_bad_core",
-                        "visibility": "platform_prebuilt",
-                        "data_class": "public_or_licensed_reference",
-                        "enterprise_specific": True,
-                        "requires_blocks": ["knowledge", "vector_search"],
-                        "recommended_with_blocks": ["bad_v2", "formula_executor_v2"],
-                        "source_types": ["guidance"],
-                        "expected_queries": [],
-                        "expected_outputs": [],
-                        "fetch_mode": "metadata_only",
-                        "ingestion_status": "not_ingested",
-                        "notes": [],
-                    }
+                    _make_bad_pack(enterprise_specific=True)
                 ],
             }
         ),
@@ -234,7 +226,7 @@ def test_validate_shelf_detects_enterprise_specific_true(tmp_path: Path):
     assert any("enterprise_specific" in e for e in errors)
 
 
-def test_validate_shelf_detects_ingested_status(tmp_path: Path):
+def test_validate_shelf_detects_string_ingestion_status(tmp_path: Path):
     bad_shelf = tmp_path / "bad_shelf.json"
     bad_shelf.write_text(
         json.dumps(
@@ -244,29 +236,108 @@ def test_validate_shelf_detects_ingested_status(tmp_path: Path):
                 "name": "Bad Shelf",
                 "description": "test",
                 "packs": [
-                    {
-                        "id": "bad_core_rag",
-                        "domain": "bad",
-                        "name": "Bad",
-                        "description": "test",
-                        "status": "metadata_only",
-                        "collection_id": "prebuilt_bad_core",
-                        "visibility": "platform_prebuilt",
-                        "data_class": "public_or_licensed_reference",
-                        "enterprise_specific": False,
-                        "requires_blocks": ["knowledge", "vector_search"],
-                        "recommended_with_blocks": ["bad_v2", "formula_executor_v2"],
-                        "source_types": ["guidance"],
-                        "expected_queries": [],
-                        "expected_outputs": [],
-                        "fetch_mode": "metadata_only",
-                        "ingestion_status": "ingested",
-                        "notes": [],
-                    }
+                    _make_bad_pack(ingestion_status="ingested")
                 ],
             }
         ),
         encoding="utf-8",
     )
     errors = validate_shelf(bad_shelf)
-    assert any("ingestion_status" in e for e in errors)
+    assert any("'ingestion_status' must be an object" in e for e in errors)
+
+
+def test_validate_shelf_detects_missing_source_policy(tmp_path: Path):
+    bad_shelf = tmp_path / "bad_shelf.json"
+    pack = _make_bad_pack()
+    del pack["source_policy"]
+    bad_shelf.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "shelf_id": "rag_packs",
+                "name": "Bad Shelf",
+                "description": "test",
+                "packs": [pack],
+            }
+        ),
+        encoding="utf-8",
+    )
+    errors = validate_shelf(bad_shelf)
+    assert any("missing keys" in e and "source_policy" in e for e in errors)
+
+
+def test_validate_shelf_detects_bad_source_policy(tmp_path: Path):
+    bad_shelf = tmp_path / "bad_shelf.json"
+    bad_shelf.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "shelf_id": "rag_packs",
+                "name": "Bad Shelf",
+                "description": "test",
+                "packs": [
+                    _make_bad_pack(
+                        source_policy={
+                            "allowed_source_classes": [],
+                            "precluded_source_classes": ["private_enterprise_data"],
+                            "requires_source_record": False,
+                            "requires_license_review": False,
+                            "requires_authority_rating": False,
+                        }
+                    )
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    errors = validate_shelf(bad_shelf)
+    assert any("requires_source_record" in e for e in errors)
+    assert any("requires_license_review" in e for e in errors)
+    assert any("requires_authority_rating" in e for e in errors)
+    assert any("allowed_source_classes" in e for e in errors)
+    assert any("confidential_client_data" in e for e in errors)
+    assert any("unknown_license" in e for e in errors)
+
+
+def _make_bad_pack(**overrides):
+    pack = {
+        "id": "bad_core_rag",
+        "domain": "bad",
+        "name": "Bad",
+        "description": "test",
+        "status": "metadata_only",
+        "collection_id": "prebuilt_bad_core",
+        "visibility": "platform_prebuilt",
+        "data_class": "public_or_licensed_reference",
+        "enterprise_specific": False,
+        "requires_blocks": ["knowledge", "vector_search"],
+        "recommended_with_blocks": ["bad_v2", "formula_executor_v2"],
+        "source_types": ["guidance"],
+        "expected_queries": [],
+        "expected_outputs": [],
+        "fetch_mode": "metadata_only",
+        "source_policy": {
+            "allowed_source_classes": ["official_guidance"],
+            "precluded_source_classes": [
+                "private_enterprise_data",
+                "confidential_client_data",
+                "copyrighted_commercial_content_without_license",
+                "user_uploaded_project_records",
+                "unknown_license",
+            ],
+            "requires_source_record": True,
+            "requires_license_review": True,
+            "requires_authority_rating": True,
+        },
+        "ingestion_status": {
+            "state": "not_ingested",
+            "documents_total": 0,
+            "documents_indexed": 0,
+            "chunks_total": 0,
+            "last_ingested_at": None,
+            "last_error": None,
+        },
+        "notes": [],
+    }
+    pack.update(overrides)
+    return pack
