@@ -70,6 +70,13 @@ frontend/dist
 
 # Runtime data — uploads, captures, the SQLite db file. Generated at runtime.
 data/
+# Automotive foundation pack build artifacts (harvests, embeddings, indexes)
+*.csv
+*.zip
+*.jsonl
+harvests/
+embeddings/
+indexes/
 # Published container kit bundles ship Fork artifacts (override data/ above)
 !block_store/kits/**/bundle/app/data/
 !block_store/kits/**/bundle/app/data/**
