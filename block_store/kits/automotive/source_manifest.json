@@ -29,7 +29,7 @@
       "source_id": "nhtsa_investigations",
       "source_family": "investigation",
       "official_publisher": "National Highway Traffic Safety Administration",
-      "source_uri": "https://www-odi.nhtsa.dot.gov/downloads/",
+      "source_uri": "https://static.nhtsa.gov/odi/ffdd/inv/FLAT_INV.zip",
       "retrieval_method": "download_csv_zip",
       "source_class": "approved_official_public_data",
       "licence_evidence": "US federal public data",
