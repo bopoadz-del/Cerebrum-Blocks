@@ -77,6 +77,8 @@ data/
 harvests/
 embeddings/
 indexes/
+# Authorised evaluation fixtures are committed, not generated artifacts.
+!block_store/kits/**/evaluation/*.jsonl
 # Published container kit bundles ship Fork artifacts (override data/ above)
 !block_store/kits/**/bundle/app/data/
 !block_store/kits/**/bundle/app/data/**

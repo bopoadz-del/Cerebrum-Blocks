@@ -40,7 +40,7 @@
     "source_manifest": "source_manifest.json",
     "schemas": ["schemas/"],
     "prompts": ["prompts/"],
-    "evaluation": ["evaluation/golden_questions.jsonl"]
+    "evaluation": ["evaluation/golden_questions.jsonl", "evaluation/development_seed.jsonl"]
   },
   "core_modules": [
     "app/core/automotive_knowledge.py",
