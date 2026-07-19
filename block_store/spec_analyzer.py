@@ -3,20 +3,28 @@
 import os
 import re
 from typing import Any, Dict, List, Tuple
+
 from app.core.universal_base import UniversalBlock
 
 
 class SpecAnalyzerBlock(UniversalBlock):
+    auto_validate = False
     name = "spec_analyzer"
-    version = "1.0.0"
+    version = "1.1.0"
+    updated_at = "2026-07-19"
     description = "Extract grade requirements, material specs, and compliance flags from specification PDFs"
     layer = 3
     tags = ["domain", "construction", "specs", "pdf", "compliance", "materials"]
-    requires = ["pdf"]
+    # Require the ocr block so scanned/image-only spec PDFs still extract real
+    # content instead of silently returning empty lists.
+    requires = ["ocr"]
 
     default_config = {
         "max_pages": 100,
         "compliance_standards": ["astm", "aci", "aisc", "iso", "bs", "en", "saso"],
+        # If PyMuPDF's text layer yields fewer than this many chars across the
+        # sampled range, treat the PDF as image-only and OCR it.
+        "ocr_fallback_min_chars": 200,
     }
 
     ui_schema = {
@@ -35,9 +43,9 @@ class SpecAnalyzerBlock(UniversalBlock):
             ],
         },
         "quick_actions": [
-            {"icon": "📋", "label": "Extract Specs", "prompt": "Extract all material specifications and grade requirements"},
-            {"icon": "✅", "label": "Check Compliance", "prompt": "Check specification for ASTM/ACI/SASO compliance requirements"},
-            {"icon": "🔍", "label": "Find Standards", "prompt": "List all referenced standards and codes"},
+            {"icon": "", "label": "Extract Specs", "prompt": "Extract all material specifications and grade requirements"},
+            {"icon": "", "label": "Check Compliance", "prompt": "Check specification for ASTM/ACI/SASO compliance requirements"},
+            {"icon": "", "label": "Find Standards", "prompt": "List all referenced standards and codes"},
         ],
     }
 
@@ -45,13 +53,20 @@ class SpecAnalyzerBlock(UniversalBlock):
         (r"\b(?:grade|class|type)\s*[:\-]?\s*([A-Z0-9\-]+)", "grade"),
         (r"\bfc['\"]?\s*=\s*([\d,]+)\s*(?:psi|MPa|kPa)", "concrete_strength"),
         (r"\bfy\s*=\s*([\d,]+)\s*(?:psi|MPa)", "rebar_yield"),
-        (r"\bASTM\s+([A-Z]\d+(?:\/[A-Z]\d+)?)", "astm_standard"),
+        # ASTM: allow trailing year suffix like A615-22 and slash-grade variants.
+        (r"\bASTM\s+([A-Z]\d+(?:[/-][A-Z]?\d*)*)", "astm_standard"),
         (r"\bACI\s+(\d+\w*)", "aci_standard"),
         (r"\bAISC\s+(\d+\w*)", "aisc_standard"),
         (r"\bISO\s+(\d+(?:[-:]\d+)?)", "iso_standard"),
+        # BS EN must come before BS alone so "BS EN 1992" matches the EN variant.
+        (r"\bBS\s+EN\s+(\d+(?:[-:]\d+)?)", "bs_en_standard"),
         (r"\bBS\s+(\d+(?:[-:]\d+)?)", "bs_standard"),
         (r"\bEN\s+(\d+(?:[-:]\d+)?)", "en_standard"),
         (r"\bSASO\s+(\d+(?:[-:]\d+)?)", "saso_standard"),
+        # AS (Australian Standard), e.g. "AS 3600", "AS 1170.4", "AS 1170-2002".
+        (r"\bAS\s+(\d+(?:\.\d+)?(?:-\d+)?)", "as_standard"),
+        # IBC year code, e.g. "IBC 2021".
+        (r"\bIBC\s+(\d{4})", "ibc_standard"),
         (r"\b(\d+)\s*MPa\s*(?:concrete|compressive)", "concrete_strength_mpa"),
         (r"\b(\d+)\s*N/mm[²2]", "strength_nmm2"),
     ]
@@ -93,30 +108,77 @@ class SpecAnalyzerBlock(UniversalBlock):
         data = input_data if isinstance(input_data, dict) else {}
 
         file_path = data.get("file_path") or params.get("file_path")
-        if not file_path:
-            return {"status": "error", "error": "No file_path provided"}
 
-        if not os.path.exists(file_path):
-            return {"status": "error", "error": f"File not found: {file_path}"}
+        # Accept raw text directly (InputAdapter may wrap it as {"text": "..."})
+        raw_text = data.get("text") or data.get("input") or (str(input_data) if isinstance(input_data, str) else "")
 
-        try:
-            text, page_count = self._extract_text(file_path, params)
-        except ImportError:
-            return {
-                "status": "error",
-                "error": "pymupdf not installed. Run: pip install pymupdf",
-            }
-        except Exception as e:
-            return {"status": "error", "error": f"PDF extraction failed: {e}"}
+        if file_path:
+            if not os.path.exists(file_path):
+                return {"status": "error", "error": f"File not found: {file_path}"}
+            try:
+                text, page_count = self._extract_text(file_path, params)
+            except ImportError:
+                return {"status": "error", "error": "pymupdf not installed. Run: pip install pymupdf"}
+            except Exception as e:
+                return {"status": "error", "error": f"PDF extraction failed: {e}"}
+
+            # OCR fallback for image-only / scanned specs (no text layer).
+            min_chars = int(self.config.get("ocr_fallback_min_chars", 200))
+            if len(text.strip()) < min_chars:
+                ocr_block = self.get_dep("ocr")
+                if ocr_block is not None:
+                    try:
+                        ocr_result = await ocr_block.process({"file_path": file_path})
+                        ocr_text = (ocr_result.get("text") or "").strip()
+                        if len(ocr_text) > len(text.strip()):
+                            text = ocr_text
+                            page_count = ocr_result.get("pages") or page_count
+                    except Exception:
+                        pass
+        elif raw_text:
+            text = raw_text
+            page_count = 0
+        else:
+            return {"status": "error", "error": "Provide file_path (PDF) or raw spec text as input"}
 
         grade_requirements = self._extract_grades(text)
         material_specs = self._extract_materials(text)
         compliance_flags = self._extract_compliance(text)
         sections = self._extract_sections(text)
 
-        referenced_standards = list(
-            {g["type"] for g in grade_requirements if "standard" in g["type"]}
-        )
+        # Resolve each extracted grade against the central grade table.
+        from app.core.construction_constants import lookup_grade, lookup_standard
+        for g in grade_requirements:
+            if g.get("type") in ("grade", "concrete_grade", "rebar_grade", "steel_grade"):
+                info = lookup_grade(g.get("value", ""))
+                if info:
+                    g["resolved"] = info
+
+        # Emit standards as {type, value, resolved} dicts; deduplicate.
+        _seen_std = set()
+        referenced_standards: List[Dict] = []
+        for g in grade_requirements:
+            if "standard" not in g["type"]:
+                continue
+            key = (g["type"], g["value"])
+            if key in _seen_std:
+                continue
+            _seen_std.add(key)
+            type_to_prefix = {
+                "astm_standard": "ASTM",
+                "aci_standard": "ACI",
+                "bs_standard": "BS",
+                "bs_en_standard": "BS EN",
+                "as_standard": "AS",
+                "ibc_standard": "IBC",
+            }
+            prefix = type_to_prefix.get(g["type"], "")
+            full_ref = f"{prefix} {g['value']}".strip() if prefix else g["value"]
+            resolved = lookup_standard(full_ref)
+            entry = {"type": g["type"], "value": g["value"]}
+            if resolved:
+                entry["resolved"] = resolved
+            referenced_standards.append(entry)
 
         return {
             "status": "success",
@@ -131,18 +193,39 @@ class SpecAnalyzerBlock(UniversalBlock):
 
     def _extract_text(self, file_path: str, params: Dict) -> Tuple[str, int]:
         import fitz
+        from app.core.file_crypto import open_plaintext
         max_pages = int(params.get("max_pages", self.config.get("max_pages", 100)))
-        doc = fitz.open(file_path)
-        pages = min(len(doc), max_pages)
-        text = "\n".join(doc[i].get_text() for i in range(pages))
-        doc.close()
+        with open_plaintext(file_path) as plain_path:
+            doc = fitz.open(plain_path)
+            pages = min(len(doc), max_pages)
+            text = "\n".join(doc[i].get_text() for i in range(pages))
+            doc.close()
         return text, pages
+
+    _GRADE_STOPWORDS = {
+        "of", "as", "be", "is", "to", "in", "on", "or", "at", "by",
+        "CONCRETE", "STEEL", "INSTALL", "APPROVAL", "REQUIREMENT",
+        "PROVIDE", "FURNISH", "PERFORM", "VERIFY",
+    }
 
     def _extract_grades(self, text: str) -> List[Dict]:
         found: Dict[str, Dict] = {}
         for pattern, ptype in self._GRADE_PATTERNS:
             for m in re.finditer(pattern, text, re.IGNORECASE):
                 val = m.group(1).strip()
+                if ptype == "grade":
+                    if len(val) < 2:
+                        continue
+                    if val.islower():
+                        continue
+                    if val in self._GRADE_STOPWORDS:
+                        continue
+                    if val.lower() in self._GRADE_STOPWORDS:
+                        continue
+                    if val.upper() in self._GRADE_STOPWORDS:
+                        continue
+                    if not any(c.isdigit() for c in val) and "-" not in val:
+                        continue
                 key = f"{ptype}:{val}"
                 if key not in found:
                     ctx_start = max(0, m.start() - 80)

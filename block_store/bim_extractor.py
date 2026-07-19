@@ -1,9 +1,13 @@
 """BIM Extractor Block - Extract quantities, elements, and clash report from IFC BIM models"""
 
+import logging
 import os
-import math
+import tempfile
 from typing import Any, Dict, List, Optional, Tuple
+
 from app.core.universal_base import UniversalBlock
+
+_logger = logging.getLogger(__name__)
 
 
 # IFC type → construction category mapping
@@ -35,9 +39,21 @@ IFC_CATEGORY_MAP: Dict[str, str] = {
 }
 
 
+_CATEGORY_ITEM_CAP = 200
+_ELEMENT_CAP = 500
+_SPACE_CAP = 50
+
+_CLASH_DISCLAIMER = (
+    "basic (bounding-box — not geometric intersection. Verify critical "
+    "clashes in a dedicated clash-detection tool)"
+)
+
+
 class BIMExtractorBlock(UniversalBlock):
+    auto_validate = False
     name = "bim_extractor"
-    version = "1.0.0"
+    version = "1.2.0"
+    updated_at = "2026-07-19"
     description = "Extract building elements, quantities, and clash report from IFC BIM models"
     layer = 3
     tags = ["domain", "construction", "bim", "ifc", "quantities", "clash"]
@@ -50,11 +66,29 @@ class BIMExtractorBlock(UniversalBlock):
         "max_elements": 10000,
     }
 
+    # Proprietary formats this block does NOT parse natively. Each is mapped to
+    # the conversion path the operator needs to take to get an IFC file.
+    _PROPRIETARY_FORMATS = {
+        ".nwd": (
+            "Navisworks Document (.nwd) is proprietary. Convert to IFC "
+            "(in Navisworks: File > Export > IFC) or use the vendor's "
+            "model-derivative API, then upload the .ifc."
+        ),
+        ".rvt": (
+            "Revit (.rvt) is proprietary. Export from Revit as IFC "
+            "(File > Export > IFC, IFC 4 or IFC 2x3) and upload the .ifc file."
+        ),
+        ".nwc": (
+            "Navisworks Cache (.nwc) is proprietary. Open in Navisworks "
+            "and export as IFC."
+        ),
+    }
+
     ui_schema = {
         "input": {
             "type": "file",
             "accept": [".ifc"],
-            "placeholder": "Upload IFC BIM model...",
+            "placeholder": "Upload IFC BIM model (.rvt/.nwd: export to IFC first)...",
         },
         "output": {
             "type": "table",
@@ -66,23 +100,36 @@ class BIMExtractorBlock(UniversalBlock):
             ],
         },
         "quick_actions": [
-            {"icon": "🏗️", "label": "Extract All", "prompt": "Extract all building elements and quantities"},
-            {"icon": "⚡", "label": "Clash Detection", "prompt": "Run clash detection on this BIM model"},
-            {"icon": "📊", "label": "Quantities", "prompt": "Extract material quantities for cost estimation"},
+            {"icon": "️", "label": "Extract All", "prompt": "Extract all building elements and quantities"},
+            {"icon": "", "label": "Clash Detection", "prompt": "Run clash detection on this BIM model"},
+            {"icon": "", "label": "Quantities", "prompt": "Extract material quantities for cost estimation"},
         ],
     }
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
-        data = input_data if isinstance(input_data, dict) else {}
 
-        file_path = data.get("file_path") or params.get("file_path")
+        file_path = self._resolve_file_path(input_data, params)
         if not file_path:
-            return {"status": "error", "error": "No file_path provided"}
+            return {"status": "error", "error": "No file_path provided — requires an IFC file"}
         if not os.path.exists(file_path):
             return {"status": "error", "error": f"File not found: {file_path}"}
-        if not file_path.lower().endswith(".ifc"):
-            return {"status": "error", "error": "File must be an .ifc IFC model"}
+
+        ext = os.path.splitext(str(file_path).lower())[1]
+        if ext in self._PROPRIETARY_FORMATS:
+            return {
+                "status": "error",
+                "error": self._PROPRIETARY_FORMATS[ext],
+                "format_extension": ext,
+                "required_format": ".ifc",
+            }
+        if ext != ".ifc":
+            return {
+                "status": "error",
+                "error": f"File must be an .ifc IFC model (got '{ext}')",
+                "format_extension": ext,
+                "required_format": ".ifc",
+            }
 
         try:
             import ifcopenshell
@@ -94,7 +141,9 @@ class BIMExtractorBlock(UniversalBlock):
             }
 
         try:
-            model = ifcopenshell.open(file_path)
+            from app.core.file_crypto import open_plaintext
+            with open_plaintext(file_path) as plain_path:
+                model = ifcopenshell.open(plain_path)
         except Exception as e:
             return {"status": "error", "error": f"IFC open error: {e}"}
 
@@ -102,9 +151,14 @@ class BIMExtractorBlock(UniversalBlock):
         extract_props = params.get("extract_properties", self.config.get("extract_properties", True))
         run_clash = params.get("run_clash_detection", self.config.get("run_clash_detection", True))
 
-        building_elements, quantities = self._extract_elements(
-            model, ifc_util, max_el, extract_props
-        )
+        (
+            building_elements,
+            quantities,
+            duplicate_subtypes_skipped,
+            quantities_truncated,
+            categories_skipped,
+            psets_failed,
+        ) = self._extract_elements(model, ifc_util, max_el, extract_props)
         project_info = self._extract_project_info(model)
         storeys = self._extract_storeys(model)
         spaces = self._extract_spaces(model)
@@ -112,45 +166,135 @@ class BIMExtractorBlock(UniversalBlock):
         if run_clash:
             clash_report = self._basic_clash_report(model, building_elements)
 
+        building_elements_capped = building_elements[:_ELEMENT_CAP]
+        spaces_capped = spaces[:_SPACE_CAP]
+        building_elements_truncated = len(building_elements) > _ELEMENT_CAP
+        spaces_truncated = len(spaces) > _SPACE_CAP
+        clash_truncated = bool(clash_report.get("pair_cap_reached"))
+
+        any_truncated = (
+            bool(quantities_truncated)
+            or building_elements_truncated
+            or spaces_truncated
+            or clash_truncated
+        )
+
         return {
             "status": "success",
-            "building_elements": building_elements[:500],
+            "building_elements": building_elements_capped,
+            "building_elements_truncated": building_elements_truncated,
+            "spaces_truncated": spaces_truncated,
             "quantities": quantities,
+            "quantities_truncated": list(quantities_truncated),
             "clash_report": clash_report,
             "project_info": project_info,
             "storeys": storeys,
-            "spaces": spaces[:50],
+            "spaces": spaces_capped,
             "element_count": len(building_elements),
+            "element_count_returned": len(building_elements_capped),
+            "duplicate_subtypes_skipped": duplicate_subtypes_skipped,
+            "categories_skipped": categories_skipped,
+            "psets_failed": psets_failed,
             "ifc_schema": model.schema,
+            "truncated": any_truncated,
+            "truncation_caps": {
+                "category_item_cap": _CATEGORY_ITEM_CAP,
+                "building_elements_cap": _ELEMENT_CAP,
+                "spaces_cap": _SPACE_CAP,
+            },
         }
+
+    def _resolve_file_path(self, input_data: Any, params: Dict) -> Optional[str]:
+        """Resolve file path from input_data and params, writing bytes to temp if needed."""
+        if isinstance(input_data, str):
+            return input_data
+        if isinstance(input_data, bytes):
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".ifc") as f:
+                f.write(input_data)
+                return f.name
+        if isinstance(input_data, dict):
+            file_bytes = input_data.get("file") or input_data.get("bytes")
+            if isinstance(file_bytes, bytes):
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".ifc") as f:
+                    f.write(file_bytes)
+                    return f.name
+            return (
+                input_data.get("file_path")
+                or input_data.get("path")
+                or input_data.get("text")
+                or input_data.get("input")
+            )
+        if isinstance(params, dict):
+            return params.get("file_path")
+        return None
 
     def _extract_elements(
         self, model, ifc_util, max_el: int, extract_props: bool
-    ) -> Tuple[List[Dict], Dict]:
+    ) -> Tuple[List[Dict], Dict, int, List[str], List[str], List[Dict[str, str]]]:
+        """Returns (elements, quantities, duplicate_subtypes_skipped,
+        quantities_truncated, categories_skipped, psets_failed)."""
         elements: List[Dict] = []
         quantities: Dict[str, Any] = {
             cat: {"count": 0, "items": []}
             for cat in set(IFC_CATEGORY_MAP.values())
         }
+        seen_guids: set = set()
+        duplicate_subtypes_skipped = 0
+        categories_skipped: List[str] = []
+        psets_failed: List[Dict[str, str]] = []
 
         for ifc_type, category in IFC_CATEGORY_MAP.items():
             try:
                 items = model.by_type(ifc_type)
-            except Exception:
+            except Exception as exc:
+                _logger.warning(
+                    "bim_extractor: model.by_type(%s) failed — dropping entire "
+                    "category from results: %s",
+                    ifc_type, exc,
+                )
+                categories_skipped.append(ifc_type)
                 continue
             for el in items:
                 if len(elements) >= max_el:
                     break
-                el_data = self._element_to_dict(el, category, ifc_util, extract_props)
+                key = getattr(el, "GlobalId", None) or el.id()
+                if key in seen_guids:
+                    duplicate_subtypes_skipped += 1
+                    continue
+                seen_guids.add(key)
+                el_data = self._element_to_dict(
+                    el, category, ifc_util, extract_props, psets_failed,
+                )
                 elements.append(el_data)
                 quantities[category]["count"] += 1
-                if len(quantities[category]["items"]) < 20:
+                if len(quantities[category]["items"]) < _CATEGORY_ITEM_CAP:
                     quantities[category]["items"].append(el_data)
 
         quantities = {k: v for k, v in quantities.items() if v["count"] > 0}
-        return elements, quantities
+        quantities_truncated = [
+            cat for cat, v in quantities.items()
+            if v["count"] > len(v["items"])
+        ]
+        for cat in quantities_truncated:
+            quantities[cat]["truncated"] = True
+            quantities[cat]["items_returned"] = len(quantities[cat]["items"])
+        return (
+            elements,
+            quantities,
+            duplicate_subtypes_skipped,
+            quantities_truncated,
+            categories_skipped,
+            psets_failed,
+        )
 
-    def _element_to_dict(self, el, category: str, ifc_util, extract_props: bool) -> Dict:
+    def _element_to_dict(
+        self,
+        el,
+        category: str,
+        ifc_util,
+        extract_props: bool,
+        psets_failed: Optional[List[Dict[str, str]]] = None,
+    ) -> Dict:
         el_dict: Dict = {
             "id": el.GlobalId if hasattr(el, "GlobalId") else str(el.id()),
             "ifc_type": el.is_a(),
@@ -160,11 +304,9 @@ class BIMExtractorBlock(UniversalBlock):
             "object_type": getattr(el, "ObjectType", "") or "",
         }
 
-        # Extract psets
         if extract_props:
             try:
                 psets = ifc_util.get_psets(el)
-                # Flatten to key/value — keep only scalar values
                 flat_props: Dict[str, Any] = {}
                 for pset_name, pset_vals in psets.items():
                     if isinstance(pset_vals, dict):
@@ -174,7 +316,6 @@ class BIMExtractorBlock(UniversalBlock):
                 if flat_props:
                     el_dict["properties"] = flat_props
 
-                # Pull common quantities
                 for pset_name, pset_vals in psets.items():
                     if isinstance(pset_vals, dict):
                         for qname in ("NetVolume", "GrossVolume", "NetSideArea", "GrossSideArea",
@@ -182,10 +323,20 @@ class BIMExtractorBlock(UniversalBlock):
                                       "Height", "Depth", "Thickness", "NetArea", "GrossArea"):
                             if qname in pset_vals and isinstance(pset_vals[qname], (int, float)):
                                 el_dict[qname.lower()] = pset_vals[qname]
-            except Exception:
-                pass
+            except Exception as exc:
+                gid = el_dict.get("id", "?")
+                ifc_type = el_dict.get("ifc_type", "?")
+                _logger.warning(
+                    "bim_extractor: get_psets failed for %s (id=%s): %s",
+                    ifc_type, gid, exc,
+                )
+                if psets_failed is not None:
+                    psets_failed.append({
+                        "global_id": str(gid),
+                        "ifc_type": str(ifc_type),
+                        "error": str(exc),
+                    })
 
-        # Material
         try:
             mats = ifc_util.get_materials(el)
             if mats:
@@ -241,18 +392,122 @@ class BIMExtractorBlock(UniversalBlock):
             return []
 
     def _basic_clash_report(self, model, elements: List[Dict]) -> Dict:
-        """
-        Basic clash detection: flag elements in same category with identical coordinates
-        (placeholder for a full OBB/AABB spatial index approach).
-        """
+        """Clash detection: AABB intersection via ifcopenshell.geom when available."""
+        try:
+            import ifcopenshell.geom  # noqa: F401
+        except Exception:
+            return self._name_duplicate_clash_fallback(elements)
+        return self._geometric_clash_report(model, elements)
+
+    def _geometric_clash_report(self, model, elements: List[Dict]) -> Dict:
+        """Real AABB clash pass. Returns method='aabb_intersection'."""
+        import ifcopenshell.geom
+
+        settings = ifcopenshell.geom.settings()
+        try:
+            settings.set(settings.USE_WORLD_COORDS, True)
+        except Exception:
+            pass
+        try:
+            settings.set(settings.WELD_VERTICES, True)
+        except Exception:
+            pass
+
+        tol_m = float(self.config.get("clash_tolerance_mm", 10.0)) / 1000.0
+        pair_cap = int(self.config.get("clash_pair_cap", 200))
+        elem_cap = int(self.config.get("clash_elem_cap", 2000))
+
+        boxes: List[Tuple[Dict, Tuple[float, float, float, float, float, float]]] = []
+        skipped_no_geom = 0
+        for el in elements[:elem_cap]:
+            ifc_el = self._lookup_ifc_element(model, el)
+            if ifc_el is None:
+                skipped_no_geom += 1
+                continue
+            try:
+                shape = ifcopenshell.geom.create_shape(settings, ifc_el)
+                verts = shape.geometry.verts
+            except Exception:
+                skipped_no_geom += 1
+                continue
+            if not verts:
+                skipped_no_geom += 1
+                continue
+            xs = verts[0::3]
+            ys = verts[1::3]
+            zs = verts[2::3]
+            aabb = (min(xs), min(ys), min(zs), max(xs), max(ys), max(zs))
+            boxes.append((el, aabb))
+
+        clashes: List[Dict] = []
+        clash_count = 0
+        for i in range(len(boxes)):
+            if len(clashes) >= pair_cap:
+                break
+            ela, ba = boxes[i]
+            for j in range(i + 1, len(boxes)):
+                if len(clashes) >= pair_cap:
+                    break
+                elb, bb = boxes[j]
+                if (ba[0] + tol_m <= bb[3] and bb[0] + tol_m <= ba[3]
+                        and ba[1] + tol_m <= bb[4] and bb[1] + tol_m <= ba[4]
+                        and ba[2] + tol_m <= bb[5] and bb[2] + tol_m <= ba[5]):
+                    if ela["category"] == elb["category"]:
+                        continue
+                    clash_count += 1
+                    clashes.append({
+                        "type": "aabb_overlap",
+                        "element_a": ela["id"],
+                        "element_b": elb["id"],
+                        "category_a": ela["category"],
+                        "category_b": elb["category"],
+                        "ifc_type_a": ela.get("ifc_type"),
+                        "ifc_type_b": elb.get("ifc_type"),
+                        "name_a": ela.get("name") or "",
+                        "name_b": elb.get("name") or "",
+                        "severity": "warning",
+                    })
+
+        return {
+            "clash_count": clash_count,
+            "clashes": clashes,
+            "detection_method": "aabb_intersection",
+            "detection_method_disclaimer": _CLASH_DISCLAIMER,
+            "tolerance_mm": float(self.config.get("clash_tolerance_mm", 10.0)),
+            "elements_analyzed": len(boxes),
+            "elements_without_geometry": skipped_no_geom,
+            "pair_cap_reached": len(clashes) >= pair_cap,
+            "note": (
+                "AABB overlap is a coarse-pass: it catches every real clash "
+                "but may flag false positives for adjacent elements that touch "
+                "but don't intersect. Precise OBB/mesh intersection still "
+                "needs a dedicated tool."
+            ),
+        }
+
+    def _lookup_ifc_element(self, model, el_dict: Dict):
+        """Look up the live ifcopenshell entity from the element dict."""
+        key = el_dict.get("id")
+        if not key:
+            return None
+        try:
+            return model.by_guid(key)
+        except Exception:
+            pass
+        try:
+            return model.by_id(int(key)) if str(key).isdigit() else None
+        except Exception:
+            return None
+
+    def _name_duplicate_clash_fallback(self, elements: List[Dict]) -> Dict:
+        """Legacy fallback: flag elements that share a name+type string."""
         clash_count = 0
         clashes: List[Dict] = []
         seen_positions: Dict[str, List[str]] = {}
 
         for el in elements:
-            # Use name+type as a proxy position key (real detection needs geometry)
             key = f"{el.get('object_type', '')}:{el.get('name', '')}"
-            if key:
+            if key and key.strip(":"):
                 if key in seen_positions:
                     clash_count += 1
                     if len(clashes) < 20:
@@ -270,9 +525,11 @@ class BIMExtractorBlock(UniversalBlock):
         return {
             "clash_count": clash_count,
             "clashes": clashes,
-            "detection_method": "name_duplicate_proxy",
+            "detection_method": "name_duplicate_fallback",
+            "detection_method_disclaimer": _CLASH_DISCLAIMER,
             "note": (
-                "Full geometric clash detection requires ifcopenshell.geom. "
-                "Install ifcopenshell[all] for precise OBB intersection tests."
+                "ifcopenshell.geom not available — using name-duplicate heuristic. "
+                "This catches mis-labelled duplicates but NOT real geometric clashes. "
+                "Install ifcopenshell[all] for real AABB intersection."
             ),
         }
