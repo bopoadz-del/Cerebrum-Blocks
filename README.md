@@ -239,7 +239,7 @@ python scripts/publish_kit.py --domain healthcare
 
 ### Deploy on Render
 
-Production uses **`app/main.py`** (not `mock_backend.py`). The repo ships a blueprint at [`render.yaml`](render.yaml) and a [`Procfile`](Procfile).
+Production uses **`app/main.py`** (not `dev/mock_backend.py`). The repo ships a blueprint at [`render.yaml`](render.yaml) and a [`Procfile`](Procfile).
 
 | Setting | Value |
 |---------|-------|
@@ -267,7 +267,7 @@ Production uses **`app/main.py`** (not `mock_backend.py`). The repo ships a blue
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | LLM providers for chat block |
 | `SENTRY_DSN` | Error tracking |
 
-The frontend is a **separate static site** on Render (build `npm run build` in `frontend/`, set `VITE_API_BASE` to the API URL). Local dev: `python mock_backend.py` on `:8000` + `npm run dev` in `frontend/` on `:5173`.
+The frontend is a **separate static site** on Render (build `npm run build` in `frontend/`, set `VITE_API_BASE` to the API URL). Local dev: `python dev/mock_backend.py` on `:8000` + `npm run dev` in `frontend/` on `:5173`.
 
 | Service | URL |
 |---------|-----|

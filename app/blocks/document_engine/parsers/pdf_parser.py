@@ -25,7 +25,7 @@ class PDFParser:
         path = Path(file_path)
         doc = PDFDocument(source=str(path))
 
-        # Try pymupdf first (already in root requirements), then pdfplumber, then PyPDF2
+        # Try pymupdf first (already in root requirements), then pdfplumber, then pypdf
         parsed = False
         if not parsed:
             try:
@@ -43,14 +43,14 @@ class PDFParser:
 
         if not parsed:
             try:
-                doc = self._parse_with_pypdf2(file_path, doc)
+                doc = self._parse_with_pypdf(file_path, doc)
                 parsed = True
             except Exception:
                 pass
 
         if not parsed:
             raise RuntimeError(
-                "No PDF parser available. Install one of: PyMuPDF, pdfplumber, or PyPDF2"
+                "No PDF parser available. Install one of: PyMuPDF, pdfplumber, or pypdf"
             )
 
         doc.glossary = self._extract_glossary(doc.text)
@@ -82,8 +82,8 @@ class PDFParser:
                     doc.tables.extend(tables)
         return doc
 
-    def _parse_with_pypdf2(self, file_path: str, doc: PDFDocument) -> PDFDocument:
-        from PyPDF2 import PdfReader
+    def _parse_with_pypdf(self, file_path: str, doc: PDFDocument) -> PDFDocument:
+        from pypdf import PdfReader
         reader = PdfReader(file_path)
         for page in reader.pages:
             text = page.extract_text() or ""

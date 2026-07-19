@@ -33,7 +33,7 @@ for dir in uploads/contracts uploads/drawings uploads/schedules uploads/bim uplo
     echo "── $dir (${#files[@]} file(s))"
     for f in "${files[@]}"; do
         total=$((total + 1))
-        if python3 test_single_file.py "$f"; then
+        if python3 tests/test_single_file.py "$f"; then
             ok=$((ok + 1))
         else
             fail=$((fail + 1))
@@ -47,7 +47,7 @@ if [ -d uploads/_synthetic ]; then
     echo "── uploads/_synthetic (generated fixtures)"
     for f in $(find uploads/_synthetic -maxdepth 2 -type f); do
         total=$((total + 1))
-        if python3 test_single_file.py "$f"; then
+        if python3 tests/test_single_file.py "$f"; then
             ok=$((ok + 1))
         else
             fail=$((fail + 1))

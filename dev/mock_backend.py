@@ -23,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-REGISTRY_DIR = Path(__file__).parent / "block_registry"
+REGISTRY_DIR = Path(__file__).resolve().parent.parent / "block_registry"
 
 
 def _load_registry_blocks():
