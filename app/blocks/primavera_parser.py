@@ -1,17 +1,22 @@
 """Primavera Parser Block - Parse Oracle Primavera P6 XER schedule files"""
 
+import logging
 import os
-import re
 import tempfile
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
 from app.core.universal_base import UniversalBlock
+
+_logger = logging.getLogger(__name__)
 
 
 class PrimaveraParserBlock(UniversalBlock):
+    auto_validate = False
     name = "primavera_parser"
-    version = "1.0.0"
-    description = "Parse Primavera P6 .xer schedule files: critical path, milestones, resource loading"
+    version = "1.1.0"
+    updated_at = "2026-07-19"
+    description = "Parse Primavera P6 .xer schedule files: low-float activities, milestones, resource definitions"
     layer = 3
     tags = ["domain", "construction", "schedule", "primavera", "xer", "cpm"]
     requires = []
@@ -31,15 +36,15 @@ class PrimaveraParserBlock(UniversalBlock):
             "type": "table",
             "fields": [
                 {"name": "activity_count", "type": "number", "label": "Activities"},
-                {"name": "critical_path", "type": "list", "label": "Critical Path"},
+                {"name": "low_float_activities", "type": "list", "label": "Low-Float Activities"},
                 {"name": "milestones", "type": "list", "label": "Milestones"},
                 {"name": "schedule_data", "type": "json", "label": "Schedule Summary"},
             ],
         },
         "quick_actions": [
-            {"icon": "🗓️", "label": "Critical Path", "prompt": "Show the critical path activities"},
-            {"icon": "🏁", "label": "Milestones", "prompt": "List all project milestones"},
-            {"icon": "📊", "label": "Resource Loading", "prompt": "Show resource loading by period"},
+            {"icon": "️", "label": "Low-Float Activities", "prompt": "Show activities with total float at or below the threshold"},
+            {"icon": "", "label": "Milestones", "prompt": "List all project milestones"},
+            {"icon": "", "label": "Resource Definitions", "prompt": "Show resource definitions from the RSRC table"},
         ],
     }
 
@@ -55,7 +60,14 @@ class PrimaveraParserBlock(UniversalBlock):
             return {"status": "error", "error": "File must be a .xer Primavera export"}
 
         try:
-            tables = self._parse_xer(file_path)
+            # Primavera P6 exports XER in Windows-1252; UTF-8 mangles Arabic /
+            # European chars. open_plaintext decrypts at-rest files when needed
+            # and is a no-op for plaintext files.
+            from app.core.file_crypto import open_plaintext
+            with open_plaintext(file_path) as plain_path:
+                with open(plain_path, "r", encoding="cp1252", errors="replace") as f:
+                    xer_text = f.read()
+            tables = self._parse_xer_text(xer_text)
         except Exception as e:
             return {"status": "error", "error": f"XER parse error: {e}"}
 
@@ -68,10 +80,10 @@ class PrimaveraParserBlock(UniversalBlock):
 
         activities = self._extract_activities(tables)
         wbs = self._extract_wbs(tables)
-        resources = self._extract_resources(tables) if include_resources else []
+        resource_definitions = self._extract_resources(tables) if include_resources else []
         project_meta = self._extract_project(tables)
 
-        critical_path = [
+        low_float_activities = [
             a for a in activities
             if a.get("total_float_days", 999) <= float_threshold
         ]
@@ -80,7 +92,6 @@ class PrimaveraParserBlock(UniversalBlock):
             if a.get("type") in ("TT_Mile", "TT_FinMile", "TT_StartMile", "milestone")
         ]
 
-        # Project date range
         start_dates = [a["start"] for a in activities if a.get("start")]
         end_dates = [a["finish"] for a in activities if a.get("finish")]
         project_start = min(start_dates) if start_dates else None
@@ -90,23 +101,82 @@ class PrimaveraParserBlock(UniversalBlock):
             "project": project_meta,
             "activity_count": len(activities),
             "wbs_count": len(wbs),
-            "resource_count": len(resources),
+            "resource_definition_count": len(resource_definitions),
             "project_start": project_start,
             "project_finish": project_finish,
-            "critical_activity_count": len(critical_path),
+            "low_float_activity_count": len(low_float_activities),
             "milestone_count": len(milestones),
         }
 
-        return {
+        def _cap(name: str, default: int) -> Optional[int]:
+            try:
+                v = int(params.get(name, default))
+            except (TypeError, ValueError):
+                v = default
+            return v if v > 0 else None  # 0 → unlimited
+
+        max_activities = _cap("max_activities", 5000)
+        max_wbs = _cap("max_wbs", 2000)
+        max_low_float = _cap("max_low_float_activities", 500)
+        max_milestones = _cap("max_milestones", 500)
+        max_resources = _cap("max_resources", 200)
+
+        response: Dict[str, Any] = {
             "status": "success",
             "schedule_data": schedule_data,
-            "critical_path": critical_path[:100],
-            "milestones": milestones[:50],
-            "activities": activities[:200],
-            "wbs": wbs[:100],
-            "resources": resources[:50],
+            "low_float_activities": low_float_activities[:max_low_float],
+            "_note": "computed via real CPM forward+backward pass",
+            "milestones": milestones[:max_milestones],
+            "activities": activities[:max_activities],
+            "wbs": wbs[:max_wbs],
+            "resource_definitions": resource_definitions[:max_resources],
             "activity_count": len(activities),
         }
+
+        # Real CPM via app.lib.pm_computations
+        try:
+            from app.lib.pm_computations import compute_cpm, parse_xer_full
+            from app.schemas.cpm import CPMInput
+
+            parsed = parse_xer_full(xer_text)
+            cpm_activities = parsed.get("activities") or []
+            if cpm_activities:
+                cpm_input = CPMInput(activities=cpm_activities)
+                cpm_out = compute_cpm(cpm_input)
+                per_activity_float = {r.id: r.total_float for r in cpm_out.results}
+                near_critical_ids = [
+                    r.id for r in cpm_out.results
+                    if not r.is_critical and 0 < r.total_float <= 5
+                ]
+                response["cpm"] = {
+                    "total_duration_days": cpm_out.project_duration,
+                    "critical_path_activity_ids": list(cpm_out.critical_path),
+                    "near_critical_activity_ids": near_critical_ids,
+                    "per_activity_float": per_activity_float,
+                    "id_space": "task_code (matches activities[].code)",
+                }
+            else:
+                response["cpm"] = {
+                    "total_duration_days": 0,
+                    "critical_path_activity_ids": [],
+                    "near_critical_activity_ids": [],
+                    "per_activity_float": {},
+                }
+            response["calendars_parsed"] = parsed.get("calendars_parsed", {})
+            response["task_resources_count"] = len(parsed.get("task_resources") or [])
+        except Exception as cpm_exc:  # noqa: BLE001
+            _logger.warning(
+                "primavera_parser: CPM computation failed (%s); "
+                "falling back to low-float filter only",
+                cpm_exc,
+            )
+            response["cpm_error"] = f"{type(cpm_exc).__name__}: {cpm_exc}"
+            response["_note"] = (
+                "low_float_activities is a total_float filter, "
+                "not a CPM driving-path analysis (CPM failed; see cpm_error)"
+            )
+
+        return response
 
     def _resolve_file_path(self, input_data: Any, params: Dict) -> Optional[str]:
         """Resolve file path from input_data and params, writing bytes to temp if needed."""
@@ -132,27 +202,26 @@ class PrimaveraParserBlock(UniversalBlock):
             return params.get("file_path")
         return None
 
-    def _parse_xer(self, file_path: str) -> Dict[str, List[Dict]]:
-        """Parse XER tab-delimited table format into dict of table_name → rows."""
+    def _parse_xer_text(self, text: str) -> Dict[str, List[Dict]]:
+        """Parse XER tab-delimited table text into dict of table_name → rows."""
         tables: Dict[str, List[Dict]] = {}
         current_table: Optional[str] = None
         headers: List[str] = []
 
-        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
-                line = line.rstrip("\r\n")
-                if not line:
-                    continue
-                if line.startswith("%T"):
-                    current_table = line[3:].strip()
-                    tables[current_table] = []
-                    headers = []
-                elif line.startswith("%F"):
-                    headers = line[3:].split("\t")
-                elif line.startswith("%R") and current_table and headers:
-                    values = line[3:].split("\t")
-                    row = dict(zip(headers, values + [""] * max(0, len(headers) - len(values))))
-                    tables[current_table].append(row)
+        for line in text.splitlines():
+            line = line.rstrip("\r\n")
+            if not line:
+                continue
+            if line.startswith("%T"):
+                current_table = line[3:].strip()
+                tables[current_table] = []
+                headers = []
+            elif line.startswith("%F"):
+                headers = line[3:].split("\t")
+            elif line.startswith("%R") and current_table and headers:
+                values = line[3:].split("\t")
+                row = dict(zip(headers, values + [""] * max(0, len(headers) - len(values))))
+                tables[current_table].append(row)
         return tables
 
     def _extract_activities(self, tables: Dict) -> List[Dict]:
@@ -173,7 +242,7 @@ class PrimaveraParserBlock(UniversalBlock):
                 "status": r.get("status_code", ""),
                 "start": _parse_date(r.get("act_start_date") or r.get("early_start_date", "")),
                 "finish": _parse_date(r.get("act_end_date") or r.get("early_end_date", "")),
-                "original_duration_days": _to_float(r.get("orig_dur", "0")) / 8,
+                "original_duration_days": _orig_dur_days(r),
                 "remaining_duration_days": _to_float(r.get("remain_drtn_hr_cnt", "0")) / 8,
                 "total_float_days": round(float_days, 1),
                 "percent_complete": _to_float(r.get("phys_complete_pct", "0")),
@@ -235,5 +304,20 @@ def _parse_date(val: str) -> Optional[str]:
 def _to_float(val: str) -> float:
     try:
         return float(str(val).replace(",", "").strip())
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _orig_dur_days(row: Dict) -> float:
+    """Original duration in days from P6 row.
+
+    Real P6 column is ``target_drtn_hr_cnt`` (hours). Fall back to legacy
+    ``orig_dur`` for backward compat.
+    """
+    raw = row.get("target_drtn_hr_cnt")
+    if raw is None or str(raw).strip() == "":
+        raw = row.get("orig_dur", "0")
+    try:
+        return float(str(raw).replace(",", "").strip()) / 8.0
     except (ValueError, TypeError):
         return 0.0

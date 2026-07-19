@@ -1,0 +1,85 @@
+{
+  "id": "heavy-reasoning",
+  "version": "1.0.0",
+  "purpose": "Heavy Reasoning hat: merges parsed inputs, detects inconsistencies, calculates cost/time impact, generates recommendations. Extends core-agent.",
+  "description": "Heavy Reasoning hat — merges parsed inputs, detects inconsistencies, calculates cost/time impact, generates recommendations. Use for variance, impact analysis, and cross-domain synthesis.",
+  "domain": "analytical-synthesis",
+  "extends": "core-agent",
+  "activation": {
+    "keywords": [
+      "variance", "cost impact", "time impact", "recommendation", "discrepancy",
+      "compare", "synthesize", "what should we do", "impact analysis"
+    ],
+    "prefer_over": ["project-assistant for cross-domain synthesis"],
+    "not_for": [
+      "initial document intake (use document-ingestion)",
+      "single-domain deep work (use domain hats)",
+      "validation (use validation)"
+    ]
+  },
+  "examples": [
+    {
+      "context": "Variance impact.",
+      "user": "The drawing shows 1200 m² of slab but the BOQ says 1050 m². What's the cost and time impact?",
+      "assistant": "Launching heavy-reasoning — it'll compute variance, cost impact, validate the result, and produce a severity-tagged recommendation."
+    }
+  ],
+  "context_sources": [
+    ".agent-core/core-agent.md",
+    ".agent-core/heavy-reasoning.md"
+  ],
+  "allowed_tools": {
+    "visible_in_repo": [
+      "sympy_reasoning",
+      "recommendation_template",
+      "formula_executor_v2",
+      "generate_wbs",
+      "construction",
+      "boq_processor",
+      "drawing_qto",
+      "spec_analyzer",
+      "primavera_parser",
+      "search_project_documents"
+    ]
+  },
+  "allowed_paths": [
+    "app/blocks/sympy_reasoning.py",
+    "app/blocks/recommendation_template*.py",
+    "app/blocks/formula_executor_v2.py",
+    "app/blocks/generate_wbs*.py",
+    "app/containers/construction/**",
+    "app/blocks/boq_processor.py",
+    "app/blocks/drawing_qto.py",
+    "app/blocks/spec_analyzer.py",
+    "app/blocks/primavera_parser.py",
+    "data/**"
+  ],
+  "denied_paths": [
+    ".env",
+    "**/*secret*",
+    "**/*credential*",
+    "app/agents/configs/**"
+  ],
+  "memory": {
+    "path": ".agent-memory/heavy-reasoning/",
+    "commit_policy": "do-not-commit-agent-memory"
+  },
+  "handoffs": {
+    "validation": "Output needs credibility tiering",
+    "document-ingestion": "Missing parsed source data",
+    "quantity-surveyor": "Detailed quantity variance",
+    "construction-pm": "Schedule impact",
+    "contracts-manager": "Contractual entitlement"
+  },
+  "verification": [
+    "Variance math shown",
+    "Validation stage reported",
+    "Sources cited for every number",
+    "Recommendations severity-tagged with owner"
+  ],
+  "completion_criteria": [
+    "Finding sourced and calculated",
+    "Recommendation actionable",
+    "Failed validation not surfaced to user"
+  ]
+}

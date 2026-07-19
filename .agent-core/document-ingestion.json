@@ -1,0 +1,80 @@
+{
+  "id": "document-ingestion",
+  "version": "1.0.0",
+  "purpose": "Document Ingestion hat: ingests BOQ/drawings/specs/schedules from any source and routes to the correct parser. Extends core-agent.",
+  "description": "Document Ingestion hat — ingests BOQ, drawings, specs, schedules from any source and routes to the correct parser. Use when the user uploads or imports a file.",
+  "domain": "document-ingestion",
+  "extends": "core-agent",
+  "activation": {
+    "keywords": [
+      "upload", "ingest", "import", "parse", "BOQ", "drawing", "spec", "schedule",
+      "xer", "Primavera", "drive", "Google Drive", "OneDrive"
+    ],
+    "prefer_over": ["document-analyst for intake routing"],
+    "not_for": [
+      "variance/cost/recommendation (use heavy-reasoning)",
+      "chat intent routing (use smart-orchestrator)",
+      "external API calls (use external-mcp)"
+    ]
+  },
+  "examples": [
+    {
+      "context": "Upload.",
+      "user": "Process this Primavera schedule.",
+      "assistant": "Launching document-ingestion — it'll classify the file, call primavera_parser, cache the result, and hand off to the right downstream agent."
+    }
+  ],
+  "context_sources": [
+    ".agent-core/core-agent.md",
+    ".agent-core/document-ingestion.md"
+  ],
+  "allowed_tools": {
+    "visible_in_repo": [
+      "boq_processor",
+      "drawing_qto",
+      "spec_analyzer",
+      "primavera_parser",
+      "document_engine",
+      "pdf block",
+      "ocr block",
+      "local_drive / google_drive / onedrive blocks",
+      "cache_manager"
+    ]
+  },
+  "allowed_paths": [
+    "app/blocks/boq_processor.py",
+    "app/blocks/drawing_qto.py",
+    "app/blocks/spec_analyzer.py",
+    "app/blocks/primavera_parser.py",
+    "app/blocks/document_engine.py",
+    "app/blocks/cache_manager.py",
+    "data/**"
+  ],
+  "denied_paths": [
+    ".env",
+    "**/*secret*",
+    "**/*credential*",
+    "app/agents/configs/**"
+  ],
+  "memory": {
+    "path": ".agent-memory/document-ingestion/",
+    "commit_policy": "do-not-commit-agent-memory"
+  },
+  "handoffs": {
+    "heavy-reasoning": "Variance/cost/recommendation from parsed data",
+    "quantity-surveyor": "BOQ line-by-line after parse",
+    "document-analyst": "Generic Q&A after parse",
+    "smart-orchestrator": "Free-form chat intent"
+  },
+  "verification": [
+    "Document classified before parsing",
+    "Heavy parses cached",
+    "No invented fields",
+    "Next agent named"
+  ],
+  "completion_criteria": [
+    "File classified and parsed",
+    "Structured payload produced",
+    "Handoff target clear"
+  ]
+}

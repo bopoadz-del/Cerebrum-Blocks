@@ -19,7 +19,8 @@ class AuthBlock(UniversalBlock):
     """
     
     name = "auth"
-    version = "1.0.0"
+    version = "1.1.0"
+    updated_at = "2026-07-19"
     requires = ["memory"]  # Stores API keys and rate limit counters
     layer = 1  # Security layer
     tags = ["security", "auth", "core"]
@@ -92,7 +93,9 @@ class AuthBlock(UniversalBlock):
             return await self.create_api_key(
                 input_data.get("name"),
                 Role(input_data.get("role", "basic")),
-                input_data.get("owner")
+                input_data.get("owner"),
+                tenant_id=input_data.get("tenant_id"),
+                project_id=input_data.get("project_id"),
             )
         elif action == "revoke_key":
             return await self._revoke_key(input_data.get("api_key"))
@@ -140,6 +143,8 @@ class AuthBlock(UniversalBlock):
                 "valid": True,
                 "role": metadata.get("role"),
                 "owner": metadata.get("owner"),
+                "tenant_id": metadata.get("tenant_id"),
+                "project_id": metadata.get("project_id"),
                 "created": metadata.get("created"),
                 "name": metadata.get("name")
             }
@@ -207,7 +212,9 @@ class AuthBlock(UniversalBlock):
             return {
                 "allowed": True,
                 "role": role.value,
-                "block": block_name
+                "block": block_name,
+                "tenant_id": validation.get("tenant_id"),
+                "project_id": validation.get("project_id"),
             }
         
         # Check for readonly variant - only if the exact block is in the allowed list
@@ -216,7 +223,9 @@ class AuthBlock(UniversalBlock):
                 "allowed": True,
                 "role": role.value,
                 "block": block_name,
-                "mode": "readonly"
+                "mode": "readonly",
+                "tenant_id": validation.get("tenant_id"),
+                "project_id": validation.get("project_id"),
             }
         
         return {
@@ -226,7 +235,14 @@ class AuthBlock(UniversalBlock):
             "required_role": "pro"  # Suggest upgrade
         }
     
-    async def create_api_key(self, name: str, role: Role, owner: str) -> Dict:
+    async def create_api_key(
+        self,
+        name: str,
+        role: Role,
+        owner: str,
+        tenant_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+    ) -> Dict:
         """Generate new API key"""
         # Use the full URL-safe random token rather than hashing a smaller
         # block to 24 hex chars (96 bits). secrets.token_urlsafe(32) gives
@@ -237,6 +253,8 @@ class AuthBlock(UniversalBlock):
             "name": name,
             "role": role.value,
             "owner": owner,
+            "tenant_id": tenant_id,
+            "project_id": project_id,
             "created": time.time(),
             "active": True
         }
@@ -271,6 +289,8 @@ class AuthBlock(UniversalBlock):
             "name": name,
             "role": role.value,
             "owner": owner,
+            "tenant_id": tenant_id,
+            "project_id": project_id,
             "message": "Save this key - it won't be shown again"
         }
     

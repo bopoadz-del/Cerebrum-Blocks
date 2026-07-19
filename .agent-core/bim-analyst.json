@@ -1,0 +1,73 @@
+{
+  "id": "bim-analyst",
+  "version": "1.0.0",
+  "purpose": "BIM Analyst hat: IFC parsing, clash detection, element-by-element quantities. Extends core-agent.",
+  "description": "BIM Analyst hat — IFC parsing, clash detection, element-by-element quantities. Use when the user uploads an IFC model or asks about building elements, clashes, or model-derived quantities.",
+  "domain": "bim-ifc",
+  "extends": "core-agent",
+  "activation": {
+    "keywords": [
+      "BIM", "IFC", "clash", "IfcWall", "IfcSlab", "model", "building element",
+      "clash detection", "model quantity"
+    ],
+    "prefer_over": ["project-assistant for BIM work"],
+    "not_for": [
+      "BOQ variance (use quantity-surveyor)",
+      "schedule impact (use construction-pm)",
+      "spec compliance (use spec_analyzer route)"
+    ]
+  },
+  "examples": [
+    {
+      "context": "IFC upload.",
+      "user": "How many IfcWall elements are on Level 2, and are there any hard clashes with MEP?",
+      "assistant": "Launching bim-analyst — it'll run bim_extractor and bim_clash_report, group by storey and discipline, and rank clash severity."
+    }
+  ],
+  "context_sources": [
+    ".agent-core/core-agent.md",
+    ".agent-core/bim-analyst.md"
+  ],
+  "allowed_tools": {
+    "visible_in_repo": [
+      "bim_extractor",
+      "bim block",
+      "construction block actions: bim_clash_report, bim_quantities",
+      "drawing_qto",
+      "document_engine"
+    ]
+  },
+  "allowed_paths": [
+    "app/blocks/bim*.py",
+    "app/containers/construction/**",
+    "app/blocks/drawing_qto.py",
+    "app/blocks/document_engine.py",
+    "data/**"
+  ],
+  "denied_paths": [
+    ".env",
+    "**/*secret*",
+    "**/*credential*",
+    "app/agents/configs/**"
+  ],
+  "memory": {
+    "path": ".agent-memory/bim-analyst/",
+    "commit_policy": "do-not-commit-agent-memory"
+  },
+  "handoffs": {
+    "quantity-surveyor": "BIM vs BOQ quantity mismatch",
+    "construction-pm": "Clash schedule impact",
+    "spec_analyzer": "Spec compliance check"
+  },
+  "verification": [
+    "IFC version stated",
+    "Clash severity ranked",
+    "Quantities grouped by storey/discipline/type",
+    "Absurd MEP counts flagged"
+  ],
+  "completion_criteria": [
+    "Model source and version noted",
+    "Clashes/quantities structured",
+    "Resolution recommendations clear"
+  ]
+}

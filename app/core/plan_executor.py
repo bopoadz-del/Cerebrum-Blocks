@@ -8,6 +8,8 @@ Plan-4 code generator, then writes the result into session.data.
 import json
 
 from app.schemas.cpm import CPMInput
+from typing import Any, Dict, List
+
 from app.schemas.execution_plan import (
     ExecutionPlan, PlanRunResult, PlanStep, StepResult,
 )
@@ -55,13 +57,44 @@ def _require_cpm_input(session: ProjectSession) -> CPMInput:
 
 
 class PlanExecutor:
-    """Dispatches ExecutionPlan steps. Stateless — safe to reuse."""
+    """Dispatches ExecutionPlan steps. Stateless — safe to reuse.
+
+    Step handlers are registered by name rather than hard-coded, so
+    domain-specific handlers (construction schedule workflows, etc.) can be
+    added by the relevant domain kit without polluting the core executor.
+    """
 
     def __init__(self, code_block=None):
         """`code_block` is a FormulaExecutorV2Block (Plan 4). Constructed
         lazily on first use when not injected, so library-only plans need no
         LLM block."""
         self._code_block = code_block
+        self._handlers: Dict[str, Any] = {}
+        self._register_default_handlers()
+
+    def _register_default_handlers(self):
+        """Register the domain-neutral handlers that ship in the core."""
+        for name in (
+            "compute_cpm",
+            "resource_histogram",
+            "gantt",
+            "compress",
+            "generate_code",
+        ):
+            self._handlers[name] = getattr(self, f"_step_{name}")
+
+    def register_step_handler(self, step_type: str, handler):
+        """Register or override a step handler.
+
+        ``handler`` is an async callable ``handler(step, session) -> value``.
+        The returned value is written into ``session.data[step.output_key]``
+        and recorded on the ``StepResult``.
+        """
+        self._handlers[step_type] = handler
+
+    def list_step_handlers(self) -> List[str]:
+        """Return the currently registered step types."""
+        return list(self._handlers.keys())
 
     def _get_code_block(self):
         if self._code_block is None:
@@ -77,6 +110,8 @@ class PlanExecutor:
         for step in plan.steps:
             try:
                 value = await self._run_step(step, session)
+                if step.output_key is not None:
+                    session.data[step.output_key] = value
                 results.append(StepResult(
                     type=step.type,
                     output_key=step.output_key,
@@ -102,7 +137,7 @@ class PlanExecutor:
     async def _run_step(self, step: PlanStep, session: ProjectSession):
         """Run one step. Returns the value written into session.data so the
         caller can record it on the StepResult."""
-        handler = getattr(self, f"_step_{step.type}", None)
+        handler = self._handlers.get(step.type)
         if handler is None:
             raise PlanExecutionError(f"Unknown step type: '{step.type}'")
         return await handler(step, session)

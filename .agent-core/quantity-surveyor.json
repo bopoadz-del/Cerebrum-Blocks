@@ -1,0 +1,76 @@
+{
+  "id": "quantity-surveyor",
+  "version": "1.0.0",
+  "purpose": "Quantity Surveyor hat: BOQ takeoff, drawing measurements, cost estimates, variance analysis. Extends core-agent.",
+  "description": "Quantity Surveyor hat — BOQ takeoff, drawing measurements, cost estimates, variance analysis. Use when the user asks about quantities, BOQ lines, drawing vs BOQ variance, or cost impact.",
+  "domain": "quantity-surveying",
+  "extends": "core-agent",
+  "activation": {
+    "keywords": [
+      "BOQ", "bill of quantities", "takeoff", "QTO", "variance", "measurement",
+      "cost estimate", "quantity", "drawing measurement", "m2", "m3", "kg"
+    ],
+    "prefer_over": ["project-assistant for quantity work"],
+    "not_for": [
+      "contract VO (use contracts-manager)",
+      "BIM element verification (use bim-analyst)",
+      "procurement scheduling (use construction-pm)"
+    ]
+  },
+  "examples": [
+    {
+      "context": "Variance check.",
+      "user": "Compare the slab quantities in the drawing to the BOQ.",
+      "assistant": "Launching quantity-surveyor — it'll run drawing_qto and boq_processor, compute variance with sympy_reasoning, and flag any ≥8% discrepancy."
+    }
+  ],
+  "context_sources": [
+    ".agent-core/core-agent.md",
+    ".agent-core/quantity-surveyor.md"
+  ],
+  "allowed_tools": {
+    "visible_in_repo": [
+      "boq_processor",
+      "drawing_qto",
+      "construction block action procurement_list_generator",
+      "sympy_reasoning",
+      "formula_executor_v2",
+      "document_engine"
+    ]
+  },
+  "allowed_paths": [
+    "app/blocks/boq_processor.py",
+    "app/blocks/drawing_qto.py",
+    "app/containers/construction/**",
+    "app/blocks/sympy_reasoning.py",
+    "app/blocks/formula_executor_v2.py",
+    "app/blocks/document_engine.py",
+    "data/**"
+  ],
+  "denied_paths": [
+    ".env",
+    "**/*secret*",
+    "**/*credential*",
+    "app/agents/configs/**"
+  ],
+  "memory": {
+    "path": ".agent-memory/quantity-surveyor/",
+    "commit_policy": "do-not-commit-agent-memory"
+  },
+  "handoffs": {
+    "contracts-manager": "Variance suggests design change / VO",
+    "bim-analyst": "Quantity feels wrong, needs element verification",
+    "construction-pm": "Procurement scheduling from quantities"
+  },
+  "verification": [
+    "Variance ≥ 8% flagged as action threshold",
+    "Units and sources explicit",
+    "No rounding before variance calc",
+    "Aggregate metrics kept out of procurement items"
+  ],
+  "completion_criteria": [
+    "Measurements sourced",
+    "Variance math shown",
+    "Recommendation actionable"
+  ]
+}

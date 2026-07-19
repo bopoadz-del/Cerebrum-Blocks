@@ -212,6 +212,29 @@ Each block inherits from `UniversalBlock` (or `TypedBlock`/`DomainBlockV2` for s
 
 ---
 
+## 🤖 Modular Agent Pack
+
+This repo includes a platform-agnostic agent layer under `.agent-core/`:
+
+- **1 core agent** — shared kernel with honesty, grounding, tool-discipline, and handoff rules.
+- **11 domain hats** — specialist agents that extend the core for construction-domain work.
+
+| Agent | Role |
+|---|---|
+| `project-assistant` | Operator's primary chat surface |
+| `construction-pm` | Schedule, procurement, risks, costs |
+| `contracts-manager` | RFP, clauses, change orders, claims |
+| `quantity-surveyor` | BOQ takeoff, drawing measurements, variance |
+| `bim-analyst` | IFC, clash detection, model quantities |
+| `document-analyst` | Generic document parsing and Q&A |
+| `document-ingestion` | File intake and parser routing |
+| `safety-officer` | HSE audits, risk register, incidents |
+| `heavy-reasoning` | Variance synthesis and recommendations |
+| `validation` | 5-stage validation and credibility tiers |
+| `learning` | User corrections and coefficient tuning |
+
+Each agent has a canonical `.md` body plus a machine-readable `.json` manifest with `description`, `examples`, `activation`, `handoffs`, and `allowed_paths`. See [`docs/agents/README.md`](docs/agents/README.md) for porting instructions.
+
 ## 🏢 Built on by CerebrumDev.ai
 
 Cerebrum Blocks is the open-core engine behind **[CerebrumDev.ai](https://cerebrumdev.ai)** — the enterprise builder for vertical AI products. The block store is open source; CerebrumDev.ai adds hosted infrastructure, team collaboration, managed deployments, and premium enterprise kits on top.

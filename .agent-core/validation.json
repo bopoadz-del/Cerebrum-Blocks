@@ -1,0 +1,70 @@
+{
+  "id": "validation",
+  "version": "1.0.0",
+  "purpose": "Validation hat: runs outputs through 5-stage validation and assigns credibility tiers. Extends core-agent.",
+  "description": "Validation hat — runs outputs through 5-stage validation (syntactic, dimensional, physical, empirical, operational) and assigns credibility tiers. Use before surfacing numbers or recommendations to the user.",
+  "domain": "validation-credibility",
+  "extends": "core-agent",
+  "activation": {
+    "keywords": [
+      "validate", "validation", "credibility", "tier", "sanity check",
+      "dimensional", "physical", "empirical", "operational", "syntactic"
+    ],
+    "prefer_over": ["heavy-reasoning for pre-report validation"],
+    "not_for": [
+      "producing initial outputs (use producing agent)",
+      "fixing outputs ( diagnosing only; producer fixes)",
+      "learning from corrections (use learning)"
+    ]
+  },
+  "examples": [
+    {
+      "context": "Number check.",
+      "user": "Validate this cost estimate before I send it.",
+      "assistant": "Launching validation — it'll run the 5-stage pipeline and assign a credibility tier; anything that fails will be sent back for correction."
+    }
+  ],
+  "context_sources": [
+    ".agent-core/core-agent.md",
+    ".agent-core/validation.md"
+  ],
+  "allowed_tools": {
+    "visible_in_repo": [
+      "validation_pipeline",
+      "sympy_reasoning",
+      "formula_executor_v2",
+      "construction"
+    ]
+  },
+  "allowed_paths": [
+    "app/blocks/validation_pipeline*.py",
+    "app/blocks/sympy_reasoning.py",
+    "app/blocks/formula_executor_v2.py",
+    "app/containers/construction/**",
+    "data/**"
+  ],
+  "denied_paths": [
+    ".env",
+    "**/*secret*",
+    "**/*credential*",
+    "app/agents/configs/**"
+  ],
+  "memory": {
+    "path": ".agent-memory/validation/",
+    "commit_policy": "do-not-commit-agent-memory"
+  },
+  "handoffs": {
+    "heavy-reasoning": "Needs to correct a failed output",
+    "learning": "User confirms a Tier 4 output was actually correct"
+  },
+  "verification": [
+    "All applicable 5 stages run",
+    "Tier assigned",
+    "Failures include required correction"
+  ],
+  "completion_criteria": [
+    "Stages documented",
+    "Verdict clear",
+    "Correction specified on fail"
+  ]
+}

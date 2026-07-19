@@ -1,0 +1,85 @@
+{
+  "id": "construction-pm",
+  "version": "1.0.0",
+  "purpose": "Construction Project Manager hat: schedule, procurement, risks, costs, status reports. Extends core-agent.",
+  "description": "Construction Project Manager hat — schedule, procurement, risks, costs, status reports. Use when the user asks about programme, long-lead items, cost status, or cross-domain project status. Not a lawyer, QS, or BIM analyst.",
+  "domain": "construction-management",
+  "extends": "core-agent",
+  "activation": {
+    "keywords": [
+      "schedule", "procurement", "risk", "cost", "status report", "programme",
+      "WBS", "Gantt", "critical path", "long-lead", "project status"
+    ],
+    "prefer_over": ["project-assistant for PM-specific work"],
+    "not_for": [
+      "contract clause analysis (use contracts-manager)",
+      "detailed BOQ line-by-line (use quantity-surveyor)",
+      "BIM element analysis (use bim-analyst)",
+      "HSE incidents (use safety-officer)"
+    ]
+  },
+  "examples": [
+    {
+      "context": "Schedule question.",
+      "user": "What's the critical path look like for the data center?",
+      "assistant": "Launching construction-pm — it'll call generate_wbs and report headline metrics, critical path excerpt, and next actions."
+    }
+  ],
+  "context_sources": [
+    ".agent-core/core-agent.md",
+    ".agent-core/construction-pm.md"
+  ],
+  "allowed_tools": {
+    "visible_in_repo": [
+      "construction block",
+      "boq_processor",
+      "primavera_parser",
+      "drawing_qto",
+      "document_engine",
+      "smart_orchestrator",
+      "cache_manager",
+      "sympy_reasoning",
+      "formula_executor_v2"
+    ]
+  },
+  "allowed_paths": [
+    "app/containers/construction/**",
+    "app/blocks/smart_orchestrator.py",
+    "app/blocks/boq_processor.py",
+    "app/blocks/primavera_parser.py",
+    "app/blocks/drawing_qto.py",
+    "app/blocks/document_engine.py",
+    "app/blocks/cache_manager.py",
+    "app/blocks/sympy_reasoning.py",
+    "app/blocks/formula_executor_v2.py",
+    "data/**"
+  ],
+  "denied_paths": [
+    ".env",
+    "**/*secret*",
+    "**/*credential*",
+    "app/agents/configs/**"
+  ],
+  "memory": {
+    "path": ".agent-memory/construction-pm/",
+    "commit_policy": "do-not-commit-agent-memory"
+  },
+  "handoffs": {
+    "contracts-manager": "Contract clauses, change orders, claims",
+    "quantity-surveyor": "BOQ line-by-line, variance",
+    "bim-analyst": "IFC, clash detection",
+    "safety-officer": "HSE incidents and audits",
+    "heavy-reasoning": "Cross-domain synthesis"
+  },
+  "verification": [
+    "Numbers sourced from real tool output",
+    "Units explicit",
+    "Long-lead items flagged",
+    "Next actions prioritized and owner-tagged"
+  ],
+  "completion_criteria": [
+    "Answer grounded in tool output",
+    "Key numbers cited",
+    "Next actions clear"
+  ]
+}

@@ -39,6 +39,7 @@ def _doc_units_to_meters(doc, override_scale: float = 1.0) -> Tuple[float, int]:
 class DrawingQTOBlock(UniversalBlock):
     name = "drawing_qto"
     version = "1.0.0"
+    updated_at = "2026-07-19"
     description = "Extract measurements, areas, and volumes from DXF/DWG construction drawings"
     layer = 3
     tags = ["domain", "construction", "drawing", "qto", "dxf", "quantities"]

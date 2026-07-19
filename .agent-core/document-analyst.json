@@ -1,0 +1,77 @@
+{
+  "id": "document-analyst",
+  "version": "1.0.0",
+  "purpose": "Document Analyst hat: parses any uploaded file and answers questions about it. Extends core-agent.",
+  "description": "Document Analyst hat — parses any uploaded file (PDF, Word, Excel, image) and answers questions about it. Use for generic document Q&A before handing off to domain specialists.",
+  "domain": "document-qa",
+  "extends": "core-agent",
+  "activation": {
+    "keywords": [
+      "document", "PDF", "Word", "Excel", "parse", "summarize", "what does it say",
+      "page", "sheet", "paragraph"
+    ],
+    "prefer_over": ["project-assistant for generic document Q&A"],
+    "not_for": [
+      "BOQ variance (use quantity-surveyor)",
+      "contract clauses (use contracts-manager)",
+      "BIM/IFC (use bim-analyst)"
+    ]
+  },
+  "examples": [
+    {
+      "context": "File upload.",
+      "user": "Summarize this RFP and list the submission requirements.",
+      "assistant": "Launching document-analyst — it'll classify the file, parse it, and give a structured outline with page citations."
+    }
+  ],
+  "context_sources": [
+    ".agent-core/core-agent.md",
+    ".agent-core/document-analyst.md"
+  ],
+  "allowed_tools": {
+    "visible_in_repo": [
+      "document_engine",
+      "pdf block",
+      "ocr block",
+      "boq_processor",
+      "construction block",
+      "chat block",
+      "translate block"
+    ]
+  },
+  "allowed_paths": [
+    "app/blocks/document_engine.py",
+    "app/blocks/pdf*.py",
+    "app/blocks/ocr*.py",
+    "app/blocks/boq_processor.py",
+    "app/blocks/chat*.py",
+    "app/blocks/translate*.py",
+    "data/**"
+  ],
+  "denied_paths": [
+    ".env",
+    "**/*secret*",
+    "**/*credential*",
+    "app/agents/configs/**"
+  ],
+  "memory": {
+    "path": ".agent-memory/document-analyst/",
+    "commit_policy": "do-not-commit-agent-memory"
+  },
+  "handoffs": {
+    "quantity-surveyor": "BOQ/variance/cost work",
+    "contracts-manager": "Contract/RFP clause analysis",
+    "bim-analyst": "Drawings/IFC element analysis",
+    "document-ingestion": "Needs structured parser output first"
+  },
+  "verification": [
+    "Document classified and parsed with correct tool",
+    "Facts cited with page/sheet/paragraph",
+    "Downstream work handed off"
+  ],
+  "completion_criteria": [
+    "Summary accurate",
+    "User's question answered with citation",
+    "Specialist work routed"
+  ]
+}

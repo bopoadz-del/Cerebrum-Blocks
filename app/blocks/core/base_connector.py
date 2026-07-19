@@ -50,6 +50,17 @@ class BaseConnector(UniversalBlock):
         """Override to perform OAuth/API-key auth. Default: no-op success."""
         return {"authenticated": True, "method": "none"}
 
+    def to_registry_entry(self) -> Dict[str, Any]:
+        """Return a dict suitable for ``connector_registry.register``."""
+        return {
+            "connector_id": self.connector_source,
+            "name": getattr(self, "description", "") or self.connector_source,
+            "description": getattr(self, "description", ""),
+            "schema": getattr(self, "default_config", {}),
+            "block": self.name,
+            "version": self.version,
+        }
+
     @abstractmethod
     async def fetch_raw(self, input_data: Any, params: Dict) -> Any:
         """Pull raw payload from external system."""

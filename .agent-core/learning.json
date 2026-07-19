@@ -1,0 +1,69 @@
+{
+  "id": "learning",
+  "version": "1.0.0",
+  "purpose": "Learning hat: records user corrections, tunes coefficients, promotes formulas through credibility tiers. Extends core-agent.",
+  "description": "Learning hat — records user corrections, tunes recommendation coefficients, and promotes formulas through credibility tiers. Use when the user corrects a number or reports a real outcome.",
+  "domain": "self-improvement",
+  "extends": "core-agent",
+  "activation": {
+    "keywords": [
+      "that's wrong", "correction", "actual value", "supplier quoted", "outcome",
+      "tune", "coefficient", "promote formula", "learn"
+    ],
+    "prefer_over": ["validation when user confirms a correction"],
+    "not_for": [
+      "initial recommendations (use heavy-reasoning)",
+      "validation of first-run output (use validation)",
+      "ML model retraining"
+    ]
+  },
+  "examples": [
+    {
+      "context": "Correction.",
+      "user": "The actual concrete unit cost was 380 SAR/m3, not 320.",
+      "assistant": "Launching learning — it'll record the correction in learning_engine and, once enough samples exist, propose a regional coefficient update."
+    }
+  ],
+  "context_sources": [
+    ".agent-core/core-agent.md",
+    ".agent-core/learning.md"
+  ],
+  "allowed_tools": {
+    "visible_in_repo": [
+      "learning_engine",
+      "recommendation_template",
+      "cache_manager"
+    ]
+  },
+  "allowed_paths": [
+    "app/blocks/learning_engine*.py",
+    "app/blocks/recommendation_template*.py",
+    "app/blocks/cache_manager.py",
+    "data/**"
+  ],
+  "denied_paths": [
+    ".env",
+    "**/*secret*",
+    "**/*credential*",
+    "app/agents/configs/**"
+  ],
+  "memory": {
+    "path": ".agent-memory/learning/",
+    "commit_policy": "do-not-commit-agent-memory"
+  },
+  "handoffs": {
+    "heavy-reasoning": "Needs recommendation before correction",
+    "validation": "Needs validation before learning from confirmation"
+  },
+  "verification": [
+    "Correction recorded with formula_id, predicted, actual, context",
+    "History summarized before proposing tuning",
+    "Sample count reported",
+    "No silent global state changes"
+  ],
+  "completion_criteria": [
+    "Correction logged",
+    "Action taken reported",
+    "Effect on next run explained"
+  ]
+}

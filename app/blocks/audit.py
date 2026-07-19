@@ -4,6 +4,7 @@ from typing import Dict, Any, List, Optional
 import time
 import hashlib
 import json
+import uuid
 from datetime import datetime
 
 
@@ -19,7 +20,8 @@ class AuditBlock(UniversalBlock):
     - Event categorization (auth, data, system)
     """
     name = "audit"
-    version = "1.0.0"
+    version = "1.1.0"
+    updated_at = "2026-07-19"
     requires = ["database", "auth"]
     layer = 1  # Security layer
     tags = ["security", "compliance", "audit", "enterprise"]
@@ -34,7 +36,7 @@ class AuditBlock(UniversalBlock):
     ui_schema = {
         'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
         'output': {'type': 'json', 'fields': [{'name': 'events', 'type': 'json', 'label': 'Audit Events'}]},
-        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['log', 'query', 'export', 'verify_chain', 'get_stats', 'tamper_check'], 'default': 'log'}],
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['log', 'query', 'export', 'verify_chain', 'get_stats', 'tamper_check', 'record_run', 'query_runs', 'get_run'], 'default': 'log'}],
         'quick_actions': [],
     }
     
@@ -42,6 +44,8 @@ class AuditBlock(UniversalBlock):
         super().__init__(hal_block, config)
         self.last_hash = "0" * 64  # Genesis hash
         self.event_count = 0
+        self.run_count = 0
+        self.memory_block = None  # Wired by assembler or tests
         
     async def _legacy_initialize(self) -> bool:
         """Initialize audit log table and load last hash"""
@@ -117,6 +121,12 @@ class AuditBlock(UniversalBlock):
             return await self._get_stats(input_data)
         elif action == "tamper_check":
             return await self._tamper_check(input_data)
+        elif action == "record_run":
+            return await self._record_run(input_data)
+        elif action == "query_runs":
+            return await self._query_runs(input_data)
+        elif action == "get_run":
+            return await self._get_run(input_data)
             
         return {"error": f"Unknown action: {action}"}
     
@@ -392,10 +402,107 @@ class AuditBlock(UniversalBlock):
             "details": verification
         }
     
+    async def _record_run(self, data: Dict) -> Dict:
+        """Record a structured ActionRun for tenant-scoped queryability."""
+        self.run_count += 1
+        run_id = f"run_{self.run_count}_{uuid.uuid4().hex[:8]}"
+        run = {
+            "run_id": run_id,
+            "request_id": data.get("request_id"),
+            "tenant_id": data.get("tenant_id"),
+            "project_id": data.get("project_id"),
+            "user_id": data.get("user_id"),
+            "action_id": data.get("action_id", "unknown"),
+            "status": data.get("status", "unknown"),
+            "duration_ms": data.get("duration_ms"),
+            "input_hash": data.get("input_hash"),
+            "output_meta": data.get("output_meta", {}),
+            "error_code": data.get("error_code"),
+            "evidence_count": data.get("evidence_count", 0),
+            "timestamp": time.time(),
+        }
+
+        if self.memory_block:
+            await self.memory_block.process({
+                "action": "set",
+                "key": f"audit:runs:{run_id}",
+                "value": run,
+                "ttl": 0,
+            })
+            # Index by tenant + status for fast queries
+            index_key = f"audit:runs:index:{run.get('tenant_id') or '__none__'}:{run['status']}"
+            index = await self.memory_block.process({"action": "get", "key": index_key})
+            run_ids = index.get("value", {}).get("run_ids", []) if index.get("hit") else []
+            run_ids.append(run_id)
+            await self.memory_block.process({
+                "action": "set",
+                "key": index_key,
+                "value": {"run_ids": run_ids},
+                "ttl": 0,
+            })
+
+        return {"status": "success", "run_id": run_id, "run": run}
+
+    async def _query_runs(self, data: Dict) -> Dict:
+        """Query ActionRuns by tenant, project, status, action, or request."""
+        tenant_id = data.get("tenant_id")
+        project_id = data.get("project_id")
+        status = data.get("status")
+        action_id = data.get("action_id")
+        request_id = data.get("request_id")
+        limit = data.get("limit", 100)
+
+        if not self.memory_block:
+            return {"status": "success", "runs": []}
+
+        # Use index when both tenant and status are provided
+        if tenant_id and status:
+            index_key = f"audit:runs:index:{tenant_id}:{status}"
+            index = await self.memory_block.process({"action": "get", "key": index_key})
+            candidate_ids = index.get("value", {}).get("run_ids", []) if index.get("hit") else []
+        else:
+            # Fall back to scanning all run keys
+            keys_result = await self.memory_block.process({"action": "keys"})
+            candidate_ids = [
+                k.replace("audit:runs:", "")
+                for k in keys_result.get("keys", [])
+                if k.startswith("audit:runs:") and not k.startswith("audit:runs:index:")
+            ]
+
+        runs = []
+        for run_id in candidate_ids[-limit:]:
+            run_data = await self.memory_block.process({"action": "get", "key": f"audit:runs:{run_id}"})
+            if not run_data.get("hit"):
+                continue
+            run = run_data.get("value", {})
+            if project_id and run.get("project_id") != project_id:
+                continue
+            if action_id and run.get("action_id") != action_id:
+                continue
+            if request_id and run.get("request_id") != request_id:
+                continue
+            runs.append(run)
+
+        return {"status": "success", "runs": runs, "count": len(runs)}
+
+    async def _get_run(self, data: Dict) -> Dict:
+        """Get a single ActionRun by run_id."""
+        run_id = data.get("run_id")
+        if not run_id:
+            return {"status": "error", "error": "run_id is required"}
+        if not self.memory_block:
+            return {"status": "error", "error": "memory backend not available"}
+
+        run_data = await self.memory_block.process({"action": "get", "key": f"audit:runs:{run_id}"})
+        if not run_data.get("hit"):
+            return {"status": "error", "error": "run not found"}
+        return {"status": "success", "run": run_data.get("value", {})}
+
     async def _get_stats(self, data: Dict) -> Dict:
         """Get audit statistics"""
         return {
             "total_events": self.event_count,
+            "total_runs": self.run_count,
             "chain_head": self.last_hash[:16] + "...",
             "retention_days": self.config.get("retention_days", 2555),
             "immutable": self.config.get("immutable", True),

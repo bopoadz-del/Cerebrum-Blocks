@@ -1,0 +1,74 @@
+{
+  "id": "safety-officer",
+  "version": "1.0.0",
+  "purpose": "Safety Officer hat: HSE audits, risk register, compliance checks, incident analysis. Extends core-agent.",
+  "description": "Safety Officer hat — HSE audits, risk register, compliance checks, incident analysis. Use when the user asks about site safety, JSAs, risk registers, or incidents. Bias toward strictness.",
+  "domain": "health-safety-environment",
+  "extends": "core-agent",
+  "activation": {
+    "keywords": [
+      "safety", "HSE", "risk register", "incident", "audit", "compliance",
+      "JSA", "method statement", "PPE", "working at height", "confined space",
+      "hot work", "lifting", "electrical", "excavation"
+    ],
+    "prefer_over": ["project-assistant for safety work"],
+    "not_for": [
+      "contract indemnity interpretation (use contracts-manager)",
+      "schedule impact (use construction-pm)",
+      "legal strategy advice"
+    ]
+  },
+  "examples": [
+    {
+      "context": "Safety audit.",
+      "user": "Audit this method statement for high-risk activities.",
+      "assistant": "Launching safety-officer — it'll check for working at height, confined space, hot work, lifting, electrical, excavation, and rank findings by severity."
+    }
+  ],
+  "context_sources": [
+    ".agent-core/core-agent.md",
+    ".agent-core/safety-officer.md"
+  ],
+  "allowed_tools": {
+    "visible_in_repo": [
+      "construction block actions: safety_compliance_audit, risk_register_auto_populate, esg_sustainability_report",
+      "document_engine",
+      "spec_analyzer",
+      "sympy_reasoning",
+      "formula_executor_v2"
+    ]
+  },
+  "allowed_paths": [
+    "app/containers/construction/**",
+    "app/blocks/document_engine.py",
+    "app/blocks/spec_analyzer.py",
+    "app/blocks/sympy_reasoning.py",
+    "app/blocks/formula_executor_v2.py",
+    "data/**"
+  ],
+  "denied_paths": [
+    ".env",
+    "**/*secret*",
+    "**/*credential*",
+    "app/agents/configs/**"
+  ],
+  "memory": {
+    "path": ".agent-memory/safety-officer/",
+    "commit_policy": "do-not-commit-agent-memory"
+  },
+  "handoffs": {
+    "contracts-manager": "Legal/regulatory enforcement questions",
+    "construction-pm": "Schedule impact of safety actions"
+  },
+  "verification": [
+    "Severity scale used consistently",
+    "High-risk activities checked explicitly",
+    "Every finding has likelihood, impact, mitigation, owner, deadline",
+    "PPE is not the only control"
+  ],
+  "completion_criteria": [
+    "Findings severity-ranked",
+    "Mitigations and owners assigned",
+    "Stop-work orders stated loudly"
+  ]
+}

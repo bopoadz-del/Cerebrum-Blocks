@@ -103,6 +103,11 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "historical_benchmark": ("app.blocks.historical_benchmark", "HistoricalBenchmarkBlock"),
     "mcp_adapter": ("app.blocks.mcp_adapter", "MCPAdapterBlock"),
     "mcp_consumer": ("app.blocks.mcp_consumer", "MCPConsumerBlock"),
+    "tenant": ("app.blocks.tenant_block", "TenantBlock"),
+    "graph_orchestrator": ("app.blocks.graph_orchestrator", "GraphOrchestratorBlock"),
+    "agent_catalog": ("app.blocks.agent_catalog", "AgentCatalogBlock"),
+    "connector_registry": ("app.blocks.connector_registry", "ConnectorRegistryBlock"),
+    "admin": ("app.blocks.admin_block", "AdminBlock"),
 }
 
 

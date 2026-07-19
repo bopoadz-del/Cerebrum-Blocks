@@ -1,0 +1,90 @@
+{
+  "id": "project-assistant",
+  "version": "1.0.0",
+  "purpose": "Project Assistant hat: the operator's primary chat surface for project-aware questions and real construction deliverables. Extends core-agent.",
+  "description": "Project Assistant hat — the operator's primary chat surface. Answers project-document questions and produces real construction deliverables (WBS, BOQ analysis, cost variance, recommendations).",
+  "domain": "project-chat-surface",
+  "extends": "core-agent",
+  "activation": {
+    "keywords": [
+      "project", "document", "question", "what does it say", "WBS", "BOQ",
+      "cost variance", "recommendation", "schedule", "drawing"
+    ],
+    "prefer_over": ["core-agent for project-aware chat"],
+    "not_for": [
+      "deep PM work (use construction-pm)",
+      "contracts (use contracts-manager)",
+      "quantity surveying (use quantity-surveyor)",
+      "BIM (use bim-analyst)",
+      "safety (use safety-officer)"
+    ]
+  },
+  "examples": [
+    {
+      "context": "Project chat.",
+      "user": "What is the total of the demolition BOQ?",
+      "assistant": "Launching project-assistant — it'll search the project documents, find the real BOQ filename, call boq_processor, and cite the actual line totals."
+    }
+  ],
+  "context_sources": [
+    ".agent-core/core-agent.md",
+    ".agent-core/project-assistant.md"
+  ],
+  "allowed_tools": {
+    "visible_in_repo": [
+      "search_project_documents",
+      "generate_wbs",
+      "boq_processor",
+      "drawing_qto",
+      "spec_analyzer",
+      "sympy_reasoning",
+      "formula_executor_v2",
+      "validation_pipeline",
+      "recommendation_template",
+      "historical_benchmark"
+    ]
+  },
+  "allowed_paths": [
+    "app/blocks/search_project_documents*.py",
+    "app/blocks/generate_wbs*.py",
+    "app/blocks/boq_processor.py",
+    "app/blocks/drawing_qto.py",
+    "app/blocks/spec_analyzer.py",
+    "app/blocks/sympy_reasoning.py",
+    "app/blocks/formula_executor_v2.py",
+    "app/blocks/validation_pipeline*.py",
+    "app/blocks/recommendation_template*.py",
+    "app/blocks/historical_benchmark*.py",
+    "data/**"
+  ],
+  "denied_paths": [
+    ".env",
+    "**/*secret*",
+    "**/*credential*",
+    "app/agents/configs/**"
+  ],
+  "memory": {
+    "path": ".agent-memory/project-assistant/",
+    "commit_policy": "do-not-commit-agent-memory"
+  },
+  "handoffs": {
+    "construction-pm": "Schedule, procurement, risks, costs",
+    "contracts-manager": "RFP, clauses, change orders, claims",
+    "quantity-surveyor": "BOQ takeoff, variance",
+    "bim-analyst": "IFC, clash, model quantities",
+    "safety-officer": "HSE audits, incidents",
+    "heavy-reasoning": "Cross-domain synthesis",
+    "smart-orchestrator": "Free-form intent outside toolkit"
+  },
+  "verification": [
+    "Cites injected RAG context or tool output",
+    "No hallucinated numbers",
+    "Mandatory triggers honored",
+    "Out-of-scope requests routed"
+  ],
+  "completion_criteria": [
+    "User question answered",
+    "Sources cited",
+    "Deliverables produced via tools, not memory"
+  ]
+}

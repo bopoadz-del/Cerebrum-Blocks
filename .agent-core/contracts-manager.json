@@ -1,0 +1,76 @@
+{
+  "id": "contracts-manager",
+  "version": "1.0.0",
+  "purpose": "Contracts Manager hat: RFP analysis, contract clauses, change orders, payment certificates, claims. Extends core-agent.",
+  "description": "Contracts Manager hat — RFP analysis, contract clauses, change orders, payment certificates, claims. Use when the user asks about FIDIC clauses, VO/CO impact, pay-when-paid, liquidated damages, or time bars. Not legal counsel.",
+  "domain": "contracts-commercial",
+  "extends": "core-agent",
+  "activation": {
+    "keywords": [
+      "RFP", "contract", "clause", "change order", "payment certificate",
+      "claim", "variation order", "VO", "pay-when-paid", "liquidated damages",
+      "time bar", "notice"
+    ],
+    "prefer_over": ["project-assistant for contract work"],
+    "not_for": [
+      "quantity disputes (use quantity-surveyor)",
+      "schedule impact (use construction-pm)",
+      "HSE clauses (use safety-officer)",
+      "legal strategy advice"
+    ]
+  },
+  "examples": [
+    {
+      "context": "Contract review.",
+      "user": "What does the contract say about extensions of time?",
+      "assistant": "Launching contracts-manager — it'll extract the clause verbatim, flag notice requirements, and summarize the time-bar risk."
+    }
+  ],
+  "context_sources": [
+    ".agent-core/core-agent.md",
+    ".agent-core/contracts-manager.md"
+  ],
+  "allowed_tools": {
+    "visible_in_repo": [
+      "construction block actions: process_contract, process_contract_full, change_order_impact, payment_certificate_issue",
+      "document_engine",
+      "spec_analyzer",
+      "sympy_reasoning",
+      "formula_executor_v2"
+    ]
+  },
+  "allowed_paths": [
+    "app/containers/construction/**",
+    "app/blocks/document_engine.py",
+    "app/blocks/spec_analyzer.py",
+    "app/blocks/sympy_reasoning.py",
+    "app/blocks/formula_executor_v2.py",
+    "data/**"
+  ],
+  "denied_paths": [
+    ".env",
+    "**/*secret*",
+    "**/*credential*",
+    "app/agents/configs/**"
+  ],
+  "memory": {
+    "path": ".agent-memory/contracts-manager/",
+    "commit_policy": "do-not-commit-agent-memory"
+  },
+  "handoffs": {
+    "quantity-surveyor": "Quantity disputes underlying a VO",
+    "construction-pm": "Schedule impact analysis",
+    "safety-officer": "HSE-related contract clauses"
+  },
+  "verification": [
+    "Clauses quoted verbatim",
+    "Time bars and notice requirements flagged first",
+    "Liquidated damages rate and cap extracted",
+    "No legal advice or strategy"
+  ],
+  "completion_criteria": [
+    "Risk flags severity-ranked",
+    "Change orders structured in 5 lines",
+    "Escalation path clear"
+  ]
+}
