@@ -1,0 +1,75 @@
+{
+  "author": "Cerebrum Team",
+  "description": "Insurance agency hierarchy Store block for agent, agency, MGA/FMO, and carrier distribution trees",
+  "digests": {},
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/agency_hierarchy:latest",
+    "type": "docker"
+  },
+  "id": "agency_hierarchy",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected operation",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "validate_hierarchy",
+      "description": "Operation",
+      "name": "operation",
+      "options": [
+        "upsert_node",
+        "get_subtree",
+        "path_to_root",
+        "validate_hierarchy"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "Agency Hierarchy",
+  "outputs": [
+    {
+      "description": "Hierarchy operation result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "",
+  "tags": [
+    "domain",
+    "insurance",
+    "agency",
+    "producer",
+    "store"
+  ],
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected operation",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Operation",
+      "name": "operation",
+      "options": [
+        "upsert_node",
+        "get_subtree",
+        "path_to_root",
+        "validate_hierarchy"
+      ],
+      "widget": "select"
+    }
+  ],
+  "version": "1.0.0"
+}

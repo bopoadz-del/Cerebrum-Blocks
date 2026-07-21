@@ -71,6 +71,15 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
     "insurance": [
         ("insurance", "app.containers.insurance", "InsuranceContainer"),
         ("insurance_v2", "app.blocks.insurance_v2", "InsuranceBlockV2"),
+        ("agency_hierarchy", "app.blocks.agency_hierarchy", "AgencyHierarchyBlock"),
+        ("producer_record", "app.blocks.producer_record", "ProducerRecordBlock"),
+        ("channel_router", "app.blocks.channel_router", "ChannelRouterBlock"),
+        ("attrition_scorer", "app.blocks.attrition_scorer", "AttritionScorerBlock"),
+        ("incentive_targeting", "app.blocks.incentive_targeting", "IncentiveTargetingBlock"),
+        ("bordereaux_ingest", "app.blocks.bordereaux_ingest", "BordereauxIngestBlock"),
+        ("distribution_analytics", "app.blocks.distribution_analytics", "DistributionAnalyticsBlock"),
+        ("hkia_gn16_rules", "app.blocks.hkia_gn16_rules", "HKIAGN16RulesBlock"),
+        ("agency_commission_engine", "app.blocks.agency_commission_engine", "AgencyCommissionEngineBlock"),
         _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "supply_chain": [

@@ -1,0 +1,73 @@
+{
+  "id": "distribution_analytics",
+  "name": "Distribution Analytics",
+  "version": "1.0.0",
+  "description": "Deterministic insurance distribution analytics for GWP, commission, productivity, and retention proxy metrics.",
+  "author": "Cerebrum Team",
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "digests": {},
+  "layer": 3,
+  "tags": [
+    "insurance",
+    "distribution",
+    "analytics",
+    "bordereaux"
+  ],
+  "requires": [],
+  "permissions": {
+    "network": false,
+    "filesystem": false,
+    "imports": [],
+    "blocks": []
+  },
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Normalized bordereaux records or raw CSV/JSON dataset"
+    },
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "default": "summary",
+      "options": [
+        "summary",
+        "benchmark",
+        "trend"
+      ],
+      "description": "Operation to run"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "metrics",
+      "type": "json",
+      "description": "Distribution metrics"
+    },
+    {
+      "name": "validation_errors",
+      "type": "json",
+      "description": "Rows skipped during normalization"
+    }
+  ],
+  "ui_schema": [
+    {
+      "name": "input",
+      "label": "Distribution dataset",
+      "widget": "json"
+    },
+    {
+      "name": "action",
+      "label": "Action",
+      "widget": "select",
+      "options": [
+        "summary",
+        "benchmark",
+        "trend"
+      ]
+    }
+  ]
+}

@@ -1,19 +1,21 @@
 {
   "id": "insurance",
-  "name": "Insurance & Risk Suite",
-  "version": "1.0.0",
-  "description": "Insurance & Risk Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the insurance domain.",
+  "name": "Insurance Distribution & Agency Suite",
+  "version": "2.0.0",
+  "description": "Distribution and agency suite for insurance carriers, MGAs, brokers, and agencies. Keeps insurance_v2 as the Layer-1 document analysis block while adding producer records, hierarchy management, commissions, routing, retention, incentives, HKIA GN16 checks, bordereaux ingest, and distribution analytics.",
   "status": "available",
   "author": "bopoadz-del",
   "tags": [
     "domain",
     "container",
-    "insurance"
+    "insurance",
+    "distribution",
+    "agency"
   ],
   "source": {
     "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
     "ref": "main",
-    "publish_script": "scripts/publish_kit.py"
+    "publish_script": "scripts/publish_insurance_kit.py"
   },
   "container": {
     "class": "app.containers.insurance.InsuranceContainer",
@@ -25,10 +27,36 @@
     "chat",
     "image",
     "insurance_v2",
-    "formula_executor_v2"
+    "formula_executor_v2",
+    "agency_hierarchy",
+    "producer_record",
+    "agency_commission_engine",
+    "channel_router",
+    "attrition_scorer",
+    "incentive_targeting",
+    "hkia_gn16_rules",
+    "bordereaux_ingest",
+    "distribution_analytics"
   ],
-  "prompts": [],
-  "data": [],
+  "prompts": [
+    "app/prompts/codegen_system.py"
+  ],
+  "data": [
+    "app/data/routing_sops.json",
+    "app/data/retention_playbook.json",
+    "app/data/incentive_playbook.json",
+    "app/data/sample_bordereaux.json",
+    "app/data/gn16_ruleset.json",
+    "app/data/commission_formulas.json",
+    "app/data/hierarchy_model.json",
+    "app/knowledge/hkia_gn16_corpus.json"
+  ],
+  "playbooks": [
+    "app/playbooks/distribution.json",
+    "app/playbooks/compensation.json",
+    "app/playbooks/compliance.json",
+    "app/playbooks/analytics.json"
+  ],
   "core_modules": [
     "app/core/insurance_knowledge.py",
     "app/core/insurance_types.py",
@@ -39,8 +67,7 @@
     "app/core/typed_block.py",
     "app/core/universal_base.py",
     "app/containers/base.py",
-    "app/core/sandbox.py",
-    "app/prompts/codegen_system.py"
+    "app/core/sandbox.py"
   ],
   "artifacts": [
     {
@@ -50,6 +77,46 @@
     {
       "src": "app/blocks/insurance_v2.py",
       "dest": "app/blocks/insurance_v2.py"
+    },
+    {
+      "src": "app/blocks/formula_executor_v2.py",
+      "dest": "app/blocks/formula_executor_v2.py"
+    },
+    {
+      "src": "app/blocks/agency_hierarchy.py",
+      "dest": "app/blocks/agency_hierarchy.py"
+    },
+    {
+      "src": "app/blocks/producer_record.py",
+      "dest": "app/blocks/producer_record.py"
+    },
+    {
+      "src": "app/blocks/agency_commission_engine.py",
+      "dest": "app/blocks/agency_commission_engine.py"
+    },
+    {
+      "src": "app/blocks/channel_router.py",
+      "dest": "app/blocks/channel_router.py"
+    },
+    {
+      "src": "app/blocks/attrition_scorer.py",
+      "dest": "app/blocks/attrition_scorer.py"
+    },
+    {
+      "src": "app/blocks/incentive_targeting.py",
+      "dest": "app/blocks/incentive_targeting.py"
+    },
+    {
+      "src": "app/blocks/hkia_gn16_rules.py",
+      "dest": "app/blocks/hkia_gn16_rules.py"
+    },
+    {
+      "src": "app/blocks/bordereaux_ingest.py",
+      "dest": "app/blocks/bordereaux_ingest.py"
+    },
+    {
+      "src": "app/blocks/distribution_analytics.py",
+      "dest": "app/blocks/distribution_analytics.py"
     },
     {
       "src": "app/core/insurance_knowledge.py",
@@ -96,8 +163,52 @@
       "dest": "app/prompts/codegen_system.py"
     },
     {
-      "src": "app/blocks/formula_executor_v2.py",
-      "dest": "app/blocks/formula_executor_v2.py"
+      "src": "app/data/routing_sops.json",
+      "dest": "app/data/routing_sops.json"
+    },
+    {
+      "src": "app/data/retention_playbook.json",
+      "dest": "app/data/retention_playbook.json"
+    },
+    {
+      "src": "app/data/incentive_playbook.json",
+      "dest": "app/data/incentive_playbook.json"
+    },
+    {
+      "src": "app/data/sample_bordereaux.json",
+      "dest": "app/data/sample_bordereaux.json"
+    },
+    {
+      "src": "app/data/gn16_ruleset.json",
+      "dest": "app/data/gn16_ruleset.json"
+    },
+    {
+      "src": "app/data/commission_formulas.json",
+      "dest": "app/data/commission_formulas.json"
+    },
+    {
+      "src": "app/data/hierarchy_model.json",
+      "dest": "app/data/hierarchy_model.json"
+    },
+    {
+      "src": "app/knowledge/hkia_gn16_corpus.json",
+      "dest": "app/knowledge/hkia_gn16_corpus.json"
+    },
+    {
+      "src": "app/playbooks/distribution.json",
+      "dest": "app/playbooks/distribution.json"
+    },
+    {
+      "src": "app/playbooks/compensation.json",
+      "dest": "app/playbooks/compensation.json"
+    },
+    {
+      "src": "app/playbooks/compliance.json",
+      "dest": "app/playbooks/compliance.json"
+    },
+    {
+      "src": "app/playbooks/analytics.json",
+      "dest": "app/playbooks/analytics.json"
     }
   ],
   "price_cents": 0,

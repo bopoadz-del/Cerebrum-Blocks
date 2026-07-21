@@ -1,0 +1,61 @@
+{
+  "id": "agency_commission_engine",
+  "name": "Agency Commission Engine",
+  "version": "1.0.0",
+  "description": "Deterministic insurance agency commission engine for life FYC, P&C new business, renewals, hierarchy overrides, chargebacks, and effective dating.",
+  "author": "Cerebrum Team",
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "digests": {},
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Commission calculation payload"
+    },
+    {
+      "name": "operation",
+      "type": "string",
+      "required": false,
+      "default": "calculate",
+      "options": [
+        "calculate",
+        "preview_override",
+        "apply_chargeback",
+        "effective_schedule"
+      ],
+      "description": "Commission engine operation"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Commission calculation result"
+    }
+  ],
+  "permissions": {
+    "network": false,
+    "filesystem": true,
+    "imports": [
+      "copy",
+      "datetime",
+      "decimal",
+      "json",
+      "os",
+      "pathlib",
+      "typing"
+    ],
+    "blocks": []
+  },
+  "signature": "",
+  "tags": [
+    "domain",
+    "insurance",
+    "commission",
+    "agency",
+    "deterministic"
+  ],
+  "layer": 3
+}

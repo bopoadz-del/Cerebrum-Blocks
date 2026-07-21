@@ -1,0 +1,14 @@
+{
+  "id": "channel_router",
+  "name": "Channel Router",
+  "version": "1.0.0",
+  "description": "Explainable insurance channel routing for agency, direct, MGA, and partner channels.",
+  "permissions": {
+    "network": false,
+    "filesystem": false,
+    "imports": [],
+    "blocks": []
+  },
+  "publisher_id": "cerebrum_platform",
+  "signature": ""
+}

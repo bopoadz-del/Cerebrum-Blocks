@@ -1,0 +1,97 @@
+{
+  "id": "hkia_gn16_rules",
+  "name": "HKIA GN16 Rules",
+  "version": "1.0.0",
+  "description": "Deterministic HKIA GN16/GL16 Layer-1 compliance rule checks for insurance evidence packages. Rule checks only; no live HKIA filing submission.",
+  "author": "Cerebrum Team",
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "digests": {},
+  "layer": 1,
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/hkia_gn16_rules:latest"
+  },
+  "requires": [],
+  "tags": [
+    "insurance",
+    "compliance",
+    "hkia",
+    "gn16",
+    "gl16",
+    "rules"
+  ],
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "{\"text\": \"policy or control evidence\", \"customer_age\": 68}"
+    },
+    {
+      "name": "operation",
+      "type": "string",
+      "required": false,
+      "default": "evaluate",
+      "description": "Operation",
+      "options": [
+        "evaluate",
+        "list_rules",
+        "explain_finding",
+        "build_audit_package"
+      ]
+    },
+    {
+      "name": "rule_id",
+      "type": "string",
+      "required": false,
+      "description": "Rule ID for explain_finding"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "findings",
+      "type": "json",
+      "description": "Compliance findings with severity, rule_id, citation, and remediation"
+    },
+    {
+      "name": "audit_package",
+      "type": "json",
+      "description": "Internal audit package for rule evaluation evidence"
+    },
+    {
+      "name": "rules",
+      "type": "json",
+      "description": "Machine-readable GN16/GL16 pilot rule list"
+    }
+  ],
+  "permissions": {
+    "network": false,
+    "filesystem": false,
+    "imports": [],
+    "blocks": []
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "label": "{\"text\": \"Paste policy or control evidence...\"}",
+      "widget": "json"
+    },
+    {
+      "name": "operation",
+      "label": "Operation",
+      "widget": "select",
+      "options": [
+        "evaluate",
+        "list_rules",
+        "explain_finding",
+        "build_audit_package"
+      ]
+    },
+    {
+      "name": "rule_id",
+      "label": "Rule ID",
+      "widget": "text"
+    }
+  ]
+}
