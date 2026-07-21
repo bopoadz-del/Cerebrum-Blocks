@@ -31,6 +31,7 @@
     "bordereaux_ingest",
     "distribution_analytics",
     "hkia_gn16_rules",
+    "agency_commission_engine",
     "formula_executor_v2"
   ],
   "prompts": [],
@@ -40,6 +41,7 @@
     "app/data/incentive_playbook.json",
     "app/data/sample_bordereaux.json",
     "app/data/gn16_ruleset.json",
+    "app/data/commission_formulas.json",
     "app/knowledge/hkia_gn16_corpus.json"
   ],
   "core_modules": [
@@ -87,6 +89,10 @@
     {
       "src": "app/blocks/distribution_analytics.py",
       "dest": "app/blocks/distribution_analytics.py"
+    },
+    {
+      "src": "app/blocks/agency_commission_engine.py",
+      "dest": "app/blocks/agency_commission_engine.py"
     },
     {
       "src": "app/core/insurance_knowledge.py",
@@ -151,6 +157,10 @@
     {
       "src": "app/data/gn16_ruleset.json",
       "dest": "app/data/gn16_ruleset.json"
+    },
+    {
+      "src": "app/data/commission_formulas.json",
+      "dest": "app/data/commission_formulas.json"
     },
     {
       "src": "app/knowledge/hkia_gn16_corpus.json",
