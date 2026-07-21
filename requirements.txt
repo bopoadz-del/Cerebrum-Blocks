@@ -31,7 +31,9 @@ numpy>=1.24.0
 pytesseract>=0.3.10
 
 # PDF Processing
-pymupdf>=1.23.0
+pymupdf>=1.27.0
+pdfplumber>=0.11.0
+pypdf>=5.0.0
 
 # Construction Intelligence Blocks (Week 1)
 sympy>=1.12
@@ -110,12 +112,6 @@ pytest-cov>=4.1.0
 pytest-json-report>=1.5.0
 respx>=0.21.0
 python-magic>=0.4.27
-
-# PDF parsing (real file processing)
-pdfplumber>=0.11.0
-PyMuPDF>=1.27.0
-PyPDF2>=3.0.0
-pypdf>=5.0.0
 
 # High-quality PDF -> Markdown extraction is optional and local-only.
 # See requirements-marker.txt. The platform base image does NOT install it

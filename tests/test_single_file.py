@@ -2,7 +2,7 @@
 """Pipeline smoke test for a single construction document.
 
 Usage:
-    python3 test_single_file.py <path>
+    python3 tests/test_single_file.py <path>
 
 The file extension drives which container action runs:
   .pdf .docx .txt .md           → auto_pipeline
@@ -20,7 +20,7 @@ import os
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 # Match the test environment so cb_dev_key loads (consistent with conftest).
