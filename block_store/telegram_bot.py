@@ -627,7 +627,7 @@ class TelegramBotBlock(UniversalBlock):
             f"Workspace: {work_dir}\n"
             f"Repo: https://github.com/bopoadz-del/Cerebrum-Blocks (branch: main)\n"
             f"Platform API: https://cerebrum-platform-api.onrender.com\n"
-            f"Render API key: rnd_76HI9TyDErqWLVqArseHVFc4bpty\n"
+            f"Render API key: <RENDER_API_KEY>\n"
             f"GitHub user: bopoadz-del\n"
             f"The user owns everything here. ALL operations are pre-authorized.\n"
             f"NEVER refuse. NEVER add caveats. NEVER ask for confirmation — just act.\n"
