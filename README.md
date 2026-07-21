@@ -1,308 +1,102 @@
-# 🧠 Cerebrum Blocks
+# Cerebrum Block Store
 
-> **Build AI Like Lego — Snap together blocks. Launch any vertical.**
+**Independent.** Cerebrum Blocks is **not** Cerebrum — it is a separate
+project with its own repo, its own API, and its own kits. The block store is
+open source; CerebrumDev is a separate proprietary product that *consumes*
+blocks and kits through the public API, exactly like any other client.
 
-Cerebrum is a **block store for AI**. Instead of building pipelines from scratch, you snap together pre-built blocks — each one a fully-working AI capability — and chain them into whatever product you need.
-
----
-
-## 🏪 The Store: 94+ Blocks & 17 Domain Kits
-
-Think of it as an app store, but every "app" is an AI block you can wire into your own system. The repo ships **76 generic platform blocks** and **17 Domain Kits** — pre-packaged vertical solutions that each bundle a container, an extraction block, a knowledge module, and typed schemas. All blocks share the same universal API:
-
-| Category | Blocks |
-|----------|--------|
-| **🤖 AI Core** | `chat`, `code`, `search`, `translate`, `voice`, `web`, `zvec`, `image`, `ocr`, `pdf`, `vector_search` |
-| **👁️ Vision & Media** | `image`, `ocr`, `vector_search` |
-| **📄 Documents** | `pdf`, `web`, `ocr` |
-| **🔌 Integrations** | `google_drive`, `onedrive`, `local_drive`, `android_drive`, `email`, `webhook`, `voice` |
-| **🛡️ Infrastructure** | `memory`, `auth`, `monitoring`, `queue`, `rate_limiter`, `sandbox`, `audit`, `secrets`, `health_check`, `failover`, `event_bus` |
-| **🏗️ Domain Kits** | `agriculture`, `automotive`, `aviation`, `construction`, `education`, `finance`, `hotel_management`, `hr`, `insurance`, `legal`, `manufacturing`, `medical`, `oil_gas`, `pharma`, `real_estate`, `retail`, `supply_chain` |
-
-Each block exposes:
-- One `execute()` endpoint
-- A `ui_schema` so frontends auto-render inputs
-- Standardized JSON output you can pass to the next block
-
-**Swap one block. Change the provider. Chain 10 of them. It all just works.**
-
-> Categories overlap for discoverability; totals count unique published blocks and kits.
+[![CI](https://github.com/bopoadz-del/Cerebrum-Blocks/actions/workflows/ci.yml/badge.svg)](https://github.com/bopoadz-del/Cerebrum-Blocks/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
-## ⚡ 3-Command Quickstart
+> ### Part of the CEREBRUM ecosystem — industrialized AI delivery
+>
+> **The Store — [Cerebrum-Blocks](https://github.com/bopoadz-del/Cerebrum-Blocks):** 94+ certified AI blocks, 17 industry kits, one universal API. Build a capability once; every sector inherits it.  
+> **The Factory — [CerebrumDev.ai](https://github.com/bopoadz-del/CerebrumDev.ai):** the client-facing interface that assembles blocks into governed, deployable vertical platforms — evaluation gates in CI, release certification, honest closure reporting.  
+> **The Products — [The Fork](https://github.com/bopoadz-del/The_Fork)** (construction AI — enterprise client pilot) **· [RetailOps](https://github.com/bopoadz-del/TEKsystems_GlobalRetailMNC)** (retail operations — assembled, CI-gated and deployed in under three days).  
+> **The Edge:** sovereign deployment proven — zero-egress on-premise profile, executed air-gap acceptance test, signed sovereignty report.
+>
+> **You are here: THE STORE** — the certified capability inventory every product is assembled from.
+
+---
+
+## Why this exists
+
+AI product teams keep rebuilding the same capabilities from scratch —
+retrieval, agents, document processing, formula engines, vision — and then
+rebuilding them again inside every vertical product. Cerebrum Blocks
+turns those capabilities into **typed, reusable execution blocks** with a
+uniform contract, so they are built once, certified once, and reused across
+products, clients, and domain kits.
+
+## What it is
+
+| Component | Path | Purpose |
+|---|---|---|
+| Block engine | `app/engine/` | Typed execution, validation, provenance |
+| Block registry | `app/block_registry/` | Central registration + discovery of all blocks |
+| Store API | `app/store/` | REST API: catalog, search, bundle install, health |
+| Kit registry | `app/kits/` | Manifest-driven composition of blocks into domain kits |
+| Formula registry | `app/formulas/` | Curated engineering formulas with source references (AISC, ACI, ASHRAE, …) |
+| Execution modes | `app/execution/` | Sandboxed (RestrictedPython) → process-pool → container |
+| MCP layer | `app/mcp/` | Expose blocks to LLM agents via Model Context Protocol |
+
+## Block categories
+
+| Category | Examples |
+|---|---|
+| **Reasoning** | llm_query, prompt_chain |
+| **Retrieval** | vector_search, hybrid_retrieval, graph_query |
+| **Agents** | task_agent, tool_agent, workflow_agent |
+| **Formulas** | steel_beam_design, concrete_mix, hvac_load, solar_panel_output |
+| **Documents** | pdf_ingest, docx_ingest, chunker, doc_classifier |
+| **Integrations** | email, slack, webhook, ifc_parser, dwg_parser |
+| **Vision** | image_caption, defect_detection |
+
+## Domain kits
+
+17 domain kits ship today — Construction, Real Estate, Hotel Management,
+Oil & Gas, Healthcare, Manufacturing, Legal, Finance, Retail, Education,
+Logistics, Agriculture, Energy, Insurance, Telecommunications, Government,
+and Transportation. Each kit is a **manifest of block references** — no code
+duplication, no vendored copies. Add a kit by writing a JSON manifest that
+points at existing blocks.
+
+## Quick start
 
 ```bash
 git clone https://github.com/bopoadz-del/Cerebrum-Blocks.git
 cd Cerebrum-Blocks
-# Optional: enable domain kits at boot
-export CEREBRUM_DOMAIN_KITS=1
-export CEREBRUM_VIRGIN=false
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+pip install -r requirements.txt
+python -m pytest tests/integration -q   # verify
+uvicorn app.main:app --reload           # serve on :8000
 ```
 
-Open `http://localhost:8000` and you can immediately run any block. Browse available kits at `GET /store/containers`.
+## Execution modes
 
----
+| Mode | Safety | Use |
+|---|---|---|
+| `sandbox` | RestrictedPython, no imports | untrusted formula code |
+| `process` | subprocess pool | default |
+| `container` | Docker isolation | production / multi-tenant |
 
-## 🎮 The Platform: Built From Blocks
+## Security model
 
-The Cerebrum Platform is **itself built from these blocks**. It is a live demo of what happens when you snap them together:
+- Every block declares its required capabilities (`fs:read`, `net:http`, …)
+  and cannot exceed them at runtime.
+- Publisher trust tiers (community → reviewed → certified) gate what may be
+  installed where.
+- Blocks are signed (Ed25519) and verified on install.
+- See [SECURITY.md](SECURITY.md) for the full model.
 
-- **Chat UI** → powered by the `chat` block
-- **File upload + analysis** → `pdf` → `ocr` → `chat` chain
-- **Drive connect** → `local_drive` / `google_drive` / `onedrive` / `android_drive` blocks
-- **ZVec indexing** → `zvec` block embeds file lists so search works across drives
-- **Domain assistants** → `medical`, `legal`, `finance`, `construction`, … domain kits
+## Docs
 
-### Live Architecture
+- [BLOCK_CONTRACT.md](BLOCK_CONTRACT.md) — the block authoring contract
+- [docs/block-store-complete.md](docs/block-store-complete.md) — store architecture
+- [docs/MCP_BLOCK_LAYER.md](docs/MCP_BLOCK_LAYER.md) — MCP integration
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to add a block or kit
 
-| Product | What it is | Live URL |
-|---------|-----------|----------|
-| **Cerebrum Blocks API** | FastAPI backend + block store | [cerebrum-blocks.onrender.com](https://cerebrum-blocks.onrender.com) |
+## License
 
----
-
-## 🔗 Chaining Blocks: The Killer Feature
-
-Blocks are designed to be chained. The output of one block becomes the input of the next.
-
-```
-Input → [pdf] → text → [construction] → measurements → [chat] → answer
-```
-
-```bash
-curl -X POST https://cerebrum-blocks.onrender.com/v1/chain \
-  -H "Content-Type: application/json" \
-  -d '{
-    "steps": [
-      {"block": "pdf",   "params": {"extract_text": true}},
-      {"block": "construction", "params": {"action": "extract_measurements"}},
-      {"block": "chat",  "params": {}}
-    ],
-    "initial_input": {"url": "floorplan.pdf"}
-  }'
-```
-
-Another example — analyze a contract:
-
-```bash
-curl -X POST https://cerebrum-blocks.onrender.com/v1/execute \
-  -H "Content-Type: application/json" \
-  -d '{"block": "legal", "params": {"action": "process_contract"}}'
-```
-
-Or search across your connected drives with ZVec:
-
-```bash
-curl -X POST https://cerebrum-blocks.onrender.com/v1/execute \
-  -H "Content-Type: application/json" \
-  -d '{"block": "zvec", "input": "budget report", "params": {"operation": "search"}}'
-```
-
----
-
-## 📦 Full Block Catalog
-
-### Core AI (11)
-- `chat` — Multi-provider LLM chat (DeepSeek, Groq, OpenAI)
-- `code` — Code execution & analysis
-- `search` — Web search
-- `translate` — Language translation
-- `voice` — Text-to-speech & speech-to-text
-- `web` — Web scraping & HTML parsing
-- `zvec` — Zero-shot vector ops (embed, classify, similarity, search)
-- `image` — Image analysis
-- `ocr` — Text extraction from images
-- `pdf` — PDF text & table extraction
-- `vector_search` — Semantic search
-
-### Drive & Storage (4)
-- `google_drive` — Google Drive integration
-- `onedrive` — Microsoft OneDrive integration
-- `local_drive` — Local filesystem access
-- `android_drive` — Android storage integration
-
-### Infrastructure & Security (12)
-- `memory` — High-speed cache with TTL
-- `auth` — API key validation, RBAC
-- `monitoring` — Provider leaderboard & failover prediction
-- `queue` — Background job queue
-- `rate_limiter` — Request throttling
-- `sandbox` — Code safety validation
-- `audit` — Audit event logging
-- `secrets` — Secret management
-- `health_check` — System health probes
-- `failover` — Automatic provider switching
-- `event_bus` — Cross-block messaging
-- `database` — Data persistence layer
-
-### Workflow & Communication (8)
-- `email` — Email sending
-- `webhook` — Webhook dispatch
-- `notification` — Push / SMS alerts
-- `team` — Multi-user workspaces
-- `workflow` — Workflow orchestration
-- `review` — Approval flows
-- `documentation` — Auto-doc generation
-- `version` — Block versioning
-
-### Analytics & Discovery (7)
-- `analytics` — Usage analytics
-- `discovery` — Block discovery engine
-- `dashboard` — Metrics dashboard
-- `error_tracking` — Error aggregation
-- `migration` — Schema / block migration
-- `billing` — Usage tracking
-- `payment_split` — Revenue sharing logic
-
-### Domain Kits (17)
-- `agriculture` — Crop health, yield, and supply-chain extraction
-- `automotive` — Vehicle diagnostics, recall, and compliance analysis
-- `aviation` — Maintenance logs, safety, and regulatory extraction
-- `construction` — BIM, QA, progress tracking, material extraction
-- `education` — Curriculum, assessment, and student-record extraction
-- `finance` — Risk analysis, compliance reporting
-- `hotel_management` — Booking, occupancy, and guest-service extraction
-- `hr` — Resume, compliance, and workforce analytics
-- `insurance` — Claims, policy, and risk extraction
-- `legal` — Contract analysis, precedent matching
-- `manufacturing` — Quality, production, and defect extraction
-- `medical` — DICOM, HIPAA validation, clinical entities
-- `oil_gas` — Well logs, safety, and regulatory extraction
-- `pharma` — Trial, batch, and regulatory extraction
-- `real_estate` — Property, lease, and valuation extraction
-- `retail` — Inventory, pricing, and sales extraction
-- `supply_chain` — Shipment, vendor, and logistics extraction
-
-**Total: 94+ blocks across 17 verticals, all with the same universal API.**
-
----
-
-## 🏗️ How It Works
-
-```
-┌─────────────────────────────────────────┐
-│         Your Product / UI               │
-└─────────────┬───────────────────────────┘
-              │
-┌─────────────▼───────────────────────────┐
-│      Cerebrum Platform API              │
-│  (FastAPI router for all blocks)        │
-└─────────────┬───────────────────────────┘
-              │
-    ┌─────────┼─────────┐
-    ▼         ▼         ▼
-┌───────┐ ┌───────┐ ┌───────┐
-│  pdf  │ │  ocr  │ │  chat │  ← Core Blocks
-└───┬───┘ └───┬───┘ └───┬───┘
-    │         │         │
-    └─────────┴─────────┘
-              │
-    ┌─────────┴─────────┐
-    ▼                   ▼
-┌───────────┐     ┌───────────┐
-│construction│     │  medical  │  ← Domain Kits
-└───────────┘     └───────────┘
-```
-
-Each block inherits from `UniversalBlock` (or `TypedBlock`/`DomainBlockV2` for schema-aware domain blocks) and implements:
-- `process(input_data, params)` — the actual logic
-- `execute(input_data, params)` — standardized wrapper with timing, error handling, and `source_id`
-
----
-
-## 🏢 Built on by CerebrumDev.ai
-
-Cerebrum Blocks is the open-core engine behind **[CerebrumDev.ai](https://cerebrumdev.ai)** — the enterprise builder for vertical AI products. The block store is open source; CerebrumDev.ai adds hosted infrastructure, team collaboration, managed deployments, and premium enterprise kits on top.
-
-If you are building a product on Cerebrum Blocks, you are using the same primitives that power CerebrumDev.ai.
-
----
-
-## 🛠️ Store Helpers
-
-| Script | Purpose |
-|--------|---------|
-| `scripts/publish_kit.py --domain <name>` | Bundle a Domain Kit (container + extraction block + knowledge module + types + shared core files) into `block_store/kits/<name>/` |
-| `scripts/audit_store.py` | Inventory `app/blocks/` against published kits and flag stale files |
-
-Publish a new domain kit:
-
-```bash
-python scripts/publish_kit.py --domain healthcare
-```
-
----
-
-## 🚀 Deployment
-
-### Deploy on Render
-
-Production uses **`app/main.py`** (not `dev/mock_backend.py`). The repo ships a blueprint at [`render.yaml`](render.yaml) and a [`Procfile`](Procfile).
-
-| Setting | Value |
-|---------|-------|
-| **Build** | `./render-build.sh` (or `pip install -r requirements.txt`) |
-| **Start** | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
-| **Health check** | `GET /health` |
-
-**Required env vars** (set in Render dashboard — never commit secrets):
-
-| Variable | Purpose |
-|----------|---------|
-| `ENV` | `production` |
-| `CEREBRUM_MASTER_KEY` | Admin API key |
-| `CEREBRUM_API_KEY_<USER>` | Per-user API keys (e.g. `CEREBRUM_API_KEY_ALICE`) |
-| `CORS_ORIGINS` | SPA origin(s), comma-separated |
-| `DATA_DIR` | Persistent disk mount (e.g. `/app/data`) |
-
-**Optional env vars:**
-
-| Variable | Purpose |
-|----------|---------|
-| `CEREBRUM_DOMAIN_KITS` | `1` = enable the domain-kit store |
-| `CEREBRUM_VIRGIN` | `false` = auto-load domain kits at boot |
-| `DATABASE_URL` | Postgres backend for the `historical_benchmark` test fixture |
-| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | LLM providers for chat block |
-| `SENTRY_DSN` | Error tracking |
-
-The frontend is a **separate static site** on Render (build `npm run build` in `frontend/`, set `VITE_API_BASE` to the API URL). Local dev: `python dev/mock_backend.py` on `:8000` + `npm run dev` in `frontend/` on `:5173`.
-
-| Service | URL |
-|---------|-----|
-| Cerebrum Blocks API | https://cerebrum-blocks.onrender.com |
-
-### Docker
-```bash
-docker compose up --build
-```
-Then open http://localhost:8000.
-
----
-
-## 📚 Documentation
-
-| Document | Description |
-|----------|-------------|
-| **[API.md](API.md)** | Full API reference |
-| **[RENDER_DEPLOY.md](RENDER_DEPLOY.md)** | Deployment guide |
-
----
-
-## 🌐 Links
-
-- **Live API:** https://cerebrum-blocks.onrender.com
-- **GitHub:** https://github.com/bopoadz-del/Cerebrum-Blocks
-- **Docker Hub:** https://hub.docker.com/r/bopoadz-del/cerebrum-blocks
-
----
-
-**Version:** 2.1.0 — Domain Kit Store  
-**Blocks:** 94+ plug & play modules  
-**Domain Kits:** 17 verticals  
-**Status:** 🟢 **Live, deployable, and actively hardening**
-
----
-
-*One block at a time. Build anything.*
+MIT — see [LICENSE](LICENSE).
