@@ -25,10 +25,14 @@
     "chat",
     "image",
     "insurance_v2",
+    "bordereaux_ingest",
+    "distribution_analytics",
     "formula_executor_v2"
   ],
   "prompts": [],
-  "data": [],
+  "data": [
+    "app/data/sample_bordereaux.json"
+  ],
   "core_modules": [
     "app/core/insurance_knowledge.py",
     "app/core/insurance_types.py",
@@ -50,6 +54,14 @@
     {
       "src": "app/blocks/insurance_v2.py",
       "dest": "app/blocks/insurance_v2.py"
+    },
+    {
+      "src": "app/blocks/bordereaux_ingest.py",
+      "dest": "app/blocks/bordereaux_ingest.py"
+    },
+    {
+      "src": "app/blocks/distribution_analytics.py",
+      "dest": "app/blocks/distribution_analytics.py"
     },
     {
       "src": "app/core/insurance_knowledge.py",
@@ -98,6 +110,10 @@
     {
       "src": "app/blocks/formula_executor_v2.py",
       "dest": "app/blocks/formula_executor_v2.py"
+    },
+    {
+      "src": "app/data/sample_bordereaux.json",
+      "dest": "app/data/sample_bordereaux.json"
     }
   ],
   "price_cents": 0,
