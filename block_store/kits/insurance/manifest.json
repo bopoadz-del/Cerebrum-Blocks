@@ -25,6 +25,9 @@
     "chat",
     "image",
     "insurance_v2",
+    "channel_router",
+    "attrition_scorer",
+    "incentive_targeting",
     "bordereaux_ingest",
     "distribution_analytics",
     "hkia_gn16_rules",
@@ -32,6 +35,9 @@
   ],
   "prompts": [],
   "data": [
+    "app/data/routing_sops.json",
+    "app/data/retention_playbook.json",
+    "app/data/incentive_playbook.json",
     "app/data/sample_bordereaux.json",
     "app/data/gn16_ruleset.json",
     "app/knowledge/hkia_gn16_corpus.json"
@@ -57,6 +63,18 @@
     {
       "src": "app/blocks/insurance_v2.py",
       "dest": "app/blocks/insurance_v2.py"
+    },
+    {
+      "src": "app/blocks/channel_router.py",
+      "dest": "app/blocks/channel_router.py"
+    },
+    {
+      "src": "app/blocks/attrition_scorer.py",
+      "dest": "app/blocks/attrition_scorer.py"
+    },
+    {
+      "src": "app/blocks/incentive_targeting.py",
+      "dest": "app/blocks/incentive_targeting.py"
     },
     {
       "src": "app/blocks/hkia_gn16_rules.py",
@@ -117,6 +135,18 @@
     {
       "src": "app/blocks/formula_executor_v2.py",
       "dest": "app/blocks/formula_executor_v2.py"
+    },
+    {
+      "src": "app/data/routing_sops.json",
+      "dest": "app/data/routing_sops.json"
+    },
+    {
+      "src": "app/data/retention_playbook.json",
+      "dest": "app/data/retention_playbook.json"
+    },
+    {
+      "src": "app/data/incentive_playbook.json",
+      "dest": "app/data/incentive_playbook.json"
     },
     {
       "src": "app/data/gn16_ruleset.json",
