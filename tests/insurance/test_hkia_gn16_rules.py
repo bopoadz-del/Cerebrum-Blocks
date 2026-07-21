@@ -115,6 +115,32 @@ async def test_build_audit_package(block, complete_payload):
     assert package["evaluation"]["operation"] == "evaluate"
 
 
+@pytest.mark.asyncio
+async def test_audit_digest_includes_structured_fields(block, complete_payload):
+    first = await block.execute(complete_payload, {"operation": "build_audit_package"})
+    altered = dict(complete_payload)
+    altered["customer_age"] = 42
+    second = await block.execute(altered, {"operation": "build_audit_package"})
+
+    assert first["result"]["evidence_digest_sha256"] != second["result"]["evidence_digest_sha256"]
+
+
+@pytest.mark.asyncio
+async def test_prohibited_terms_require_local_negation(block):
+    payload = {
+        "text": (
+            "Intermediary compensation schedule. Advance commission is offered for new writers. "
+            "Separately, the product brochure states that unsolicited cold calling is prohibited."
+        ),
+        "commission_arrangement": True,
+    }
+
+    result = await block.execute(payload, {"operation": "evaluate"})
+    evaluation = result["result"]
+    rule_ids = {finding["rule_id"] for finding in evaluation["findings"]}
+    assert "GN16-REM-001" in rule_ids
+
+
 def test_bundle_copy_and_knowledge_assets_exist():
     root_block = ROOT / "app" / "blocks" / "hkia_gn16_rules.py"
     bundle_block = ROOT / "block_store" / "kits" / "insurance" / "bundle" / "app" / "blocks" / "hkia_gn16_rules.py"

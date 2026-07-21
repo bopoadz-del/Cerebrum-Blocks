@@ -174,6 +174,73 @@ async def test_agency_hierarchy_rejects_invalid_parent_role(hierarchy_block):
 
 
 @pytest.mark.asyncio
+async def test_agency_hierarchy_restores_prior_node_on_cycle(hierarchy_block):
+    await _upsert(
+        hierarchy_block,
+        {
+            "id": "carrier-1",
+            "role": "carrier",
+            "parent_id": None,
+            "name": "Northstar Life",
+            "effective_from": None,
+            "effective_to": None,
+            "metadata": {},
+        },
+    )
+    await _upsert(
+        hierarchy_block,
+        {
+            "id": "agency-parent",
+            "role": "agency",
+            "parent_id": "carrier-1",
+            "name": "Parent Agency",
+            "effective_from": None,
+            "effective_to": None,
+            "metadata": {},
+        },
+    )
+    await _upsert(
+        hierarchy_block,
+        {
+            "id": "agency-child",
+            "role": "agency",
+            "parent_id": "agency-parent",
+            "name": "Child Agency",
+            "effective_from": None,
+            "effective_to": None,
+            "metadata": {},
+        },
+    )
+
+    cycle_result = await _upsert(
+        hierarchy_block,
+        {
+            "id": "agency-parent",
+            "role": "agency",
+            "parent_id": "agency-child",
+            "name": "Parent Agency",
+            "effective_from": None,
+            "effective_to": None,
+            "metadata": {},
+        },
+    )
+
+    assert cycle_result["status"] == "error"
+    assert any("cycle" in error for error in cycle_result["errors"])
+
+    path = await hierarchy_block.process(
+        {"operation": "path_to_root", "node_id": "agency-child"}
+    )
+    assert path["status"] == "success"
+    assert [node["id"] for node in path["path"]] == [
+        "agency-child",
+        "agency-parent",
+        "carrier-1",
+    ]
+    assert hierarchy_block._nodes["agency-parent"]["parent_id"] == "carrier-1"
+
+
+@pytest.mark.asyncio
 async def test_agency_hierarchy_validate_reports_bad_dates(hierarchy_block):
     result = await _upsert(
         hierarchy_block,

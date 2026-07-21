@@ -36,16 +36,7 @@
     "incentive_targeting",
     "hkia_gn16_rules",
     "bordereaux_ingest",
-    "distribution_analytics",
-    "workflow",
-    "database",
-    "audit",
-    "notification",
-    "recommendation_template",
-    "validation_pipeline",
-    "webhook",
-    "storage",
-    "dashboard"
+    "distribution_analytics"
   ],
   "prompts": [
     "app/prompts/codegen_system.py"

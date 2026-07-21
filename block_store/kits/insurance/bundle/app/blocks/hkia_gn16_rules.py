@@ -7,6 +7,7 @@ prepare, transmit, or submit filings to the Hong Kong Insurance Authority.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
@@ -547,7 +548,7 @@ class HKIAGN16RulesBlock(UniversalBlock):
             return evaluation
 
         text, fields = self._extract_payload(input_data, params)
-        evidence_digest = hashlib.sha256(self._normalize_text(text).encode("utf-8")).hexdigest()
+        evidence_digest = self._evidence_digest(text, fields)
 
         return {
             "status": "success",
@@ -581,9 +582,12 @@ class HKIAGN16RulesBlock(UniversalBlock):
         check_type = check["type"]
 
         if check_type == "prohibited_terms":
-            matched_terms = self._matched_terms(normalized_text, check.get("terms", []))
-            allowed_context = self._matched_terms(normalized_text, check.get("allowed_context_terms", []))
-            if matched_terms and not allowed_context:
+            matched_terms = self._prohibited_terms_without_local_negation(
+                normalized_text,
+                check.get("terms", []),
+                check.get("allowed_context_terms", []),
+            )
+            if matched_terms:
                 return self._finding(rule, sequence, matched_terms, [], check["missing_message"], fields)
             return None
 
@@ -757,12 +761,48 @@ class HKIAGN16RulesBlock(UniversalBlock):
                 matches.append(term)
         return matches
 
+    def _prohibited_terms_without_local_negation(
+        self,
+        normalized_text: str,
+        terms: List[str],
+        allowed_context_terms: List[str],
+        window: int = 80,
+    ) -> List[str]:
+        """Return prohibited terms that lack negating context near the match.
+
+        Document-wide negation must not suppress an unrelated prohibited phrase.
+        """
+        flagged: List[str] = []
+        for term in terms:
+            for match in self._term_matches(normalized_text, term):
+                start = max(0, match.start() - window)
+                end = min(len(normalized_text), match.end() + window)
+                local_window = normalized_text[start:end]
+                if not self._matched_terms(local_window, allowed_context_terms):
+                    flagged.append(term)
+                    break
+        return flagged
+
+    def _evidence_digest(self, text: str, fields: Dict[str, Any]) -> str:
+        payload = {
+            "text": self._normalize_text(text),
+            "fields": self._canonical_fields(fields),
+        }
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+        return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+    def _canonical_fields(self, fields: Dict[str, Any]) -> Dict[str, Any]:
+        return {key: fields[key] for key in sorted(fields)}
+
     def _term_in_text(self, normalized_text: str, term: str) -> bool:
+        return any(True for _ in self._term_matches(normalized_text, term))
+
+    def _term_matches(self, normalized_text: str, term: str):
         normalized_term = self._normalize_text(term)
         if not normalized_term:
-            return False
+            return iter(())
         pattern = r"(?<![a-z0-9])" + re.escape(normalized_term) + r"(?![a-z0-9])"
-        return re.search(pattern, normalized_text) is not None
+        return re.finditer(pattern, normalized_text)
 
     def _truthy_fields(self, fields: Dict[str, Any], field_names: List[str]) -> List[str]:
         matches: List[str] = []

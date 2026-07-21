@@ -27,6 +27,10 @@ REQUIRED_BLOCKS = {
     "hkia_gn16_rules",
     "bordereaux_ingest",
     "distribution_analytics",
+}
+
+# Platform support blocks belong to the host runtime, not this kit's virgin-boot specs.
+UNSUPPORTED_PLATFORM_BLOCKS = {
     "workflow",
     "database",
     "audit",
@@ -62,8 +66,10 @@ def test_insurance_manifest_is_v2_available_suite():
 
 def test_insurance_manifest_has_required_v2_blocks():
     manifest = _manifest()
+    advertised = set(manifest["blocks"])
 
-    assert REQUIRED_BLOCKS.issubset(set(manifest["blocks"]))
+    assert REQUIRED_BLOCKS.issubset(advertised)
+    assert advertised.isdisjoint(UNSUPPORTED_PLATFORM_BLOCKS)
 
 
 def test_insurance_manifest_playbooks_exist_with_triads():

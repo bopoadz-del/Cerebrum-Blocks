@@ -138,10 +138,14 @@ class AgencyHierarchyBlock(UniversalBlock):
                 "node": node,
             }
 
+        prior = self._copy_node(self._nodes[node["id"]]) if node["id"] in self._nodes else None
         self._nodes[node["id"]] = node
         validation = self._validate_hierarchy()
         if not validation.get("valid", False):
-            self._nodes.pop(node["id"], None)
+            if prior is None:
+                self._nodes.pop(node["id"], None)
+            else:
+                self._nodes[node["id"]] = prior
             return {
                 "status": "error",
                 "operation": "upsert_node",
