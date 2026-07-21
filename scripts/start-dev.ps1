@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 
 Write-Host "Starting mock backend on http://localhost:8000 ..."
-Start-Process -FilePath "python" -ArgumentList "mock_backend.py" -WorkingDirectory $Root -WindowStyle Minimized
+Start-Process -FilePath "python" -ArgumentList "dev/mock_backend.py" -WorkingDirectory $Root -WindowStyle Minimized
 
 Start-Sleep -Seconds 2
 

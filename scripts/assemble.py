@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # Ensure logs directory exists
 Path('logs').mkdir(exist_ok=True)
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from universal_assembler import UniversalAssembler
 
@@ -203,19 +203,19 @@ async def main():
         epilog="""
 Examples:
   # Dry run to check configuration
-  python assemble.py --dry-run
+  python scripts/assemble.py --dry-run
   
   # Initialize infrastructure only
-  python assemble.py --target=container_infrastructure
+  python scripts/assemble.py --target=container_infrastructure
   
   # Full assembly with verbose output
-  python assemble.py --full --verbose
+  python scripts/assemble.py --full --verbose
   
   # Test a chain
-  python assemble.py --test-chain="construction.ocr->ai_core.chat"
+  python scripts/assemble.py --test-chain="construction.ocr->ai_core.chat"
   
   # Show topology without initializing
-  python assemble.py --topology
+  python scripts/assemble.py --topology
         """
     )
     
@@ -286,7 +286,7 @@ Examples:
             
     else:
         parser.print_help()
-        print("\n💡 Try: python assemble.py --dry-run")
+        print("\n💡 Try: python scripts/assemble.py --dry-run")
 
 
 if __name__ == "__main__":

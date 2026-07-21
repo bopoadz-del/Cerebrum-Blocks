@@ -88,7 +88,7 @@ def test_text_heavy_pdf_does_not_trigger_ocr(tmp_path, monkeypatch):
 
     assert result["status"] == "success"
     assert called["ocr"] is False, "OCR should not run for dense text PDFs"
-    assert result["engine"] in {"pdfplumber", "PyPDF2", "PyMuPDF"}
+    assert result["engine"] in {"pdfplumber", "pypdf", "PyMuPDF"}
     # Body of text should round-trip — engines all see the inserted glyphs.
     assert "LOREM IPSUM" in result["text"]
 

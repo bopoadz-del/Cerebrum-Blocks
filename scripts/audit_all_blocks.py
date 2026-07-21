@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import sys
 import asyncio
-sys.path.insert(0, '.')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.blocks import BLOCK_REGISTRY
 

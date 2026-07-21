@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Test blocks THROUGH the platform API, not directly."""
 import sys, asyncio, json
-sys.path.insert(0, '.')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.testclient import TestClient
 from app.main import app

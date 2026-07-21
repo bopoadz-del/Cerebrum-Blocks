@@ -240,7 +240,7 @@ class PDFBlock(TypedBlock):
             except Exception as e:
                 return {"status": "error", "text": "", "pages": 0, "error": f"Word read failed: {str(e)}"}
 
-        # Try real PDF libraries in order: pdfplumber, PyPDF2, PyMuPDF.
+        # Try real PDF libraries in order: pdfplumber, pypdf, PyMuPDF.
         # On success, fall through to the OCR-fallback gate below instead
         # of returning early — a vector/scanned PDF will extract cleanly
         # but produce almost no characters per page, and we want to retry
@@ -266,10 +266,10 @@ class PDFBlock(TypedBlock):
         except Exception as e:
             last_error = f"pdfplumber failed: {str(e)}"
 
-        # 2. Try PyPDF2
+        # 2. Try pypdf
         if text is None:
             try:
-                from PyPDF2 import PdfReader
+                from pypdf import PdfReader
                 reader = PdfReader(pdf_path)
                 buf = ""
                 for page in reader.pages:
@@ -277,11 +277,11 @@ class PDFBlock(TypedBlock):
                     buf += page_text + "\n"
                 text = buf
                 pages = len(reader.pages)
-                engine = "PyPDF2"
+                engine = "pypdf"
             except ImportError:
-                last_error = "PyPDF2 not installed"
+                last_error = "pypdf not installed"
             except Exception as e:
-                last_error = f"PyPDF2 failed: {str(e)}"
+                last_error = f"pypdf failed: {str(e)}"
 
         # 3. Try PyMuPDF fallback
         if text is None:
@@ -307,7 +307,7 @@ class PDFBlock(TypedBlock):
                 "pages": 0,
                 "error": (
                     f"No PDF parser available. {last_error}. "
-                    "Install one of: pdfplumber, PyPDF2, or PyMuPDF"
+                    "Install one of: pdfplumber, pypdf, or PyMuPDF"
                 ),
             }
 
