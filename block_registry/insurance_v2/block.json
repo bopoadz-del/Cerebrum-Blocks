@@ -1,0 +1,97 @@
+{
+  "author": "Cerebrum Team",
+  "description": "Insurance document analysis with typed input/output",
+  "execution": {
+    "image": "ghcr.io/cerebrum-blocks/insurance_v2:latest",
+    "type": "docker"
+  },
+  "id": "insurance_v2",
+  "inputs": [
+    {
+      "description": "Paste insurance document text or chain from PDF/OCR...",
+      "name": "input",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "default": 0.85,
+      "description": "Configuration parameter: confidence_threshold",
+      "name": "confidence_threshold",
+      "required": false,
+      "type": "number"
+    },
+    {
+      "default": "auto",
+      "description": "Configuration parameter: document_type",
+      "name": "document_type",
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "Insurance V2",
+  "outputs": [
+    {
+      "description": "Document type",
+      "name": "document_type",
+      "type": "string"
+    },
+    {
+      "description": "Extracted insurance entities",
+      "name": "entities",
+      "type": "object"
+    },
+    {
+      "description": "Insurance metrics",
+      "name": "metrics",
+      "type": "object"
+    },
+    {
+      "description": "Compliance flags",
+      "name": "compliance_flags",
+      "type": "object"
+    },
+    {
+      "description": "Risk scores",
+      "name": "risk_scores",
+      "type": "object"
+    },
+    {
+      "description": "Confidence",
+      "name": "confidence",
+      "type": "percentage"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "",
+  "tags": [
+    "domain",
+    "insurance",
+    "v2"
+  ],
+  "ui_schema": [
+    {
+      "label": "Paste insurance document text or chain from PDF/OCR...",
+      "name": "input",
+      "widget": "textarea"
+    },
+    {
+      "label": "Confidence Threshold",
+      "name": "confidence_threshold",
+      "widget": "number"
+    },
+    {
+      "label": "Document Type",
+      "name": "document_type",
+      "widget": "text"
+    }
+  ],
+  "version": "2.0"
+}

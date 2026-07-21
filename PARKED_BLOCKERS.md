@@ -4,8 +4,9 @@
   no publisher private key is present (only `data/publishers/cerebrum_platform.pub`).
   New distribution block `signature` fields remain empty until a private key is
   provided. Do not invent a replacement platform key in-repo.
-- `CEREBRUM_DOMAIN_KITS=insurance` registration logs pre-existing capability
-  declaration warnings for `insurance` / `insurance_v2` because
-  `block_registry/insurance_v2/block.json` is absent. Distribution blocks load.
+- `CEREBRUM_DOMAIN_KITS=insurance` capability declaration warnings for
+  `insurance` / `insurance_v2`: **resolved** by adding
+  `block_registry/insurance/block.json` and
+  `block_registry/insurance_v2/block.json`.
 - Starlette pytest filter: **resolved** in `pytest.ini` (use
   `ignore::DeprecationWarning:starlette`).
