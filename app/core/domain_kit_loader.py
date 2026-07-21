@@ -73,6 +73,7 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
         ("insurance_v2", "app.blocks.insurance_v2", "InsuranceBlockV2"),
         ("bordereaux_ingest", "app.blocks.bordereaux_ingest", "BordereauxIngestBlock"),
         ("distribution_analytics", "app.blocks.distribution_analytics", "DistributionAnalyticsBlock"),
+        ("hkia_gn16_rules", "app.blocks.hkia_gn16_rules", "HKIAGN16RulesBlock"),
         _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "supply_chain": [

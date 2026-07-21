@@ -27,11 +27,14 @@
     "insurance_v2",
     "bordereaux_ingest",
     "distribution_analytics",
+    "hkia_gn16_rules",
     "formula_executor_v2"
   ],
   "prompts": [],
   "data": [
-    "app/data/sample_bordereaux.json"
+    "app/data/sample_bordereaux.json",
+    "app/data/gn16_ruleset.json",
+    "app/knowledge/hkia_gn16_corpus.json"
   ],
   "core_modules": [
     "app/core/insurance_knowledge.py",
@@ -54,6 +57,10 @@
     {
       "src": "app/blocks/insurance_v2.py",
       "dest": "app/blocks/insurance_v2.py"
+    },
+    {
+      "src": "app/blocks/hkia_gn16_rules.py",
+      "dest": "app/blocks/hkia_gn16_rules.py"
     },
     {
       "src": "app/blocks/bordereaux_ingest.py",
@@ -110,6 +117,14 @@
     {
       "src": "app/blocks/formula_executor_v2.py",
       "dest": "app/blocks/formula_executor_v2.py"
+    },
+    {
+      "src": "app/data/gn16_ruleset.json",
+      "dest": "app/data/gn16_ruleset.json"
+    },
+    {
+      "src": "app/knowledge/hkia_gn16_corpus.json",
+      "dest": "app/knowledge/hkia_gn16_corpus.json"
     },
     {
       "src": "app/data/sample_bordereaux.json",
