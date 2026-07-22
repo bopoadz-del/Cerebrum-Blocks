@@ -1,20 +1,21 @@
 # Cerebrum Blocks — Repository Status
 
-> **Date:** 2026-07-19  
+> **Date:** 2026-07-22  
 > **Branch:** main  
-> **Python files in `app/blocks/`:** 106  
-> **Registered blocks (`BLOCK_REGISTRY`):** 42  
-> **Tests collected:** 608 (8 deselected, 4 collection errors)
+> **Python files in `app/blocks/`:** 121  
+> **Registered blocks (`block_registry/`):** 105  
+> **Tests collected:** 660 (8 deselected, 4 collection errors)
 
 ---
 
 ## Summary
 
-Repository hygiene pass completed. Root-level scripts and test files were moved
-to `scripts/`, `tests/`, and `dev/`. CI now runs `tests/test_all_blocks.py` and
-`tests/test_regression_security.py`. Duplicate PDF dependencies were removed
-from `requirements.txt` (`PyPDF2` dropped, `pypdf` kept; `pdfplumber` and
-`pymupdf`/`PyMuPDF` deduplicated).
+Recent merges brought in:
+- **FinanceOps foundation blocks** (PR #41): 7 new finance transformation blocks plus container and kit bundle.
+- **Generic action-contract runtime** (PR #40): domain-neutral action discovery, registry, and execution engine under `app/blocks/core/action_contract/`.
+- **Store registry update** (PR #42): registered `action_contract` in `block_registry/`.
+
+Earlier hygiene pass moved root-level scripts/tests into `scripts/`, `tests/`, and `dev/`; cleaned duplicate PDF dependencies; and wired `tests/test_all_blocks.py` and `tests/test_regression_security.py` into CI.
 
 ---
 
@@ -22,23 +23,33 @@ from `requirements.txt` (`PyPDF2` dropped, `pypdf` kept; `pdfplumber` and
 
 | Location | Count |
 |----------|-------|
-| `app/blocks/*.py` (top-level) | 106 |
-| Registered in `BLOCK_REGISTRY` | 42 |
-| Containers under `app/containers/` | 2+ |
+| `app/blocks/*.py` (top-level) | 121 |
+| `block_registry/` entries | 105 |
+| Containers under `app/containers/` | 2 directories (`construction/`, plus container modules) |
 | Core modules under `app/core/` | 40+ |
 
-### New / upgraded platform blocks (this pass)
+### Recently added / upgraded blocks
 
-| Block | Purpose |
-|-------|---------|
-| `tenant` | Tenant/project provisioning and header context resolution |
-| `auth` | API keys + tenant/project scoping |
-| `audit` | Immutable hash-chain log + structured `ActionRun` records |
-| `graph_orchestrator` | Universal directed-graph execution engine |
-| `agent_catalog` | Declarative agent manifests, hats, handoffs |
-| `connector_registry` | Connector lifecycle registry and run tracking |
-| `storage` | Secure upload validation + S3/R2 archive support |
-| `admin` | Preflight checks, stats, bulk cleanup |
+| Block | Purpose | Source |
+|-------|---------|--------|
+| `action_contract` | Generic action-contract runtime (models, registry, execution, schema validation) | Cerebrum-Steward |
+| `finance_canonical_model` | Canonical chart-of-accounts and financial data model | FinanceOps kit |
+| `finance_coa_governance` | COA governance rules and validation | FinanceOps kit |
+| `finance_data_quality` | Financial data quality checks | FinanceOps kit |
+| `finance_import` | General ledger and sub-ledger import transforms | FinanceOps kit |
+| `finance_reconciliation` | Account reconciliation engine | FinanceOps kit |
+| `finance_saas_metrics` | SaaS / subscription KPI calculations | FinanceOps kit |
+| `finance_v2` | Composite FinanceOps reasoning block | FinanceOps kit |
+| `finance_ops` | FinanceOps domain container | FinanceOps kit |
+| `agency_commission_engine` | Commission calculation and chargebacks | InsureOps kit |
+| `agency_hierarchy` | Agency/producer hierarchy management | InsureOps kit |
+| `attrition_scorer` | Churn / attrition scoring | InsureOps kit |
+| `bordereaux_ingest` | Insurance statement feed ingest | InsureOps kit |
+| `channel_router` | Explainable case channel routing | InsureOps kit |
+| `distribution_analytics` | Distribution performance analytics | InsureOps kit |
+| `hkia_gn16_rules` | HK insurance regulatory rule evaluation | InsureOps kit |
+| `incentive_targeting` | Incentive eligibility and recommendations | InsureOps kit |
+| `producer_record` | Producer / agent record management | InsureOps kit |
 
 ---
 
@@ -47,7 +58,7 @@ from `requirements.txt` (`PyPDF2` dropped, `pypdf` kept; `pdfplumber` and
 Collected via `pytest --collect-only`:
 
 ```
-608/616 tests collected (8 deselected), 4 errors in 8.07s
+660/668 tests collected (8 deselected), 4 errors in 9.02s
 ```
 
 ### Collection errors (pre-existing)
@@ -73,7 +84,7 @@ Collected via `pytest --collect-only`:
 ## Repository Layout
 
 ```
-├── app/blocks/          # 106 .py files (blocks + helpers)
+├── app/blocks/          # 121 .py files (blocks + helpers)
 ├── app/containers/      # Domain containers
 ├── app/core/            # Runtime core
 ├── app/lib/             # Shared domain libraries
