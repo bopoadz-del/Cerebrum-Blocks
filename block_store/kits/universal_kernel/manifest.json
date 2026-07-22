@@ -29,6 +29,10 @@
       "structured_outcomes",
       "billing_entitlement",
       "notification_mailer"
+    ],
+    "wave4": [
+      "approval_action",
+      "block_runner"
     ]
   }
 }
