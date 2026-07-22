@@ -11,14 +11,12 @@ from app.core.domain_kit_registry import enabled_kit_ids, load_registry
 
 logger = logging.getLogger(__name__)
 
-# Shared deterministic reasoning/calculation block available in every real domain kit.
 _FORMULA_EXECUTOR_V2_SPEC = (
     "formula_executor_v2",
     "app.blocks.formula_executor_v2",
     "FormulaExecutorV2Block",
 )
 
-# Blocks bundled with each store kit (must match manifest.json blocks list).
 _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
     "construction": [
         ("construction", "app.containers.construction", "ConstructionContainer"),
@@ -132,6 +130,17 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
         ("finance_v2", "app.blocks.finance_v2", "FinanceBlockV2"),
         _FORMULA_EXECUTOR_V2_SPEC,
     ],
+    "finance_ops": [
+        ("finance_ops", "app.containers.finance_ops", "FinanceOpsContainer"),
+        ("finance_v2", "app.blocks.finance_v2", "FinanceBlockV2"),
+        _FORMULA_EXECUTOR_V2_SPEC,
+        ("finance_canonical_model", "app.blocks.finance_canonical_model", "FinanceCanonicalModelBlock"),
+        ("finance_import", "app.blocks.finance_import", "FinanceImportBlock"),
+        ("finance_data_quality", "app.blocks.finance_data_quality", "FinanceDataQualityBlock"),
+        ("finance_reconciliation", "app.blocks.finance_reconciliation", "FinanceReconciliationBlock"),
+        ("finance_coa_governance", "app.blocks.finance_coa_governance", "FinanceCoAGovernanceBlock"),
+        ("finance_saas_metrics", "app.blocks.finance_saas_metrics", "FinanceSaaSMetricsBlock"),
+    ],
     "maintenance": [
         ("cmms_connector", "app.blocks.cmms_connector", "CmmsConnectorBlock"),
         ("iot_sensor_connector", "app.blocks.iot_sensor_connector", "IotSensorConnectorBlock"),
@@ -181,7 +190,5 @@ def verify_installed_containers() -> None:
         except Exception as exc:
             logger.warning(
                 "installed kit '%s' container %s failed to import: %s",
-                kit_id,
-                class_path,
-                exc,
+                kit_id, class_path, exc,
             )
