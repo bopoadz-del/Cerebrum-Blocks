@@ -1,0 +1,14 @@
+{
+  "name": "universal_kernel",
+  "version": "0.1.0",
+  "waves": {
+    "wave1": [
+      "identity",
+      "authorization_policy",
+      "scope_guard",
+      "rate_limit_guard",
+      "audit_evidence",
+      "provenance_verification"
+    ]
+  }
+}
