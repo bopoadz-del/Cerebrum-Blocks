@@ -1,0 +1,15 @@
+{
+  "id": "finance_import",
+  "name": "Finance Import Normalizer",
+  "version": "1.0.0",
+  "description": "Normalize tabular ERP, CRM, HCM, budget, forecast, and project-cost rows.",
+  "author": "Cerebrum Team",
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "digests": {},
+  "inputs": [{"name": "input", "type": "json", "required": false, "description": "FinanceOps payload"}],
+  "outputs": [{"name": "result", "type": "json", "description": "Deterministic FinanceOps result"}],
+  "permissions": {"network": false, "filesystem": false, "imports": ["typing"], "blocks": []},
+  "tags": ["domain", "finance_ops", "ingestion", "normalization", "deterministic"],
+  "layer": 3
+}

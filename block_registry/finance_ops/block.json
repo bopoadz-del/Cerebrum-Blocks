@@ -1,0 +1,20 @@
+{
+  "id": "finance_ops",
+  "name": "FinanceOps Container",
+  "version": "1.0.0",
+  "description": "Corporate Finance transformation and FP&A foundation container.",
+  "author": "Cerebrum Team",
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "digests": {},
+  "inputs": [{"name": "input", "type": "json", "required": false, "description": "FinanceOps payload"}],
+  "outputs": [{"name": "result", "type": "json", "description": "Deterministic FinanceOps result"}],
+  "permissions": {
+    "network": false,
+    "filesystem": false,
+    "imports": ["typing"],
+    "blocks": ["finance_canonical_model", "finance_import", "finance_data_quality", "finance_reconciliation", "finance_coa_governance", "finance_saas_metrics"]
+  },
+  "tags": ["domain", "container", "finance_ops", "fp&a", "epm"],
+  "layer": 3
+}
