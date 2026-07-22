@@ -1,0 +1,9 @@
+{
+  "id": "finance_data_quality", "name": "Finance Data Quality", "version": "1.0.0",
+  "description": "Finance-side data quality and journal-balance controls.",
+  "author": "Cerebrum Team", "publisher_id": "cerebrum_platform", "signature": "", "digests": {},
+  "inputs": [{"name": "input", "type": "json", "required": false, "description": "FinanceOps payload"}],
+  "outputs": [{"name": "result", "type": "json", "description": "Deterministic FinanceOps result"}],
+  "permissions": {"network": false, "filesystem": false, "imports": ["collections", "decimal", "typing"], "blocks": []},
+  "tags": ["domain", "finance_ops", "data_quality", "controls", "deterministic"], "layer": 3
+}
