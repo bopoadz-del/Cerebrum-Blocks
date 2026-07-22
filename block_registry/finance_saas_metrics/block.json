@@ -1,0 +1,15 @@
+{
+  "id": "finance_saas_metrics",
+  "name": "Finance SaaS Metrics",
+  "version": "1.0.0",
+  "description": "MRR, ARR, ACV, TCV, NRR, GRR, renewals, and ARR bridges.",
+  "author": "Cerebrum Team",
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "digests": {},
+  "inputs": [{"name": "input", "type": "json", "required": false, "description": "FinanceOps payload"}],
+  "outputs": [{"name": "result", "type": "json", "description": "Deterministic FinanceOps result"}],
+  "permissions": {"network": false, "filesystem": false, "imports": ["calendar", "datetime", "decimal", "typing"], "blocks": []},
+  "tags": ["domain", "finance_ops", "saas", "arr", "subscription", "deterministic"],
+  "layer": 3
+}

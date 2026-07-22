@@ -1,0 +1,9 @@
+{
+  "id": "finance_v2", "name": "Finance Document Analysis V2", "version": "2.0.0",
+  "description": "Typed financial document analysis for statements, audit reports, KYC/AML, formulas, regulatory flags, and risk scoring.",
+  "author": "Cerebrum Team", "publisher_id": "cerebrum_platform", "signature": "", "digests": {},
+  "inputs": [{"name": "input", "type": "json", "required": false, "description": "Finance document payload"}],
+  "outputs": [{"name": "result", "type": "json", "description": "Typed finance analysis"}],
+  "permissions": {"network": false, "filesystem": false, "imports": ["dataclasses", "json", "math", "re", "sympy", "typing"], "blocks": []},
+  "tags": ["domain", "finance", "v2", "document_analysis", "deterministic"], "layer": 3
+}
