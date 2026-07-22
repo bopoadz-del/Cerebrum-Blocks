@@ -1,5 +1,10 @@
-# Wave 1 TRUST spine dependencies (beyond the project base requirements).
+# Wave 1 TRUST + Wave 2 INTELLIGENCE spine dependencies (beyond the project base requirements).
 # bcrypt is pinned below 4.1 per the task brief to preserve passlib compatibility.
 bcrypt<4.1
 PyJWT>=2.8.0
 redis>=5.0.0
+
+# Wave 2 INTELLIGENCE spine
+numpy>=1.24.0
+openpyxl>=3.1.0
+pypdf>=4.0.0

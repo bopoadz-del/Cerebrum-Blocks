@@ -9,6 +9,16 @@
       "rate_limit_guard",
       "audit_evidence",
       "provenance_verification"
+    ],
+    "wave2": [
+      "secure_ingestion",
+      "document_parsing",
+      "durable_jobs",
+      "embedding_provider",
+      "vector_store",
+      "hybrid_retrieval",
+      "llm_provider",
+      "grounded_answer"
     ]
   }
 }
