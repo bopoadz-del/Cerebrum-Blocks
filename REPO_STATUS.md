@@ -30,9 +30,10 @@ Earlier hygiene pass moved root-level scripts/tests into `scripts/`, `tests/`, a
 
 ### Recently added / upgraded blocks
 
-| Block | Purpose | Source |
-|-------|---------|--------|
-| `action_contract` | Generic action-contract runtime (models, registry, execution, schema validation) | Cerebrum-Steward |
+| Block | Purpose | Source | Tier |
+|-------|---------|--------|------|
+| `universal_kernel` | Product-neutral 24-capability kernel kit (trust, intelligence, operations, frontier) | Mixed (Fork + Factory + new) | **premium** |
+| `action_contract` | Generic action-contract runtime (models, registry, execution, schema validation) | Cerebrum-Steward | standard |
 | `finance_canonical_model` | Canonical chart-of-accounts and financial data model | FinanceOps kit |
 | `finance_coa_governance` | COA governance rules and validation | FinanceOps kit |
 | `finance_data_quality` | Financial data quality checks | FinanceOps kit |

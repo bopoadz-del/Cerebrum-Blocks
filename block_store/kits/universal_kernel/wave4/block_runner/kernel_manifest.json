@@ -7,5 +7,7 @@
     "block_store.kits.universal_kernel.wave3.structured_outcomes"
   ],
   "provenance": "new",
-  "acceptance_test": "tests/test_block_runner.py"
+  "acceptance_test": "tests/test_block_runner.py",
+  "tier": "premium",
+  "note": "Premium-only; not available in the freemium tier."
 }

@@ -6,5 +6,7 @@
     "numpy"
   ],
   "provenance": "factory",
-  "acceptance_test": "tests/test_embedding_provider.py"
+  "acceptance_test": "tests/test_embedding_provider.py",
+  "tier": "premium",
+  "note": "Premium-only; not available in the freemium tier."
 }

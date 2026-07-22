@@ -6,5 +6,7 @@
     "numpy"
   ],
   "provenance": "new",
-  "acceptance_test": "tests/test_grounded_answer.py"
+  "acceptance_test": "tests/test_grounded_answer.py",
+  "tier": "premium",
+  "note": "Premium-only; not available in the freemium tier."
 }

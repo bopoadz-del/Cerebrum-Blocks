@@ -6,5 +6,7 @@
     "openpyxl"
   ],
   "provenance": "fork",
-  "acceptance_test": "tests/test_document_parsing.py"
+  "acceptance_test": "tests/test_document_parsing.py",
+  "tier": "premium",
+  "note": "Premium-only; not available in the freemium tier."
 }

@@ -6,5 +6,7 @@
     "numpy"
   ],
   "provenance": "fork+factory",
-  "acceptance_test": "tests/test_hybrid_retrieval.py"
+  "acceptance_test": "tests/test_hybrid_retrieval.py",
+  "tier": "premium",
+  "note": "Premium-only; not available in the freemium tier."
 }

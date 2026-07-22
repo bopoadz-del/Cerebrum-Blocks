@@ -6,5 +6,7 @@
     "block_store.kits.universal_kernel.wave1.audit_evidence"
   ],
   "provenance": "new",
-  "acceptance_test": "tests/test_approval_action.py"
+  "acceptance_test": "tests/test_approval_action.py",
+  "tier": "premium",
+  "note": "Premium-only; not available in the freemium tier."
 }
