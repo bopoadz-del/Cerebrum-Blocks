@@ -5,47 +5,15 @@ from __future__ import annotations
 from typing import Any, Dict, List, Mapping
 
 from app.core.finance_ops import (
-    CANONICAL_FIELDS,
-    is_missing,
-    money_str,
-    normalize_common_values,
-    normalize_record_keys,
-    stable_digest,
-    to_decimal,
-    validate_canonical_record,
+    CANONICAL_FIELDS, is_missing, money_str, normalize_common_values,
+    normalize_record_keys, stable_digest, to_decimal, validate_canonical_record,
 )
 from app.core.typed_block import TypedBlock
 
-
 SOURCE_SPECS: Dict[str, Dict[str, Any]] = {
-    "gl": {
-        "record_type": "gl_entry",
-        "field_map": {
-            "line_id": "record_id", "voucher_id": "source_record_id",
-            "journal_id": "source_record_id", "legal_entity": "entity_id",
-            "gl_account": "account_id", "cost_centre": "cost_center_id",
-            "posting_date": "transaction_date", "fiscal_period": "period",
-            "currency_code": "currency", "net_amount": "amount",
-        },
-    },
-    "crm_contract": {
-        "record_type": "subscription_contract",
-        "field_map": {
-            "id": "record_id", "customer": "customer_id", "contract": "contract_id",
-            "product": "product_id", "start": "start_date", "end": "end_date",
-            "billing": "billing_frequency", "monthly_recurring_revenue": "mrr",
-            "annual_recurring_revenue": "arr", "annual_contract_value": "acv",
-            "total_contract_value": "tcv",
-        },
-    },
-    "hcm_worker": {
-        "record_type": "workforce_record",
-        "field_map": {
-            "id": "record_id", "worker_id": "employee_id", "legal_entity": "entity_id",
-            "department": "department_id", "cost_centre": "cost_center_id",
-            "base_salary": "amount", "currency_code": "currency", "fiscal_period": "period",
-        },
-    },
+    "gl": {"record_type": "gl_entry", "field_map": {"line_id": "record_id", "voucher_id": "source_record_id", "journal_id": "source_record_id", "legal_entity": "entity_id", "gl_account": "account_id", "cost_centre": "cost_center_id", "posting_date": "transaction_date", "fiscal_period": "period", "currency_code": "currency", "net_amount": "amount"}},
+    "crm_contract": {"record_type": "subscription_contract", "field_map": {"id": "record_id", "customer": "customer_id", "contract": "contract_id", "product": "product_id", "start": "start_date", "end": "end_date", "billing": "billing_frequency", "monthly_recurring_revenue": "mrr", "annual_recurring_revenue": "arr", "annual_contract_value": "acv", "total_contract_value": "tcv"}},
+    "hcm_worker": {"record_type": "workforce_record", "field_map": {"id": "record_id", "worker_id": "employee_id", "legal_entity": "entity_id", "department": "department_id", "cost_centre": "cost_center_id", "base_salary": "amount", "currency_code": "currency", "fiscal_period": "period"}},
     "budget": {"record_type": "budget_line", "defaults": {"scenario": "budget"}},
     "forecast": {"record_type": "forecast_line", "defaults": {"scenario": "forecast"}},
     "project_cost": {"record_type": "project_cost"},
@@ -57,31 +25,15 @@ class FinanceImportBlock(TypedBlock):
 
     name = "finance_import"
     version = "1.0.0"
-    description = (
-        "Deterministic row normalizer for GL, CRM contracts, HCM workers, project "
-        "costs, budgets, and forecasts. It produces canonical row-level evidence "
-        "and does not connect to source systems directly."
-    )
+    description = "Deterministic row normalizer for GL, CRM contracts, HCM workers, project costs, budgets, and forecasts."
     layer = 3
     tags = ["domain", "finance_ops", "ingestion", "normalization", "deterministic"]
     requires: List[str] = []
-    input_schema = {
-        "type": "object",
-        "properties": {
-            "operation": {"type": "string"}, "source_type": {"type": "string"},
-            "rows": {"type": "array"}, "field_map": {"type": "object"},
-        },
-    }
+    input_schema = {"type": "object", "properties": {"operation": {"type": "string"}, "source_type": {"type": "string"}, "rows": {"type": "array"}, "field_map": {"type": "object"}}}
     output_schema = {"type": "object", "properties": {"status": {"type": "string"}}, "required": ["status"]}
     accepted_input_types = ["JSON"]
     produced_output_types = ["FinanceImportBatch"]
-    ui_schema = {
-        "input": {"type": "json", "multiline": True}, "output": {"type": "json"},
-        "quick_actions": [
-            {"icon": "", "label": "Normalize GL", "prompt": "Normalize general-ledger rows"},
-            {"icon": "", "label": "Profile Source", "prompt": "Profile finance source columns"},
-        ],
-    }
+    ui_schema = {"input": {"type": "json", "multiline": True}, "output": {"type": "json"}}
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         data = {**(params or {}), **(input_data if isinstance(input_data, dict) else {})}
@@ -91,18 +43,19 @@ class FinanceImportBlock(TypedBlock):
                 return self._normalize_rows(data)
             if operation == "profile":
                 return self._profile(data)
-        except (TypeError, ValueError) as exc:
-            return {"status": "error", "operation": operation, "error": str(exc)}
-        return {"status": "error", "operation": operation, "error": f"Unknown operation: {operation}", "available_operations": ["normalize_rows", "profile"]}
+        except (KeyError, TypeError, ValueError) as exc:
+            return {"status": "validation_error", "operation": operation, "error": str(exc)}
+        return {"status": "unsupported", "operation": operation, "error": f"Unknown operation: {operation}", "available_operations": ["normalize_rows", "profile"]}
 
     @staticmethod
-    def _source_spec(data: Dict[str, Any]) -> Dict[str, Any]:
+    def _source_spec(data: Dict[str, Any]) -> tuple[str, Dict[str, Any]]:
         source_type = str(data.get("source_type") or "").strip()
         if source_type not in SOURCE_SPECS:
             raise ValueError(f"Unsupported source_type '{source_type}'. Use: {sorted(SOURCE_SPECS)}")
-        return SOURCE_SPECS[source_type]
+        return source_type, SOURCE_SPECS[source_type]
 
-    def _profile(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    @staticmethod
+    def _profile(data: Dict[str, Any]) -> Dict[str, Any]:
         rows = data.get("rows")
         if not isinstance(rows, list):
             raise ValueError("rows must be an array")
@@ -113,25 +66,21 @@ class FinanceImportBlock(TypedBlock):
             for key, value in row.items():
                 item = columns.setdefault(str(key), {"present": 0, "null": 0})
                 item["present"] += 1
-                if is_missing(value):
-                    item["null"] += 1
+                item["null"] += int(is_missing(value))
         return {"status": "success", "operation": "profile", "row_count": len(rows), "columns": columns, "source_digest": stable_digest(rows)}
 
     def _normalize_rows(self, data: Dict[str, Any]) -> Dict[str, Any]:
         rows = data.get("rows")
         if not isinstance(rows, list):
             raise ValueError("rows must be an array")
-        spec = self._source_spec(data)
-        source_type = str(data["source_type"])
+        source_type, spec = self._source_spec(data)
         source_system = str(data.get("source_system") or source_type)
-        explicit_map = data.get("field_map") if isinstance(data.get("field_map"), dict) else {}
-        field_map = {**spec.get("field_map", {}), **explicit_map}
-        defaults = {**spec.get("defaults", {}), **(data.get("defaults") or {})}
+        field_map = {**spec.get("field_map", {}), **(data.get("field_map") if isinstance(data.get("field_map"), dict) else {})}
+        defaults = {**spec.get("defaults", {}), **(data.get("defaults") if isinstance(data.get("defaults"), dict) else {})}
         record_type = str(data.get("record_type") or spec["record_type"])
         accepted: List[Dict[str, Any]] = []
         rejected: List[Dict[str, Any]] = []
         warning_count = 0
-
         for row_number, row in enumerate(rows, start=1):
             if not isinstance(row, dict):
                 rejected.append({"row_number": row_number, "issues": [{"severity": "error", "code": "row_not_object", "message": "Row must be an object"}]})
@@ -155,11 +104,9 @@ class FinanceImportBlock(TypedBlock):
                 rejected.append({"row_number": row_number, "record": known, "issues": issues + warnings})
             else:
                 accepted.append({**known, "validation_warnings": warnings})
-
         payload = {"source_type": source_type, "source_system": source_system, "record_type": record_type, "accepted": accepted, "rejected": rejected}
         return {
-            "status": "success" if not rejected else "validation_error",
-            "operation": "normalize_rows", **payload,
+            "status": "success" if not rejected else "validation_error", "operation": "normalize_rows", **payload,
             "stats": {"input_rows": len(rows), "accepted_rows": len(accepted), "rejected_rows": len(rejected), "warning_count": warning_count},
             "batch_digest": stable_digest(payload),
         }

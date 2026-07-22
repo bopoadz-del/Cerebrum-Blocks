@@ -15,53 +15,46 @@ class FinanceDataQualityBlock(TypedBlock):
 
     name = "finance_data_quality"
     version = "1.0.0"
-    description = "Finance data-quality controls for required fields, duplicates, currencies, periods, orphan dimensions, and unbalanced journal groups."
+    description = "Finance data-quality controls for required fields, duplicates, currencies, periods, orphan dimensions, and unbalanced journals."
     layer = 3
     tags = ["domain", "finance_ops", "data_quality", "controls", "deterministic"]
     requires: List[str] = []
-    input_schema = {
-        "type": "object",
-        "properties": {"records": {"type": "array"}, "required_fields": {"type": "array"}, "master_data": {"type": "object"}},
-    }
+    input_schema = {"type": "object", "properties": {"records": {"type": "array"}, "required_fields": {"type": "array"}, "master_data": {"type": "object"}}}
     output_schema = {"type": "object", "properties": {"status": {"type": "string"}}, "required": ["status"]}
     accepted_input_types = ["JSON"]
     produced_output_types = ["FinanceDataQualityReport"]
-    default_config = {
-        "allowed_currencies": ["USD", "EUR", "GBP", "SAR", "AED", "AUD", "CAD", "JPY"],
-        "balance_tolerance": "0.01",
-    }
-    ui_schema = {
-        "input": {"type": "json", "multiline": True}, "output": {"type": "json"},
-        "quick_actions": [{"icon": "", "label": "Run Quality Check", "prompt": "Run finance data-quality controls"}],
-    }
+    default_config = {"allowed_currencies": ["USD", "EUR", "GBP", "SAR", "AED", "AUD", "CAD", "JPY"], "balance_tolerance": "0.01"}
+    ui_schema = {"input": {"type": "json", "multiline": True}, "output": {"type": "json"}}
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         data = {**(params or {}), **(input_data if isinstance(input_data, dict) else {})}
         records = data.get("records")
         if not isinstance(records, list):
-            return {"status": "error", "error": "records must be an array"}
+            return {"status": "validation_error", "error": "records must be an array"}
         required_fields = data.get("required_fields") or ["record_id", "entity_id", "period", "currency"]
         unique_fields = data.get("unique_fields") or ["record_id"]
         allowed_currencies = {str(value).upper() for value in (data.get("allowed_currencies") or self.config.get("allowed_currencies", []))}
         master_data = data.get("master_data") if isinstance(data.get("master_data"), dict) else {}
-        tolerance = to_decimal(data.get("balance_tolerance", self.config.get("balance_tolerance", DEFAULT_TOLERANCE)), "balance_tolerance")
-        issues: List[Dict[str, Any]] = []
-        issues.extend(self._row_issues(records, required_fields, allowed_currencies))
-        issues.extend(self._duplicate_issues(records, unique_fields))
-        issues.extend(self._master_data_issues(records, master_data))
-        issues.extend(self._journal_balance_issues(records, data, tolerance))
+        try:
+            tolerance = to_decimal(data.get("balance_tolerance", self.config.get("balance_tolerance", DEFAULT_TOLERANCE)), "balance_tolerance")
+        except ValueError as exc:
+            return {"status": "validation_error", "error": str(exc)}
+        issues = self._row_issues(records, required_fields, allowed_currencies)
+        issues += self._duplicate_issues(records, unique_fields)
+        issues += self._master_data_issues(records, master_data)
+        issues += self._journal_balance_issues(records, data, tolerance)
         severity_counts = {severity: sum(1 for issue in issues if issue["severity"] == severity) for severity in ("critical", "error", "warning", "info")}
         deductions = severity_counts["critical"] * 25 + severity_counts["error"] * 10 + severity_counts["warning"] * 3 + severity_counts["info"]
         score = max(Decimal("0"), Decimal("100") - Decimal(deductions) / max(len(records), 1))
-        score_text = format(score.quantize(Decimal("0.01")), "f")
         blocking = severity_counts["critical"] + severity_counts["error"]
+        evidence = {"records": records, "issues": issues, "quality_score": format(score.quantize(Decimal("0.01")), "f")}
         return {
-            "status": "success" if blocking == 0 else "validation_error",
-            "record_count": len(records), "quality_score": score_text,
-            "gate": "pass" if blocking == 0 else "fail", "severity_counts": severity_counts,
+            "status": "success" if not blocking else "validation_error",
+            "record_count": len(records), "quality_score": evidence["quality_score"],
+            "gate": "pass" if not blocking else "fail", "severity_counts": severity_counts,
             "issues": issues,
             "controls_run": ["required_fields", "numeric_amount", "period_format", "currency_format", "duplicate_keys", "master_data_references", "journal_balance"],
-            "evidence_digest": stable_digest({"records": records, "issues": issues, "quality_score": score_text}),
+            "evidence_digest": stable_digest(evidence),
         }
 
     @staticmethod
@@ -139,8 +132,7 @@ class FinanceDataQualityBlock(TypedBlock):
                 row_counts[key] += 1
             except ValueError:
                 continue
-        issues: List[Dict[str, Any]] = []
-        for key, balance in groups.items():
-            if abs(balance) > tolerance:
-                issues.append({"severity": "error", "code": "journal_unbalanced", "group_by": list(group_by), "group": list(key), "row_count": row_counts[key], "balance": money_str(balance), "tolerance": money_str(tolerance), "message": "Journal group does not net to zero within tolerance"})
-        return issues
+        return [
+            {"severity": "error", "code": "journal_unbalanced", "group_by": list(group_by), "group": list(key), "row_count": row_counts[key], "balance": money_str(balance), "tolerance": money_str(tolerance), "message": "Journal group does not net to zero within tolerance"}
+            for key, balance in groups.items() if abs(balance) > tolerance
+        ]
