@@ -1,4 +1,4 @@
-# Cerebrum Block Store
+# The Store - Cerebrum Blocks 
 
 **Independent.** Cerebrum Blocks is **not** Cerebrum — it is a separate
 project with its own repo, its own API, and its own kits. The block store is
