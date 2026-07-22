@@ -24,8 +24,16 @@ from app.blocks.core.action_contract import ActionRegistry, execute_action, Acti
 registry = ActionRegistry()
 registry.discover(package="app.blocks.domains")
 
-context = ActionContext(user_id="u-1", tenant_id="t-1", permissions={"read"})
-result = await execute_action(registry, "analytics.summarize", context, {"query": "..."})
+spec = registry.resolve("analytics.summarize")
+context = ActionContext(
+    user_id="u-1",
+    tenant_id="t-1",
+    organisation_id="org-1",
+    project_id="p-1",
+    permissions=["read"],
+    allowed_domains=["analytics"],
+)
+result = await execute_action(spec, context, {"query": "..."})
 ```
 
 ## Design principles

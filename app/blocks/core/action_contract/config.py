@@ -14,7 +14,7 @@ class KernelConfig:
     llm_provider: str = "fake"
 
     @classmethod
-    def from_env(cls, prefix: str = "PRODUCT_") -> "KernelConfig":
+    def from_env(cls, prefix: str = "") -> "KernelConfig":
         return cls(
             database_url=os.getenv(f"{prefix}DATABASE_URL")
             or os.getenv("DATABASE_URL")

@@ -1,8 +1,7 @@
-"""Generic domain-action contract (local kit snapshot).
+"""Generic domain-action contract runtime.
 
 This package defines a domain-neutral, strongly typed contract for *actions*
-(deliverable/analysis operations) that domain kits expose to the product host
-host runtime in this repository.
+(deliverable/analysis operations) that domain kits expose to a host runtime.
 
 The contract is intentionally generic: the host runtime dispatches actions
 purely by their registered :class:`ActionSpec`. Adding a new action to a kit
