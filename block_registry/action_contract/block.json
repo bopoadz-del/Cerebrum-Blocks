@@ -1,0 +1,20 @@
+{
+  "id": "action_contract",
+  "name": "Action Contract Runtime",
+  "version": "1.0.0",
+  "description": "Domain-neutral runtime for registering, discovering, and executing actions exposed by domain kits. Includes typed models, registry, execution engine, schema validation, audit helper, and config.",
+  "author": "Cerebrum Team",
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "digests": {},
+  "inputs": [{"name": "input", "type": "json", "required": false, "description": "Action payload"}],
+  "outputs": [{"name": "result", "type": "json", "description": "Action execution result"}],
+  "permissions": {
+    "network": false,
+    "filesystem": false,
+    "imports": ["pydantic"],
+    "blocks": []
+  },
+  "tags": ["core", "runtime", "action", "contract", "registry"],
+  "layer": 1
+}
