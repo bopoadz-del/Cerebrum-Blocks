@@ -1,4 +1,4 @@
-"""LLM provider sub-kit: deterministic stub + optional OpenAI provider."""
+"""LLM provider sub-kit: deterministic stub + optional OpenAI/Moonshot providers."""
 
 from .code import (
     Completion,
@@ -8,12 +8,20 @@ from .code import (
     OpenAIProvider,
     get_provider,
 )
+from .moonshot import (
+    MoonshotAPIError,
+    MoonshotProvider,
+    get_moonshot_provider,
+)
 
 __all__ = [
     "Completion",
     "DeterministicStubProvider",
     "LLMConfigurationError",
     "LLMProvider",
+    "MoonshotAPIError",
+    "MoonshotProvider",
     "OpenAIProvider",
+    "get_moonshot_provider",
     "get_provider",
 ]
