@@ -1,0 +1,10 @@
+{
+  "tenant_id": "cerebrum_prebuilt",
+  "project_id": "prebuilt_legal_adgm_core",
+  "kit": "obliqa_mp_benchmark",
+  "provider": "feature-hash-v1",
+  "dimensions": 384,
+  "chunks_indexed": 1419,
+  "store_count": 1419,
+  "vector_store_path": "block_store/kits/obliqa_mp_benchmark/vector_store.pkl"
+}

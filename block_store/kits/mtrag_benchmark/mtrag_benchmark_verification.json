@@ -1,0 +1,49 @@
+{
+  "query": "what are the tax implications",
+  "project_id": "prebuilt_universal_multiturn_core",
+  "honesty": "hybrid",
+  "top_results": [
+    {
+      "chunk_id": "mtrag:cloud:ibmcld_16250-1908-4265",
+      "score": 0.031514,
+      "text_snippet": "\nHowever, using an active/active topology likely requires using [webhooks](https://cloud.ibm.com/docs/watson-assistant?topic=watson-assistant-webhook-overview) to gather interaction data, and build cu",
+      "metadata": {
+        "project_id": "prebuilt_universal_multiturn_core",
+        "domain": "universal",
+        "jurisdiction": "multi",
+        "authority": "IBM MTRAG",
+        "authority_type": "multiturn_rag_benchmark",
+        "corpus": "cloud",
+        "doc_id": "ibmcld_16250-1908-4265"
+      }
+    },
+    {
+      "chunk_id": "mtrag:clapnq:801812522_9252-10172-0-920",
+      "score": 0.031258,
+      "text_snippet": "Lead poisoning\nIn acute poisoning , typical neurological signs are pain , muscle weakness , numbness and tingling , and , rarely , symptoms associated with inflammation of the brain . Abdominal pain ,",
+      "metadata": {
+        "project_id": "prebuilt_universal_multiturn_core",
+        "domain": "universal",
+        "jurisdiction": "multi",
+        "authority": "IBM MTRAG",
+        "authority_type": "multiturn_rag_benchmark",
+        "corpus": "clapnq",
+        "doc_id": "801812522_9252-10172-0-920"
+      }
+    },
+    {
+      "chunk_id": "mtrag:cloud:ibmcld_07634-0-2070",
+      "score": 0.031054,
+      "text_snippet": "\n\n\n\n\n\n\n  AC-11 - Session Lock \n\n\n\n  Control requirements \n\nThe information system:\n\nAC-11 (a)\n:   Prevents further access to the system by initiating a session lock after [IBM Assignment: fifteen (15)",
+      "metadata": {
+        "project_id": "prebuilt_universal_multiturn_core",
+        "domain": "universal",
+        "jurisdiction": "multi",
+        "authority": "IBM MTRAG",
+        "authority_type": "multiturn_rag_benchmark",
+        "corpus": "cloud",
+        "doc_id": "ibmcld_07634-0-2070"
+      }
+    }
+  ]
+}

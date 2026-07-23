@@ -1,16 +1,17 @@
 # Cerebrum Blocks — Repository Status
 
-> **Date:** 2026-07-22  
+> **Date:** 2026-07-23  
 > **Branch:** main  
 > **Python files in `app/blocks/`:** 121  
 > **Registered blocks (`block_registry/`):** 105  
-> **Tests collected:** 660 (8 deselected, 4 collection errors)
+> **Tests collected:** 673+ (8 deselected, 4 collection errors)
 
 ---
 
 ## Summary
 
 Recent merges brought in:
+- **Prebuilt RAG collections** (local RAG kit import): 8 indexed RAW_RAG collections and 2 evaluation kits added to the Store inventory under `block_store/shelves/`, with per-kit `kernel_manifest.json`, verification, and a new `app.core.indexed_rag_collections` loader.
 - **FinanceOps foundation blocks** (PR #41): 7 new finance transformation blocks plus container and kit bundle.
 - **Generic action-contract runtime** (PR #40): domain-neutral action discovery, registry, and execution engine under `app/blocks/core/action_contract/`.
 - **Store registry update** (PR #42): registered `action_contract` in `block_registry/`.
@@ -50,6 +51,38 @@ Earlier hygiene pass moved root-level scripts/tests into `scripts/`, `tests/`, a
 | `hkia_gn16_rules` | HK insurance regulatory rule evaluation | InsureOps kit |
 | `incentive_targeting` | Incentive eligibility and recommendations | InsureOps kit |
 | `producer_record` | Producer / agent record management | InsureOps kit |
+
+---
+
+## RAG Collection Inventory
+
+| Shelf | Count | Purpose |
+|-------|-------|---------|
+| `block_store/shelves/rag_packs.json` | 17 | Metadata-only domain RAG pack catalogue (remains `not_ingested`) |
+| `block_store/shelves/indexed_rag_collections.json` | 8 | Operational inventory of indexed prebuilt RAG collections |
+| `block_store/shelves/eval_packs.json` | 2 | Approved evaluation datasets (not indexed as RAG) |
+
+### Indexed RAW_RAG collections
+
+| Collection | Kit | Domain | Chunks indexed | Vector store |
+|---|---|---|---|---|
+| `prebuilt_pharma_core` | `confusable_pharma_benchmark` | pharma | 7,123 | Yes |
+| `prebuilt_danish_public_sector_core` | `danragbench_benchmark` | danish_public_sector | 349 | Yes |
+| `prebuilt_legal_adgm_core` | `obliqa_mp_benchmark` | legal | 1,419 | Yes |
+| `prebuilt_document_parsing_core` | `parsebench_benchmark` | document_parsing | 168,943 | Yes |
+| `prebuilt_multi_domain_qa_core` | `recor_benchmark` | multi-domain | 507,141 | Yes |
+| `prebuilt_finance_sec_core` | `t2ragbench_benchmark` | finance | 23,088 | Yes |
+| `prebuilt_enterprise_rag_core` | `enterpriserag_benchmark` | enterprise_rag | 350,000* | Yes |
+| `prebuilt_universal_multiturn_core` | `mtrag_benchmark` | universal | 366,479 | Yes |
+
+\* EnterpriseRAG was capped at 350,000 chunks from 511,963 synthetic documents due to single-process memory ceiling.
+
+### Approved evaluation kits
+
+| Kit | Domain | Role | Records |
+|---|---|---|---|
+| `aec_benchmark` | construction | REASONING_EVAL / PRODUCT_WORKFLOW_TEST / VISION_DATA | 196 tasks |
+| `techmanualqa700_benchmark` | technical_manuals | RETRIEVAL_EVAL / REASONING_EVAL | 700 QA pairs |
 
 ---
 

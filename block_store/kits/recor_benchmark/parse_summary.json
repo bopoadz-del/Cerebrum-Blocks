@@ -1,0 +1,63 @@
+{
+  "benchmark_files": [
+    "data/benchmark/biology_benchmark.jsonl",
+    "data/benchmark/Drones_benchmark.jsonl",
+    "data/benchmark/earth_science_benchmark.jsonl",
+    "data/benchmark/economics_benchmark.jsonl",
+    "data/benchmark/hardware_benchmark.jsonl",
+    "data/benchmark/law_benchmark.jsonl",
+    "data/benchmark/medicalsciences_benchmark.jsonl",
+    "data/benchmark/politics_benchmark.jsonl",
+    "data/benchmark/psychology_benchmark.jsonl",
+    "data/benchmark/robotics_benchmark.jsonl",
+    "data/benchmark/sustainable_living_benchmark.jsonl"
+  ],
+  "corpus_files": [
+    "data/corpus/biology_documents.jsonl",
+    "data/corpus/Drones_documents.jsonl",
+    "data/corpus/earth_science_documents.jsonl",
+    "data/corpus/economics_documents.jsonl",
+    "data/corpus/hardware_documents.jsonl",
+    "data/corpus/law_documents.jsonl",
+    "data/corpus/medicalsciences_documents.jsonl",
+    "data/corpus/politics_documents.jsonl",
+    "data/corpus/psychology_documents.jsonl",
+    "data/corpus/robotics_documents.jsonl",
+    "data/corpus/sustainable_living_documents.jsonl"
+  ],
+  "total_conversations": 707,
+  "total_turns": 2971,
+  "total_documents": 507141,
+  "malformed_lines": {
+    "benchmark": 0,
+    "corpus": 0
+  },
+  "malformed_files": [],
+  "duplicate_conversation_ids": 108,
+  "duplicate_document_ids": 0,
+  "duplicate_document_contents": 65823,
+  "generation_methods": {
+    "unified_bright_workflow": 707
+  },
+  "benchmark_schema_keys": [
+    "id",
+    "task",
+    "original_query",
+    "original_answer",
+    "turns",
+    "metadata"
+  ],
+  "turn_schema_keys": [
+    "turn_id",
+    "query",
+    "answer",
+    "gold_doc_ids",
+    "subquestion_reasoning",
+    "subquestion_reasoning_metadata",
+    "conversation_history"
+  ],
+  "corpus_schema_keys": [
+    "doc_id",
+    "content"
+  ]
+}

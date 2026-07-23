@@ -1,0 +1,150 @@
+{
+  "file_count": 24,
+  "total_bytes": 283437448,
+  "files": [
+    {
+      "path": ".gitattributes",
+      "size": 45,
+      "extension": "",
+      "sha256": "243aefa77819afb719cfb37e021b733a822a1400f2d9e5bcbf1abfa88930e58d"
+    },
+    {
+      "path": "README.md",
+      "size": 7009,
+      "extension": ".md",
+      "sha256": "ba120308ba6c01c9861b7b18dd0e4ab75b6b431a6ad04e359fa02f5934529caf"
+    },
+    {
+      "path": "data/benchmark/Drones_benchmark.jsonl",
+      "size": 368666,
+      "extension": ".jsonl",
+      "sha256": "f9596920f4b9c2ee7cd101aee387541725785eda608bafa75b6d44e1ed74ea43"
+    },
+    {
+      "path": "data/benchmark/biology_benchmark.jsonl",
+      "size": 1081774,
+      "extension": ".jsonl",
+      "sha256": "46335cb6423acfd0929fa54d04dd5de59fa6f5c9d520f3d861ef76acf8c21895"
+    },
+    {
+      "path": "data/benchmark/earth_science_benchmark.jsonl",
+      "size": 1333484,
+      "extension": ".jsonl",
+      "sha256": "05b988150bb2ae2364dc82a53a013d5ec3251280dceba82ee8912fd39e92b4c7"
+    },
+    {
+      "path": "data/benchmark/economics_benchmark.jsonl",
+      "size": 908037,
+      "extension": ".jsonl",
+      "sha256": "de94f6f97dc295fa685eb95a39c1772add2d39f6fc9eff143fa496cec4fa210e"
+    },
+    {
+      "path": "data/benchmark/hardware_benchmark.jsonl",
+      "size": 578772,
+      "extension": ".jsonl",
+      "sha256": "c4dbfdb1650d3546d84684118efdd8ac979a12fa9a67a6d6549194afbe558c00"
+    },
+    {
+      "path": "data/benchmark/law_benchmark.jsonl",
+      "size": 836742,
+      "extension": ".jsonl",
+      "sha256": "89d7570b9ced3034961c196567cce842cd95970ee97c71a3f571065d843f6fef"
+    },
+    {
+      "path": "data/benchmark/medicalsciences_benchmark.jsonl",
+      "size": 578218,
+      "extension": ".jsonl",
+      "sha256": "6bdac7df3b0e68ff62f05ef335e6983aedf9226441733fdde9ca092f6ed2f245"
+    },
+    {
+      "path": "data/benchmark/politics_benchmark.jsonl",
+      "size": 839287,
+      "extension": ".jsonl",
+      "sha256": "af28681fa833bf366ea8aa48063bcfb282d2c4f8e546536059db4a29c290ee3a"
+    },
+    {
+      "path": "data/benchmark/psychology_benchmark.jsonl",
+      "size": 984423,
+      "extension": ".jsonl",
+      "sha256": "16224d70e7963c046a0f7f6902951dbf4970679a8348924929ee794e7bf1b308"
+    },
+    {
+      "path": "data/benchmark/robotics_benchmark.jsonl",
+      "size": 822888,
+      "extension": ".jsonl",
+      "sha256": "effbe528bc1b483d311e50aa4df5aaebed0f801aa47087ba8f5a3008fd73a73f"
+    },
+    {
+      "path": "data/benchmark/sustainable_living_benchmark.jsonl",
+      "size": 945672,
+      "extension": ".jsonl",
+      "sha256": "9deaf61fb50ddf6582331e961a896c00d8ef66dbfe72cdd27095d0f21f52b9d7"
+    },
+    {
+      "path": "data/corpus/Drones_documents.jsonl",
+      "size": 13708598,
+      "extension": ".jsonl",
+      "sha256": "38680b685350d2c7253f3e6742d87c79aa595e5f9afda77658bd18dd18aa3e32"
+    },
+    {
+      "path": "data/corpus/biology_documents.jsonl",
+      "size": 23478341,
+      "extension": ".jsonl",
+      "sha256": "52f6c562636b9e8834976db49cadb0902ebf617ec1e44c4b39f084019a44064d"
+    },
+    {
+      "path": "data/corpus/earth_science_documents.jsonl",
+      "size": 51512390,
+      "extension": ".jsonl",
+      "sha256": "c209011fe2439a278306fffdaed21a174767f33b1dcab48231dd8bd2e07bd4b2"
+    },
+    {
+      "path": "data/corpus/economics_documents.jsonl",
+      "size": 24327988,
+      "extension": ".jsonl",
+      "sha256": "b49b915c10d27e57356677d0ac7d6a1db43132ad5421068bbc2988686ceff33d"
+    },
+    {
+      "path": "data/corpus/hardware_documents.jsonl",
+      "size": 20506943,
+      "extension": ".jsonl",
+      "sha256": "722e49ae7c7f1c9bb2b56e1cc80108418b161bc18492ed0cdf915f76642af1fa"
+    },
+    {
+      "path": "data/corpus/law_documents.jsonl",
+      "size": 21283434,
+      "extension": ".jsonl",
+      "sha256": "209d0f2cf785b96e6e1755c8589528ba7dd63f2913b173207d5e4a577f7e81cb"
+    },
+    {
+      "path": "data/corpus/medicalsciences_documents.jsonl",
+      "size": 25819345,
+      "extension": ".jsonl",
+      "sha256": "cd62a8286b72ad8d560c9052860ccbfc9b4a6984d102b9b2e8e8a1a67029dde6"
+    },
+    {
+      "path": "data/corpus/politics_documents.jsonl",
+      "size": 20129454,
+      "extension": ".jsonl",
+      "sha256": "71edbcfdd827161b340fbbc32ce4869b38752cd56be3ecd4c1b3c26379520f1f"
+    },
+    {
+      "path": "data/corpus/psychology_documents.jsonl",
+      "size": 24750918,
+      "extension": ".jsonl",
+      "sha256": "8a06cd49c1f1c853ba98cfc322b72e2bb1385e308382ab69821300ddeb5f3e51"
+    },
+    {
+      "path": "data/corpus/robotics_documents.jsonl",
+      "size": 22500325,
+      "extension": ".jsonl",
+      "sha256": "28648070f4de78040c80e5a86c8d2537b2b6b51356dd5ab13b27d3b4c05de382"
+    },
+    {
+      "path": "data/corpus/sustainable_living_documents.jsonl",
+      "size": 26134695,
+      "extension": ".jsonl",
+      "sha256": "6eacc22d51afb5dcbc89a6b743d2a2c2a9fbd00d9c34e2c0d2177bccf8b95782"
+    }
+  ]
+}

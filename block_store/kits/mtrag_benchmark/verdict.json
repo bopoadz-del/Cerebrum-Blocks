@@ -1,0 +1,52 @@
+{
+  "dataset_id": "mtrag_benchmark",
+  "domain": "universal",
+  "primary_role": "REASONING_EVAL",
+  "secondary_roles": [
+    "RETRIEVAL_EVAL"
+  ],
+  "evaluation_layers": [
+    "RETRIEVAL_GOLD",
+    "END_TO_END_RAG_GOLD",
+    "PRODUCT_WORKFLOW_TEST"
+  ],
+  "source_publisher": "IBM Research",
+  "original_source": "https://github.com/IBM/mt-rag-benchmark",
+  "licence": "Apache-2.0 (repository); mixed upstream licences for corpora",
+  "commercial_use": "allowed_with_caveats",
+  "redistribution": "allowed_with_caveats",
+  "jurisdiction": [
+    "US",
+    "multi"
+  ],
+  "effective_dates": {},
+  "file_count": "110 conversations, 842 human eval turns, 507 MTRAG-UN tasks, 4 corpora",
+  "total_bytes": 542000000,
+  "record_count": 842,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0,
+  "near_duplicate_rate": 0,
+  "synthetic_status": "partial",
+  "pii_status": "no_pii_detected",
+  "raw_rag_score": null,
+  "evaluation_score": 88,
+  "hard_failures": [
+    "conflicting_terms"
+  ],
+  "verdict": "APPROVE_GOLDEN_EVAL",
+  "approved_components": [
+    "mtrag-human retrieval qrels",
+    "mtrag-human generation tasks",
+    "mtragun-human generation tasks",
+    "mtragun-human retrieval qrels"
+  ],
+  "excluded_components": [
+    "Cloud corpus third-party vendor documentation \u2014 verify redistribution rights",
+    "Banking/Telco corpora \u2014 not yet released"
+  ],
+  "required_raw_sources": [],
+  "reason": "High-quality multi-turn RAG benchmark with gold passages, conversation history, and answerability labels. Repository is Apache-2.0, but upstream corpora (ClapNQ/CC-BY-SA, FiQA/CC-BY-SA, Cloud/vendor docs) require separate licence verification before redistribution.",
+  "evidence_paths": [
+    "Cerebrum-Blocks/block_store/kits/mtrag_benchmark/source_repo/LICENSE"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "dataset_id": "confusable_pharma_benchmark",
+  "domain": "pharma",
+  "primary_role": "RETRIEVAL_EVAL",
+  "secondary_roles": [],
+  "source_publisher": "Ritivel Labs Inc.",
+  "original_source": "U.S. Food and Drug Administration Product-Specific Guidance (PSG) documents, https://www.accessdata.fda.gov/drugsatfda_docs/psg/",
+  "licence": "Apache-2.0",
+  "commercial_use": "allowed",
+  "redistribution": "allowed",
+  "jurisdiction": [
+    "US"
+  ],
+  "effective_dates": {
+    "earliest_in_text": "January 1999",
+    "latest_in_text": "December 2025",
+    "source": "document header dates in corpus text",
+    "note": "No structured effective_date field; dates are embedded in FDA guidance text."
+  },
+  "file_count": 6,
+  "total_bytes": 13607782,
+  "record_count": 8985,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0,
+  "near_duplicate_rate": 0.644,
+  "synthetic_status": "partial",
+  "pii_status": "no_pii_detected",
+  "raw_rag_score": null,
+  "evaluation_score": 83,
+  "score_breakdown": {
+    "exact_mapping": 25,
+    "verified_answer": 8,
+    "matching_raw_corpus": 15,
+    "product_relevance": 15,
+    "difficulty_coverage": 8,
+    "negative_cases": 3,
+    "low_duplication": 3,
+    "split_separation": 4,
+    "jurisdiction_version": 2
+  },
+  "hard_failures": [],
+  "verdict": "APPROVE_EVAL_CANDIDATE",
+  "approved_components": [
+    "data/corpus.jsonl (7,123 FDA PSG chunks with source URLs)",
+    "data/queries.jsonl (931 validated exclusive retrieval queries)",
+    "data/qrels.jsonl (931 one-to-one query-document relevance judgments)",
+    "ritivelLabsRetrievalReport.pdf (methodology report)"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [
+    "FDA Product-Specific Guidance PDFs referenced by source_url in each corpus chunk"
+  ],
+  "reason": "Well-structured pharma retrieval benchmark with exclusive one-to-one query-chunk mappings, an included raw corpus, and a permissive Apache-2.0 licence. Query text and expected answers are LLM-generated/validated abstractive summaries (not verbatim extracts), and corpus chunks share substantial FDA boilerplate, producing high near-duplicate overlap. Approved as an evaluation candidate only; not golden-ground-truth status.",
+  "evidence_paths": [
+    "Cerebrum-Blocks/block_store/kits/confusable_pharma_benchmark/README.md",
+    "Cerebrum-Blocks/block_store/kits/confusable_pharma_benchmark/ritivelLabsRetrievalReport.pdf",
+    "Cerebrum-Blocks/block_store/kits/confusable_pharma_benchmark/data/corpus.jsonl",
+    "Cerebrum-Blocks/block_store/kits/confusable_pharma_benchmark/data/queries.jsonl",
+    "Cerebrum-Blocks/block_store/kits/confusable_pharma_benchmark/data/qrels.jsonl"
+  ],
+  "max_status": "technically_verified_candidate"
+}

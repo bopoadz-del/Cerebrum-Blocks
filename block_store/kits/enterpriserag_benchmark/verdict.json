@@ -1,0 +1,46 @@
+{
+  "dataset_id": "EnterpriseRAGBench",
+  "domain": "enterprise_rag",
+  "primary_role": "RETRIEVAL_EVAL",
+  "secondary_roles": ["REASONING_EVAL"],
+  "source_publisher": "Onyx (DanswerAI, Inc.)",
+  "original_source": "https://github.com/onyx-dot-app/EnterpriseRAG-Bench",
+  "licence": "MIT",
+  "commercial_use": "allowed",
+  "redistribution": "allowed",
+  "jurisdiction": [],
+  "effective_dates": {},
+  "file_count": 511968,
+  "total_bytes": 1257013089,
+  "record_count": 500,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.002563,
+  "near_duplicate_rate": 0.005,
+  "synthetic_status": "majority",
+  "pii_status": "synthetic_fictional_personal_identifiers",
+  "raw_rag_score": null,
+  "evaluation_score": 77,
+  "hard_failures": [],
+  "verdict": "technically_verified_candidate",
+  "approved_components": [
+    "questions.jsonl",
+    "all_documents.zip corpus",
+    "evaluation harness (reference code in GitHub repository)"
+  ],
+  "excluded_components": [
+    "extra_questions.jsonl (metadata-dependent questions excluded from the core benchmark by the publisher)"
+  ],
+  "required_raw_sources": [],
+  "reason": "EnterpriseRAG-Bench is a synthetic enterprise RAG benchmark (MIT licence) with 511,963 documents and 500 questions across ten retrieval/reasoning categories. All question-to-document mappings resolve to documents present in the released corpus, schema is consistent, and no files are malformed. The corpus is entirely LLM-generated and labelled as such by the authors, so it does not present synthetic content as real authority, but gold answers and document sets are revisable hypotheses validated by LLM-based conformance checks and multi-retriever pooling rather than exhaustive human review. Scored 77/100 under the RETRIEVAL_EVAL rubric (mapping 18/25, verified answer 10/15, raw corpus 15/15, relevance 12/15, difficulty/coverage 9/10, negative cases 4/5, duplication 4/5, train/dev/test split 2/5, jurisdiction/version 3/5), which maps to APPROVE_EVAL_CANDIDATE. Per kit policy the final status is capped at technically_verified_candidate.",
+  "evidence_paths": [
+    "external_inventory.json",
+    "file_inventory.jsonl",
+    "inventory_stats.json",
+    "analysis_summary.json",
+    "validation_summary.json",
+    "conflict_similarities.json",
+    "near_duplicate_summary.json",
+    "sample_docs.json",
+    "all_documents_zip_listing.txt"
+  ]
+}

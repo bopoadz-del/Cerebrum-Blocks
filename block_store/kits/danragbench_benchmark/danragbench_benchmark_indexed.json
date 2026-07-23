@@ -1,0 +1,10 @@
+{
+  "tenant_id": "cerebrum_prebuilt",
+  "project_id": "prebuilt_danish_public_sector_core",
+  "kit": "danragbench_benchmark",
+  "provider": "feature-hash-v1",
+  "dimensions": 384,
+  "chunks_indexed": 349,
+  "store_count": 349,
+  "vector_store_path": "block_store/kits/danragbench_benchmark/vector_store.pkl"
+}

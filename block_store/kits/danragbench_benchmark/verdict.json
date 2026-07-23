@@ -1,0 +1,47 @@
+{
+  "dataset_id": "Johanschmidt/DanRAG-Bench",
+  "domain": "danish_public_sector",
+  "primary_role": "RETRIEVAL_EVAL",
+  "secondary_roles": ["RAW_RAG"],
+  "source_publisher": "Johan Hausted Schmidt, IT University of Copenhagen",
+  "original_source": "https://huggingface.co/datasets/Johanschmidt/DanRAG-Bench",
+  "licence": "MIT (https://opensource.org/licenses/MIT)",
+  "commercial_use": "allowed",
+  "redistribution": "allowed",
+  "jurisdiction": ["DK"],
+  "effective_dates": {
+    "earliest_document": "2023",
+    "latest_document": "2024",
+    "query_generation_and_verification": "2025"
+  },
+  "file_count": 4,
+  "total_bytes": 485838,
+  "record_count": 820,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0042,
+  "near_duplicate_rate": 0.0276,
+  "synthetic_status": "partial",
+  "pii_status": "none_identified",
+  "raw_rag_score": null,
+  "evaluation_score": 76,
+  "hard_failures": [],
+  "verdict": "TECHNICALLY_VERIFIED_CANDIDATE",
+  "approved_components": [
+    "queries/train-00000-of-00001.parquet (471 verified Danish QA pairs with page-level valid_pages mappings)",
+    "corpus_text_extracted_for_verification.parquet (349 page text records extracted from the remote corpus Parquet without downloading page images)"
+  ],
+  "excluded_components": [
+    "corpus/train-00000-of-00001.parquet (canonical 298.7 MB Parquet containing 300 DPI page images; excluded per no-large-image/PDF download policy)",
+    "data/corpus-00000-of-00001.parquet (byte-identical duplicate of the canonical corpus file; excluded for the same reason)"
+  ],
+  "required_raw_sources": [
+    "https://huggingface.co/datasets/Johanschmidt/DanRAG-Bench/resolve/main/corpus/train-00000-of-00001.parquet",
+    "https://huggingface.co/datasets/Johanschmidt/DanRAG-Bench/resolve/main/data/corpus-00000-of-00001.parquet"
+  ],
+  "reason": "DanRAG-Bench is a well-documented, MIT-licensed Danish retrieval benchmark. The 471 query-answer pairs are grounded in 349 real public-sector pages and manually verified; text-only corpus records were extracted to verify mappings. The canonical corpus Parquet containing 300 DPI page images was not downloaded per the no-large-image/PDF policy, and there is no train/dev/test split. Score 76/100 places it in the eval-candidate band, capped at TECHNICALLY_VERIFIED_CANDIDATE.",
+  "evidence_paths": [
+    "README.md",
+    "queries/train-00000-of-00001.parquet",
+    "corpus_text_extracted_for_verification.parquet"
+  ]
+}

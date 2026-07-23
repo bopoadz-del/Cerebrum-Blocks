@@ -1,0 +1,50 @@
+{
+  "dataset_id": "parsebench_benchmark",
+  "domain": "document_parsing",
+  "primary_role": "REASONING_EVAL",
+  "secondary_roles": ["VISION_DATA"],
+  "source_publisher": "ParseBench team (run-llama/ParseBench, affiliated with LlamaIndex)",
+  "original_source": "https://github.com/run-llama/ParseBench; https://huggingface.co/datasets/llamaindex/ParseBench; https://arxiv.org/abs/2604.08538",
+  "licence": "Apache-2.0",
+  "commercial_use": "allowed",
+  "redistribution": "allowed",
+  "jurisdiction": ["multinational"],
+  "effective_dates": {},
+  "file_count": 2113,
+  "total_bytes": 592182175,
+  "record_count": 169011,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "partial",
+  "pii_status": "business_contact_info_only",
+  "raw_rag_score": null,
+  "evaluation_score": 81,
+  "hard_failures": [],
+  "verdict": "APPROVE_EVAL_CANDIDATE",
+  "approved_components": [
+    "chart.jsonl",
+    "table.jsonl",
+    "text_content.jsonl",
+    "text_formatting.jsonl",
+    "layout.jsonl",
+    "docs/",
+    "README.md",
+    "eval.yaml"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [
+    "docs/"
+  ],
+  "reason": "High-quality document-parsing evaluation benchmark with 169k rules mapped to 2,079 publicly sourced pages. Apache-2.0 licence permits commercial use and redistribution, and the full raw corpus is included. Capped at candidate status because annotations are VLM-generated then human-corrected rather than fully human-authored, rule IDs are not globally unique (same hash reused across different pages/documents), there is no train/dev/test split, and documents span multiple jurisdictions/versions without per-record authority metadata.",
+  "evidence_paths": [
+    "inventory.json",
+    "README.md",
+    "eval.yaml",
+    "chart.jsonl",
+    "table.jsonl",
+    "text_content.jsonl",
+    "text_formatting.jsonl",
+    "layout.jsonl"
+  ]
+}

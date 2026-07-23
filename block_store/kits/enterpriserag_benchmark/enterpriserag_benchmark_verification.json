@@ -1,0 +1,49 @@
+{
+  "query": "Redwood Inference enterprise RAG",
+  "project_id": "prebuilt_enterprise_rag_core",
+  "honesty": "hybrid",
+  "top_results": [
+    {
+      "chunk_id": "enterpriserag:dsid_8cbc9eae4b3447e89359a142a20327f1",
+      "score": 0.032522,
+      "text_snippet": "Reverse-charge acceptance + fallback collection plan for BrightGrain\n\nFrom: Lukas Hoffman <lukas.h@brightgrain.com>\\nTo: Vanessa Ortiz <vanessa.ortiz@redwoodinference.com>\\nDate: Thu, 24 Jun 2027 14:1",
+      "metadata": {
+        "project_id": "prebuilt_enterprise_rag_core",
+        "domain": "enterprise_rag",
+        "jurisdiction": "multi",
+        "authority": "Onyx / EnterpriseRAG-Bench",
+        "authority_type": "synthetic_enterprise_benchmark",
+        "source_type": "gmail",
+        "archive_path": "gmail/jordan_blake/dsid_8cbc9eae4b3447e89359a142a20327f1__20270627-brightgrain-rc-acceptance-collection-fallback.txt"
+      }
+    },
+    {
+      "chunk_id": "enterpriserag:dsid_ae24ed6fb99443ffac7d3dd04a4b0679",
+      "score": 0.031099,
+      "text_snippet": "Control runbook & audit windows \u2014 roadmap questions for Velox Financial\n\nFrom: Ben Carter <ben.carter@redwood.ai>\nTo: Claire Park <claire.park@veloxfin.com>\nCc: Marissa Cole <marissa.cole@redwood.ai>,",
+      "metadata": {
+        "project_id": "prebuilt_enterprise_rag_core",
+        "domain": "enterprise_rag",
+        "jurisdiction": "multi",
+        "authority": "Onyx / EnterpriseRAG-Bench",
+        "authority_type": "synthetic_enterprise_benchmark",
+        "source_type": "gmail",
+        "archive_path": "gmail/ben_carter/dsid_ae24ed6fb99443ffac7d3dd04a4b0679__20281202-compliance-control-runbook-questions.txt"
+      }
+    },
+    {
+      "chunk_id": "enterpriserag:dsid_4cff64967b884c4f87a7dc96b5dfb169",
+      "score": 0.030798,
+      "text_snippet": "HarborWay RevenueOps\n\nSummary: Mid-market SaaS (RevOps platform) evaluating Hosted API first; will consider Dedicated if POC shows predictable unit economics. Primary workload: outbound SDR/chat agent",
+      "metadata": {
+        "project_id": "prebuilt_enterprise_rag_core",
+        "domain": "enterprise_rag",
+        "jurisdiction": "multi",
+        "authority": "Onyx / EnterpriseRAG-Bench",
+        "authority_type": "synthetic_enterprise_benchmark",
+        "source_type": "hubspot",
+        "archive_path": "hubspot/dsid_4cff64967b884c4f87a7dc96b5dfb169__company-harborway-revenueops.txt"
+      }
+    }
+  ]
+}

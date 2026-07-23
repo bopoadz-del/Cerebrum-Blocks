@@ -1,0 +1,49 @@
+{
+  "query": "fair treatment of shareholders ADGM",
+  "project_id": "prebuilt_legal_adgm_core",
+  "honesty": "hybrid",
+  "top_results": [
+    {
+      "chunk_id": "adgm_reg:12f5de9f-1f99-4695-a4bd-bf45a9cc11a7",
+      "score": 0.032018,
+      "text_snippet": "Except as otherwise provided in these Regulations, the following requirements shall not apply to the application of a Resolution Tool or exercise of a Resolution Power\u2014\n(a)\tsubject to any requirements",
+      "metadata": {
+        "project_id": "prebuilt_legal_adgm_core",
+        "domain": "legal",
+        "jurisdiction": "ADGM",
+        "authority": "Abu Dhabi Global Market Financial Services Regulatory Authority",
+        "authority_type": "regulatory_guidance",
+        "document_id": 14,
+        "passage_id": "12f5de9f-1f99-4695-a4bd-bf45a9cc11a7"
+      }
+    },
+    {
+      "chunk_id": "adgm_reg:b1d73c18-4c0d-4fb9-87cf-94b7b76283b1",
+      "score": 0.032002,
+      "text_snippet": "Without limiting the generality of Rule \u200e2.3.4, an Insurer's risk management system in respect of its use of reinsurance arrangements must include the development, implementation and maintenance of a ",
+      "metadata": {
+        "project_id": "prebuilt_legal_adgm_core",
+        "domain": "legal",
+        "jurisdiction": "ADGM",
+        "authority": "Abu Dhabi Global Market Financial Services Regulatory Authority",
+        "authority_type": "regulatory_guidance",
+        "document_id": 12,
+        "passage_id": "b1d73c18-4c0d-4fb9-87cf-94b7b76283b1"
+      }
+    },
+    {
+      "chunk_id": "adgm_reg:26b689a7-5256-4c4d-9e33-ba1ea586ec2a",
+      "score": 0.031545,
+      "text_snippet": "An Insurer's risk management systems must:\n(a)\tbe appropriate to the size, mix of business and complexity of the Insurer's operations;\n(b)\tbe based on an enterprise-wide risk management approach, whic",
+      "metadata": {
+        "project_id": "prebuilt_legal_adgm_core",
+        "domain": "legal",
+        "jurisdiction": "ADGM",
+        "authority": "Abu Dhabi Global Market Financial Services Regulatory Authority",
+        "authority_type": "regulatory_guidance",
+        "document_id": 12,
+        "passage_id": "26b689a7-5256-4c4d-9e33-ba1ea586ec2a"
+      }
+    }
+  ]
+}

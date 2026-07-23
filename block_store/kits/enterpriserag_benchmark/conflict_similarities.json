@@ -1,0 +1,62 @@
+[
+  {
+    "qid": "qst_0411",
+    "doc1": "dsid_5f3a672da4974781a5577b0f3d4993e9",
+    "doc2": "dsid_8ffbd9fe82df457ca67d4fbc9ff1090c",
+    "similarity": 0.030162412993039442
+  },
+  {
+    "qid": "qst_0412",
+    "doc1": "dsid_89c0c31e220c4777b15c3c6ff0eff61d",
+    "doc2": "dsid_a2bf755670ad44e09b42c11e9d73e5d3",
+    "similarity": 0.02172886159659896
+  },
+  {
+    "qid": "qst_0413",
+    "doc1": "dsid_6df52fdb96ae4edcb76464738bca3340",
+    "doc2": "dsid_6df52fdb96ae4edcb76464738bca3340",
+    "similarity": 1.0
+  },
+  {
+    "qid": "qst_0414",
+    "doc1": "dsid_5611f05242ae4e6b9ae68d3c3e91bd54",
+    "doc2": "dsid_0c1f1c83e8d44d2fa3a9f6c7b2d7b9f1",
+    "similarity": 0.004107981220657277
+  },
+  {
+    "qid": "qst_0415",
+    "doc1": "dsid_1d487c52d79a44c2b40eb19a0db51122",
+    "doc2": "dsid_05841423a55e4c35abd276d9899b7134",
+    "similarity": 0.001128668171557562
+  },
+  {
+    "qid": "qst_0416",
+    "doc1": "dsid_8ca703d991844bd195b4b8fdc16040fd",
+    "doc2": "dsid_3c3ab5813b264367877e0d02f652ca32",
+    "similarity": 0.020664206642066422
+  },
+  {
+    "qid": "qst_0417",
+    "doc1": "dsid_aa97b7293f9f4f3c8180f645e4fe5911",
+    "doc2": "dsid_10a589a5ee9048d9a33deb4156037171",
+    "similarity": 0.003955411722402014
+  },
+  {
+    "qid": "qst_0418",
+    "doc1": "dsid_981f4a0281054f9aaaec7887156eebc4",
+    "doc2": "dsid_b837e1140d1a4c3d8efd2f42d9b6a799",
+    "similarity": 0.38519259629814906
+  },
+  {
+    "qid": "qst_0419",
+    "doc1": "dsid_db1c1f64721b468dafb35c2e0080a8f8",
+    "doc2": "dsid_113f5cc6931640c3b82adcc07142d829",
+    "similarity": 0.2255878836189717
+  },
+  {
+    "qid": "qst_0420",
+    "doc1": "dsid_4e65166659394a90922be6a5c7b110a8",
+    "doc2": "dsid_7b2f4b37dfb642e19d78c5f9d2c43f16",
+    "similarity": 0.30881057268722467
+  }
+]

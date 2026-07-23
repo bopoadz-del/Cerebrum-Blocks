@@ -1,0 +1,121 @@
+
+=== GITHUB sample (20 docs) ===
+github/redwood/dsid_c444e6ca5b3b48f8ade088a1dfd6cb9f__pr-28705-fix-variant-skew-when-stickiness-key-missing.txt
+Fix variant skew when stickiness key is missing (use high-entropy fallback + Console warnings)
+
+Context
+We’ve seen skewed allocations in beta (most notably eu-west) when callers do not provide a stickiness key. The root cause was our “safe default” for bucketing: when the stickiness key source resolution produced an empty value, we were hashing a low-entropy sentinel (effectively a constant) which deterministically mapped the entire missing-key population to the same bucket → variant.
+
+This PR fixes the data plane bucketing behavior to keep traffic splits correct even when stickiness is missing, and adds guardrails in Console so customers understand the tradeoff (even distribution but non-sticky assignment).
+
+What changed
+1) Policy engine / router bucketing
+- Previous behavior:
+  - stickiness_key = resolveStickyKey(req)  // may be "" / null
+  - key_for_hash = stickiness_key ?? "unknown"
+  - bucket = hash(experiment_id + route_id + key_for_hash)
+  - Result: all missing-key requests share key_for_hash="unknown" → same bucket.
+- New behavior:
+  - If resolveStickyKey(req) yields a non-empty key: keep existing deterministic + sticky assignment.
+  - If missing:
+    - Use a high-entropy per-request fallback for bucketing only (req.request_id), explicitly marked as non-sticky.
+    - Emit an internal annotation so we can debug / measure: assignment_key_source="request_id" and assignment_is_sticky=false.
+    - Add a counter metric: route_experiments_missing_sticky_key_total{route_id, experiment_id}.
+
+Rationale: Without a stable identifier we cannot be both sticky and well-distributed. For beta/GA safety we prioritize correct split distribution (avoids “variant 0 traffic” incidents) while making the non-sticky nature explicit in telemetry and UX.
+
+2) Console warnings + validation hints
+- Experiment creation wizard now surfaces a warning banner when:
+  - stickiness_key is not explicitly set AND eligibility rules don’t guarantee a stable identifier (e.g., user_id / session_id he
+
+=== JIRA sample (20 docs) ===
+jira/internal-support/dsid_3bd4d1dbfb804f1e937fcbde6e196cad__INT-708642-scoped-impersonation-gateway-analytics-etl.txt
+Scoped impersonation gateway for analytics ETL to copy GCS -> S3 with least-privilege and audit
+
+Issue summary:
+We need a secure, auditable mechanism that allows long-running analytics ETL workers running in our AWS analytics-prod account to read objects from a GCS bucket in the GCP analytics-prod project and write them to an S3 bucket in the AWS account. The preferred flow is a short-lived impersonation gateway that performs token exchange/impersonation rather than provisioning long-lived keys in the ETL workers.
+
+Impact:
+- Current workaround uses service-account JSON in a secrets store which increases blast radius and requires manual rotations.
+- ETL pipelines for nightly reports and feature-store materialization are blocked from migrating to the new partitioned job runner until a secure cross-cloud identity pattern is in place.
+- Compliance wants CloudTrail / Cloud Audit logs tied to a single auditable gateway identity.
+
+Environment:
+- GCP project: analytics-prod (gcs: gs://redwood-analytics-prod-data)
+- AWS account: analytics-prod (s3: s3://redwood-analytics-prod-landing)
+- ETL runner: Kubernetes job in aws-prod EKS cluster (namespace: analytics-jobs)
+
+Acceptance criteria / success conditions:
+1) ETL pods do NOT have long-lived GCP service account keys.
+2) ETL pods request ephemeral credentials from an internal gateway endpoint (mTLS + RBAC) and receive a short-lived token that allows reading a specific GCS prefix.
+3) Gateway enforces per-job least-privilege scoping (object prefix and read-only) via IAM conditions and expires tokens within 15m.
+4) All cross-cloud access is recorded in Cloud Audit Logs and CloudTrail associated with the gateway principal.
+5) Terraform manifests (or a small module) are provided to create the gateway, IAM bindings, KMS encryption keys policies, and a small integration test that copies a test object.
+
+Proposed implementation notes / suggestions:
+- Use GCP service account impersonation (IAM serviceAccountTokenCreator) bound to a gate
+
+=== LINEAR sample (20 docs) ===
+linear/engineering/dsid_fbdb13dc9c9e4e2ea5d0724b859c1270__ENG-877777-adaptive-slowpath-queue-per-tenant-guardrails.txt
+Adaptive Slowpath Queue with Per-Tenant Throughput Guardrails and Opportunistic Demotion
+
+Background: Customers on Redwood Dedicated request predictable throughput for committed tenants while workloads have bursty tail patterns. Existing admission shapers provide hard caps and broad shedding policies, but we've observed QoS cliffs for long-running tokens and unfairness when a few tenants spike. This ticket designs and implements an adaptive slowpath queue that provides soft per-tenant throughput guardrails, opportunistic demotion (best-effort degradation to lower-cost execution lanes), and autoscaler hooks so fleet scaling respects committed minima and burst escrow. The aim is to avoid wholesale rejections while preserving headroom for high-priority traffic and predictable unit economics.
+Per-tenant committed throughput (RPS or token/s) can be configured and enforced as a soft guarantee with measurable reservation usage exposed in Console
+Under 95th percentile load spikes, high-priority tenants maintain at least 75% of their committed throughput and see no >10x increase in p99 latency compared to baseline
+Opportunistic demotion moves degraded requests to lower-cost execution lanes without altering user-facing semantics (no silent truncation) and can be toggled via feature flag
+Autoscaler exposes a signal (slowpath backlog size and committed-reservation deficit) that increases desired capacity when sustained deficit > 30s
+Observability: dashboards for per-tenant reservation usage, slowpath queue length, demotion rate, and reject/shed events are live; alerts fire when demotion > 10% of requests for >5min
+Integration tests and load harness reproduce a tenant burst scenario and show graceful degradation with no outage-level errors
+Soft guarantees implemented as token escrow: each tenant has a provisioned-min pool plus a burst escrow funded by recent idle capacity. Escrow decays over a configurable window
+Slowpath queue is per-fleet but implements tenant-weighted fairnes
+
+=== HUBSPOT sample (20 docs) ===
+hubspot/dsid_4ead72636c22482e921f40b7f7ad5d49__company-tidepool-labs.txt
+Tidepool Labs
+
+Inbound PLG signup — solo founder building a Discord summarization assistant for small communities.
+Contact: Maya Patel (founder) — maya@tidepoollabs.dev — prefers async comms (email / thread).
+Used free credits to prototype: created one chat route + embeddings index (~10k rows).
+Quote from Maya on call: 'I need something cheap for embeddings — the cost per 1M tokens kills our margins.'
+Latency target: 200-400ms p95 for chat (mobile-first). Concerned about tail latency spikes.
+Model preference: prefers small open models (quantized) but willing to try Redwood-hosted variants if price/latency ok.
+Security: public cloud is acceptable; asked about data retention and audit logging (minimal compliance needs now).
+No AE/SE touch yet — purely self-serve. Owner added for tracking / potential outreach if usage grows.
+Asked for examples: embedding dimensionality tradeoffs, cheapest quantization profile, token budget tricks.
+Requested assets: pricing link, short best-practices doc for embedding cleanup, sample prompt templates for chat thread summarization.
+Small spike in API calls on 2026-03-09 morning after a community test — dropped back to baseline same day.
+Referral: found Redwood via community benchmark threads and 'developers' newsletter; mentioned good docs as reason to try.
+2026-02-18 - Signup via self-serve; activated free credits; sent welcome email automatically.
+2026-02-25 - Deployed embeddings index; initial costs reported in console; no overages.
+2026-03-08 - Short Fireflies call (ff_2026-03-08_9821) — product walkthrough by founder; asked retention questions.
+2026-03-09 - Community load test; brief p95 spike; logged in console; founder emailed support question (thread-gm-20260309-4d2f).
+2026-03-12 - Logged interest in pricing tiers; left comment on pricing doc in Drive.
+unclear monthly budget
+wants lower-cost embedding options
+wants retention controls details
+Send quickstart + pricing link, usage tips for low-cost embeddings, invite to community S
+
+=== FIREFLIES sample (20 docs) ===
+fireflies/sales-calls/dsid_1254077c7b0b4d1683b472670d642da2__2028-11-21-poc-benchmark-sampling-burstiness-ttft-tpot-scope.txt
+POC benchmark sampling, burstiness and TTFT/TPOT scoping
+
+Meeting header: 2028-11-21 11:00 AM PST | Duration ~75m
+Attendees: Alex (Redwood AE), Priya (Redwood SE), Jordan (Redwood SE), Samir (Redwood SRE); Mark (Blue Harbor CTO), Sophie (Blue Harbor SRE), Liam (Blue Harbor ML), Asha (Blue Harbor Product), Eli (Blue Harbor Procurement)
+
+Summary: Quick scoping to align on how Blue Harbor wants TTFT vs TPOT acceptance defined for a 6-week POC. Focus on burstiness/tail-latency impact, sampling plan (steady vs replay vs burst), and clear pass/fail criteria at p95/p99 for both TTFT and TPOT. Action items and next steps captured.
+
+Topics: POC goals, traffic profile and burstiness, TTFT definition and measurement window, TPOT composition (including system-level overhead), p95/p99 targets, cold-start / KV cache warmups, sampling and replay plan, timeline and success criteria.
+
+00:00 Alex: hey everyone thanks for carving time today, I think we have about an hour and 15, we'll try to cover scope and acceptance criteria first.
+00:18 Mark: yeah thanks Alex, quick context — Blue Harbor has chat-assist integrations in our research portal. We see lots of spikes when batch jobs finish, so burstiness and tail behavior are our primary concern.
+00:32 Sophie: also we have strict p99 goals, like anything beyond 800ms for first token really starts to impact UX for scientists.
+00:45 Priya: got it. when you say first token, are you measuring time-to-first-token from request ingress or from user click? small but important difference.
+00:52 Sophie: from request ingress — that's where we can instrument.
+01:05 Jordan: ok so we'll treat TTFT as ingress->first-byte at the edge, and TPOT as total per-token time which includes generation and network egress. we'll also capture server-side compute time separately.
+01:22 Liam: rough numbers — average prompt length 120 tokens, average output 220 tokens, but there are tails where outputs hit 2k tokens. Traffic baseline is 8 rps steady, but bursts up to 
+
+=== GOOGLE_DRIVE sample (20 docs) ===
+google_drive/shared_drives/engineering/site-reliability-engineering/dsid_8a5d9f81097249829c90ebad8bf490fd__observability-data-supplychain-gap-analysis-notes.txt
+Observability data supplychain gap analysis and tactical runbook
+
+Summary:\n\nThis is a working analysis of the recent SLO burn incident (2025-11-04) where several downstream services reported elevated 99th percentile latencies and page noise while key telemetry streams were partially missing. The purpose is threefold: 1) capture on-call observations and quick mitigations, 2) draft a tactical runbook for similar supply-chain gaps in the telemetry pipeline, and 3) propose longer-term fixes and experiments to reduce pager noise and make SLO attribution faster.\n\nWhy this is different from the usual 'alert tuning' docs:\n- Root cause appears upstream of alert evaluation: intermittent backlog and partial writes in the metric/log ingestion path (exporter agent restarts + transient disk pressure) caused repeated spikes in SLO burn alerts that were correlated but not caused by application error.\n- We observed mixed signal semantics (half of traffic reported by proxy metrics, other half by application metrics), so naive alerting on any one signal created oscillations.\n- This doc focuses on the telemetry "supply chain" (emit -> agent -> buffer -> aggregator -> storage -> evaluation) rather than only thresholds or debounce windows.\n\nIncident timeline (abridged):\n- 2025-11-04 02:38 UTC — Synthetic p95 latency starts rising in frontend-prod (alerts fired at 02:41).\n- 02:42 — Multiple SLO burn alerts triggered for api-prod-route and embeddings-worker tiers. Oncall paged.\n- 02:45 — SRE observes gaps in application-level request count metric (app.requests) where values drop to near-zero for short 30–90s windows. Proxy metrics (envoy.nginx.requests) show normal traffic.\n- 02:48 — Telemetry agent logs on a subset of hosts show repeated 'write failed, retrying' messages and local buffer flushes due to transient disk throttle.\n- 02:52 — Several aggregator scale-up events triggered but could not backfill missing points; alert suppression rules were not applied since the alert

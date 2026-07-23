@@ -1,0 +1,10 @@
+{
+  "tenant_id": "cerebrum_prebuilt",
+  "project_id": "prebuilt_multi_domain_qa_core",
+  "kit": "recor_benchmark",
+  "provider": "fast_hash_fallback",
+  "dimensions": 384,
+  "chunks_indexed": 507141,
+  "store_count": 507141,
+  "vector_store_path": "block_store/kits/recor_benchmark/vector_store.pkl"
+}

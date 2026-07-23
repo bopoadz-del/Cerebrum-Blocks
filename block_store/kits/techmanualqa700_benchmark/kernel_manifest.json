@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "id": "techmanualqa700_benchmark",
+  "name": "TechManualQA-700 Technical Manual Retrieval Evaluation Kit",
+  "domain": "technical_manuals",
+  "project_id": null,
+  "tenant_id": null,
+  "kit_folder": "techmanualqa700_benchmark",
+  "status": "eval_data",
+  "primary_role": "RETRIEVAL_EVAL",
+  "secondary_roles": [
+    "REASONING_EVAL"
+  ],
+  "description": "700 validated QA pairs for technical manuals with doc_id/page_number references, human audit subset and RAGAS scores. CC-BY-4.0 annotations; source PDFs are not included.",
+  "source_publisher": "Tomislav Duricic (Graz University of Technology / Know-Center GmbH)",
+  "original_source": "https://zenodo.org/records/17410809",
+  "licence": "CC-BY 4.0",
+  "commercial_use": "allowed",
+  "redistribution": "allowed",
+  "jurisdiction": [],
+  "record_count": 700,
+  "file_count": 7,
+  "excluded_components": [
+    "Source technical manual PDFs are not included and must be obtained separately"
+  ],
+  "requires_raw_sources": [
+    "20 technical manual PDFs listed at https://github.com/tduricic/techmanualqa"
+  ],
+  "indexed": false,
+  "last_updated_at": "2026-07-23T16:57:50.752655+00:00"
+}

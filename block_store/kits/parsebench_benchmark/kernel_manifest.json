@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "id": "prebuilt_document_parsing_core",
+  "name": "Document Parsing Core RAG Pack",
+  "domain": "document_parsing",
+  "project_id": "prebuilt_document_parsing_core",
+  "tenant_id": "cerebrum_prebuilt",
+  "kit_folder": "parsebench_benchmark",
+  "status": "indexed",
+  "description": "Indexed RAG collection from parsebench_benchmark.",
+  "embedding": {
+    "provider": "fast_hash_fallback",
+    "dimensions": 384
+  },
+  "ingestion_status": {
+    "state": "indexed",
+    "documents_total": 168943,
+    "documents_indexed": 168943,
+    "chunks_total": 168943,
+    "chunks_indexed": 168943,
+    "last_ingested_at": "2026-07-23T21:12:13.821940+00:00",
+    "last_error": null
+  },
+  "source_policy": {
+    "allowed_source_classes": [
+      "public_domain",
+      "open_license",
+      "official_statute_or_regulation",
+      "official_guidance",
+      "platform_curated_template"
+    ],
+    "precluded_source_classes": [
+      "private_enterprise_data",
+      "confidential_client_data",
+      "copyrighted_commercial_content_without_license",
+      "user_uploaded_project_records",
+      "unknown_license"
+    ],
+    "requires_source_record": true,
+    "requires_license_review": true,
+    "requires_authority_rating": true
+  }
+}

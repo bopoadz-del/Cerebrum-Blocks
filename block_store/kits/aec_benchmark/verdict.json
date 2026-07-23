@@ -1,0 +1,49 @@
+{
+  "dataset_id": "aec_benchmark",
+  "domain": "construction",
+  "primary_role": "REASONING_EVAL",
+  "secondary_roles": [
+    "VISION_DATA"
+  ],
+  "evaluation_layers": [
+    "PRODUCT_WORKFLOW_TEST"
+  ],
+  "source_publisher": "Nomic AI",
+  "original_source": "https://huggingface.co/datasets/nomic-ai/aec-bench",
+  "licence": "Apache-2.0 (harness/metadata); document rights unclear",
+  "commercial_use": "unknown",
+  "redistribution": "unknown",
+  "jurisdiction": [
+    "US"
+  ],
+  "effective_dates": {},
+  "file_count": 1189,
+  "total_bytes": 1572864,
+  "record_count": 196,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0,
+  "near_duplicate_rate": 0,
+  "synthetic_status": "none",
+  "pii_status": "no_pii_detected",
+  "raw_rag_score": null,
+  "evaluation_score": 76,
+  "hard_failures": [
+    "unknown_licence"
+  ],
+  "verdict": "APPROVE_EVAL_CANDIDATE",
+  "approved_components": [
+    "196 task harnesses (instruction.md, task.toml, gt.json, test.sh)",
+    "Skill taxonomy: intrasheet, intradrawing, intraproject"
+  ],
+  "excluded_components": [
+    "External PDFs (~5.6 GB) until document rights are cleared",
+    "Keyword-based verifiers should be treated as brittle; do not use as sole ground truth"
+  ],
+  "required_raw_sources": [
+    "Construction drawings/specs/submittals from nomic-public-data.com"
+  ],
+  "reason": "Excellent product-workflow benchmark for construction document intelligence with real drawing/spec/submittal tasks. Harness and metadata are Apache-2.0, but the underlying AEC documents are third-party materials with no explicit redistribution licence. One referenced file is already 404. Approved as evaluation candidate for product workflow testing, not as a redistributable RAG corpus.",
+  "evidence_paths": [
+    "Cerebrum-Blocks/block_store/kits/aec_benchmark/README.md"
+  ]
+}

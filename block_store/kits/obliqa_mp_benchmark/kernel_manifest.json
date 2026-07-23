@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "id": "prebuilt_legal_adgm_core",
+  "name": "ADGM Financial Regulations Core RAG Pack",
+  "domain": "legal",
+  "project_id": "prebuilt_legal_adgm_core",
+  "tenant_id": "cerebrum_prebuilt",
+  "kit_folder": "obliqa_mp_benchmark",
+  "status": "indexed",
+  "description": "Indexed RAG collection from obliqa_mp_benchmark.",
+  "embedding": {
+    "provider": "feature-hash-v1",
+    "dimensions": 384
+  },
+  "ingestion_status": {
+    "state": "indexed",
+    "documents_total": 1419,
+    "documents_indexed": 1419,
+    "chunks_total": 1419,
+    "chunks_indexed": 1419,
+    "last_ingested_at": "2026-07-23T21:12:13.821940+00:00",
+    "last_error": null
+  },
+  "source_policy": {
+    "allowed_source_classes": [
+      "public_domain",
+      "open_license",
+      "official_statute_or_regulation",
+      "official_guidance",
+      "platform_curated_template"
+    ],
+    "precluded_source_classes": [
+      "private_enterprise_data",
+      "confidential_client_data",
+      "copyrighted_commercial_content_without_license",
+      "user_uploaded_project_records",
+      "unknown_license"
+    ],
+    "requires_source_record": true,
+    "requires_license_review": true,
+    "requires_authority_rating": true
+  }
+}

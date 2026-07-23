@@ -1,0 +1,23 @@
+name: ParseBench
+description: ParseBench is a benchmark for evaluating document parsing systems on real-world enterprise documents.
+evaluation_framework: parsebench
+
+tasks:
+  - id: mean
+    config: parse-bench
+    split: mean
+  - id: table
+    config: parse-bench
+    split: table
+  - id: chart
+    config: parse-bench
+    split: chart
+  - id: text_content
+    config: parse-bench
+    split: text_content
+  - id: text_formatting
+    config: parse-bench
+    split: text_formatting
+  - id: layout
+    config: parse-bench
+    split: layout

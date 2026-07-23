@@ -1,0 +1,50 @@
+{
+  "dataset_id": "RegNLP/ObliQA-MP",
+  "domain": "legal",
+  "primary_role": "REASONING_EVAL",
+  "secondary_roles": ["RETRIEVAL_EVAL"],
+  "source_publisher": "RegNLP (Tuba Gokhan, Ted Briscoe; Natural Legal Language Processing Workshop 2025 / ACL)",
+  "original_source": "https://huggingface.co/datasets/RegNLP/ObliQA-MP",
+  "licence": "Apache-2.0 (dataset card); underlying corpus derived from Abu Dhabi Global Markets (ADGM) public financial regulations",
+  "commercial_use": "allowed",
+  "redistribution": "allowed",
+  "jurisdiction": ["ADGM", "UAE"],
+  "effective_dates": {},
+  "file_count": 5,
+  "total_bytes": 6569152,
+  "record_count": 2976,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0003,
+  "near_duplicate_rate": 0.005,
+  "synthetic_status": "majority",
+  "pii_status": "none_identified",
+  "raw_rag_score": null,
+  "evaluation_score": 70,
+  "hard_failures": [],
+  "verdict": "APPROVE_EVAL_CANDIDATE",
+  "approved_components": [
+    "ObliQA_MultiPassage_train.json (2,083 QA pairs)",
+    "ObliQA_MultiPassage_val.json (446 QA pairs)",
+    "ObliQA_MultiPassage_test.json (447 QA pairs)",
+    "README.md (HuggingFace dataset card)"
+  ],
+  "excluded_components": [
+    "ObliQA_MultiPassage.json (full unsplit release) - could not be fully retrieved from GitHub due to sustained slow transfer; train/val/test splits cover the complete 2,976-record dataset",
+    "ObliQA_Validated_MultiPassage.json / .jsonl (GPT-4 connectivity labels) - not present in the released HuggingFace artifact"
+  ],
+  "required_raw_sources": [
+    "RegNLP/ObliQADataset StructuredRegulatoryDocuments.zip (40-document ADGM corpus) is required to build the retrieval/generation corpus for this eval"
+  ],
+  "reason": "Strict multi-passage regulatory QA benchmark with clean train/val/test splits and Apache-2.0 licensing. Score capped by absence of verified answers, absence of negative/insufficient-evidence cases in the released splits, and lack of embedded jurisdiction version dates; suitable as a candidate evaluation set only.",
+  "evidence_paths": [
+    "ObliQA_MultiPassage_train.json",
+    "ObliQA_MultiPassage_val.json",
+    "ObliQA_MultiPassage_test.json",
+    "README.md",
+    "README_ObliQA_ML.md",
+    "https://huggingface.co/datasets/RegNLP/ObliQA-MP",
+    "https://github.com/RegNLP/ObliQA-ML/",
+    "https://github.com/RegNLP/ObliQADataset",
+    "https://aclanthology.org/2025.nllp-1.10/"
+  ]
+}

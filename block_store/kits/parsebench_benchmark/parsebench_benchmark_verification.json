@@ -1,0 +1,67 @@
+{
+  "query": "table missing sentence",
+  "project_id": "prebuilt_document_parsing_core",
+  "honesty": "hybrid",
+  "top_results": [
+    {
+      "chunk_id": "parsebench:text_misc__missing_missing_specific_word_38",
+      "score": 0.016393,
+      "text_snippet": "{\"word\": \"register\"}",
+      "metadata": {
+        "project_id": "prebuilt_document_parsing_core",
+        "domain": "document_parsing",
+        "jurisdiction": "multi",
+        "authority": "ParseBench",
+        "authority_type": "parsing_benchmark",
+        "category": "text_content",
+        "type": "missing_specific_word",
+        "pdf": "docs/text/text_misc__missing.pdf",
+        "page": null,
+        "tags": [
+          "misc",
+          "easy"
+        ]
+      }
+    },
+    {
+      "chunk_id": "parsebench:text_multicolumns__14999_missing_specific_word_344",
+      "score": 0.016129,
+      "text_snippet": "{\"word\": \"register\"}",
+      "metadata": {
+        "project_id": "prebuilt_document_parsing_core",
+        "domain": "document_parsing",
+        "jurisdiction": "multi",
+        "authority": "ParseBench",
+        "authority_type": "parsing_benchmark",
+        "category": "text_content",
+        "type": "missing_specific_word",
+        "pdf": "docs/text/text_multicolumns__14999.pdf",
+        "page": null,
+        "tags": [
+          "multicolumns",
+          "hard"
+        ]
+      }
+    },
+    {
+      "chunk_id": "parsebench:text_multicolumns__98-31231_missing_specific_word_242",
+      "score": 0.015873,
+      "text_snippet": "{\"word\": \"register\"}",
+      "metadata": {
+        "project_id": "prebuilt_document_parsing_core",
+        "domain": "document_parsing",
+        "jurisdiction": "multi",
+        "authority": "ParseBench",
+        "authority_type": "parsing_benchmark",
+        "category": "text_content",
+        "type": "missing_specific_word",
+        "pdf": "docs/text/text_multicolumns__98-31231.pdf",
+        "page": null,
+        "tags": [
+          "multicolumns",
+          "hard"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,257 @@
+{
+  "tenant_id": "cerebrum_prebuilt",
+  "provider": "hash",
+  "indexes": [
+    {
+      "tenant_id": "cerebrum_prebuilt",
+      "project_id": "prebuilt_pharma_core",
+      "kit": "confusable_pharma_benchmark",
+      "provider": "feature-hash-v1",
+      "dimensions": 384,
+      "chunks_indexed": 7123,
+      "store_count": 7123,
+      "vector_store_path": "block_store/kits/confusable_pharma_benchmark/vector_store.pkl"
+    },
+    {
+      "tenant_id": "cerebrum_prebuilt",
+      "project_id": "prebuilt_danish_public_sector_core",
+      "kit": "danragbench_benchmark",
+      "provider": "feature-hash-v1",
+      "dimensions": 384,
+      "chunks_indexed": 349,
+      "store_count": 349,
+      "vector_store_path": "block_store/kits/danragbench_benchmark/vector_store.pkl"
+    },
+    {
+      "tenant_id": "cerebrum_prebuilt",
+      "project_id": "prebuilt_legal_adgm_core",
+      "kit": "obliqa_mp_benchmark",
+      "provider": "feature-hash-v1",
+      "dimensions": 384,
+      "chunks_indexed": 1419,
+      "store_count": 1419,
+      "vector_store_path": "block_store/kits/obliqa_mp_benchmark/vector_store.pkl"
+    },
+    {
+      "tenant_id": "cerebrum_prebuilt",
+      "project_id": "prebuilt_document_parsing_core",
+      "kit": "parsebench_benchmark",
+      "provider": "fast_hash_fallback",
+      "dimensions": 384,
+      "chunks_indexed": 168943,
+      "store_count": 168943,
+      "vector_store_path": "block_store/kits/parsebench_benchmark/vector_store.pkl"
+    },
+    {
+      "tenant_id": "cerebrum_prebuilt",
+      "project_id": "prebuilt_multi_domain_qa_core",
+      "kit": "recor_benchmark",
+      "provider": "fast_hash_fallback",
+      "dimensions": 384,
+      "chunks_indexed": 507141,
+      "store_count": 507141,
+      "vector_store_path": "block_store/kits/recor_benchmark/vector_store.pkl"
+    },
+    {
+      "tenant_id": "cerebrum_prebuilt",
+      "project_id": "prebuilt_finance_sec_core",
+      "kit": "t2ragbench_benchmark",
+      "provider": "fast_hash_fallback",
+      "dimensions": 384,
+      "chunks_indexed": 23088,
+      "store_count": 23088,
+      "vector_store_path": "block_store/kits/t2ragbench_benchmark/vector_store.pkl"
+    },
+    {
+      "tenant_id": "cerebrum_prebuilt",
+      "project_id": "prebuilt_enterprise_rag_core",
+      "kit": "enterpriserag_benchmark",
+      "provider": "fast_hash_fallback",
+      "dimensions": 384,
+      "chunks_indexed": 350000,
+      "store_count": 350000,
+      "vector_store_path": "block_store/kits/enterpriserag_benchmark/vector_store.pkl",
+      "notes": "Indexed deterministic cap of 350,000 chunks from 511,963 synthetic documents due to single-process memory ceiling."
+    },
+    {
+      "tenant_id": "cerebrum_prebuilt",
+      "project_id": "prebuilt_universal_multiturn_core",
+      "kit": "mtrag_benchmark",
+      "provider": "fast_hash_fallback",
+      "dimensions": 384,
+      "chunks_indexed": 366479,
+      "store_count": 366479,
+      "vector_store_path": "block_store/kits/mtrag_benchmark/vector_store.pkl"
+    }
+  ],
+  "verifications": [
+    {
+      "query": "Abacavir bioequivalence tablet",
+      "project_id": "prebuilt_pharma_core",
+      "honesty": "hybrid",
+      "top_results": [
+        {
+          "chunk_id": "pharma_fda_psg:4818",
+          "score": 0.032266,
+          "text_snippet": "**Analyte to measure:** Mometasone furoate in plasma  \n\nBioequivalence based on (90% CI): Mometasone furoate  \n\nII. Option 2: Two in vitro bioequivalence studies, one in vivo bioequivalence study with",
+          "metadata": {
+            "project_id": "prebuilt_pharma_core",
+            "domain": "pharma",
+            "jurisdiction": "US",
+            "authority": "U.S. Food and Drug Administration",
+            "authority_type": "regulatory_guidance",
+            "title": "Mometasone Furoate - Powder",
+            "active_ingredient": "Mometasone Furoate",
+            "dosage_form": "Powder",
+            "route": "Inhalation",
+            "source_url": "https://www.accessdata.fda.gov/drugsatfda_docs/psg/PSG_021067.pdf",
+            "document_type": "Draft",
+            "doc_id": "4818"
+          }
+        },
+        {
+          "chunk_id": "pharma_fda_psg:2680",
+          "score": 0.032018,
+          "text_snippet": "To demonstrate bioequivalence for estradiol vaginal tablet, 10 mcg and 25 mcg strengths using a combination of in vivo bioequivalence study with pharmacokinetic endpoints and comparative clinical endp",
+          "metadata": {
+            "project_id": "prebuilt_pharma_core",
+            "domain": "pharma",
+            "jurisdiction": "US",
+            "authority": "U.S. Food and Drug Administration",
+            "authority_type": "regulatory_guidance",
+            "title": "Estradiol - Tablet",
+            "active_ingredient": "Estradiol",
+            "dosage_form": "Tablet",
+            "route": "Vaginal",
+            "source_url": "https://www.accessdata.fda.gov/drugsatfda_docs/psg/PSG_020908.pdf",
+            "document_type": "Draft",
+            "doc_id": "2680"
+          }
+        },
+        {
+          "chunk_id": "pharma_fda_psg:5916",
+          "score": 0.031498,
+          "text_snippet": "If the test product formulations are qualitatively (Q1) and quantitatively (Q2) the same as the Reference Listed Drug (RLD) with respect to inactive ingredients, bioequivalence may be established by c",
+          "metadata": {
+            "project_id": "prebuilt_pharma_core",
+            "domain": "pharma",
+            "jurisdiction": "US",
+            "authority": "U.S. Food and Drug Administration",
+            "authority_type": "regulatory_guidance",
+            "title": "Rifaximin - Tablet",
+            "active_ingredient": "Rifaximin",
+            "dosage_form": "Tablet",
+            "route": "Oral",
+            "source_url": "https://www.accessdata.fda.gov/drugsatfda_docs/psg/PSG_021361.pdf",
+            "document_type": "Draft",
+            "doc_id": "5916"
+          }
+        }
+      ]
+    },
+    {
+      "query": "Danmarks Nationalbank annual report 2024",
+      "project_id": "prebuilt_danish_public_sector_core",
+      "honesty": "hybrid",
+      "top_results": [
+        {
+          "chunk_id": "danish_public:finance_nationalbank_2024_p0001",
+          "score": 0.031778,
+          "text_snippet": "DANMARKS\nNATIONALBANK\nÅrsrapport\n2024\n",
+          "metadata": {
+            "project_id": "prebuilt_danish_public_sector_core",
+            "domain": "danish_public_sector",
+            "jurisdiction": "DK",
+            "authority": "finance",
+            "authority_type": "public_sector_report",
+            "title": "Danmarks Nationalbank Årsrapport 2024",
+            "doc_id": "finance_nationalbank_2024",
+            "page_num": 1,
+            "page_id": "finance_nationalbank_2024_p0001"
+          }
+        },
+        {
+          "chunk_id": "danish_public:finance_nationalbank_2024_p0050",
+          "score": 0.031746,
+          "text_snippet": "5 0\t\nDAN MARK S N ATIO N AL BAN K  \nÅR SR AP P ORT  2 0 2 4\nLedelsespåtegning\nDirektionen har dags dato behandlet og god- \nkendt årsregnskabet for regnskabsåret 1. januar -  \n31. decem­ber 2024 for Da",
+          "metadata": {
+            "project_id": "prebuilt_danish_public_sector_core",
+            "domain": "danish_public_sector",
+            "jurisdiction": "DK",
+            "authority": "finance",
+            "authority_type": "public_sector_report",
+            "title": "Danmarks Nationalbank Årsrapport 2024",
+            "doc_id": "finance_nationalbank_2024",
+            "page_num": 50,
+            "page_id": "finance_nationalbank_2024_p0050"
+          }
+        },
+        {
+          "chunk_id": "danish_public:finance_nationalbank_2024_p0052",
+          "score": 0.031099,
+          "text_snippet": "5 2\t\nDAN MARK S N ATIO N AL BAN K  \nÅR SR AP P ORT  2 0 2 4\nTil repræsentantskabet\nKonklusion\nDet er vores opfattelse, at årsregnskabet giver et retvi-\nsende billede af Danmarks Nationalbanks aktiver,",
+          "metadata": {
+            "project_id": "prebuilt_danish_public_sector_core",
+            "domain": "danish_public_sector",
+            "jurisdiction": "DK",
+            "authority": "finance",
+            "authority_type": "public_sector_report",
+            "title": "Danmarks Nationalbank Årsrapport 2024",
+            "doc_id": "finance_nationalbank_2024",
+            "page_num": 52,
+            "page_id": "finance_nationalbank_2024_p0052"
+          }
+        }
+      ]
+    },
+    {
+      "query": "fair treatment of shareholders ADGM",
+      "project_id": "prebuilt_legal_adgm_core",
+      "honesty": "hybrid",
+      "top_results": [
+        {
+          "chunk_id": "adgm_reg:29f5643e-1cd5-4bf6-ba9c-2d3a5f22f3cd",
+          "score": 0.032002,
+          "text_snippet": "A Difference of Treatment Valuation shall determine—\n(a)\tthe treatment that Shareholders, creditors and Depositors would have received if Insolvency Proceedings in respect of the Institution in Resolu",
+          "metadata": {
+            "project_id": "prebuilt_legal_adgm_core",
+            "domain": "legal",
+            "jurisdiction": "ADGM",
+            "authority": "Abu Dhabi Global Market Financial Services Regulatory Authority",
+            "authority_type": "regulatory_guidance",
+            "document_id": 14,
+            "passage_id": "29f5643e-1cd5-4bf6-ba9c-2d3a5f22f3cd"
+          }
+        },
+        {
+          "chunk_id": "adgm_reg:e0c9be27-3815-4f76-9349-2681fa2fe8ac",
+          "score": 0.031281,
+          "text_snippet": "The Authorised Person acting as the Investment Manager of an ADGM Green Portfolio must provide a copy of the attestation obtained for the purposes of Rule ‎3.8.6 to each Client with whom it has entere",
+          "metadata": {
+            "project_id": "prebuilt_legal_adgm_core",
+            "domain": "legal",
+            "jurisdiction": "ADGM",
+            "authority": "Abu Dhabi Global Market Financial Services Regulatory Authority",
+            "authority_type": "regulatory_guidance",
+            "document_id": 3,
+            "passage_id": "e0c9be27-3815-4f76-9349-2681fa2fe8ac"
+          }
+        },
+        {
+          "chunk_id": "adgm_reg:e6fc1de1-709b-4e05-b519-c6d344a0d34e",
+          "score": 0.031099,
+          "text_snippet": "Audit committee. A separate section of the annual report should describe the work of the audit committee in discharging its responsibilities. The annual report should also explain to Shareholders how,",
+          "metadata": {
+            "project_id": "prebuilt_legal_adgm_core",
+            "domain": "legal",
+            "jurisdiction": "ADGM",
+            "authority": "Abu Dhabi Global Market Financial Services Regulatory Authority",
+            "authority_type": "regulatory_guidance",
+            "document_id": 11,
+            "passage_id": "e6fc1de1-709b-4e05-b519-c6d344a0d34e"
+          }
+        }
+      ]
+    }
+  ]
+}

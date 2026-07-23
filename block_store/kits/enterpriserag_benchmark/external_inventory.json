@@ -1,0 +1,32 @@
+[
+  {
+    "path": "LICENSE",
+    "size": 1072,
+    "extension": "",
+    "sha256": "9eab95dae84867fa8ba1450e4bf34addf74e841923f4b6877f4d2df82bed3508"
+  },
+  {
+    "path": "README.md",
+    "size": 8302,
+    "extension": ".md",
+    "sha256": "f38f53da1ce310a60ac6a6e49657d4815b006e9e967fdf6cbd7915d328c62bb7"
+  },
+  {
+    "path": "questions.jsonl",
+    "size": 764927,
+    "extension": ".jsonl",
+    "sha256": "f9524b9157cd43aae36b99333a124738804306ea6d07f332d49faa6d3d147905"
+  },
+  {
+    "path": "extra_questions.jsonl",
+    "size": 57726,
+    "extension": ".jsonl",
+    "sha256": "26e23e5ade467512433e0fc012b30ea14b079dde11ad6f93cf380eed1bd96807"
+  },
+  {
+    "path": "all_documents.zip",
+    "size": 1256181062,
+    "extension": ".zip",
+    "sha256": "9d1174928696ad08bc15f3f104739519de633c1605a4ec2034e0e3c0087bc5cd"
+  }
+]

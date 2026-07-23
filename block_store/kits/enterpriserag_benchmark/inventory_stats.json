@@ -1,0 +1,9 @@
+{
+  "total": 511963,
+  "bytes": 2474399575,
+  "extensions": {
+    ".txt": 511962,
+    ".jsonl": 1
+  },
+  "malformed": 0
+}

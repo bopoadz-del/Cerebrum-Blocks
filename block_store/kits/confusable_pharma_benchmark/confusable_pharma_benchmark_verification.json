@@ -1,0 +1,64 @@
+{
+  "query": "Abacavir bioequivalence tablet",
+  "project_id": "prebuilt_pharma_core",
+  "honesty": "hybrid",
+  "top_results": [
+    {
+      "chunk_id": "pharma_fda_psg:414",
+      "score": 0.032522,
+      "text_snippet": "This draft guidance, when finalized, will represent the current thinking of the Food and Drug Administration (FDA, or the Agency) on this topic. It does not establish any rights for any person and is ",
+      "metadata": {
+        "project_id": "prebuilt_pharma_core",
+        "domain": "pharma",
+        "jurisdiction": "US",
+        "authority": "U.S. Food and Drug Administration",
+        "authority_type": "regulatory_guidance",
+        "title": "Amphetamine Sulfate - Tablet",
+        "active_ingredient": "Amphetamine Sulfate",
+        "dosage_form": "Tablet",
+        "route": "Oral",
+        "source_url": "https://www.accessdata.fda.gov/drugsatfda_docs/psg/Amphetamine sulfate_oral tablet_ANDA 200166_RC11-17.pdf",
+        "document_type": "Draft",
+        "doc_id": "414"
+      }
+    },
+    {
+      "chunk_id": "pharma_fda_psg:4852",
+      "score": 0.032266,
+      "text_snippet": "h. It is the prospective applicant's responsibility to enroll a sufficient number of subjects for the study to demonstrate bioequivalence of the T to the RS product.  \n\ni. A clear list of permitted an",
+      "metadata": {
+        "project_id": "prebuilt_pharma_core",
+        "domain": "pharma",
+        "jurisdiction": "US",
+        "authority": "U.S. Food and Drug Administration",
+        "authority_type": "regulatory_guidance",
+        "title": "Mometasone Furoate - Aerosol, Metered",
+        "active_ingredient": "Mometasone Furoate",
+        "dosage_form": "Aerosol, Metered",
+        "route": "Inhalation",
+        "source_url": "https://www.accessdata.fda.gov/drugsatfda_docs/psg/PSG_205641.pdf",
+        "document_type": "Draft",
+        "doc_id": "4852"
+      }
+    },
+    {
+      "chunk_id": "pharma_fda_psg:5034",
+      "score": 0.031258,
+      "text_snippet": "To qualify for a waiver from submitting an in vivo bioequivalence study on the basis that bioequivalence is self- evident under 21 CFR 320.22(b), the test product should be qualitatively \\((\\mathrm{Q1",
+      "metadata": {
+        "project_id": "prebuilt_pharma_core",
+        "domain": "pharma",
+        "jurisdiction": "US",
+        "authority": "U.S. Food and Drug Administration",
+        "authority_type": "regulatory_guidance",
+        "title": "Nedosiran Sodium - Solution",
+        "active_ingredient": "Nedosiran Sodium",
+        "dosage_form": "Solution",
+        "route": "Injectable",
+        "source_url": "https://www.accessdata.fda.gov/drugsatfda_docs/psg/PSG_215842.pdf",
+        "document_type": "Draft",
+        "doc_id": "5034"
+      }
+    }
+  ]
+}

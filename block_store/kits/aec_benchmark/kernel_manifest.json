@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "id": "aec_benchmark",
+  "name": "AEC-Bench Construction Document Intelligence Evaluation Kit",
+  "domain": "construction",
+  "project_id": null,
+  "tenant_id": null,
+  "kit_folder": "aec_benchmark",
+  "status": "eval_data",
+  "primary_role": "REASONING_EVAL",
+  "secondary_roles": [
+    "VISION_DATA",
+    "PRODUCT_WORKFLOW_TEST"
+  ],
+  "description": "196 real AEC task harnesses for cross-sheet drawing/spec/submittal reasoning. Harness and metadata are Apache-2.0; underlying third-party AEC documents require separate rights clearance.",
+  "source_publisher": "Nomic AI",
+  "original_source": "https://huggingface.co/datasets/nomic-ai/aec-bench",
+  "licence": "Apache-2.0 (harness/metadata); document rights unclear",
+  "commercial_use": "unknown",
+  "redistribution": "unknown",
+  "jurisdiction": [
+    "US"
+  ],
+  "record_count": 196,
+  "file_count": 1189,
+  "excluded_components": [
+    "External PDFs (~5.6 GB) until document rights are cleared",
+    "Keyword-based verifiers should be treated as brittle"
+  ],
+  "requires_raw_sources": [
+    "Construction drawings/specs/submittals from nomic-public-data.com"
+  ],
+  "indexed": false,
+  "last_updated_at": "2026-07-23T16:57:50.752655+00:00"
+}

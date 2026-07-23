@@ -1,0 +1,58 @@
+{
+  "dataset_id": "techmanualqa700_benchmark",
+  "domain": "technical_manuals",
+  "primary_role": "RETRIEVAL_EVAL",
+  "secondary_roles": [
+    "REASONING_EVAL"
+  ],
+  "source_publisher": "Tomislav Duricic (Graz University of Technology / Know-Center GmbH)",
+  "original_source": "https://zenodo.org/records/17410809",
+  "licence": "CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/legalcode)",
+  "commercial_use": "allowed",
+  "redistribution": "allowed",
+  "jurisdiction": [],
+  "effective_dates": {},
+  "file_count": 7,
+  "total_bytes": 811823,
+  "record_count": 700,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "partial",
+  "pii_status": "no_pii_detected",
+  "raw_rag_score": null,
+  "evaluation_score": 71,
+  "score_breakdown": {
+    "exact_mapping": 22,
+    "verified_answer": 11,
+    "matching_raw_corpus": 5,
+    "product_relevance": 14,
+    "difficulty_coverage": 8,
+    "negative_cases": 5,
+    "low_duplication": 4,
+    "split_separation": 0,
+    "jurisdiction_version": 2
+  },
+  "hard_failures": [],
+  "verdict": "APPROVE_EVAL_CANDIDATE",
+  "max_status": "technically_verified_candidate",
+  "approved_components": [
+    "TechManualQA_700.jsonl: 700 question-answer pairs with document/page references and quality scores",
+    "human_annotation/: inter-annotator audit spreadsheets (general and procedural tasks, annotators A and B)"
+  ],
+  "excluded_components": [
+    "Source technical manual PDFs are not included in the archive and must be obtained separately from the original manufacturers"
+  ],
+  "required_raw_sources": [
+    "20 technical manual PDFs listed at https://github.com/tduricic/techmanualqa (Covered Manuals section)"
+  ],
+  "reason": "TechManualQA-700 is a well-documented, CC-BY-4.0-licensed retrieval QA benchmark for technical manuals. It provides exact doc_id/page_number mappings for 600 answerable questions, 100 unanswerable questions, automated RAGAS scores, LLM-judge scores, and a human audit subset (~262 questions) with κ=0.82. Major limitations are the absence of the raw source PDFs in the archive and the lack of a predefined train/dev/test split, which limit immediate end-to-end retrieval evaluation. Evaluation score 71/100 maps to APPROVE_EVAL_CANDIDATE; capped at technically_verified_candidate pending domain review.",
+  "evidence_paths": [
+    "Cerebrum-Blocks/block_store/kits/techmanualqa700_benchmark/TechManualQA_700.zip",
+    "Cerebrum-Blocks/block_store/kits/techmanualqa700_benchmark/TechManualQA_700/TechManualQA_700.jsonl",
+    "Cerebrum-Blocks/block_store/kits/techmanualqa700_benchmark/TechManualQA_700/README.md",
+    "Cerebrum-Blocks/block_store/kits/techmanualqa700_benchmark/TechManualQA_700/LICENSE",
+    "Cerebrum-Blocks/block_store/kits/techmanualqa700_benchmark/zenodo_page.html"
+  ],
+  "generated_at": "2026-07-23T09:35:16.169Z"
+}

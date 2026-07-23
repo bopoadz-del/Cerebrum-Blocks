@@ -1,0 +1,55 @@
+{
+  "query": "Danmarks Nationalbank annual report 2024",
+  "project_id": "prebuilt_danish_public_sector_core",
+  "honesty": "hybrid",
+  "top_results": [
+    {
+      "chunk_id": "danish_public:finance_statens_laantagning_2023_p0041",
+      "score": 0.032266,
+      "text_snippet": "RAPPORT  |  Nr. 1 \nStatens l\u00e5ntagning og g\u00e6ld \n \n \nSide 41 af 46 \nDANMARKS NATIONALBANK \n\u2026 fortsat \nIndenlandske statsl\u00e5n i alt \n \n \n \n \n \n \nIndenlandske statspapirer i alt  \n621.209 \n141.450 \n173.172",
+      "metadata": {
+        "project_id": "prebuilt_danish_public_sector_core",
+        "domain": "danish_public_sector",
+        "jurisdiction": "DK",
+        "authority": "finance",
+        "authority_type": "public_sector_report",
+        "title": "Statens l\u00e5ntagning og g\u00e6ld 2023",
+        "doc_id": "finance_statens_laantagning_2023",
+        "page_num": 41,
+        "page_id": "finance_statens_laantagning_2023_p0041"
+      }
+    },
+    {
+      "chunk_id": "danish_public:energy_energistatistik_2023_p0037",
+      "score": 0.03101,
+      "text_snippet": "                                                                                                    HUSHOLDNINGER                  \n37 \n \n \nPrivat forbrug og elforbrug i husholdnin-\nger \n \n90\n110\n130\n",
+      "metadata": {
+        "project_id": "prebuilt_danish_public_sector_core",
+        "domain": "danish_public_sector",
+        "jurisdiction": "DK",
+        "authority": "energy",
+        "authority_type": "public_sector_report",
+        "title": "Energistatistik 2023",
+        "doc_id": "energy_energistatistik_2023",
+        "page_num": 37,
+        "page_id": "energy_energistatistik_2023_p0037"
+      }
+    },
+    {
+      "chunk_id": "danish_public:energy_energistatistik_2023_p0048",
+      "score": 0.030159,
+      "text_snippet": "ENERGIPRISER \n48 \n \n \nElpriser for erhvervskunder \n \n0,0\n0,5\n1,0\n1,5\n2,0\n2,5\nFI\nSE\nMT\nPL\nNO\nPO\nFR\nCZ\nEE\nDK\nDE\nLU\nES\nBE\nEU27\nNL\nLV\nSI\nLT\nCR\nAT\nCY\nSK\nRO\nBG\nIE\nHU\nIT\nGR\n2022\n2023\n \n \n \nElpriserne er vist",
+      "metadata": {
+        "project_id": "prebuilt_danish_public_sector_core",
+        "domain": "danish_public_sector",
+        "jurisdiction": "DK",
+        "authority": "energy",
+        "authority_type": "public_sector_report",
+        "title": "Energistatistik 2023",
+        "doc_id": "energy_energistatistik_2023",
+        "page_num": 48,
+        "page_id": "energy_energistatistik_2023_p0048"
+      }
+    }
+  ]
+}

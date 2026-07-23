@@ -1,0 +1,10 @@
+{
+  "tenant_id": "cerebrum_prebuilt",
+  "project_id": "prebuilt_document_parsing_core",
+  "kit": "parsebench_benchmark",
+  "provider": "fast_hash_fallback",
+  "dimensions": 384,
+  "chunks_indexed": 168943,
+  "store_count": 168943,
+  "vector_store_path": "block_store/kits/parsebench_benchmark/vector_store.pkl"
+}

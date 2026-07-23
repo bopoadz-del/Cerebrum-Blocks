@@ -1,0 +1,10 @@
+{
+  "tenant_id": "cerebrum_prebuilt",
+  "project_id": "prebuilt_universal_multiturn_core",
+  "kit": "mtrag_benchmark",
+  "provider": "fast_hash_fallback",
+  "dimensions": 384,
+  "chunks_indexed": 366479,
+  "store_count": 366479,
+  "vector_store_path": "block_store/kits/mtrag_benchmark/vector_store.pkl"
+}

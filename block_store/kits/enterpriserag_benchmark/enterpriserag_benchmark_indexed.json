@@ -1,0 +1,11 @@
+{
+  "tenant_id": "cerebrum_prebuilt",
+  "project_id": "prebuilt_enterprise_rag_core",
+  "kit": "enterpriserag_benchmark",
+  "provider": "fast_hash_fallback",
+  "dimensions": 384,
+  "chunks_indexed": 350000,
+  "store_count": 350000,
+  "vector_store_path": "block_store/kits/enterpriserag_benchmark/vector_store.pkl",
+  "notes": "Indexed deterministic cap of 350,000 chunks from 511,963 synthetic documents due to single-process memory ceiling."
+}

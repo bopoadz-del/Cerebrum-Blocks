@@ -1,0 +1,10 @@
+{
+  "tenant_id": "cerebrum_prebuilt",
+  "project_id": "prebuilt_pharma_core",
+  "kit": "confusable_pharma_benchmark",
+  "provider": "feature-hash-v1",
+  "dimensions": 384,
+  "chunks_indexed": 7123,
+  "store_count": 7123,
+  "vector_store_path": "block_store/kits/confusable_pharma_benchmark/vector_store.pkl"
+}
