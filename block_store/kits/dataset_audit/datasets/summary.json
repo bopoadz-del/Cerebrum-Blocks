@@ -1,0 +1,93 @@
+{
+  "evaluation_candidates": [
+    "legal_general_retrieval_eval",
+    "legal_australia_victoria_criminal",
+    "construction_bim_core",
+    "insurance_eu_regulatory_qa",
+    "aviation_faa_eval",
+    "medical_pubmedqa_eval",
+    "retail_product_search_eval",
+    "supply_chain_logic_eval",
+    "rag_kits"
+  ],
+  "non_evaluation_datasets": [
+    "insurance_eu_solvency_core",
+    "aviation_faa_core_rag",
+    "medical_clinical_guidelines",
+    "supply_chain_raw_rag_candidates",
+    "universal_reference_data",
+    "universal_ingestion_tests",
+    "universal_api_reference",
+    "financeops_demo_fixtures"
+  ],
+  "datasets_requiring_raw_sources": [
+    {
+      "dataset_id": "legal_general_retrieval_eval",
+      "required_raw_sources": [
+        "contractnli",
+        "cuad",
+        "maud",
+        "privacy_qa"
+      ],
+      "notes": "LegalBench-RAG: each test has query, source file path, character span, and exact answer snippet. Benchmarks: ['contractnli.json', 'cuad.json', 'maud.json', 'privacy_qa.json']. Sources are under corpus/."
+    },
+    {
+      "dataset_id": "legal_australia_victoria_criminal",
+      "required_raw_sources": [
+        "corpus.jsonl"
+      ],
+      "notes": "Legal RAG Bench: expert-written QA pairs with passage IDs into corpus.jsonl. Corpus included."
+    },
+    {
+      "dataset_id": "construction_bim_core",
+      "required_raw_sources": [
+        "projects/ (IFC model files)"
+      ],
+      "notes": "IFC-Bench v2: question/ground_truth/ifc_model/project/category. No explicit passage span. Source IFC models required."
+    },
+    {
+      "dataset_id": "insurance_eu_regulatory_qa",
+      "required_raw_sources": [
+        "eiopa-qa-archive.xlsx (full EIOPA Q&A archive)",
+        "referenced Solvency II regulations"
+      ],
+      "notes": "Sample of EIOPA Q&A archive. Contains answer and regulation_reference/article, but no passage span or derivation. Full archive and referenced regulations needed for usable eval."
+    },
+    {
+      "dataset_id": "aviation_faa_eval",
+      "required_raw_sources": [
+        "aviation_faa_core_rag/ (AIM PDF, CFR XML parts 61/91/121/135)"
+      ],
+      "notes": "Test split has 660 instruction/output pairs. Source field gives regulation reference but no passage span. Train file has 8899 total rows, of which 5922 carry non-empty instruction questions; overlap checked against those."
+    },
+    {
+      "dataset_id": "medical_pubmedqa_eval",
+      "required_raw_sources": [
+        "ori_pqal.json (questions, contexts, labels)",
+        "PubMed abstracts corresponding to PMIDs"
+      ],
+      "notes": "test_ground_truth.json contains PMID->answer labels. ori_pqal.json contains questions and contexts. Raw PubMed abstracts required for full retrieval corpus."
+    },
+    {
+      "dataset_id": "retail_product_search_eval",
+      "required_raw_sources": [
+        "amazon_esci/products/",
+        "amazon_esci/retrieval/",
+        "wands/data/data.jsonl.gz"
+      ],
+      "notes": "Amazon ESCI and WANDS product-search benchmarks. Sub-component unique test/eval queries: {'amazon_esci_test': 30947, 'amazon_esci_exact_test': 14487, 'wands': 480}; unioned unique queries: 31418. Rows are query-product judgments; question counts are unique query texts. exact_queries_small test queries are a subset of Amazon ESCI test queries. Product catalogs are the raw corpus."
+    },
+    {
+      "dataset_id": "rag_kits",
+      "required_raw_sources": [
+        "raw_regulations/ (harvested regulation texts)",
+        "harvest_manifest.json"
+      ],
+      "notes": "rag_kits is a mixed bag. Sub-components: {\"tatqa_test\": {\"questions\": 1663, \"with_answer\": 1663, \"with_derivation\": 1663, \"duplicates\": 17}, \"tatqa_dev\": {\"questions\": 1668, \"with_answer\": 1668, \"with_derivation\": 1668, \"duplicates\": 19}, \"irish_finance\": {\"questions\": 3600, \"with_answer\": 3600, \"with_derivation\": 0, \"duplicates\": 2404}, \"opensanctions_sample_1000\": {\"questions\": 0, \"note\": \"Entity sanctions watchlist sample; not QA.\"}, \"Regulations_CDM.csv\": {\"rows\": 141, \"note\": \"Regulatory reference table; not QA eval.\"}, \"Regulations_definition.csv\": {\"rows\": 193, \"note\": \"Regulatory reference table; not QA eval.\"}, \"Regulations_Link_Retrieval.csv\": {\"rows\": 192, \"note\": \"Regulatory reference table; not QA eval.\"}}. TAT-QA is a table-QA golden eval; IrishFinance is prompt-completion corpus; Regulations CSVs are reference tables; opensanctions is a sanctions sample."
+    }
+  ],
+  "datasets_with_corpus_missing_or_incomplete": [
+    "insurance_eu_regulatory_qa",
+    "medical_pubmedqa_eval"
+  ]
+}

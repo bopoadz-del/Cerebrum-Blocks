@@ -1,0 +1,14 @@
+{
+  "dataset_id": "construction_bim_core",
+  "is_raw_rag_candidate": false,
+  "document_count": 0,
+  "estimated_chunk_count": 0,
+  "avg_chunk_chars": 0,
+  "min_chunk_chars": 0,
+  "max_chunk_chars": 0,
+  "orphan_fragments": 0,
+  "table_corruption": "none",
+  "duplicate_chunks": 0,
+  "required_metadata": [],
+  "structural_boundaries": []
+}

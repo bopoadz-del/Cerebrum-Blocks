@@ -1,0 +1,14 @@
+{
+  "dataset_id": "aviation_faa_eval",
+  "display_name": "FAA Aviation Training Dataset",
+  "publisher": "ziksy (HuggingFace)",
+  "original_publisher": "ziksy (HuggingFace)",
+  "source_urls": [
+    "https://huggingface.co/datasets/ziksy/faa-aviation-training"
+  ],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "aviation_faa_eval/README.md"
+  ],
+  "notes": "Instruction-tuning and knowledge dataset built from 14 CFR, AIM and PHAK. Source material is U.S. government work."
+}

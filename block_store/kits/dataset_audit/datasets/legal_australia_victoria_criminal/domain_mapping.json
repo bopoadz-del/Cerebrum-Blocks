@@ -1,0 +1,28 @@
+{
+  "dataset_id": "legal_australia_victoria_criminal",
+  "domain": "legal",
+  "cerebrum_product": "Cerebrum Legal",
+  "supported_workflows": [
+    "Australian (Victorian) criminal-law retrieval and bench-book question answering",
+    "Jury instruction and criminal procedure RAG",
+    "Legal reasoning evaluation for jurisdiction-specific criminal law"
+  ],
+  "supported_questions": [
+    "Is the judge required to excuse a juror who knows the accused?",
+    "Should jurors be excused if they encountered pre-trial publicity?",
+    "What should a juror do if another juror conducts an independent inquiry?",
+    "Can counsel refer to the standard sentence during a murder trial?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "legal_general_retrieval_eval",
+      "nature": "Both are legal RAG/retrieval benchmarks, but cover different jurisdictions and practice areas"
+    }
+  ],
+  "unrelated_content": [],
+  "weak_content": [
+    "Highly jurisdiction-specific: useful for Victoria/Australia criminal law but weakly transferable to other legal systems",
+    "Only 100 QA examples; coverage of criminal law sub-topics is narrow"
+  ],
+  "primary_recommendation": "Use as the canonical source for Australian Victorian criminal-law and jury-procedure RAG. Avoid relying on it for general commercial or non-Australian legal questions."
+}

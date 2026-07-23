@@ -1,0 +1,48 @@
+{
+  "dataset_id": "supply_chain_logic_eval",
+  "file_count": 6,
+  "extensions": {
+    "(no ext)": 1,
+    ".md": 2,
+    ".jsonl": 1,
+    ".parquet": 1,
+    ".json": 1
+  },
+  "mime_types": {
+    "application/octet-stream": 4,
+    "application/json": 2
+  },
+  "largest_files": [
+    {
+      "path": "retailopt_190.jsonl",
+      "size_bytes": 4105312,
+      "sha256": "18b287ff5e0a1c3354040a3f4753fbcedb0d17d1d0a2bada19549cea14be7620",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "retailopt_190.parquet",
+      "size_bytes": 514479,
+      "sha256": "e6ddefc9a2faf530b7142f44114e8915bf42d199e8d126120880420eda00c4b2",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "sample_problem.json",
+      "size_bytes": 26383,
+      "sha256": "0f37ba7841afb5f6f0f3152098502f46ba531563c97cd94af3585bab7147ae1a",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 9450,
+      "sha256": "bc499bee7235ef3f54ebae449e26f4cfa3e2ecd42d9ea3031057cd4dc544bf6d",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "RETAILOPT190_NOTES.md",
+      "size_bytes": 3665,
+      "sha256": "ea486f3e04d71cf300fbb80b26e393176f821d38c6cf3faff50e00a4a493e02f",
+      "mime_type": "application/octet-stream"
+    }
+  ],
+  "schema_notes": "Derived from inventory; inspect representative files for detailed schema."
+}

@@ -1,0 +1,14 @@
+{
+  "dataset_id": "aviation_faa_core_rag",
+  "licence_name": "Unknown (no local licence file)",
+  "licence_url": null,
+  "licence_text_location": null,
+  "commercial_use": "unknown",
+  "modification": "unknown",
+  "redistribution": "unknown",
+  "unresolved_or_conflicting_conditions": [
+    "No LICENSE, LICENCE or README file exists in the folder.",
+    "Source material is U.S. government work and is generally in the public domain under 17 U.S.C. §105, but this has not been recorded in a local licence text."
+  ],
+  "notes": "Hard failure: unknown licence. The source is official U.S. government publications, but rights must be confirmed per publication."
+}

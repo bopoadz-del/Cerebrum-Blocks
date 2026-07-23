@@ -1,0 +1,20 @@
+{
+  "dataset_id": "medical_clinical_guidelines",
+  "is_raw_rag_candidate": true,
+  "document_count": 16,
+  "estimated_chunk_count": 149,
+  "avg_chunk_chars": 1477,
+  "min_chunk_chars": 23,
+  "max_chunk_chars": 2048,
+  "orphan_fragments": 4,
+  "table_corruption": "none",
+  "duplicate_chunks": 0,
+  "required_metadata": [
+    "doc_id",
+    "document_id",
+    "source_file"
+  ],
+  "structural_boundaries": [
+    "title"
+  ]
+}

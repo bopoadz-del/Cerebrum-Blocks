@@ -1,0 +1,56 @@
+{
+  "dataset_id": "insurance_eu_regulatory_qa",
+  "domain": "insurance",
+  "primary_role": "RETRIEVAL_EVAL",
+  "secondary_roles": [],
+  "source_publisher": "European Insurance and Occupational Pensions Authority (EIOPA)",
+  "original_source": "EIOPA",
+  "licence": "EIOPA Legal Notice (reuse authorised with attribution)",
+  "commercial_use": "permitted",
+  "redistribution": "permitted",
+  "jurisdiction": "insurance",
+  "effective_dates": "",
+  "file_count": 9,
+  "total_bytes": 1702000,
+  "record_count": 80,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.05314,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "none",
+  "pii_status": "none",
+  "raw_rag_score": 0,
+  "evaluation_score": 66,
+  "score_breakdown": {
+    "exact_mapping": 10,
+    "verified_answer": 11,
+    "matching_raw_corpus": 8,
+    "product_relevance": 15,
+    "difficulty_coverage": 6,
+    "negative_cases": 3,
+    "low_duplication": 3,
+    "split_separation": 5,
+    "jurisdiction_version": 5
+  },
+  "hard_failures": [],
+  "verdict": "QUESTION_POOL_ONLY",
+  "approved_components": [
+    "Whole dataset as classified"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [
+    "eiopa-qa-archive.xlsx (full EIOPA Q&A archive)",
+    "referenced Solvency II regulations"
+  ],
+  "reason": "Evaluation score 66/100 maps to QUESTION_POOL_ONLY. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/insurance_eu_regulatory_qa/provenance.json",
+    "datasets/insurance_eu_regulatory_qa/licence_review.json",
+    "datasets/insurance_eu_regulatory_qa/domain_mapping.json",
+    "datasets/insurance_eu_regulatory_qa/quality_metrics.json",
+    "datasets/insurance_eu_regulatory_qa/privacy_review.json",
+    "datasets/insurance_eu_regulatory_qa/chunkability_report.json",
+    "datasets/insurance_eu_regulatory_qa/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.616879+00:00",
+  "max_status": "technically_verified_candidate"
+}

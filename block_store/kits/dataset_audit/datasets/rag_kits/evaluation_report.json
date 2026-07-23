@@ -1,0 +1,18 @@
+{
+  "dataset_id": "rag_kits",
+  "is_evaluation_candidate": true,
+  "question_count": 6931,
+  "with_expected_answer": 6931,
+  "with_source_document": 6931,
+  "with_passage_span": 0,
+  "with_derivation": 3331,
+  "with_jurisdiction_version": 0,
+  "exact_duplicate_questions": 2440,
+  "train_test_overlap": "none",
+  "quality_tier": "candidate",
+  "required_raw_sources": [
+    "raw_regulations/ (harvested regulation texts)",
+    "harvest_manifest.json"
+  ],
+  "notes": "rag_kits is a mixed bag. Sub-components: {\"tatqa_test\": {\"questions\": 1663, \"with_answer\": 1663, \"with_derivation\": 1663, \"duplicates\": 17}, \"tatqa_dev\": {\"questions\": 1668, \"with_answer\": 1668, \"with_derivation\": 1668, \"duplicates\": 19}, \"irish_finance\": {\"questions\": 3600, \"with_answer\": 3600, \"with_derivation\": 0, \"duplicates\": 2404}, \"opensanctions_sample_1000\": {\"questions\": 0, \"note\": \"Entity sanctions watchlist sample; not QA.\"}, \"Regulations_CDM.csv\": {\"rows\": 141, \"note\": \"Regulatory reference table; not QA eval.\"}, \"Regulations_definition.csv\": {\"rows\": 193, \"note\": \"Regulatory reference table; not QA eval.\"}, \"Regulations_Link_Retrieval.csv\": {\"rows\": 192, \"note\": \"Regulatory reference table; not QA eval.\"}}. TAT-QA is a table-QA golden eval; IrishFinance is prompt-completion corpus; Regulations CSVs are reference tables; opensanctions is a sanctions sample."
+}

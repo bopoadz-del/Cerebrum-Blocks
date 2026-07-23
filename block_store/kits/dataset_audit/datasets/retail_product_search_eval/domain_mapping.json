@@ -1,0 +1,28 @@
+{
+  "dataset_id": "retail_product_search_eval",
+  "domain": "retail",
+  "cerebrum_product": "Cerebrum Retail",
+  "supported_workflows": [
+    "Product search relevance benchmarking (exact, substitute, complement, irrelevant)",
+    "E-commerce query-product ranking and retrieval evaluation",
+    "Semantic product search and recommendation model development"
+  ],
+  "supported_questions": [
+    "Which products are exact matches for the query 'iPhone 13'?",
+    "What substitute products could satisfy the same customer need?",
+    "What complementary products are commonly bought together?",
+    "How relevant is this waiting-room chair to the query 'salon chair'?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "supply_chain_logic_eval",
+      "nature": "Both involve retail operations, but this dataset covers search/relevance while supply_chain_logic_eval covers inventory optimisation"
+    }
+  ],
+  "unrelated_content": [],
+  "weak_content": [
+    "Amazon ESCI includes Japanese and Spanish queries; useful for multilingual retail but weakly related to a single-locale deployment",
+    "WANDS is furniture/home-goods focused; generalisation to other retail verticals is limited"
+  ],
+  "primary_recommendation": "Primary source for retail product-search and ranking evaluation. Use Amazon ESCI for large-scale ESCI benchmarking and WANDS for annotated home-goods relevance tasks."
+}

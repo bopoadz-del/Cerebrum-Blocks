@@ -1,0 +1,11 @@
+{
+  "dataset_id": "medical_pubmedqa_eval",
+  "licence_name": "MIT",
+  "licence_url": "https://opensource.org/licenses/MIT",
+  "licence_text_location": "medical_pubmedqa_eval/LICENSE_pubmedqa",
+  "commercial_use": "permitted",
+  "modification": "permitted",
+  "redistribution": "permitted",
+  "unresolved_or_conflicting_conditions": [],
+  "notes": "The local MIT licence applies to the dataset files; underlying PubMed abstracts are public-domain U.S. government works."
+}

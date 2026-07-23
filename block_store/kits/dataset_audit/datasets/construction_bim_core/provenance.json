@@ -1,0 +1,15 @@
+{
+  "dataset_id": "construction_bim_core",
+  "display_name": "IFC-Bench",
+  "publisher": "Sylvain Hellin, Technical University of Munich",
+  "original_publisher": "Sylvain Hellin, Technical University of Munich",
+  "source_urls": [
+    "https://github.com/sylvainHellin/ifc-bench"
+  ],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "construction_bim_core/LICENSE",
+    "construction_bim_core/README.md"
+  ],
+  "notes": "Dataset (QA pairs, docs, model cards) is original. IFC model files are third-party and retain their own licences."
+}

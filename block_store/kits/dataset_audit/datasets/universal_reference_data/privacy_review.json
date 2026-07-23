@@ -1,0 +1,10 @@
+{
+  "dataset_id": "universal_reference_data",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [],
+  "legitimate_public_records": false,
+  "recommendation": "approve",
+  "notes": "Reference lists of countries, currencies, timezones, and units. No personal data."
+}

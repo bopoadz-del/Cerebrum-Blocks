@@ -1,0 +1,13 @@
+{
+  "dataset_id": "universal_reference_data",
+  "display_name": "Universal Reference Data",
+  "publisher": "Project-curated",
+  "original_publisher": "Project-curated",
+  "source_urls": [],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "universal_reference_data/countries.json",
+    "universal_reference_data/units.json"
+  ],
+  "notes": "Small hand-curated reference tables for countries, currencies, timezones and units. No provenance or licence metadata."
+}

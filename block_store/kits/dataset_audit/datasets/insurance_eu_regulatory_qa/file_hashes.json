@@ -1,0 +1,59 @@
+{
+  "dataset_id": "insurance_eu_regulatory_qa",
+  "files": [
+    {
+      "path": "eiopa-qa-archive.xlsx",
+      "size_bytes": 1286679,
+      "sha256": "913e93b2d1506409087bcee8be776336f2a69105b8f50d31aa4fadddb2cd9bf4",
+      "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    },
+    {
+      "path": "insurance_eu_regulatory_qa_sample.csv",
+      "size_bytes": 130513,
+      "sha256": "575e136c0a51e9b19b7f20749c1a95b7cf198d579de49f1f18721c7758c7b294",
+      "mime_type": "application/vnd.ms-excel"
+    },
+    {
+      "path": "insurance_eu_regulatory_qa_sample.jsonl",
+      "size_bytes": 145311,
+      "sha256": "0640d84a30b3d28464fac48aa4e301e881c2b59961c77b70b0a82a01c2de4da5",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "metadata.json",
+      "size_bytes": 2860,
+      "sha256": "dcfdc4688c019043acf7ebd782e18207621ea9f713090851f58dd2e473461977",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "qa_archive_metadata.txt",
+      "size_bytes": 6375,
+      "sha256": "4796404184306e64fc86b4ab2b5ad1918663f5de3df5ea6732767f5ac1e808d2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "sample_ids.txt",
+      "size_bytes": 469,
+      "sha256": "f7ddb67ce8b7604cb5df15d2f2a0262c270d570094eeae1a56d952885d73f1f1",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "sample_metadata.csv",
+      "size_bytes": 120712,
+      "sha256": "26ddef7e8f8544fd9db2d60909bf95a6b6be7ef4aaabbc0e824cf66a8505b323",
+      "mime_type": "application/vnd.ms-excel"
+    },
+    {
+      "path": "scrape_qa_sample.py",
+      "size_bytes": 8899,
+      "sha256": "2a6e7d13c3d9fe1d9f9eaf67b1a60f75b40c5a15099d50cfd3689a18aaf0dd27",
+      "mime_type": "text/x-python"
+    },
+    {
+      "path": "scraping_failed.txt",
+      "size_bytes": 182,
+      "sha256": "572dd9861ae994a0158e3ee139415e57dc811dafd79cb8490b0142ea51e5c037",
+      "mime_type": "text/plain"
+    }
+  ]
+}

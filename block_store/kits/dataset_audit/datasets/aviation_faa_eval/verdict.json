@@ -1,0 +1,55 @@
+{
+  "dataset_id": "aviation_faa_eval",
+  "domain": "aviation",
+  "primary_role": "RETRIEVAL_EVAL",
+  "secondary_roles": [],
+  "source_publisher": "ziksy (HuggingFace)",
+  "original_source": "ziksy (HuggingFace)",
+  "licence": "Apache 2.0",
+  "commercial_use": "permitted",
+  "redistribution": "permitted",
+  "jurisdiction": "aviation",
+  "effective_dates": "",
+  "file_count": 3,
+  "total_bytes": 17370811,
+  "record_count": 660,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "majority",
+  "pii_status": "none",
+  "raw_rag_score": 0,
+  "evaluation_score": 73,
+  "score_breakdown": {
+    "exact_mapping": 10,
+    "verified_answer": 13,
+    "matching_raw_corpus": 10,
+    "product_relevance": 15,
+    "difficulty_coverage": 8,
+    "negative_cases": 3,
+    "low_duplication": 5,
+    "split_separation": 5,
+    "jurisdiction_version": 4
+  },
+  "hard_failures": [],
+  "verdict": "APPROVE_EVAL_CANDIDATE",
+  "approved_components": [
+    "Whole dataset as classified"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [
+    "aviation_faa_core_rag/ (AIM PDF, CFR XML parts 61/91/121/135)"
+  ],
+  "reason": "Evaluation score 73/100 maps to APPROVE_EVAL_CANDIDATE. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/aviation_faa_eval/provenance.json",
+    "datasets/aviation_faa_eval/licence_review.json",
+    "datasets/aviation_faa_eval/domain_mapping.json",
+    "datasets/aviation_faa_eval/quality_metrics.json",
+    "datasets/aviation_faa_eval/privacy_review.json",
+    "datasets/aviation_faa_eval/chunkability_report.json",
+    "datasets/aviation_faa_eval/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.624952+00:00",
+  "max_status": "technically_verified_candidate"
+}

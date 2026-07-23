@@ -1,0 +1,71 @@
+{
+  "dataset_id": "legal_australia_victoria_criminal",
+  "domain": "legal",
+  "primary_role": "RETRIEVAL_EVAL",
+  "secondary_roles": [],
+  "source_publisher": "Isaacus",
+  "original_source": "Isaacus",
+  "licence": "CC BY-NC-SA 4.0 (header) / CC BY-NC 4.0 (body)",
+  "commercial_use": "prohibited",
+  "redistribution": "permitted",
+  "jurisdiction": "legal",
+  "effective_dates": "",
+  "file_count": 3,
+  "total_bytes": 7648788,
+  "record_count": 100,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "none",
+  "pii_status": "none",
+  "raw_rag_score": 0,
+  "evaluation_score": 90,
+  "score_breakdown": {
+    "exact_mapping": 25,
+    "verified_answer": 13,
+    "matching_raw_corpus": 12,
+    "product_relevance": 15,
+    "difficulty_coverage": 8,
+    "negative_cases": 3,
+    "low_duplication": 5,
+    "split_separation": 5,
+    "jurisdiction_version": 4
+  },
+  "hard_failures": [
+    {
+      "gate": "commercial_use_prohibited",
+      "source": "licence_review.json",
+      "details": "CC BY-NC-SA 4.0 (header) / CC BY-NC 4.0 (body)"
+    },
+    {
+      "gate": "commercial_use_prohibited",
+      "source": "licence_issues.json",
+      "details": "Licence is CC BY-NC-SA 4.0 (header) / CC BY-NC 4.0 (body); both versions prohibit commercial use."
+    },
+    {
+      "gate": "conflicting_terms",
+      "source": "licence_issues.json",
+      "details": "Dataset card header says cc-by-nc-sa-4.0 while the licence section says CC BY-NC 4.0, creating an inconsistent share-alike requirement."
+    }
+  ],
+  "verdict": "REJECT",
+  "approved_components": [],
+  "excluded_components": [
+    "Entire dataset (CC BY-NC prohibits commercial use; conflicting licence terms)"
+  ],
+  "required_raw_sources": [
+    "corpus.jsonl"
+  ],
+  "reason": "Hard rejection gates triggered: commercial_use_prohibited, conflicting_terms. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/legal_australia_victoria_criminal/provenance.json",
+    "datasets/legal_australia_victoria_criminal/licence_review.json",
+    "datasets/legal_australia_victoria_criminal/domain_mapping.json",
+    "datasets/legal_australia_victoria_criminal/quality_metrics.json",
+    "datasets/legal_australia_victoria_criminal/privacy_review.json",
+    "datasets/legal_australia_victoria_criminal/chunkability_report.json",
+    "datasets/legal_australia_victoria_criminal/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.607882+00:00",
+  "max_status": "technically_verified_candidate"
+}

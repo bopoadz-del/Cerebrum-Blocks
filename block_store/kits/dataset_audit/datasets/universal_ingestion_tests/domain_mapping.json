@@ -1,0 +1,31 @@
+{
+  "dataset_id": "universal_ingestion_tests",
+  "domain": "universal_kernel",
+  "cerebrum_product": "Cerebrum Universal Kernel",
+  "supported_workflows": [
+    "Validation of ingestion pipelines for JSON edge cases",
+    "Testing schema validation, email/URL/phone parsing",
+    "Regression testing for ETL and data-quality checks"
+  ],
+  "supported_questions": [
+    "Does the pipeline correctly handle empty strings and unicode characters?",
+    "Can the validator reject invalid email addresses?",
+    "How does the system handle scientific notation and extreme integer values?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "universal_api_reference",
+      "nature": "Both are universal infrastructure datasets with no domain-specific content"
+    },
+    {
+      "dataset_id": "universal_reference_data",
+      "nature": "Both support cross-domain infrastructure; ingestion_tests focuses on validation, reference_data on lookup tables"
+    }
+  ],
+  "unrelated_content": [],
+  "weak_content": [
+    "Synthetic test cases only; no real domain knowledge",
+    "Some cases (e.g., XSS payloads) are intentionally adversarial and not representative of production content"
+  ],
+  "primary_recommendation": "Use as an internal test corpus for ingestion and validation pipelines, not as a domain knowledge source."
+}

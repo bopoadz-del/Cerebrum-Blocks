@@ -1,0 +1,13 @@
+{
+  "dataset_id": "retail_product_search_eval",
+  "licence_name": "Apache 2.0 (both sub-datasets)",
+  "licence_url": "https://www.apache.org/licenses/LICENSE-2.0",
+  "licence_text_location": "Sub-dataset README dataset card headers",
+  "commercial_use": "permitted",
+  "modification": "permitted",
+  "redistribution": "permitted",
+  "unresolved_or_conflicting_conditions": [
+    "No top-level licence file covers the combined retail_product_search_eval folder."
+  ],
+  "notes": "Both sub-datasets are permissive Apache 2.0; commercial use, modification and redistribution are permitted with attribution."
+}

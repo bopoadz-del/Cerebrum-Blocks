@@ -1,0 +1,16 @@
+{
+  "dataset_id": "insurance_eu_solvency_core",
+  "display_name": "EIOPA Solvency II Single Rulebook",
+  "publisher": "European Insurance and Occupational Pensions Authority (EIOPA)",
+  "original_publisher": "EIOPA",
+  "source_urls": [
+    "https://www.eiopa.europa.eu/rulebook/solvency-ii-single-rulebook_en",
+    "https://www.eiopa.europa.eu/document/download/244a473e-b3b5-4df1-b0c6-2b8fa1aa40be_en?filename=eiopa-solvency2-single-rulebook-user-guide.pdf",
+    "https://www.eiopa.europa.eu/legal-notice_en"
+  ],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "insurance_eu_solvency_core/metadata.json"
+  ],
+  "notes": "Local copy is a downloaded selection of EIOPA rulebook pages and PDFs."
+}

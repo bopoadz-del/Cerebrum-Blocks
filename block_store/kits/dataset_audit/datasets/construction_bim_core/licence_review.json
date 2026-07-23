@@ -1,0 +1,15 @@
+{
+  "dataset_id": "construction_bim_core",
+  "licence_name": "CC BY 4.0 (dataset); mixed per-model licences",
+  "licence_url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+  "licence_text_location": "construction_bim_core/LICENSE",
+  "commercial_use": "permitted",
+  "modification": "permitted",
+  "redistribution": "permitted",
+  "unresolved_or_conflicting_conditions": [
+    "Four IFC model files are licensed under GPLv3 (projects/4351, ettenheim_gis, hitos, samuel_macalister_sample_house).",
+    "Redistributing the whole folder as a single package would impose GPLv3 copyleft obligations on those models, conflicting with the CC BY 4.0 dataset licence.",
+    "West Riverside Hospital model is CC BY 3.0, which is not the same as the dataset's CC BY 4.0."
+  ],
+  "notes": "Permissions above apply to the dataset's own CC BY 4.0 content; model files must be tracked individually."
+}

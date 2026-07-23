@@ -1,0 +1,34 @@
+{
+  "dataset_id": "rag_kits",
+  "files_inspected": 390,
+  "records_inspected": 100,
+  "exact_duplicate_count": 232,
+  "exact_duplicate_rate": 0.03709,
+  "near_duplicate_count": 0,
+  "near_duplicate_rate": 0.0,
+  "repeated_context_count": 416,
+  "repeated_question_count": 2404,
+  "synthetic_status": "majority",
+  "extraction_noise": "major",
+  "language_distribution": {
+    "en": 0.93,
+    "hr": 0.04,
+    "fr": 0.03
+  },
+  "sample_issues": [
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\rag_kits\\raw_regulations\\harvest_manifest.json",
+      "record_index": 16,
+      "type": "repeated_context",
+      "description": "Context repeated across 3 inspected records",
+      "snippet": "esma"
+    },
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\rag_kits\\IrishFinance_prompt_completion.jsonl",
+      "record_index": 2414,
+      "type": "html_in_plaintext",
+      "description": "HTML/XML tags present in non-HTML record",
+      "snippet": "prompt: System: You are a financial policy and regulatory assistant specializing in central banking, economic policy, and financial regulation. Provide accurate, comprehensive answers based on officia"
+    }
+  ]
+}

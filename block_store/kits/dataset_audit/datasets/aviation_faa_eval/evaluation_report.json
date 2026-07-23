@@ -1,0 +1,17 @@
+{
+  "dataset_id": "aviation_faa_eval",
+  "is_evaluation_candidate": true,
+  "question_count": 660,
+  "with_expected_answer": 660,
+  "with_source_document": 660,
+  "with_passage_span": 0,
+  "with_derivation": 0,
+  "with_jurisdiction_version": 0,
+  "exact_duplicate_questions": 0,
+  "train_test_overlap": "none",
+  "quality_tier": "candidate",
+  "required_raw_sources": [
+    "aviation_faa_core_rag/ (AIM PDF, CFR XML parts 61/91/121/135)"
+  ],
+  "notes": "Test split has 660 instruction/output pairs. Source field gives regulation reference but no passage span. Train file has 8899 total rows, of which 5922 carry non-empty instruction questions; overlap checked against those."
+}

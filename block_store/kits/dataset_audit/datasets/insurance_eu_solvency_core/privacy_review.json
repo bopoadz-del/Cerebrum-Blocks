@@ -1,0 +1,10 @@
+{
+  "dataset_id": "insurance_eu_solvency_core",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [],
+  "legitimate_public_records": false,
+  "recommendation": "approve",
+  "notes": "Public EU insurance regulation texts (EIOPA Solvency II). No personal or customer data detected."
+}

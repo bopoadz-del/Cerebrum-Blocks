@@ -1,0 +1,52 @@
+{
+  "dataset_id": "medical_clinical_guidelines",
+  "display_name": "Clinical Guidelines (Meditron subset)",
+  "primary_role": "RAW_RAG",
+  "verdict": "REJECT",
+  "score": 79,
+  "findings": [
+    {
+      "type": "hard_failure",
+      "gate": "unknown_licence",
+      "details": "Common Crawl Foundation Terms of Use: commercial and redistribution rights unclear"
+    },
+    {
+      "type": "licence",
+      "licence": "Common Crawl Foundation Terms of Use",
+      "commercial": "unknown",
+      "redistribution": "unknown"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.0,
+      "near_duplicate_rate": 0.0,
+      "synthetic_status": "none",
+      "extraction_noise": "major"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    },
+    {
+      "type": "raw_rag",
+      "documents": 16,
+      "chunks": 149,
+      "table_corruption": "none"
+    }
+  ],
+  "approved_components": [],
+  "excluded_components": [
+    "Entire dataset (unknown redistribution rights under Common Crawl ToU)"
+  ],
+  "required_raw_sources": [],
+  "reason": "Hard rejection gates triggered: unknown_licence. Weak scoring dimensions: content_integrity, operational_efficiency.",
+  "evidence_paths": [
+    "datasets/medical_clinical_guidelines/provenance.json",
+    "datasets/medical_clinical_guidelines/licence_review.json",
+    "datasets/medical_clinical_guidelines/domain_mapping.json",
+    "datasets/medical_clinical_guidelines/quality_metrics.json",
+    "datasets/medical_clinical_guidelines/privacy_review.json",
+    "datasets/medical_clinical_guidelines/chunkability_report.json",
+    "datasets/medical_clinical_guidelines/evaluation_report.json"
+  ]
+}

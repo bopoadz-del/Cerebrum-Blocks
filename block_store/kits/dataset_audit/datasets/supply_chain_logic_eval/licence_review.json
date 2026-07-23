@@ -1,0 +1,13 @@
+{
+  "dataset_id": "supply_chain_logic_eval",
+  "licence_name": "ReLoop Research and Education License v1.0 / Data CC BY 4.0 / Code MIT",
+  "licence_url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+  "licence_text_location": "supply_chain_logic_eval/LICENSE",
+  "commercial_use": "permitted",
+  "modification": "permitted",
+  "redistribution": "permitted",
+  "unresolved_or_conflicting_conditions": [
+    "The LICENSE file is a custom ReLoop Research and Education License, while README.md states data is CC BY 4.0 and code is MIT. The custom licence is compatible with CC BY 4.0 but adds an additional attribution requirement."
+  ],
+  "notes": "All three statements permit commercial use, modification and redistribution with attribution."
+}

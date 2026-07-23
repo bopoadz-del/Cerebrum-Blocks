@@ -1,0 +1,36 @@
+{
+  "dataset_id": "retail_product_search_eval",
+  "files_inspected": 7,
+  "records_inspected": 492,
+  "exact_duplicate_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_count": 0,
+  "near_duplicate_rate": 0.0,
+  "repeated_context_count": 95047,
+  "repeated_question_count": 2723656,
+  "synthetic_status": "none",
+  "extraction_noise": "minor",
+  "language_distribution": {
+    "en": 0.4756,
+    "fr": 0.4573,
+    "ca": 0.0427,
+    "es": 0.0224,
+    "ro": 0.002
+  },
+  "sample_issues": [
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\retail_product_search_eval\\amazon_esci\\queries\\train-00000-of-00001.parquet",
+      "record_index": 946736,
+      "type": "repeated_question",
+      "description": "Question/query repeated across 2 inspected records",
+      "snippet": "loewe hombre oferta"
+    },
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\retail_product_search_eval\\amazon_esci\\products\\test-00000-of-00002.parquet",
+      "record_index": 5922,
+      "type": "html_in_plaintext",
+      "description": "HTML/XML tags present in non-HTML record",
+      "snippet": "product_id: B082TTXZ72\nproduct_title: Toyvian Construcciones Juegos de Simulación Herramienta de Construcción Juguetes Ingeniero Casco para Niños Juegos de rol Accesorios para Disfraces\nproduct_descri"
+    }
+  ]
+}

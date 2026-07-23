@@ -1,0 +1,13 @@
+{
+  "dataset_id": "universal_api_reference",
+  "display_name": "Universal API Reference",
+  "publisher": "Project-curated",
+  "original_publisher": "Project-curated",
+  "source_urls": [],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "universal_api_reference/http_status_codes.json",
+    "universal_api_reference/file_extensions.json"
+  ],
+  "notes": "Hand-curated HTTP status code and file extension references. No provenance or licence metadata."
+}

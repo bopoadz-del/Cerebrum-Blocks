@@ -1,0 +1,10 @@
+{
+  "dataset_id": "supply_chain_raw_rag_candidates",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [],
+  "legitimate_public_records": false,
+  "recommendation": "approve",
+  "notes": "Public customs/warehousing guidance and a source scouting report. No personal data detected."
+}

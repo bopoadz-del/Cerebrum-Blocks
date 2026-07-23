@@ -1,0 +1,10 @@
+{
+  "dataset_id": "medical_pubmedqa_eval",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [],
+  "legitimate_public_records": false,
+  "recommendation": "approve",
+  "notes": "PubMedQA biomedical question-answer pairs derived from PubMed abstracts. No patient identifiers detected; content is public biomedical literature."
+}

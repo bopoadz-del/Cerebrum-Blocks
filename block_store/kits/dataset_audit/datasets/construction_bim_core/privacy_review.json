@@ -1,0 +1,10 @@
+{
+  "dataset_id": "construction_bim_core",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [],
+  "legitimate_public_records": false,
+  "recommendation": "approve",
+  "notes": "IFC benchmark data and model cards for open/public building-information-modeling projects. No personal data detected."
+}

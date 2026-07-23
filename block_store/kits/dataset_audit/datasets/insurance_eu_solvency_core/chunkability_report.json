@@ -1,0 +1,22 @@
+{
+  "dataset_id": "insurance_eu_solvency_core",
+  "is_raw_rag_candidate": true,
+  "document_count": 4,
+  "estimated_chunk_count": 445,
+  "avg_chunk_chars": 1841,
+  "min_chunk_chars": 104,
+  "max_chunk_chars": 2048,
+  "orphan_fragments": 4,
+  "table_corruption": "none",
+  "duplicate_chunks": 44,
+  "required_metadata": [
+    "document_id",
+    "section_heading",
+    "source_file",
+    "title"
+  ],
+  "structural_boundaries": [
+    "section",
+    "title"
+  ]
+}

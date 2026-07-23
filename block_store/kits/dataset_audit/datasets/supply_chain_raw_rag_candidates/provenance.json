@@ -1,0 +1,18 @@
+{
+  "dataset_id": "supply_chain_raw_rag_candidates",
+  "display_name": "Supply Chain Raw RAG Candidates",
+  "publisher": "Multiple (UNECE, U.S. CBP, EU Commission, UK HMRC, U.S. OSHA)",
+  "original_publisher": "Multiple (UNECE, U.S. CBP, EU Commission, UK HMRC, U.S. OSHA)",
+  "source_urls": [
+    "https://digitallibrary.un.org/record/548326",
+    "https://www.cbp.gov/trade/basic-import-export/importer-exporter-tips",
+    "https://taxation-customs.ec.europa.eu/customs/customs-imports-and-exports_en",
+    "https://www.gov.uk/guidance/import-goods-into-the-uk",
+    "https://www.osha.gov/warehousing-safety"
+  ],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "supply_chain_raw_rag_candidates/scouting_report.md"
+  ],
+  "notes": "Small raw samples harvested directly from public authorities and international organisations. Other sources are recorded as URL-only or citation-only because their licences are unclear or non-commercial."
+}

@@ -1,0 +1,59 @@
+{
+  "dataset_id": "aviation_faa_core_rag",
+  "display_name": "FAA Aviation Core RAG documents",
+  "primary_role": "RAW_RAG",
+  "verdict": "REJECT",
+  "score": 79,
+  "findings": [
+    {
+      "type": "hard_failure",
+      "gate": "unknown_licence",
+      "details": "Unknown (no local licence file)"
+    },
+    {
+      "type": "hard_failure",
+      "gate": "unknown_licence",
+      "details": "No LICENSE, LICENCE or README file exists. Source material is U.S. government work, but no local licence text records the rights."
+    },
+    {
+      "type": "licence",
+      "licence": "Unknown (no local licence file)",
+      "commercial": "unknown",
+      "redistribution": "unknown"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.0,
+      "near_duplicate_rate": 0.0,
+      "synthetic_status": "none",
+      "extraction_noise": "none"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    },
+    {
+      "type": "raw_rag",
+      "documents": 5,
+      "chunks": 1706,
+      "table_corruption": "major"
+    }
+  ],
+  "approved_components": [
+    "Documents if local public-domain licence file is added"
+  ],
+  "excluded_components": [
+    "Current package (no local licence file)"
+  ],
+  "required_raw_sources": [],
+  "reason": "Hard rejection gates triggered: unknown_licence. Weak scoring dimensions: chunk_quality, content_integrity, operational_efficiency.",
+  "evidence_paths": [
+    "datasets/aviation_faa_core_rag/provenance.json",
+    "datasets/aviation_faa_core_rag/licence_review.json",
+    "datasets/aviation_faa_core_rag/domain_mapping.json",
+    "datasets/aviation_faa_core_rag/quality_metrics.json",
+    "datasets/aviation_faa_core_rag/privacy_review.json",
+    "datasets/aviation_faa_core_rag/chunkability_report.json",
+    "datasets/aviation_faa_core_rag/evaluation_report.json"
+  ]
+}

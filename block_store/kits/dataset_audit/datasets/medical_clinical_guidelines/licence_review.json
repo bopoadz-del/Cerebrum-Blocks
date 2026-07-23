@@ -1,0 +1,14 @@
+{
+  "dataset_id": "medical_clinical_guidelines",
+  "licence_name": "Common Crawl Foundation Terms of Use",
+  "licence_url": "https://commoncrawl.org/terms-of-use/full/",
+  "licence_text_location": "medical_clinical_guidelines/README_guidelines.md (dataset card header only; no separate LICENSE file)",
+  "commercial_use": "unknown",
+  "modification": "unknown",
+  "redistribution": "unknown",
+  "unresolved_or_conflicting_conditions": [
+    "The Common Crawl ToU grants only a limited, non-transferable, non-sublicensable licence to access and use the Service; it does not explicitly authorise redistribution or modification of extracted Crawled Content.",
+    "Each underlying source (e.g., WikiDoc crowdsourced content) may impose additional terms; the dataset card advises checking redistribution licences."
+  ],
+  "notes": "Not a conventional open-data licence. The publisher filtered to sources it believes allow redistribution, but no local licence text grants those rights."
+}

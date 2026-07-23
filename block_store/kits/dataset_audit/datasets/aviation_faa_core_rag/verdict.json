@@ -1,0 +1,66 @@
+{
+  "dataset_id": "aviation_faa_core_rag",
+  "domain": "aviation",
+  "primary_role": "RAW_RAG",
+  "secondary_roles": [],
+  "source_publisher": "U.S. Federal Aviation Administration / U.S. Government Publishing Office",
+  "original_source": "U.S. Federal Aviation Administration / U.S. Government Publishing Office",
+  "licence": "Unknown (no local licence file)",
+  "commercial_use": "unknown",
+  "redistribution": "unknown",
+  "jurisdiction": "aviation",
+  "effective_dates": "",
+  "file_count": 6,
+  "total_bytes": 46043352,
+  "record_count": 0,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "none",
+  "pii_status": "none",
+  "raw_rag_score": 79,
+  "evaluation_score": 0,
+  "score_breakdown": {
+    "authority": 20,
+    "product_relevance": 15,
+    "licence_clarity": 8,
+    "provenance": 6,
+    "coverage_contribution": 8,
+    "currency_versioning": 8,
+    "chunk_quality": 5,
+    "content_integrity": 5,
+    "operational_efficiency": 4
+  },
+  "hard_failures": [
+    {
+      "gate": "unknown_licence",
+      "source": "licence_review.json",
+      "details": "Unknown (no local licence file)"
+    },
+    {
+      "gate": "unknown_licence",
+      "source": "licence_issues.json",
+      "details": "No LICENSE, LICENCE or README file exists. Source material is U.S. government work, but no local licence text records the rights."
+    }
+  ],
+  "verdict": "REJECT",
+  "approved_components": [
+    "Documents if local public-domain licence file is added"
+  ],
+  "excluded_components": [
+    "Current package (no local licence file)"
+  ],
+  "required_raw_sources": [],
+  "reason": "Hard rejection gates triggered: unknown_licence. Weak scoring dimensions: chunk_quality, content_integrity, operational_efficiency.",
+  "evidence_paths": [
+    "datasets/aviation_faa_core_rag/provenance.json",
+    "datasets/aviation_faa_core_rag/licence_review.json",
+    "datasets/aviation_faa_core_rag/domain_mapping.json",
+    "datasets/aviation_faa_core_rag/quality_metrics.json",
+    "datasets/aviation_faa_core_rag/privacy_review.json",
+    "datasets/aviation_faa_core_rag/chunkability_report.json",
+    "datasets/aviation_faa_core_rag/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.620882+00:00",
+  "max_status": "technically_verified_candidate"
+}

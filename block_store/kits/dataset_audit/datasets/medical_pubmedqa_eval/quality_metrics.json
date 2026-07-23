@@ -1,0 +1,17 @@
+{
+  "dataset_id": "medical_pubmedqa_eval",
+  "files_inspected": 3,
+  "records_inspected": 100,
+  "exact_duplicate_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_count": 0,
+  "near_duplicate_rate": 0.0,
+  "repeated_context_count": 0,
+  "repeated_question_count": 0,
+  "synthetic_status": "none",
+  "extraction_noise": "none",
+  "language_distribution": {
+    "en": 1.0
+  },
+  "sample_issues": []
+}

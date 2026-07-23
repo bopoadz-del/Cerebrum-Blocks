@@ -1,0 +1,53 @@
+{
+  "dataset_id": "insurance_eu_solvency_core",
+  "domain": "insurance",
+  "primary_role": "RAW_RAG",
+  "secondary_roles": [],
+  "source_publisher": "European Insurance and Occupational Pensions Authority (EIOPA)",
+  "original_source": "EIOPA",
+  "licence": "EIOPA Legal Notice (reuse authorised with attribution)",
+  "commercial_use": "permitted",
+  "redistribution": "permitted",
+  "jurisdiction": "insurance",
+  "effective_dates": "",
+  "file_count": 5,
+  "total_bytes": 1714888,
+  "record_count": 0,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "none",
+  "pii_status": "none",
+  "raw_rag_score": 86,
+  "evaluation_score": 0,
+  "score_breakdown": {
+    "authority": 20,
+    "product_relevance": 15,
+    "licence_clarity": 12,
+    "provenance": 9,
+    "coverage_contribution": 6,
+    "currency_versioning": 8,
+    "chunk_quality": 7,
+    "content_integrity": 5,
+    "operational_efficiency": 4
+  },
+  "hard_failures": [],
+  "verdict": "APPROVE_CORE_RAG",
+  "approved_components": [
+    "Whole dataset as classified"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [],
+  "reason": "Raw RAG score 86/100 maps to APPROVE_CORE_RAG. Weak scoring dimensions: content_integrity, operational_efficiency.",
+  "evidence_paths": [
+    "datasets/insurance_eu_solvency_core/provenance.json",
+    "datasets/insurance_eu_solvency_core/licence_review.json",
+    "datasets/insurance_eu_solvency_core/domain_mapping.json",
+    "datasets/insurance_eu_solvency_core/quality_metrics.json",
+    "datasets/insurance_eu_solvency_core/privacy_review.json",
+    "datasets/insurance_eu_solvency_core/chunkability_report.json",
+    "datasets/insurance_eu_solvency_core/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.611880+00:00",
+  "max_status": "technically_verified_candidate"
+}

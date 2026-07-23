@@ -1,0 +1,51 @@
+{
+  "dataset_id": "universal_reference_data",
+  "display_name": "Universal Reference Data",
+  "primary_role": "REFERENCE_DATA",
+  "verdict": "REJECT",
+  "score": 0,
+  "findings": [
+    {
+      "type": "hard_failure",
+      "gate": "unknown_licence",
+      "details": "Unknown (no local licence file)"
+    },
+    {
+      "type": "hard_failure",
+      "gate": "unknown_licence",
+      "details": "No LICENSE, LICENCE or README file exists; reuse terms are unstated."
+    },
+    {
+      "type": "licence",
+      "licence": "Unknown (no local licence file)",
+      "commercial": "unknown",
+      "redistribution": "unknown"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.0,
+      "near_duplicate_rate": 0.014599,
+      "synthetic_status": "none",
+      "extraction_noise": "none"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    }
+  ],
+  "approved_components": [],
+  "excluded_components": [
+    "Entire dataset (no licence file; reuse terms unstated)"
+  ],
+  "required_raw_sources": [],
+  "reason": "Hard rejection gates triggered: unknown_licence.",
+  "evidence_paths": [
+    "datasets/universal_reference_data/provenance.json",
+    "datasets/universal_reference_data/licence_review.json",
+    "datasets/universal_reference_data/domain_mapping.json",
+    "datasets/universal_reference_data/quality_metrics.json",
+    "datasets/universal_reference_data/privacy_review.json",
+    "datasets/universal_reference_data/chunkability_report.json",
+    "datasets/universal_reference_data/evaluation_report.json"
+  ]
+}

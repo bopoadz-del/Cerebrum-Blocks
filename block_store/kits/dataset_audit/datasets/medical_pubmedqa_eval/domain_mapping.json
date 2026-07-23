@@ -1,0 +1,27 @@
+{
+  "dataset_id": "medical_pubmedqa_eval",
+  "domain": "medical",
+  "cerebrum_product": "Cerebrum Medical",
+  "supported_workflows": [
+    "Biomedical yes/no/maybe question answering",
+    "Evaluation of medical reasoning over PubMed abstracts",
+    "Research-literature decision support"
+  ],
+  "supported_questions": [
+    "Do mitochondria play a role in remodelling lace plant leaves during programmed cell death?",
+    "Is drug X effective for condition Y based on published evidence?",
+    "Does the reported study support the hypothesis?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "medical_clinical_guidelines",
+      "nature": "Both are medical; pubmedqa_eval focuses on research-abstract QA while clinical_guidelines focuses on synthesised practice recommendations"
+    }
+  ],
+  "unrelated_content": [],
+  "weak_content": [
+    "Questions are framed as yes/no/maybe over single abstracts; less useful for open-ended clinical consultation",
+    "Some abstracts are basic-science (e.g., plant PCD) and only weakly relevant to clinical medicine"
+  ],
+  "primary_recommendation": "Use as the standard medical QA evaluation set. For clinical decision-support RAG, prefer medical_clinical_guidelines."
+}

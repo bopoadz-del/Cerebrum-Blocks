@@ -1,0 +1,19 @@
+{
+  "dataset_id": "retail_product_search_eval",
+  "is_evaluation_candidate": true,
+  "question_count": 31418,
+  "with_expected_answer": 31418,
+  "with_source_document": 31418,
+  "with_passage_span": 0,
+  "with_derivation": 0,
+  "with_jurisdiction_version": 0,
+  "exact_duplicate_questions": 14496,
+  "train_test_overlap": "confirmed",
+  "quality_tier": "golden",
+  "required_raw_sources": [
+    "amazon_esci/products/",
+    "amazon_esci/retrieval/",
+    "wands/data/data.jsonl.gz"
+  ],
+  "notes": "Amazon ESCI and WANDS product-search benchmarks. Sub-component unique test/eval queries: {'amazon_esci_test': 30947, 'amazon_esci_exact_test': 14487, 'wands': 480}; unioned unique queries: 31418. Rows are query-product judgments; question counts are unique query texts. exact_queries_small test queries are a subset of Amazon ESCI test queries. Product catalogs are the raw corpus."
+}

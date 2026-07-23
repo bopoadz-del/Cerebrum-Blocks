@@ -1,0 +1,18 @@
+{
+  "dataset_id": "retail_product_search_eval",
+  "display_name": "Retail Product Search Evaluation",
+  "publisher": "Multiple (Amazon Science / Wayfair)",
+  "original_publisher": "Amazon Science (ESCI) / Wayfair (WANDS)",
+  "source_urls": [
+    "https://github.com/amazon-science/esci-data",
+    "https://huggingface.co/datasets/milistu/amazon-esci-data",
+    "https://github.com/wayfair/WANDS",
+    "https://huggingface.co/datasets/shuttie/wands"
+  ],
+  "downloaded_from": "mirror",
+  "evidence_files": [
+    "retail_product_search_eval/amazon_esci/README.md",
+    "retail_product_search_eval/wands/README.md"
+  ],
+  "notes": "Root folder has no licence; both sub-datasets are Apache 2.0 HuggingFace mirrors of the original Amazon Science and Wayfair datasets."
+}

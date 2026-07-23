@@ -1,0 +1,29 @@
+{
+  "dataset_id": "insurance_eu_regulatory_qa",
+  "domain": "insurance",
+  "cerebrum_product": "Cerebrum Insurance",
+  "supported_workflows": [
+    "EIOPA regulatory Q&A retrieval and answer synthesis",
+    "Solvency II interpretive guidance question answering",
+    "Regulatory help-desk and compliance clarification workflows"
+  ],
+  "supported_questions": [
+    "How does EIOPA interpret the Own Risk and Solvency Assessment requirements?",
+    "What is EIOPA's guidance on reporting deadlines for Solvency II?",
+    "How should an insurer apply the proportionality principle?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "insurance_eu_solvency_core",
+      "nature": "Same regulator (EIOPA) and same subject (Solvency II); this dataset provides official Q&A interpretations of the rules in insurance_eu_solvency_core"
+    }
+  ],
+  "unrelated_content": [
+    "scrape_qa_sample.py is a tooling/scraper file, not domain content"
+  ],
+  "weak_content": [
+    "One sampled record has an empty answer",
+    "Sample is focused on Solvency II; other EIOPA topic areas (pensions, consumer protection) are under-represented"
+  ],
+  "primary_recommendation": "Strongest source for Solvency II interpretive Q&A. Use together with insurance_eu_solvency_core for the underlying rules; prefer this dataset when the user asks how EIOPA interprets a requirement."
+}

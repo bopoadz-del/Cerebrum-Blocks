@@ -1,0 +1,53 @@
+{
+  "dataset_id": "supply_chain_raw_rag_candidates",
+  "domain": "supply_chain",
+  "primary_role": "RAW_RAG",
+  "secondary_roles": [],
+  "source_publisher": "Multiple (UNECE, U.S. CBP, EU Commission, UK HMRC, U.S. OSHA)",
+  "original_source": "Multiple (UNECE, U.S. CBP, EU Commission, UK HMRC, U.S. OSHA)",
+  "licence": "Mixed per-sample",
+  "commercial_use": "permitted",
+  "redistribution": "permitted",
+  "jurisdiction": "supply_chain",
+  "effective_dates": "",
+  "file_count": 7,
+  "total_bytes": 446297,
+  "record_count": 0,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "none",
+  "pii_status": "none",
+  "raw_rag_score": 83,
+  "evaluation_score": 0,
+  "score_breakdown": {
+    "authority": 20,
+    "product_relevance": 15,
+    "licence_clarity": 12,
+    "provenance": 9,
+    "coverage_contribution": 8,
+    "currency_versioning": 8,
+    "chunk_quality": 5,
+    "content_integrity": 2,
+    "operational_efficiency": 4
+  },
+  "hard_failures": [],
+  "verdict": "APPROVE_CANDIDATE_RAG",
+  "approved_components": [
+    "Whole dataset as classified"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [],
+  "reason": "Raw RAG score 83/100 maps to APPROVE_CANDIDATE_RAG. Weak scoring dimensions: chunk_quality, content_integrity, operational_efficiency.",
+  "evidence_paths": [
+    "datasets/supply_chain_raw_rag_candidates/provenance.json",
+    "datasets/supply_chain_raw_rag_candidates/licence_review.json",
+    "datasets/supply_chain_raw_rag_candidates/domain_mapping.json",
+    "datasets/supply_chain_raw_rag_candidates/quality_metrics.json",
+    "datasets/supply_chain_raw_rag_candidates/privacy_review.json",
+    "datasets/supply_chain_raw_rag_candidates/chunkability_report.json",
+    "datasets/supply_chain_raw_rag_candidates/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.643937+00:00",
+  "max_status": "technically_verified_candidate"
+}

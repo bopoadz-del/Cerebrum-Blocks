@@ -1,0 +1,49 @@
+{
+  "dataset_id": "construction_bim_core",
+  "file_count": 50,
+  "extensions": {
+    ".md": 24,
+    ".csv": 2,
+    "(no ext)": 1,
+    ".txt": 22,
+    ".ifc": 1
+  },
+  "mime_types": {
+    "application/octet-stream": 26,
+    "application/vnd.ms-excel": 2,
+    "text/plain": 22
+  },
+  "largest_files": [
+    {
+      "path": "projects/duplex/arc.ifc",
+      "size_bytes": 1656153,
+      "sha256": "707a032566dee8e969a44d95509be46d646440e2443624709f8d3ae2b45f4656",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "ifc-bench-v2.csv",
+      "size_bytes": 469100,
+      "sha256": "e47ccd097306f5bca49b9c8ac0b4cd72f296df9f7ff7a02625b3f06c1691da9b",
+      "mime_type": "application/vnd.ms-excel"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 17951,
+      "sha256": "cce411b1451c348b88e5988316b2e0431b25b9bd0794c1789d7419cab1a00329",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "ifc-bench-v1.csv",
+      "size_bytes": 17143,
+      "sha256": "f67a48770d74b6e0ff0868c923c3e1d976110350b2c439564d7ceccc16a46f35",
+      "mime_type": "application/vnd.ms-excel"
+    },
+    {
+      "path": "projects/west_riverside_hospital/model_card.md",
+      "size_bytes": 4571,
+      "sha256": "3513e60bbaa3202fb9c54a014bdcbe38b46ba7b426e3ecc45f3b11d33ef4b6ff",
+      "mime_type": "application/octet-stream"
+    }
+  ],
+  "schema_notes": "Derived from inventory; inspect representative files for detailed schema."
+}

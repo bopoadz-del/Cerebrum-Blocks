@@ -1,0 +1,77 @@
+{
+  "dataset_id": "rag_kits",
+  "display_name": "RAG Kits (mixed regulatory and financial corpora)",
+  "primary_role": "RETRIEVAL_EVAL",
+  "verdict": "REJECT",
+  "score": 74,
+  "findings": [
+    {
+      "type": "hard_failure",
+      "gate": "unknown_licence",
+      "details": "Mixed per-component licence with unresolved top-level terms"
+    },
+    {
+      "type": "hard_failure",
+      "gate": "unknown_licence",
+      "details": "No licence file for the link-index CSV; reuse terms for the compilation are not stated."
+    },
+    {
+      "type": "hard_failure",
+      "gate": "commercial_use_prohibited",
+      "details": "OpenSanctions is free for non-commercial users; businesses must acquire a data licence (https://www.opensanctions.org/docs/commercial/exemption/)."
+    },
+    {
+      "type": "licence",
+      "licence": "Mixed per-component",
+      "commercial": "mixed",
+      "redistribution": "mixed"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.03709,
+      "near_duplicate_rate": 0.0,
+      "synthetic_status": "majority",
+      "extraction_noise": "major"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    },
+    {
+      "type": "evaluation",
+      "questions": 6931,
+      "with_span": 0,
+      "with_answer": 6931,
+      "quality_tier": "candidate"
+    },
+    {
+      "type": "raw_rag",
+      "documents": 108,
+      "chunks": 20130,
+      "table_corruption": "major"
+    }
+  ],
+  "approved_components": [
+    "tatqa_dataset_test.json",
+    "tatqa_dataset_dev.json"
+  ],
+  "excluded_components": [
+    "opensanctions_sample_1000.json (commercial prohibited)",
+    "IrishFinance_prompt_completion.jsonl (unknown licence)",
+    "Regulations_Link_Retrieval.csv (unknown licence)"
+  ],
+  "required_raw_sources": [
+    "raw_regulations/ (harvested regulation texts)",
+    "harvest_manifest.json"
+  ],
+  "reason": "Hard rejection gates triggered: unknown_licence, commercial_use_prohibited. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/rag_kits/provenance.json",
+    "datasets/rag_kits/licence_review.json",
+    "datasets/rag_kits/domain_mapping.json",
+    "datasets/rag_kits/quality_metrics.json",
+    "datasets/rag_kits/privacy_review.json",
+    "datasets/rag_kits/chunkability_report.json",
+    "datasets/rag_kits/evaluation_report.json"
+  ]
+}

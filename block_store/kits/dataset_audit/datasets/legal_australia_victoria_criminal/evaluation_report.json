@@ -1,0 +1,17 @@
+{
+  "dataset_id": "legal_australia_victoria_criminal",
+  "is_evaluation_candidate": true,
+  "question_count": 100,
+  "with_expected_answer": 100,
+  "with_source_document": 100,
+  "with_passage_span": 100,
+  "with_derivation": 0,
+  "with_jurisdiction_version": 0,
+  "exact_duplicate_questions": 0,
+  "train_test_overlap": "none",
+  "quality_tier": "golden",
+  "required_raw_sources": [
+    "corpus.jsonl"
+  ],
+  "notes": "Legal RAG Bench: expert-written QA pairs with passage IDs into corpus.jsonl. Corpus included."
+}

@@ -1,0 +1,36 @@
+{
+  "dataset_id": "construction_bim_core",
+  "domain": "construction",
+  "cerebrum_product": "Cerebrum Construction",
+  "supported_workflows": [
+    "IFC model question answering over architectural and MEP building models",
+    "BIM-based building compliance and accessibility checks",
+    "Quantity take-off and spatial reasoning from digital twin models",
+    "Code-style generation and structured extraction from IFC files"
+  ],
+  "supported_questions": [
+    "What is the total gross floor area of the building?",
+    "How many windows are on the north facade?",
+    "Are the walls of room A203 load bearing?",
+    "What is the floor-to-floor height between ground and first floor?",
+    "Which rooms have direct access to outdoor spaces?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "universal_reference_data",
+      "nature": "units.json may help convert SI/Imperial measurements, but no semantic overlap"
+    },
+    {
+      "dataset_id": "universal_api_reference",
+      "nature": "generic file extension metadata unrelated to BIM domain"
+    }
+  ],
+  "unrelated_content": [
+    "LICENSE and CONTRIBUTING.md files are repository metadata, not domain content"
+  ],
+  "weak_content": [
+    "Model cards for some projects contain only bibliographic/source metadata with no domain semantics",
+    "Several project folders hold only license/model_card files without actual IFC models"
+  ],
+  "primary_recommendation": "Strong, focused source for Construction/BIM RAG and code-generation tasks. Use as the core construction knowledge base and combine with universal_reference_data for unit conversion lookups."
+}

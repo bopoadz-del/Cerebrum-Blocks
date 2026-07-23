@@ -1,0 +1,59 @@
+{
+  "dataset_id": "legal_general_retrieval_eval",
+  "display_name": "LegalBench-RAG",
+  "primary_role": "RETRIEVAL_EVAL",
+  "verdict": "APPROVE_GOLDEN_EVAL",
+  "score": 90,
+  "findings": [
+    {
+      "type": "licence",
+      "licence": "MIT",
+      "commercial": "permitted",
+      "redistribution": "permitted"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.000526,
+      "near_duplicate_rate": 0.02,
+      "synthetic_status": "none",
+      "extraction_noise": "none"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    },
+    {
+      "type": "evaluation",
+      "questions": 6889,
+      "with_span": 6889,
+      "with_answer": 6889,
+      "quality_tier": "golden"
+    },
+    {
+      "type": "raw_rag",
+      "documents": 711,
+      "chunks": 54268,
+      "table_corruption": "none"
+    }
+  ],
+  "approved_components": [
+    "Whole dataset as classified"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [
+    "contractnli",
+    "cuad",
+    "maud",
+    "privacy_qa"
+  ],
+  "reason": "Evaluation score 90/100 maps to APPROVE_GOLDEN_EVAL. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/legal_general_retrieval_eval/provenance.json",
+    "datasets/legal_general_retrieval_eval/licence_review.json",
+    "datasets/legal_general_retrieval_eval/domain_mapping.json",
+    "datasets/legal_general_retrieval_eval/quality_metrics.json",
+    "datasets/legal_general_retrieval_eval/privacy_review.json",
+    "datasets/legal_general_retrieval_eval/chunkability_report.json",
+    "datasets/legal_general_retrieval_eval/evaluation_report.json"
+  ]
+}

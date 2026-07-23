@@ -1,0 +1,10 @@
+{
+  "dataset_id": "aviation_faa_core_rag",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [],
+  "legitimate_public_records": false,
+  "recommendation": "approve",
+  "notes": "Public FAA Aeronautical Information Manual and CFR parts. No personal data detected."
+}

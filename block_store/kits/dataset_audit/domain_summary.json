@@ -1,0 +1,178 @@
+{
+  "generated_at": "2026-07-23T06:37:44.663987+00:00",
+  "datasets_judged": 17,
+  "verdict_counts": {
+    "REJECT": 9,
+    "APPROVE_GOLDEN_EVAL": 1,
+    "APPROVE_CORE_RAG": 1,
+    "QUESTION_POOL_ONLY": 2,
+    "APPROVE_EVAL_CANDIDATE": 3,
+    "APPROVE_CANDIDATE_RAG": 1
+  },
+  "role_counts": {
+    "REASONING_EVAL": 2,
+    "RETRIEVAL_EVAL": 7,
+    "RAW_RAG": 4,
+    "REFERENCE_DATA": 2,
+    "OPERATIONAL_DEMO_DATA": 2
+  },
+  "datasets": [
+    {
+      "dataset_id": "construction_bim_core",
+      "domain": "construction",
+      "primary_role": "REASONING_EVAL",
+      "verdict": "REJECT",
+      "score": 75,
+      "hard_failures": [
+        "conflicting_terms"
+      ]
+    },
+    {
+      "dataset_id": "legal_general_retrieval_eval",
+      "domain": "legal",
+      "primary_role": "RETRIEVAL_EVAL",
+      "verdict": "APPROVE_GOLDEN_EVAL",
+      "score": 90,
+      "hard_failures": []
+    },
+    {
+      "dataset_id": "legal_australia_victoria_criminal",
+      "domain": "legal",
+      "primary_role": "RETRIEVAL_EVAL",
+      "verdict": "REJECT",
+      "score": 90,
+      "hard_failures": [
+        "commercial_use_prohibited",
+        "conflicting_terms"
+      ]
+    },
+    {
+      "dataset_id": "insurance_eu_solvency_core",
+      "domain": "insurance",
+      "primary_role": "RAW_RAG",
+      "verdict": "APPROVE_CORE_RAG",
+      "score": 86,
+      "hard_failures": []
+    },
+    {
+      "dataset_id": "insurance_eu_regulatory_qa",
+      "domain": "insurance",
+      "primary_role": "RETRIEVAL_EVAL",
+      "verdict": "QUESTION_POOL_ONLY",
+      "score": 66,
+      "hard_failures": []
+    },
+    {
+      "dataset_id": "aviation_faa_core_rag",
+      "domain": "aviation",
+      "primary_role": "RAW_RAG",
+      "verdict": "REJECT",
+      "score": 79,
+      "hard_failures": [
+        "unknown_licence"
+      ]
+    },
+    {
+      "dataset_id": "aviation_faa_eval",
+      "domain": "aviation",
+      "primary_role": "RETRIEVAL_EVAL",
+      "verdict": "APPROVE_EVAL_CANDIDATE",
+      "score": 73,
+      "hard_failures": []
+    },
+    {
+      "dataset_id": "medical_clinical_guidelines",
+      "domain": "medical",
+      "primary_role": "RAW_RAG",
+      "verdict": "REJECT",
+      "score": 79,
+      "hard_failures": [
+        "unknown_licence"
+      ]
+    },
+    {
+      "dataset_id": "medical_pubmedqa_eval",
+      "domain": "medical",
+      "primary_role": "RETRIEVAL_EVAL",
+      "verdict": "APPROVE_EVAL_CANDIDATE",
+      "score": 73,
+      "hard_failures": []
+    },
+    {
+      "dataset_id": "retail_product_search_eval",
+      "domain": "retail",
+      "primary_role": "RETRIEVAL_EVAL",
+      "verdict": "APPROVE_EVAL_CANDIDATE",
+      "score": 81,
+      "hard_failures": []
+    },
+    {
+      "dataset_id": "supply_chain_logic_eval",
+      "domain": "supply_chain",
+      "primary_role": "REASONING_EVAL",
+      "verdict": "QUESTION_POOL_ONLY",
+      "score": 63,
+      "hard_failures": []
+    },
+    {
+      "dataset_id": "supply_chain_raw_rag_candidates",
+      "domain": "supply_chain",
+      "primary_role": "RAW_RAG",
+      "verdict": "APPROVE_CANDIDATE_RAG",
+      "score": 83,
+      "hard_failures": []
+    },
+    {
+      "dataset_id": "rag_kits",
+      "domain": "mixed",
+      "primary_role": "RETRIEVAL_EVAL",
+      "verdict": "REJECT",
+      "score": 74,
+      "hard_failures": [
+        "commercial_use_prohibited",
+        "unknown_licence"
+      ]
+    },
+    {
+      "dataset_id": "universal_reference_data",
+      "domain": "universal_kernel",
+      "primary_role": "REFERENCE_DATA",
+      "verdict": "REJECT",
+      "score": 0,
+      "hard_failures": [
+        "unknown_licence"
+      ]
+    },
+    {
+      "dataset_id": "universal_ingestion_tests",
+      "domain": "universal_kernel",
+      "primary_role": "OPERATIONAL_DEMO_DATA",
+      "verdict": "REJECT",
+      "score": 0,
+      "hard_failures": [
+        "unknown_licence"
+      ]
+    },
+    {
+      "dataset_id": "universal_api_reference",
+      "domain": "universal_kernel",
+      "primary_role": "REFERENCE_DATA",
+      "verdict": "REJECT",
+      "score": 0,
+      "hard_failures": [
+        "unknown_licence"
+      ]
+    },
+    {
+      "dataset_id": "financeops_demo_fixtures",
+      "domain": "finance_ops",
+      "primary_role": "OPERATIONAL_DEMO_DATA",
+      "verdict": "REJECT",
+      "score": 0,
+      "hard_failures": [
+        "pii_detected",
+        "unknown_licence"
+      ]
+    }
+  ]
+}

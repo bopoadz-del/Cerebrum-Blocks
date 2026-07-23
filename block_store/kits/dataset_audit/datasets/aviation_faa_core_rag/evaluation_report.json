@@ -1,0 +1,22 @@
+{
+  "dataset_id": "aviation_faa_core_rag",
+  "is_evaluation_candidate": false,
+  "question_count": 0,
+  "with_expected_answer": 0,
+  "with_source_document": 0,
+  "with_passage_span": 0,
+  "with_derivation": 0,
+  "with_jurisdiction_version": 0,
+  "exact_duplicate_questions": 0,
+  "train_test_overlap": "none",
+  "quality_tier": "rejected",
+  "required_raw_sources": [
+    "AIM_Basic_w_Chg_1_2_3_dtd_7-9-26.pdf",
+    "cfr_part_61.xml",
+    "cfr_part_91.xml",
+    "cfr_part_121.xml",
+    "cfr_part_135.xml",
+    "aim_index.html"
+  ],
+  "notes": "Raw RAG corpus for aviation regulations. Not an evaluation dataset."
+}

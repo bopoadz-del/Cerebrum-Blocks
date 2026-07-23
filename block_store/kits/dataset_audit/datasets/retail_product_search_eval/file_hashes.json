@@ -1,0 +1,47 @@
+{
+  "dataset_id": "retail_product_search_eval",
+  "files": [
+    {
+      "path": "amazon_esci/README.md",
+      "size_bytes": 5774,
+      "sha256": "c43ed589a5cb6e2a583b1bf49e30f0b633839fbf899a06c1c0c0e95f7dd454f0",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "amazon_esci/products/test-00000-of-00002.parquet",
+      "size_bytes": 146982884,
+      "sha256": "d501a4c0e17cce131ba9c31792144b582ca10f5365635ce9c61e9c49cdf59d95",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "amazon_esci/queries/test-00000-of-00001.parquet",
+      "size_bytes": 15691283,
+      "sha256": "7446a1a836b7ee97d11dbd2db9ba797270e97bf7dc619674142743b6f6305794",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "amazon_esci/queries/train-00000-of-00001.parquet",
+      "size_bytes": 47904769,
+      "sha256": "3d5fcc196109f40cd51bac23af90f7000e56f3d2e2f27626438a28d2d4ad4f98",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "amazon_esci/retrieval/exact_queries_small.parquet",
+      "size_bytes": 5991261,
+      "sha256": "5313b26fc6fffd05622f42ef6674c5504f523521f331f77984c476814b2a5969",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "wands/README.md",
+      "size_bytes": 4605,
+      "sha256": "cfcb7a8c9d51f5605a7486d0f223a3ef1f4820517f65322ee850080825377678",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "wands/data/data.jsonl.gz",
+      "size_bytes": 120859365,
+      "sha256": "2d819da2f328b9ab173c3b3df9cfd3b4a04f43e62a4ca22b5fa66ebfa8a5e3f9",
+      "mime_type": "application/octet-stream"
+    }
+  ]
+}

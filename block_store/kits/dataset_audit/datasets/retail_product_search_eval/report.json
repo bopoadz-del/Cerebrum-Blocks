@@ -1,0 +1,52 @@
+{
+  "dataset_id": "retail_product_search_eval",
+  "display_name": "Retail Product Search Evaluation",
+  "primary_role": "RETRIEVAL_EVAL",
+  "verdict": "APPROVE_EVAL_CANDIDATE",
+  "score": 81,
+  "findings": [
+    {
+      "type": "licence",
+      "licence": "Apache 2.0 (both sub-datasets)",
+      "commercial": "permitted",
+      "redistribution": "permitted"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.0,
+      "near_duplicate_rate": 0.0,
+      "synthetic_status": "none",
+      "extraction_noise": "minor"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    },
+    {
+      "type": "evaluation",
+      "questions": 31418,
+      "with_span": 0,
+      "with_answer": 31418,
+      "quality_tier": "golden"
+    }
+  ],
+  "approved_components": [
+    "Whole dataset as classified"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [
+    "amazon_esci/products/",
+    "amazon_esci/retrieval/",
+    "wands/data/data.jsonl.gz"
+  ],
+  "reason": "Evaluation score 81/100 maps to APPROVE_EVAL_CANDIDATE. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/retail_product_search_eval/provenance.json",
+    "datasets/retail_product_search_eval/licence_review.json",
+    "datasets/retail_product_search_eval/domain_mapping.json",
+    "datasets/retail_product_search_eval/quality_metrics.json",
+    "datasets/retail_product_search_eval/privacy_review.json",
+    "datasets/retail_product_search_eval/chunkability_report.json",
+    "datasets/retail_product_search_eval/evaluation_report.json"
+  ]
+}

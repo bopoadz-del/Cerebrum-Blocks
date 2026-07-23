@@ -1,0 +1,50 @@
+{
+  "dataset_id": "aviation_faa_eval",
+  "display_name": "FAA Aviation Training Dataset",
+  "primary_role": "RETRIEVAL_EVAL",
+  "verdict": "APPROVE_EVAL_CANDIDATE",
+  "score": 73,
+  "findings": [
+    {
+      "type": "licence",
+      "licence": "Apache 2.0",
+      "commercial": "permitted",
+      "redistribution": "permitted"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.0,
+      "near_duplicate_rate": 0.0,
+      "synthetic_status": "majority",
+      "extraction_noise": "none"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    },
+    {
+      "type": "evaluation",
+      "questions": 660,
+      "with_span": 0,
+      "with_answer": 660,
+      "quality_tier": "candidate"
+    }
+  ],
+  "approved_components": [
+    "Whole dataset as classified"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [
+    "aviation_faa_core_rag/ (AIM PDF, CFR XML parts 61/91/121/135)"
+  ],
+  "reason": "Evaluation score 73/100 maps to APPROVE_EVAL_CANDIDATE. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/aviation_faa_eval/provenance.json",
+    "datasets/aviation_faa_eval/licence_review.json",
+    "datasets/aviation_faa_eval/domain_mapping.json",
+    "datasets/aviation_faa_eval/quality_metrics.json",
+    "datasets/aviation_faa_eval/privacy_review.json",
+    "datasets/aviation_faa_eval/chunkability_report.json",
+    "datasets/aviation_faa_eval/evaluation_report.json"
+  ]
+}

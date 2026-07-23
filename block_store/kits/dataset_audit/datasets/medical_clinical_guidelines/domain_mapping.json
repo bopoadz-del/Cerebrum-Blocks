@@ -1,0 +1,28 @@
+{
+  "dataset_id": "medical_clinical_guidelines",
+  "domain": "medical",
+  "cerebrum_product": "Cerebrum Medical",
+  "supported_workflows": [
+    "Clinical practice guideline retrieval and summarisation",
+    "Evidence-based treatment recommendation Q&A",
+    "Diagnosis, staging and care-pathway support"
+  ],
+  "supported_questions": [
+    "What is the recommended use of PET/CT in head and neck cancer staging?",
+    "Should multigene profiling assays guide systemic therapy in early-stage breast cancer?",
+    "When is multiparametric MRI reasonable for pre-treatment local staging of prostate cancer?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "medical_pubmedqa_eval",
+      "nature": "Both are medical QA resources, but clinical_guidelines contains full CPG articles while pubmedqa_eval contains yes/no/maybe QA over PubMed abstracts"
+    }
+  ],
+  "unrelated_content": [],
+  "weak_content": [
+    "Sample file is only 17 records; the full corpus referenced in the README is not present",
+    "A substantial portion of the original corpus comes from WikiDoc, which is crowdsourced and less rigorously peer-reviewed than society guidelines",
+    "Guidelines are current as of August 2023; clinical recommendations may be outdated"
+  ],
+  "primary_recommendation": "Primary source for clinical guideline RAG when the full corpus is available. Treat the present sample as a preview; for medical QA benchmarking, use medical_pubmedqa_eval."
+}

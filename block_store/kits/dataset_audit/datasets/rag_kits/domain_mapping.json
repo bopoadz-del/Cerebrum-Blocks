@@ -1,0 +1,76 @@
+{
+  "dataset_id": "rag_kits",
+  "domain": "mixed",
+  "cerebrum_product": "Multiple (see sub-component mapping)",
+  "supported_workflows": [
+    "Cross-domain regulatory text RAG",
+    "Sanctions-screening and entity-resolution QA",
+    "Financial policy and central-banking Q&A",
+    "Derivative-market regulation (EMIR) retrieval"
+  ],
+  "supported_questions": [
+    "What are the main objectives of ESMA Guidelines on sound remuneration policies under AIFMD?",
+    "Are these two sanctioned person records referring to the same individual?",
+    "What does EMIR say about clearing obligations for OTC derivatives?",
+    "What are the Federal Reserve's regulatory reporting requirements?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "financeops_demo_fixtures",
+      "nature": "IrishFinance prompt-completion and Federal Reserve/SEC/FDIC content overlaps with finance_ops domain"
+    },
+    {
+      "dataset_id": "insurance_eu_solvency_core",
+      "nature": "Both contain EU financial-services regulation, but rag_kits is EMIR/securities-focused while solvency_core is insurance-focused"
+    },
+    {
+      "dataset_id": "supply_chain_raw_rag_candidates",
+      "nature": "OpenSanctions entity data can support trade/sanctions compliance, but no document overlap"
+    }
+  ],
+  "unrelated_content": [
+    "harvest_regulations.py and harvest_regulations.log are tooling/ingestion artifacts, not domain content"
+  ],
+  "weak_content": [
+    "IrishFinance_prompt_completion.jsonl contains many near-duplicate prompt/completion pairs derived from compliance tables that lack the requested information, producing 'I cannot answer' responses"
+  ],
+  "primary_recommendation": "Decompose this mixed dataset by sub-component. Recommend the following mapping:",
+  "sub_component_mapping": [
+    {
+      "path": "raw_regulations/EMIR",
+      "domain": "finance_ops",
+      "cerebrum_product": "Cerebrum Finance Ops",
+      "description": "EU EMIR regulations on OTC derivatives, clearing and trade repositories"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve",
+      "domain": "finance_ops",
+      "cerebrum_product": "Cerebrum Finance Ops",
+      "description": "U.S. Federal Reserve regulatory material"
+    },
+    {
+      "path": "raw_regulations/SEC",
+      "domain": "finance_ops",
+      "cerebrum_product": "Cerebrum Finance Ops",
+      "description": "U.S. Securities and Exchange Commission regulations"
+    },
+    {
+      "path": "raw_regulations/FDIC",
+      "domain": "finance_ops",
+      "cerebrum_product": "Cerebrum Finance Ops",
+      "description": "U.S. Federal Deposit Insurance Corporation guidance and rules"
+    },
+    {
+      "path": "IrishFinance_prompt_completion.jsonl",
+      "domain": "finance_ops",
+      "cerebrum_product": "Cerebrum Finance Ops",
+      "description": "Financial policy prompt-completion pairs; weak due to many unanswerable examples"
+    },
+    {
+      "path": "opensanctions_sample_1000.json",
+      "domain": "finance_ops",
+      "cerebrum_product": "Cerebrum Finance Ops",
+      "description": "Sanctions entity-resolution pairs; supports AML/KYC and trade-compliance workflows"
+    }
+  ]
+}

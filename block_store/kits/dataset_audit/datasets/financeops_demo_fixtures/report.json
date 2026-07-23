@@ -1,0 +1,64 @@
+{
+  "dataset_id": "financeops_demo_fixtures",
+  "display_name": "FinanceOps Demo Fixtures",
+  "primary_role": "OPERATIONAL_DEMO_DATA",
+  "verdict": "REJECT",
+  "score": 0,
+  "findings": [
+    {
+      "type": "hard_failure",
+      "gate": "unknown_licence",
+      "details": "Unknown (no local licence file)"
+    },
+    {
+      "type": "hard_failure",
+      "gate": "unknown_licence",
+      "details": "No LICENSE, LICENCE or README file exists; reuse terms are unstated."
+    },
+    {
+      "type": "hard_failure",
+      "gate": "pii_detected",
+      "details": "Demo users.json contains synthetic but realistic PII: names, email addresses, ages, and account metadata. transactions.json links to account IDs. Recommend redaction or replacement with clearly synthetic placeholders before any public release."
+    },
+    {
+      "type": "hard_failure",
+      "gate": "pii_detected",
+      "details": "Demo users.json contains synthetic but realistic PII: names, email addresses, ages, and account metadata. transactions.json links to account IDs. Recommend redaction or replacement with clearly synthetic placeholders before any public release."
+    },
+    {
+      "type": "licence",
+      "licence": "Unknown (no local licence file)",
+      "commercial": "unknown",
+      "redistribution": "unknown"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.0,
+      "near_duplicate_rate": 0.0,
+      "synthetic_status": "none",
+      "extraction_noise": "none"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "detected"
+    }
+  ],
+  "approved_components": [
+    "Schema definitions after PII redaction"
+  ],
+  "excluded_components": [
+    "users.json (synthetic PII)",
+    "transactions.json (links to PII)"
+  ],
+  "required_raw_sources": [],
+  "reason": "Hard rejection gates triggered: unknown_licence, pii_detected.",
+  "evidence_paths": [
+    "datasets/financeops_demo_fixtures/provenance.json",
+    "datasets/financeops_demo_fixtures/licence_review.json",
+    "datasets/financeops_demo_fixtures/domain_mapping.json",
+    "datasets/financeops_demo_fixtures/quality_metrics.json",
+    "datasets/financeops_demo_fixtures/privacy_review.json",
+    "datasets/financeops_demo_fixtures/chunkability_report.json",
+    "datasets/financeops_demo_fixtures/evaluation_report.json"
+  ]
+}

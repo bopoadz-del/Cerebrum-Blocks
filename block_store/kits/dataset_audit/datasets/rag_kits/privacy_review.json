@@ -1,0 +1,12 @@
+{
+  "dataset_id": "rag_kits",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [
+    "public_sanctions_record"
+  ],
+  "legitimate_public_records": true,
+  "recommendation": "approve",
+  "notes": "OpenSanctions sample contains names, birth dates, passport/id numbers of sanctioned individuals. These are legitimate public sanctions records, not an unauthorized privacy failure. Other content is public regulatory text."
+}

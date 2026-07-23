@@ -1,0 +1,27 @@
+{
+  "dataset_id": "insurance_eu_solvency_core",
+  "domain": "insurance",
+  "cerebrum_product": "Cerebrum Insurance",
+  "supported_workflows": [
+    "EU insurance solvency regulation reference retrieval",
+    "Solvency II directive and delegated regulation question answering",
+    "Compliance mapping against EIOPA Single Rulebook"
+  ],
+  "supported_questions": [
+    "What are the capital requirements under Solvency II?",
+    "What does Delegated Regulation (EU) 2015/35 specify about technical provisions?",
+    "What is the scope of the Solvency II Single Rulebook?",
+    "Which EIOPA guidelines apply to governance requirements?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "insurance_eu_regulatory_qa",
+      "nature": "Overlapping source (EIOPA) and topic (Solvency II); this dataset holds raw regulatory texts, while insurance_eu_regulatory_qa holds official Q&A interpretations"
+    }
+  ],
+  "unrelated_content": [
+    "HTML boilerplate, navigation and EUR-Lex chrome are ingestion noise, not domain content"
+  ],
+  "weak_content": [],
+  "primary_recommendation": "Primary canonical source for raw Solvency II regulatory text. Pair with insurance_eu_regulatory_qa for interpretive Q&A rather than replacing it."
+}

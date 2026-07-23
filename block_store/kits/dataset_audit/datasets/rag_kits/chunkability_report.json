@@ -1,0 +1,34 @@
+{
+  "dataset_id": "rag_kits",
+  "is_raw_rag_candidate": true,
+  "document_count": 108,
+  "estimated_chunk_count": 20130,
+  "avg_chunk_chars": 1655,
+  "min_chunk_chars": 6,
+  "max_chunk_chars": 2048,
+  "orphan_fragments": 1044,
+  "table_corruption": "major",
+  "duplicate_chunks": 7386,
+  "required_metadata": [
+    "article",
+    "chapter",
+    "clause",
+    "definition_term",
+    "document_id",
+    "question_id",
+    "section_heading",
+    "source_file",
+    "table_id",
+    "title"
+  ],
+  "structural_boundaries": [
+    "FAQ",
+    "article",
+    "chapter",
+    "clause",
+    "definition",
+    "section",
+    "table",
+    "title"
+  ]
+}

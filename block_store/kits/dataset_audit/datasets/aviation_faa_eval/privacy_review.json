@@ -1,0 +1,10 @@
+{
+  "dataset_id": "aviation_faa_eval",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [],
+  "legitimate_public_records": false,
+  "recommendation": "approve",
+  "notes": "Public aviation training evaluation questions. No personal data detected."
+}

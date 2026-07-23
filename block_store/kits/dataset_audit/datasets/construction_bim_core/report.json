@@ -1,0 +1,57 @@
+{
+  "dataset_id": "construction_bim_core",
+  "display_name": "IFC-Bench",
+  "primary_role": "REASONING_EVAL",
+  "verdict": "REJECT",
+  "score": 75,
+  "findings": [
+    {
+      "type": "hard_failure",
+      "gate": "conflicting_terms",
+      "details": "Dataset is CC BY 4.0 but four IFC model files are GPLv3; combined redistribution triggers copyleft obligations that conflict with the permissive dataset licence."
+    },
+    {
+      "type": "licence",
+      "licence": "CC BY 4.0 (dataset); mixed per-model licences",
+      "commercial": "permitted",
+      "redistribution": "permitted"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.00933,
+      "near_duplicate_rate": 0.0,
+      "synthetic_status": "none",
+      "extraction_noise": "none"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    },
+    {
+      "type": "evaluation",
+      "questions": 1026,
+      "with_span": 0,
+      "with_answer": 1026,
+      "quality_tier": "golden"
+    }
+  ],
+  "approved_components": [
+    "QA pairs (ifc-bench-v1.csv) under CC BY 4.0 after removing GPLv3 IFC models"
+  ],
+  "excluded_components": [
+    "projects/ IFC model files (GPLv3/CC BY 3.0 conflicting terms)"
+  ],
+  "required_raw_sources": [
+    "projects/ (IFC model files)"
+  ],
+  "reason": "Hard rejection gates triggered: conflicting_terms. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/construction_bim_core/provenance.json",
+    "datasets/construction_bim_core/licence_review.json",
+    "datasets/construction_bim_core/domain_mapping.json",
+    "datasets/construction_bim_core/quality_metrics.json",
+    "datasets/construction_bim_core/privacy_review.json",
+    "datasets/construction_bim_core/chunkability_report.json",
+    "datasets/construction_bim_core/evaluation_report.json"
+  ]
+}

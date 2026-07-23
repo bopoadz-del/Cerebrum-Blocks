@@ -1,0 +1,48 @@
+{
+  "dataset_id": "legal_general_retrieval_eval",
+  "file_count": 720,
+  "extensions": {
+    "(no ext)": 1,
+    ".md": 1,
+    ".json": 4,
+    ".txt": 714
+  },
+  "mime_types": {
+    "application/octet-stream": 2,
+    "application/json": 4,
+    "text/plain": 714
+  },
+  "largest_files": [
+    {
+      "path": "benchmarks/cuad.json",
+      "size_bytes": 5331921,
+      "sha256": "8e0405b15fb8869c631da424372b488e274f253a81634b78803b21c72c0601f9",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "benchmarks/maud.json",
+      "size_bytes": 3259893,
+      "sha256": "82ef159b87f73a9c68e7143fac88bf47ac212713b56617d7e87d6f1f0a781daf",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "benchmarks/contractnli.json",
+      "size_bytes": 1079894,
+      "sha256": "bc60963c4880e3db3141e96f3a7b75e1dbe195cba8f10f0658872f43430fc77a",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "corpus/maud/Contango_Oil_&_Gas_KKR_&_Co.txt",
+      "size_bytes": 1013485,
+      "sha256": "4edc30a193b5b61d464406c2ad12406d33e218828c340d027414020f99305df7",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "corpus/maud/WPX Energy, Inc._Devon Energy Corporation.txt",
+      "size_bytes": 820706,
+      "sha256": "9bc25993a6222e08eb22b0297d022efd6bda9c2ccf12edec69dd39b790b01145",
+      "mime_type": "text/plain"
+    }
+  ],
+  "schema_notes": "Derived from inventory; inspect representative files for detailed schema."
+}

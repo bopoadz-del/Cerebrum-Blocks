@@ -1,0 +1,10 @@
+{
+  "dataset_id": "legal_australia_victoria_criminal",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [],
+  "legitimate_public_records": false,
+  "recommendation": "approve",
+  "notes": "qa.jsonl uses fictional first names in legal hypotheticals (e.g., 'Bob', 'Ted'). These are not real persons. No genuine PII detected."
+}

@@ -1,0 +1,63 @@
+{
+  "dataset_id": "construction_bim_core",
+  "domain": "construction",
+  "primary_role": "REASONING_EVAL",
+  "secondary_roles": [],
+  "source_publisher": "Sylvain Hellin, Technical University of Munich",
+  "original_source": "Sylvain Hellin, Technical University of Munich",
+  "licence": "CC BY 4.0 (dataset); mixed per-model licences",
+  "commercial_use": "permitted",
+  "redistribution": "permitted",
+  "jurisdiction": "construction",
+  "effective_dates": "",
+  "file_count": 50,
+  "total_bytes": 2197509,
+  "record_count": 1026,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.00933,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "none",
+  "pii_status": "none",
+  "raw_rag_score": 0,
+  "evaluation_score": 75,
+  "score_breakdown": {
+    "exact_mapping": 10,
+    "verified_answer": 13,
+    "matching_raw_corpus": 12,
+    "product_relevance": 15,
+    "difficulty_coverage": 9,
+    "negative_cases": 3,
+    "low_duplication": 4,
+    "split_separation": 5,
+    "jurisdiction_version": 4
+  },
+  "hard_failures": [
+    {
+      "gate": "conflicting_terms",
+      "source": "licence_issues.json",
+      "details": "Dataset is CC BY 4.0 but four IFC model files are GPLv3; combined redistribution triggers copyleft obligations that conflict with the permissive dataset licence."
+    }
+  ],
+  "verdict": "REJECT",
+  "approved_components": [
+    "QA pairs (ifc-bench-v1.csv) under CC BY 4.0 after removing GPLv3 IFC models"
+  ],
+  "excluded_components": [
+    "projects/ IFC model files (GPLv3/CC BY 3.0 conflicting terms)"
+  ],
+  "required_raw_sources": [
+    "projects/ (IFC model files)"
+  ],
+  "reason": "Hard rejection gates triggered: conflicting_terms. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/construction_bim_core/provenance.json",
+    "datasets/construction_bim_core/licence_review.json",
+    "datasets/construction_bim_core/domain_mapping.json",
+    "datasets/construction_bim_core/quality_metrics.json",
+    "datasets/construction_bim_core/privacy_review.json",
+    "datasets/construction_bim_core/chunkability_report.json",
+    "datasets/construction_bim_core/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.598679+00:00",
+  "max_status": "technically_verified_candidate"
+}

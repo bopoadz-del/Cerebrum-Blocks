@@ -1,0 +1,28 @@
+{
+  "dataset_id": "financeops_demo_fixtures",
+  "domain": "finance_ops",
+  "cerebrum_product": "Cerebrum Finance Ops",
+  "supported_workflows": [
+    "Demo and smoke-test fixture for finance operations dashboards",
+    "Sample transaction categorisation and user-account data",
+    "Prototype expense tracking and personal-finance Q&A"
+  ],
+  "supported_questions": [
+    "What transactions occurred for account ACC-123 in January 2024?",
+    "What is the total spending on food and entertainment?",
+    "Which users are active admins?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "rag_kits",
+      "nature": "rag_kits contains financial regulation content; demo fixtures are operational toy data with no overlap in content"
+    }
+  ],
+  "unrelated_content": [],
+  "weak_content": [
+    "Only 12 users and 12 transactions; extremely small and synthetic",
+    "No real finance or accounting domain depth beyond basic debit/credit categorisation",
+    "Not suitable for production finance-ops knowledge or regulatory compliance"
+  ],
+  "primary_recommendation": "Use only as lightweight demo/test fixtures. Do not treat as a primary finance-ops knowledge source; prefer rag_kits financial regulation content for real finance-ops RAG."
+}

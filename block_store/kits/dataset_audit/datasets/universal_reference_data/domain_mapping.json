@@ -1,0 +1,28 @@
+{
+  "dataset_id": "universal_reference_data",
+  "domain": "universal_kernel",
+  "cerebrum_product": "Cerebrum Universal Kernel",
+  "supported_workflows": [
+    "Cross-domain reference lookups (countries, currencies, timezones, units)",
+    "Unit conversion support for domain-specific agents",
+    "Normalization of country/currency/timezone metadata"
+  ],
+  "supported_questions": [
+    "What is the ISO code and currency for Brazil?",
+    "How many metres are in a mile?",
+    "What is the capital of Japan?",
+    "What is the UTC offset for Eastern Time?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "universal_api_reference",
+      "nature": "Both are universal reference datasets; this one covers geographic and measurement data, the other covers HTTP and file-extension metadata"
+    }
+  ],
+  "unrelated_content": [],
+  "weak_content": [
+    "Static reference tables only; no domain reasoning or procedural knowledge",
+    "Currency and population values may become stale over time"
+  ],
+  "primary_recommendation": "Use as shared reference data across all Cerebrum domain agents. Combine with domain-specific datasets for unit-aware answers."
+}

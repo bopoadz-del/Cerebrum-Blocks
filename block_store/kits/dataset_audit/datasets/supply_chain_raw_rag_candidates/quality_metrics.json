@@ -1,0 +1,17 @@
+{
+  "dataset_id": "supply_chain_raw_rag_candidates",
+  "files_inspected": 7,
+  "records_inspected": 7,
+  "exact_duplicate_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_count": 0,
+  "near_duplicate_rate": 0.0,
+  "repeated_context_count": 0,
+  "repeated_question_count": 0,
+  "synthetic_status": "none",
+  "extraction_noise": "major",
+  "language_distribution": {
+    "en": 1.0
+  },
+  "sample_issues": []
+}

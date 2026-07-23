@@ -1,0 +1,15 @@
+{
+  "dataset_id": "insurance_eu_regulatory_qa",
+  "licence_name": "EIOPA Legal Notice (reuse authorised with attribution)",
+  "licence_url": "https://www.eiopa.europa.eu/legal-notice_en",
+  "licence_text_location": "insurance_eu_regulatory_qa/metadata.json (licence_note)",
+  "commercial_use": "permitted",
+  "modification": "permitted",
+  "redistribution": "permitted",
+  "unresolved_or_conflicting_conditions": [
+    "Transformed/republished material must carry the EIOPA-derived-document disclaimer.",
+    "Sold documents must inform buyers that the material is available free of charge.",
+    "Q&As have no binding legal force; only the CJEU can authoritatively interpret Union law."
+  ],
+  "notes": "Commercial use is permitted subject to EIOPA attribution and disclaimer conditions."
+}

@@ -1,0 +1,25 @@
+{
+  "dataset_id": "universal_ingestion_tests",
+  "file_count": 2,
+  "extensions": {
+    ".json": 2
+  },
+  "mime_types": {
+    "application/json": 2
+  },
+  "largest_files": [
+    {
+      "path": "json_edge_cases.json",
+      "size_bytes": 1832,
+      "sha256": "be0b478d5308f43a04c95f3d9f703d2bb9b095a8cb6cfbde77cb1ba877c3907f",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "validation_cases.json",
+      "size_bytes": 1162,
+      "sha256": "545ea39c333b6acf4668b28eaaa31e71ef533f59a56a0ba2660235beaa5be848",
+      "mime_type": "application/json"
+    }
+  ],
+  "schema_notes": "Derived from inventory; inspect representative files for detailed schema."
+}

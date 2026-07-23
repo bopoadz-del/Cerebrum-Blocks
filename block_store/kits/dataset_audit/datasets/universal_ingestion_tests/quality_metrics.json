@@ -1,0 +1,30 @@
+{
+  "dataset_id": "universal_ingestion_tests",
+  "files_inspected": 2,
+  "records_inspected": 44,
+  "exact_duplicate_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_count": 2,
+  "near_duplicate_rate": 0.045455,
+  "repeated_context_count": 0,
+  "repeated_question_count": 0,
+  "synthetic_status": "none",
+  "extraction_noise": "none",
+  "language_distribution": {
+    "ca": 0.25,
+    "nl": 0.25,
+    "en": 0.2273,
+    "af": 0.1591,
+    "et": 0.0909,
+    "it": 0.0227
+  },
+  "sample_issues": [
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\universal_ingestion_tests\\validation_cases.json",
+      "record_index": 17,
+      "type": "near_duplicate",
+      "description": "Record has high text overlap with another inspected record (>= 70% Jaccard)",
+      "snippet": "value: (555) 123-4567\n__record_key__: valid_phone_numbers"
+    }
+  ]
+}

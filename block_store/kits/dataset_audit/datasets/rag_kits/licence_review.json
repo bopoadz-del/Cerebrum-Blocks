@@ -1,0 +1,117 @@
+{
+  "dataset_id": "rag_kits",
+  "licence_name": "Mixed per-component",
+  "licence_url": null,
+  "licence_text_location": null,
+  "commercial_use": "mixed",
+  "modification": "mixed",
+  "redistribution": "mixed",
+  "unresolved_or_conflicting_conditions": [
+    "No top-level LICENSE file covers the whole rag_kits folder."
+  ],
+  "components": [
+    {
+      "component": "Regulations_Link_Retrieval.csv",
+      "display_name": "Regulation link index",
+      "licence_name": "Unknown (no local licence)",
+      "licence_url": null,
+      "licence_text_location": null,
+      "commercial_use": "unknown",
+      "modification": "unknown",
+      "redistribution": "unknown",
+      "unresolved_or_conflicting_conditions": [
+        "CSV contains only titles and URLs; no licence file grants rights to the compilation."
+      ]
+    },
+    {
+      "component": "Regulations_CDM.csv",
+      "display_name": "FINOS CDM Q&A",
+      "licence_name": "Community Specification License 1.0 (FINOS CDM upstream)",
+      "licence_url": "https://github.com/finos/common-domain-model/blob/master/LICENSE.md",
+      "licence_text_location": null,
+      "commercial_use": "permitted",
+      "modification": "permitted",
+      "redistribution": "permitted",
+      "unresolved_or_conflicting_conditions": [
+        "No local licence file; rights inferred from FINOS CDM upstream licence."
+      ]
+    },
+    {
+      "component": "Regulations_definition.csv",
+      "display_name": "EU regulatory definitions",
+      "licence_name": "EU reuse policy / CC BY 4.0 (Commission documents)",
+      "licence_url": "https://eur-lex.europa.eu/content/help/data-reuse/reuse-legal-notice.html",
+      "licence_text_location": null,
+      "commercial_use": "permitted",
+      "modification": "permitted",
+      "redistribution": "permitted",
+      "unresolved_or_conflicting_conditions": [
+        "Definitions are excerpts; reuse must acknowledge the EU source."
+      ]
+    },
+    {
+      "component": "IrishFinance_prompt_completion.jsonl",
+      "display_name": "Irish finance prompt-completion pairs",
+      "licence_name": "Unknown (no local licence)",
+      "licence_url": null,
+      "licence_text_location": null,
+      "commercial_use": "unknown",
+      "modification": "unknown",
+      "redistribution": "unknown",
+      "unresolved_or_conflicting_conditions": [
+        "No licence file for the compiled prompt-completion file.",
+        "Source institutions permit reproduction with attribution, but the compilation's licence is not stated."
+      ]
+    },
+    {
+      "component": "tatqa_dataset_test.json",
+      "display_name": "TAT-QA test split",
+      "licence_name": "CC BY 4.0",
+      "licence_url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+      "licence_text_location": null,
+      "commercial_use": "permitted",
+      "modification": "permitted",
+      "redistribution": "permitted",
+      "unresolved_or_conflicting_conditions": []
+    },
+    {
+      "component": "tatqa_dataset_dev.json",
+      "display_name": "TAT-QA dev split",
+      "licence_name": "CC BY 4.0",
+      "licence_url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+      "licence_text_location": null,
+      "commercial_use": "permitted",
+      "modification": "permitted",
+      "redistribution": "permitted",
+      "unresolved_or_conflicting_conditions": []
+    },
+    {
+      "component": "opensanctions_sample_1000.json",
+      "display_name": "OpenSanctions sample",
+      "licence_name": "OpenSanctions commercial/non-commercial licence",
+      "licence_url": "https://www.opensanctions.org/docs/commercial/exemption/",
+      "licence_text_location": null,
+      "commercial_use": "prohibited",
+      "modification": "unknown",
+      "redistribution": "unknown",
+      "unresolved_or_conflicting_conditions": [
+        "OpenSanctions is free for non-commercial users; businesses must acquire a data licence."
+      ]
+    },
+    {
+      "component": "raw_regulations/*",
+      "display_name": "Harvested raw regulatory texts",
+      "licence_name": "Public domain / reuse authorised with attribution",
+      "licence_url": "https://eur-lex.europa.eu/content/help/data-reuse/reuse-legal-notice.html",
+      "licence_text_location": "rag_kits/raw_regulations/harvest_manifest.json",
+      "commercial_use": "permitted",
+      "modification": "permitted",
+      "redistribution": "permitted",
+      "unresolved_or_conflicting_conditions": [
+        "Each harvested document retains its source's terms (EU reuse policy, U.S. government public domain, etc.).",
+        "One SEC URL returned HTTP 403; the corresponding file may be incomplete."
+      ]
+    }
+  ],
+  "notes": "Component-level review below."
+}

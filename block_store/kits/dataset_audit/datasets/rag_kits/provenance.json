@@ -1,0 +1,118 @@
+{
+  "dataset_id": "rag_kits",
+  "display_name": "RAG Kits (mixed regulatory and financial corpora)",
+  "publisher": "Mixed / project-curated",
+  "original_publisher": "Mixed / project-curated",
+  "source_urls": [
+    "https://eur-lex.europa.eu",
+    "https://www.esma.europa.eu",
+    "https://www.federalreserve.gov",
+    "https://www.ecfr.gov",
+    "https://www.fdic.gov",
+    "https://www.sec.gov",
+    "https://github.com/NExTplusplus/TAT-QA",
+    "https://www.opensanctions.org",
+    "https://www.centralbank.ie",
+    "https://www.ecb.europa.eu"
+  ],
+  "downloaded_from": "mixed",
+  "evidence_files": [
+    "rag_kits/raw_regulations/harvest_manifest.json",
+    "rag_kits/harvest_regulations.py"
+  ],
+  "components": [
+    {
+      "component": "Regulations_Link_Retrieval.csv",
+      "display_name": "Regulation link index",
+      "publisher": "Project-curated",
+      "original_publisher": "Project-curated (links point to EUR-Lex and ESMA)",
+      "source_urls": [
+        "https://eur-lex.europa.eu",
+        "https://www.esma.europa.eu"
+      ],
+      "downloaded_from": "original_source"
+    },
+    {
+      "component": "Regulations_CDM.csv",
+      "display_name": "FINOS CDM Q&A",
+      "publisher": "Project-curated / FINOS",
+      "original_publisher": "FINOS",
+      "source_urls": [
+        "https://cdm.finos.org/",
+        "https://github.com/finos/common-domain-model"
+      ],
+      "downloaded_from": "repackaging"
+    },
+    {
+      "component": "Regulations_definition.csv",
+      "display_name": "EU regulatory definitions",
+      "publisher": "Project-curated / EUR-Lex",
+      "original_publisher": "European Union",
+      "source_urls": [
+        "https://eur-lex.europa.eu"
+      ],
+      "downloaded_from": "repackaging"
+    },
+    {
+      "component": "IrishFinance_prompt_completion.jsonl",
+      "display_name": "Irish finance prompt-completion pairs",
+      "publisher": "Project-curated",
+      "original_publisher": "Multiple (Central Bank of Ireland, ECB, ESMA, etc.)",
+      "source_urls": [
+        "https://www.centralbank.ie",
+        "https://www.ecb.europa.eu",
+        "https://www.esma.europa.eu"
+      ],
+      "downloaded_from": "repackaging"
+    },
+    {
+      "component": "tatqa_dataset_test.json",
+      "display_name": "TAT-QA test split",
+      "publisher": "NExT++ / ACL 2021",
+      "original_publisher": "Fengbin Zhu et al. / NExT++",
+      "source_urls": [
+        "https://github.com/NExTplusplus/TAT-QA",
+        "https://nextplusplus.github.io/TAT-QA/"
+      ],
+      "downloaded_from": "original_source"
+    },
+    {
+      "component": "tatqa_dataset_dev.json",
+      "display_name": "TAT-QA dev split",
+      "publisher": "NExT++ / ACL 2021",
+      "original_publisher": "Fengbin Zhu et al. / NExT++",
+      "source_urls": [
+        "https://github.com/NExTplusplus/TAT-QA",
+        "https://nextplusplus.github.io/TAT-QA/"
+      ],
+      "downloaded_from": "original_source"
+    },
+    {
+      "component": "opensanctions_sample_1000.json",
+      "display_name": "OpenSanctions sample",
+      "publisher": "OpenSanctions",
+      "original_publisher": "OpenSanctions",
+      "source_urls": [
+        "https://www.opensanctions.org/",
+        "https://www.opensanctions.org/docs/commercial/exemption/"
+      ],
+      "downloaded_from": "original_source"
+    },
+    {
+      "component": "raw_regulations/*",
+      "display_name": "Harvested raw regulatory texts",
+      "publisher": "Multiple (EU, U.S. Federal Reserve, FDIC, SEC)",
+      "original_publisher": "Multiple",
+      "source_urls": [
+        "https://eur-lex.europa.eu",
+        "https://www.esma.europa.eu",
+        "https://www.federalreserve.gov",
+        "https://www.ecfr.gov",
+        "https://www.fdic.gov",
+        "https://www.sec.gov"
+      ],
+      "downloaded_from": "original_source"
+    }
+  ],
+  "notes": "Aggregated RAG corpus. Each sub-component has different provenance and must be reviewed separately."
+}

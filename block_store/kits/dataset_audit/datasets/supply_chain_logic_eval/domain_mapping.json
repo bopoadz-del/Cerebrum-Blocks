@@ -1,0 +1,32 @@
+{
+  "dataset_id": "supply_chain_logic_eval",
+  "domain": "supply_chain",
+  "cerebrum_product": "Cerebrum Supply Chain",
+  "supported_workflows": [
+    "Text-to-optimization benchmark for retail supply chain planning",
+    "Solver-validated MILP generation for inventory, assortment and logistics problems",
+    "Agentic optimization code verification"
+  ],
+  "supported_questions": [
+    "Generate an MILP for multi-period inventory with seasonal demand and perishability",
+    "How should a retailer allocate product substitution and promotion decisions?",
+    "What is the optimal transshipment plan across distribution centres?",
+    "Can this omni-channel scenario with reverse logistics be formulated as a MILP?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "retail_product_search_eval",
+      "nature": "Both are retail-related, but this dataset is optimisation/logic-focused while retail_product_search_eval is search/relevance-focused"
+    },
+    {
+      "dataset_id": "supply_chain_raw_rag_candidates",
+      "nature": "Both are supply chain; this dataset provides synthetic optimisation problems, raw_rag_candidates provides regulatory and operational reference text"
+    }
+  ],
+  "unrelated_content": [],
+  "weak_content": [
+    "Scenarios are synthetic; while solver-validated, they may not capture all real-world operational constraints",
+    "Strong focus on retail shelf-life/inventory; coverage of procurement or customs compliance is limited"
+  ],
+  "primary_recommendation": "Primary source for supply-chain optimisation and text-to-MILP evaluation. Complement with supply_chain_raw_rag_candidates for regulatory and logistics reference material."
+}

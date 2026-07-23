@@ -1,0 +1,23 @@
+{
+  "dataset_id": "medical_clinical_guidelines",
+  "files": [
+    {
+      "path": "LICENSE_guidelines",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "open_guidelines_sample_head.jsonl",
+      "size_bytes": 500000,
+      "sha256": "d51f9fcf7cf95ac295d9b2c5abcc063532d9e0929007caa6e707782122940f50",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "README_guidelines.md",
+      "size_bytes": 16063,
+      "sha256": "ee489152a0fe77bee3313b948b5c756dd4cd2160060ff1e6aff15f396a9084c4",
+      "mime_type": "application/octet-stream"
+    }
+  ]
+}

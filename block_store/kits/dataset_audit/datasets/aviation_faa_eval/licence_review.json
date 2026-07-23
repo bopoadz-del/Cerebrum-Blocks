@@ -1,0 +1,11 @@
+{
+  "dataset_id": "aviation_faa_eval",
+  "licence_name": "Apache 2.0",
+  "licence_url": "https://www.apache.org/licenses/LICENSE-2.0",
+  "licence_text_location": "aviation_faa_eval/README.md (dataset card header)",
+  "commercial_use": "permitted",
+  "modification": "permitted",
+  "redistribution": "permitted",
+  "unresolved_or_conflicting_conditions": [],
+  "notes": "Source material is U.S. government work and in the public domain; the dataset compilation is Apache 2.0."
+}

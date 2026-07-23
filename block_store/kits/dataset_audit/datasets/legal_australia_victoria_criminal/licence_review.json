@@ -1,0 +1,14 @@
+{
+  "dataset_id": "legal_australia_victoria_criminal",
+  "licence_name": "CC BY-NC-SA 4.0 (header) / CC BY-NC 4.0 (body)",
+  "licence_url": "https://creativecommons.org/licenses/by-nc/4.0/deed.en",
+  "licence_text_location": "legal_australia_victoria_criminal/README.md",
+  "commercial_use": "prohibited",
+  "modification": "permitted",
+  "redistribution": "permitted",
+  "unresolved_or_conflicting_conditions": [
+    "Dataset card YAML header says 'cc-by-nc-sa-4.0' but the licence section says 'CC BY NC 4.0'; the share-alike requirement is inconsistent.",
+    "Non-commercial clause prohibits commercial use."
+  ],
+  "notes": "Commercial use is explicitly prohibited. Attribution required. Source corpus is a government legal publication."
+}

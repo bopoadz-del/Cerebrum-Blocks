@@ -1,0 +1,67 @@
+{
+  "dataset_id": "financeops_demo_fixtures",
+  "domain": "finance_ops",
+  "primary_role": "OPERATIONAL_DEMO_DATA",
+  "secondary_roles": [],
+  "source_publisher": "Project-curated",
+  "original_source": "Project-curated",
+  "licence": "Unknown (no local licence file)",
+  "commercial_use": "unknown",
+  "redistribution": "unknown",
+  "jurisdiction": "finance_ops",
+  "effective_dates": "",
+  "file_count": 2,
+  "total_bytes": 4816,
+  "record_count": 0,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "none",
+  "pii_status": "detected",
+  "raw_rag_score": 0,
+  "evaluation_score": 0,
+  "score_breakdown": {},
+  "hard_failures": [
+    {
+      "gate": "unknown_licence",
+      "source": "licence_review.json",
+      "details": "Unknown (no local licence file)"
+    },
+    {
+      "gate": "unknown_licence",
+      "source": "licence_issues.json",
+      "details": "No LICENSE, LICENCE or README file exists; reuse terms are unstated."
+    },
+    {
+      "gate": "pii_detected",
+      "source": "privacy_review.json",
+      "details": "Demo users.json contains synthetic but realistic PII: names, email addresses, ages, and account metadata. transactions.json links to account IDs. Recommend redaction or replacement with clearly synthetic placeholders before any public release."
+    },
+    {
+      "gate": "pii_detected",
+      "source": "privacy_issues.json",
+      "details": "Demo users.json contains synthetic but realistic PII: names, email addresses, ages, and account metadata. transactions.json links to account IDs. Recommend redaction or replacement with clearly synthetic placeholders before any public release."
+    }
+  ],
+  "verdict": "REJECT",
+  "approved_components": [
+    "Schema definitions after PII redaction"
+  ],
+  "excluded_components": [
+    "users.json (synthetic PII)",
+    "transactions.json (links to PII)"
+  ],
+  "required_raw_sources": [],
+  "reason": "Hard rejection gates triggered: unknown_licence, pii_detected.",
+  "evidence_paths": [
+    "datasets/financeops_demo_fixtures/provenance.json",
+    "datasets/financeops_demo_fixtures/licence_review.json",
+    "datasets/financeops_demo_fixtures/domain_mapping.json",
+    "datasets/financeops_demo_fixtures/quality_metrics.json",
+    "datasets/financeops_demo_fixtures/privacy_review.json",
+    "datasets/financeops_demo_fixtures/chunkability_report.json",
+    "datasets/financeops_demo_fixtures/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.662371+00:00",
+  "max_status": "technically_verified_candidate"
+}

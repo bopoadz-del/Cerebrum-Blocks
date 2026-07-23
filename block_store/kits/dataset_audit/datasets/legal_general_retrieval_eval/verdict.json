@@ -1,0 +1,58 @@
+{
+  "dataset_id": "legal_general_retrieval_eval",
+  "domain": "legal",
+  "primary_role": "RETRIEVAL_EVAL",
+  "secondary_roles": [],
+  "source_publisher": "ZeroEntropy",
+  "original_source": "ZeroEntropy",
+  "licence": "MIT",
+  "commercial_use": "permitted",
+  "redistribution": "permitted",
+  "jurisdiction": "legal",
+  "effective_dates": "",
+  "file_count": 720,
+  "total_bytes": 90407448,
+  "record_count": 6889,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.000526,
+  "near_duplicate_rate": 0.02,
+  "synthetic_status": "none",
+  "pii_status": "none",
+  "raw_rag_score": 0,
+  "evaluation_score": 90,
+  "score_breakdown": {
+    "exact_mapping": 25,
+    "verified_answer": 13,
+    "matching_raw_corpus": 12,
+    "product_relevance": 15,
+    "difficulty_coverage": 9,
+    "negative_cases": 3,
+    "low_duplication": 4,
+    "split_separation": 5,
+    "jurisdiction_version": 4
+  },
+  "hard_failures": [],
+  "verdict": "APPROVE_GOLDEN_EVAL",
+  "approved_components": [
+    "Whole dataset as classified"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [
+    "contractnli",
+    "cuad",
+    "maud",
+    "privacy_qa"
+  ],
+  "reason": "Evaluation score 90/100 maps to APPROVE_GOLDEN_EVAL. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/legal_general_retrieval_eval/provenance.json",
+    "datasets/legal_general_retrieval_eval/licence_review.json",
+    "datasets/legal_general_retrieval_eval/domain_mapping.json",
+    "datasets/legal_general_retrieval_eval/quality_metrics.json",
+    "datasets/legal_general_retrieval_eval/privacy_review.json",
+    "datasets/legal_general_retrieval_eval/chunkability_report.json",
+    "datasets/legal_general_retrieval_eval/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.602679+00:00",
+  "max_status": "technically_verified_candidate"
+}

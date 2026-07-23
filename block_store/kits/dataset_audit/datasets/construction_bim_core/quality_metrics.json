@@ -1,0 +1,27 @@
+{
+  "dataset_id": "construction_bim_core",
+  "files_inspected": 50,
+  "records_inspected": 100,
+  "exact_duplicate_count": 11,
+  "exact_duplicate_rate": 0.00933,
+  "near_duplicate_count": 0,
+  "near_duplicate_rate": 0.0,
+  "repeated_context_count": 11,
+  "repeated_question_count": 242,
+  "synthetic_status": "none",
+  "extraction_noise": "none",
+  "language_distribution": {
+    "en": 0.98,
+    "pl": 0.01,
+    "nl": 0.01
+  },
+  "sample_issues": [
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\construction_bim_core\\ifc-bench-v1.csv",
+      "record_index": 0,
+      "type": "repeated_question",
+      "description": "Question/query repeated across 2 inspected records",
+      "snippet": "What is the total gross floor area of the building?"
+    }
+  ]
+}

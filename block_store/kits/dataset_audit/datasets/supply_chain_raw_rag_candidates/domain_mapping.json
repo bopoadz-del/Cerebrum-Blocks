@@ -1,0 +1,37 @@
+{
+  "dataset_id": "supply_chain_raw_rag_candidates",
+  "domain": "supply_chain",
+  "cerebrum_product": "Cerebrum Supply Chain",
+  "supported_workflows": [
+    "Customs and trade-process reference retrieval",
+    "Warehouse safety and logistics regulation Q&A",
+    "Single Window and international trade facilitation reference",
+    "Identification of redistributable supply-chain reference sources"
+  ],
+  "supported_questions": [
+    "What are the steps for a new importer/exporter under U.S. CBP?",
+    "How do EU customs imports and exports work?",
+    "What are the UK requirements for importing goods?",
+    "What does UN/CEFACT Recommendation 33 say about Single Window?",
+    "What are common warehousing hazards according to OSHA?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "supply_chain_logic_eval",
+      "nature": "Both are supply chain; raw_rag_candidates covers reference/regulatory text while logic_eval covers synthetic optimisation problems"
+    },
+    {
+      "dataset_id": "rag_kits",
+      "nature": "rag_kits includes some sanctions/finance regulatory content that touches trade compliance, but no direct overlap in documents"
+    }
+  ],
+  "unrelated_content": [
+    "scouting_report.md is an audit/scouting artifact, not end-user domain content"
+  ],
+  "weak_content": [
+    "Downloaded HTML samples contain navigation/chrome and require cleaning before ingestion",
+    "GS1 standards and WHO cold-chain guidance are citation-only due to licence restrictions, limiting depth",
+    "WCO/Harmonized System and ICH/USP standards are not redistributable and only noted as citations"
+  ],
+  "primary_recommendation": "Use as a curated starting set for customs, trade and warehousing reference RAG. Before production ingestion, clean boilerplate from HTML files and seek licence confirmation for citation-only sources."
+}

@@ -1,0 +1,13 @@
+{
+  "dataset_id": "legal_general_retrieval_eval",
+  "licence_name": "MIT",
+  "licence_url": "https://opensource.org/licenses/MIT",
+  "licence_text_location": "legal_general_retrieval_eval/LICENSE",
+  "commercial_use": "permitted",
+  "modification": "permitted",
+  "redistribution": "permitted",
+  "unresolved_or_conflicting_conditions": [
+    "MIT covers the benchmark code and generated QA/snippet references; the underlying contract corpora (ContractNLI, CUAD, MAUD, PrivacyQA) retain their own usage policies."
+  ],
+  "notes": "No explicit redistribution or commercial prohibition in the local MIT licence, but downstream use must respect the source corpora terms."
+}

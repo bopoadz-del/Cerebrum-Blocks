@@ -1,0 +1,25 @@
+{
+  "dataset_id": "legal_general_retrieval_eval",
+  "files_inspected": 720,
+  "records_inspected": 100,
+  "exact_duplicate_count": 4,
+  "exact_duplicate_rate": 0.000526,
+  "near_duplicate_count": 2,
+  "near_duplicate_rate": 0.02,
+  "repeated_context_count": 2,
+  "repeated_question_count": 33,
+  "synthetic_status": "none",
+  "extraction_noise": "none",
+  "language_distribution": {
+    "en": 1.0
+  },
+  "sample_issues": [
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\legal_general_retrieval_eval\\benchmarks\\contractnli.json",
+      "record_index": 834,
+      "type": "near_duplicate",
+      "description": "Record has high text overlap with another inspected record (>= 70% Jaccard)",
+      "snippet": "query: Consider Aspiegel's Non-Disclosure Agreement; Does the document allow the Receiving Party to share some Confidential Information with third parties, including consultants, agents, and professio"
+    }
+  ]
+}

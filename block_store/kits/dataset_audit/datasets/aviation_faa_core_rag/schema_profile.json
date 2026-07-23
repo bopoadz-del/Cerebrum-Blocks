@@ -1,0 +1,47 @@
+{
+  "dataset_id": "aviation_faa_core_rag",
+  "file_count": 6,
+  "extensions": {
+    ".pdf": 1,
+    ".html": 1,
+    ".xml": 4
+  },
+  "mime_types": {
+    "application/pdf": 1,
+    "text/html": 1,
+    "text/xml": 4
+  },
+  "largest_files": [
+    {
+      "path": "AIM_Basic_w_Chg_1_2_3_dtd_7-9-26.pdf",
+      "size_bytes": 42727799,
+      "sha256": "aa64a8be658f54a2f6d7fbb4b0d3ae222942446ad200926e5c88d8afca39dc8b",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "cfr_part_121.xml",
+      "size_bytes": 1198481,
+      "sha256": "2062dc17dab71fe39133bc0fe95840b3b120eea37706a4c74a1c54ccea85c451",
+      "mime_type": "text/xml"
+    },
+    {
+      "path": "cfr_part_91.xml",
+      "size_bytes": 801286,
+      "sha256": "3135cac0541bf5d82ee80ff9dca4c271aabbdb9acafd935e501b15c6e533cb99",
+      "mime_type": "text/xml"
+    },
+    {
+      "path": "cfr_part_135.xml",
+      "size_bytes": 671783,
+      "sha256": "ae9d61a8b86fb80eb74d2c43f9b87b16287b680001949e19183d32430380e04b",
+      "mime_type": "text/xml"
+    },
+    {
+      "path": "cfr_part_61.xml",
+      "size_bytes": 619885,
+      "sha256": "18cada82fc643756c9bc73e51d581c3cd8c7fb655d5090c06651a7f6c25db120",
+      "mime_type": "text/xml"
+    }
+  ],
+  "schema_notes": "Derived from inventory; inspect representative files for detailed schema."
+}

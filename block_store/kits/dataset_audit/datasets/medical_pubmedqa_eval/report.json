@@ -1,0 +1,51 @@
+{
+  "dataset_id": "medical_pubmedqa_eval",
+  "display_name": "PubMedQA",
+  "primary_role": "RETRIEVAL_EVAL",
+  "verdict": "APPROVE_EVAL_CANDIDATE",
+  "score": 73,
+  "findings": [
+    {
+      "type": "licence",
+      "licence": "MIT",
+      "commercial": "permitted",
+      "redistribution": "permitted"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.0,
+      "near_duplicate_rate": 0.0,
+      "synthetic_status": "none",
+      "extraction_noise": "none"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    },
+    {
+      "type": "evaluation",
+      "questions": 500,
+      "with_span": 0,
+      "with_answer": 500,
+      "quality_tier": "golden"
+    }
+  ],
+  "approved_components": [
+    "Whole dataset as classified"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [
+    "ori_pqal.json (questions, contexts, labels)",
+    "PubMed abstracts corresponding to PMIDs"
+  ],
+  "reason": "Evaluation score 73/100 maps to APPROVE_EVAL_CANDIDATE. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/medical_pubmedqa_eval/provenance.json",
+    "datasets/medical_pubmedqa_eval/licence_review.json",
+    "datasets/medical_pubmedqa_eval/domain_mapping.json",
+    "datasets/medical_pubmedqa_eval/quality_metrics.json",
+    "datasets/medical_pubmedqa_eval/privacy_review.json",
+    "datasets/medical_pubmedqa_eval/chunkability_report.json",
+    "datasets/medical_pubmedqa_eval/evaluation_report.json"
+  ]
+}

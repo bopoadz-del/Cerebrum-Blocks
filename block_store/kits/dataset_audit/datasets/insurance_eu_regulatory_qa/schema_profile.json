@@ -1,0 +1,52 @@
+{
+  "dataset_id": "insurance_eu_regulatory_qa",
+  "file_count": 9,
+  "extensions": {
+    ".xlsx": 1,
+    ".csv": 2,
+    ".jsonl": 1,
+    ".json": 1,
+    ".txt": 3,
+    ".py": 1
+  },
+  "mime_types": {
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": 1,
+    "application/vnd.ms-excel": 2,
+    "application/json": 2,
+    "text/plain": 3,
+    "text/x-python": 1
+  },
+  "largest_files": [
+    {
+      "path": "eiopa-qa-archive.xlsx",
+      "size_bytes": 1286679,
+      "sha256": "913e93b2d1506409087bcee8be776336f2a69105b8f50d31aa4fadddb2cd9bf4",
+      "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    },
+    {
+      "path": "insurance_eu_regulatory_qa_sample.jsonl",
+      "size_bytes": 145311,
+      "sha256": "0640d84a30b3d28464fac48aa4e301e881c2b59961c77b70b0a82a01c2de4da5",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "insurance_eu_regulatory_qa_sample.csv",
+      "size_bytes": 130513,
+      "sha256": "575e136c0a51e9b19b7f20749c1a95b7cf198d579de49f1f18721c7758c7b294",
+      "mime_type": "application/vnd.ms-excel"
+    },
+    {
+      "path": "sample_metadata.csv",
+      "size_bytes": 120712,
+      "sha256": "26ddef7e8f8544fd9db2d60909bf95a6b6be7ef4aaabbc0e824cf66a8505b323",
+      "mime_type": "application/vnd.ms-excel"
+    },
+    {
+      "path": "scrape_qa_sample.py",
+      "size_bytes": 8899,
+      "sha256": "2a6e7d13c3d9fe1d9f9eaf67b1a60f75b40c5a15099d50cfd3689a18aaf0dd27",
+      "mime_type": "text/x-python"
+    }
+  ],
+  "schema_notes": "Derived from inventory; inspect representative files for detailed schema."
+}

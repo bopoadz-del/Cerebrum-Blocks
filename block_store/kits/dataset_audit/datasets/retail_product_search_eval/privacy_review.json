@@ -1,0 +1,10 @@
+{
+  "dataset_id": "retail_product_search_eval",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [],
+  "legitimate_public_records": false,
+  "recommendation": "approve",
+  "notes": "Public Amazon ESCI product/search data and Wayfair WANDS product queries. No customer-linked identifiers detected in sampled fields."
+}

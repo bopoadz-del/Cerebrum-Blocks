@@ -1,0 +1,23 @@
+{
+  "datasets_with_concerns": [
+    {
+      "dataset_id": "financeops_demo_fixtures",
+      "recommendation": "restricted",
+      "pii_fields": [
+        "account_id",
+        "age",
+        "email",
+        "name.first",
+        "name.last",
+        "username"
+      ],
+      "sensitive_data_types": [
+        "contact",
+        "customer_data",
+        "demographic",
+        "identity"
+      ],
+      "notes": "Demo users.json contains synthetic but realistic PII: names, email addresses, ages, and account metadata. transactions.json links to account IDs. Recommend redaction or replacement with clearly synthetic placeholders before any public release."
+    }
+  ]
+}

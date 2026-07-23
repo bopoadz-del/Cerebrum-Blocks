@@ -1,0 +1,59 @@
+{
+  "dataset_id": "medical_clinical_guidelines",
+  "domain": "medical",
+  "primary_role": "RAW_RAG",
+  "secondary_roles": [],
+  "source_publisher": "EPFL LLM Team",
+  "original_source": "EPFL LLM Team",
+  "licence": "Common Crawl Foundation Terms of Use",
+  "commercial_use": "unknown",
+  "redistribution": "unknown",
+  "jurisdiction": "medical",
+  "effective_dates": "",
+  "file_count": 3,
+  "total_bytes": 516063,
+  "record_count": 0,
+  "malformed_count": 1,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "none",
+  "pii_status": "none",
+  "raw_rag_score": 79,
+  "evaluation_score": 0,
+  "score_breakdown": {
+    "authority": 16,
+    "product_relevance": 15,
+    "licence_clarity": 8,
+    "provenance": 9,
+    "coverage_contribution": 10,
+    "currency_versioning": 8,
+    "chunk_quality": 7,
+    "content_integrity": 2,
+    "operational_efficiency": 4
+  },
+  "hard_failures": [
+    {
+      "gate": "unknown_licence",
+      "source": "licence_review.json",
+      "details": "Common Crawl Foundation Terms of Use: commercial and redistribution rights unclear"
+    }
+  ],
+  "verdict": "REJECT",
+  "approved_components": [],
+  "excluded_components": [
+    "Entire dataset (unknown redistribution rights under Common Crawl ToU)"
+  ],
+  "required_raw_sources": [],
+  "reason": "Hard rejection gates triggered: unknown_licence. Weak scoring dimensions: content_integrity, operational_efficiency.",
+  "evidence_paths": [
+    "datasets/medical_clinical_guidelines/provenance.json",
+    "datasets/medical_clinical_guidelines/licence_review.json",
+    "datasets/medical_clinical_guidelines/domain_mapping.json",
+    "datasets/medical_clinical_guidelines/quality_metrics.json",
+    "datasets/medical_clinical_guidelines/privacy_review.json",
+    "datasets/medical_clinical_guidelines/chunkability_report.json",
+    "datasets/medical_clinical_guidelines/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.628936+00:00",
+  "max_status": "technically_verified_candidate"
+}

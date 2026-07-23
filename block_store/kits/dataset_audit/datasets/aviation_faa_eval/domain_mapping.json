@@ -1,0 +1,28 @@
+{
+  "dataset_id": "aviation_faa_eval",
+  "domain": "aviation",
+  "cerebrum_product": "Cerebrum Aviation",
+  "supported_workflows": [
+    "Fine-tuning and evaluation of aviation Q&A models on FAA material",
+    "Benchmarking question answering over Federal Aviation Regulations, AIM and PHAK",
+    "Pilot-knowledge assessment at student/private/instrument/commercial/ATP levels"
+  ],
+  "supported_questions": [
+    "What actions are prohibited under 14 CFR 121.310?",
+    "What does FAR 91.213 require for inoperative equipment?",
+    "How do you read a fuel/time/distance-to-climb graph?",
+    "What are the rules for changing the address on a remote pilot certificate?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "aviation_faa_core_rag",
+      "nature": "Derived from the same FAA source corpus (Title 14 CFR, AIM, PHAK); core_rag holds raw documents, this dataset holds derived instruction/QA pairs"
+    }
+  ],
+  "unrelated_content": [],
+  "weak_content": [
+    "Some QA pairs are highly specific to U.S. FAA rules and may not transfer to EASA or other regulators",
+    "Knowledge chunks are generic training text without structured citation beyond source field"
+  ],
+  "primary_recommendation": "Use as the primary evaluation/fine-tuning set for aviation domain models. For live RAG grounding, prefer aviation_faa_core_rag as the authoritative source corpus."
+}

@@ -1,0 +1,49 @@
+{
+  "dataset_id": "supply_chain_raw_rag_candidates",
+  "file_count": 7,
+  "extensions": {
+    ".html": 4,
+    ".md": 1,
+    ".pdf": 1,
+    ".txt": 1
+  },
+  "mime_types": {
+    "text/html": 4,
+    "application/octet-stream": 1,
+    "application/pdf": 1,
+    "text/plain": 1
+  },
+  "largest_files": [
+    {
+      "path": "cbp_importer_exporter_tips.html",
+      "size_bytes": 129104,
+      "sha256": "c3a3d2c3793d2d16f24553da5ec35d65cd63f8cec6bcc3bb6c914343da65bf04",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "uncefact_rec33_single_window.pdf",
+      "size_bytes": 97400,
+      "sha256": "1ac51ecf5cc2c3c0e25e54c2c1a6c88c1c171e417d0bd182d23a2c8ba4756339",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "osha_warehousing_safety.html",
+      "size_bytes": 93667,
+      "sha256": "229a70eb4e2ff72655e2d4f532ccfd7d79b02704c789d6874841209cfe24535b",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "eu_customs_imports.html",
+      "size_bytes": 60899,
+      "sha256": "85906dfe31334431b3875780ed0ff91ce5cf21b65283436c4a0acac25e77fd30",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "govuk_import_goods.html",
+      "size_bytes": 52456,
+      "sha256": "49037aca6c66ad84896915df87646f868077dc246b7ed9bc35b093f5240e6784",
+      "mime_type": "text/html"
+    }
+  ],
+  "schema_notes": "Derived from inventory; inspect representative files for detailed schema."
+}

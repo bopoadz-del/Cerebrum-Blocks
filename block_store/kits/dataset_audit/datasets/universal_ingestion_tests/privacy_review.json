@@ -1,0 +1,10 @@
+{
+  "dataset_id": "universal_ingestion_tests",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [],
+  "legitimate_public_records": false,
+  "recommendation": "approve",
+  "notes": "Contains intentionally synthetic test values (example emails, numeric edge cases, validation strings). No real personal data."
+}

@@ -1,0 +1,54 @@
+{
+  "dataset_id": "universal_reference_data",
+  "domain": "universal_kernel",
+  "primary_role": "REFERENCE_DATA",
+  "secondary_roles": [],
+  "source_publisher": "Project-curated",
+  "original_source": "Project-curated",
+  "licence": "Unknown (no local licence file)",
+  "commercial_use": "unknown",
+  "redistribution": "unknown",
+  "jurisdiction": "universal_kernel",
+  "effective_dates": "",
+  "file_count": 4,
+  "total_bytes": 17491,
+  "record_count": 0,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_rate": 0.014599,
+  "synthetic_status": "none",
+  "pii_status": "none",
+  "raw_rag_score": 0,
+  "evaluation_score": 0,
+  "score_breakdown": {},
+  "hard_failures": [
+    {
+      "gate": "unknown_licence",
+      "source": "licence_review.json",
+      "details": "Unknown (no local licence file)"
+    },
+    {
+      "gate": "unknown_licence",
+      "source": "licence_issues.json",
+      "details": "No LICENSE, LICENCE or README file exists; reuse terms are unstated."
+    }
+  ],
+  "verdict": "REJECT",
+  "approved_components": [],
+  "excluded_components": [
+    "Entire dataset (no licence file; reuse terms unstated)"
+  ],
+  "required_raw_sources": [],
+  "reason": "Hard rejection gates triggered: unknown_licence.",
+  "evidence_paths": [
+    "datasets/universal_reference_data/provenance.json",
+    "datasets/universal_reference_data/licence_review.json",
+    "datasets/universal_reference_data/domain_mapping.json",
+    "datasets/universal_reference_data/quality_metrics.json",
+    "datasets/universal_reference_data/privacy_review.json",
+    "datasets/universal_reference_data/chunkability_report.json",
+    "datasets/universal_reference_data/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.653370+00:00",
+  "max_status": "technically_verified_candidate"
+}

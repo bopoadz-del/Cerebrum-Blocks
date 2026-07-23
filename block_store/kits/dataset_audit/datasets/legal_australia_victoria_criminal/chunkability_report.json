@@ -1,0 +1,27 @@
+{
+  "dataset_id": "legal_australia_victoria_criminal",
+  "is_raw_rag_candidate": true,
+  "document_count": 4712,
+  "estimated_chunk_count": 5346,
+  "avg_chunk_chars": 1160,
+  "min_chunk_chars": 26,
+  "max_chunk_chars": 2048,
+  "orphan_fragments": 166,
+  "table_corruption": "none",
+  "duplicate_chunks": 251,
+  "required_metadata": [
+    "clause",
+    "definition_term",
+    "doc_id",
+    "document_id",
+    "section_heading",
+    "source_file",
+    "title"
+  ],
+  "structural_boundaries": [
+    "clause",
+    "definition",
+    "section",
+    "title"
+  ]
+}

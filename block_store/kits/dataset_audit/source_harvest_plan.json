@@ -1,0 +1,74 @@
+[
+  {
+    "dataset_id": "construction_bim_core",
+    "verdict": "REJECT",
+    "required_raw_sources": [
+      "projects/ (IFC model files)"
+    ],
+    "reason": "Hard rejection gates triggered: conflicting_terms. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version."
+  },
+  {
+    "dataset_id": "legal_general_retrieval_eval",
+    "verdict": "APPROVE_GOLDEN_EVAL",
+    "required_raw_sources": [
+      "contractnli",
+      "cuad",
+      "maud",
+      "privacy_qa"
+    ],
+    "reason": "Evaluation score 90/100 maps to APPROVE_GOLDEN_EVAL. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version."
+  },
+  {
+    "dataset_id": "legal_australia_victoria_criminal",
+    "verdict": "REJECT",
+    "required_raw_sources": [
+      "corpus.jsonl"
+    ],
+    "reason": "Hard rejection gates triggered: commercial_use_prohibited, conflicting_terms. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version."
+  },
+  {
+    "dataset_id": "insurance_eu_regulatory_qa",
+    "verdict": "QUESTION_POOL_ONLY",
+    "required_raw_sources": [
+      "eiopa-qa-archive.xlsx (full EIOPA Q&A archive)",
+      "referenced Solvency II regulations"
+    ],
+    "reason": "Evaluation score 66/100 maps to QUESTION_POOL_ONLY. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version."
+  },
+  {
+    "dataset_id": "aviation_faa_eval",
+    "verdict": "APPROVE_EVAL_CANDIDATE",
+    "required_raw_sources": [
+      "aviation_faa_core_rag/ (AIM PDF, CFR XML parts 61/91/121/135)"
+    ],
+    "reason": "Evaluation score 73/100 maps to APPROVE_EVAL_CANDIDATE. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version."
+  },
+  {
+    "dataset_id": "medical_pubmedqa_eval",
+    "verdict": "APPROVE_EVAL_CANDIDATE",
+    "required_raw_sources": [
+      "ori_pqal.json (questions, contexts, labels)",
+      "PubMed abstracts corresponding to PMIDs"
+    ],
+    "reason": "Evaluation score 73/100 maps to APPROVE_EVAL_CANDIDATE. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version."
+  },
+  {
+    "dataset_id": "retail_product_search_eval",
+    "verdict": "APPROVE_EVAL_CANDIDATE",
+    "required_raw_sources": [
+      "amazon_esci/products/",
+      "amazon_esci/retrieval/",
+      "wands/data/data.jsonl.gz"
+    ],
+    "reason": "Evaluation score 81/100 maps to APPROVE_EVAL_CANDIDATE. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version."
+  },
+  {
+    "dataset_id": "rag_kits",
+    "verdict": "REJECT",
+    "required_raw_sources": [
+      "raw_regulations/ (harvested regulation texts)",
+      "harvest_manifest.json"
+    ],
+    "reason": "Hard rejection gates triggered: unknown_licence, commercial_use_prohibited. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version."
+  }
+]

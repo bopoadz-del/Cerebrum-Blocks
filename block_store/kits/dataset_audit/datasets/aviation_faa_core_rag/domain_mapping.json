@@ -1,0 +1,27 @@
+{
+  "dataset_id": "aviation_faa_core_rag",
+  "domain": "aviation",
+  "cerebrum_product": "Cerebrum Aviation",
+  "supported_workflows": [
+    "U.S. federal aviation regulation retrieval",
+    "Aeronautical Information Manual (AIM) reference answering",
+    "Pilot certification and operational rule RAG"
+  ],
+  "supported_questions": [
+    "What are the pilot certification requirements under 14 CFR Part 61?",
+    "What equipment is required for IFR flight under Part 91?",
+    "What are the rest requirements for Part 121 flight crew?",
+    "How does the AIM define Class B airspace?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "aviation_faa_eval",
+      "nature": "aviation_faa_eval is derived from the same FAR/AIM/PHAK sources and covers similar topics"
+    }
+  ],
+  "unrelated_content": [
+    "HTML navigation and XML metadata wrappers from eCFR/eCFR extraction are not domain content"
+  ],
+  "weak_content": [],
+  "primary_recommendation": "Primary source for authoritative FAA regulation and AIM RAG. Use aviation_faa_eval as an evaluation/test split derived from related sources."
+}

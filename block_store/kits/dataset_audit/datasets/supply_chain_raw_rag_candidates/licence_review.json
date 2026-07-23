@@ -1,0 +1,17 @@
+{
+  "dataset_id": "supply_chain_raw_rag_candidates",
+  "licence_name": "Mixed per-sample",
+  "licence_url": null,
+  "licence_text_location": "supply_chain_raw_rag_candidates/scouting_report.md",
+  "commercial_use": "permitted",
+  "modification": "unknown",
+  "redistribution": "permitted",
+  "unresolved_or_conflicting_conditions": [
+    "No single top-level licence file; each sample retains its source licence.",
+    "UN/CEFACT sample: UN official document (public).",
+    "U.S. CBP/OSHA samples: U.S. government work (public domain).",
+    "EU Commission sample: CC BY 4.0 (default Commission policy).",
+    "UK GOV.UK sample: Open Government Licence v3.0."
+  ],
+  "notes": "Downloaded samples are all permissive for redistribution, including commercial use where applicable. Modification rights vary and should be checked per source."
+}

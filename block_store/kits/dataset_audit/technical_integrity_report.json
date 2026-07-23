@@ -1,0 +1,341 @@
+{
+  "generated_at": "2026-07-23T05:02:05.194659+00:00",
+  "base_dir": "C:/Users/shimm",
+  "datasets": {
+    "construction_bim_core": {
+      "path": "Cerebrum-Blocks/block_store/kits/construction_bim_core",
+      "exists": true,
+      "file_count": 50,
+      "total_bytes": 2197509,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".md": 24,
+        ".csv": 2,
+        "(no extension)": 1,
+        ".txt": 22,
+        ".ifc": 1
+      },
+      "mime_counts": {
+        "application/octet-stream": 26,
+        "application/vnd.ms-excel": 2,
+        "text/plain": 22
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "legal_general_retrieval_eval": {
+      "path": "Cerebrum-Blocks/block_store/kits/legal_general_retrieval_eval",
+      "exists": true,
+      "file_count": 720,
+      "total_bytes": 90407448,
+      "files_with_issues": 0,
+      "extension_counts": {
+        "(no extension)": 1,
+        ".md": 1,
+        ".json": 4,
+        ".txt": 714
+      },
+      "mime_counts": {
+        "application/octet-stream": 2,
+        "application/json": 4,
+        "text/plain": 714
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "legal_australia_victoria_criminal": {
+      "path": "Cerebrum-Blocks/block_store/kits/legal_australia_victoria_criminal",
+      "exists": true,
+      "file_count": 3,
+      "total_bytes": 7648788,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".jsonl": 2,
+        ".md": 1
+      },
+      "mime_counts": {
+        "application/json": 2,
+        "application/octet-stream": 1
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "insurance_eu_solvency_core": {
+      "path": "Cerebrum-Blocks/block_store/kits/insurance_eu_solvency_core",
+      "exists": true,
+      "file_count": 5,
+      "total_bytes": 1714888,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".html": 3,
+        ".pdf": 1,
+        ".json": 1
+      },
+      "mime_counts": {
+        "text/html": 3,
+        "application/pdf": 1,
+        "application/json": 1
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "insurance_eu_regulatory_qa": {
+      "path": "Cerebrum-Blocks/block_store/kits/insurance_eu_regulatory_qa",
+      "exists": true,
+      "file_count": 9,
+      "total_bytes": 1702000,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".xlsx": 1,
+        ".csv": 2,
+        ".jsonl": 1,
+        ".json": 1,
+        ".txt": 3,
+        ".py": 1
+      },
+      "mime_counts": {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": 1,
+        "application/vnd.ms-excel": 2,
+        "application/json": 2,
+        "text/plain": 3,
+        "text/x-python": 1
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "aviation_faa_core_rag": {
+      "path": "Cerebrum-Blocks/block_store/kits/aviation_faa_core_rag",
+      "exists": true,
+      "file_count": 6,
+      "total_bytes": 46043352,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".pdf": 1,
+        ".html": 1,
+        ".xml": 4
+      },
+      "mime_counts": {
+        "application/pdf": 1,
+        "text/html": 1,
+        "text/xml": 4
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "aviation_faa_eval": {
+      "path": "Cerebrum-Blocks/block_store/kits/aviation_faa_eval",
+      "exists": true,
+      "file_count": 3,
+      "total_bytes": 17370811,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".md": 1,
+        ".jsonl": 2
+      },
+      "mime_counts": {
+        "application/octet-stream": 1,
+        "application/json": 2
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "medical_clinical_guidelines": {
+      "path": "Cerebrum-Blocks/block_store/kits/medical_clinical_guidelines",
+      "exists": true,
+      "file_count": 3,
+      "total_bytes": 516063,
+      "files_with_issues": 2,
+      "extension_counts": {
+        "(no extension)": 1,
+        ".jsonl": 1,
+        ".md": 1
+      },
+      "mime_counts": {
+        "application/octet-stream": 2,
+        "application/json": 1
+      },
+      "issue_counts": {
+        "empty file (0 bytes)": 1,
+        "malformed JSON lines: 1": 1
+      },
+      "issues": [
+        {
+          "file": "Cerebrum-Blocks/block_store/kits/medical_clinical_guidelines/LICENSE_guidelines",
+          "issue": "empty file (0 bytes)"
+        },
+        {
+          "file": "Cerebrum-Blocks/block_store/kits/medical_clinical_guidelines/open_guidelines_sample_head.jsonl",
+          "issue": "malformed JSON lines: 1"
+        }
+      ]
+    },
+    "medical_pubmedqa_eval": {
+      "path": "Cerebrum-Blocks/block_store/kits/medical_pubmedqa_eval",
+      "exists": true,
+      "file_count": 3,
+      "total_bytes": 2597266,
+      "files_with_issues": 0,
+      "extension_counts": {
+        "(no extension)": 1,
+        ".json": 2
+      },
+      "mime_counts": {
+        "application/octet-stream": 1,
+        "application/json": 2
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "retail_product_search_eval": {
+      "path": "Cerebrum-Blocks/block_store/kits/retail_product_search_eval",
+      "exists": true,
+      "file_count": 7,
+      "total_bytes": 337439941,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".md": 2,
+        ".parquet": 4,
+        ".gz": 1
+      },
+      "mime_counts": {
+        "application/octet-stream": 7
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "supply_chain_logic_eval": {
+      "path": "Cerebrum-Blocks/block_store/kits/supply_chain_logic_eval",
+      "exists": true,
+      "file_count": 6,
+      "total_bytes": 4660619,
+      "files_with_issues": 0,
+      "extension_counts": {
+        "(no extension)": 1,
+        ".md": 2,
+        ".jsonl": 1,
+        ".parquet": 1,
+        ".json": 1
+      },
+      "mime_counts": {
+        "application/octet-stream": 4,
+        "application/json": 2
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "supply_chain_raw_rag_candidates": {
+      "path": "Cerebrum-Blocks/block_store/kits/supply_chain_raw_rag_candidates",
+      "exists": true,
+      "file_count": 7,
+      "total_bytes": 446297,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".html": 4,
+        ".md": 1,
+        ".pdf": 1,
+        ".txt": 1
+      },
+      "mime_counts": {
+        "text/html": 4,
+        "application/octet-stream": 1,
+        "application/pdf": 1,
+        "text/plain": 1
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "rag_kits": {
+      "path": "Cerebrum-Blocks/block_store/kits/rag_kits",
+      "exists": true,
+      "file_count": 390,
+      "total_bytes": 66322907,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".log": 1,
+        ".py": 1,
+        ".jsonl": 1,
+        ".json": 4,
+        ".csv": 3,
+        ".html": 179,
+        ".txt": 190,
+        ".pdf": 11
+      },
+      "mime_counts": {
+        "application/octet-stream": 1,
+        "text/x-python": 1,
+        "application/json": 5,
+        "application/vnd.ms-excel": 3,
+        "text/html": 179,
+        "text/plain": 190,
+        "application/pdf": 11
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "universal_reference_data": {
+      "path": "Cerebrum-Blocks/block_store/kits/universal_reference_data",
+      "exists": true,
+      "file_count": 4,
+      "total_bytes": 17491,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".json": 4
+      },
+      "mime_counts": {
+        "application/json": 4
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "universal_ingestion_tests": {
+      "path": "Cerebrum-Blocks/block_store/kits/universal_ingestion_tests",
+      "exists": true,
+      "file_count": 2,
+      "total_bytes": 2994,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".json": 2
+      },
+      "mime_counts": {
+        "application/json": 2
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "universal_api_reference": {
+      "path": "Cerebrum-Blocks/block_store/kits/universal_api_reference",
+      "exists": true,
+      "file_count": 2,
+      "total_bytes": 8694,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".json": 2
+      },
+      "mime_counts": {
+        "application/json": 2
+      },
+      "issue_counts": {},
+      "issues": []
+    },
+    "financeops_demo_fixtures": {
+      "path": "Cerebrum-Blocks/block_store/kits/financeops_demo_fixtures",
+      "exists": true,
+      "file_count": 2,
+      "total_bytes": 4816,
+      "files_with_issues": 0,
+      "extension_counts": {
+        ".json": 2
+      },
+      "mime_counts": {
+        "application/json": 2
+      },
+      "issue_counts": {},
+      "issues": []
+    }
+  },
+  "totals": {
+    "file_count": 1222,
+    "total_bytes": 579101884,
+    "files_with_issues": 2
+  }
+}

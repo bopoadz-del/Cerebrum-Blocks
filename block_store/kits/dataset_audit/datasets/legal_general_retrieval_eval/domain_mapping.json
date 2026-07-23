@@ -1,0 +1,31 @@
+{
+  "dataset_id": "legal_general_retrieval_eval",
+  "domain": "legal",
+  "cerebrum_product": "Cerebrum Legal",
+  "supported_workflows": [
+    "Contract understanding and clause retrieval (NDAs, affiliate agreements, M&A agreements, privacy policies)",
+    "Legal-document question answering over unstructured contract text",
+    "Benchmarking legal retrieval and natural-language inference on contracts"
+  ],
+  "supported_questions": [
+    "Does this NDA grant the receiving party rights to confidential information?",
+    "What is the expiration date of the contract?",
+    "What is the type of consideration in this acquisition agreement?",
+    "Who can see information about tasks I hire workers for under Fiverr's privacy policy?"
+  ],
+  "overlap_with": [
+    {
+      "dataset_id": "legal_australia_victoria_criminal",
+      "nature": "Both are legal retrieval/QA datasets, but cover disjoint sub-fields: common-law contracts/regulatory privacy vs. Australian criminal procedure"
+    },
+    {
+      "dataset_id": "insurance_eu_solvency_core",
+      "nature": "Insurance regulation is adjacent, but no overlap in source documents or tasks"
+    }
+  ],
+  "unrelated_content": [],
+  "weak_content": [
+    "Some contracts are simple templates with limited clause variability; retrieval value is high but generalisation to bespoke commercial contracts may be limited"
+  ],
+  "primary_recommendation": "Primary source for general commercial contract RAG and legal NLI/retrieval evaluation within the legal domain."
+}

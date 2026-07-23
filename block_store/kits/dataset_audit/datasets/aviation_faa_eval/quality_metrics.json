@@ -1,0 +1,33 @@
+{
+  "dataset_id": "aviation_faa_eval",
+  "files_inspected": 3,
+  "records_inspected": 100,
+  "exact_duplicate_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_count": 0,
+  "near_duplicate_rate": 0.0,
+  "repeated_context_count": 4691,
+  "repeated_question_count": 6560,
+  "synthetic_status": "majority",
+  "extraction_noise": "none",
+  "language_distribution": {
+    "en": 0.99,
+    "cy": 0.01
+  },
+  "sample_issues": [
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\aviation_faa_eval\\ziksy_faa-aviation-training_train.jsonl",
+      "record_index": 1546,
+      "type": "repeated_context",
+      "description": "Context repeated across 2 inspected records",
+      "snippet": "14 CFR 91.155"
+    },
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\aviation_faa_eval\\ziksy_faa-aviation-training_test.jsonl",
+      "record_index": 47,
+      "type": "repeated_question",
+      "description": "Question/query repeated across 74 inspected records",
+      "snippet": "You are an aviation expert and FAA-certified flight instructor. Answer questions accurately based on Federal Aviation Regulations, the Aeronautical Information Manual, and standard aviation knowledge."
+    }
+  ]
+}

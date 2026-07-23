@@ -1,0 +1,17 @@
+{
+  "dataset_id": "insurance_eu_regulatory_qa",
+  "display_name": "EIOPA Questions and Answers on regulation",
+  "publisher": "European Insurance and Occupational Pensions Authority (EIOPA)",
+  "original_publisher": "EIOPA",
+  "source_urls": [
+    "https://www.eiopa.europa.eu/qa-regulation_en",
+    "https://www.eiopa.europa.eu/sites/default/files/export_qa/eiopa-qa.xlsx?prefLang=en",
+    "https://www.eiopa.europa.eu/legal-notice_en"
+  ],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "insurance_eu_regulatory_qa/metadata.json",
+    "insurance_eu_regulatory_qa/qa_archive_metadata.txt"
+  ],
+  "notes": "Includes the official EIOPA Q&A archive export plus a scraped Solvency II sample."
+}

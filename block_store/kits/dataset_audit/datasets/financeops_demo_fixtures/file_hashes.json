@@ -1,0 +1,17 @@
+{
+  "dataset_id": "financeops_demo_fixtures",
+  "files": [
+    {
+      "path": "transactions.json",
+      "size_bytes": 2486,
+      "sha256": "07c658838b0510804e90012b4a447a2799a0ad45b0ed73e9f46c2353d972c0d6",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "users.json",
+      "size_bytes": 2330,
+      "sha256": "5788c0dbf3fc473a3a9a04c950832ba18b57a4bcd4e80dc6a395de45325434ca",
+      "mime_type": "application/json"
+    }
+  ]
+}

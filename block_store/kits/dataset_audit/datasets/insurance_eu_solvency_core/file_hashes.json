@@ -1,0 +1,35 @@
+{
+  "dataset_id": "insurance_eu_solvency_core",
+  "files": [
+    {
+      "path": "eiopa-solvency-ii-delegated-regulation-2015-35.html",
+      "size_bytes": 407503,
+      "sha256": "c0ffeb6bbaf31d95b4f967e0741d24c4fed235682cfd3b56079938ec15975ea7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "eiopa-solvency-ii-directive-2009-138-ec.html",
+      "size_bytes": 347661,
+      "sha256": "1480ef9db298f99239b96271de7d997678fa9405e3987afd5e98c7b5ec9dd973",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "eiopa-solvency-ii-single-rulebook.html",
+      "size_bytes": 65451,
+      "sha256": "eec6526163539d3c6956c0bc52d475164af56e99b5e1181a58fe3eee29962f0a",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "eiopa-solvency2-single-rulebook-user-guide.pdf",
+      "size_bytes": 891852,
+      "sha256": "6c09d7d03d1e2e9761e03d5cb60a800811d421e15fbd083b5a7ad130adaf8a85",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "metadata.json",
+      "size_bytes": 2421,
+      "sha256": "80a3819d7d411ee2f0b65d5cae5f713702d1ae582735e72e243e645e6969b212",
+      "mime_type": "application/json"
+    }
+  ]
+}

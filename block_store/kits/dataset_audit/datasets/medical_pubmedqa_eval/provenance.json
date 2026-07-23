@@ -1,0 +1,14 @@
+{
+  "dataset_id": "medical_pubmedqa_eval",
+  "display_name": "PubMedQA",
+  "publisher": "pubmedqa",
+  "original_publisher": "pubmedqa",
+  "source_urls": [
+    "https://github.com/pubmedqa/pubmedqa"
+  ],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "medical_pubmedqa_eval/LICENSE_pubmedqa"
+  ],
+  "notes": "Question-answering dataset based on PubMed abstracts. PubMed abstracts are U.S. government/public-domain works; the dataset annotations are MIT-licensed."
+}

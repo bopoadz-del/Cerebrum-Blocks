@@ -1,0 +1,13 @@
+{
+  "dataset_id": "financeops_demo_fixtures",
+  "licence_name": "Unknown (no local licence file)",
+  "licence_url": null,
+  "licence_text_location": null,
+  "commercial_use": "unknown",
+  "modification": "unknown",
+  "redistribution": "unknown",
+  "unresolved_or_conflicting_conditions": [
+    "No LICENSE, LICENCE or README exists."
+  ],
+  "notes": "Hard failure: unknown licence."
+}

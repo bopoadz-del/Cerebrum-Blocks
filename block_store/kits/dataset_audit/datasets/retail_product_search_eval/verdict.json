@@ -1,0 +1,57 @@
+{
+  "dataset_id": "retail_product_search_eval",
+  "domain": "retail",
+  "primary_role": "RETRIEVAL_EVAL",
+  "secondary_roles": [],
+  "source_publisher": "Multiple (Amazon Science / Wayfair)",
+  "original_source": "Amazon Science (ESCI) / Wayfair (WANDS)",
+  "licence": "Apache 2.0 (both sub-datasets)",
+  "commercial_use": "permitted",
+  "redistribution": "permitted",
+  "jurisdiction": "retail",
+  "effective_dates": "",
+  "file_count": 7,
+  "total_bytes": 337439941,
+  "record_count": 31418,
+  "malformed_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_rate": 0.0,
+  "synthetic_status": "none",
+  "pii_status": "none",
+  "raw_rag_score": 0,
+  "evaluation_score": 81,
+  "score_breakdown": {
+    "exact_mapping": 18,
+    "verified_answer": 13,
+    "matching_raw_corpus": 12,
+    "product_relevance": 15,
+    "difficulty_coverage": 9,
+    "negative_cases": 3,
+    "low_duplication": 5,
+    "split_separation": 2,
+    "jurisdiction_version": 4
+  },
+  "hard_failures": [],
+  "verdict": "APPROVE_EVAL_CANDIDATE",
+  "approved_components": [
+    "Whole dataset as classified"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [
+    "amazon_esci/products/",
+    "amazon_esci/retrieval/",
+    "wands/data/data.jsonl.gz"
+  ],
+  "reason": "Evaluation score 81/100 maps to APPROVE_EVAL_CANDIDATE. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/retail_product_search_eval/provenance.json",
+    "datasets/retail_product_search_eval/licence_review.json",
+    "datasets/retail_product_search_eval/domain_mapping.json",
+    "datasets/retail_product_search_eval/quality_metrics.json",
+    "datasets/retail_product_search_eval/privacy_review.json",
+    "datasets/retail_product_search_eval/chunkability_report.json",
+    "datasets/retail_product_search_eval/evaluation_report.json"
+  ],
+  "generated_at": "2026-07-23T06:37:44.635937+00:00",
+  "max_status": "technically_verified_candidate"
+}

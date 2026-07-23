@@ -1,0 +1,56 @@
+{
+  "dataset_id": "rag_kits",
+  "file_count": 390,
+  "extensions": {
+    ".log": 1,
+    ".py": 1,
+    ".jsonl": 1,
+    ".json": 4,
+    ".csv": 3,
+    ".html": 179,
+    ".txt": 190,
+    ".pdf": 11
+  },
+  "mime_types": {
+    "application/octet-stream": 1,
+    "text/x-python": 1,
+    "application/json": 5,
+    "application/vnd.ms-excel": 3,
+    "text/html": 179,
+    "text/plain": 190,
+    "application/pdf": 11
+  },
+  "largest_files": [
+    {
+      "path": "IrishFinance_prompt_completion.jsonl",
+      "size_bytes": 7218856,
+      "sha256": "756dae068d2b4e12129013fda94dc991a0efda8f6b7a5f98488f3971696a794e",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "raw_regulations/EMIR/109_Commission_Regulation_EC_No_1126_2008.html",
+      "size_bytes": 6987380,
+      "sha256": "c0cfd1ba4501674df0060cfd366bea80167c9c21f805ca2905fde3392df98f4e",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "opensanctions_sample_1000.json",
+      "size_bytes": 4309239,
+      "sha256": "9c41669ce49093edacb2068b6e67d554561e2317120a8d62da59f60093b83042",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "raw_regulations/EMIR/085_Directive_2006_48_EC.html",
+      "size_bytes": 3217696,
+      "sha256": "f0cdf3204322d95f1875982edc9b4c502880156d7012ea0f016e279085d51b26",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/109_Commission_Regulation_EC_No_1126_2008.txt",
+      "size_bytes": 1834649,
+      "sha256": "b9eb0acd64ffc8ff66d58865474fc8e73e828994a3088e44f451cbc1b904a35c",
+      "mime_type": "text/plain"
+    }
+  ],
+  "schema_notes": "Derived from inventory; inspect representative files for detailed schema."
+}

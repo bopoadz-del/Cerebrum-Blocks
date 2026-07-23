@@ -1,0 +1,13 @@
+{
+  "dataset_id": "universal_ingestion_tests",
+  "display_name": "Universal Ingestion Tests",
+  "publisher": "Project-curated",
+  "original_publisher": "Project-curated",
+  "source_urls": [],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "universal_ingestion_tests/validation_cases.json",
+    "universal_ingestion_tests/json_edge_cases.json"
+  ],
+  "notes": "Synthetic validation and edge-case fixtures. No provenance or licence metadata."
+}

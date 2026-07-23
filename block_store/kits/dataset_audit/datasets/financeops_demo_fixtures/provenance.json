@@ -1,0 +1,13 @@
+{
+  "dataset_id": "financeops_demo_fixtures",
+  "display_name": "FinanceOps Demo Fixtures",
+  "publisher": "Project-curated",
+  "original_publisher": "Project-curated",
+  "source_urls": [],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "financeops_demo_fixtures/users.json",
+    "financeops_demo_fixtures/transactions.json"
+  ],
+  "notes": "Synthetic users and transactions for demonstration. No provenance or licence metadata."
+}

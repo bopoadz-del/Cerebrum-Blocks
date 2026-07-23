@@ -1,0 +1,33 @@
+{
+  "dataset_id": "medical_pubmedqa_eval",
+  "file_count": 3,
+  "extensions": {
+    "(no ext)": 1,
+    ".json": 2
+  },
+  "mime_types": {
+    "application/octet-stream": 1,
+    "application/json": 2
+  },
+  "largest_files": [
+    {
+      "path": "ori_pqal.json",
+      "size_bytes": 2584787,
+      "sha256": "8b3276be8942ebbd77f3ddcda12c1749bf0e490045a736fd8438ee40cf37a41d",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "test_ground_truth.json",
+      "size_bytes": 11414,
+      "sha256": "939fe566f09017d13b1ca64d2ddfee0bc2374b366048152997669cccedc44d51",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "LICENSE_pubmedqa",
+      "size_bytes": 1065,
+      "sha256": "8e75abc6136be91e5ae66dbb6dda07c8bc9dcc215ed3bc1ba3ae7fab7904777e",
+      "mime_type": "application/octet-stream"
+    }
+  ],
+  "schema_notes": "Derived from inventory; inspect representative files for detailed schema."
+}

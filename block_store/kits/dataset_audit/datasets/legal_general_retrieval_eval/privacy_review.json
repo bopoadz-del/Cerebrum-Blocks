@@ -1,0 +1,10 @@
+{
+  "dataset_id": "legal_general_retrieval_eval",
+  "pii_detected": false,
+  "pii_fields": [],
+  "pii_record_count": 0,
+  "sensitive_data_types": [],
+  "legitimate_public_records": false,
+  "recommendation": "approve",
+  "notes": "Corpus comprises publicly shared non-disclosure/data-use agreement templates and benchmark annotations. Company names and signatory roles are business identifiers, not personal data."
+}

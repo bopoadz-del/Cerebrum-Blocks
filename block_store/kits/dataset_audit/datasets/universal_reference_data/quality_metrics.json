@@ -1,0 +1,31 @@
+{
+  "dataset_id": "universal_reference_data",
+  "files_inspected": 4,
+  "records_inspected": 137,
+  "exact_duplicate_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_count": 2,
+  "near_duplicate_rate": 0.014599,
+  "repeated_context_count": 0,
+  "repeated_question_count": 0,
+  "synthetic_status": "none",
+  "extraction_noise": "none",
+  "language_distribution": {
+    "en": 0.8102,
+    "es": 0.0803,
+    "fr": 0.0365,
+    "it": 0.0292,
+    "ca": 0.0292,
+    "ro": 0.0073,
+    "da": 0.0073
+  },
+  "sample_issues": [
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\universal_reference_data\\timezones.json",
+      "record_index": 12,
+      "type": "near_duplicate",
+      "description": "Record has high text overlap with another inspected record (>= 70% Jaccard)",
+      "snippet": "id: Europe/Paris\nname: Central European Time\nabbreviation: CET\nutc_offset: +01:00\ndst_offset: +02:00\nregion: Europe\n__record_key__: timezones"
+    }
+  ]
+}

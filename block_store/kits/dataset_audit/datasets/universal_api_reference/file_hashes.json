@@ -1,0 +1,17 @@
+{
+  "dataset_id": "universal_api_reference",
+  "files": [
+    {
+      "path": "file_extensions.json",
+      "size_bytes": 3711,
+      "sha256": "8125e786ca922a2532a70f2fcf98e3b4d6ff5054ba63371d7b6c284ab2ca7333",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "http_status_codes.json",
+      "size_bytes": 4983,
+      "sha256": "07c6e1acfe45de787128d62cec20256a9fb38bf3dd9f0fa0bfba44e1936f9380",
+      "mime_type": "application/json"
+    }
+  ]
+}

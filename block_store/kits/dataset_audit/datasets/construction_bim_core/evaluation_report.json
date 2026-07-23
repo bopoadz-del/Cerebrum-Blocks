@@ -1,0 +1,17 @@
+{
+  "dataset_id": "construction_bim_core",
+  "is_evaluation_candidate": true,
+  "question_count": 1026,
+  "with_expected_answer": 1026,
+  "with_source_document": 1026,
+  "with_passage_span": 0,
+  "with_derivation": 0,
+  "with_jurisdiction_version": 0,
+  "exact_duplicate_questions": 170,
+  "train_test_overlap": "none",
+  "quality_tier": "golden",
+  "required_raw_sources": [
+    "projects/ (IFC model files)"
+  ],
+  "notes": "IFC-Bench v2: question/ground_truth/ifc_model/project/category. No explicit passage span. Source IFC models required."
+}

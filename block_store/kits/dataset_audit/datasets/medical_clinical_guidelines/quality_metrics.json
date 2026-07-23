@@ -1,0 +1,33 @@
+{
+  "dataset_id": "medical_clinical_guidelines",
+  "files_inspected": 3,
+  "records_inspected": 19,
+  "exact_duplicate_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_count": 0,
+  "near_duplicate_rate": 0.0,
+  "repeated_context_count": 0,
+  "repeated_question_count": 0,
+  "synthetic_status": "none",
+  "extraction_noise": "major",
+  "language_distribution": {
+    "en": 0.9474,
+    "es": 0.0526
+  },
+  "sample_issues": [
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\medical_clinical_guidelines\\open_guidelines_sample_head.jsonl",
+      "record_index": 16,
+      "type": "malformed_record",
+      "description": "Record could not be parsed correctly",
+      "snippet": "__malformed_json__: True\n__error__: Unterminated string starting at: line 1 column 38158 (char 38157)\n__raw__: {\"id\":\"0ee4f9b150e2ee25bf2c3e2c65eef16adf490054\",\"source\":\"cco\",\"title\":\"None\",\"clean_tex"
+    },
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\medical_clinical_guidelines\\README_guidelines.md",
+      "record_index": 0,
+      "type": "html_in_plaintext",
+      "description": "HTML/XML tags present in non-HTML record",
+      "snippet": "text: ---\nlicense: other\nlicense_name: common-crawl\nlicense_link: LICENSE\ntask_categories:\n- text-generation\nlanguage:\n- en\npretty_name: Clinical Guidelines\nsize_categories:\n- 10K<n<100K\nconfigs:\n- co"
+    }
+  ]
+}

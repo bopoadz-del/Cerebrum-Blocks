@@ -1,0 +1,16 @@
+{
+  "dataset_id": "medical_clinical_guidelines",
+  "display_name": "Clinical Guidelines (Meditron subset)",
+  "publisher": "EPFL LLM Team",
+  "original_publisher": "EPFL LLM Team",
+  "source_urls": [
+    "https://huggingface.co/datasets/epfl-llm/ClinicalGuidelines",
+    "https://github.com/epfLLM/meditron",
+    "https://arxiv.org/abs/2311.16079"
+  ],
+  "downloaded_from": "repackaging",
+  "evidence_files": [
+    "medical_clinical_guidelines/README_guidelines.md"
+  ],
+  "notes": "Subset of 37K articles from 9 sources that the publisher states allow redistribution. Underlying sources include CCO, CDC, CMA, ICRC, NICE, PubMed, SPOR, WHO, WikiDoc."
+}

@@ -1,0 +1,32 @@
+{
+  "dataset_id": "legal_general_retrieval_eval",
+  "is_raw_rag_candidate": true,
+  "document_count": 711,
+  "estimated_chunk_count": 54268,
+  "avg_chunk_chars": 1542,
+  "min_chunk_chars": 1,
+  "max_chunk_chars": 2048,
+  "orphan_fragments": 1907,
+  "table_corruption": "none",
+  "duplicate_chunks": 749,
+  "required_metadata": [
+    "article",
+    "chapter",
+    "clause",
+    "definition_term",
+    "document_id",
+    "section_heading",
+    "source_file",
+    "table_id",
+    "title"
+  ],
+  "structural_boundaries": [
+    "article",
+    "chapter",
+    "clause",
+    "definition",
+    "section",
+    "table",
+    "title"
+  ]
+}

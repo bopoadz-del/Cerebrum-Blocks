@@ -1,0 +1,18 @@
+{
+  "dataset_id": "supply_chain_logic_eval",
+  "display_name": "RetailOpt-190",
+  "publisher": "Junbo Jacob Lian",
+  "original_publisher": "Junbo Jacob Lian",
+  "source_urls": [
+    "https://github.com/junbolian/RetailOpt-190",
+    "https://huggingface.co/datasets/Jacoblian/RetailOpt-190",
+    "https://arxiv.org/abs/2602.15983"
+  ],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "supply_chain_logic_eval/LICENSE",
+    "supply_chain_logic_eval/README.md",
+    "supply_chain_logic_eval/RETAILOPT190_NOTES.md"
+  ],
+  "notes": "Solver-validated text-to-optimization benchmark. The package contains data, code and notes."
+}

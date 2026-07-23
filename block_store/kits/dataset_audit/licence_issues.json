@@ -1,0 +1,79 @@
+{
+  "audited_at": "2026-07-23T05:12:45.569919+00:00",
+  "datasets_audited": 18,
+  "datasets_with_hard_issues": 8,
+  "hard_issue_counts": {
+    "unknown_licence": 7,
+    "commercial_use_prohibited": 2,
+    "redistribution_prohibited": 0,
+    "conflicting_terms": 2
+  },
+  "issues": [
+    {
+      "dataset_id": "construction_bim_core",
+      "component": null,
+      "issue_type": "conflicting_terms",
+      "description": "Dataset is CC BY 4.0 but four IFC model files are GPLv3; combined redistribution triggers copyleft obligations that conflict with the permissive dataset licence."
+    },
+    {
+      "dataset_id": "legal_australia_victoria_criminal",
+      "component": null,
+      "issue_type": "commercial_use_prohibited",
+      "description": "Licence is CC BY-NC-SA 4.0 (header) / CC BY-NC 4.0 (body); both versions prohibit commercial use."
+    },
+    {
+      "dataset_id": "legal_australia_victoria_criminal",
+      "component": null,
+      "issue_type": "conflicting_terms",
+      "description": "Dataset card header says cc-by-nc-sa-4.0 while the licence section says CC BY-NC 4.0, creating an inconsistent share-alike requirement."
+    },
+    {
+      "dataset_id": "aviation_faa_core_rag",
+      "component": null,
+      "issue_type": "unknown_licence",
+      "description": "No LICENSE, LICENCE or README file exists. Source material is U.S. government work, but no local licence text records the rights."
+    },
+    {
+      "dataset_id": "rag_kits",
+      "component": "Regulations_Link_Retrieval.csv",
+      "issue_type": "unknown_licence",
+      "description": "No licence file for the link-index CSV; reuse terms for the compilation are not stated."
+    },
+    {
+      "dataset_id": "rag_kits",
+      "component": "IrishFinance_prompt_completion.jsonl",
+      "issue_type": "unknown_licence",
+      "description": "No licence file for the compiled prompt-completion pairs; although source institutions allow reproduction with attribution, the compilation's licence is unstated."
+    },
+    {
+      "dataset_id": "rag_kits",
+      "component": "opensanctions_sample_1000.json",
+      "issue_type": "commercial_use_prohibited",
+      "description": "OpenSanctions is free for non-commercial users; businesses must acquire a data licence (https://www.opensanctions.org/docs/commercial/exemption/)."
+    },
+    {
+      "dataset_id": "universal_reference_data",
+      "component": null,
+      "issue_type": "unknown_licence",
+      "description": "No LICENSE, LICENCE or README file exists; reuse terms are unstated."
+    },
+    {
+      "dataset_id": "universal_ingestion_tests",
+      "component": null,
+      "issue_type": "unknown_licence",
+      "description": "No LICENSE, LICENCE or README file exists; reuse terms are unstated."
+    },
+    {
+      "dataset_id": "universal_api_reference",
+      "component": null,
+      "issue_type": "unknown_licence",
+      "description": "No LICENSE, LICENCE or README file exists; reuse terms are unstated."
+    },
+    {
+      "dataset_id": "financeops_demo_fixtures",
+      "component": null,
+      "issue_type": "unknown_licence",
+      "description": "No LICENSE, LICENCE or README file exists; reuse terms are unstated."
+    }
+  ]
+}

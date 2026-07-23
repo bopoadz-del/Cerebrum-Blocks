@@ -1,0 +1,18 @@
+{
+  "dataset_id": "insurance_eu_regulatory_qa",
+  "is_evaluation_candidate": true,
+  "question_count": 80,
+  "with_expected_answer": 79,
+  "with_source_document": 80,
+  "with_passage_span": 0,
+  "with_derivation": 0,
+  "with_jurisdiction_version": 80,
+  "exact_duplicate_questions": 0,
+  "train_test_overlap": "none",
+  "quality_tier": "candidate",
+  "required_raw_sources": [
+    "eiopa-qa-archive.xlsx (full EIOPA Q&A archive)",
+    "referenced Solvency II regulations"
+  ],
+  "notes": "Sample of EIOPA Q&A archive. Contains answer and regulation_reference/article, but no passage span or derivation. Full archive and referenced regulations needed for usable eval."
+}

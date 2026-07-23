@@ -1,0 +1,47 @@
+{
+  "dataset_id": "insurance_eu_solvency_core",
+  "display_name": "EIOPA Solvency II Single Rulebook",
+  "primary_role": "RAW_RAG",
+  "verdict": "APPROVE_CORE_RAG",
+  "score": 86,
+  "findings": [
+    {
+      "type": "licence",
+      "licence": "EIOPA Legal Notice (reuse authorised with attribution)",
+      "commercial": "permitted",
+      "redistribution": "permitted"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.0,
+      "near_duplicate_rate": 0.0,
+      "synthetic_status": "none",
+      "extraction_noise": "none"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    },
+    {
+      "type": "raw_rag",
+      "documents": 4,
+      "chunks": 445,
+      "table_corruption": "none"
+    }
+  ],
+  "approved_components": [
+    "Whole dataset as classified"
+  ],
+  "excluded_components": [],
+  "required_raw_sources": [],
+  "reason": "Raw RAG score 86/100 maps to APPROVE_CORE_RAG. Weak scoring dimensions: content_integrity, operational_efficiency.",
+  "evidence_paths": [
+    "datasets/insurance_eu_solvency_core/provenance.json",
+    "datasets/insurance_eu_solvency_core/licence_review.json",
+    "datasets/insurance_eu_solvency_core/domain_mapping.json",
+    "datasets/insurance_eu_solvency_core/quality_metrics.json",
+    "datasets/insurance_eu_solvency_core/privacy_review.json",
+    "datasets/insurance_eu_solvency_core/chunkability_report.json",
+    "datasets/insurance_eu_solvency_core/evaluation_report.json"
+  ]
+}

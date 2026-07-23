@@ -1,0 +1,13 @@
+{
+  "dataset_id": "aviation_faa_core_rag",
+  "display_name": "FAA Aviation Core RAG documents",
+  "publisher": "U.S. Federal Aviation Administration / U.S. Government Publishing Office",
+  "original_publisher": "U.S. Federal Aviation Administration / U.S. Government Publishing Office",
+  "source_urls": [
+    "https://www.faa.gov/air_traffic/publications",
+    "https://www.ecfr.gov/current/title-14"
+  ],
+  "downloaded_from": "original_source",
+  "evidence_files": [],
+  "notes": "Folder contains raw FAA AIM PDF and eCFR XML fragments for Title 14 CFR parts. No local licence, README or source metadata is present."
+}

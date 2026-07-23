@@ -1,0 +1,29 @@
+{
+  "dataset_id": "universal_reference_data",
+  "files": [
+    {
+      "path": "countries.json",
+      "size_bytes": 6397,
+      "sha256": "fbf4e7544e876b08cb87c422127253f7b0f3344c57131164b1bb43de5ff8bc92",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "currencies.json",
+      "size_bytes": 3456,
+      "sha256": "ac321a7cdbf16ef693b019130403c991dcc3d2cf5a41b3ab97e9349a5995c472",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "timezones.json",
+      "size_bytes": 4679,
+      "sha256": "32a5ca5282d26236069de68d575ba15a901a976f873b2b0f1047325253b4ef0f",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "units.json",
+      "size_bytes": 2959,
+      "sha256": "9d8a2c4a7eb3e711ee2993b8333e128d08db78947c425b7a292917e36c10eab6",
+      "mime_type": "application/json"
+    }
+  ]
+}

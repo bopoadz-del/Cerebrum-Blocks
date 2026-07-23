@@ -1,0 +1,28 @@
+{
+  "dataset_id": "aviation_faa_core_rag",
+  "is_raw_rag_candidate": true,
+  "document_count": 5,
+  "estimated_chunk_count": 1706,
+  "avg_chunk_chars": 1576,
+  "min_chunk_chars": 20,
+  "max_chunk_chars": 2048,
+  "orphan_fragments": 41,
+  "table_corruption": "major",
+  "duplicate_chunks": 4,
+  "required_metadata": [
+    "chapter",
+    "clause",
+    "document_id",
+    "section_heading",
+    "source_file",
+    "table_id",
+    "title"
+  ],
+  "structural_boundaries": [
+    "chapter",
+    "clause",
+    "section",
+    "table",
+    "title"
+  ]
+}

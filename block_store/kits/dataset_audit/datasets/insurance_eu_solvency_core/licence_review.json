@@ -1,0 +1,15 @@
+{
+  "dataset_id": "insurance_eu_solvency_core",
+  "licence_name": "EIOPA Legal Notice (reuse authorised with attribution)",
+  "licence_url": "https://www.eiopa.europa.eu/legal-notice_en",
+  "licence_text_location": "insurance_eu_solvency_core/metadata.json (licence_note)",
+  "commercial_use": "permitted",
+  "modification": "permitted",
+  "redistribution": "permitted",
+  "unresolved_or_conflicting_conditions": [
+    "If material is transformed and republished, a twofold disclaimer must be used.",
+    "If incorporated in documents that are sold, buyers must be informed the material is available free of charge from EIOPA.",
+    "EIOPA corporate identity/logos require prior written permission."
+  ],
+  "notes": "Commercial use is permitted subject to the EIOPA attribution and disclaimer conditions."
+}

@@ -1,0 +1,46 @@
+{
+  "dataset_id": "supply_chain_logic_eval",
+  "files_inspected": 6,
+  "records_inspected": 388,
+  "exact_duplicate_count": 0,
+  "exact_duplicate_rate": 0.0,
+  "near_duplicate_count": 381,
+  "near_duplicate_rate": 0.981959,
+  "repeated_context_count": 0,
+  "repeated_question_count": 0,
+  "synthetic_status": "majority",
+  "extraction_noise": "none",
+  "language_distribution": {
+    "en": 1.0
+  },
+  "sample_issues": [
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\supply_chain_logic_eval\\retailopt_190.parquet",
+      "record_index": 0,
+      "type": "exact_duplicate",
+      "description": "Record text matches 1 other inspected record(s)",
+      "snippet": "scenario_id: retail_f1_52_weeks_v0\nprompt_schema: [SCENARIO]\nFamily: F1 (Core Operations)\nArchetype: retail_f1_52_weeks\nScenario ID: retail_f1_52_weeks_v0\n\n[BUSINESS DESCRIPTION]\nBusiness narrative:\nT"
+    },
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\supply_chain_logic_eval\\retailopt_190.parquet",
+      "record_index": 0,
+      "type": "near_duplicate",
+      "description": "Record has high text overlap with another inspected record (>= 70% Jaccard)",
+      "snippet": "scenario_id: retail_f1_52_weeks_v0\nprompt_schema: [SCENARIO]\nFamily: F1 (Core Operations)\nArchetype: retail_f1_52_weeks\nScenario ID: retail_f1_52_weeks_v0\n\n[BUSINESS DESCRIPTION]\nBusiness narrative:\nT"
+    },
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\supply_chain_logic_eval\\retailopt_190.parquet",
+      "record_index": 0,
+      "type": "repeated_question",
+      "description": "Question/query repeated across 2 inspected records",
+      "snippet": "[SCENARIO]\nFamily: F1 (Core Operations)\nArchetype: retail_f1_52_weeks\nScenario ID: retail_f1_52_weeks_v0\n\n[BUSINESS DESCRIPTION]\nBusiness narrative:\nThe retailer plans inventory over a full year of we"
+    },
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\supply_chain_logic_eval\\retailopt_190.parquet",
+      "record_index": 0,
+      "type": "synthetic_template_marker",
+      "description": "Record contains template/placeholder markers",
+      "snippet": "scenario_id: retail_f1_52_weeks_v0\nprompt_schema: [SCENARIO]\nFamily: F1 (Core Operations)\nArchetype: retail_f1_52_weeks\nScenario ID: retail_f1_52_weeks_v0\n\n[BUSINESS DESCRIPTION]\nBusiness narrative:\nT"
+    }
+  ]
+}

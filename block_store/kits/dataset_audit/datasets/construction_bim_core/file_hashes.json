@@ -1,0 +1,305 @@
+{
+  "dataset_id": "construction_bim_core",
+  "files": [
+    {
+      "path": "CONTRIBUTING.md",
+      "size_bytes": 3350,
+      "sha256": "5f2d3e072efefe76b0a01cc2fb8eb7a32ae5cd1bf356c666d2c7927ad0540106",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "ifc-bench-v1.csv",
+      "size_bytes": 17143,
+      "sha256": "f67a48770d74b6e0ff0868c923c3e1d976110350b2c439564d7ceccc16a46f35",
+      "mime_type": "application/vnd.ms-excel"
+    },
+    {
+      "path": "ifc-bench-v2.csv",
+      "size_bytes": 469100,
+      "sha256": "e47ccd097306f5bca49b9c8ac0b4cd72f296df9f7ff7a02625b3f06c1691da9b",
+      "mime_type": "application/vnd.ms-excel"
+    },
+    {
+      "path": "LICENSE",
+      "size_bytes": 1800,
+      "sha256": "458a6aea35d8fc3abdcd22e36a94ff2ae1053a9eabc6719192dac20880cb5c41",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 17951,
+      "sha256": "cce411b1451c348b88e5988316b2e0431b25b9bd0794c1789d7419cab1a00329",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/4351/license.txt",
+      "size_bytes": 664,
+      "sha256": "47ae3548194e4defc3400ba1b54a71966f5bc913211cd3a348c68235d8d4b19b",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/4351/model_card.md",
+      "size_bytes": 453,
+      "sha256": "67eab980fad3cba4db40ff31c41b7759e5701c46a138b56d100b799ce8b08113",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/ac20/license.txt",
+      "size_bytes": 355,
+      "sha256": "df953f8d88f873720f4b819fc580b1dc9c3f4f1ff5e16c946d7bd4c35bcf3cf6",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/ac20/model_card.md",
+      "size_bytes": 506,
+      "sha256": "19d0cd1f59f81cd15484df2c71ad307fb76cf3088eb6d1cb2e92511e2a7b00ef",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/city_house_munich/license.txt",
+      "size_bytes": 489,
+      "sha256": "6bdede1ac7ac323cd438618282ae21e7c42e4e7576171b588fecc260cc0ae393",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/city_house_munich/model_card.md",
+      "size_bytes": 419,
+      "sha256": "1145240580cedde9f90985f11c144ea261170c622d8d15ad99143b9189982512",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/dental_clinic/license.txt",
+      "size_bytes": 404,
+      "sha256": "9e3e0deafee61941c22d85bd744e9ab0e870691017600a97f24e5fa2a9b62298",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/dental_clinic/model_card.md",
+      "size_bytes": 931,
+      "sha256": "ed324f3c923673e16b5c96de6ef5f5dc30ad0490fdaa4af1e331000cbcd299ae",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/digital_hub/license.txt",
+      "size_bytes": 1141,
+      "sha256": "232af45af192ff1f35f230333091b2b222b559073e800849cb0f0e11092d924a",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/digital_hub/model_card.md",
+      "size_bytes": 1005,
+      "sha256": "511ca0519f101edc73740be4892eaa3273db0db1b559ae8fb385d428d46edd1f",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/duplex/arc.ifc",
+      "size_bytes": 1656153,
+      "sha256": "707a032566dee8e969a44d95509be46d646440e2443624709f8d3ae2b45f4656",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/duplex/license.txt",
+      "size_bytes": 401,
+      "sha256": "0fa6d676189799f0f7bd260b3d8b240bd097b41685d701b937fde7067456a1fe",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/duplex/model_card.md",
+      "size_bytes": 794,
+      "sha256": "52dad64cb8064d0d3bf37ab131b3bb26332349abb8c77038f10e66f45f5bdd90",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/ettenheim_gis/license.txt",
+      "size_bytes": 664,
+      "sha256": "47ae3548194e4defc3400ba1b54a71966f5bc913211cd3a348c68235d8d4b19b",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/ettenheim_gis/model_card.md",
+      "size_bytes": 433,
+      "sha256": "3b2d69988c209e7c9c4fde290bdd6809cdeae88aed19e67c8fb004151cb72cc3",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/fantasy_hotel_1/license.txt",
+      "size_bytes": 1094,
+      "sha256": "4ed1230e1a64393492643218e984c08b37dc2ae1369c56c85804effc311459d5",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/fantasy_hotel_1/model_card.md",
+      "size_bytes": 429,
+      "sha256": "3f55ce8326c5d00ad578e16824bea7b0aaa1fa514e771aee46290d30b9b03be8",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/fantasy_hotel_2/license.txt",
+      "size_bytes": 1094,
+      "sha256": "4ed1230e1a64393492643218e984c08b37dc2ae1369c56c85804effc311459d5",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/fantasy_hotel_2/model_card.md",
+      "size_bytes": 429,
+      "sha256": "70af190364ac590b6c100a0b3510de372f41df2404a7582b9ba4b51c92913f59",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/fantasy_office_building_1/license.txt",
+      "size_bytes": 1094,
+      "sha256": "4ed1230e1a64393492643218e984c08b37dc2ae1369c56c85804effc311459d5",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/fantasy_office_building_1/model_card.md",
+      "size_bytes": 446,
+      "sha256": "6a970661835ae5464b677eba400d3a2da468850cf9e232e24041392740195b1e",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/fantasy_office_building_2/license.txt",
+      "size_bytes": 1094,
+      "sha256": "4ed1230e1a64393492643218e984c08b37dc2ae1369c56c85804effc311459d5",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/fantasy_office_building_2/model_card.md",
+      "size_bytes": 446,
+      "sha256": "eb85c3e69a6d9f40e51b6a2d090d812c88b27dc9b62fe8abb50aeb3cc900b306",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/fantasy_office_building_3/license.txt",
+      "size_bytes": 1094,
+      "sha256": "4ed1230e1a64393492643218e984c08b37dc2ae1369c56c85804effc311459d5",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/fantasy_office_building_3/model_card.md",
+      "size_bytes": 446,
+      "sha256": "691ac34810483889c05cbebfe60d99ac2cb53de8ab220f5804ecd32a30450e27",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/fantasy_residential_building_1/license.txt",
+      "size_bytes": 1094,
+      "sha256": "4ed1230e1a64393492643218e984c08b37dc2ae1369c56c85804effc311459d5",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/fantasy_residential_building_1/model_card.md",
+      "size_bytes": 466,
+      "sha256": "dcf432728a5278b7f68b5955ad6e0a69fe8041c608ec30f212a0192f33ae8105",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/fzk_house/license.txt",
+      "size_bytes": 355,
+      "sha256": "df953f8d88f873720f4b819fc580b1dc9c3f4f1ff5e16c946d7bd4c35bcf3cf6",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/fzk_house/model_card.md",
+      "size_bytes": 496,
+      "sha256": "e5b793e318e012d4f207b82f66544ed582bc3f0a7b33e4eb0f65309eead503dd",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/hitos/license.txt",
+      "size_bytes": 664,
+      "sha256": "47ae3548194e4defc3400ba1b54a71966f5bc913211cd3a348c68235d8d4b19b",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/hitos/model_card.md",
+      "size_bytes": 433,
+      "sha256": "bedc042a2e3d4201f37d5fddaed9c35f391f74e6f9ecba86cc370490062ad124",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/molio/license.txt",
+      "size_bytes": 328,
+      "sha256": "0e7810040d1aff5bd870bef7cf5c4675a6fb11a49113c7115152b4a8b8efd810",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/molio/model_card.md",
+      "size_bytes": 478,
+      "sha256": "098d46b0529b39575ec4aac4d675c727f97a57a5d6f86864fa04b0da398b99a5",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/samuel_macalister_sample_house/license.txt",
+      "size_bytes": 664,
+      "sha256": "47ae3548194e4defc3400ba1b54a71966f5bc913211cd3a348c68235d8d4b19b",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/samuel_macalister_sample_house/model_card.md",
+      "size_bytes": 618,
+      "sha256": "a5f11ef2fbf20950bac35cce3c8deeb927da2d4deda0ac0249e38b7391f325f5",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/schependomlaan/license.txt",
+      "size_bytes": 216,
+      "sha256": "aec3da830db52f4a331d6b2252e038c245749879f90570da1eb023c61e3d9e5e",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/schependomlaan/model_card.md",
+      "size_bytes": 439,
+      "sha256": "4feb14232157b80c6ef4cec7a474dace40229a32a6a948d0178fa878be5b1004",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/sixty5/license.txt",
+      "size_bytes": 335,
+      "sha256": "6cf6c9c5da2e192d888b3727eb23632c17096f0fae23f8295d853cc3a71c4d41",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/sixty5/model_card.md",
+      "size_bytes": 1441,
+      "sha256": "8abb1b6f1b78644f6c87b9af7cedc52c41806a586d60df721a84666adaf170a9",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/smiley_west/license.txt",
+      "size_bytes": 355,
+      "sha256": "df953f8d88f873720f4b819fc580b1dc9c3f4f1ff5e16c946d7bd4c35bcf3cf6",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/smiley_west/model_card.md",
+      "size_bytes": 500,
+      "sha256": "af90de55afe7b0a4c0521db74934b3bcfebe2cc1069a90770d06a8807823f119",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/wbdg_office/license.txt",
+      "size_bytes": 404,
+      "sha256": "9e3e0deafee61941c22d85bd744e9ab0e870691017600a97f24e5fa2a9b62298",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/wbdg_office/model_card.md",
+      "size_bytes": 771,
+      "sha256": "0087e82d8d795560c6c0078aa03fc107a4d13a42c3e8f9fe45e4c6730a5373cf",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "projects/west_riverside_hospital/license.txt",
+      "size_bytes": 1059,
+      "sha256": "2d7d4e28831e12cc6ae47ec03560d602e139f1f73617bb2ed3dfe1782e8c97f4",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "projects/west_riverside_hospital/model_card.md",
+      "size_bytes": 4571,
+      "sha256": "3513e60bbaa3202fb9c54a014bdcbe38b46ba7b426e3ecc45f3b11d33ef4b6ff",
+      "mime_type": "application/octet-stream"
+    }
+  ]
+}

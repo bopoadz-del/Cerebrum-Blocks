@@ -1,0 +1,71 @@
+{
+  "dataset_id": "legal_australia_victoria_criminal",
+  "display_name": "Legal RAG Bench",
+  "primary_role": "RETRIEVAL_EVAL",
+  "verdict": "REJECT",
+  "score": 90,
+  "findings": [
+    {
+      "type": "hard_failure",
+      "gate": "commercial_use_prohibited",
+      "details": "CC BY-NC-SA 4.0 (header) / CC BY-NC 4.0 (body)"
+    },
+    {
+      "type": "hard_failure",
+      "gate": "commercial_use_prohibited",
+      "details": "Licence is CC BY-NC-SA 4.0 (header) / CC BY-NC 4.0 (body); both versions prohibit commercial use."
+    },
+    {
+      "type": "hard_failure",
+      "gate": "conflicting_terms",
+      "details": "Dataset card header says cc-by-nc-sa-4.0 while the licence section says CC BY-NC 4.0, creating an inconsistent share-alike requirement."
+    },
+    {
+      "type": "licence",
+      "licence": "CC BY-NC-SA 4.0 (header) / CC BY-NC 4.0 (body)",
+      "commercial": "prohibited",
+      "redistribution": "permitted"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.0,
+      "near_duplicate_rate": 0.0,
+      "synthetic_status": "none",
+      "extraction_noise": "none"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    },
+    {
+      "type": "evaluation",
+      "questions": 100,
+      "with_span": 100,
+      "with_answer": 100,
+      "quality_tier": "golden"
+    },
+    {
+      "type": "raw_rag",
+      "documents": 4712,
+      "chunks": 5346,
+      "table_corruption": "none"
+    }
+  ],
+  "approved_components": [],
+  "excluded_components": [
+    "Entire dataset (CC BY-NC prohibits commercial use; conflicting licence terms)"
+  ],
+  "required_raw_sources": [
+    "corpus.jsonl"
+  ],
+  "reason": "Hard rejection gates triggered: commercial_use_prohibited, conflicting_terms. Weak scoring dimensions: negative_cases, low_duplication, split_separation, jurisdiction_version.",
+  "evidence_paths": [
+    "datasets/legal_australia_victoria_criminal/provenance.json",
+    "datasets/legal_australia_victoria_criminal/licence_review.json",
+    "datasets/legal_australia_victoria_criminal/domain_mapping.json",
+    "datasets/legal_australia_victoria_criminal/quality_metrics.json",
+    "datasets/legal_australia_victoria_criminal/privacy_review.json",
+    "datasets/legal_australia_victoria_criminal/chunkability_report.json",
+    "datasets/legal_australia_victoria_criminal/evaluation_report.json"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "dataset_id": "supply_chain_logic_eval",
+  "is_evaluation_candidate": true,
+  "question_count": 190,
+  "with_expected_answer": 190,
+  "with_source_document": 0,
+  "with_passage_span": 0,
+  "with_derivation": 185,
+  "with_jurisdiction_version": 0,
+  "exact_duplicate_questions": 0,
+  "train_test_overlap": "none",
+  "quality_tier": "candidate",
+  "required_raw_sources": [],
+  "notes": "RetailOpt-190: MILP text-to-optimization benchmark. Each item has prompt_full with equations and reference_objective/status as ground truth. No external raw corpus required."
+}

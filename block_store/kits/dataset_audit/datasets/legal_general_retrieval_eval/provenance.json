@@ -1,0 +1,16 @@
+{
+  "dataset_id": "legal_general_retrieval_eval",
+  "display_name": "LegalBench-RAG",
+  "publisher": "ZeroEntropy",
+  "original_publisher": "ZeroEntropy",
+  "source_urls": [
+    "https://github.com/ZeroEntropy-AI/LegalBench-RAG",
+    "https://www.dropbox.com/scl/fo/r7xfa5i3hdsbxex1w6amw/AID389Olvtm-ZLTKAPrw6k4?rlkey=5n8zrbk4c08lbit3iiexofmwg&st=0hu354cq&dl=0"
+  ],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "legal_general_retrieval_eval/LICENSE",
+    "legal_general_retrieval_eval/README.md"
+  ],
+  "notes": "The benchmark is generated from ContractNLI, CUAD, MAUD and PrivacyQA. The README states users must agree to the usage policies of those underlying datasets."
+}

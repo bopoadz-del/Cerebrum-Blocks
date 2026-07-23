@@ -1,0 +1,2345 @@
+{
+  "dataset_id": "rag_kits",
+  "files": [
+    {
+      "path": "harvest_regulations.log",
+      "size_bytes": 19487,
+      "sha256": "09d8cb6b954e4acefee4557cce9911147be36bf380f2cc908aa8e1940cb46e1d",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "harvest_regulations.py",
+      "size_bytes": 6303,
+      "sha256": "f5fb7998b7f1ed836430692fc085303874a39c67f4a907d763129137db86c6c8",
+      "mime_type": "text/x-python"
+    },
+    {
+      "path": "IrishFinance_prompt_completion.jsonl",
+      "size_bytes": 7218856,
+      "sha256": "756dae068d2b4e12129013fda94dc991a0efda8f6b7a5f98488f3971696a794e",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "opensanctions_sample_1000.json",
+      "size_bytes": 4309239,
+      "sha256": "9c41669ce49093edacb2068b6e67d554561e2317120a8d62da59f60093b83042",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "Regulations_CDM.csv",
+      "size_bytes": 110250,
+      "sha256": "0a19d7fe55a9549ac1e660aaecb4a2cf021eaf40503fd9384a79bd74583bf03c",
+      "mime_type": "application/vnd.ms-excel"
+    },
+    {
+      "path": "Regulations_definition.csv",
+      "size_bytes": 61294,
+      "sha256": "28baeaaf9177bd5473330533944dceac50497b359284945787088cacb3d2195f",
+      "mime_type": "application/vnd.ms-excel"
+    },
+    {
+      "path": "Regulations_Link_Retrieval.csv",
+      "size_bytes": 24970,
+      "sha256": "5e0da0b2bceb8b4cefc12362436f3b18b9ebed6a1505281e1cc083dee0532735",
+      "mime_type": "application/vnd.ms-excel"
+    },
+    {
+      "path": "tatqa_dataset_dev.json",
+      "size_bytes": 1637431,
+      "sha256": "8da095a819af6db3c14877c6df2d4d29960e41d1a63dd1fa853507bd2a616af5",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "tatqa_dataset_test.json",
+      "size_bytes": 1133161,
+      "sha256": "478d92c377b1d66947be264e188de08c8cea6ef1551f7defc70c1d06ae35836f",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "raw_regulations/harvest_manifest.json",
+      "size_bytes": 69672,
+      "sha256": "2557060cc3130be84b9269ba34b824d9ef17ce8d04e3e12f76c3e5f3f0f657af",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "raw_regulations/EMIR/001_EU_2019_834.html",
+      "size_bytes": 530680,
+      "sha256": "0023141559e055903e9cd2180c060821ea83bc6773cf4a77f4bc1d0df0ef811f",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/001_EU_2019_834.txt",
+      "size_bytes": 93253,
+      "sha256": "8d8d8726085d5f010d8869574e714678d65575f59db47f8893f03f49b7a98167",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/002_EU_No_1095_2010.html",
+      "size_bytes": 669078,
+      "sha256": "c189b62a110a051e1c347ebb55f0441ac578b5d91672227521d24f2a74003634",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/002_EU_No_1095_2010.txt",
+      "size_bytes": 186063,
+      "sha256": "ea01895ba3af2ac74982ca96f8acc93373b84f437254decfe91f25ea158d5469",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/003_EU_No_1247_2012.html",
+      "size_bytes": 425845,
+      "sha256": "27b446ecf13466ac557676076ae8eec1c9a037ccfaa2168963274b7161f2adf9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/003_EU_No_1247_2012.txt",
+      "size_bytes": 25323,
+      "sha256": "1e8fb9a374f0d475d71e40470746df9b845ffee0ed76dd9b54b003cf6fb0d4c9",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/004_EU_No_1248_2012.html",
+      "size_bytes": 300880,
+      "sha256": "84deec6d95ae182e4fcf02e1daf13a04bbc8e5a73a536ebc76f78a986966bdc4",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/004_EU_No_1248_2012.txt",
+      "size_bytes": 8398,
+      "sha256": "a6eb76e999486c198e4e0b265518a045b1fcd8163d3bad55d4e64e6d022e74f4",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/005_EU_No_1249_2012.html",
+      "size_bytes": 354258,
+      "sha256": "dfeb31a6835fafadc9131b7591d51ed3695d81ba9a28c7bb33bf5be05f3842de",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/005_EU_No_1249_2012.txt",
+      "size_bytes": 20656,
+      "sha256": "3f04c513d15ed046d51e8883de684d924bca0a8e911f2821bdc1bac871330983",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/006_EU_No_148_2013.pdf",
+      "size_bytes": 811928,
+      "sha256": "4bb64e2de85d5a767740490b63579e39e1e1f5523b202ba6f355e417853f0962",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "raw_regulations/EMIR/006_EU_No_148_2013.txt",
+      "size_bytes": 24516,
+      "sha256": "3ca3cde0ea2b5c1d8242c26a578732e7a6b82eea91459cc2fe72d8c84dd70af0",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/007_EU_No_149_2013.html",
+      "size_bytes": 463092,
+      "sha256": "149e5bd8f1249174010be953a82228242b02e3242d530604916e254ef217a85c",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/007_EU_No_149_2013.txt",
+      "size_bytes": 61725,
+      "sha256": "8e3565ef52f101a071cbdbb9f7f5df86fab09bbef4c7cb6d35c8502854e12ac8",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/008_EU_No_150_2013.html",
+      "size_bytes": 407217,
+      "sha256": "e18a7c9826405e9ed4df4e625cb07f9485effb474af3193a7bafd6f00974c6c5",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/008_EU_No_150_2013.txt",
+      "size_bytes": 35951,
+      "sha256": "689abe4d0fc2eccb0d3004337b14b37393f18c6dabf0323675731fa82b53bede",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/009_EU_No_151_2013.html",
+      "size_bytes": 338640,
+      "sha256": "93261215643710f141d4dcc6bcb2a99a0d8c052ef908f3ea4975a10f218d7d45",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/009_EU_No_151_2013.txt",
+      "size_bytes": 17469,
+      "sha256": "8c3d5eaea5d9812db62b64af97ee15b5c3a2b2137780938d6ac6d65149730fe9",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/010_EU_No_152_2013.html",
+      "size_bytes": 314791,
+      "sha256": "0085d22b8c4ece5cf1aae9941f90449adaf6789c22b62721ca2db292cac98f1e",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/010_EU_No_152_2013.txt",
+      "size_bytes": 21603,
+      "sha256": "20671317bd9cdf082841cdfd736bbed4e5fc8c4ce292ac6500da721044f34793",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/011_EU_No_153_2013.html",
+      "size_bytes": 699367,
+      "sha256": "1474750be24292eab1b367e6a7d901f4144b332a81c9961bf1b4dad2df2cb11b",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/011_EU_No_153_2013.txt",
+      "size_bytes": 148237,
+      "sha256": "df201c2d0f7348d37edff628d5c9f43ca842b4e61b5d4805ef2feeae49458135",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/012_EU_No_2015_2205.html",
+      "size_bytes": 349773,
+      "sha256": "10341cf426622eb3d91bb0d5642dca0852de36b6d4771ade79797c50e9e1283b",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/012_EU_No_2015_2205.txt",
+      "size_bytes": 32106,
+      "sha256": "8299d44dd10aa159a0cbabe17ca09b1163f97073f4d2655b5ae5c459df9a3805",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/013_EU_No_2017_2155.html",
+      "size_bytes": 341890,
+      "sha256": "071433a0c42ab6d5edfb0d3eabdc167f65af751ae90b2c49fd6520d8d4b99815",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/013_EU_No_2017_2155.txt",
+      "size_bytes": 31014,
+      "sha256": "d06a657835de45ab3639ce6a58eb1c199a3c88b9ff72c5cda3711c901b3dc591",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/014_EU_No_285_2014.html",
+      "size_bytes": 307157,
+      "sha256": "a6d58c1550af3465bf5d8568068c82deb5fae57fb90f20252259191e55fe75ce",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/014_EU_No_285_2014.txt",
+      "size_bytes": 16733,
+      "sha256": "c3018b42a31ef1db8bd78821333599107624cbd6db319af4295003ce8a2fbbb4",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/015_EU_No_648_2012.html",
+      "size_bytes": 929482,
+      "sha256": "6f722dc8d354d2a9c46e6d6afcbc9fc615ab7adf15dfc62664f2e3a51c3aed2c",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/015_EU_No_648_2012.txt",
+      "size_bytes": 284512,
+      "sha256": "96b2c71bff6e9ca90a7d050b23ae461e53c69ea3f767d4f1ee9491e15bd2f542",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/016_1_of_EMIR.html",
+      "size_bytes": 24215,
+      "sha256": "8c288ec1dfd7117aa0e3031712563ded93810628c87679b7c0b39be16600e95c",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/016_1_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/017_11_of_EMIR.html",
+      "size_bytes": 24228,
+      "sha256": "7e769cdc97eafe1e3c2578b9cc522ea90afc5d275c05422018ee6f197ae37bdf",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/017_11_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/018_12_of_the_RTS_on_OTC_derivatives.html",
+      "size_bytes": 463091,
+      "sha256": "2211f8b95524d4f2594573d00447a6bd93b1b42a01520c903c2b9b5c8e55eba1",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/018_12_of_the_RTS_on_OTC_derivatives.txt",
+      "size_bytes": 61725,
+      "sha256": "8e3565ef52f101a071cbdbb9f7f5df86fab09bbef4c7cb6d35c8502854e12ac8",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/020_13_of_the_RTS_on_OTC_derivatives.html",
+      "size_bytes": 463090,
+      "sha256": "1d3bc2b89b4457aea6d02a8a9c52a5959aa7d1fbe6cc3c7ea8e418f027449c21",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/020_13_of_the_RTS_on_OTC_derivatives.txt",
+      "size_bytes": 61725,
+      "sha256": "8e3565ef52f101a071cbdbb9f7f5df86fab09bbef4c7cb6d35c8502854e12ac8",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/021_14_of_EMIR.html",
+      "size_bytes": 24212,
+      "sha256": "e852017f2d0d923f8717fd11191694506bc98bb52bd401ac6300a8f572ac9886",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/021_14_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/022_11_1_of_RTS_on_CCP_requirements.html",
+      "size_bytes": 24240,
+      "sha256": "90b0222f1a01500956b824828507c359a6de056d5b40d6f2995f2ec322b21859",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/022_11_1_of_RTS_on_CCP_requirements.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/023_14_of_the_RTS_on_OTC_derivatives.html",
+      "size_bytes": 341890,
+      "sha256": "712a1a51a4db140e32d4a34c016bc3c9459dd857a84d867775fd1890fd074e76",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/023_14_of_the_RTS_on_OTC_derivatives.txt",
+      "size_bytes": 31014,
+      "sha256": "d06a657835de45ab3639ce6a58eb1c199a3c88b9ff72c5cda3711c901b3dc591",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/024_15_of_the_RTS_on_OTC_derivatives.html",
+      "size_bytes": 341891,
+      "sha256": "fb053c131069243b41541bddf71dfca8d04db1e3032bf1108dd51af94ad7ca24",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/024_15_of_the_RTS_on_OTC_derivatives.txt",
+      "size_bytes": 31014,
+      "sha256": "d06a657835de45ab3639ce6a58eb1c199a3c88b9ff72c5cda3711c901b3dc591",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/025_16_of_EMIR.html",
+      "size_bytes": 24223,
+      "sha256": "28b5ca13f93450f18d9db29e59b33e936c296bd250e941223a3b3f31083570b3",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/025_16_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/026_18_of_EMIR.html",
+      "size_bytes": 24200,
+      "sha256": "b38a74d941f30f8851674e6abfc10d34a480d2df6b59539f89154b4836a4dcb9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/026_18_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/027_2_of_EMIR.html",
+      "size_bytes": 24219,
+      "sha256": "a389a9d5f552240c9965b91d1ecd88c8766c3dab3b50d326aef2acfbbd44bafb",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/027_2_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/028_2_of_RTS_on_IRS_in_G4_currencies.pdf",
+      "size_bytes": 1616489,
+      "sha256": "464473436748a6edf6933c09758a792433704a4a52fc3f64922c3bc926398e75",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "raw_regulations/EMIR/028_2_of_RTS_on_IRS_in_G4_currencies.txt",
+      "size_bytes": 404238,
+      "sha256": "456834e25a32f268a6d98357717e012dafa16e39f81e052b8bdd92f5e9df72ff",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/029_2_of_RTS_on_Third_Country_contracts.html",
+      "size_bytes": 70827,
+      "sha256": "7be6abc51445e91590840abbc78684db81d4762ec0dcb40028f00144a5ed96b3",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/029_2_of_RTS_on_Third_Country_contracts.txt",
+      "size_bytes": 1946,
+      "sha256": "d02966ad3839dc3a31dc33232abe73a324137bf65a7a498cdb058434420704c7",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/030_89_of_EMIR.html",
+      "size_bytes": 24339,
+      "sha256": "52971fdb9180d09998626b1a867abec58270a5cba6ec7ea8a087c3be12834cd7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/030_89_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/031_2_10_of_EMIR.html",
+      "size_bytes": 24323,
+      "sha256": "4a770d0045caee4c891cb8470b8955d2ccebfcaab8e834afcc3c0259e4746f54",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/031_2_10_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/032_26_of_EMIR.html",
+      "size_bytes": 24311,
+      "sha256": "0fa2899398d0917603bcde9260956953dbb038ae45175cd1a5e0a137f17a0976",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/032_26_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/033_28_of_EMIR.html",
+      "size_bytes": 24204,
+      "sha256": "fe7bf03598e2be966678c1e0d2fcda9320f2774ba4910fd288e3ae112610b5f8",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/033_28_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/034_4_2_of_EMIR.html",
+      "size_bytes": 24232,
+      "sha256": "beddf6e4586c5ce8841831bb4aa8e7de9eac57e427df9228bca52a2bd293cc07",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/034_4_2_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/035_11_6_to_11_10_of_EMIR.html",
+      "size_bytes": 24228,
+      "sha256": "31dba4fd699f8dd6d8f9663595e8cadd6fb68903c237cccdf14a2a26cb70d2a6",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/035_11_6_to_11_10_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/036_3_of_EMIR.html",
+      "size_bytes": 24215,
+      "sha256": "6ae684dbc418465e25b3c38af942b908abef5bce3020771af378446aea3e53e4",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/036_3_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/037_35_of_RTS_on_CCP_requirement.html",
+      "size_bytes": 56555,
+      "sha256": "8ea05f438b2588e6428a6ca4ad69f6e161a8eff56c475c34af3a4855f2bc74b0",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/037_35_of_RTS_on_CCP_requirement.txt",
+      "size_bytes": 7036,
+      "sha256": "84cb4649a0682144637ba103c6a7da0b2030836acbc19c3a8e0b9a735f0dc2ec",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/038_38_of_EMIR.html",
+      "size_bytes": 24312,
+      "sha256": "e355f22782aa4d96dcfc9f696432cd835266cb6f5f03a81693a97a2bcc6e9bfe",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/038_38_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/039_39_of_EMIR.html",
+      "size_bytes": 24225,
+      "sha256": "9bc3b2681b50b805b52176b621ff4f1e6955419195cee5735cdc83e79eb55533",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/039_39_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/040_4_of_EMIR.html",
+      "size_bytes": 24232,
+      "sha256": "3a7d7c6bfb1636b31bc5461907c61f081b2bcbe49ddcdb14a8baa4e7ce1147ff",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/040_4_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/041_41_of_EMIR.html",
+      "size_bytes": 24314,
+      "sha256": "8130426af2525687fc968950f510001692d5a9b17e126e56df3649fe10b51214",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/041_41_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/042_27_3_of_RTS_on_CCP_requirements.html",
+      "size_bytes": 58254,
+      "sha256": "3857bc5843d485af890156be3008aba017c8f1ec39f599eb936a7c207760c9ad",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/042_27_3_of_RTS_on_CCP_requirements.txt",
+      "size_bytes": 6755,
+      "sha256": "231796ad7c3cd1bf432cd8c262c080d9e236868f8c10faae5079843387818044",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/043_42_of_EMIR.html",
+      "size_bytes": 24324,
+      "sha256": "15689bf27c0bd53db7b743d536aca046d7c4b33fe378ef36ea7fbd70c7056235",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/043_42_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/044_48_2_of_EMIR.html",
+      "size_bytes": 24222,
+      "sha256": "e53a6b360b41045cce3f50adc5faca174bc0afe11a7d44ce662cee6a70d9200b",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/044_48_2_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/045_43_3_of_EMIR.html",
+      "size_bytes": 24218,
+      "sha256": "06a44838b42bcb23f222580ffbed4dc8d81a052ed808b4d5c26dd9d09cccc463",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/045_43_3_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/046_45_4_of_EMIR.html",
+      "size_bytes": 24245,
+      "sha256": "d76e56b8f4675bb81c8ec72b0c527ad05fd4cbc9a69f61b8b748e91471c46acd",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/046_45_4_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/047_46_of_EMIR.html",
+      "size_bytes": 24239,
+      "sha256": "bee50b10c58e4b8f70062065765260d4d4c3b4f68a7783152148ad6f77f49692",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/047_46_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/048_37_of_RTS_on_CCP_requirements.html",
+      "size_bytes": 24215,
+      "sha256": "863508f5d7e98d0b1fd25708616b710c01d1ea145ad1d6a19f9a318a2014dc02",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/048_37_of_RTS_on_CCP_requirements.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/049_47_of_EMIR.html",
+      "size_bytes": 24212,
+      "sha256": "0cdcabbaf4d15b78f406da316589467d485a527723cbc426d2ae9cb0e1bd39a1",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/049_47_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/050_48_of_EMIR.html",
+      "size_bytes": 24307,
+      "sha256": "9467394292519bc9ad123ba1f5a1d1edda69987e6a607721c4a7c5668400d824",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/050_48_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/051_49_of_EMIR.html",
+      "size_bytes": 24338,
+      "sha256": "bf07b9a7b6adb9864ef9b77e2ee38476bbbb1ba8d0a4eeedaef690fbc6bb97b2",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/051_49_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/052_10_of_EMIR.html",
+      "size_bytes": 24246,
+      "sha256": "ff340540ce7cdf999300c2ed22db827ffe759b97af6c9d7ef10aea84c2c42a36",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/052_10_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/053_4a_of_EMIR.html",
+      "size_bytes": 24331,
+      "sha256": "6878fee5149fa7a1262ac5233c0270e6f87105bafa10dbe029fe26fc0e372791",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/053_4a_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/054_5_of_the_ITS_on_reporting_to_TR.pdf",
+      "size_bytes": 1616489,
+      "sha256": "464473436748a6edf6933c09758a792433704a4a52fc3f64922c3bc926398e75",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "raw_regulations/EMIR/054_5_of_the_ITS_on_reporting_to_TR.txt",
+      "size_bytes": 404238,
+      "sha256": "456834e25a32f268a6d98357717e012dafa16e39f81e052b8bdd92f5e9df72ff",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/055_56_of_EMIR.html",
+      "size_bytes": 24236,
+      "sha256": "16caa51493805ca2e31de384e109b31cc5e5d22ffd5216519a7aa51c3b1df4bf",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/055_56_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/056_6_of_EMIR.html",
+      "size_bytes": 24225,
+      "sha256": "749b923842a2780b9370375aa702d423a6c31b78862c9a1800bb1a761f6cf40b",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/056_6_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/057_81_of_EMIR.html",
+      "size_bytes": 24302,
+      "sha256": "faa592b1bb70e14a5a89ced076e4798e5ebf45996ebec1564876246fab852b6b",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/057_81_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/058_9_of_EMIR.html",
+      "size_bytes": 24222,
+      "sha256": "ef28c09ca585b48535495437c49851c838e6e106f7df000c392ba1913b281c43",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/058_9_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/059_Art_2.html",
+      "size_bytes": 24222,
+      "sha256": "2195c1512b7366826203106fe1b2fe46546a4119e531b7ecda69fc64fb01ebf3",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/059_Art_2.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/060_Article_10_of_EMIR.html",
+      "size_bytes": 24362,
+      "sha256": "57b8b3e9c202739e4ca9e40fbe1c2908232b98504c4aa1e9294d82fded8f5310",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/060_Article_10_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/061_Article_16_of_the_ESMA_Regulation.html",
+      "size_bytes": 70142,
+      "sha256": "da673b62c763fa351aebd3d89be9563f230c1100ae1184dbe63ef79323a906ef",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/061_Article_16_of_the_ESMA_Regulation.txt",
+      "size_bytes": 11059,
+      "sha256": "844cc4de89a56010de36de8c7ec099688826e2a847556d405e865ea6154c36cd",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/062_Article_19_6_of_Directive_2004_39_EC.pdf",
+      "size_bytes": 1114778,
+      "sha256": "c7e52eff5f5b278c2710ac0e38b644c861156facb40a4a63727fc8805cb31362",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "raw_regulations/EMIR/062_Article_19_6_of_Directive_2004_39_EC.txt",
+      "size_bytes": 241892,
+      "sha256": "d8066e9a692e18d453c344973f09b7c7186fb2f714c830a456ca4b23804f3f29",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/063_Article_2_3_g_of_AIFMD.pdf",
+      "size_bytes": 1413728,
+      "sha256": "085d6374c9aa7519657caa1c128c6e46e9763030d66f40322d2b5b6f63b094bd",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "raw_regulations/EMIR/063_Article_2_3_g_of_AIFMD.txt",
+      "size_bytes": 352120,
+      "sha256": "c97f370d61320a9c8f738ea08dfd5e87a291b27c361e61a3ed240a1bf8852f1b",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/064_Article_2_7_of_EMIR.html",
+      "size_bytes": 24408,
+      "sha256": "79c30891135fc6bae501c905ab7c3123ba862335cabbd8617227eee82a515370",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/064_Article_2_7_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/065_Article_2_8_of_EMIR.html",
+      "size_bytes": 24207,
+      "sha256": "5b90e905ff651cf465d8168de04a8239d948b770fd6e0e362b89b60c747afdce",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/065_Article_2_8_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/066_Article_29_2_of_the_ESMA_Regulation.html",
+      "size_bytes": 52985,
+      "sha256": "9c8613e70d059ef5a8227755adf816acc72e4c6893f949ca739e7354a1f1ed86",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/066_Article_29_2_of_the_ESMA_Regulation.txt",
+      "size_bytes": 4837,
+      "sha256": "669b10dee1a112518a518c858614a138de467d70786bec6b1a0ff2d592721d9d",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/067_Article_2a_of_EMIR.html",
+      "size_bytes": 24232,
+      "sha256": "bad5f6b2e6ae2eb2616b52b08fda0b32fa7413153d3b10875f4866d8b6895f6d",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/067_Article_2a_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/068_Article_3_2_of_the_AIFMD.pdf",
+      "size_bytes": 1413728,
+      "sha256": "085d6374c9aa7519657caa1c128c6e46e9763030d66f40322d2b5b6f63b094bd",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "raw_regulations/EMIR/068_Article_3_2_of_the_AIFMD.txt",
+      "size_bytes": 352120,
+      "sha256": "c97f370d61320a9c8f738ea08dfd5e87a291b27c361e61a3ed240a1bf8852f1b",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/069_Article_4_1_14_of_Directive_2004_39_EC.pdf",
+      "size_bytes": 1114778,
+      "sha256": "c7e52eff5f5b278c2710ac0e38b644c861156facb40a4a63727fc8805cb31362",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "raw_regulations/EMIR/069_Article_4_1_14_of_Directive_2004_39_EC.txt",
+      "size_bytes": 241892,
+      "sha256": "d8066e9a692e18d453c344973f09b7c7186fb2f714c830a456ca4b23804f3f29",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/070_Article_4_1_b_ii_of_EMIR.html",
+      "size_bytes": 24220,
+      "sha256": "25654f7993ad1d4bcd28e030913baa79e3757b76c53a0de07fbc52ba67b2feb7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/070_Article_4_1_b_ii_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/071_Article_4_2_b_of_RTS_2017_2155_amending_RTS_149_2013.pdf",
+      "size_bytes": 411807,
+      "sha256": "276542f407f545f49646bf19a8ad820680c6f09ccbc0bd66e207b2d0e198f8a5",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "raw_regulations/EMIR/071_Article_4_2_b_of_RTS_2017_2155_amending_RTS_149_2013.txt",
+      "size_bytes": 28955,
+      "sha256": "4b57c095a3a73e4dc7904edf54ab6ae5ce17471b1b151124f4152947b1e38086",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/072_Article_4_3_of_EMIR.html",
+      "size_bytes": 24232,
+      "sha256": "52f7f2965fd11a0a8c31564c7380d183b2dff45acf5e66e0de1536b544dab29b",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/072_Article_4_3_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/073_Article_2_RTS_on_OTC_derivatives.html",
+      "size_bytes": 24307,
+      "sha256": "cbb5f7aaabbae3e96cbc04f807db9cf532020bdf07a6caa44bd026a378b6e0fa",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/073_Article_2_RTS_on_OTC_derivatives.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/074_Article_4_4_of_EMIR.html",
+      "size_bytes": 24232,
+      "sha256": "3b01b9d9d5bb5958ecebf3366fd775235709590e6c75d8d877c164d8c3774de2",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/074_Article_4_4_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/075_Article_4_9_of_MiFID.html",
+      "size_bytes": 78441,
+      "sha256": "5ffbbd1c3edd42778797cb7d2fb5e249fd3e8d1d5605d6f9ffd07ebc3311de89",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/075_Article_4_9_of_MiFID.txt",
+      "size_bytes": 23178,
+      "sha256": "ea73a8497c30ba4c34d0283346673f260b276e7a02aea82b28aa97020127113f",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/076_Article_42_of_the_AIFMD.html",
+      "size_bytes": 1151581,
+      "sha256": "8684215c2678db81815d3bb79525a4dc2106d7e8bc2b1397c3385058f433657f",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/076_Article_42_of_the_AIFMD.txt",
+      "size_bytes": 340866,
+      "sha256": "4d599861ad3bf8f2a44670f66f36307b33ac896adf11807720aced12e6713694",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/077_Article10_2_for_FCs_and_NFCs.html",
+      "size_bytes": 24347,
+      "sha256": "cd6adff46086928e0c0800d3a7fc6eb57dd2b3f0ef73267f3f03187389b8d551",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/077_Article10_2_for_FCs_and_NFCs.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/078_Article_4a_2_for_FCs_and_NFCs.html",
+      "size_bytes": 24230,
+      "sha256": "1ac18a4e569fc3c79d67cb0525499b8936ce8256b083bc868ba73d718e4a22ff",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/078_Article_4a_2_for_FCs_and_NFCs.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/079_Article_10_3_of_EMIR.html",
+      "size_bytes": 24243,
+      "sha256": "ec4a702bcec73d4a51d993ba9bde392d083659a68430e658ad53f10bb98e85e5",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/079_Article_10_3_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/080_Article_4a_3_of_EMIR.html",
+      "size_bytes": 24227,
+      "sha256": "5c7d7b42dbc746bfa724c183b2cc9b6d24ce65903e35291845139ff3004ead40",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/080_Article_4a_3_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/081_Article_61_3_of_AIFMD.html",
+      "size_bytes": 1151582,
+      "sha256": "214fc3cd87a8699e8f28cf1c5df0a193b3d7d9a4d121c5b05def7deed2cab2dc",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/081_Article_61_3_of_AIFMD.txt",
+      "size_bytes": 340866,
+      "sha256": "4d599861ad3bf8f2a44670f66f36307b33ac896adf11807720aced12e6713694",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/082_Article_61_4_of_AIFMD.html",
+      "size_bytes": 1151581,
+      "sha256": "cea8349f36638aaef4181c0bf22c9c9aa98ca0b6889a55591886bb8f2004f144",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/082_Article_61_4_of_AIFMD.txt",
+      "size_bytes": 340866,
+      "sha256": "4d599861ad3bf8f2a44670f66f36307b33ac896adf11807720aced12e6713694",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/083_Article_9_1_of_EMIR.html",
+      "size_bytes": 24213,
+      "sha256": "e6356cbca8837f96d44b042eaefc88608697b25786f969634362172fde9ab42b",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/083_Article_9_1_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/084_Articles_9_1b_to_1d_EMIR.html",
+      "size_bytes": 24298,
+      "sha256": "03cd221b93ffe82c7fac646e2f68182262464e9c9c30d08bd1f131dee587ca59",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/084_Articles_9_1b_to_1d_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/085_Directive_2006_48_EC.html",
+      "size_bytes": 3217696,
+      "sha256": "f0cdf3204322d95f1875982edc9b4c502880156d7012ea0f016e279085d51b26",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/085_Directive_2006_48_EC.txt",
+      "size_bytes": 703048,
+      "sha256": "adf160c70b56e786de248e824476adb3e477670b239a831cd38d478ad06e39ab",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/086_Directive_2006_49_EC.html",
+      "size_bytes": 956722,
+      "sha256": "a4fb3eab0176ebf4d08933a0a7ceb403003dcba9e847484fab57edfeb7be0a58",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/086_Directive_2006_49_EC.txt",
+      "size_bytes": 195917,
+      "sha256": "ea1a8e1764cfa870545556632b9315b5fd45e05859815fab5340ad52f771eca7",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/087_Directive_2011_61_EU.html",
+      "size_bytes": 1151582,
+      "sha256": "434dee227fa0640db41e609eb75aa87efa54ab11c8c939aad26c4606d63971bb",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/087_Directive_2011_61_EU.txt",
+      "size_bytes": 340866,
+      "sha256": "4d599861ad3bf8f2a44670f66f36307b33ac896adf11807720aced12e6713694",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/088_Directive_2011_61_EU.html",
+      "size_bytes": 1151582,
+      "sha256": "e57a4ab9956f6402dffa814c4db5582bb6bd2750e42a2651fe4cd66d30c50224",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/088_Directive_2011_61_EU.txt",
+      "size_bytes": 340866,
+      "sha256": "4d599861ad3bf8f2a44670f66f36307b33ac896adf11807720aced12e6713694",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/089_Directive_83_349_EEC.html",
+      "size_bytes": 331080,
+      "sha256": "3d7b9b9e83d6c10485778a8169b535df641a6155c25d0383dcf1614a6259ab35",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/089_Directive_83_349_EEC.txt",
+      "size_bytes": 75923,
+      "sha256": "f4e2f3676cc567a8d254e939a07e80d430f2c252964bce623728385343585f0c",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/090_European_Commission_FAQ_no.pdf",
+      "size_bytes": 345777,
+      "sha256": "0385d67303e1d38d4d1da2fcc1308be3c552b9c9d485fc49b3afea127c90495a",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "raw_regulations/EMIR/090_European_Commission_FAQ_no.txt",
+      "size_bytes": 30518,
+      "sha256": "3b41306b9d98c51e28067297b016980aa099dfa0b45c1b95ef8acba29d746a58",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/091_Guideline_and_Recommendation_3_b_v.pdf",
+      "size_bytes": 267041,
+      "sha256": "e6f18690a2d4026e53c2e5f3560114b2832dbb1973b7a06dc30e9c2ff0b2214b",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "raw_regulations/EMIR/091_Guideline_and_Recommendation_3_b_v.txt",
+      "size_bytes": 20770,
+      "sha256": "f19117e81828cc64fb03ea56bf70bfa88354d260b76df2a9d8384f54a8071ec7",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/092_Article_1_c_of_the_Commission_Delegated_Regulation.pdf",
+      "size_bytes": 626692,
+      "sha256": "3762cec1f35d49261d80dceaf823a255f3bcd0da5b75c403837187d5d4ff239f",
+      "mime_type": "application/pdf"
+    },
+    {
+      "path": "raw_regulations/EMIR/092_Article_1_c_of_the_Commission_Delegated_Regulation.txt",
+      "size_bytes": 49601,
+      "sha256": "56ef65639865a92ea66fbaf5106d1b9c947c999b1f57fd3857140fae6cb0c05a",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/093_article_13_2_of_EMIR.html",
+      "size_bytes": 24241,
+      "sha256": "284d306ccf871f9490fd0d17f3bdc52f6a31ea847482d9f17f5ed4536160da4b",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/093_article_13_2_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/094_article_16b_5_of_the_ESMA_Regulation.html",
+      "size_bytes": 665473,
+      "sha256": "4de43df7be842d861caabeb9d485bd5a27f544add8b04c4fd6897cd3bf85286d",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/094_article_16b_5_of_the_ESMA_Regulation.txt",
+      "size_bytes": 184225,
+      "sha256": "732ba55ba431e62a28a4a79516f81acd906b82bd033d084ddcefca7def06cb23",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/095_EMIR_Article_11_2.html",
+      "size_bytes": 24240,
+      "sha256": "8515c10a04ed4e59a237419304df730d093c28d87ff170561b6bd38f7fb10591",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/095_EMIR_Article_11_2.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/096_Article_4_1_b_ii_of_EMIR.html",
+      "size_bytes": 24217,
+      "sha256": "b9681b0198a3c8c4cdb05de0fd74c42bf2a85bddb176e6287b4077613d2b2f44",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/096_Article_4_1_b_ii_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/097_Article_4_2_b_of_RTS_2017_2155.html",
+      "size_bytes": 341891,
+      "sha256": "389c4930d46064fccd5df8628f96d0ddba9d80ec75aa6ae123c46f026b3f96e5",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/097_Article_4_2_b_of_RTS_2017_2155.txt",
+      "size_bytes": 31014,
+      "sha256": "d06a657835de45ab3639ce6a58eb1c199a3c88b9ff72c5cda3711c901b3dc591",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/098_Article_4_4_b_of_the_Indirect_Clearing_RTS.html",
+      "size_bytes": 326866,
+      "sha256": "f997b1a6e08fc37db38f81c390925990a81f9b633227c5a01b27bc533f1fe877",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/098_Article_4_4_b_of_the_Indirect_Clearing_RTS.txt",
+      "size_bytes": 30365,
+      "sha256": "b681c572325ac571a8c8de5350a7c0a8b08f3222e165704cc67852a8de9d02d6",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/099_EU_No_285_2014.html",
+      "size_bytes": 307157,
+      "sha256": "98191de60aaa4667548e13e41e28bb356a9328794adc44d4b3e9aebec5332f13",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/099_EU_No_285_2014.txt",
+      "size_bytes": 16733,
+      "sha256": "c3018b42a31ef1db8bd78821333599107624cbd6db319af4295003ce8a2fbbb4",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/100_Article_46_1_of_EMIR.html",
+      "size_bytes": 24236,
+      "sha256": "b4caf6f6f2aea4cca59dd1d2a15fcc62b3382f37cf9758957a7454739eec2405",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/100_Article_46_1_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/101_Articles_48_5_of_EMIR.html",
+      "size_bytes": 24231,
+      "sha256": "5cdd50ba98b04207545fa83e442a06671cf990a2103faba4f57b5f7d154e15db",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/101_Articles_48_5_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/102_Articles_48_6_of_EMIR.html",
+      "size_bytes": 24222,
+      "sha256": "8418b20fdddcad77d60d737dece5c2e001a6d8dbc5a68722739674f605e506b0",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/102_Articles_48_6_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/103_Article_39_7_of_EMIR.html",
+      "size_bytes": 24225,
+      "sha256": "92196b86e9bd13d55ca1a2360ea96abad84c37cb0b256bc91650f1b457126139",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/103_Article_39_7_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/104_Article_47_3_of_EMIR.html",
+      "size_bytes": 24215,
+      "sha256": "1371d7547e7b4b3299b16b8938661d5fd8c871e506106d6aa92e93fd3f261d13",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/104_Article_47_3_of_EMIR.txt",
+      "size_bytes": 11,
+      "sha256": "e55fb1a1d731153e943b68844af12dcce8bfac917c98ffdea64c80da0607dd47",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/105_Settlement_Finality_Directive_98_26_EC.html",
+      "size_bytes": 308643,
+      "sha256": "97601fe7a5f0bab2454fdbe02246a63f3e172d8ae13839e917c1e47f098d8c7e",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/105_Settlement_Finality_Directive_98_26_EC.txt",
+      "size_bytes": 26678,
+      "sha256": "c00168e24832017838626eb9d3ba3af0b4c89b42f7d3c2d16856fd042f08b238",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/106_Article_47_Model_Validation_of_the_Commission_delegated_Regulation.html",
+      "size_bytes": 699368,
+      "sha256": "7876fb5dedec84abd528d507d4854bbef4bc666cec22da49872b9ba4de5d967c",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/106_Article_47_Model_Validation_of_the_Commission_delegated_Regulation.txt",
+      "size_bytes": 148237,
+      "sha256": "df201c2d0f7348d37edff628d5c9f43ca842b4e61b5d4805ef2feeae49458135",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/107_Commission_Delegated_Regulation_No_2013_153.html",
+      "size_bytes": 699367,
+      "sha256": "b0cce9f93dace657805b0dfee66ef2434f58a8a3e780ee99a183122a23f363c9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/107_Commission_Delegated_Regulation_No_2013_153.txt",
+      "size_bytes": 148237,
+      "sha256": "df201c2d0f7348d37edff628d5c9f43ca842b4e61b5d4805ef2feeae49458135",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/108_Recital_13_of_Commission_Delegated_Regulation_No_2013_153.html",
+      "size_bytes": 699367,
+      "sha256": "85ca100d3334c2e460d8cf43cf8925d44596ddc1c1dd57c1c5ccf8896ec37ae9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/108_Recital_13_of_Commission_Delegated_Regulation_No_2013_153.txt",
+      "size_bytes": 148237,
+      "sha256": "df201c2d0f7348d37edff628d5c9f43ca842b4e61b5d4805ef2feeae49458135",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/EMIR/109_Commission_Regulation_EC_No_1126_2008.html",
+      "size_bytes": 6987380,
+      "sha256": "c0cfd1ba4501674df0060cfd366bea80167c9c21f805ca2905fde3392df98f4e",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/EMIR/109_Commission_Regulation_EC_No_1126_2008.txt",
+      "size_bytes": 1834649,
+      "sha256": "b9eb0acd64ffc8ff66d58865474fc8e73e828994a3088e44f451cbc1b904a35c",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/126_Appraisals_Part_323.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/126_Appraisals_Part_323.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/127_Capital_Adequacy_of_FDIC-Supervised_Institutions_Part_324.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/127_Capital_Adequacy_of_FDIC-Supervised_Institutions_Part_324.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/128_Stress_Testing_Part_325.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/128_Stress_Testing_Part_325.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/129_Minimum_Security_Devices_and_BSA_Compliance_Part_326.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/129_Minimum_Security_Devices_and_BSA_Compliance_Part_326.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/130_Assessments_Part_327.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/130_Assessments_Part_327.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/131_Advertisement_of_Membership_Part_328.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/131_Advertisement_of_Membership_Part_328.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/132_Liquidity_Risk_Measurement_Standards_Part_329.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/132_Liquidity_Risk_Measurement_Standards_Part_329.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/133_Deposit_Insurance_Coverage_Part_330.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/133_Deposit_Insurance_Coverage_Part_330.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/134_Federal_Interest_Rate_Authority_Part_331.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/134_Federal_Interest_Rate_Authority_Part_331.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/135_Privacy_of_Consumer_Financial_Information_Part_332.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/135_Privacy_of_Consumer_Financial_Information_Part_332.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/136_Extension_of_Corporate_Powers_Part_333.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/136_Extension_of_Corporate_Powers_Part_333.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/137_Fair_Credit_Reporting_Part_334.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/137_Fair_Credit_Reporting_Part_334.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/138_Securities_of_State_Nonmember_Banks_and_Savings_Associations_Part_335.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/138_Securities_of_State_Nonmember_Banks_and_Savings_Associations_Part_335.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/139_FDIC_Employees_Part_336.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/139_FDIC_Employees_Part_336.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/140_Unsafe_and_Unsound_Banking_Practices_Part_337.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/140_Unsafe_and_Unsound_Banking_Practices_Part_337.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/141_Fair_Housing_Part_338.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/141_Fair_Housing_Part_338.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/142_Loans_in_Flood_Hazard_Areas_Part_339.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/142_Loans_in_Flood_Hazard_Areas_Part_339.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/143_Restrictions_on_Sale_of_Assets_of_Failed_Institutions_Part_340.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/143_Restrictions_on_Sale_of_Assets_of_Failed_Institutions_Part_340.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/144_Securities_Transfer_Agents_Part_341.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/144_Securities_Transfer_Agents_Part_341.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/145_Consumer_Protection_in_Sales_of_Insurance_Part_343.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/145_Consumer_Protection_in_Sales_of_Insurance_Part_343.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/146_Recordkeeping_for_Securities_Transactions_Part_344.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/146_Recordkeeping_for_Securities_Transactions_Part_344.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/147_Community_Reinvestment_Part_345.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/147_Community_Reinvestment_Part_345.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/148_CRA-Related_Disclosure_and_Reporting_Part_346.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/148_CRA-Related_Disclosure_and_Reporting_Part_346.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/149_International_Banking_Part_347.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/149_International_Banking_Part_347.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/150_Management_Official_Interlocks_Part_348.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/150_Management_Official_Interlocks_Part_348.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/151_Derivatives_Part_349.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/151_Derivatives_Part_349.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/152_Proprietary_Trading_and_Covered_Funds_Part_351.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/152_Proprietary_Trading_and_Covered_Funds_Part_351.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/153_Nondiscrimination_on_the_Basis_of_Disability_Part_352.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/153_Nondiscrimination_on_the_Basis_of_Disability_Part_352.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/154_Suspicious_Activity_Reports_Part_353.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/154_Suspicious_Activity_Reports_Part_353.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/155_Industrial_Banks_Part_354.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/155_Industrial_Banks_Part_354.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/156_Economically_Depressed_Regions_Part_357.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/156_Economically_Depressed_Regions_Part_357.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/157_Golden_Parachute_and_Indemnification_Payments_Part_359.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/157_Golden_Parachute_and_Indemnification_Payments_Part_359.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/158_Resolution_and_Receivership_Rules_Part_360.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/158_Resolution_and_Receivership_Rules_Part_360.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/159_Minority_and_Women_Outreach_Program-Contracting_Part_361.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/159_Minority_and_Women_Outreach_Program-Contracting_Part_361.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/160_Activities_of_Insured_State_Banks_and_Insured_Savings_Associations_Part_362.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/160_Activities_of_Insured_State_Banks_and_Insured_Savings_Associations_Part_362.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/161_Annual_Independent_Audits_and_Reporting_Requirements_Part_363.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/161_Annual_Independent_Audits_and_Reporting_Requirements_Part_363.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/162_Standards_for_Safety_and_Soundness_Part_364.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/162_Standards_for_Safety_and_Soundness_Part_364.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/163_Real_Estate_Lending_Standards_Part_365.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/163_Real_Estate_Lending_Standards_Part_365.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/164_Minimum_Standards_of_Integrity_and_Fitness_for_FDIC_Contractors_Part_366.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/164_Minimum_Standards_of_Integrity_and_Fitness_for_FDIC_Contractors_Part_366.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/165_Suspension_and_Exclusion_of_Contractors_and_Termination_of_Contracts_Part_367.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/165_Suspension_and_Exclusion_of_Contractors_and_Termination_of_Contracts_Part_367.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/166_Government_Securities_Sales_Practices_Part_368.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/166_Government_Securities_Sales_Practices_Part_368.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/167_Prohibition_Against_Use_of_Interstate_Branches_Primarily_for_Deposit_Production_Part_369.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/167_Prohibition_Against_Use_of_Interstate_Branches_Primarily_for_Deposit_Production_Part_369.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/168_Recordkeeping_for_Timely_Deposit_Insurance_Determination_Part_370.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/168_Recordkeeping_for_Timely_Deposit_Insurance_Determination_Part_370.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/169_Recordkeeping_Requirements_for_Qualified_Financial_Contracts_Part_371.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/169_Recordkeeping_Requirements_for_Qualified_Financial_Contracts_Part_371.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/170_Credit_Risk_Retention_Part_373.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/170_Credit_Risk_Retention_Part_373.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/171_Orderly_Liquidation_Authority_Part_380.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/171_Orderly_Liquidation_Authority_Part_380.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/172_Resolution_Plans_Part_381.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/172_Resolution_Plans_Part_381.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/173_Restrictions_on_Qualified_Financial_Contracts_Part_382.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/173_Restrictions_on_Qualified_Financial_Contracts_Part_382.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/FDIC/174_Regulations_Transferred_from_the_Office_of_Thrift_Supervision_Part_390.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/FDIC/174_Regulations_Transferred_from_the_Office_of_Thrift_Supervision_Part_390.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/110_Section_13_3_of_the_Federal_Reserve_Act_Emergency_Lending_Authority.html",
+      "size_bytes": 121173,
+      "sha256": "837b447ab77a16fdd80bd2d6a0cca277f37505a74b908c71a0fbffd21b6d57b9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/110_Section_13_3_of_the_Federal_Reserve_Act_Emergency_Lending_Authority.txt",
+      "size_bytes": 29919,
+      "sha256": "8af53527d04c06673a64347983b57b6a9e72260fdab2b38ec03db803ad9f4ae2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/111_Regulation_A_Extensions_of_Credit_by_Federal_Reserve_Banks.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/111_Regulation_A_Extensions_of_Credit_by_Federal_Reserve_Banks.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/112_Regulation_D_Reserve_Requirements_of_Depository_Institutions.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/112_Regulation_D_Reserve_Requirements_of_Depository_Institutions.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/113_Regulation_Q_Prohibition_Against_Payment_of_Interest_on_Demand_Deposits.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/113_Regulation_Q_Prohibition_Against_Payment_of_Interest_on_Demand_Deposits.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/114_Regulation_T_Credit_by_Brokers_and_Dealers.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/114_Regulation_T_Credit_by_Brokers_and_Dealers.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/115_Regulation_U_Credit_by_Banks_for_Securities_Purchases.html",
+      "size_bytes": 93494,
+      "sha256": "2e3212655af793724f143932a5ea649f8412f2fea16048adc5469e4d1da521e3",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/115_Regulation_U_Credit_by_Banks_for_Securities_Purchases.txt",
+      "size_bytes": 13224,
+      "sha256": "0fc1f2dcd5f9462b60cb4c5353abacfe1be8a867b72f44f858c42cfbe51617ba",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/116_Regulation_CC_Availability_of_Funds_and_Collection_of_Checks.html",
+      "size_bytes": 82470,
+      "sha256": "3c843160e8e61f7ee8bfbb33254765787ed6bac577b4e09a62d19a2beac44f89",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/116_Regulation_CC_Availability_of_Funds_and_Collection_of_Checks.txt",
+      "size_bytes": 3895,
+      "sha256": "12efb8bfee841f1bccc794d254443aa770a36caf0ce9b5c7ce7485b9f71867e2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/117_Regulation_Z_Truth_in_Lending_Act.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/117_Regulation_Z_Truth_in_Lending_Act.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/118_Regulation_H_Membership_of_State_Banking_Institutions_in_the_Federal_Reserve_System.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/118_Regulation_H_Membership_of_State_Banking_Institutions_in_the_Federal_Reserve_System.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/119_Regulation_Y_Bank_Holding_Companies_and_Change_in_Bank_Control.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/119_Regulation_Y_Bank_Holding_Companies_and_Change_in_Bank_Control.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/120_Regulation_P_Privacy_of_Consumer_Financial_Information.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/120_Regulation_P_Privacy_of_Consumer_Financial_Information.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/121_Regulation_X_Borrower_Restraints_on_Credit_Transactions.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/121_Regulation_X_Borrower_Restraints_on_Credit_Transactions.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/122_Regulation_BB_Community_Reinvestment_Act.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/122_Regulation_BB_Community_Reinvestment_Act.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/123_Regulation_J_Collection_of_Checks_and_Other_Items_by_Federal_Reserve_Banks.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/123_Regulation_J_Collection_of_Checks_and_Other_Items_by_Federal_Reserve_Banks.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/124_Regulation_O_Loans_to_Executive_Officers_Directors_and_Principal_Shareholders.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/Federal_Reserve/124_Regulation_O_Loans_to_Executive_Officers_Directors_and_Principal_Shareholders.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/175_SEC_Regulation_S-K_Standard_Instructions_for_Forms.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/175_SEC_Regulation_S-K_Standard_Instructions_for_Forms.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/176_SEC_Regulation_S-X_Form_and_Content_of_Financial_Statements.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/176_SEC_Regulation_S-X_Form_and_Content_of_Financial_Statements.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/177_SEC_Regulation_A_Exemptions_for_Small_Offerings.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/177_SEC_Regulation_A_Exemptions_for_Small_Offerings.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/178_SEC_Regulation_D_Private_Offering_Exemptions.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/178_SEC_Regulation_D_Private_Offering_Exemptions.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/179_SEC_Regulation_M_Anti-Manipulation_Rules_Concerning_Securities_Offerings.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/179_SEC_Regulation_M_Anti-Manipulation_Rules_Concerning_Securities_Offerings.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/180_SEC_Regulation_NMS_National_Market_System.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/180_SEC_Regulation_NMS_National_Market_System.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/181_SEC_Regulation_SHO_Short_Sales.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/181_SEC_Regulation_SHO_Short_Sales.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/182_SEC_Regulation_ATS_Alternative_Trading_Systems.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/182_SEC_Regulation_ATS_Alternative_Trading_Systems.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/183_SEC_Regulation_G_Disclosure_of_Non-GAAP_Financial_Measures.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/183_SEC_Regulation_G_Disclosure_of_Non-GAAP_Financial_Measures.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/184_SEC_Regulation_FD_Fair_Disclosure.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/184_SEC_Regulation_FD_Fair_Disclosure.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/185_SEC_Regulation_Crowdfunding_Exemptions_for_Crowdfunding.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/185_SEC_Regulation_Crowdfunding_Exemptions_for_Crowdfunding.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/186_SEC_Regulation_Best_Interest_Standards_of_Conduct_for_Broker-Dealers.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/186_SEC_Regulation_Best_Interest_Standards_of_Conduct_for_Broker-Dealers.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/187_SEC_Regulation_SCI_Systems_Compliance_and_Integrity.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/187_SEC_Regulation_SCI_Systems_Compliance_and_Integrity.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/188_SEC_Regulation_AB_Asset-Backed_Securities.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/188_SEC_Regulation_AB_Asset-Backed_Securities.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/189_SEC_Regulation_AC_Analyst_Certification.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/189_SEC_Regulation_AC_Analyst_Certification.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/190_SEC_Regulation_S-T_General_Rules_for_Electronic_Filings.html",
+      "size_bytes": 10596,
+      "sha256": "32dbf09453171b655e277cf8680eef96148cdce60a59fd12f826b32bf24585ab",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/190_SEC_Regulation_S-T_General_Rules_for_Electronic_Filings.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/191_SEC_Regulation_BTR_Blackout_Trading_Restrictions.html",
+      "size_bytes": 10596,
+      "sha256": "d9944b6ed919d753e5cc3ae63310efddf62e9ab501958472502ba99e9551ddc9",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/191_SEC_Regulation_BTR_Blackout_Trading_Restrictions.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    },
+    {
+      "path": "raw_regulations/SEC/192_SEC_Regulation_SBSR_Security-Based_Swap_Reporting.html",
+      "size_bytes": 10596,
+      "sha256": "6c18b1ecf5d6f9f93f837e8f0c473e154cdf29558394ac6f72741147eaad65a7",
+      "mime_type": "text/html"
+    },
+    {
+      "path": "raw_regulations/SEC/192_SEC_Regulation_SBSR_Security-Based_Swap_Reporting.txt",
+      "size_bytes": 1126,
+      "sha256": "b68256501bf2049f1e2a1ba4cc1715eba09a585b76cbe29d8dd635ea3a0a55b2",
+      "mime_type": "text/plain"
+    }
+  ]
+}

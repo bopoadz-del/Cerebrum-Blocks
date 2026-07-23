@@ -1,0 +1,23 @@
+{
+  "dataset_id": "aviation_faa_eval",
+  "files": [
+    {
+      "path": "README.md",
+      "size_bytes": 5636,
+      "sha256": "de4b759a75946154e141d12a76ffcbc5f5f5aaeb9cfefcada5fcc8e2fb359458",
+      "mime_type": "application/octet-stream"
+    },
+    {
+      "path": "ziksy_faa-aviation-training_test.jsonl",
+      "size_bytes": 987721,
+      "sha256": "7a684df5731dcf43737bb063c36e99a0f5361d33616535fd60b327962a450ea9",
+      "mime_type": "application/json"
+    },
+    {
+      "path": "ziksy_faa-aviation-training_train.jsonl",
+      "size_bytes": 16377454,
+      "sha256": "6c21552a84793e04b08de7639ab48780c48174fbe3e9dd5c08ac954c8fcede79",
+      "mime_type": "application/json"
+    }
+  ]
+}

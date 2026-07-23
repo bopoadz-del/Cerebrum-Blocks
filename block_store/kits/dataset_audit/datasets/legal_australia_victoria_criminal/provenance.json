@@ -1,0 +1,16 @@
+{
+  "dataset_id": "legal_australia_victoria_criminal",
+  "display_name": "Legal RAG Bench",
+  "publisher": "Isaacus",
+  "original_publisher": "Isaacus",
+  "source_urls": [
+    "https://huggingface.co/datasets/isaacus/legal-rag-bench",
+    "https://isaacus.com/blog/legal-rag-bench",
+    "https://resources.judicialcollege.vic.edu.au/article/1053858"
+  ],
+  "downloaded_from": "original_source",
+  "evidence_files": [
+    "legal_australia_victoria_criminal/README.md"
+  ],
+  "notes": "Passages are sampled from the Judicial College of Victoria Criminal Charge Book. The dataset card header states cc-by-nc-sa-4.0 while the text body refers to CC BY NC 4.0."
+}

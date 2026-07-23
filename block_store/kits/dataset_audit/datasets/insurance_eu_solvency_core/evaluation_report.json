@@ -1,0 +1,20 @@
+{
+  "dataset_id": "insurance_eu_solvency_core",
+  "is_evaluation_candidate": false,
+  "question_count": 0,
+  "with_expected_answer": 0,
+  "with_source_document": 0,
+  "with_passage_span": 0,
+  "with_derivation": 0,
+  "with_jurisdiction_version": 0,
+  "exact_duplicate_questions": 0,
+  "train_test_overlap": "none",
+  "quality_tier": "rejected",
+  "required_raw_sources": [
+    "eiopa-solvency-ii-delegated-regulation-2015-35.html",
+    "eiopa-solvency-ii-directive-2009-138-ec.html",
+    "eiopa-solvency-ii-single-rulebook.html",
+    "eiopa-solvency2-single-rulebook-user-guide.pdf"
+  ],
+  "notes": "Raw corpus of EU Solvency II regulations. Not an evaluation dataset."
+}

@@ -1,0 +1,20 @@
+{
+  "dataset_id": "legal_general_retrieval_eval",
+  "is_evaluation_candidate": true,
+  "question_count": 6889,
+  "with_expected_answer": 6889,
+  "with_source_document": 6889,
+  "with_passage_span": 6889,
+  "with_derivation": 0,
+  "with_jurisdiction_version": 0,
+  "exact_duplicate_questions": 33,
+  "train_test_overlap": "none",
+  "quality_tier": "golden",
+  "required_raw_sources": [
+    "contractnli",
+    "cuad",
+    "maud",
+    "privacy_qa"
+  ],
+  "notes": "LegalBench-RAG: each test has query, source file path, character span, and exact answer snippet. Benchmarks: ['contractnli.json', 'cuad.json', 'maud.json', 'privacy_qa.json']. Sources are under corpus/."
+}

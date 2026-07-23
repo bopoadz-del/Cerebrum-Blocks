@@ -1,0 +1,51 @@
+{
+  "dataset_id": "universal_ingestion_tests",
+  "display_name": "Universal Ingestion Tests",
+  "primary_role": "OPERATIONAL_DEMO_DATA",
+  "verdict": "REJECT",
+  "score": 0,
+  "findings": [
+    {
+      "type": "hard_failure",
+      "gate": "unknown_licence",
+      "details": "Unknown (no local licence file)"
+    },
+    {
+      "type": "hard_failure",
+      "gate": "unknown_licence",
+      "details": "No LICENSE, LICENCE or README file exists; reuse terms are unstated."
+    },
+    {
+      "type": "licence",
+      "licence": "Unknown (no local licence file)",
+      "commercial": "unknown",
+      "redistribution": "unknown"
+    },
+    {
+      "type": "quality",
+      "exact_duplicate_rate": 0.0,
+      "near_duplicate_rate": 0.045455,
+      "synthetic_status": "none",
+      "extraction_noise": "none"
+    },
+    {
+      "type": "privacy",
+      "pii_status": "none"
+    }
+  ],
+  "approved_components": [],
+  "excluded_components": [
+    "Entire dataset (no licence file; reuse terms unstated)"
+  ],
+  "required_raw_sources": [],
+  "reason": "Hard rejection gates triggered: unknown_licence.",
+  "evidence_paths": [
+    "datasets/universal_ingestion_tests/provenance.json",
+    "datasets/universal_ingestion_tests/licence_review.json",
+    "datasets/universal_ingestion_tests/domain_mapping.json",
+    "datasets/universal_ingestion_tests/quality_metrics.json",
+    "datasets/universal_ingestion_tests/privacy_review.json",
+    "datasets/universal_ingestion_tests/chunkability_report.json",
+    "datasets/universal_ingestion_tests/evaluation_report.json"
+  ]
+}

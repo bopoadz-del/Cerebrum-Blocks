@@ -1,0 +1,25 @@
+{
+  "dataset_id": "insurance_eu_regulatory_qa",
+  "files_inspected": 9,
+  "records_inspected": 100,
+  "exact_duplicate_count": 154,
+  "exact_duplicate_rate": 0.05314,
+  "near_duplicate_count": 0,
+  "near_duplicate_rate": 0.0,
+  "repeated_context_count": 1542,
+  "repeated_question_count": 247,
+  "synthetic_status": "none",
+  "extraction_noise": "none",
+  "language_distribution": {
+    "en": 1.0
+  },
+  "sample_issues": [
+    {
+      "file": "Cerebrum-Blocks\\block_store\\kits\\insurance_eu_regulatory_qa\\eiopa-qa-archive.xlsx",
+      "record_index": 83,
+      "type": "repeated_context",
+      "description": "Context repeated across 5 inspected records",
+      "snippet": "N/A"
+    }
+  ]
+}
