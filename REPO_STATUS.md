@@ -1,7 +1,7 @@
 # Cerebrum Blocks — Repository Status
 
-> **Date:** 2026-07-23  
-> **Branch:** main  
+> **Date:** 2026-07-24  
+> **Branch:** feat/rag-kits-store-inventory  
 > **Python files in `app/blocks/`:** 121  
 > **Registered blocks (`block_registry/`):** 105  
 > **Tests collected:** 673+ (8 deselected, 4 collection errors)
@@ -12,9 +12,11 @@
 
 Recent merges brought in:
 - **Prebuilt RAG collections** (local RAG kit import): 8 indexed RAW_RAG collections and 2 evaluation kits added to the Store inventory under `block_store/shelves/`, with per-kit `kernel_manifest.json`, verification, and a new `app.core.indexed_rag_collections` loader.
+- **Regulations & Finance Core RAG Pack** (`rag_kits`): metadata-only catalogue entry added to `rag_packs.json` for the local multi-domain corpus; source corpora remain local/generated and are excluded from Git.
 - **FinanceOps foundation blocks** (PR #41): 7 new finance transformation blocks plus container and kit bundle.
 - **Generic action-contract runtime** (PR #40): domain-neutral action discovery, registry, and execution engine under `app/blocks/core/action_contract/`.
 - **Store registry update** (PR #42): registered `action_contract` in `block_registry/`.
+- **Block registry hardening**: 20 incomplete manifests patched with required schema fields and 22 missing `block.py` adapters added; `scripts/test_block_registry.py` now reports `105 passed, 0 failed, 0 skipped`.
 
 Earlier hygiene pass moved root-level scripts/tests into `scripts/`, `tests/`, and `dev/`; cleaned duplicate PDF dependencies; and wired `tests/test_all_blocks.py` and `tests/test_regression_security.py` into CI.
 
@@ -60,7 +62,7 @@ Earlier hygiene pass moved root-level scripts/tests into `scripts/`, `tests/`, a
 |-------|-------|---------|
 | `block_store/shelves/rag_packs.json` | 17 | Metadata-only domain RAG pack catalogue (remains `not_ingested`) |
 | `block_store/shelves/indexed_rag_collections.json` | 8 | Operational inventory of indexed prebuilt RAG collections |
-| `block_store/shelves/eval_packs.json` | 2 | Approved evaluation datasets (not indexed as RAG) |
+| `block_store/shelves/eval_packs.json` | 3 | Approved evaluation datasets and source corpora (not indexed as RAG) |
 
 ### Indexed RAW_RAG collections
 
@@ -83,6 +85,7 @@ Earlier hygiene pass moved root-level scripts/tests into `scripts/`, `tests/`, a
 |---|---|---|---|
 | `aec_benchmark` | construction | REASONING_EVAL / PRODUCT_WORKFLOW_TEST / VISION_DATA | 196 tasks |
 | `techmanualqa700_benchmark` | technical_manuals | RETRIEVAL_EVAL / REASONING_EVAL | 700 QA pairs |
+| `rag_kits_core` | multi-domain | RETRIEVAL_EVAL / REASONING_EVAL / SOURCE_CORPUS | 5,858 records (local corpus) |
 
 ---
 

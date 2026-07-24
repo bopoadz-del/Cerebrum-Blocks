@@ -10,5 +10,31 @@
     "blocks": []
   },
   "publisher_id": "cerebrum_platform",
-  "signature": ""
+  "signature": "",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Payload for incentive_targeting"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Result for incentive_targeting"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/incentive_targeting:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "label": "Payload for incentive_targeting",
+      "widget": "json"
+    }
+  ]
 }

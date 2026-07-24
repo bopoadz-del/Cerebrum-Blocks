@@ -112,7 +112,10 @@ block_store/kits/universal_api_reference/
 block_store/kits/universal_ingestion_tests/
 block_store/kits/universal_reference_data/
 block_store/kits/download_tmp/
-block_store/kits/rag_kits/
+block_store/kits/rag_kits/raw_regulations/
+block_store/kits/rag_kits/__pycache__/
+block_store/kits/rag_kits/*.pkl
+block_store/kits/rag_kits/*.log
 # Published container kit bundles ship Fork artifacts (override data/ above)
 !block_store/kits/**/bundle/app/data/
 !block_store/kits/**/bundle/app/data/**

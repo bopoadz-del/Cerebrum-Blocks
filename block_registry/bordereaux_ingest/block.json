@@ -71,5 +71,9 @@
         "simulate_webhook"
       ]
     }
-  ]
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/bordereaux_ingest:latest"
+  }
 }

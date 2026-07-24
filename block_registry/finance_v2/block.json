@@ -7,9 +7,51 @@
   "publisher_id": "cerebrum_platform",
   "signature": "",
   "digests": {},
-  "inputs": [{"name": "input", "type": "json", "required": false, "description": "Finance document payload"}],
-  "outputs": [{"name": "result", "type": "json", "description": "Typed finance analysis"}],
-  "permissions": {"network": false, "filesystem": false, "imports": ["dataclasses", "json", "math", "re", "sympy", "typing"], "blocks": []},
-  "tags": ["domain", "finance", "v2", "document_analysis", "deterministic"],
-  "layer": 3
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Finance document payload"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Typed finance analysis"
+    }
+  ],
+  "permissions": {
+    "network": false,
+    "filesystem": false,
+    "imports": [
+      "dataclasses",
+      "json",
+      "math",
+      "re",
+      "sympy",
+      "typing"
+    ],
+    "blocks": []
+  },
+  "tags": [
+    "domain",
+    "finance",
+    "v2",
+    "document_analysis",
+    "deterministic"
+  ],
+  "layer": 3,
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/finance_v2:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "label": "Finance document payload",
+      "widget": "json"
+    }
+  ]
 }

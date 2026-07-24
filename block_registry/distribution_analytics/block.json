@@ -69,5 +69,9 @@
         "trend"
       ]
     }
-  ]
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/distribution_analytics:latest"
+  }
 }

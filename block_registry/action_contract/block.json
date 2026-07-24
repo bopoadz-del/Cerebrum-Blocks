@@ -7,14 +7,46 @@
   "publisher_id": "cerebrum_platform",
   "signature": "",
   "digests": {},
-  "inputs": [{"name": "input", "type": "json", "required": false, "description": "Action payload"}],
-  "outputs": [{"name": "result", "type": "json", "description": "Action execution result"}],
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Action payload"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Action execution result"
+    }
+  ],
   "permissions": {
     "network": false,
     "filesystem": false,
-    "imports": ["pydantic"],
+    "imports": [
+      "pydantic"
+    ],
     "blocks": []
   },
-  "tags": ["core", "runtime", "action", "contract", "registry"],
-  "layer": 1
+  "tags": [
+    "core",
+    "runtime",
+    "action",
+    "contract",
+    "registry"
+  ],
+  "layer": 1,
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/action_contract:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "label": "Action payload",
+      "widget": "json"
+    }
+  ]
 }

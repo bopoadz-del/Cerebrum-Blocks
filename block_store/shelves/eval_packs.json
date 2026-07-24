@@ -70,6 +70,45 @@
       ],
       "indexed": false,
       "last_updated_at": "2026-07-23T16:57:50.752655+00:00"
+    },
+    {
+      "schema_version": "1.0.0",
+      "id": "rag_kits_core",
+      "name": "Regulations & Finance Core RAG Kit",
+      "domain": "multi-domain",
+      "project_id": null,
+      "tenant_id": null,
+      "kit_folder": "rag_kits",
+      "status": "eval_data",
+      "primary_role": "RETRIEVAL_EVAL",
+      "secondary_roles": [
+        "REASONING_EVAL",
+        "SOURCE_CORPUS"
+      ],
+      "description": "Local raw corpus of financial/regulatory/QA reference material (IrishFinance, TATQA, OpenSanctions sample, and regulation link retrieval metadata). Intended for local ingestion and evaluation; harvested corpus is generated and not tracked.",
+      "source_publisher": "Cerebrum local curation",
+      "original_source": "Local drive import",
+      "licence": "Mixed — per-dataset licences must be verified before redistribution",
+      "commercial_use": "unknown",
+      "redistribution": "unknown",
+      "jurisdiction": [],
+      "record_count": 5858,
+      "file_count": 9,
+      "excluded_components": [
+        "Harvested raw_regulations/ corpus is generated and not committed (see .gitignore)",
+        "Third-party PDFs fetched by harvest_regulations.py require separate rights clearance"
+      ],
+      "requires_raw_sources": [
+        "Regulations_Link_Retrieval.csv",
+        "Regulations_CDM.csv",
+        "Regulations_definition.csv",
+        "IrishFinance_prompt_completion.jsonl",
+        "tatqa_dataset_dev.json",
+        "tatqa_dataset_test.json",
+        "opensanctions_sample_1000.json"
+      ],
+      "indexed": false,
+      "last_updated_at": "2026-07-24T11:46:31+00:00"
     }
   ]
 }

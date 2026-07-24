@@ -49,7 +49,6 @@
     ],
     "blocks": []
   },
-  "signature": "",
   "tags": [
     "domain",
     "insurance",
@@ -57,5 +56,27 @@
     "agency",
     "deterministic"
   ],
-  "layer": 3
+  "layer": 3,
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/agency_commission_engine:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "label": "Commission calculation payload",
+      "widget": "json"
+    },
+    {
+      "name": "operation",
+      "label": "Commission engine operation",
+      "widget": "text",
+      "options": [
+        "calculate",
+        "preview_override",
+        "apply_chargeback",
+        "effective_schedule"
+      ]
+    }
+  ]
 }

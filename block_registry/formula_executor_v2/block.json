@@ -6,7 +6,38 @@
   "permissions": {
     "network": true,
     "filesystem": true,
-    "imports": ["httpx", "os", "re", "threading"],
+    "imports": [
+      "httpx",
+      "os",
+      "re",
+      "threading"
+    ],
     "blocks": []
-  }
+  },
+  "inputs": [
+    {
+      "name": "input",
+      "type": "json",
+      "required": false,
+      "description": "Payload for formula_executor_v2"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Result for formula_executor_v2"
+    }
+  ],
+  "execution": {
+    "type": "docker",
+    "image": "ghcr.io/cerebrum-blocks/formula_executor_v2:latest"
+  },
+  "ui_schema": [
+    {
+      "name": "input",
+      "label": "Payload for formula_executor_v2",
+      "widget": "json"
+    }
+  ]
 }

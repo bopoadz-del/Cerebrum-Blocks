@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "id": "rag_kits_core",
+  "name": "Regulations & Finance Core RAG Kit",
+  "domain": "multi-domain",
+  "project_id": "prebuilt_rag_kits_core",
+  "tenant_id": "cerebrum_prebuilt",
+  "kit_folder": "rag_kits",
+  "status": "metadata_only",
+  "description": "Local raw corpus of financial/regulatory/QA reference material (IrishFinance, TATQA, OpenSanctions sample, and Regulation link retrieval metadata). Intended for local ingestion and evaluation; not committed as binary corpora.",
+  "embedding": {
+    "provider": "not_indexed",
+    "dimensions": null
+  },
+  "ingestion_status": {
+    "state": "not_ingested",
+    "documents_total": 0,
+    "documents_indexed": 0,
+    "chunks_total": 0,
+    "chunks_indexed": 0,
+    "last_ingested_at": null,
+    "last_error": null
+  },
+  "source_policy": {
+    "allowed_source_classes": [
+      "public_domain",
+      "open_license",
+      "official_statute_or_regulation",
+      "official_guidance",
+      "platform_curated_template",
+      "academic_benchmark"
+    ],
+    "precluded_source_classes": [
+      "private_enterprise_data",
+      "confidential_client_data",
+      "copyrighted_commercial_content_without_license",
+      "user_uploaded_project_records",
+      "unknown_license"
+    ],
+    "requires_source_record": true,
+    "requires_license_review": true,
+    "requires_authority_rating": true
+  },
+  "contents": {
+    "regulations_link_retrieval": "Regulations_Link_Retrieval.csv",
+    "regulations_cdm": "Regulations_CDM.csv",
+    "regulations_definitions": "Regulations_definition.csv",
+    "irish_finance_qa": "IrishFinance_prompt_completion.jsonl",
+    "tatqa_dev": "tatqa_dataset_dev.json",
+    "tatqa_test": "tatqa_dataset_test.json",
+    "opensanctions_sample": "opensanctions_sample_1000.json",
+    "harvest_script": "harvest_regulations.py",
+    "harvested_corpus_dir": "raw_regulations/"
+  }
+}
