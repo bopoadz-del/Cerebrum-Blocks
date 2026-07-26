@@ -17,6 +17,24 @@ jobs:
     timeout-minutes: 15
     env:
       ENV: test
+      DATABASE_URL: postgresql://cerebrum:cerebrum@localhost:5433/cerebrum
+      EMBEDDING_MODEL: all-MiniLM-L6-v2
+      VECTOR_DIMENSION: "384"
+      CEREBRUM_VIRGIN: "false"
+    services:
+      postgres:
+        image: ankane/pgvector:v0.5.1
+        env:
+          POSTGRES_USER: cerebrum
+          POSTGRES_PASSWORD: cerebrum
+          POSTGRES_DB: cerebrum
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -36,11 +54,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Apply database migrations
+        run: |
+          sudo apt-get install -y --no-install-recommends postgresql-client
+          psql "$DATABASE_URL" -f migrations/001_historical_benchmark.sql
+          psql "$DATABASE_URL" -f migrations/002_vector_ingestion.sql
+
       - name: Run integration tests
         run: python -m pytest tests/integration/ -v
 
       - name: Run typed-block tests
         run: pytest -q tests/test_typed_block.py
+
+      - name: Run core RAG + vector + registry tests
+        run: pytest -q tests/core/test_vector_store.py tests/core/test_registry_integrity.py tests/core/test_block_contracts.py tests/core/test_rag_ingestion.py
 
       - name: Run all-blocks tests
         run: pytest -q tests/test_all_blocks.py

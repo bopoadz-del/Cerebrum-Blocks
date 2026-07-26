@@ -122,7 +122,7 @@ class ChatBlock(TypedBlock):
             try:
                 from app.core.rag.retriever import retrieve as _retrieve
                 rag_k = int(params.get("rag_k", 5))
-                chunks = _retrieve(message, str(rag_project_id), k=rag_k)
+                chunks = await _retrieve(message, str(rag_project_id), k=rag_k)
                 if chunks:
                     context = "\n\n".join(
                         f"[{c.doc_id}#{c.chunk_index}] {c.text}" for c in chunks

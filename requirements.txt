@@ -21,9 +21,11 @@ ddgs>=1.0.0
 # Image Processing
 pillow>=10.1.0
 
-# Vector Search - Optional heavy ML stack (uncomment if needed)
+# Vector Search / RAG — local embedding model required for pgvector ingestion
+# and retrieval. sentence-transformers pulls torch; installs cleanly on Linux
+# and Windows with pip.
 # chromadb>=0.4.18
-# sentence-transformers>=2.2.2
+sentence-transformers>=2.2.2
 numpy>=1.24.0
 
 # OCR
