@@ -42,6 +42,15 @@ _GENERIC_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "async_processor": ("app.blocks.async_processor", "AsyncProcessorBlock"),
     "video_metadata_ingest": ("app.blocks.video_metadata_ingest", "VideoMetadataIngestBlock"),
     "video_anomaly_trigger": ("app.blocks.video_anomaly_trigger", "VideoAnomalyTriggerBlock"),
+    # Aviation POC core blocks
+    "aviation_v2": ("app.blocks.aviation_v2", "AviationBlockV2"),
+    "aviation_grounding_gate": ("app.blocks.aviation_grounding_gate", "AviationGroundingGateBlock"),
+    "aviation_chat_server": ("app.blocks.aviation_chat_server", "AviationChatServerBlock"),
+    "aviation_pss_kit": ("app.blocks.aviation_pss_kit", "AviationPssKitBlock"),
+    "aviation_revenue_kit": ("app.blocks.aviation_revenue_kit", "AviationRevenueKitBlock"),
+    "aviation_loyalty_kit": ("app.blocks.aviation_loyalty_kit", "AviationLoyaltyKitBlock"),
+    "aviation_cargo_kit": ("app.blocks.aviation_cargo_kit", "AviationCargoKitBlock"),
+    "aviation_cx_kit": ("app.blocks.aviation_cx_kit", "AviationCxKitBlock"),
 }
 
 _REGISTRY_ROOT = Path(__file__).resolve().parents[2] / "block_registry"

@@ -90,6 +90,21 @@ class PostgresVideoStore(VideoStore):
         self._schema_ready = False
 
     async def _get_pool(self):
+        import asyncio
+
+        current_loop = asyncio.get_running_loop()
+        # Defensive: recreate the pool if it was bound to a different event loop
+        # (common in tests where each TestClient runs on its own loop).
+        if self._pool is not None:
+            pool_loop = getattr(self._pool, "_loop", None)
+            if pool_loop is not current_loop or pool_loop.is_closed():
+                try:
+                    await self._pool.close()
+                except Exception:
+                    pass
+                self._pool = None
+                self._schema_ready = False
+
         if self._pool is None:
             import asyncpg
 

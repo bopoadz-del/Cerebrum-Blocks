@@ -90,3 +90,12 @@ backend.log
 mock_backend.log
 frontend_dev.log
 frontend_e2e.log
+
+# Portable local Postgres binaries (large, generated)
+.postgres/
+
+# Temporary diagnostic scripts
+diagnose_retrieval.py
+
+# Odd artifacts
+=1.6.0

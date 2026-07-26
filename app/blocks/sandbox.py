@@ -3,7 +3,10 @@ from app.core.universal_base import UniversalBlock
 from typing import Dict, Any, Callable, Optional
 import asyncio
 import logging
-import resource
+try:
+    import resource  # Unix-only
+except ImportError:  # pragma: no cover - Windows does not have the resource module
+    resource = None  # type: ignore[import-not-found]
 import tempfile
 import os
 import signal
@@ -221,8 +224,8 @@ class SandboxBlock(UniversalBlock):
         error = None
         
         try:
-            # Set memory limit
-            if policy.max_memory_mb > 0:
+            # Set memory limit (Unix only)
+            if policy.max_memory_mb > 0 and resource is not None:
                 resource.setrlimit(
                     resource.RLIMIT_AS,
                     (policy.max_memory_mb * 1024 * 1024, policy.max_memory_mb * 1024 * 1024)

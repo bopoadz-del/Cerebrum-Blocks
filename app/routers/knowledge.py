@@ -19,6 +19,7 @@ def _raise_for_block_error(result: Dict[str, Any]) -> None:
 class AskRequest(BaseModel):
     question: str = Field(..., description="Question to ask the knowledge base")
     collections: Optional[List[str]] = Field(default=None, description="Vector collections to search")
+    project_id: Optional[str] = Field(default=None, description="pgvector project/corpus to search")
     top_k: int = Field(default=5, ge=1, le=20)
     llm_provider: Optional[str] = Field(default=None, description="Override default LLM")
 
@@ -26,6 +27,7 @@ class AskRequest(BaseModel):
 class SearchRequest(BaseModel):
     query: str = Field(..., description="Search query")
     collections: Optional[List[str]] = Field(default=None)
+    project_id: Optional[str] = Field(default=None, description="pgvector project/corpus to search")
     top_k: int = Field(default=5, ge=1, le=20)
 
 
@@ -44,6 +46,7 @@ async def knowledge_ask(request: AskRequest, auth: dict = Depends(require_api_ke
         {
             "action": "ask",
             "collections": request.collections,
+            "project_id": request.project_id,
             "top_k": request.top_k,
             "llm_provider": request.llm_provider,
         },
@@ -62,6 +65,7 @@ async def knowledge_search(request: SearchRequest, auth: dict = Depends(require_
         {
             "action": "search",
             "collections": request.collections,
+            "project_id": request.project_id,
             "top_k": request.top_k,
         },
     )

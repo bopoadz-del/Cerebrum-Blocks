@@ -35,8 +35,10 @@ init_sentry()
 
 logger = logging.getLogger(__name__)
 
+from app.core import vector_store
 from app.dependencies import init_blocks
 from app.routers import (
+    ingestion,
     auth,
     blocks,
     capture,
@@ -77,8 +79,10 @@ async def lifespan(app: FastAPI):
     blocked on a 2s+ pre-warm.
     """
     import asyncio
+    await vector_store.init_pool()
     asyncio.create_task(init_blocks())
     yield
+    await vector_store.close_pool()
 
 
 app = FastAPI(
@@ -198,6 +202,7 @@ app.include_router(execute.router)
 app.include_router(chain.router)
 app.include_router(chat.router)
 app.include_router(upload.router)
+app.include_router(ingestion.router)
 app.include_router(auth.router)
 app.include_router(memory.router)
 app.include_router(metrics_router.router)

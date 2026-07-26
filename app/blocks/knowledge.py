@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from app.core.universal_base import UniversalBlock
 from app.core.typed_block import TypedBlock, Schema, ContentType
+from app.core import vector_store
 
 
 class KnowledgeBlock(TypedBlock):
@@ -117,11 +118,16 @@ class KnowledgeBlock(TypedBlock):
             query = question.get("question") or question.get("query") or str(question)
         else:
             query = question if isinstance(question, str) else str(question)
-        collections = params.get("collections") or self.config.get("default_collections", ["cerebrum_captures"])
         top_k = params.get("top_k", self.config.get("default_top_k", 5))
         llm_provider = params.get("llm_provider", self.config.get("llm_provider", "deepseek"))
 
-        # 1. Retrieve from all collections
+        # Prefer the pgvector-backed project corpus when a project_id is given.
+        project_id = params.get("project_id")
+        if project_id:
+            return await self._ask_pgvector(query, str(project_id), top_k, llm_provider)
+
+        # Legacy collection path (vector_search dependency / HTTP vector DB)
+        collections = params.get("collections") or self.config.get("default_collections", ["cerebrum_captures"])
         all_chunks = []
         for collection in collections:
             results = await self._search_vectors(query, collection, top_k)
@@ -198,12 +204,121 @@ Answer the question and cite sources.
             "chunks_retrieved": len(top_chunks),
         }
 
+    async def _ask_pgvector(
+        self, query: str, project_id: str, top_k: int, llm_provider: str
+    ) -> Dict:
+        """RAG path backed by the pgvector store.
+
+        When no LLM API key is configured, returns an honest grounded answer
+        built directly from the highest-scoring retrieved chunk.
+        """
+        results = await vector_store.search_vectors(
+            project_id, query, top_k=top_k, threshold=0.3
+        )
+        if not results:
+            return {
+                "status": "success",
+                "answer": "I don't have any relevant information in my knowledge base.",
+                "sources": [],
+                "confidence": 0.0,
+                "project_id": project_id,
+            }
+
+        top = results[0]
+        sources = [
+            {
+                "chunk_id": r.get("chunk_id"),
+                "document_id": r.get("document_id"),
+                "score": r.get("score"),
+                "metadata": r.get("metadata"),
+            }
+            for r in results
+        ]
+
+        # Avoid cloud LLM dependency in local/no-key mode. Only emit a raw
+        # chunk as the answer when the retrieval score is high enough that the
+        # chunk is plausibly on-topic; otherwise answer honestly that we have
+        # no relevant information.
+        if not self._provider_has_key(llm_provider):
+            grounded_confidence_threshold = 0.6
+            if top["score"] < grounded_confidence_threshold:
+                return {
+                    "status": "success",
+                    "answer": "I don't have any relevant information in my knowledge base.",
+                    "sources": [],
+                    "confidence": top["score"],
+                    "query": query,
+                    "chunks_retrieved": len(results),
+                    "project_id": project_id,
+                    "grounded": True,
+                }
+            return {
+                "status": "success",
+                "answer": top["content"],
+                "sources": sources,
+                "confidence": top["score"],
+                "query": query,
+                "chunks_retrieved": len(results),
+                "project_id": project_id,
+                "grounded": True,
+            }
+
+        context = "\n\n".join(
+            f"[Source {i+1}] {r['content']}" for i, r in enumerate(results)
+        )
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a knowledge synthesis engine. Answer using ONLY the "
+                    "provided sources. Cite sources as [Source N]. If the sources "
+                    "don't contain the answer, say so. Be concise."
+                ),
+            },
+            {
+                "role": "user",
+                "content": f"Question: {query}\n\nSources:\n{context}\n\nAnswer the question and cite sources.",
+            },
+        ]
+        answer_data = await self._llm_chat(messages, llm_provider)
+        if answer_data.get("status") == "error":
+            return {
+                "status": "error",
+                "error": answer_data.get("error", "LLM synthesis failed"),
+                "sources": [],
+                "confidence": 0.0,
+                "project_id": project_id,
+            }
+        return {
+            "status": "success",
+            "answer": answer_data.get("content", ""),
+            "sources": sources,
+            "confidence": top["score"],
+            "query": query,
+            "chunks_retrieved": len(results),
+            "project_id": project_id,
+        }
+
     # ── Search Only ────────────────────────────────────────────────────────────
 
     async def _search_only(self, query: Any, params: Dict) -> Dict:
         query_str = query if isinstance(query, str) else str(query)
-        collections = params.get("collections") or self.config.get("default_collections", ["cerebrum_captures"])
         top_k = params.get("top_k", self.config.get("default_top_k", 5))
+        project_id = params.get("project_id")
+
+        if project_id:
+            results = await vector_store.search_vectors(
+                project_id, query_str, top_k=top_k, threshold=0.3
+            )
+            return {
+                "status": "success",
+                "query": query_str,
+                "project_id": project_id,
+                "results": results[:top_k],
+                "total_found": len(results),
+            }
+
+        collections = params.get("collections") or self.config.get("default_collections", ["cerebrum_captures"])
 
         all_results = []
         for collection in collections:
@@ -364,6 +479,16 @@ Answer the question and cite sources.
             return {"status": "error", "error": f"Unknown provider: {provider}"}
 
     # ── Helpers ────────────────────────────────────────────────────────────────
+
+    def _provider_has_key(self, provider: str) -> bool:
+        """Return True when the configured provider has an API key available."""
+        if provider == "deepseek":
+            return bool(self.config.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY", ""))
+        if provider == "openrouter":
+            return bool(self.config.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY", ""))
+        if provider == "ollama":
+            return True
+        return False
 
     def _extract_citations(self, answer: str, source_map: Dict) -> List[Dict]:
         """Extract which sources were actually cited in the answer."""
