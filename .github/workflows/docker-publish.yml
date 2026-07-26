@@ -69,7 +69,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          # PRs build amd64 only to stay within the GitHub runner disk limit
+          # now that sentence-transformers/torch are in the base image. Main
+          # and tags still produce the multi-arch image.
+          platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
           push: ${{ github.event_name != 'pull_request' && steps.docker-secrets.outputs.available == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
