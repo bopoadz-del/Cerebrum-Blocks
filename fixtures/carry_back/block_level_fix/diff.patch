@@ -1,0 +1,17 @@
+diff --git a/app/blocks/pdf.py b/app/blocks/pdf.py
+index 1111111..2222222 100644
+--- a/app/blocks/pdf.py
++++ b/app/blocks/pdf.py
+@@ -90,6 +90,12 @@ def _try_ocr_fallback(
+         return None
+     finally:
+         doc.close()
++
++
++def _guard_empty_path(pdf_path: str) -> None:
++    """Pin: empty/None path must raise before fitz.open (carry-back seeded fix)."""
++    if not pdf_path or not str(pdf_path).strip():
++        raise ValueError("pdf_path must be a non-empty path")
+ 
+ 
+ class PDFBlock(TypedBlock):

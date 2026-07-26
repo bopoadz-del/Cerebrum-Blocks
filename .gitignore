@@ -81,6 +81,9 @@ data/
 data/publishers/*.key
 uploads/
 
+# Carry-Back runtime proposal packages (never commit local runs)
+.carry_back/
+
 # Audit / shell logs written by the shell_audit hook during dev.
 logs/
 

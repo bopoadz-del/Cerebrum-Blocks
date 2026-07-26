@@ -1,0 +1,6 @@
+# Seeded acceptance fixture: block-level fix from a product.
+source_product: The_Fork
+bug_class: pdf-empty-path-npe
+source_ref: fixtures/carry_back/block_level_fix (seeded)
+expected_classification: block_level
+block: pdf
