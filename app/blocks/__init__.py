@@ -42,6 +42,7 @@ _GENERIC_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "async_processor": ("app.blocks.async_processor", "AsyncProcessorBlock"),
     "video_metadata_ingest": ("app.blocks.video_metadata_ingest", "VideoMetadataIngestBlock"),
     "video_anomaly_trigger": ("app.blocks.video_anomaly_trigger", "VideoAnomalyTriggerBlock"),
+    "workbench": ("app.blocks.workbench", "WorkbenchBlock"),
     # Aviation POC core blocks
     "aviation_v2": ("app.blocks.aviation_v2", "AviationBlockV2"),
     "aviation_grounding_gate": ("app.blocks.aviation_grounding_gate", "AviationGroundingGateBlock"),
