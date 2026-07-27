@@ -6,6 +6,9 @@ python-multipart>=0.0.6
 aiofiles>=23.2.0
 python-dotenv>=1.0.0
 
+# Shared infrastructure — Redis clients for cache_manager and session/memory blocks
+redis>=5.0.0
+
 # Marketplace security — publisher identity and Ed25519 block signing
 cryptography>=42.0.0
 
