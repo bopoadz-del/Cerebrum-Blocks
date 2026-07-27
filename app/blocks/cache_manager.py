@@ -1,10 +1,10 @@
 """Cache Manager Block - Redis wrapper with in-memory fallback."""
 
 import json
-import os
 import time
 from typing import Any, Dict, Optional
 from app.core.universal_base import UniversalBlock
+from app.core.redis_infra import get_sync_redis_client
 
 
 class CacheManagerBlock(UniversalBlock):
@@ -20,7 +20,6 @@ class CacheManagerBlock(UniversalBlock):
     default_config = {
         "default_ttl": 3600,
         "max_local_entries": 10000,
-        "redis_url": os.environ.get("REDIS_URL")  # falls back to in-memory if unset
     }
 
     ui_schema = {
@@ -46,18 +45,10 @@ class CacheManagerBlock(UniversalBlock):
     def __init__(self, hal_block=None, config=None):
         super().__init__(hal_block, config)
         self._local_cache: Dict[str, Dict] = {}
-        self._redis = None
-        self._init_redis()
 
-    def _init_redis(self):
-        redis_url = self.config.get("redis_url") or self.default_config.get("redis_url")
-        if redis_url:
-            try:
-                import redis
-                self._redis = redis.from_url(redis_url, decode_responses=True)
-                self._redis.ping()
-            except Exception:
-                self._redis = None
+    def _redis(self):
+        """Return the shared sync Redis client (lazy, singleton, fail-soft)."""
+        return get_sync_redis_client()
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Route to appropriate cache action."""
@@ -196,7 +187,7 @@ class CacheManagerBlock(UniversalBlock):
             "status": "success",
             "block": self.name,
             "version": self.version,
-            "redis_connected": self._redis is not None
+            "redis_connected": get_sync_redis_client() is not None
         }
 
     def _resolve_key(self, input_data: Any, params: Dict) -> Optional[str]:
