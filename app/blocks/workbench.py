@@ -214,6 +214,12 @@ class WorkbenchBlock(TypedBlock):
 
             gate_report = self._run_gates(workspace, changed_paths)
             promotable = all(g.get("pass") for g in gate_report.values())
+            if not changed_paths:
+                gate_report["non_empty_diff"] = {
+                    "pass": False,
+                    "reason": "no files changed — CLI produced an empty diff",
+                }
+                promotable = False
 
             return {
                 "status": "success",

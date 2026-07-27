@@ -174,3 +174,29 @@ async def test_workbench_reports_cli_failure():
 
     assert result["status"] == "error"
     assert "auth required" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_workbench_empty_diff_is_not_promotable():
+    """A CLI session that edits nothing must not be promotable."""
+
+    def fake_runner(cmd: List[str], cwd: str, timeout: float) -> Dict[str, Any]:
+        return {"returncode": 0, "stdout": "ok", "stderr": ""}
+
+    with tempfile.TemporaryDirectory() as tmp:
+        module = Path(tmp) / "module.py"
+        module.write_text("x = 0\n", encoding="utf-8")
+
+        block = _block_with_runner(fake_runner)
+        result = await block.process(
+            {
+                "brief": "Do nothing",
+                "mutable_paths": [str(module)],
+            }
+        )
+
+    assert result["status"] == "success"
+    package = result["result"]
+    assert package["changed_paths"] == []
+    assert package["promotable"] is False
+    assert package["gate_report"]["non_empty_diff"]["pass"] is False
