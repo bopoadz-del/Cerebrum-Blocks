@@ -122,6 +122,36 @@ def test_legal_core_rag_has_expected_new_shape():
     assert pack.ingestion_status["documents_total"] == 0
 
 
+def test_aviation_core_rag_source_documents_exist():
+    """The aviation RAG pack metadata wires to a real corpus on disk."""
+    pack = get_pack("aviation")
+    assert pack.id == "aviation_core_rag"
+    assert pack.domain == "aviation"
+
+    # Expected source corpus directory (mirrors pack id naming convention)
+    kit_root = Path(__file__).resolve().parents[2] / "block_store" / "kits"
+    source_dir = kit_root / "aviation_faa_core_rag"
+    assert source_dir.is_dir(), f"aviation source corpus missing: {source_dir}"
+
+    expected_files = {
+        "AIM_Basic_w_Chg_1_2_3_dtd_7-9-26.pdf",
+        "aim_index.html",
+        "cfr_part_121.xml",
+        "cfr_part_135.xml",
+        "cfr_part_61.xml",
+        "cfr_part_91.xml",
+    }
+    found_files = {p.name for p in source_dir.iterdir() if p.is_file()}
+    assert expected_files <= found_files, (
+        f"aviation corpus missing expected files: {expected_files - found_files}"
+    )
+
+    # Every source file must be non-empty; the PDF is the largest reference.
+    for name in expected_files:
+        path = source_dir / name
+        assert path.stat().st_size > 0, f"aviation corpus file is empty: {name}"
+
+
 def test_pack_collection_ids_are_unique():
     collection_ids = [pack.collection_id for pack in list_packs()]
     assert len(collection_ids) == len(set(collection_ids))
