@@ -211,3 +211,39 @@ def asgi_auth_required(inner_app, *, required_tier: str = _MCP_REQUIRED_TIER):
         await inner_app(scope, receive, send)
 
     return _wrapped
+
+
+def enforce_tier_block_access(block_name: str, auth: Dict[str, Any]) -> None:
+    """Server-side tier boundary: a free key reaches only its allowed blocks.
+
+    Reads ``TIER_LIMITS[tier]["blocks_allowed"]`` — the declared (previously
+    unenforced) per-tier block list. ``"all"`` means unrestricted.
+    """
+    from app.core.api_keys import TIER_LIMITS, Tier
+
+    raw_tier = (auth or {}).get("tier")
+    if raw_tier is None:
+        return
+    try:
+        tier = raw_tier if isinstance(raw_tier, Tier) else Tier(str(raw_tier).lower())
+    except ValueError:
+        return
+    allowed = TIER_LIMITS.get(tier, {}).get("blocks_allowed", "all")
+    if allowed == "all" or block_name in allowed:
+        return
+    logger.warning(
+        "security: blocked tier=%s from invoking block '%s' (not in tier allowance)",
+        tier.value, block_name,
+    )
+    raise HTTPException(
+        status_code=403,
+        detail={
+            "error": "tier_block_access_denied",
+            "block": block_name,
+            "tier": tier.value,
+            "message": (
+                f"Block '{block_name}' is not included in the {tier.value} tier. "
+                "Upgrade to access it."
+            ),
+        },
+    )

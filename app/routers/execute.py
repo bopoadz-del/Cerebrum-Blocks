@@ -15,7 +15,7 @@ from app.dependencies import require_api_key
 from app.dependencies import block_instances, get_block_instance
 from app.core.grounding import evaluate_grounding, persist_verdict
 from app.core.input_adapter import adapt_input
-from app.core.security import enforce_block_access
+from app.core.security import enforce_block_access, enforce_tier_block_access
 from app.core.trust_scope import enforce_trust_scope
 from app.block_registry import registry_block_exists
 
@@ -220,6 +220,7 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
         raise HTTPException(404, f"Block '{block_name}' not found. Available: {list(BLOCK_REGISTRY.keys())}")
 
     enforce_block_access(block_name, auth)
+    enforce_tier_block_access(block_name, auth)
 
     # Trust-scope enforcement (action-contract kernel, wired to the live
     # path): caller-supplied identity/permission scope never reaches a

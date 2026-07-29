@@ -33,7 +33,7 @@ class _CaptureBlock:
         }
 
 
-AUTH = {"id": "key-123", "email": "trial@example.com", "tier": "free"}
+AUTH = {"id": "key-123", "email": "trial@example.com", "tier": "pro"}
 
 
 def _patched(capture):
