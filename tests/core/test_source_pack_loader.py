@@ -179,3 +179,14 @@ def test_validate_shelf_detects_invalid_list_field(tmp_path: Path):
     )
     errors = validate_shelf(bad_shelf)
     assert any("must be a list of strings" in e for e in errors)
+
+
+def test_load_shelf_fails_closed_on_invalid_shelf(tmp_path: Path):
+    """An invalid shelf must refuse to load, not merely report when asked."""
+    bad_shelf = tmp_path / "bad_shelf.json"
+    bad_shelf.write_text(
+        json.dumps({"schema_version": "1.0.0", "shelf_id": "bad"}),
+        encoding="utf-8",
+    )
+    with pytest.raises(SourcePackError):
+        load_shelf(bad_shelf)

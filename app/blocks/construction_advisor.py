@@ -22,6 +22,8 @@ class ConstructionAdvisorBlock(UniversalBlock):
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
+        if params.get("action") == "validate_transition":
+            return self._validate_transition(input_data if isinstance(input_data, dict) else {})
         query = self._query(input_data, params)
         if not query.strip():
             return {"status": "error", "error": "no query provided"}
@@ -64,6 +66,20 @@ class ConstructionAdvisorBlock(UniversalBlock):
             except Exception as exc:  # noqa: BLE001
                 out["evaluation_error"] = str(exc)[:120]
         return out
+
+    @staticmethod
+    def _validate_transition(data: Dict) -> Dict:
+        """Guarded workflow-transition check against the construction KB."""
+        try:
+            verdict = kb.validate_transition(
+                str(data.get("rule_id") or ""),
+                str(data.get("state") or ""),
+                data.get("event") or {},
+                data.get("context") or {},
+            )
+        except (KeyError, ValueError, kb.GuardEvalError) as exc:
+            return {"status": "error", "error": str(exc)}
+        return {"status": "success", **verdict}
 
     @staticmethod
     def _query(input_data: Any, params: Dict) -> str:

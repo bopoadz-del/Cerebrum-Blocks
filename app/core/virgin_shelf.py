@@ -86,13 +86,20 @@ class VirginEdition:
         return dict(self._data)
 
 
-def load_shelf(path: Path | str | None = None) -> dict[str, Any]:
-    """Load the raw virgin shelf JSON."""
+def load_shelf(path: Path | str | None = None, *, validate: bool = True) -> dict[str, Any]:
+    """Load the virgin shelf JSON. Invalid shelves refuse to load (fail closed)."""
     target = Path(path) if path else SHELF_PATH
     if not target.exists():
         raise VirginShelfError(f"virgin shelf not found: {target}")
     with open(target, encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    if validate:
+        errors = _validate_shelf_data(data)
+        if errors:
+            raise VirginShelfError(
+                f"invalid virgin shelf {target}: {'; '.join(errors)}"
+            )
+    return data
 
 
 def list_editions(path: Path | str | None = None) -> list[VirginEdition]:
@@ -121,12 +128,15 @@ def validate_shelf(path: Path | str | None = None) -> list[str]:
 
     An empty list means the shelf is structurally valid.
     """
-    errors: list[str] = []
     try:
-        data = load_shelf(path)
+        data = load_shelf(path, validate=False)
     except VirginShelfError as exc:
         return [str(exc)]
+    return _validate_shelf_data(data)
 
+
+def _validate_shelf_data(data: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
     for key in ("schema_version", "shelf_id", "name", "description", "editions"):
         if key not in data:
             errors.append(f"shelf missing top-level key: {key}")

@@ -150,8 +150,12 @@ def install_kit(
     artifacts = manifest.get("artifacts") or []
     skeleton_mode = not manifest.get("bundle_ready") and manifest.get("skeleton_installable")
 
+    provenance_status = _verify_kit_provenance(kit_id, kit_dir)
+
     if skeleton_mode:
-        return _install_skeleton_kit(kit_id, manifest, kit_dir, target, force=force)
+        result = _install_skeleton_kit(kit_id, manifest, kit_dir, target, force=force)
+        result["provenance"] = provenance_status
+        return result
 
     if not artifacts:
         raise ContainerKitError(f"Kit '{kit_id}' has no install artifacts")
@@ -203,7 +207,32 @@ def install_kit(
         "installed_at": state["kits"][kit_id]["installed_at"],
         "registry": registry_entry,
         "install_mode": "bundle",
+        "provenance": provenance_status,
     }
+
+
+def _verify_kit_provenance(kit_id: str, kit_dir: Path) -> str:
+    """Verify the kit's provenance manifest on the install path.
+
+    A kit that ships ``provenance.json`` must verify — digest or root-hash
+    mismatches refuse the install (fail closed). A kit without one installs
+    but the result says so explicitly; nothing is silently assumed verified.
+    """
+    from block_store.kits.universal_kernel.wave1.provenance_verification import (
+        ProvenanceMismatch,
+        verify_kit,
+    )
+
+    provenance_path = kit_dir / "provenance.json"
+    if not provenance_path.is_file():
+        return "absent — unverified"
+    try:
+        verify_kit(provenance_path)
+    except ProvenanceMismatch as exc:
+        raise ContainerKitError(
+            f"Kit '{kit_id}' failed provenance verification: {exc}"
+        ) from exc
+    return "verified"
 
 
 def _install_skeleton_kit(

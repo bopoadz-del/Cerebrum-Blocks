@@ -131,19 +131,27 @@ def _shelf_path(path: Path | str | None = None) -> Path:
     return PROJECT_ROOT / _SHELF_REL_PATH
 
 
-def load_shelf(path: Path | str | None = None) -> dict[str, Any]:
-    """Load the raw RAG pack shelf JSON."""
+def load_shelf(path: Path | str | None = None, *, validate: bool = True) -> dict[str, Any]:
+    """Load the RAG pack shelf JSON. Invalid shelves refuse to load (fail closed)."""
     target = Path(path) if path else _shelf_path()
     if not target.exists():
         raise RagPackLoaderError(f"RAG pack shelf not found: {target}")
 
     try:
         with open(target, encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
     except json.JSONDecodeError as exc:
         raise RagPackLoaderError(f"invalid JSON in RAG pack shelf {target}: {exc}")
     except OSError as exc:
         raise RagPackLoaderError(f"cannot read RAG pack shelf {target}: {exc}")
+
+    if validate:
+        errors = _validate_shelf_data(data)
+        if errors:
+            raise RagPackLoaderError(
+                f"invalid RAG pack shelf {target}: {'; '.join(errors)}"
+            )
+    return data
 
 
 def list_packs(path: Path | str | None = None) -> list[RagPack]:
@@ -172,12 +180,15 @@ def validate_shelf(path: Path | str | None = None) -> list[str]:
 
     An empty list means the shelf is structurally valid.
     """
-    errors: list[str] = []
     try:
-        data = load_shelf(path)
+        data = load_shelf(path, validate=False)
     except RagPackLoaderError as exc:
         return [str(exc)]
+    return _validate_shelf_data(data)
 
+
+def _validate_shelf_data(data: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
     if data.get("shelf_id") != "rag_packs":
         errors.append("shelf_id must be 'rag_packs'")
 

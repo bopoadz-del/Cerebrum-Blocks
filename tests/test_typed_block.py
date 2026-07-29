@@ -18,7 +18,6 @@ from app.core import (
     TextContent, ChatMessage,
     registry, get_registry,
     transformer, get_transformer, transform,
-    validate_text_content,
 )
 from app.core.universal_base import UniversalBlock
 from app.blocks import PDFBlock, OCRBlock, ChatBlock
@@ -188,7 +187,7 @@ class TestDataTransformer:
         assert text_content["metadata"]["filename"] == "document.pdf"
         
         # Validate as TextContent
-        validation = validate_text_content(text_content)
+        validation = registry.validate(text_content, "TextContent")
         assert validation["valid"]
     
     def test_ocr_to_text_content(self):
@@ -296,7 +295,7 @@ class TestPDFToChatFlow:
         assert text_content["metadata"]["pages"] == 10
         
         # Validate as TextContent
-        validation = validate_text_content(text_content)
+        validation = registry.validate(text_content, "TextContent")
         assert validation["valid"], f"Validation errors: {validation['errors']}"
         
         # Step 2: Extract text for Chat block input

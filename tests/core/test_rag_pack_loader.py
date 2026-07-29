@@ -371,3 +371,14 @@ def _make_bad_pack(**overrides):
     }
     pack.update(overrides)
     return pack
+
+
+def test_load_shelf_fails_closed_on_invalid_shelf(tmp_path: Path):
+    """An invalid shelf must refuse to load, not merely report when asked."""
+    bad_shelf = tmp_path / "bad_shelf.json"
+    bad_shelf.write_text(
+        json.dumps({"schema_version": "1.0.0", "shelf_id": "bad"}),
+        encoding="utf-8",
+    )
+    with pytest.raises(RagPackLoaderError):
+        load_shelf(bad_shelf)

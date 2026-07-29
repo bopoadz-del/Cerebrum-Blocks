@@ -90,19 +90,27 @@ class SourcePack:
         return dict(self._data)
 
 
-def load_shelf(path: Path | str | None = None) -> dict[str, Any]:
-    """Load the raw source pack shelf JSON."""
+def load_shelf(path: Path | str | None = None, *, validate: bool = True) -> dict[str, Any]:
+    """Load the source pack shelf JSON. Invalid shelves refuse to load (fail closed)."""
     target = Path(path) if path else SHELF_PATH
     if not target.exists():
         raise SourcePackError(f"source pack shelf not found: {target}")
 
     try:
         with open(target, encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
     except json.JSONDecodeError as exc:
         raise SourcePackError(f"invalid JSON in source pack shelf {target}: {exc}")
     except OSError as exc:
         raise SourcePackError(f"cannot read source pack shelf {target}: {exc}")
+
+    if validate:
+        errors = _validate_shelf_data(data)
+        if errors:
+            raise SourcePackError(
+                f"invalid source pack shelf {target}: {'; '.join(errors)}"
+            )
+    return data
 
 
 def list_packs(path: Path | str | None = None) -> list[SourcePack]:
@@ -131,12 +139,15 @@ def validate_shelf(path: Path | str | None = None) -> list[str]:
 
     An empty list means the shelf is structurally valid.
     """
-    errors: list[str] = []
     try:
-        data = load_shelf(path)
+        data = load_shelf(path, validate=False)
     except SourcePackError as exc:
         return [str(exc)]
+    return _validate_shelf_data(data)
 
+
+def _validate_shelf_data(data: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
     for key in ("schema_version", "shelf_id", "name", "description", "packs"):
         if key not in data:
             errors.append(f"shelf missing top-level key: {key}")

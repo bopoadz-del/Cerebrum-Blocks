@@ -17,8 +17,6 @@ from .schema_registry import (
     AviationAnalysis, OilGasAnalysis, ChatMessage, ChatConversation,
     SearchResult, VectorEmbedding, FileContent,
     AudioContent, VideoContent, CodeResult, TranslationResult,
-    validate_text_content, validate_image_content,
-    validate_pdf_content, validate_chat_message,
 )
 from .data_transformer import DataTransformer, transformer, get_transformer, transform
 
@@ -71,10 +69,6 @@ __all__ = [
     "CodeResult",
     "TranslationResult",
     # Validation
-    "validate_text_content",
-    "validate_image_content",
-    "validate_pdf_content",
-    "validate_chat_message",
     # Transformer
     "DataTransformer",
     "transformer",
