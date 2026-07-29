@@ -81,7 +81,7 @@ class WorkbenchBlock(TypedBlock):
     )
 
     default_config = {
-        "kimi_cli_path": "kimi",
+        "kimi_cli_path": os.getenv("KIMI_CLI_PATH", "kimi"),
         "timeout_seconds": 300,
         "default_prompt_template": None,
     }
