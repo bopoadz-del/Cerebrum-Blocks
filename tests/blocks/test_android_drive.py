@@ -40,26 +40,28 @@ async def test_android_drive_block_metadata(android_drive_block):
 
 
 @pytest.mark.asyncio
-async def test_android_drive_block_get_paths(android_drive_block):
-    """Test Android Drive block get_paths operation."""
+async def test_android_drive_block_get_paths_is_honest(android_drive_block):
+    """get_paths must not fabricate device paths — no integration exists."""
     result = await android_drive_block.execute(
         None,
         {"operation": "get_paths"}
     )
-    
+
     assert result["block"] == "android_drive"
     assert result["result"]["operation"] == "get_paths"
-    assert "paths" in result["result"]
+    assert result["result"]["status"] != "success"
+    assert result["result"]["error"] == "not_implemented"
+    assert "paths" not in result["result"]
 
 
 @pytest.mark.asyncio
-async def test_android_drive_block_mock_response(android_drive_block):
-    """Test Android Drive block returns mock when not on Android."""
+async def test_android_drive_block_list_is_honest(android_drive_block):
+    """list must not claim the integration is ready — none is wired."""
     result = await android_drive_block.execute(
         None,
         {"operation": "list", "folder_path": "/sdcard"}
     )
-    
+
     assert result["block"] == "android_drive"
-    # Should return mock response when not in Android environment
-    assert "result" in result
+    assert result["result"]["status"] != "success"
+    assert result["result"]["error"] == "not_implemented"
