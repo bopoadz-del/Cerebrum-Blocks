@@ -16,6 +16,7 @@ import time
 import uuid
 from typing import Any, AsyncIterator, Dict, List, Optional
 
+from app.core.grounding import persist_verdict
 from app.core.typed_block import TypedBlock, Schema, ContentType
 
 
@@ -51,7 +52,6 @@ class AviationChatServerBlock(TypedBlock):
             "auth_token",
             "conversation",
             "stream",
-            "orchestrator_steps",
         ],
         format_hints={},
     )
@@ -137,13 +137,25 @@ class AviationChatServerBlock(TypedBlock):
                 conversation=conversation,
                 project_id=project_id,
                 user=user,
-                orchestrator_steps=data.get("orchestrator_steps") or params.get("orchestrator_steps"),
             )
         except Exception as exc:  # noqa: BLE001
             logger.exception("Aviation chat orchestrator failed for session %s", session_id)
             return self._error_frame(
                 f"Agent processing failed: {exc}", session_id=session_id
             )
+
+        # Persist the verdict to the grounding audit store — every answer,
+        # every time, including blocks.
+        grounding = orchestrator_result.get("grounding") or {}
+        persist_verdict(
+            {
+                "surface": "aviation_chat_server",
+                "session_id": session_id,
+                "query": str(message)[:500],
+                "verdict": grounding.get("verdict"),
+                "blocked_reason": grounding.get("blocked_reason"),
+            }
+        )
 
         # Build stream frames from the orchestrator output.
         frames = self._build_frames(orchestrator_result, stream=stream)
@@ -318,14 +330,17 @@ class AviationChatServerBlock(TypedBlock):
         conversation: List[Dict],
         project_id: Optional[str],
         user: Optional[str],
-        orchestrator_steps: Optional[List[Dict]],
     ) -> Dict:
-        """Hand the user message to the orchestrator; do not call LLM/tools directly."""
+        """Hand the user message to the orchestrator; do not call LLM/tools directly.
+
+        The step chain is always the server-defined default: callers cannot
+        supply their own steps, so the grounding gate can never be omitted.
+        """
         orchestrator = await self._resolve_orchestrator()
         if orchestrator is None:
             raise RuntimeError("Orchestrator block is not available.")
 
-        steps = orchestrator_steps or self._default_steps(project_id)
+        steps = self._default_steps(project_id)
         payload = {
             "steps": steps,
             "initial_input": {
@@ -397,12 +412,19 @@ class AviationChatServerBlock(TypedBlock):
 
         grounding = final_output.get("grounding") or final_output
         if isinstance(grounding, dict) and "verdict" in grounding:
+            # The gate's allowed_response is the ONLY releasable text — a
+            # blocked verdict must never fall back to the raw draft.
             return {
-                "answer": grounding.get("allowed_response") or final_output.get("text"),
+                "answer": grounding.get("allowed_response"),
                 "grounding": grounding,
             }
 
+        # No verdict produced → fail closed. A verdict is never fabricated.
         return {
-            "answer": final_output.get("text") or final_output.get("answer"),
-            "grounding": {"verdict": "flag-as-estimate", "allowed_response": final_output.get("text")},
+            "answer": None,
+            "grounding": {
+                "verdict": "block",
+                "allowed_response": None,
+                "blocked_reason": "orchestrator produced no grounding verdict",
+            },
         }

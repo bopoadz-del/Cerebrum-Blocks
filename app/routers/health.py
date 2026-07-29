@@ -1,3 +1,5 @@
+import os
+import subprocess
 from datetime import datetime, timezone
 from fastapi import APIRouter
 
@@ -7,6 +9,27 @@ from app.dependencies import block_instances, MONITORING_AVAILABLE, get_monitori
 router = APIRouter()
 
 
+def _probe_kimi_cli() -> dict:
+    """Evaluated workbench capability: a registered block is not a capability
+    unless the Kimi CLI actually answers."""
+    probe = {"registered": "workbench" in BLOCK_REGISTRY, "cli_ok": False}
+    cli = os.getenv("KIMI_CLI_PATH", "kimi").strip() or "kimi"
+    try:
+        proc = subprocess.run(
+            [cli, "--version"], capture_output=True, text=True, timeout=5, check=False
+        )
+        probe["cli_ok"] = proc.returncode == 0
+        if proc.returncode == 0:
+            probe["cli_version"] = (proc.stdout or "").strip()[:80]
+        else:
+            probe["error"] = (proc.stderr or "").strip()[:200] or f"exit {proc.returncode}"
+    except FileNotFoundError:
+        probe["error"] = f"CLI not found: {cli}"
+    except Exception as exc:  # noqa: BLE001 - health probes must not raise
+        probe["error"] = str(exc)[:200]
+    return probe
+
+
 @router.get("/health")
 def health():
     """Health check."""
@@ -14,6 +37,7 @@ def health():
         "status": "healthy",
         "blocks_loaded": len(block_instances),
         "blocks_available": len(BLOCK_REGISTRY),
+        "kimi_workbench": _probe_kimi_cli(),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 

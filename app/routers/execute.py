@@ -13,12 +13,81 @@ import httpx
 from app.blocks import BLOCK_REGISTRY, get_block_capabilities
 from app.dependencies import require_api_key
 from app.dependencies import block_instances, get_block_instance
+from app.core.grounding import evaluate_grounding, persist_verdict
 from app.core.input_adapter import adapt_input
 from app.core.security import enforce_block_access
+from app.core.trust_scope import enforce_trust_scope
 from app.block_registry import registry_block_exists
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Answer-producing blocks whose replies must carry a grounding verdict.
+# aviation_chat_server runs its own gate in-block and persists its verdicts.
+_GROUNDED_ANSWER_BLOCKS = {"chat", "knowledge"}
+_ANSWER_FIELDS = ("answer", "text", "response")
+
+
+def _grounding_sources(input_data: Any, result: Dict[str, Any]) -> list:
+    sources = []
+    if isinstance(input_data, dict):
+        for key in ("context", "question", "message", "text", "conversation"):
+            value = input_data.get(key)
+            if value:
+                sources.append(json.dumps(value) if not isinstance(value, str) else value)
+    for value in (result.get("sources"), result.get("chunks"), result.get("results")):
+        if value:
+            sources.append(json.dumps(value) if not isinstance(value, str) else value)
+    return sources
+
+
+def _apply_grounding_stage(block_name: str, input_data: Any, response: Any) -> Any:
+    """Mandatory grounding stage for answer-producing blocks.
+
+    Blocked → the answer field is null; never a raw ungrounded fallback.
+    Every verdict is persisted to the grounding audit store.
+    """
+    if block_name not in _GROUNDED_ANSWER_BLOCKS or not isinstance(response, dict):
+        return response
+    result = response.get("result")
+    if not isinstance(result, dict):
+        return response
+    answer_field = next(
+        (f for f in _ANSWER_FIELDS if isinstance(result.get(f), str) and result.get(f)),
+        None,
+    )
+    if answer_field is None:
+        return response
+
+    query = ""
+    if isinstance(input_data, dict):
+        query = str(
+            input_data.get("question") or input_data.get("message") or input_data.get("text") or ""
+        )
+    elif isinstance(input_data, str):
+        query = input_data
+
+    verdict = evaluate_grounding(
+        result[answer_field],
+        sources=_grounding_sources(input_data, result),
+        query=query,
+    )
+    persist_verdict(
+        {
+            "surface": f"execute:{block_name}",
+            "query": query[:500],
+            "verdict": verdict["verdict"],
+            "reasons": verdict["reasons"],
+            "unsupported_figures": verdict["unsupported_figures"],
+        }
+    )
+    response["grounding"] = {
+        "verdict": verdict["verdict"],
+        "reasons": verdict["reasons"],
+        "unsupported_figures": verdict["unsupported_figures"],
+    }
+    result[answer_field] = verdict["allowed_response"]
+    return response
 
 
 def _run_registry_block(block_name: str, input_data: Any, params: Dict) -> dict:
@@ -152,6 +221,20 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
 
     enforce_block_access(block_name, auth)
 
+    # Trust-scope enforcement (action-contract kernel, wired to the live
+    # path): caller-supplied identity/permission scope never reaches a
+    # block; the server-derived scope from the validated API key does.
+    scoped_input, scoped_params, scope_warnings = enforce_trust_scope(
+        request.input, request.params, auth
+    )
+
+    def _with_scope_warnings(response: dict) -> dict:
+        if scope_warnings and isinstance(response, dict):
+            meta = response.setdefault("metadata", {})
+            if isinstance(meta, dict):
+                meta["trust_scope_warnings"] = scope_warnings
+        return _apply_grounding_stage(block_name, scoped_input, response)
+
     capabilities = get_block_capabilities(block_name)
     if capabilities.publisher_tier == "revoked":
         raise HTTPException(
@@ -162,14 +245,16 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
     use_runner = capabilities.must_run_out_of_process
 
     if use_runner:
-        return await _run_block_via_runner(block_name, request.input, request.params or {})
+        return _with_scope_warnings(
+            await _run_block_via_runner(block_name, scoped_input, scoped_params)
+        )
 
     # In-process execution path for safe blocks.
     if block_name in BLOCK_REGISTRY:
         try:
             block = get_block_instance(block_name)
-            adapted_input = adapt_input(request.input, block)
-            return await block.execute(adapted_input, request.params or {})
+            adapted_input = adapt_input(scoped_input, block)
+            return _with_scope_warnings(await block.execute(adapted_input, scoped_params))
         except HTTPException:
             raise
         except Exception as e:
@@ -182,9 +267,9 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
             raise HTTPException(status, err)
 
     # Registry-only blocks with safe capabilities fall back to local subprocess.
-    registry_result = _run_registry_block(block_name, request.input, request.params or {})
+    registry_result = _run_registry_block(block_name, scoped_input, scoped_params)
     if registry_result.get("success"):
-        return {
+        return _with_scope_warnings({
             "block": block_name,
             "request_id": "registry",
             "status": "success",
@@ -193,7 +278,7 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
             "source_id": f"{block_name}-registry",
             "metadata": {"source": "registry"},
             "processing_time_ms": 0,
-        }
+        })
     raise HTTPException(500, registry_result.get("error", "Registry execution failed"))
 
 
