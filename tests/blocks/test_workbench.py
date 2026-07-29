@@ -19,6 +19,19 @@ def workbench():
     return WorkbenchBlock(config={})
 
 
+def _assert_legal_kimi_argv(cmd: List[str]) -> None:
+    """Reject argv combinations the real Kimi CLI refuses at startup.
+
+    ``--prompt`` implies auto permission mode; ``--yolo`` and ``--auto`` are
+    mutually exclusive with it (and with each other).
+    """
+    flags = set(cmd)
+    if "--prompt" in flags and ({"--yolo", "--auto"} & flags):
+        raise AssertionError(f"illegal Kimi argv: --prompt with --yolo/--auto: {cmd}")
+    if "--yolo" in flags and "--auto" in flags:
+        raise AssertionError(f"illegal Kimi argv: --yolo with --auto: {cmd}")
+
+
 def _block_with_runner(runner):
     block = WorkbenchBlock(config={})
     block._cli_runner = runner
@@ -31,6 +44,7 @@ async def test_workbench_invokes_cli_with_prompt_and_mutable_paths(workbench):
     calls: List[Dict[str, Any]] = []
 
     def fake_runner(cmd: List[str], cwd: str, timeout: float) -> Dict[str, Any]:
+        _assert_legal_kimi_argv(cmd)
         calls.append({"cmd": cmd, "cwd": cwd, "timeout": timeout})
         # Simulate Kimi editing a file by writing to the mutable path.
         mutable = Path(cwd)
