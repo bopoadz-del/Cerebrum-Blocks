@@ -30,10 +30,12 @@ class KnowledgeBlock(TypedBlock):
         format_hints={}
     )
 
+    # Only "status" is guaranteed by every action (ask/search/summarize);
+    # "answer" is produced by ask only, so the contract matches reality.
     output_schema = Schema(
         content_type=ContentType.JSON,
-        required_fields=["status", "answer"],
-        optional_fields=["sources", "confidence", "query", "chunks_retrieved"],
+        required_fields=["status"],
+        optional_fields=["answer", "sources", "confidence", "query", "chunks_retrieved", "results", "summary"],
         format_hints={}
     )
 

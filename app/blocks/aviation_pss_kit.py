@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 class AviationPssKitBlock(TypedBlock):
     """Read-only booking and PSS intelligence for aviation operations."""
 
-    auto_validate = False
     name = "aviation_pss_kit"
     version = "1.0.0"
     description = (

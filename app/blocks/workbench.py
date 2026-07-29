@@ -48,7 +48,6 @@ _SAFETY_PATTERNS = {
 class WorkbenchBlock(TypedBlock):
     """Bounded Kimi CLI workbench: prompt → edit → diff → gates → package."""
 
-    auto_validate = False
     name = "workbench"
     version = "1.0.0"
     description = (
@@ -62,7 +61,7 @@ class WorkbenchBlock(TypedBlock):
     input_schema = Schema(
         content_type=ContentType.JSON,
         required_fields=["brief", "mutable_paths"],
-        optional_fields=["prompt_template", "timeout_seconds", "auto_approve"],
+        optional_fields=["prompt_template", "timeout_seconds"],
         format_hints={},
     )
 
@@ -83,7 +82,6 @@ class WorkbenchBlock(TypedBlock):
 
     default_config = {
         "kimi_cli_path": "kimi",
-        "auto_approve": True,
         "timeout_seconds": 300,
         "default_prompt_template": None,
     }
@@ -177,8 +175,9 @@ class WorkbenchBlock(TypedBlock):
                 or self.config.get("timeout_seconds", 300)
             )
             cli_path = self.config.get("kimi_cli_path", "kimi")
-            auto_approve = self.config.get("auto_approve", True)
 
+            # --prompt already implies auto permission mode; --yolo/--auto are
+            # mutually exclusive with it and the real CLI rejects the combination.
             cmd = [
                 cli_path,
                 "--prompt",
@@ -186,8 +185,6 @@ class WorkbenchBlock(TypedBlock):
                 "--add-dir",
                 str(workspace),
             ]
-            if auto_approve:
-                cmd.extend(["--yolo", "--auto"])
 
             logger.info("workbench: invoking Kimi CLI for brief: %s", brief[:80])
             if self._cli_runner:

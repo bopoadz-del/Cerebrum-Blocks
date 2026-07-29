@@ -53,10 +53,16 @@ class AgentSwarmBlock(TypedBlock):
         format_hints={}
     )
 
+    # Only "status" is guaranteed by every action (execute/async/health);
+    # execute-specific fields are optional so the contract matches reality.
     output_schema = Schema(
         content_type=ContentType.JSON,
-        required_fields=["status", "project_id", "objective", "outputs", "final_output"],
-        optional_fields=["total_tokens", "total_time_ms", "swarm_id", "memory_id"],
+        required_fields=["status"],
+        optional_fields=[
+            "project_id", "objective", "outputs", "final_output",
+            "total_tokens", "total_time_ms", "swarm_id", "memory_id",
+            "job_id", "agents", "mode", "note",
+        ],
         format_hints={}
     )
 
@@ -180,6 +186,11 @@ class AgentSwarmBlock(TypedBlock):
                     {"agent": "scheduler", "task": "check_float", "status": "done", "output": "Total float: 14 days"},
                     {"agent": "qa_engineer", "task": "review_spec", "status": "done", "output": "3 non-compliance items found"},
                 ],
+                "outputs": [],
+                "final_output": (
+                    "DEMO ONLY — no agents/tasks were provided, so nothing was "
+                    "executed. Provide agents and tasks for real execution."
+                ),
                 "summary": "Demo swarm completed successfully. Provide agents and tasks for real execution.",
             }
 

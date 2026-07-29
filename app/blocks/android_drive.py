@@ -7,7 +7,6 @@ from app.core.universal_base import UniversalBlock
 class AndroidDriveBlock(UniversalBlock):
     """Android device storage operations"""
     
-    auto_validate = False
     name = "android_drive"
     version = "1.0"
     description = "Android device storage access via ADB or REST bridge"
@@ -34,20 +33,17 @@ class AndroidDriveBlock(UniversalBlock):
     }
     
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        """Access Android device storage"""
+        """Android storage access is not implemented — say so, honestly."""
         params = params or {}
         operation = params.get("operation", "list")
-        
-        if operation == "get_paths":
-            return {
-                "status": "success",
-                "operation": "get_paths",
-                "paths": ["/storage/emulated/0/Documents", "/storage/emulated/0/Download"]
-            }
-        else:
-            return {
-                "status": "success",
-                "operation": "list",
-                "files": [],
-                "message": "Android Drive integration ready"
-            }
+
+        return {
+            "status": "error",
+            "error": "not_implemented",
+            "operation": operation,
+            "detail": (
+                "android_drive is a stub: no ADB or REST bridge is wired. "
+                "It returns no device data. Do not build on this block until "
+                "an integration exists."
+            ),
+        }

@@ -71,7 +71,6 @@ class AviationGroundingGateBlock(TypedBlock):
     with document content.
     """
 
-    auto_validate = False
     name = "aviation_grounding_gate"
     version = "1.0.0"
     description = (

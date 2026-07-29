@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 class AviationRevenueKitBlock(TypedBlock):
     """Read-only revenue management intelligence for aviation operators."""
 
-    auto_validate = False
     name = "aviation_revenue_kit"
     version = "1.0.0"
     description = (

@@ -17,7 +17,6 @@ def _ocr_lang() -> str:
 class OCRBlock(TypedBlock):
     """Optical Character Recognition from images with typed I/O"""
     
-    auto_validate = False
     name = "ocr"
     version = "2.0.0"
     description = "Extract text from images using OCR with preprocessing"

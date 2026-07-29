@@ -18,7 +18,6 @@ from app.core import (
     TextContent, ChatMessage,
     registry, get_registry,
     transformer, get_transformer, transform,
-    validate_text_content,
 )
 from app.core.universal_base import UniversalBlock
 from app.blocks import PDFBlock, OCRBlock, ChatBlock
@@ -188,7 +187,7 @@ class TestDataTransformer:
         assert text_content["metadata"]["filename"] == "document.pdf"
         
         # Validate as TextContent
-        validation = validate_text_content(text_content)
+        validation = registry.validate(text_content, "TextContent")
         assert validation["valid"]
     
     def test_ocr_to_text_content(self):
@@ -296,7 +295,7 @@ class TestPDFToChatFlow:
         assert text_content["metadata"]["pages"] == 10
         
         # Validate as TextContent
-        validation = validate_text_content(text_content)
+        validation = registry.validate(text_content, "TextContent")
         assert validation["valid"], f"Validation errors: {validation['errors']}"
         
         # Step 2: Extract text for Chat block input
@@ -440,3 +439,39 @@ if __name__ == "__main__":
         print(f"✅ Registry has {len(r.list_types())} types")
         
         print("\n✅ All manual tests passed!")
+
+
+class TestOutputValidationFailsClosed:
+    """A block whose output violates its schema must fail, not warn-and-proceed."""
+
+    @pytest.mark.asyncio
+    async def test_nonconforming_output_is_an_error(self):
+        class BrokenBlock(TypedBlock):
+            name = "broken"
+            version = "1.0"
+            input_schema = TextContent
+            output_schema = TextContent
+
+            async def process(self, input_data, params=None):
+                return {"wrong_field": "no text here"}
+
+        result = await BrokenBlock().execute({"text": "hello"}, {})
+        assert result["status"] == "error", (
+            f"nonconforming output must fail closed, got {result['status']}"
+        )
+        details = str(result.get("result", {})) + str(result.get("metadata", {}))
+        assert "text" in details
+
+    @pytest.mark.asyncio
+    async def test_conforming_output_still_succeeds(self):
+        class GoodBlock(TypedBlock):
+            name = "good"
+            version = "1.0"
+            input_schema = TextContent
+            output_schema = TextContent
+
+            async def process(self, input_data, params=None):
+                return {"text": input_data.get("text", "")}
+
+        result = await GoodBlock().execute({"text": "hello"}, {})
+        assert result["status"] != "error"
