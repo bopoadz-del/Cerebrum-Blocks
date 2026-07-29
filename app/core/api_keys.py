@@ -34,7 +34,10 @@ TIER_LIMITS = {
         "requests_per_month": 1000,
         "tokens_per_month": 100000,
         "rate_limit_per_minute": 20,
-        "blocks_allowed": ["chat", "pdf", "ocr", "voice", "translate"],
+        "blocks_allowed": [
+            "chat", "pdf", "ocr", "voice", "translate",
+            "knowledge", "vector_search", "memory", "workflow",
+        ],
     },
     Tier.PRO: {
         "requests_per_month": 50000,
