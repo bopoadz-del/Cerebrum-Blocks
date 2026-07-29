@@ -15,6 +15,7 @@ from app.dependencies import require_api_key
 from app.dependencies import block_instances, get_block_instance
 from app.core.input_adapter import adapt_input
 from app.core.security import enforce_block_access
+from app.core.trust_scope import enforce_trust_scope
 from app.block_registry import registry_block_exists
 
 logger = logging.getLogger(__name__)
@@ -152,6 +153,20 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
 
     enforce_block_access(block_name, auth)
 
+    # Trust-scope enforcement (action-contract kernel, wired to the live
+    # path): caller-supplied identity/permission scope never reaches a
+    # block; the server-derived scope from the validated API key does.
+    scoped_input, scoped_params, scope_warnings = enforce_trust_scope(
+        request.input, request.params, auth
+    )
+
+    def _with_scope_warnings(response: dict) -> dict:
+        if scope_warnings and isinstance(response, dict):
+            meta = response.setdefault("metadata", {})
+            if isinstance(meta, dict):
+                meta["trust_scope_warnings"] = scope_warnings
+        return response
+
     capabilities = get_block_capabilities(block_name)
     if capabilities.publisher_tier == "revoked":
         raise HTTPException(
@@ -162,14 +177,16 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
     use_runner = capabilities.must_run_out_of_process
 
     if use_runner:
-        return await _run_block_via_runner(block_name, request.input, request.params or {})
+        return _with_scope_warnings(
+            await _run_block_via_runner(block_name, scoped_input, scoped_params)
+        )
 
     # In-process execution path for safe blocks.
     if block_name in BLOCK_REGISTRY:
         try:
             block = get_block_instance(block_name)
-            adapted_input = adapt_input(request.input, block)
-            return await block.execute(adapted_input, request.params or {})
+            adapted_input = adapt_input(scoped_input, block)
+            return _with_scope_warnings(await block.execute(adapted_input, scoped_params))
         except HTTPException:
             raise
         except Exception as e:
@@ -182,9 +199,9 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
             raise HTTPException(status, err)
 
     # Registry-only blocks with safe capabilities fall back to local subprocess.
-    registry_result = _run_registry_block(block_name, request.input, request.params or {})
+    registry_result = _run_registry_block(block_name, scoped_input, scoped_params)
     if registry_result.get("success"):
-        return {
+        return _with_scope_warnings({
             "block": block_name,
             "request_id": "registry",
             "status": "success",
@@ -193,7 +210,7 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
             "source_id": f"{block_name}-registry",
             "metadata": {"source": "registry"},
             "processing_time_ms": 0,
-        }
+        })
     raise HTTPException(500, registry_result.get("error", "Registry execution failed"))
 
 
