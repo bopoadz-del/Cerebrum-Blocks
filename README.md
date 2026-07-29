@@ -12,7 +12,7 @@ blocks and kits through the public API, exactly like any other client.
 
 > ### Part of the CEREBRUM ecosystem — industrialized AI delivery
 >
-> **The Store — [Cerebrum-Blocks](https://github.com/bopoadz-del/Cerebrum-Blocks):** 94+ certified AI blocks, 17 industry kits, one universal API. Build a capability once; every sector inherits it.  
+> **The Store — [Cerebrum-Blocks](https://github.com/bopoadz-del/Cerebrum-Blocks):** 129 typed blocks (108 registry entries), 19 domain kits + universal kernel, one API. Build a capability once; every sector inherits it.  
 > **The Factory — [CerebrumDev.ai](https://github.com/bopoadz-del/CerebrumDev.ai):** the client-facing interface that assembles blocks into governed, deployable vertical platforms — evaluation gates in CI, release certification, honest closure reporting.  
 > **The Products — [The Fork](https://github.com/bopoadz-del/The_Fork)** (construction AI — enterprise client pilot) **· [RetailOps](https://github.com/bopoadz-del/TEKsystems_GlobalRetailMNC)** (retail operations — assembled, CI-gated and deployed in under three days).  
 > **The Edge:** sovereign deployment proven — zero-egress on-premise profile, executed air-gap acceptance test, signed sovereignty report.
@@ -34,34 +34,33 @@ products, clients, and domain kits.
 
 | Component | Path | Purpose |
 |---|---|---|
-| Block engine | `app/engine/` | Typed execution, validation, provenance |
-| Block registry | `app/block_registry/` | Central registration + discovery of all blocks |
-| Store API | `app/store/` | REST API: catalog, search, bundle install, health |
-| Kit registry | `app/kits/` | Manifest-driven composition of blocks into domain kits |
-| Formula registry | `app/formulas/` | Curated engineering formulas with source references (AISC, ACI, ASHRAE, …) |
-| Execution modes | `app/execution/` | Sandboxed (RestrictedPython) → process-pool → container |
-| MCP layer | `app/mcp/` | Expose blocks to LLM agents via Model Context Protocol |
+| Blocks | `app/blocks/` | 129 typed execution blocks (chat, RAG, documents, domain analysis, workbench, …) |
+| Block runtime | `app/core/` | TypedBlock base with fail-closed I/O validation, trust-scope enforcement, grounding stage, capability model |
+| Execute API | `app/routers/execute.py` | `/v1/execute` — auth, tier boundary, trust scope, grounding, capability dispatch |
+| Block registry | `block_registry/` | 108 manifest + adapter entries for discovery and subprocess execution |
+| Store | `app/routers/store.py` + `block_store/` | Kit catalog, provenance-verified install, 19 domain kits + the universal kernel |
+| Sandbox runner | `sandbox-runner/` | Out-of-process execution service for blocks with elevated capabilities |
+| Containers | `app/containers/` | Domain containers assembling blocks per vertical |
 
 ## Block categories
 
-| Category | Examples |
+| Category | Examples (real block names) |
 |---|---|
-| **Reasoning** | llm_query, prompt_chain |
-| **Retrieval** | vector_search, hybrid_retrieval, graph_query |
-| **Agents** | task_agent, tool_agent, workflow_agent |
-| **Formulas** | steel_beam_design, concrete_mix, hvac_load, solar_panel_output |
-| **Documents** | pdf_ingest, docx_ingest, chunker, doc_classifier |
-| **Integrations** | email, slack, webhook, ifc_parser, dwg_parser |
-| **Vision** | image_caption, defect_detection |
+| **Reasoning / chat** | chat, agent_swarm, smart_orchestrator, adaptive_router |
+| **Retrieval** | vector_search, knowledge, zvec |
+| **Formulas** | formula_executor, formula_executor_v2, construction_advisor (cited construction KB) |
+| **Documents** | pdf, ocr, xlsx_schedule, spec_analyzer, bim_extractor |
+| **Domain analysis** | construction_v2, aviation_v2, finance_v2, medical_v2, … (19 verticals) |
+| **Workbench** | workbench (bounded Kimi CLI editing with diff + safety gates) |
 
 ## Domain kits
 
-17 domain kits ship today — Construction, Real Estate, Hotel Management,
-Oil & Gas, Healthcare, Manufacturing, Legal, Finance, Retail, Education,
-Logistics, Agriculture, Energy, Insurance, Telecommunications, Government,
-and Transportation. Each kit is a **manifest of block references** — no code
-duplication, no vendored copies. Add a kit by writing a JSON manifest that
-points at existing blocks.
+19 domain kits ship under `block_store/kits/` (construction, aviation,
+finance, medical, legal, retail, insurance, education, agriculture,
+manufacturing, oil & gas, pharma, real estate, hotel management, HR,
+supply chain, automotive, finance ops, and more), plus the
+`universal_kernel` capability kits. A kit is a manifest plus a bundle;
+installs are provenance-verified (see Security model).
 
 ## Quick start
 
@@ -75,27 +74,35 @@ uvicorn app.main:app --reload           # serve on :8000
 
 ## Execution modes
 
-| Mode | Safety | Use |
+| Mode | When | Mechanism |
 |---|---|---|
-| `sandbox` | RestrictedPython, no imports | untrusted formula code |
-| `process` | subprocess pool | default |
-| `container` | Docker isolation | production / multi-tenant |
+| in-process | blocks whose declared capabilities are safe | direct call inside the API worker |
+| registry subprocess | registry-only blocks with safe capabilities | `block_registry/<id>/block.py` via subprocess |
+| sandbox runner | blocks declaring network / filesystem / privileged imports | out-of-process `sandbox-runner/` service |
 
 ## Security model
 
-- Every block declares its required capabilities (`fs:read`, `net:http`, …)
-  and cannot exceed them at runtime.
-- Publisher trust tiers (community → reviewed → certified) gate what may be
-  installed where.
-- Blocks are signed (Ed25519) and verified on install.
-- See [SECURITY.md](SECURITY.md) for the full model.
+- Every block declares capabilities (network, filesystem, privileged
+  imports) in its registry manifest; elevated blocks are dispatched to the
+  out-of-process sandbox runner, and revoked publishers cannot execute.
+- `/v1/execute` enforces the tier block-access boundary, strips
+  caller-supplied trust scope (tenant/permission keys are
+  server-controlled), and routes answer-producing blocks through a
+  mandatory grounding stage (blocked answers are null, verdicts audited).
+- Kit installs verify a `provenance.json` (sha256 digests + root hash)
+  when present; kits without one are labeled `absent — unverified` in the
+  install response. Ed25519 block signing exists (`scripts/sign_block.py`,
+  `app/core/block_validation.py`) but is **not yet operating**: no
+  publisher private key is present and kit signature fields are empty —
+  see `PARKED_BLOCKERS.md`. Do not describe blocks as signed today.
 
 ## Docs
 
-- [BLOCK_CONTRACT.md](BLOCK_CONTRACT.md) — the block authoring contract
-- [docs/block-store-complete.md](docs/block-store-complete.md) — store architecture
-- [docs/MCP_BLOCK_LAYER.md](docs/MCP_BLOCK_LAYER.md) — MCP integration
-- [CONTRIBUTING.md](CONTRIBUTING.md) — how to add a block or kit
+- [API.md](API.md) — the HTTP API surface
+- [REPO_STATUS.md](REPO_STATUS.md) — current inventory and status
+- [SKILLS_BLOCK_LOGIC.md](SKILLS_BLOCK_LOGIC.md) — block logic notes
+- [docs/decisions/phase1-dead-controls.md](docs/decisions/phase1-dead-controls.md) — control dispositions (wired vs deleted)
+- [PARKED_BLOCKERS.md](PARKED_BLOCKERS.md) — honestly parked work (e.g. block signing)
 
 ## License
 
