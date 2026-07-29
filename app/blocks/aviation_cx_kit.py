@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 class AviationCxKitBlock(TypedBlock):
     """Read-only customer-experience intelligence for aviation operators."""
 
-    auto_validate = False
     name = "aviation_cx_kit"
     version = "1.0.0"
     description = (

@@ -48,7 +48,6 @@ _SAFETY_PATTERNS = {
 class WorkbenchBlock(TypedBlock):
     """Bounded Kimi CLI workbench: prompt → edit → diff → gates → package."""
 
-    auto_validate = False
     name = "workbench"
     version = "1.0.0"
     description = (

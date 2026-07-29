@@ -37,10 +37,16 @@ class WorkflowBlock(TypedBlock):
         format_hints={}
     )
 
+    # Only "status" is guaranteed by every action (run/list/get/history/health);
+    # run-specific fields are optional so the contract matches reality.
     output_schema = Schema(
         content_type=ContentType.JSON,
-        required_fields=["status", "pipeline_id", "run_id", "step_count", "results"],
-        optional_fields=["execution_time_ms", "final_output"],
+        required_fields=["status"],
+        optional_fields=[
+            "pipeline_id", "run_id", "step_count", "results",
+            "execution_time_ms", "final_output", "pipelines", "runs",
+            "workflows", "steps",
+        ],
         format_hints={}
     )
 

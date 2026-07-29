@@ -32,7 +32,6 @@ class AviationChatServerBlock(TypedBlock):
       4. Emits stream frames and persists only session state back to memory.
     """
 
-    auto_validate = False
     name = "aviation_chat_server"
     version = "1.0.0"
     description = (

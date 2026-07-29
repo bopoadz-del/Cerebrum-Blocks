@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 class AviationCargoKitBlock(TypedBlock):
     """Read-only cargo-operations intelligence for aviation operators."""
 
-    auto_validate = False
     name = "aviation_cargo_kit"
     version = "1.0.0"
     description = (

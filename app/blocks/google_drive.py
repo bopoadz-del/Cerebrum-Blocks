@@ -43,7 +43,6 @@ def _oauth_url() -> str:
 class GoogleDriveBlock(UniversalBlock):
     """Google Drive: list, read, download files via OAuth 2.0"""
 
-    auto_validate = False
     name = "google_drive"
     version = "2.0"
     description = "Google Drive file operations — set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET or GOOGLE_ACCESS_TOKEN"

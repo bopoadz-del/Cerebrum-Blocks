@@ -212,7 +212,6 @@ def _summarize_detections(detections: List[Dict[str, Any]]) -> Dict[str, int]:
 class ImageBlock(UniversalBlock):
     """Local image analysis — PIL metadata + Tesseract OCR. No cloud calls."""
 
-    auto_validate = False
     name = "image"
     version = "3.0"
     description = "Local image analysis — metadata + OCR (no cloud vision)"

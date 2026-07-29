@@ -440,3 +440,39 @@ if __name__ == "__main__":
         print(f"✅ Registry has {len(r.list_types())} types")
         
         print("\n✅ All manual tests passed!")
+
+
+class TestOutputValidationFailsClosed:
+    """A block whose output violates its schema must fail, not warn-and-proceed."""
+
+    @pytest.mark.asyncio
+    async def test_nonconforming_output_is_an_error(self):
+        class BrokenBlock(TypedBlock):
+            name = "broken"
+            version = "1.0"
+            input_schema = TextContent
+            output_schema = TextContent
+
+            async def process(self, input_data, params=None):
+                return {"wrong_field": "no text here"}
+
+        result = await BrokenBlock().execute({"text": "hello"}, {})
+        assert result["status"] == "error", (
+            f"nonconforming output must fail closed, got {result['status']}"
+        )
+        details = str(result.get("result", {})) + str(result.get("metadata", {}))
+        assert "text" in details
+
+    @pytest.mark.asyncio
+    async def test_conforming_output_still_succeeds(self):
+        class GoodBlock(TypedBlock):
+            name = "good"
+            version = "1.0"
+            input_schema = TextContent
+            output_schema = TextContent
+
+            async def process(self, input_data, params=None):
+                return {"text": input_data.get("text", "")}
+
+        result = await GoodBlock().execute({"text": "hello"}, {})
+        assert result["status"] != "error"

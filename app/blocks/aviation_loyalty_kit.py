@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 class AviationLoyaltyKitBlock(TypedBlock):
     """Read-only loyalty-program intelligence for aviation operators."""
 
-    auto_validate = False
     name = "aviation_loyalty_kit"
     version = "1.0.0"
     description = (
