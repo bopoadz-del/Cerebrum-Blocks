@@ -75,7 +75,14 @@ def test_attrition_scorer_registry_and_bundle_entries():
     registry = json.loads((root / "block_registry" / "attrition_scorer" / "block.json").read_text())
     manifest = json.loads((root / "block_store" / "kits" / "insurance" / "manifest.json").read_text())
 
-    assert registry["signature"] == ""
+    # Phase 5: block signing operates — the registry entry carries a
+    # valid platform signature (was empty while signing was parked).
+    assert registry["signature"], "block must be signed"
+    from app.core.publisher_registry import BlockVerifier
+    verdict = BlockVerifier().verify_block(
+        root / "block_registry" / registry["id"]
+    )
+    assert verdict["verified"], verdict.get("reason")
     assert "attrition_scorer" in manifest["blocks"]
     assert "app/data/retention_playbook.json" in manifest["data"]
     assert (root / "block_store" / "kits" / "insurance" / "bundle" / "app" / "blocks" / "attrition_scorer.py").exists()
