@@ -1,82 +1,82 @@
 # FastAPI & Server
-fastapi>=0.104.0
-uvicorn[standard]>=0.24.0
-pydantic>=2.5.0
-python-multipart>=0.0.6
-aiofiles>=23.2.0
-python-dotenv>=1.0.0
+fastapi==0.115.6
+uvicorn[standard]==0.52.0
+pydantic==2.10.4
+python-multipart==0.0.20
+aiofiles==25.1.0
+python-dotenv==1.2.2
 
 # Shared infrastructure — Redis clients for cache_manager and session/memory blocks
-redis>=5.0.0
+redis==8.0.1
 
 # Marketplace security — publisher identity and Ed25519 block signing
-cryptography>=42.0.0
+cryptography==41.0.7
 
 # HTTP Client
-aiohttp>=3.9.0
-httpx>=0.25.0
-requests>=2.25.0
+aiohttp==3.14.3
+httpx==0.28.1
+requests==2.34.2
 
 # Web Scraping
-beautifulsoup4>=4.12.0
-ddgs>=1.0.0
+beautifulsoup4==4.15.0
+ddgs==9.14.4
 
 # Image Processing
-pillow>=10.1.0
+pillow==12.3.0
 
 # Vector Search / RAG — local embedding model required for pgvector ingestion
 # and retrieval. sentence-transformers pulls torch; installs cleanly on Linux
 # and Windows with pip.
 # chromadb>=0.4.18
-sentence-transformers>=2.2.2
-numpy>=1.24.0
+sentence-transformers==5.6.1
+numpy==2.4.6
 
 # OCR
 # easyocr>=1.7.0
-pytesseract>=0.3.10
+pytesseract==0.3.13
 
 # PDF Processing
-pymupdf>=1.27.0
-pdfplumber>=0.11.0
-pypdf>=5.0.0
+pymupdf==1.28.0
+pdfplumber==0.11.10
+pypdf==6.14.2
 
 # Construction Intelligence Blocks (Week 1)
-sympy>=1.12
-pandas>=2.0.0
-openpyxl>=3.1.0
+sympy==1.14.0
+pandas==2.3.3
+openpyxl==3.1.5
 
 # Sandboxed code execution for formula_executor_v2 / reasoning engine
-RestrictedPython>=6.0
+RestrictedPython==8.4
 
 # Construction Domain Blocks (Week 2)
-ezdxf>=1.1.0
-shapely>=2.0.0
+ezdxf==1.4.4
+shapely==2.1.2
 
 # Intelligence Blocks (Week 3)
-pint>=0.23
-ifcopenshell>=0.7.0
+pint==0.25.3
+ifcopenshell==0.8.5
 
 # Intelligence Blocks (Week 4)
-scikit-learn>=1.4.0
+scikit-learn==1.9.0
 
 # Domain formula backends — Library Container (Layer 4)
-CoolProp>=6.5            # thermodynamic / HVAC property lookups
-QuantLib>=1.30           # quantitative finance — PyPI name is `QuantLib` (imports as `import QuantLib`)
+CoolProp==8.0.0  # thermodynamic / HVAC property lookups
+QuantLib==1.43  # quantitative finance — PyPI name is `QuantLib` (imports as `import QuantLib`)
 
 # ML experiment tracking — used by app/core/mlflow_tracker.py.
 # No-ops gracefully when MLFLOW_TRACKING_URI is unset.
-mlflow>=2.10.0
+mlflow==3.14.0
 
 # PostgreSQL async driver — activates the Postgres backend for the
 # historical_benchmark block when DATABASE_URL is set; otherwise the block
 # falls back to its file-backed store.
-asyncpg>=0.29
+asyncpg==0.31.0
 
 # Document parsing — promoted from optional after real-world tests
 # showed DOCX uploads silently producing zero text and BOQ tables in
 # PDFs being missed without table-aware extraction.
-python-docx>=1.1.0       # Word documents (.docx) — used by app/blocks/pdf.py
-pdfplumber>=0.11.0       # PDF table-aware extraction — better at BOQ tables than text-only
+python-docx==1.2.0  # Word documents (.docx) — used by app/blocks/pdf.py
+pdfplumber==0.11.10  # PDF table-aware extraction — better at BOQ tables than text-only
 
 # Optional - domain libraries (install as needed)
 # spacy>=3.7.0           # NLP for spec_analyzer
@@ -87,7 +87,7 @@ pdfplumber>=0.11.0       # PDF table-aware extraction — better at BOQ tables t
 
 # AI/ML APIs - Optional (uncomment if needed)
 # openai>=1.3.0
-anthropic>=0.40.0
+anthropic==0.120.2
 # groq>=0.5.0
 
 # Translation - Optional (uncomment if needed)
@@ -95,11 +95,11 @@ anthropic>=0.40.0
 # deepl>=1.16.0
 
 # Voice
-SpeechRecognition>=3.10.0
-gTTS>=2.5.0
+SpeechRecognition==3.17.0
+gTTS==2.5.4
 
 # Translation
-deep-translator>=1.11.0
+deep-translator==1.11.4
 
 # Microsoft OneDrive - Optional (uncomment if needed)
 # msal>=1.25.0
@@ -111,12 +111,12 @@ deep-translator>=1.11.0
 # google-api-python-client>=2.108.0
 
 # Testing
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-pytest-cov>=4.1.0
-pytest-json-report>=1.5.0
-respx>=0.21.0
-python-magic>=0.4.27
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-cov==7.1.0
+pytest-json-report==1.5.0
+respx==0.23.1
+python-magic==0.4.27
 
 # High-quality PDF -> Markdown extraction is optional and local-only.
 # See requirements-marker.txt. The platform base image does NOT install it
@@ -125,13 +125,13 @@ python-magic>=0.4.27
 # can fall back to the generic `pdf` block.
 
 # Image processing (capture, OCR, image blocks)
-opencv-python-headless>=4.9.0
-mcp>=1.6.0
+opencv-python-headless==5.0.0.93
+mcp==2.0.0
 
 # Error tracking — optional. Activated when SENTRY_DSN is set.
-sentry-sdk[fastapi]>=2.0.0
+sentry-sdk[fastapi]==2.66.1
 
 # Prometheus metrics exposition — used by app/routers/metrics.py to
 # expose /metrics in the Prometheus text format and to record per-request
 # counters/histograms via the metrics middleware.
-prometheus_client>=0.19
+prometheus_client==0.26.0
