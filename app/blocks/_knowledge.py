@@ -131,8 +131,15 @@ def search_knowledge(
         if score:
             # secondary key: id-token hits weigh a touch more (title relevance)
             id_hits = len(qt & _tokens((e.get("id") or "").replace(".", " ")))
-            scored.append((score + 0.5 * id_hits, e))
-    scored.sort(key=lambda x: -x[0])
+            total = score + 0.5 * id_hits
+            # Revision currency: a superseded revision is still citable but
+            # must never outrank its successor — down-rank it hard.
+            if e.get("superseded_by"):
+                total *= 0.25
+            scored.append((total, e))
+    # Source precedence: equal relevance is resolved by credibility tier —
+    # the higher-authority source wins.
+    scored.sort(key=lambda x: (-x[0], -(x[1].get("credibility_tier") or 0)))
     return [e for _, e in scored[:top_k]]
 
 
@@ -146,6 +153,11 @@ def _build_warnings(entry: Dict[str, Any]) -> List[str]:
     sourced from one project is never silently applied to another.
     """
     warnings: List[str] = []
+    superseded = entry.get("superseded_by")
+    if superseded:
+        warnings.append(
+            f"superseded by {superseded} — do not rely on this revision"
+        )
     tier = entry.get("credibility_tier")
     applic = entry.get("applicability", {}) or {}
     region = applic.get("region_specific")

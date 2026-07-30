@@ -43,6 +43,8 @@ class ConstructionAdvisorBlock(UniversalBlock):
                 "thresholds": e.get("thresholds"),
                 "provenance": e.get("provenance", {}),
                 "credibility_tier": e.get("credibility_tier"),
+                "as_of": e.get("effective_date"),
+                "superseded_by": e.get("superseded_by"),
                 "warnings": kb._build_warnings(e),
             })
 
