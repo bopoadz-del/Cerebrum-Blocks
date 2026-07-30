@@ -6,6 +6,7 @@ apt-get update -qq
 apt-get install -y -qq \
   tesseract-ocr \
   tesseract-ocr-ara \
+  poppler-utils \
   libgl1 \
   libglib2.0-0
 
