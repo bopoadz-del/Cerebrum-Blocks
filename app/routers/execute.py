@@ -13,7 +13,12 @@ import httpx
 from app.blocks import BLOCK_REGISTRY, get_block_capabilities
 from app.dependencies import require_api_key
 from app.dependencies import block_instances, get_block_instance
-from app.core.grounding import evaluate_grounding, persist_verdict
+from app.core.grounding import (
+    VERDICT_OUT_OF_SCOPE,
+    check_scope_refusal,
+    evaluate_grounding,
+    persist_verdict,
+)
 from app.core.input_adapter import adapt_input
 from app.core.security import enforce_block_access, enforce_tier_block_access
 from app.core.trust_scope import enforce_trust_scope
@@ -66,6 +71,27 @@ def _apply_grounding_stage(block_name: str, input_data: Any, response: Any) -> A
         )
     elif isinstance(input_data, str):
         query = input_data
+
+    # Scope refusal precedes grounding: a refused question is never
+    # answered, however grounded the corpus may be.
+    refusal = check_scope_refusal(query)
+    if refusal is not None:
+        persist_verdict(
+            {
+                "surface": f"execute:{block_name}",
+                "query": query[:500],
+                "verdict": VERDICT_OUT_OF_SCOPE,
+                "refusal_id": refusal["id"],
+                "reasons": [refusal["reason"]],
+            }
+        )
+        response["grounding"] = {
+            "verdict": VERDICT_OUT_OF_SCOPE,
+            "refusal_id": refusal["id"],
+            "reasons": [refusal["reason"]],
+        }
+        result[answer_field] = None
+        return response
 
     verdict = evaluate_grounding(
         result[answer_field],

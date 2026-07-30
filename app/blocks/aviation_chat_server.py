@@ -16,7 +16,7 @@ import time
 import uuid
 from typing import Any, AsyncIterator, Dict, List, Optional
 
-from app.core.grounding import persist_verdict
+from app.core.grounding import VERDICT_OUT_OF_SCOPE, check_scope_refusal, persist_verdict
 from app.core.typed_block import TypedBlock, Schema, ContentType
 
 
@@ -116,6 +116,41 @@ class AviationChatServerBlock(TypedBlock):
             return self._error_frame(
                 "Authentication required.", session_id=session_id, status_code=401
             )
+
+        # Scope refusal precedes everything: a refused question never
+        # reaches the orchestrator or the LLM.
+        refusal = check_scope_refusal(str(message))
+        if refusal is not None:
+            persist_verdict(
+                {
+                    "surface": "aviation_chat_server",
+                    "session_id": session_id,
+                    "query": str(message)[:500],
+                    "verdict": VERDICT_OUT_OF_SCOPE,
+                    "refusal_id": refusal["id"],
+                }
+            )
+            return {
+                "status": "success",
+                "session_id": session_id,
+                "frames": [
+                    {
+                        "type": "error",
+                        "payload": {
+                            "verdict": VERDICT_OUT_OF_SCOPE,
+                            "reason": refusal["reason"],
+                        },
+                        "timestamp": time.time(),
+                    },
+                    {
+                        "type": "done",
+                        "payload": {"verdict": VERDICT_OUT_OF_SCOPE},
+                        "timestamp": time.time(),
+                    },
+                ],
+                "memory_stored": False,
+                "conversation_length": 0,
+            }
 
         # Load or initialise conversation history.
         conversation = await self._load_conversation(session_id, data)
