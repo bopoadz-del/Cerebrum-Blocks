@@ -23,6 +23,15 @@ standard used in The Fork.
 - **Cited construction guidance.** `construction_advisor` returns KB entries
   with provenance and credibility tiers, and validates procurement workflow
   transitions through an AST-allowlisted guard evaluator.
+- **Signed registry blocks.** All 105 `block_registry` blocks carry
+  verifying Ed25519 signatures, enforced at load time; the private key is
+  held in the owner's secrets manager, never in the repo.
+- **Scope refusal.** Questions in the refusal categories (medication
+  dosing, structural sign-off, legal filing strategy, live emergency) are
+  never attempted, however grounded the corpus.
+- **Tenant isolation on stateful blocks.** Storage namespaces are
+  server-derived from the API key; a caller cannot name another tenant's
+  namespace (covered by a concurrent two-tenant test).
 
 ## Not certified for
 
@@ -33,11 +42,12 @@ standard used in The Fork.
   certified for unsupervised professional judgement.
 - **Semantic retrieval quality in offline environments** (embedder
   fallback is lexical and cross-call incomparable).
-- **Signed-block supply chains.** Signing is parked; no block is signed
-  today.
+- **Signed kit *bundles*.** Registry blocks are signed, but domain-kit
+  bundles are provenance-verified (sha256) rather than Ed25519-signed;
+  kits without a `provenance.json` install labeled `absent — unverified`.
 - **Unattended multi-tenant production isolation beyond the enforced
-  boundaries above.** Project-level isolation inside a tenant is not yet
-  enforced.
+  boundaries above.** Tenant isolation on stateful blocks is enforced;
+  project-level isolation *inside* a tenant is not yet.
 
 ## Mock / stub inventory (in-product labels)
 
