@@ -42,6 +42,12 @@ services:
       # __pycache__-clearing import-time hack existed in main.py.
       - key: PYTHONDONTWRITEBYTECODE
         value: "1"
+      # Durable storage root. The grounding audit log
+      # ($STORAGE_PATH/grounding/verdicts.jsonl) and any other on-disk
+      # state live here; the disk mount below makes it survive restarts
+      # and deploys. Mirrors CerebrumDev.ai's storage contract.
+      - key: STORAGE_PATH
+        value: /app/storage
       # Secret env vars stay in the dashboard. List with `sync: false`
       # so blueprint sync doesn't overwrite them with placeholders.
       - key: CORS_ORIGINS
@@ -71,6 +77,13 @@ services:
       # image still works on port 8001 locally.
       - key: SANDBOX_RUNNER_URL
         value: http://cerebrum-sandbox-runner:10000
+    # Persistent disk so the grounding audit log and other on-disk state
+    # survive restarts/deploys (STORAGE_PATH points here). 1 GB matches
+    # CerebrumDev.ai; raise sizeGB if verdict volume grows.
+    disk:
+      name: cerebrum-blocks-storage
+      mountPath: /app/storage
+      sizeGB: 1
 
   - type: pserv
     name: cerebrum-sandbox-runner
