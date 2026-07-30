@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Edge computing gateway: dispatch construction actions to NVIDIA Jetson fleet with OTA, health monitoring, parallel execution",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "52a4a511f486d04946f9f90f1d8d266fdb3fb8203e80333c498df11c7142e894",
-    "block.py": "1002eddc002755e0ee947ed9ed1850939b91c0fd856cfab8992d37e6f8a7e362"
+    "block.py": "a807dbcac46c5cf4c66347ed3dbbbca3a7bb80bd29f36d050b2d5f53dc3e1f1e"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/jetson_gateway:latest",
@@ -86,7 +86,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "KPMre7zljXNegkld56l+06YDbBsqb6FZ4qPHm+JukRR7cxekHGheTh1NTKDR+/0czLWRmM0NlFlLPEVdyV/aCw==",
+  "signature": "8OOTpEXdVSARdwMMKyPAUQ/SKPZhYiy4mkTSzheRupArURuSe0DkavsSbHWDlQT208YKAVMw9qc+UdTjCXi1Aw==",
   "tags": [
     "infrastructure",
     "edge",

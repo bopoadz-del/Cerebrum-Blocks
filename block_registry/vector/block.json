@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "8d870abf6c1f265979941b6311a4edcaacabf9719c883b234f4b46227de7c11e",
-    "block.py": "ba5364144561c0ac754c16ab0bd44a6d4fb09539068ce8757f5f76f4a07cdc50"
+    "block.py": "a706c667d2ee5c4636aeef8d99af6798efb0d1593714c98aac27c0093028381b"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/vector:latest",
@@ -81,7 +81,7 @@
     "config",
     "memory"
   ],
-  "signature": "owS3JdWNzd64bavDNWCuaOxGvWPOBmGWPlowRRQnVQDJ6/YxT5VVGVlh00C60d0hODcaw7TrSwZMN8o7OPoBCQ==",
+  "signature": "5EW+ZBjutk/4ozsz7YEXj0ClwlI30ck5NKSIWa/2yQrCV8hGuitKhTn0Q/bvVr4ykG/JTI/k6gTBW/yg3pPmCw==",
   "tags": [
     "ai",
     "vector",

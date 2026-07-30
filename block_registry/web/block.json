@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Fetch and extract content from any URL",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "baf4ce27c35278ef8a616b0b687ab7d381aab81c4f5ebfb76aa152549862dd9f",
-    "block.py": "fe1cc40c64f9fd43c976c873c7844d602cf2501c47cc027171f7f3fd1b0e9902"
+    "block.py": "469864c13b4dcccb21835c12feb34a29f0c0f222aca1bad031e532e7b414a4c3"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/web:latest",
@@ -46,7 +46,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "MpTNnBtDwIlNkSRXlSyOvjpKnjHDZVv4qTWqk+jgwiS3/TpBVQZuATprukxX5Bui/c6eIhI3gazuNxJn9B48Cg==",
+  "signature": "RpK5ZHnjJmB6feu44osxN8zJVhDuKSQoKgpuPKzwY7q5x8vAt18NzV4NyLFRCHaupHcf8gmKpfKKBXrEkP/hBA==",
   "tags": [
     "domain",
     "web",

@@ -19,9 +19,9 @@
   },
   "description": "Secure code execution isolation with memory limits, CPU limits, and sandbox policies",
   "digests": {
-    "Dockerfile": "415104ddcf97c32cd3393f9e85b041557c53c90604199e5d4348a095631451be",
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
     "block.json": "911cd400b3a972189b5effe12f8281c290b3ccd9c32a5ccfabff002fca603b65",
-    "block.py": "c11c9664ed2c69036179af04f59f199726a088e1128948bb04837a2e153c5ef5"
+    "block.py": "a9242fc174eb2f177d836019405304fd3b16906d850eca4bdbf6079c2da0a9fe"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/sandbox:latest",
@@ -81,7 +81,7 @@
     "memory",
     "config"
   ],
-  "signature": "H9j7py6932j2WUSayXy0imm1H2ZDakARclgVi3YW95YoJe8LcPd2LFK6v1f1zZyU0hCqXMyUNM4o3ohnC7wADA==",
+  "signature": "8+QOVx1j0i74z12VLMTyihL689i4IT5Ht0gRRR1DWP2HaEazI9oFnHC2CoE1x9cj+IhQUErMx+wTCfrvCyGaCA==",
   "tags": [
     "security",
     "isolation",

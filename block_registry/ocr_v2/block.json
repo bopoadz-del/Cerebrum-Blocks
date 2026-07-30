@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Extract text from images using OCR with typed output",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "1b3ba619dc6b4133405d0ef0eecbe6a7f0b43db03c263cab1ff003d760fe2765",
-    "block.py": "48548373575b20b1037b59e1ff9bda9107d4ff2505479215a3ba1ba63280f4de"
+    "block.py": "57cd7cb560221a7c89568a64e548eca3cacad038848dfde8d3a2d2dabb96b427"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/ocr_v2:latest",
@@ -71,7 +71,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "71UQ6lEmwM9rprzYh1w0faDUty5BIDpsq3+YoDnM/MVUZ5Zwogjf8IybW59Tzp1Vfatc79m5ioXDnWIVP+5QAA==",
+  "signature": "UHBjZhhoPcpIU7I12NH4dofJzoPJvdbEnOZ3ulNqA4rAXfCHgmmOY1lTUfMw3txrCRLoQWOfG58J2qlB/qIzAQ==",
   "tags": [
     "domain",
     "vision",

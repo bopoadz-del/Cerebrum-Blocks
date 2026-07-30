@@ -289,7 +289,11 @@ class BlockSigner:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["publisher_id"] = publisher_id
 
-        digests = BlockSigner._compute_digests(block_path, manifest=manifest)
+        # Canonical LF digests: signatures are line-ending independent by
+        # construction, not by verifier guesswork.
+        digests = BlockSigner._compute_digests(
+            block_path, manifest=manifest, normalize_eol="\n"
+        )
 
         payload = {"publisher_id": publisher_id, "digests": digests}
         payload_str = _canonical_json(payload)
@@ -378,15 +382,14 @@ class BlockVerifier:
 
         # Verify file digests.
         stored_digests: Dict[str, str] = manifest["digests"]
-        computed_digests = BlockSigner._compute_digests(block_path)
+        # Canonical form first (LF-normalized, matching sign_block); legacy
+        # raw and CRLF forms accepted for blocks signed before normalization.
+        computed_digests = BlockSigner._compute_digests(block_path, normalize_eol="\n")
         digests_match = computed_digests == stored_digests
-
-        # Line-ending tolerance: a signature produced on a Windows CRLF
-        # checkout must still verify on a Linux LF checkout (and vice versa).
         if not digests_match:
-            for target_eol in ("\n", "\r\n"):
+            for legacy in (None, "\r\n"):
                 normalized = BlockSigner._compute_digests(
-                    block_path, normalize_eol=target_eol
+                    block_path, normalize_eol=legacy
                 )
                 if normalized == stored_digests:
                     digests_match = True

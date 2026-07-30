@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Memory coordinator for cross-block session state",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "dc99f30c95c35dc7163cbb05c26b6cc2715f487fc851e4fe57e2863383569d5a",
-    "block.py": "5b7ccca4b3f55b141bbd8e274b8eb6e2bd57d20cce5769813f9bd33c966915c5"
+    "block.py": "449a29cd8fdf3a2463e091f795f1d1ac9259ff6c4bb6dfa01e51def3c934530b"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/context_broker:latest",
@@ -60,7 +60,7 @@
   "requires": [
     "memory"
   ],
-  "signature": "rcu8MratZ+Hysbed7iJJNI3O1W10YdsEvi/9A4YGNZovret0psEXH6e2ZHTsq4Vb/GkTUpW+mk9cqGd6d2N7CA==",
+  "signature": "hCFcqM9K406+e+XbkbH9YEJkXz9AK0RYqKZAef9R/CQcBnbNKrRETVor4yjMRrgQh2Mj5V5jp+aJCEm9SFpxCg==",
   "tags": [
     "infrastructure",
     "memory",

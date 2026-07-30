@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Block store certification and 5-stage item validation pipeline. Virgin boot alias: validation_pipeline (see docs/validation_block_mapping.md).",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "5989c385a478c57c329512c1c7e6a3639d4edf4b9b4ce08d146aef85ec2eefcb",
-    "block.py": "5d171fec846617f5dbb846cc9ce4a53bbc7447e5f0707291257f01868368a624"
+    "block.py": "629d9f19c525017a296e82ed1a891935bdcda9e961450774f26954fd4cce84cb"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/validation:latest",
@@ -111,7 +111,7 @@
     "sandbox",
     "database"
   ],
-  "signature": "nC4pPdzyS6cJJTbFUhIxaIyzekd+wzPP9jvil4pHXOchhDtIXqhm8uyOQ9+UiXK9fNRIayiBF9zXSp5kG12HAA==",
+  "signature": "GvCLp6YrDBrOjS0QioIAAmyzgmdqUyo/WNohvZzCLtrvw5cOJvRCjQo87R2YvSnIWEr5FTvB6Ih6iMgFghKzDw==",
   "tags": [
     "store",
     "security",

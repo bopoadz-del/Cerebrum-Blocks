@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Extract building elements, quantities, and clash report from IFC BIM models",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "b8713f52269c774e1db3187ae60074010a20388a03c8d366f0a619374f8d14b5",
-    "block.py": "0828740fd12c5df4d07be7cf99ff7c6efa7ec814df85a78f29d4e018b234809f"
+    "block.py": "e715b8f4832f1760b89c94f818f76b4e7cf9ec14547555a756d6d6e36bc5ec02"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/bim_extractor:latest",
@@ -79,7 +79,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "jtVykMOqJy+H+cfig4u9dCssIEABmI/9TyqreFs0JmPCEK0iIsfKx1thB3Qogv5L+SFEPkhKcAtGky+ZgBM2Bw==",
+  "signature": "u9FOk9AwUTr/zZdaDRSISJO4zwLTLyojLG9ibg7wQl/Uz1H1Fr12ochznkH1taXZvjuv6OvWV1XI1LOa5yizBg==",
   "tags": [
     "domain",
     "construction",

@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Extended-boot skill knowledge block \u2014 parses CEREBRUM_SKILL.md (domain file configurable via skill_file). Not loaded in virgin boot.",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "e9b3202a5b1fadd6026fa201d37b65a703cb938f74fa2feae7b66dc8d2ab1892",
-    "block.py": "ee39f77ef58d61a3c16d1aeb75ee411be8ad3dac028854b1564361d9541da788"
+    "block.py": "821483301b67279d2c777f63ffff66e5c8f322a6160dc7c1a710068e93f4fb29"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/skills:latest",
@@ -53,7 +53,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "KL2fvbONSJrmR0xo+MZjISZkpxs32UVZg54yMwjMHntNJHU3zbamAC35VkVkTGx8X12Q3FwObec9rgtHTXRrAA==",
+  "signature": "Edgje9h6U0uF07Fy4gvWDxjggpcKdo2Xadybb7XvDTeSXoSgJFF3yu4zTS2VZaxEVFxAIxpBKANi7XdDDa0rBg==",
   "tags": [
     "ai",
     "core",

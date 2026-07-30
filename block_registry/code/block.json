@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Execute Python or JavaScript code; analyze code for issues",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "a239ad221646ead2ca0fa81a38f22c04f4f5c69f628261e9ee53d00a05cf6a13",
-    "block.py": "b60d5fc8a4e0880a7024d183486b3f9e2843a436dd54b21a6405193235d6bf2e"
+    "block.py": "9d181ddba7cd8a98564a907d5caf555980d7298c86576f4734e3da137e9814ea"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/code:latest",
@@ -46,7 +46,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "Py0EdWQIEWqceCSLCK0l9vvqPTagUUMevEbzaU2oPziP6pSAwmJ2h3Q9ewGreaeh03hjbtDG38YAYo5HudiWCA==",
+  "signature": "huDV5u3E0OUnVYKfo3Bs+3L3z7L8SnOmXkOiaeTpxntbEkveopNbWrvmJianvhsUu04GE+CChLKaT0K5wxbHBw==",
   "tags": [
     "domain",
     "code",

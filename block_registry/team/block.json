@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "0c92fa20630846c1cc283dc31e54f3ff10cdd31cba6289ebfadcc01fb824560b",
-    "block.py": "95c044c574332ecdbb32795a9b3562fa98c6eff10bd8ecdfa41152e4f2676c5d"
+    "block.py": "f06ad42e2d9dc04a0de160c8faa54086eabdbcd21f6a2dc5a5cf1328528e032d"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/team:latest",
@@ -103,7 +103,7 @@
     "database",
     "billing"
   ],
-  "signature": "V8EGnEfjp6KfmQBBSMDBv7uERO3c8hJ2wnhy6F+kUBjkeEHKV15KrCh9kgYmFxoMNq6DoCCmNvAEogJyYda5DQ==",
+  "signature": "0+nSjsaKkpoZ5vMfNFz4HI358VwztDVXwhK+YmLsFwDEppmWW/uZQpg8ywzWwo0eXQgnUntXdTVfmkmDNBm2BQ==",
   "tags": [
     "platform",
     "multi-tenant",

@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "b1f2a4ec2ad7f04b2faba8f74606225fc81976e54ded253d91115c8a40093b38",
-    "block.py": "3de9137bc51c1e7fbd8471ce4aeea93d928239dfd9e691a99adb7355ea230af6"
+    "block.py": "aad94861d5f61fcdf76281da62d8eccadcc6d0e2617e2587c9e1abfa79c2353a"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/audit:latest",
@@ -94,7 +94,7 @@
     "database",
     "auth"
   ],
-  "signature": "7sCAZEM4IqXoUfu/BF0EOsf59RDZOPUBQW7GHKsLOjvIXu6Hjk06XtPBilcCjI0HTDKZypQuxwV+8uvcSDlbDA==",
+  "signature": "MyMRAYm6C24+brQ0fbRPubEBNGg35IrgUKxjXiCeNkI4W2C1X9WpMCTjLnRlUL6+wUS0QRRgoxLlS8Vlkc8/CQ==",
   "tags": [
     "security",
     "compliance",

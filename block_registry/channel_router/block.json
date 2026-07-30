@@ -1,14 +1,17 @@
 {
+  "description": "Explainable insurance channel routing for agency, direct, MGA, and partner channels.",
+  "digests": {
+    "block.json": "48818e024a25281ff2def1030c71740908ae00d94a26ccadb276abcf1122503b"
+  },
   "id": "channel_router",
   "name": "Channel Router",
-  "version": "1.0.0",
-  "description": "Explainable insurance channel routing for agency, direct, MGA, and partner channels.",
   "permissions": {
-    "network": false,
+    "blocks": [],
     "filesystem": false,
     "imports": [],
-    "blocks": []
+    "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": ""
+  "signature": "nHtGhWnwHgOvSddh62HA2nzZdSWKYt6aTT++MdLkSbmaVGrV8SdGXFlEZc8GsY5xDCNqHkfoKL0Rc7LCBSgeAg==",
+  "version": "1.0.0"
 }

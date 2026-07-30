@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Google Drive file operations \u2014 set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET or GOOGLE_ACCESS_TOKEN",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "26ecbff783d442fc5de8c29cccc487cc097a70ed9f801b4b5fc0f394dac60e61",
-    "block.py": "8352d92ab18cd9d9256c7465d3e7d4c536426d477c5a1f0ef3b160a60cc92ebe"
+    "block.py": "e58ee30a064a6ce4ad7acd2172f889fd9702bbac357d31f5f2905abcf7c0d278"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/google_drive:latest",
@@ -36,7 +36,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "CL4rPD4NW0mvTVO3+ypEN7VZKwJODnvdsjfWzgWCX1M0JNTJSFOGLZggCSfyjqIg2jly/Fu3WnsjQ6jsa9YLDw==",
+  "signature": "YF2mOxwht0zCeyzDGQimkQ8Q0uXuD6FbH+Ag7oqWuDFxFaj94lZolWgQvTwHOirCtXbF18pWbLCNV7Fa2r84Cg==",
   "tags": [
     "integration",
     "storage",

@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Extract text from PDF files with typed output",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "4f04e6d5378e5376aad52f84ef261026fe750e7909a6276de8494bd13b590bde",
-    "block.py": "7feae01133855f18553ea6ef5ae5ba71a374ed10de7051111a2d9af9f99fc227"
+    "block.py": "d05c40cd290741db3e4774e0175023dec0459daac874aa7adf9710805fe7ea3f"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/pdf_v2:latest",
@@ -76,7 +76,7 @@
   "requires": [
     "ocr"
   ],
-  "signature": "I0F97gkth4pPzaUKFlJfORk68qZBMX1mXpTjjv2fHQPzyEqs1/ovBY6rDVhzEoeT7SZ1lBayXcNnM9O7ltRXAQ==",
+  "signature": "YegOX0LIxzTvDpKsumZFlivDm6wgXeC4xmzRPkjsVhF0IFR1ZKjrI2Oxo1zSiFquwbugYy7MBlM+XzwGqG/uBQ==",
   "tags": [
     "domain",
     "documents",

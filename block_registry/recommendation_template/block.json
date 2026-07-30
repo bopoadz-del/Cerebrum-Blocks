@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Data-driven construction recommendation engine: variance data \u2192 severity-ranked recommendations + action items",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "5bbd0fbf9ee0629f059f513bf3e8b08430aec872fdb657b3053f1d8b70013b67",
-    "block.py": "0189f6783d742c1a314b066a886d0dd64f476028ab0f13b8fba93ef75cce1116"
+    "block.py": "f586e5038eb689fa47dd995add27cd2bc26c6fb8e155754762a7292fc1ac73ef"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/recommendation_template:latest",
@@ -67,7 +67,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "O0Z8AfJDCD+z6ty+uMPW2l2EzzUoJPluVd3vqKLqp8cd5XyeIGECcjI8GDFu+Z2JbToGPPCXtQORpluaLc0fAg==",
+  "signature": "8Lz6y9DfjFj6pdL9GUVW4ZxmhXIcD6h/XgdUlA5PMQ9gKJ2luCR+miKuipVDhZ5MeszZRSa9c/8/PE2fPWQaAg==",
   "tags": [
     "domain",
     "construction",

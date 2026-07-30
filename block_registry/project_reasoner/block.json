@@ -1,12 +1,22 @@
 {
+  "description": "LLM agent for project planning and reasoning.",
+  "digests": {
+    "block.json": "80fa066337feabaa4e84e1a33618c9382d31a0661dc5fe5c0a586b15f22fd777"
+  },
   "id": "project_reasoner",
   "name": "Project Reasoner",
-  "version": "1.0.0",
-  "description": "LLM agent for project planning and reasoning.",
   "permissions": {
-    "network": true,
+    "blocks": [],
     "filesystem": true,
-    "imports": ["httpx", "json", "logging", "os"],
-    "blocks": []
-  }
+    "imports": [
+      "httpx",
+      "json",
+      "logging",
+      "os"
+    ],
+    "network": true
+  },
+  "publisher_id": "cerebrum_platform",
+  "signature": "zm5XwgVF5Odm0pQLTpUvkUrVyVIDFOLO504iHbECho6KTmWRaHWJX5RY9QuQgfnJU0EXOWX2k0uuOta4gB/5BA==",
+  "version": "1.0.0"
 }

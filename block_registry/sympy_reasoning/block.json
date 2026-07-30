@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Heavy reasoning engine: symbolic variance analysis + data-driven construction recommendations",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "148079e531ed848cc626bb116d5d4e3cb7a80a894daca633f3a671414092f8e7",
-    "block.py": "a80c0e9c223b62bf5990fafce22e0cddf4ba7ee218643b3a6c7dcca573401127"
+    "block.py": "d8a1d9aa5c1642b896a2ab98a09af4bae88bfe721c5e5bd5acc3220c4282ab54"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/sympy_reasoning:latest",
@@ -60,7 +60,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "qkEX4ehhmUHCZtn1kF5VsD+SaY+zdjXve+DLM9Cr8ZqKtApbaH0LZVksh5faTvoxmkON8XxzeXKQC4x7XehDCQ==",
+  "signature": "EOfeTOWq35RFc6S/HiZO2fGRkTnRyfP91WwYGv1ELULtXE3xNud6cJ2CDpa71cqIIReKxuWyADqJeFgfiuRfBw==",
   "tags": [
     "domain",
     "construction",

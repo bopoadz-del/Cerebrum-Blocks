@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "LLM-augmented enhancement of construction quantities/risks/RFIs",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "b1b5e6646fef44d4af937aa673d4da849c5ab754df3933db8f0f90cab4be9688",
-    "block.py": "c9ecd057ce96c0e405cbd07174ecbb998e2c9a0d5d3e6071a1bd50d0ad5d3360"
+    "block.py": "a29a78456245f9a49a92dd90525555df9e906404f2826fdb9e53d7eebc221f49"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/llm_enhancer:latest",
@@ -67,7 +67,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "hgymZn7qSx6z2umc95q8fULTMy1BO6NuRDFkXuIhQuKEMJIyfOOYYoSlYvA2SMRhSKeGm2Ttnov3bOT/btO3Dg==",
+  "signature": "UfBnG3jzdJN2NEbRn6I0zSDxDvE3eSlJBtwnPRia5pLID+RRiYi8RXfsRj+YDKzEDtFW/JEFMiZMvxR9ZzhqAQ==",
   "tags": [
     "domain",
     "construction",

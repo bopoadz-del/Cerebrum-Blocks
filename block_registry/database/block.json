@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "182e57cc74fa992f9069d49ae4aaa6ba3f19085c7f6372ffcfa23783bcfab7aa",
-    "block.py": "261fb2b0f06f9987f6748979db162192c0328dd2d7cf3157acf6dac1fd30d27d"
+    "block.py": "d16a3e3f63e46aa761577d96b9cc23bf7485a3c951d16a796f16881119dc66d6"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/database:latest",
@@ -67,7 +67,7 @@
   "requires": [
     "config"
   ],
-  "signature": "6vvAWYtJP38XXHvvJJPq7t1YIsJQutXsyIfml6EBfhBm/iF++WRwjyyaXWaWpgecBoBXu0zbYLDuWSgwCmgaBQ==",
+  "signature": "Sm4YkfFt2oWmmkohikGjbeFsI0qQtW4+lDOjr7SboKfzWU6z46Ge42b/JrFe3fGQodyrOnbhmAl9QaMC3fbtDg==",
   "tags": [
     "infrastructure",
     "database",

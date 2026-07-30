@@ -1,7 +1,9 @@
 {
   "author": "Cerebrum Team",
   "description": "Insurance agency hierarchy Store block for agent, agency, MGA/FMO, and carrier distribution trees",
-  "digests": {},
+  "digests": {
+    "block.json": "9f8f96a4e5cba7516c28f08f809d989b58972b129c1bc4c11970641ed0eb1b3f"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/agency_hierarchy:latest",
     "type": "docker"
@@ -45,7 +47,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "",
+  "signature": "iy+H1yn7lho3isHU8WWFJhZRHIMYoWNXlbeH/s70pHHyVxZ/aU32nU0uIGDP1M5vWtg6zbebjZ153W6KDMdACA==",
   "tags": [
     "domain",
     "insurance",

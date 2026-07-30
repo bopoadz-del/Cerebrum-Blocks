@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "e0b8c2819dff5a73f0b8f608aab2cbcbe559eab491e79969d679466aa7d50e0c",
-    "block.py": "26b3a308765d306370ca7da2ac9f921f1ca3b62d45da6b4aef96d4ad12a103ce"
+    "block.py": "942a4fb48dcd538c813dd405a8b58ff50d83bfe1616144c303689ae5a1ee6782"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/rate_limiter:latest",
@@ -89,7 +89,7 @@
     "memory",
     "database"
   ],
-  "signature": "qVrmMVmbbMjGJBdeKhpG2lJSAYwCIQ0xlpYfEZlSTda4+vLDwtO6c1/D+vgY1ZdFTHHjc0WT1z5v0GTA3Z9PCQ==",
+  "signature": "1kaaXWawtPdN4/DBguZIB58cRPR/ezYPctWyIayOrfqWPMePlbXQPdHU0YQ8DsvxFOqv4MSCoqETsjtoIXcVAg==",
   "tags": [
     "security",
     "protection",

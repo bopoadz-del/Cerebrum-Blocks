@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Local image analysis \u2014 metadata + OCR (no cloud vision)",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "1feb70aa1e7f19ed87d6c0b1a5fddb38387719c39a7768d95affb556e1c07092",
-    "block.py": "4c802db285cf40bacb093e9d20a3de79eff719f7b3ff3bfb85daea399710976b"
+    "block.py": "9d6423edfc64da54155092e4bacc995ec4bcdd2c1608304f1d00d3aac790f0ab"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/image:latest",
@@ -46,7 +46,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "rYrwYVZGtIIECEWvsCVnda0F+8TVbFwnUIuvUtmj94sv+TZtLU4RRip0U5Tc0RoBblFBzNgkRA1i/gRqqGZUDw==",
+  "signature": "A1Yt9R8IUaqmit2+9LJrWGYCOjz1wTY2rOt4k0WlJ6lTmvXTq3T6U0Cov9fc8wemh/2s4eY1+9E/xeCIkWe9BA==",
   "tags": [
     "domain",
     "vision",

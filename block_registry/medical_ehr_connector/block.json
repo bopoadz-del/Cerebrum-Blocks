@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Fetch FHIR Patient, Observation, and MedicationRequest resources from an EHR",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "057f73bf672ea6696d7a8690d8d07609025a7997bde5a965043aeb176ad7f2bc",
-    "block.py": "980ec451d8a7d15f442ff1bc0d194a16cffc14629bd655b7aa21e55310225a2d"
+    "block.py": "438796091e07e5ac31ce45574167bb2b67614a15a46e84b0b0113e8106dfdc6a"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/medical_ehr_connector:latest",
@@ -125,7 +125,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "wHvkckPvdlyupC1EpkLXlsAq8HEckvHUEZYU/pfv3ZIvyzel+uF60W8drfYn77YzpY+r6B9wA3QXpBWEFnGRDw==",
+  "signature": "quQpC+rNfBOBmcicuRd2EG70Z2sjGbIoEzIfw4hDDBKxwUsmHLEpoVzNq6cEE3dvzT+gm8JTmlV29CUrA3EsBA==",
   "tags": [
     "connector",
     "medical",

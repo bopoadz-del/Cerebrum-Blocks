@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Parse \u2192 Reason \u2192 Map pipeline for technical document intelligence",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "6ff2f9d92d673561dcfffe1527bc00a8e43f98133fe194c92c8878eb44601c28",
-    "block.py": "22dee3ffd46d2fef0e9da5eaeba4cb8823ac5c8bda3f4a1359b7b6e47c5d3346"
+    "block.py": "cd38b29fc7f53f8eac94f33d9367098ccadb15a3dc93a3bd9a2ed6884ea91b91"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/document_engine:latest",
@@ -104,7 +104,7 @@
     "pdf",
     "ocr"
   ],
-  "signature": "npQ/C3EWI9IyCqjqjMZkGXa4pGK9NjMtapfSDZr3cLFjM58MuuGH+etBv7uGeB4BDThhvWDQPXd7+kDlS8uUDQ==",
+  "signature": "x8FvxHfndNL946OB01/Sk49r7EWFuurUsR6vlakv7h8KaKwPzHE1D0kiMmQdK9+qY5KIfuGGZsuo7cEHU2xyDA==",
   "tags": [
     "domain",
     "construction",

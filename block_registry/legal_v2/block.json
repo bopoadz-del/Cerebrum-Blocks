@@ -1,6 +1,9 @@
 {
   "author": "Cerebrum Team",
-  "description": "Legal document analysis with typed input/output — extracts entities, clauses, risks, and compliance flags from contracts and pleadings",
+  "description": "Legal document analysis with typed input/output \u2014 extracts entities, clauses, risks, and compliance flags from contracts and pleadings",
+  "digests": {
+    "block.json": "e986bf44115400afd76b0c600dab2ab0dc9a241bfd34c85a914968e1622f3df6"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/legal_v2:latest",
     "type": "docker"
@@ -60,6 +63,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
+  "signature": "NsfCvyxeQvgOKXEDXws/Ag1gO+gC154MpDosfhJQxFZnGyhVPybmecAq5bovEtfN5JHeVxdMPVwhr8pbwt+KBg==",
   "tags": [
     "domain",
     "legal",

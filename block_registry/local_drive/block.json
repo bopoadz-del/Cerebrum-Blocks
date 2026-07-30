@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Sandboxed local filesystem access: list, read, write files",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "1dff2ec4a9c17e1de4d98c086d70f6022109c48ccad595dd7ab7f838dab886a1",
-    "block.py": "384804b645af779157f000f7fe1ef966f8961825d9b6db701519159dd3a1fa73"
+    "block.py": "b7afc7394fe677973b4db66e138afa049b6214a65e0b77916500a864f43c423a"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/local_drive:latest",
@@ -41,7 +41,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "BPGFzcowJTMXQ42fPtBMu6sCTbcL9t1PLx+AMX2PSOTczhYsd4vJm7uW6GGoMViKBru6vUfNI1/YYe2P7T4EDw==",
+  "signature": "12CyrFrzBUinEKReX/aYO5wOSKdp3Sk4RZOBiuOvgf/LryWTKtdvvao27vlHas5i1N17JXGE7HGdzgof2oj+Bg==",
   "tags": [
     "integration",
     "storage",

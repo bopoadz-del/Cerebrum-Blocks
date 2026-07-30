@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "c4459fcec05e8e47ace95589296f458fedd7dc7608c4d34c24824a0b8b7cf8f2",
-    "block.py": "881cf9b2baa4fd9105cbcadf161151569e0cfaf132afc067db686a56125fe170"
+    "block.py": "0e1ed9703f0911770e20ece81ddb921ac8e6451035faf09d745b421feeb95905"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/failover:latest",
@@ -60,7 +60,7 @@
     "config",
     "monitoring"
   ],
-  "signature": "khpbAaldTcM+r24eGvRvxjoqPl66DFnjRM+kFoGrDV2DLtsMzCrKmuElEf3KfU6TgRTo63hs6zfGGDG64uheCA==",
+  "signature": "kKxsihpTfjTrbpqf78tEoVSCHCG8+2JnsJLKF46B1y97xWUz7CKXJ49evf3YDzxP69Gn7ZzMKUOdwdJsnKJ4Ag==",
   "tags": [
     "resilience",
     "failover",

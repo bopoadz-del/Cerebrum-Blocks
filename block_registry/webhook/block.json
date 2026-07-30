@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "f2d280245e4866d3ed22c3d72624b66d981273b9e1d8ce729269b980b8bf4475",
-    "block.py": "dd7ddacd3ddde9b21d712baf720bcd32461926c1da95177a38bbdf96e0eb825a"
+    "block.py": "d44e65ff847d77df69a80979fa9ee4beef3640fcf24628a893f12b9325e24b25"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/webhook:latest",
@@ -56,7 +56,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "do1Qe0Tmapue+iGMv7dl7mFuQdsgbp/fNJFfU57SZG4tg1K1PuCOpXJuZxbRE3AU0MJl14W+GW6C5GGohGt1Dg==",
+  "signature": "NYRG/xxVkBg0RMgofG7wmcFPjT3P+oEPWXx8ZSdQHDI5XYUCTN+Wb+nekjFo612wC/k+yyU3BJ8KIiQnTXM4AA==",
   "tags": [
     "webhook",
     "http",

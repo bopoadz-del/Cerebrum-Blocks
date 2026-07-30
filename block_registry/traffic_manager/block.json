@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Governance layer between block-to-block calls",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "3a473e7cb8acd3e5aa83fe97a4f2a434f726fabbc0b51ea957b1ef9067c2bef3",
-    "block.py": "ab24c9ee3c482c5a0ccc2569de2785c4a5de74dafcc7c9da9f4bbce293572c95"
+    "block.py": "7077019e0de8bb5692d4f7663bde75843f74df95347af284ae024e607af61c62"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/traffic_manager:latest",
@@ -92,7 +92,7 @@
     "failover",
     "queue"
   ],
-  "signature": "hlISBm+X+3r5iZTWmGsHs0keFl23DrmLAz/ODUBDEjHKUl1MtkXN9K/MuzVdhSzDfm/YOp9LaNFElJYuVJnZAQ==",
+  "signature": "MiAPBmG81zt87FqUN3n9awy0v/htrVDD8MvMvfUJdxPi9VvZoY1XEqrHlwWeh7Rfi9OXhxCRy3SbZ53RVd+jBw==",
   "tags": [
     "security",
     "governance",

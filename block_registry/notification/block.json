@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Send notifications via Telegram, Email, Webhook, or Slack",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "107a38ce9a9daa1a9304832876de9343f5e20aa68c3048a692b37962bc3ed15b",
-    "block.py": "4b153a38df9a8ded0e0204520c26cedd6a947f266b828981324ac4038f3305ce"
+    "block.py": "54b89f6527312074e29a1c5504bd0a6cc437dabd7f78b437c38baf4896c4fd4e"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/notification:latest",
@@ -107,7 +107,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "VnRKwXpdWTG6j4GpkWIjpdnOxbCKZN4kSAfvrnXqcJZiwuQaP82n/txFEm4+x39N4+4VJts8KCp0uk3B98lgBg==",
+  "signature": "ecm+fU0SYQMVY/H3nOUr8rDneh+hDBR6vcB7UOUZB0zZiHf5/RKZXYdXCvNJaQqrMnoiT96t8gwL9ei/IbKDCQ==",
   "tags": [
     "notification",
     "messaging",

@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Extract measurements, areas, and volumes from DXF/DWG construction drawings",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "dc7c9e8e8eeec39d618746656e2f9f5baaa229a0cd757f5e0a0ee6abd2e5366c",
-    "block.py": "08b586840e979c80cd2ecff0af20138dfaf00006ec0c1f4f15f5bc88652c438c"
+    "block.py": "7bd43f91dff3d083c3105f4f5d14f578e7f1580bd43fc32d0453ac75492d98c1"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/drawing_qto:latest",
@@ -72,7 +72,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "g27zbsqiLQrvfcsIK8hpOF9Nyo7rsx46oXYhhXzO8xaaHxOQr2lghgRXTgL3Cv3VvC1W2J1SQLGQ0TwyeNu4DA==",
+  "signature": "GIU4F/lDsMU+c0bg8xJxcFcmeGyWIN5DxETY3cVaVjjqwE0hUU8K8VLYSjw3aPz3r+J2/hIefqRU6x+uliKaDw==",
   "tags": [
     "domain",
     "construction",

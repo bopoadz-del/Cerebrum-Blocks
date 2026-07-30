@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Event bus for synchronous and asynchronous block communication",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "cea54c8bffc0ae29094da3fa6906afe88152460b82f219aa8fa0d4f38bd51596",
-    "block.py": "ddc8e804742df2394025d3ec4ca515a5c2a179f0462d48ffc4da45bcbf432411"
+    "block.py": "03c69b640fbd3ea92422766add606c5267ebbbdab65e7f7b8a34202d0472620f"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/event_bus:latest",
@@ -81,7 +81,7 @@
   "requires": [
     "memory"
   ],
-  "signature": "t96poWqYEVfIV4ZspAJvlIfFFT9K4XP1I31EC/w06/Xk0WR8WOBMbP7kRDHs9OIwn/OPjBpV+utQJDHmeHXlBw==",
+  "signature": "8pRJX8M3XHV5/t3UFWI3ml4UAh1cbVTqhdRUW+LC9ZKZJ/L57FSzQBC8Vz5wYQpXUnoCGfY/CGugceWo8pL8AA==",
   "tags": [
     "interface",
     "messaging",

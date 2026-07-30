@@ -1,14 +1,17 @@
 {
+  "description": "Heuristic insurance producer attrition risk scoring with transparent factor contributions.",
+  "digests": {
+    "block.json": "4f241a2160437914b34d9fad61b6b6279b6d0b0f9cc95c38819c0c6c0e828b84"
+  },
   "id": "attrition_scorer",
   "name": "Attrition Scorer",
-  "version": "1.0.0",
-  "description": "Heuristic insurance producer attrition risk scoring with transparent factor contributions.",
   "permissions": {
-    "network": false,
+    "blocks": [],
     "filesystem": false,
     "imports": [],
-    "blocks": []
+    "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": ""
+  "signature": "hBgA+UV853HDAjt1/r08OtEdhlOkfNS8sU7LnMU+qX/HaNXHdbmE+ctV4xtmOLfU633Yb9P+MIhGzuKDdzKJBA==",
+  "version": "1.0.0"
 }

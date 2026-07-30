@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Celery-style task dispatcher with in-process fallback queue",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "188180a8ccbfe009a5ef4f9ed8077bfd85beffdfbe4d1a99aec8c2e2e77d9b62",
-    "block.py": "6cad5c835ff968e3e2b796cc78093111677f183d19f886f2744cdf1be9e5fe2c"
+    "block.py": "57ff66ad856187c106f303f02db6ce42a45c691be4125f42bab7c6aa96b79f57"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/async_processor:latest",
@@ -57,7 +57,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "80DnzC7QQptLoEAX/GWsuo/E1x+3EUuYoICR9fxQYyeK+wS9JC2DXwk/KbjcS9TlrAZRT1b9dK2XZ63dVRdbBA==",
+  "signature": "f6F0J4hl7vRZo0Zh1zyMi3bkp37dEV2nIwh5swElxnOEhu+P/pHD1Q4gduAI+eiioRfeoe4UP/I5xmUmMIkaDw==",
   "tags": [
     "infrastructure",
     "async",

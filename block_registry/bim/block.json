@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "59956f1d0d174c5ba794f00176032045d58db1b55e1a93d297ea56e415912062",
-    "block.py": "7a77cfff364e3d7ee89bd8636d4964f271c4b6858bcca2844857900bd180f2c8"
+    "block.py": "200cfc7e069d67a008f423b28408e18c2b573dab051323d712a17f364f127fd2"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/bim:latest",
@@ -79,7 +79,7 @@
     "pdf",
     "ocr"
   ],
-  "signature": "3xhrmzybGRTJDVFZAvdvnDHiz5UG1gq/Du+zBRTK4x2nID29pzRSG3fzUeKCiyZ5m4o8b8pjYh590hTpMTT7Ag==",
+  "signature": "Iz6eGpRuWGGqxMeG/i0TZZSKHbuGxW2aWaORWaIu0FmtzQV9AyYo3hVCkPFuXcy6p4vh1ELWAFFF1JksEiOEBg==",
   "tags": [
     "construction",
     "bim",

@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Chain blocks into pipelines with variable interpolation and scheduling",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "0016962fefa8918931fd2945665abcf1f700eeca86731142cbf492e777b2df44",
-    "block.py": "adf59ce563d9940c2fe46fbee4a278d6e4dca9f3c7cfc2bc28c65764a275defa"
+    "block.py": "e988d40c86822c769b033d8ed299e4fe63dfe278324169510dc36ad7f8cec26e"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/workflow:latest",
@@ -89,7 +89,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "CPc5PfAj1i3Yf5TRtAJe2kiCFgOapfyCEEFGuDavdOD21wPvW4oM4wsZFgUqxFK3X2WSEwP0UoV9rcwCZrcKDw==",
+  "signature": "wAJzz+CY8p4HYg85ilxU7J944UOHHtZMNJLnFHbjMMgEazE4uEBSNIEgu1wnJN95IGBRbNRRA4j/wGZI25WaAQ==",
   "tags": [
     "workflow",
     "pipeline",

@@ -1,12 +1,17 @@
 {
+  "description": "Construction domain container adapter.",
+  "digests": {
+    "block.json": "49f5ec43977e228e3defafe709a80b27112eba5923b2b0f2b2df92b070b253d6"
+  },
   "id": "construction",
   "name": "Construction Container",
-  "version": "1.0.0",
-  "description": "Construction domain container adapter.",
   "permissions": {
-    "network": false,
+    "blocks": [],
     "filesystem": false,
     "imports": [],
-    "blocks": []
-  }
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "signature": "BPLdGbnVWGtoyjUoTk+cQdIRCCAPcZlyOX5xZ93qPYkz5HGgIybrtCuE01Zx2HtB4dS4C4WCOiZWxJZgQDUZAg==",
+  "version": "1.0.0"
 }
