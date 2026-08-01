@@ -9,8 +9,10 @@ python-dotenv==1.2.2
 # Shared infrastructure — Redis clients for cache_manager and session/memory blocks
 redis==8.0.1
 
-# Marketplace security — publisher identity and Ed25519 block signing
-cryptography==41.0.7
+# Marketplace security — publisher identity and Ed25519 block signing.
+# Must stay >=43,<49: mlflow (line 68) constrains it, and 41.0.7 makes the
+# whole file unresolvable. This is the version requirements.lock resolves to.
+cryptography==48.0.1
 
 # HTTP Client
 aiohttp==3.14.3
