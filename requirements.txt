@@ -1,10 +1,12 @@
 # FastAPI & Server
-fastapi==0.115.6
-uvicorn[standard]==0.52.0
-pydantic==2.10.4
-python-multipart==0.0.20
+# These track requirements.lock. pydantic must stay >=2.12.0 (mcp 2.0.0
+# constrains it); 2.10.4 made the file unresolvable.
+fastapi==0.141.1
+uvicorn[standard]==0.34.0
+pydantic==2.13.4
+python-multipart==0.0.32
 aiofiles==25.1.0
-python-dotenv==1.2.2
+python-dotenv==1.0.1
 
 # Shared infrastructure — Redis clients for cache_manager and session/memory blocks
 redis==8.0.1
@@ -17,7 +19,7 @@ cryptography==48.0.1
 # HTTP Client
 aiohttp==3.14.3
 httpx==0.28.1
-requests==2.34.2
+requests==2.33.1
 
 # Web Scraping
 beautifulsoup4==4.15.0
