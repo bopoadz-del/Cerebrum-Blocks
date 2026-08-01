@@ -44,10 +44,16 @@ services:
         value: "1"
       # Durable storage root. The grounding audit log
       # ($STORAGE_PATH/grounding/verdicts.jsonl) and any other on-disk
-      # state live here; the disk mount below makes it survive restarts
-      # and deploys. Mirrors CerebrumDev.ai's storage contract.
+      # state live here.
+      #
+      # This MUST point at the disk that is already mounted on the live
+      # service (/app/data), not at a new path. Render allows exactly one
+      # disk per service, so declaring a second one would replace the
+      # existing `cerebrum-blocks-data` volume -- which is where DATA_DIR
+      # keeps the API keys (app/core/api_keys.py). Pointing at the mount
+      # that already exists gets durability with no volume churn.
       - key: STORAGE_PATH
-        value: /app/storage
+        value: /app/data
       # Secret env vars stay in the dashboard. List with `sync: false`
       # so blueprint sync doesn't overwrite them with placeholders.
       - key: CORS_ORIGINS
@@ -78,11 +84,26 @@ services:
       - key: SANDBOX_RUNNER_URL
         value: http://cerebrum-sandbox-runner:10000
     # Persistent disk so the grounding audit log and other on-disk state
-    # survive restarts/deploys (STORAGE_PATH points here). 1 GB matches
-    # CerebrumDev.ai; raise sizeGB if verdict volume grows.
+    # survive restarts/deploys (STORAGE_PATH points here).
+    #
+    # These values MATCH the disk already attached to this service
+    # (dsk-d7dd87v7f7vs73es1310, named "data", mounted at /app/data), so a
+    # blueprint sync is a no-op rather than a volume swap. Render allows
+    # exactly one disk per service; renaming it or changing mountPath
+    # would detach the existing volume, which is where DATA_DIR keeps the
+    # API keys (app/core/api_keys.py).
+    #
+    # NOTE: this blueprint describes `cerebrum-platform-api`, which is
+    # currently SUSPENDED. The live block store is the separate service
+    # `cerebrum-blocks` (srv-d8rrorvavr4c73evhvi0), which is NOT managed
+    # by this file, so setting STORAGE_PATH here does not reach it. The
+    # live service already has a 1 GB disk at /app/data; to make the
+    # grounding audit log durable there, set STORAGE_PATH=/app/data on
+    # that service in the Render dashboard. Without it, grounding.py
+    # falls back to a relative "./storage" path that is wiped on deploy.
     disk:
-      name: cerebrum-blocks-storage
-      mountPath: /app/storage
+      name: data
+      mountPath: /app/data
       sizeGB: 1
 
   - type: pserv
