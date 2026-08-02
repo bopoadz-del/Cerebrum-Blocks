@@ -19,17 +19,54 @@ curl -X POST https://cerebrum-platform-api.onrender.com/v1/chain \
 
 ## 🏥 Health Check
 
+Liveness — unauthenticated, no I/O, always 200. Use it to answer "is the
+process up", nothing more.
+
 ```bash
 GET /health
+GET /v1/health
 ```
 
 **Response:**
 ```json
 {
-  "status": "healthy",
-  "blocks_loaded": 19,
-  "blocks_available": 19
+  "status": "ok"
 }
+```
+
+Readiness — unauthenticated, probes real dependencies, returns **503** when
+degraded. This is the endpoint platform health checks should target
+(`render.yaml` sets `healthCheckPath: /ready`); `/health` can never fail.
+
+```bash
+GET /ready
+GET /v1/ready
+```
+
+**Response (200):**
+```json
+{
+  "status": "ready",
+  "checks": {"data_dir": "ok", "block_registry": "ok"}
+}
+```
+
+**Response (503):**
+```json
+{
+  "status": "degraded",
+  "checks": {"data_dir": "fail", "block_registry": "ok"}
+}
+```
+
+Diagnostics — **requires an API key**. Block counts, the evaluated Kimi
+workbench capability, and the readiness checks. The subprocess probe is
+cached (`KIMI_PROBE_TTL_SECONDS`, default 300); pass `?refresh=true` to
+force a fresh reading.
+
+```bash
+GET /v1/system/diagnostics
+Authorization: Bearer YOUR_API_KEY
 ```
 
 ---

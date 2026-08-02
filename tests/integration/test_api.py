@@ -8,6 +8,10 @@ from app.main import app
 
 client = TestClient(app, headers={"Authorization": "Bearer cb_dev_key"})
 
+# `client` above attaches an API key to every request, which makes it
+# useless for asserting that an endpoint refuses anonymous callers.
+anon_client = TestClient(app)
+
 requires_extended_blocks = pytest.mark.skipif(
     os.getenv("CEREBRUM_VIRGIN", "true").strip().lower() in ("1", "true", "yes"),
     reason="Drive blocks require legacy boot (set CEREBRUM_VIRGIN=false)",
@@ -53,18 +57,43 @@ class TestAPIEndpoints:
         assert response.status_code == 404
     
     def test_health_endpoint(self):
-        """Test health endpoint."""
+        """Liveness: unauthenticated, minimal, always 200."""
         response = client.get("/health")
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "healthy"
-    
-    def test_stats_endpoint(self):
-        """Test stats endpoint."""
+        assert data["status"] == "ok"
+
+    def test_readiness_endpoint(self):
+        """Readiness probes real dependencies and can return non-200."""
+        response = client.get("/ready")
+        assert response.status_code in (200, 503)
+        assert response.json()["status"] in ("ready", "degraded")
+
+    def test_stats_endpoint_requires_auth(self):
+        """/stats returns the block inventory that /blocks is gated to
+        protect, so it carries the same gate.
+
+        Note the module-level `client` sends an Authorization header on
+        every request, so the unauthenticated case needs its own client.
+        """
+        assert anon_client.get("/stats").status_code == 401
         response = client.get("/stats")
         assert response.status_code == 200
-        data = response.json()
-        assert "blocks" in data
+        assert "blocks" in response.json()
+
+    @pytest.mark.parametrize(
+        "path",
+        ["/stats", "/blocks", "/v1/blocks", "/v1/system/diagnostics", "/v1/system/health"],
+    )
+    def test_inventory_and_diagnostics_are_gated_on_the_real_app(self, path):
+        """Same gate, asserted against the fully assembled app rather than
+        a router-only test harness."""
+        assert anon_client.get(path).status_code == 401
+
+    @pytest.mark.parametrize("path", ["/health", "/v1/health", "/ready", "/v1/ready"])
+    def test_probe_endpoints_stay_anonymous_on_the_real_app(self, path):
+        """Render and Docker cannot present a bearer token."""
+        assert anon_client.get(path).status_code in (200, 503)
 
 
 class TestExecuteEndpoint:

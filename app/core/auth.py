@@ -1,8 +1,10 @@
 """API Key authentication and usage tracking for Cerebrum Blocks."""
 
+import hashlib
 import hmac
 import logging
 import os
+import re
 import sqlite3
 import sys
 import threading
@@ -16,6 +18,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 logger = logging.getLogger(__name__)
 
 
+_KEY_DIGEST_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
 class _UsageStore:
     """Hour-bucketed usage counter shared across processes.
 
@@ -25,12 +30,24 @@ class _UsageStore:
     and let multi-worker deployments multiply the limit by `n` (each
     worker had an independent counter). With SQLite WAL the upsert is
     atomic across processes on the same host.
+
+    The rows are keyed by a salted SHA-256 digest of the API key, never
+    the key itself. The audit found the previous version used the bearer
+    credential verbatim as the primary key, so every live key — including
+    CEREBRUM_MASTER_KEY — was recoverable by reading the database file off
+    the persistent disk. Rate limiting needs a stable opaque identifier,
+    not the plaintext, so hashing is behaviour-preserving.
+
+    The salt is random per database and persisted in a `meta` table. It
+    defeats precomputed-digest lookups against a low-entropy operator-
+    chosen master key; it is not a secret and does not need protecting.
     """
 
     def __init__(self):
         self._lock = threading.Lock()
         self._mem: Dict[str, Dict[int, int]] = {}
         self._db_path: Optional[str] = None
+        self._salt: str = os.urandom(16).hex()
         self._setup_db()
 
     def _setup_db(self) -> None:
@@ -47,7 +64,21 @@ class _UsageStore:
                     "  count INTEGER NOT NULL DEFAULT 0, "
                     "  PRIMARY KEY (key, hour_bucket))"
                 )
+                conn.execute(
+                    "CREATE TABLE IF NOT EXISTS meta("
+                    "  k TEXT PRIMARY KEY, v TEXT NOT NULL)"
+                )
+                conn.execute(
+                    "INSERT OR IGNORE INTO meta(k, v) VALUES('key_salt', ?)",
+                    (self._salt,),
+                )
+                row = conn.execute(
+                    "SELECT v FROM meta WHERE k='key_salt'"
+                ).fetchone()
+                if row and row[0]:
+                    self._salt = str(row[0])
             self._db_path = path
+            self._purge_plaintext_keys(path)
         except (OSError, sqlite3.Error) as exc:
             logger.warning(
                 "rate_limit: SQLite backend unavailable (%s) — falling back "
@@ -55,41 +86,93 @@ class _UsageStore:
             )
             self._db_path = None
 
+    @staticmethod
+    def _purge_plaintext_keys(path: str) -> None:
+        """Remove pre-hash rows and scrub them from the file's free pages.
+
+        Databases written by the previous version hold raw API keys in
+        `usage.key`. Those rows are hour-bucketed counters, so dropping
+        them costs at most one hour of accumulated count — cheaper than
+        carrying recoverable credentials on disk. DELETE alone leaves the
+        plaintext in freed pages and in the write-ahead log, so the purge
+        is followed by VACUUM (rebuilds the main file) and a truncating
+        WAL checkpoint (zeroes the -wal file).
+        """
+        try:
+            conn = sqlite3.connect(path, timeout=5.0, isolation_level=None)
+        except sqlite3.Error:
+            return
+        try:
+            # The table is pruned hourly, so this stays small. Detect
+            # pre-hash rows in Python rather than with a 64-element SQL
+            # GLOB: anything that is not a lowercase 64-hex digest was
+            # written by the plaintext-key version.
+            legacy = sum(
+                1
+                for (stored,) in conn.execute("SELECT key FROM usage")
+                if not _KEY_DIGEST_RE.match(str(stored))
+            )
+            if not legacy:
+                return
+            logger.warning(
+                "rate_limit: purging %d plaintext API key row(s) from %s "
+                "(pre-hash schema); counters for the current hour reset.",
+                legacy, os.path.basename(path),
+            )
+            conn.execute("DELETE FROM usage")
+            conn.execute("VACUUM")
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        except sqlite3.Error as exc:
+            logger.warning("rate_limit: plaintext-key purge failed (%s)", exc)
+        finally:
+            try:
+                conn.close()
+            except sqlite3.Error:
+                pass
+
+    def _digest(self, key: str) -> str:
+        """Stable opaque identifier for an API key. Never reversible."""
+        return hashlib.sha256(
+            (self._salt + ":" + (key or "")).encode("utf-8")
+        ).hexdigest()
+
     def increment(self, key: str, hour_bucket: int) -> int:
+        digest = self._digest(key)
         if self._db_path:
             try:
                 with sqlite3.connect(self._db_path, timeout=2.0) as conn:
                     conn.execute(
                         "INSERT INTO usage(key, hour_bucket, count) VALUES(?, ?, 1) "
                         "ON CONFLICT(key, hour_bucket) DO UPDATE SET count = count + 1",
-                        (key, hour_bucket),
+                        (digest, hour_bucket),
                     )
                     row = conn.execute(
                         "SELECT count FROM usage WHERE key=? AND hour_bucket=?",
-                        (key, hour_bucket),
+                        (digest, hour_bucket),
                     ).fetchone()
                     return int(row[0]) if row else 0
             except sqlite3.Error as exc:
                 logger.warning("rate_limit: SQLite write failed (%s)", exc)
                 # fall through to memory backup
         with self._lock:
-            self._mem.setdefault(key, {})
-            self._mem[key][hour_bucket] = self._mem[key].get(hour_bucket, 0) + 1
-            return self._mem[key][hour_bucket]
+            self._mem.setdefault(digest, {})
+            self._mem[digest][hour_bucket] = self._mem[digest].get(hour_bucket, 0) + 1
+            return self._mem[digest][hour_bucket]
 
     def get(self, key: str, hour_bucket: int) -> int:
+        digest = self._digest(key)
         if self._db_path:
             try:
                 with sqlite3.connect(self._db_path, timeout=2.0) as conn:
                     row = conn.execute(
                         "SELECT count FROM usage WHERE key=? AND hour_bucket=?",
-                        (key, hour_bucket),
+                        (digest, hour_bucket),
                     ).fetchone()
                     return int(row[0]) if row else 0
             except sqlite3.Error:
                 pass
         with self._lock:
-            return self._mem.get(key, {}).get(hour_bucket, 0)
+            return self._mem.get(digest, {}).get(hour_bucket, 0)
 
     def prune_older_than(self, hour_bucket: int) -> None:
         """Drop counters strictly older than `hour_bucket`. Cheap to call
