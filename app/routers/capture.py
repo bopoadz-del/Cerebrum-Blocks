@@ -3,7 +3,6 @@
 Accepts multipart image uploads from any client:
   - Ksnip (desktop)
   - Termux (Android)
-  - Telegram bot
   - Web form
   - curl / any HTTP client
 """
@@ -67,7 +66,6 @@ async def capture_upload(
     **Clients:**
     - Ksnip: `curl -F file=@screenshot.png -F source=ksnip ...`
     - Termux: `curl -F file=@screencap.png -F source=termux ...`
-    - Telegram: forward photo as multipart upload
     - Web: standard HTML form
     """
     # Validate

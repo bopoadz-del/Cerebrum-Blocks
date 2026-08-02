@@ -46,7 +46,7 @@
 - **Commit SHAs:** 28eeba0c86206ac1d556da97b6bcd45af7c82457, 900cfdc21875f40fd9d411ba86ba9181bec8c899
 - **Context:** `RENDER_API_KEY=rnd_abc...mple`
 
-### 3. `app/blocks/telegram_bot.py` — Render API key (rnd_...)
+### 3. `app/blocks/telegram_bot.py` — Render API key (rnd_...) *(file deleted 2026-08-02; Telegram removed from the platform)*
 
 - **Repository:** `bopoadz-del/Cerebrum-Blocks`
 - **Redacted value:** `rnd_...bpty`

@@ -10,20 +10,19 @@ router = APIRouter()
 
 
 class SendRequest(BaseModel):
-    channel: str = Field(default="telegram", description="telegram | email | webhook | slack")
-    to: Optional[str] = Field(default=None, description="Recipient (chat_id, email, or URL)")
+    channel: str = Field(..., description="email | webhook | slack | mcp")
+    to: Optional[str] = Field(default=None, description="Recipient (email address or URL)")
     message: str = Field(default="", description="Message text or payload")
     subject: Optional[str] = Field(default=None, description="Email subject")
     html: Optional[str] = Field(default=None, description="HTML body for email")
     url: Optional[str] = Field(default=None, description="Webhook URL override")
     headers: Optional[Dict] = Field(default=None, description="Custom headers for webhook")
     payload: Optional[Any] = Field(default=None, description="Webhook payload")
-    parse_mode: Optional[str] = Field(default="Markdown", description="Telegram parse mode")
     blocks: Optional[List[Dict]] = Field(default=None, description="Slack block kit")
 
 
 class BroadcastRequest(BaseModel):
-    channels: List[str] = Field(default_factory=lambda: ["telegram"])
+    channels: List[str] = Field(..., description="any of email | webhook | slack | mcp")
     to: Optional[str] = Field(default=None)
     message: str = Field(default="")
     subject: Optional[str] = Field(default=None)
