@@ -1,14 +1,17 @@
 {
+  "description": "Heuristic insurance producer incentive targeting and budget simulation.",
+  "digests": {
+    "block.json": "aa3536597df3a5106247b9e60f63d583ac8817e091ecfbc2d8db3784df028c6f"
+  },
   "id": "incentive_targeting",
   "name": "Incentive Targeting",
-  "version": "1.0.0",
-  "description": "Heuristic insurance producer incentive targeting and budget simulation.",
   "permissions": {
-    "network": false,
+    "blocks": [],
     "filesystem": false,
     "imports": [],
-    "blocks": []
+    "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": ""
+  "signature": "9nSi+RqAhBnPfHw6W1klvsf2Xf6X8X9NABh67Cmo8wX6OeUKXXR+a7h2d98/cM0+HkoZjb4svvkgnMBtNdxwAw==",
+  "version": "1.0.0"
 }

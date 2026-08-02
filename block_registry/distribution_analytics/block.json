@@ -1,73 +1,76 @@
 {
-  "id": "distribution_analytics",
-  "name": "Distribution Analytics",
-  "version": "1.0.0",
-  "description": "Deterministic insurance distribution analytics for GWP, commission, productivity, and retention proxy metrics.",
   "author": "Cerebrum Team",
-  "publisher_id": "cerebrum_platform",
-  "signature": "",
-  "digests": {},
+  "description": "Deterministic insurance distribution analytics for GWP, commission, productivity, and retention proxy metrics.",
+  "digests": {
+    "block.json": "170ccbd03cdbf719d77a69b86761bacdb322a024cabcc8047d212b5b5ad04d12",
+    "block.py": "2b2fa0a5aae6488107c26ef010ff0827f4a6f8cff5b8859b78cf8134e191f6b8"
+  },
+  "id": "distribution_analytics",
+  "inputs": [
+    {
+      "description": "Normalized bordereaux records or raw CSV/JSON dataset",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "summary",
+      "description": "Operation to run",
+      "name": "action",
+      "options": [
+        "summary",
+        "benchmark",
+        "trend"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
   "layer": 3,
+  "name": "Distribution Analytics",
+  "outputs": [
+    {
+      "description": "Distribution metrics",
+      "name": "metrics",
+      "type": "json"
+    },
+    {
+      "description": "Rows skipped during normalization",
+      "name": "validation_errors",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "YNOut29aCY/+7k/f0n8wEn1p4+G+/LcHGJxU1g9ckh8CdYPgQBafYIy8fa8Qy0uSWMSByFpikjEGWXy798XSAQ==",
   "tags": [
     "insurance",
     "distribution",
     "analytics",
     "bordereaux"
   ],
-  "requires": [],
-  "permissions": {
-    "network": false,
-    "filesystem": false,
-    "imports": [],
-    "blocks": []
-  },
-  "inputs": [
+  "ui_schema": [
     {
+      "label": "Distribution dataset",
       "name": "input",
-      "type": "json",
-      "required": false,
-      "description": "Normalized bordereaux records or raw CSV/JSON dataset"
+      "widget": "json"
     },
     {
+      "label": "Action",
       "name": "action",
-      "type": "string",
-      "required": false,
-      "default": "summary",
       "options": [
         "summary",
         "benchmark",
         "trend"
       ],
-      "description": "Operation to run"
+      "widget": "select"
     }
   ],
-  "outputs": [
-    {
-      "name": "metrics",
-      "type": "json",
-      "description": "Distribution metrics"
-    },
-    {
-      "name": "validation_errors",
-      "type": "json",
-      "description": "Rows skipped during normalization"
-    }
-  ],
-  "ui_schema": [
-    {
-      "name": "input",
-      "label": "Distribution dataset",
-      "widget": "json"
-    },
-    {
-      "name": "action",
-      "label": "Action",
-      "widget": "select",
-      "options": [
-        "summary",
-        "benchmark",
-        "trend"
-      ]
-    }
-  ]
+  "version": "1.0.0"
 }

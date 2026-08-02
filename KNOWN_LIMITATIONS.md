@@ -27,12 +27,16 @@ honest measure of coverage: 47 entries do not cover a domain. Reproduce with
 
 ## Signing and provenance
 
-- **Block signing is not operating.** Ed25519 signing code exists
-  (`scripts/sign_block.py`, `app/core/block_validation.py`) but no publisher
-  private key is present and kit signature fields are empty (0 of 19 domain
-  kits signed) — see `PARKED_BLOCKERS.md`. Kit installs verify sha256
-  `provenance.json` manifests **when present**; kits without one install
-  labeled `absent — unverified`.
+- **Block signing is OPERATING as of Phase 5.** All 105 `block_registry`
+  entries carry verifying Ed25519 signatures, enforced by the load-time
+  validation gate; the private key lives in the owner's secrets manager and
+  is rotated with `scripts/rotate_publisher_key.py` (which refuses to write
+  key material inside the repo). No private key material is committed —
+  a test asserts this.
+- Domain-kit *bundle* signing is a separate track: kit installs verify a
+  sha256 `provenance.json` when present, and kits without one install
+  labeled `absent — unverified`. Kit bundles are not yet Ed25519-signed the
+  way registry blocks now are.
 
 ## Grounding coverage
 
@@ -53,8 +57,9 @@ honest measure of coverage: 47 entries do not cover a domain. Reproduce with
 
 ## Test suite
 
-Five failures are known and pre-date the free-trial hardening, reproduced on
-a clean tree: planted-truth ×2 (offline embedder, above), the aviation
-corpus test (corpus absent, above), a block-validation line-endings case,
-and the cache_manager e2e (requires Redis). Everything else is green:
-785 passed at the time of writing.
+Four environment-dependent failures remain, reproduced on a clean tree:
+planted-truth ×2 (offline embedder, above), the aviation corpus test
+(corpus absent, above), and the cache_manager e2e (requires Redis). The
+block-validation cross-line-ending case that used to fail is fixed in
+Phase 5 (signatures are LF-canonical by construction). Everything else is
+green: 799 passed at the time of writing.

@@ -23,15 +23,22 @@ from app.blocks.core.action_contract.models import RESERVED_CONTEXT_KEYS
 # Content-level at the block API surface — see module docstring.
 CONTENT_LEVEL_KEYS = frozenset({"domain", "context", "project_id"})
 
-ENFORCED_SCOPE_KEYS = frozenset(RESERVED_CONTEXT_KEYS - CONTENT_LEVEL_KEYS)
+# ``_namespace`` selects WHOSE stored data a stateful block (memory, cache)
+# reads or writes — that is trust scope, not content. It is always
+# server-derived so one tenant can never name another's namespace.
+ENFORCED_SCOPE_KEYS = frozenset((RESERVED_CONTEXT_KEYS - CONTENT_LEVEL_KEYS) | {"_namespace"})
 
 
 def server_scope(auth: Dict[str, Any]) -> Dict[str, Any]:
     """Trust scope derived from the validated API key — the only authority."""
     key_id = str(auth.get("id") or "anonymous")
+    tenant_id = f"apikey:{key_id}"
     return {
-        "tenant_id": f"apikey:{key_id}",
+        "tenant_id": tenant_id,
         "user_id": str(auth.get("email") or key_id),
+        # Stateful blocks (memory, cache) key their storage on this; it is
+        # never caller-controllable, so tenants cannot cross namespaces.
+        "_namespace": f"tenant:{tenant_id}",
     }
 
 

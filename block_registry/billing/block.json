@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "309028156fe68befea8e508ab535feaabc044dc24ce7bfe7c1aadc85db294a1f",
-    "block.py": "b9f02ac26e10c627469217dd1b28a2e1352617482899666f81e956c6da8e65fd"
+    "block.py": "494c6cc16f0556ecc83f802aae7629248efab0b631f15001c0c73f6b1a84df6b"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/billing:latest",
@@ -77,7 +77,7 @@
     "auth",
     "memory"
   ],
-  "signature": "CmevW13RG8+KBrn5NdKtx3Ox1K/eHYrwBdFxqAHsPkbBLgnpe9ryeWyfwBbuE9Qu6WeaswGzY/G3Yr8P0M4+Aw==",
+  "signature": "dlOsipiVXL+WEnqLazReYE123nkv7HqrgVYRKsSkKS4uXnC66ebFCo9gCA64oACLyYVBQDogpdRgmuA/IbxmCA==",
   "tags": [
     "billing",
     "usage",

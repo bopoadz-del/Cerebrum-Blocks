@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Parse Primavera P6 .xer schedule files: critical path, milestones, resource loading",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "f2315e31411b752829e0264f368f8c37a234d717c4e10f45da41d2a055753fc3",
-    "block.py": "06fbcd27ec0bf1aca7b49cc75781b5138db67db3c8f6cb0fac790b33cf0f0c9b"
+    "block.py": "09ed3a010ebb6440de36d85e53f78c0b7a91bcf829be98b0ed0c6c17a645df32"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/primavera_parser:latest",
@@ -65,7 +65,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "3j8kwLMOg1iClYwyzGUFD9mGzIk7/kjhD2wkSbPTLlfREgED6S/vCi7PnFU4oHKTcYkhTDHe8JLsUaXuVA/+Bw==",
+  "signature": "ApZhkULLxkvraNatymfK9jIeTufmTTPinuvQOdsYMfUazKdJ9/NiuQtrc7zidwubtKsf7dFkQWHMNHmiJ5gMCg==",
   "tags": [
     "domain",
     "construction",

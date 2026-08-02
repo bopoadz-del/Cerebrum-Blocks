@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Extract grade requirements, material specs, and compliance flags from specification PDFs",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "a5f3bd96bfb9905b848f4f73602c01c1e4cfe575965c9654fad3f6e3f971bc96",
-    "block.py": "79b72112a7f87bb027793b5986453c780f07cc66feb4be8c517f23f90eaf413d"
+    "block.py": "a22f9a90d487eea7f697d15ca2917f212b5990db027aceb9b0856f0bc776a947"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/spec_analyzer:latest",
@@ -75,7 +75,7 @@
   "requires": [
     "pdf"
   ],
-  "signature": "P2GOr099vYm9AHHuN33HDzOfQGjZuJySQrw/hwLEhhDCe+QtiL4eOrCY9fBbxzVvEX1hG6r+RuPWXzhhpuIKBA==",
+  "signature": "iLvcUj0ewZdisWd+wGMZNRCOUmZmBDpsamjjeKkJalwtb34jCrHxLLYBCgk+rhXdRRGZpoV6eZVwMDhhna/UBw==",
   "tags": [
     "domain",
     "construction",

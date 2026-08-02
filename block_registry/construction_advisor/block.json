@@ -1,13 +1,17 @@
 {
+  "description": "Natural-language access to the construction knowledge base.",
+  "digests": {
+    "block.json": "a2ea0d22b0b66d71e98ea5e090dc3311a956d4249fb4205afb7679840f05f86d"
+  },
   "id": "construction_advisor",
   "name": "Construction Advisor",
-  "version": "1.0.0",
-  "publisher_id": "cerebrum_platform",
-  "description": "Natural-language access to the construction knowledge base.",
   "permissions": {
-    "network": false,
+    "blocks": [],
     "filesystem": false,
     "imports": [],
-    "blocks": []
-  }
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "signature": "KOKNeNh8M/V+edcaSrA5M43/YlMI0Fsu46lKBdpQPiaRic3b2MBiW+u/RMgftwu2VBD1PTVMX1qGfJJj4d+cCQ==",
+  "version": "1.0.0"
 }

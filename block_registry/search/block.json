@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Search the web via DuckDuckGo (no key required) or Serper API",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "434de1bbbbad54e87dd9e1c1bf8ccc178b589d09fd9a2f16e0e0b36e7156d72d",
-    "block.py": "0f91ebfba21e1aa179d28ce114b4866a61c0e3a0357872bd94118e319e328f56"
+    "block.py": "88f9d04e94b93619c1c4585a99226b78cb5835c820e903e2fc2f7fd060b2794c"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/search:latest",
@@ -36,7 +36,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "It6FZwBWmR98bKCzJDYTeJ6j39+Xye1DMd1PxzZ+j+rRyQHAlJ6RGNZvx1lnEUT+D4DoVWSGFAxsbZmfvb4tAw==",
+  "signature": "rsZp8vUJ5PUu1WeadHNmtSnXxelNnLlhT4SpfeqJtwn29d+PjRoucCZR9uA902JqYLNmh1zLXKZcITFgD/FiCw==",
   "tags": [
     "domain",
     "search",

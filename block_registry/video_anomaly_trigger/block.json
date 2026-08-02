@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Watch video metadata for anomalies and chain to notification or workflow triggers",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "0b758dfcccdcfa348691be0ea7f79b4d633581a645cb98952bd0608dc2c9aed3",
-    "block.py": "b36b87be6259ec7f271be7e7a1ef0fe091eaa2bd2f8faba4c83e09b6f0804fc4"
+    "block.py": "1f1cfebdf24a5a0e9c61845323f37a3d147c33be81ec7a3e97912e03db78846d"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/video_anomaly_trigger:latest",
@@ -104,7 +104,7 @@
   "requires": [
     "notification"
   ],
-  "signature": "FyFUUunMGpTXvZ4jVCBWsiJbX1vrimNMzluS/skJ11sYpy+ouj8GGtzyf6FX/Y+LoxlGBd41TefIF2QjhqZMCw==",
+  "signature": "oz7Koz0eOvsRDTKoBi58qvYHmlmicIsympUdF5YA/YlXtkZzs6nG3vyVk6XCpFEC00onlmxxq5j8NY21S2/PCw==",
   "tags": [
     "connector",
     "video",

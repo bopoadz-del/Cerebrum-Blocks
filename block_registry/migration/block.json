@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "0ed9456f4df91bfbfe2832ccfd91d8505c475988f62d3b2b280424b0836db0e2",
-    "block.py": "9d97a3b7dcc20550e29342b9b491da594e6cc67be5002892537f0ea5d5723459"
+    "block.py": "6d47b5f8bd3d405b797eb2ff2ad31057b3b75fe1049a6c7c6e190191c76593e1"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/migration:latest",
@@ -84,7 +84,7 @@
     "database",
     "version"
   ],
-  "signature": "d7T9wjzA+WCDyXRaS58wOKQjuOWoHr4LGN6uKXuOTqENl2jdYhP0dCqeE/6VVfMgu6agYS1wr6ybRDqUqiTgAg==",
+  "signature": "+UnuD/jA75GigNdhlNxUdCFMjpK0VcFw7KNlNDRMBRi/8e/17ytd8FbH0WF171ndhRdvKwOlQinC54xhhtq1AQ==",
   "tags": [
     "infra",
     "database",

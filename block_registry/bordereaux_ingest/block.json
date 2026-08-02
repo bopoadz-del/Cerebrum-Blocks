@@ -1,75 +1,78 @@
 {
-  "id": "bordereaux_ingest",
-  "name": "Bordereaux Ingest",
-  "version": "1.0.0",
-  "description": "Parse, validate, and normalize simulated insurance bordereaux CSV/JSON rows.",
   "author": "Cerebrum Team",
-  "publisher_id": "cerebrum_platform",
-  "signature": "",
-  "digests": {},
-  "layer": 3,
-  "tags": [
-    "insurance",
-    "bordereaux",
-    "ingest",
-    "simulated-feed"
-  ],
-  "requires": [],
-  "permissions": {
-    "network": false,
-    "filesystem": false,
-    "imports": [],
-    "blocks": []
+  "description": "Parse, validate, and normalize simulated insurance bordereaux CSV/JSON rows.",
+  "digests": {
+    "block.json": "12734250a7e68e6f3c54484fcc432eb3ea5a1f01303bd97e6584f989bdb83fe1",
+    "block.py": "aa78a7be9aad887fec07d7653a23babf418596e2581df123e90be01532d58107"
   },
+  "id": "bordereaux_ingest",
   "inputs": [
     {
+      "description": "CSV text, JSON rows, or {'rows': [...]} bordereaux payload",
       "name": "input",
-      "type": "json",
       "required": false,
-      "description": "CSV text, JSON rows, or {'rows': [...]} bordereaux payload"
+      "type": "json"
     },
     {
-      "name": "action",
-      "type": "string",
-      "required": false,
       "default": "normalize",
+      "description": "Operation to run",
+      "name": "action",
       "options": [
         "parse",
         "validate",
         "normalize",
         "simulate_webhook"
       ],
-      "description": "Operation to run"
+      "required": false,
+      "type": "string"
     }
   ],
+  "layer": 3,
+  "name": "Bordereaux Ingest",
   "outputs": [
     {
+      "description": "Normalized bordereaux records",
       "name": "normalized_records",
-      "type": "json",
-      "description": "Normalized bordereaux records"
+      "type": "json"
     },
     {
+      "description": "Row-level validation errors",
       "name": "validation_errors",
-      "type": "json",
-      "description": "Row-level validation errors"
+      "type": "json"
     }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "signature": "TE3Z/yqA99O6E/fGL26qnoOSp5zo6k5l+usJ781Jd4hfAmCcJJipkUfQ+rjRqzk+DwC0oXhJtkhiDyzhlumADw==",
+  "tags": [
+    "insurance",
+    "bordereaux",
+    "ingest",
+    "simulated-feed"
   ],
   "ui_schema": [
     {
-      "name": "input",
       "label": "Bordereaux payload",
+      "name": "input",
       "widget": "json"
     },
     {
-      "name": "action",
       "label": "Action",
-      "widget": "select",
+      "name": "action",
       "options": [
         "parse",
         "validate",
         "normalize",
         "simulate_webhook"
-      ]
+      ],
+      "widget": "select"
     }
-  ]
+  ],
+  "version": "1.0.0"
 }

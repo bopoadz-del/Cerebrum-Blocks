@@ -1,6 +1,10 @@
 {
   "author": "Cerebrum Team",
   "description": "Insurance document analysis with typed input/output",
+  "digests": {
+    "block.json": "408f6c92f3587a7f4909e27e588b30ae95460e9819ba0e05d2703f3d5eb4503e",
+    "block.py": "a24a490bfb3b53582b53511133f7315704d3be16095bb9cdd7f9c19dd409a833"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/insurance_v2:latest",
     "type": "docker"
@@ -70,7 +74,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "",
+  "signature": "MwUcgI4mCr41AlLNKqXETVk14HGPGt/50W9QxGvJQQaKRmsR7OhTn2gp02oHFpOJZZ8j9O80je9bXZc12lOVBw==",
   "tags": [
     "domain",
     "insurance",

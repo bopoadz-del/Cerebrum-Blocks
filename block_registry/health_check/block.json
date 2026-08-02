@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "09d4282e5c5a2a24010e802bce6a6d0a76862f007d086ac42f95608a845851e2",
-    "block.py": "37e0ad3d80b559c5931c6fb8b514d7f95d56be41bbfc3789941dedff9be032df"
+    "block.py": "bbdd3e3219b82b451e591ec9123615a11f42d259d7f91932e4548bd8993dca01"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/health_check:latest",
@@ -92,7 +92,7 @@
     "memory",
     "config"
   ],
-  "signature": "HVObT2xTl8TVVpeQ8RHfplEBRbtj53IhD/uv0nUs2oTTfn8atb4g0u9O+hCrSxfAVL4SyQ1VIJn7faBZMq4QDQ==",
+  "signature": "fkbfi4cYGrPQKMc6f9xhHugdO1mlcC5xUcdeADrYe8CO4IuUsKkDMI0W6ec9mjGOqlnz7MpHA1HtfZHzkfx3Bw==",
   "tags": [
     "observability",
     "infra",

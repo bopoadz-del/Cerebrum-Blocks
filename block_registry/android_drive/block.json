@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Android device storage access via ADB or REST bridge",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "dff31091875f9eb73a8715e4e51c2c3e45305dfb8febd16680d64ce7568e261f",
-    "block.py": "1598bf56b6234d9afbb5e4f5b9ce6eb7b6cc539e31f612c968e124e3f73ca58a"
+    "block.py": "6fb288e2df6a33f36f701c7e44904c39104fb2f705bc09bf830278e4063ea398"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/android_drive:latest",
@@ -36,7 +36,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "Uh+kFFZ6Jnbmr5OoJ+uJQ7vQparHy6Npg0JlWC32EWBFojLbgK/NhfhNZ+PEWHznmHvySkdX6KNKrf198z58AQ==",
+  "signature": "HoFVBU/AWrjOiBsYdC2NbEsOLEAlpbpcHM+jNFWks+1cRC2T6h+LFkvfxPH3CwJvHzso0b4oWWP6yW/Dk7+TAQ==",
   "tags": [
     "integration",
     "storage",

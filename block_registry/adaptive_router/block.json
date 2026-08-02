@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "dcee11b8b9f9d9f4a20e9c2df2193765c384ef888adc7555c523937dadd8237a",
-    "block.py": "fef886a6313a7b3c31ee4a22301a3201b359e4ee397e33c609b0aa27d6b743eb"
+    "block.py": "5784803a38e82d3a3f87c74b76e0d5da27a9fed156636877bcb5c7b33c529b3e"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/adaptive_router:latest",
@@ -99,7 +99,7 @@
     "monitoring",
     "failover"
   ],
-  "signature": "xI+CZPHI8lssX0JhGulSxhxKsVOPezM1ZIfsWVSw5Hj0LZQwUW+ez1G9v1p5GMMyLEq3kChZv7lZSy6s+dstAQ==",
+  "signature": "m+9D7JeP25jw+GN5Vvenz6jKUgCAjC/JezxLfzUwVKtZKB2eiGpeav5kbv+C2xauPKyhviAGA3C/eAeXr37VBg==",
   "tags": [
     "ai",
     "optimization",

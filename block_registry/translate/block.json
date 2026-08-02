@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Translate text between 20+ languages \u2014 no API key needed",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "9ddd03d080681dc2ae8519d13ae65c84598c3f92913cee764c06fadfaa2df7cb",
-    "block.py": "06936bb16cb2807f63c47e8469baf31d2d51256a103f9763cfedb8faf8425ed6"
+    "block.py": "444b2cf0909a6d334092036987e9a81b16f3853a7583fa14f96447a21e54a657"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/translate:latest",
@@ -46,7 +46,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "iRAccqhwnyfWqQas+BmaoOMAi1Q33k+ts3gnHuOYusF0VaJ0mZu6ccIHiNFY41gJ8EKmnAGuPBgbYXnR76czAg==",
+  "signature": "jPDli3P6DxNYxoKjQdoW3kXs2KgS0Rz7fO30MoAtxTMsiOuMVnDdbVHqW3G+uAzAs+NDy1gT6yG1zOEOeak8BA==",
   "tags": [
     "domain",
     "nlp",

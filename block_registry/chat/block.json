@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "AI chat completions \u2014 DeepSeek primary, local LLM fallback",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "02a12ac13e8da2b3afa6e298a2a2a758c35b2e50df5a977415800b14286095e6",
-    "block.py": "45e93aa526f4fa7c46b8814896d95a8fe4d3af4cca75f3568e877b5279b310a1"
+    "block.py": "4ad716ecf46565771a0554fdbb1ea9e1c90af31b591762f66fcdcfdf0e57b38c"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/chat:latest",
@@ -57,7 +57,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "P6w/tZjidEE8pnBu+wqTVK9poiKA/plPOQdkCQ59Cy6uhjv5eYwXQMlE1ocElz4Yl6xgy+mtwnToP/GP+Z/1DA==",
+  "signature": "YA01EZLnELknH2AW1xZ7kUP7S2bqLCWF75x7hC0q/dBAvxNGurDqXZLDrx7v38NQN15bB5y/9i/MpKB3G7ndDw==",
   "tags": [
     "ai",
     "core",

@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "e768d27afadf29e05a729df5ebe71194b3dc3071d4a460f84f74d5e7bc57cf7e",
-    "block.py": "19ecf6e4cd2129241e337e80ba87cadf737dfffc53de2d647de142dcdf34ed15"
+    "block.py": "0a12a09833e081b98fe7c3e175f6b0d43126abaab2f7d0e204c0107f143e4660"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/queue:latest",
@@ -73,7 +73,7 @@
     "config",
     "memory"
   ],
-  "signature": "MV04DC/lwX1mdvA1QAxosJD7/KA/xXFw1NLC7vrfj4C5UssiKDwgP5vnajenrJ7v808zjth0ezoGHR8ZkDHKCw==",
+  "signature": "u9mIRIe4GPK/cFKJmciKPERiQzcZDH++4a0QGORB3R8Jb1LvccoBBZ3t+gNIXIzgPLioNEQGCcHV8lFWoqbdAQ==",
   "tags": [
     "queue",
     "jobs",

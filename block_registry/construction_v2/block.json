@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Construction document analysis with typed input/output",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "546f83da602ff2c800429b8b2e4fb7dbc254160c72f350febf2e6bdc5540397f",
-    "block.py": "59720fa4e23091af36a5c657c45b90e7c4382fc4ec7a30cd6a142b59f03a1283"
+    "block.py": "d06213ed2fb61d35a9ecaca5f662755e3cc2a3516deda4cf00468c59cf21bec7"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/construction_v2:latest",
@@ -86,7 +86,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "V+oQ5/oxWjspi3TZ+CEKr8nIbu8i+Ip0xGQFmIgJm0jqZ+bVDwwwBWGeZBj/oOlp0lCYbDBRWf8Kf2xdNefqAg==",
+  "signature": "+76on/n/lnQ/2y668IdWSurFsoQttGYwKP17da86Kz7vivWy4SLO38DPlKn4xqQPwMOLz8UnN5HeCmNQRTiNBg==",
   "tags": [
     "domain",
     "construction",

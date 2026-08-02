@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Redis wrapper with get/set/delete/stats actions",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "bf05af124f831e9a5be71d0b01b9f8d7bd847c27fe6c47367af5aa914d100b00",
-    "block.py": "c0608468ae87edcb5e9c59b5c61564b814a4b028a0785fb8bc4c113bdef3a17e"
+    "block.py": "95fbc979227cc91b5be38265f135511319515da4dada01234eefb75cd6765497"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/cache_manager:latest",
@@ -57,7 +57,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "/FaXNBCCD9GJoKQ/29mFua8vIdQj8yDFqFYOYU4hxu/hXaz41HYgx2w2XA15Iun0FMtD8Cy6D1NUN7xeX9w3Cg==",
+  "signature": "Wmu7EZ3sMhsSdiJ98PY5KGiQ+6f+Z0MYa84ACrRMrKtmwkOVU3PsBPF23y3YbZO8kkC6QtCKS8folcUAjGapCQ==",
   "tags": [
     "infrastructure",
     "cache",

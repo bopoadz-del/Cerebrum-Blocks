@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Extract text from images using OCR with preprocessing",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "1c9664be641a4f295e70a760a0cbb3099d430d6c28a1088088b18b4cc62350e8",
-    "block.py": "d4a67cc6ece35dbef0fc035ca659502b9587ab598729f8f15acd448c44931d8d"
+    "block.py": "f9523a9cbc08836667717f68953909e9609e18ae67f3cd8aafe1e38cce0798b7"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/ocr:latest",
@@ -71,7 +71,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "JMKWZgjB9mkE2QjRQ6RQGZFu1JMSrZu2CMtmSfJCFzqvrs6vcfyqhTZzjT2UrXGFW8Gk/sAd9BZr6M1YMromDA==",
+  "signature": "zmQDeQtOk2Vr/0un6VQIzhghLXCL7po5joNVUeqb+3m57VgIZtinTOPv4bj8/f/FQje+igZykoULKncB59Y7Cg==",
   "tags": [
     "domain",
     "vision",

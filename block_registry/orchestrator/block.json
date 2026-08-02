@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Chain execution engine with type validation",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "b0b70c6ed6c828c33062235a6b4355e78fc9f7cada2b2174305324a2e14d377b",
-    "block.py": "d7ce9f8450aeef66bb36b452b805c22d757edfe6ecbd8a133b4a137f89345f87"
+    "block.py": "59ecdf5f90eb9f025fde0b88788492d19929734e6308050c60af3e3c1d0e9d30"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/orchestrator:latest",
@@ -77,7 +77,7 @@
     "memory",
     "traffic_manager"
   ],
-  "signature": "zhsl6xEFrEPdlOhu6VvFRU4JYdD6b+a/j0cTMsnmpsaT2FFnvmHz8vwUfXpEd0/bq5zU7IhYrpS+JVCqFlmHCQ==",
+  "signature": "bPkvZgEv8vQxj4emZOiICwS5VCU5cDlqn43mqKSLfrBqL+W/FVjmAcZHkxFoTCHpnUVTqB+D2lA8XJX+P065DA==",
   "tags": [
     "ai",
     "core",

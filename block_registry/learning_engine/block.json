@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Tier promotion + coefficient tuning: learns from user corrections to improve formula accuracy",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "c8ea0c8412b185546e9a7c8c85f4035f6ad68001a99a9a117a9db16e14f4c182",
-    "block.py": "97d18aa6c76974241e1eee6cf6f6f64af619a519fe073fddba5a415a88860c0c"
+    "block.py": "708de7abf63404b178e9cc0529914945df71e184c866f964e9729fa5cb936439"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/learning_engine:latest",
@@ -67,7 +67,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "4mt+u+aczuMd4LcJyYgk2MsrKGENmp0dsF1LVp26JLIV5HypOogWo5oKqWJfbbMJmWLtvYL1dI9Y9Dh1j0jLBA==",
+  "signature": "1N4ngkT04ByV3hvNlx7NthhUlu1aJZqRt85mOvzANVo4CUUG2EH552YxKQSqCg8dCTINFrLqaixKJdBxn1CqBA==",
   "tags": [
     "domain",
     "construction",

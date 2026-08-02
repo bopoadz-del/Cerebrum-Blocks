@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Multi-agent task orchestration with dependency resolution and LLM routing",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "c8a73d5b4abf82b825fd8d6077ddccbe2eac52098db3ebf99d311082d4164fdd",
-    "block.py": "47d7ea0c6634696d7c88e62e5d5287e91b7910dadde6868d0899825a223c87da"
+    "block.py": "1f624da9a908b9ea9ee718b808bcd9aa5ed9dd7cc1145353b00dfb2b745c1489"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/agent_swarm:latest",
@@ -167,7 +167,7 @@
   "requires": [
     "vector_search"
   ],
-  "signature": "1BAq6IUQ7v95HOgdNBFK6jdvaoNzVLUcAjZdCsGVw3acC/lbZwHr17d7MPJmR+wHOEHIaogR00Zr9/1Mo445AQ==",
+  "signature": "d31s4qoxEq/ZRBY6MW/4tLHlb9SKsmayy+XmSV0NyAOV6phvuAZAR3RZ2HgEjXX3UeGzEvwBpzYgim/fx9TpCA==",
   "tags": [
     "agents",
     "swarm",

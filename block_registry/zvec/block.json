@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Embed text as TF-IDF vectors; compute similarity; zero-shot classify",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "af10601b2d9ea0345fbcd30b9e596b4eb7ac7263f322c111050bf037ef8408f3",
-    "block.py": "a94d22fe8e4a85555549e97846a68e10f4727e7a5392d2f1196ab2f904dab65c"
+    "block.py": "b206b7e80cc53487bab1544294825a75527419e1c2266b1aec47fe5d020fd362"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/zvec:latest",
@@ -41,7 +41,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "/cN4D5jlIlsNHJURhbeZ2l4RRWCHImd5s0+FFICfJWLyqzOptCIDAnfXCfVXwsbYlv147I23tmwFSdp6DeYMBQ==",
+  "signature": "UARV+PrHFyvT3rODh2RTF0Nwpu4Jb1oR+q8DL87b9BvKgG4lVr7hHTm+cE75A7P7YTaJiWhkicj8H3karF+9DQ==",
   "tags": [
     "ai",
     "core",

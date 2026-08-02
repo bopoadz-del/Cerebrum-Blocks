@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "High-speed TTL/LRU cache \u2014 session storage and Redis alternative for edge deployments",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "025ace101ce6095f9e8fe6c55365474f0e453cd00a70e85e5c61a45d7609fca6",
-    "block.py": "608ed49c8c9abb55786db4e9efc9fac0df5ebe051f256dabd41570e8dab4b72c"
+    "block.py": "f388a7e4103d8cb4bd3250f15fe4f76201215b178fc7dafcb7513d4e24a7925c"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/memory:latest",
@@ -75,7 +75,7 @@
   "requires": [
     "config"
   ],
-  "signature": "d7S9hVEemBNvdoq7yIAdcO/eAnoHAdVKZbjbwcaNvNgFI0huh3Tx3Mq44UTbyVYdZtOLxCzOe8/qnDxg4rwjBw==",
+  "signature": "ygRFRNGoaT41JdXab7oK/wXIx85g3hZBp1POw0FF3bfYXNgXbdBo9UIrP4nS/zF8OB7zZFfRiYrpZgwjDGx9AA==",
   "tags": [
     "security",
     "cache",

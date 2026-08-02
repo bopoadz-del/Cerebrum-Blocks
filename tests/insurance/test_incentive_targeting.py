@@ -72,7 +72,14 @@ def test_incentive_targeting_registry_bundle_and_playbook_entries():
     registry = json.loads((root / "block_registry" / "incentive_targeting" / "block.json").read_text())
     manifest = json.loads((root / "block_store" / "kits" / "insurance" / "manifest.json").read_text())
 
-    assert registry["signature"] == ""
+    # Phase 5: block signing operates — the registry entry carries a
+    # valid platform signature (was empty while signing was parked).
+    assert registry["signature"], "block must be signed"
+    from app.core.publisher_registry import BlockVerifier
+    verdict = BlockVerifier().verify_block(
+        root / "block_registry" / registry["id"]
+    )
+    assert verdict["verified"], verdict.get("reason")
     assert "incentive_targeting" in manifest["blocks"]
     assert "app/data/incentive_playbook.json" in manifest["data"]
     assert (root / "block_store" / "kits" / "insurance" / "bundle" / "app" / "blocks" / "incentive_targeting.py").exists()

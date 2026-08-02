@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "OneDrive file operations \u2014 set ONEDRIVE_CLIENT_ID + ONEDRIVE_CLIENT_SECRET + ONEDRIVE_REFRESH_TOKEN or ONEDRIVE_ACCESS_TOKEN",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "7e29f1251b9321a1b29c00ebd00d2752aa38c196672e395ec59a7cf3eebdeab6",
-    "block.py": "7160e69828591e840f2103fe68c77d84bb7d54f32741871ad814a901f51075d7"
+    "block.py": "d96c155b0eb0ecee10425cfb8555801529d2283532ea2f262d9836932d948bff"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/onedrive:latest",
@@ -36,7 +36,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "/b8eDzwk91NRU2uh+18jKGl0AQ3ziMl3LgcK0UxQQiKnNOv8HgiyqRFa8txNaPa1VuufHm2PHzifnTpkXJeZBA==",
+  "signature": "8BeVNpyfw2pI3IxhKEq9QP3+/0dx1sGHwef8K0IFuQaIvL3nyJoxT0HjGOIXRyIxmNwtstb2DmtOquEE068VCg==",
   "tags": [
     "integration",
     "storage",

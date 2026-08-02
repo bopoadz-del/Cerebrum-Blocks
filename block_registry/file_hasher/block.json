@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "SHA256/MD5 hashing and metadata extraction for files",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "9a44860e234df898f3719a3bd6984138a6a011eee044a155efde5248b9574a3d",
-    "block.py": "180a532674c85919a1043a98f6d29acd9f09661635e0f58ca04a69d569e45f10"
+    "block.py": "5eaf59ba17e4b9b71041b8b9b8e6be0c444fd5c53d317f96880a647af639f86f"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/file_hasher:latest",
@@ -55,7 +55,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "0PpGzcdvY/oMicU2vFqS66yZKoAs+NV8qE55Bc1evheeP9oLINYU7Krp579BcuJKTnBxUuMkF0ql/et+Tz8DDQ==",
+  "signature": "9TCzc9xC3sjnXUECznshK0Tn7adEIa4fyio8e3gKcqRGaRJIKms+Y0vJk66NGgFdWjfXpQjmUXB+jmr2tv+cBA==",
   "tags": [
     "infrastructure",
     "security",

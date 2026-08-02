@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "708886f39827b65022349242c6dc5d747376ac0d0177b015819a0d29eca535b8",
-    "block.py": "00eb1cfff4410394b4ddbbbcb2308cb2fa5e9d4ece4c829dbc0c715a681db442"
+    "block.py": "b85baf8696971c3fa3771cef7e7ad91d29068a52547a7fcb01985338a88ae21b"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/auth:latest",
@@ -76,7 +76,7 @@
   "requires": [
     "memory"
   ],
-  "signature": "+LvS7uAD5JOHpJKfSCkzoXHalUKwCoCnYasRHlzoiu64TtfEgeGqfiCBSQjjgqqkzkXTeLjBJSTOLiqvyJRsCA==",
+  "signature": "SIkWnGcZFzisH700tz3l9ij0xLhsWuDnCqE7A9r0iqRAxeayt+d/bPU0IxTi76um6rP3r+m7b8m+PlVp5oxOAQ==",
   "tags": [
     "security",
     "auth",

@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "90a8e0b422dc8633292015b601c40a658dbf94c580c8a46827cc2b8680fbfbce",
-    "block.py": "3633968c224eaaeca5a8bf0496f04f6f0e114ff6193e7746495955c6d7d3f370"
+    "block.py": "0765c1e93286662cb237fafcf3406bab9044ce268d8164012cb04135cb9b734e"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/payment_split:latest",
@@ -103,7 +103,7 @@
     "team",
     "database"
   ],
-  "signature": "mcG3/tLicBCbnuIIgm68RjWCteKGwkdAgmZ6gBITCRsGVpIQSM+kqG4QUV7LtXE2SXthhsRqnUNIUV36K0j2Ag==",
+  "signature": "+jO7bfFTbVTkOBJlyQilBNbfKo/P3YkIuWqA+8o2jo9U+wmA4M2y8ORGzF6X3I/e5ufbXMFQ6bRueW9c6ZmRCA==",
   "tags": [
     "store",
     "payments",

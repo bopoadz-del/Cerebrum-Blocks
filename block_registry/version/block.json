@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "23be544ed9dfdf29350b2b67409ed31770efe675009510a4d649b16a0d83ed28",
-    "block.py": "72002920f99b6032054a535bb0b09c31a54e9541113c3c81b9c83f8310bbf9dd"
+    "block.py": "fd02feccea158d04ad9b70e56d6e8a90463c5cafb56aa14f7d4592e3b8def090"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/version:latest",
@@ -95,7 +95,7 @@
     "database",
     "storage"
   ],
-  "signature": "3NbkEW6GN29aI57x3GUk9ipZfuUXMh2sETvS2azgUgF7BoVfnEFbgOXNvI9DOhawQzL04oOu3QbUBwxcAOrEDg==",
+  "signature": "kVmRBIxJ7p9uXaPnB7QinhRUA3HF7muXnibljsJTxJuVtaAZC7DZFpl9oYTSbgN+bL09ki9V3Bfeu2nzOygUCg==",
   "tags": [
     "platform",
     "devops",

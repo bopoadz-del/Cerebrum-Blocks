@@ -1,20 +1,43 @@
 {
-  "id": "action_contract",
-  "name": "Action Contract Runtime",
-  "version": "1.0.0",
-  "description": "Domain-neutral runtime for registering, discovering, and executing actions exposed by domain kits. Includes typed models, registry, execution engine, schema validation, audit helper, and config.",
   "author": "Cerebrum Team",
-  "publisher_id": "cerebrum_platform",
-  "signature": "",
-  "digests": {},
-  "inputs": [{"name": "input", "type": "json", "required": false, "description": "Action payload"}],
-  "outputs": [{"name": "result", "type": "json", "description": "Action execution result"}],
-  "permissions": {
-    "network": false,
-    "filesystem": false,
-    "imports": ["pydantic"],
-    "blocks": []
+  "description": "Domain-neutral runtime for registering, discovering, and executing actions exposed by domain kits. Includes typed models, registry, execution engine, schema validation, audit helper, and config.",
+  "digests": {
+    "block.json": "53162473f908db80a2b74b6bd2c6f7977b0e7b7b544befbba71ae299faf2486d"
   },
-  "tags": ["core", "runtime", "action", "contract", "registry"],
-  "layer": 1
+  "id": "action_contract",
+  "inputs": [
+    {
+      "description": "Action payload",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    }
+  ],
+  "layer": 1,
+  "name": "Action Contract Runtime",
+  "outputs": [
+    {
+      "description": "Action execution result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "pydantic"
+    ],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "signature": "uW+vPYi4D9DFkzbV8yEuN/2E/7gxxNGfHjP0CZtoz+nuB0Pk/llxpjCbUSmBTm2MtQo/KzoNbVIUAYOES1P5CA==",
+  "tags": [
+    "core",
+    "runtime",
+    "action",
+    "contract",
+    "registry"
+  ],
+  "version": "1.0.0"
 }

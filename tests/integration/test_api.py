@@ -213,18 +213,27 @@ class TestDriveEndpoints:
         data = response.json()
         assert data["block"] == "onedrive"
     
-    def test_android_drive_paths(self):
-        """Test Android Drive get_paths."""
+    def test_android_drive_paths_refuses_instead_of_fabricating(self):
+        """android_drive is a stub, so get_paths must say so.
+
+        It used to answer with fabricated device paths. Phase 1.7 replaced
+        that with an honest refusal; this asserts the refusal rather than
+        the invented data, so the test fails again if the stub ever starts
+        making paths up.
+        """
         response = client.post("/execute", json={
             "block": "android_drive",
             "input": {},
             "params": {"operation": "get_paths"}
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["block"] == "android_drive"
-        assert "paths" in data["result"]
+        result = data["result"]
+        assert result["status"] == "error"
+        assert result["error"] == "not_implemented"
+        assert "paths" not in result
 
 
 class TestVectorSearchEndpoints:

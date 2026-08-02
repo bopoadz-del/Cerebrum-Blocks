@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "RS Means-style benchmark unit costs, cost ranges, and market data for construction items",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "4b10c965e0cbf672e67c74d37f0be646aef39923fcf86d2022fad8f1672c3f68",
-    "block.py": "3be52a3ce89a5624a8a5476148da50ba01a91171ad6e0cb858bb8af9e9e8557c"
+    "block.py": "892447f0e243c4b06c4c1710172a446870e98d9017941085dfdb089744234056"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/historical_benchmark:latest",
@@ -95,7 +95,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "/I+DM156g9Pov4mE43rZeon2FWBG5fsuFl7ZuabRbwc2kK3vL+ETDntoc1qABUxeyZ75iYc2pcsCpKNoHK2jAw==",
+  "signature": "ztMJP32k0Vyra2ctpFb6myAMR30VPd1ew4EF/MfyVCzwjvkK4LPRc6LZWjUdZ9R/NURtO58e7hXdPb7iT4ToDw==",
   "tags": [
     "construction",
     "cost",

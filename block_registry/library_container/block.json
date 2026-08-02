@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Formula backend registry: SymPy, Pint, CoolProp, QuantLib",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "5b234e72645f04bf5990e7ae00db08db3ef1d6855b2364ba0d993b17fb71e501",
-    "block.py": "1527e447ec099e57c281af656a0586b8cd513b04967faefbb8cafb64f7b9a75f"
+    "block.py": "fec83a849ebce37c4843cd40308ee19e88ac137fd4415b7ec53c4ad4b4128930"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/library_container:latest",
@@ -51,7 +51,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "AcGxQZsD6nxL5D/1DGnd7TnqzHKEdsNDbgZetP5a4q2Gqw9pnlaUvVkMGF8qQepT8PcOYp9MMtFkgwnMpKKyCg==",
+  "signature": "jjAg5M6nL/fqdJn/oVGyMzQ+vRzBBennlTiDUyJH9Ei3/jHMhtaD8fhQkIP0ntP5e3iwLs7QdpxWr5saMFciBw==",
   "tags": [
     "library",
     "formula",

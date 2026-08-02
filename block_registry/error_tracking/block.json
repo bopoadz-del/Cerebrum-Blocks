@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "ae38f192cd4c3e4f950712615d98e128ae98386e21cd3dc45b04f905933e1b44",
-    "block.py": "405e57600552ba89a56799262b196a12fbe1ba263a42260ba20797f2b5237f52"
+    "block.py": "b837d813ad93a58638525af586e836e4be1b170ca5a41f23961c3dd38f0e568b"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/error_tracking:latest",
@@ -92,7 +92,7 @@
     "database",
     "notification"
   ],
-  "signature": "cxHVDiuvm+zQj0kaXTAFguCsMlPgr3efw9HcqMryJNzogZ6v7TyamW4SrwejivleDxNcp/9A6Rtt6kgeUxxADw==",
+  "signature": "1dAVTrMPPcqoMa+DtLUv/A/APyEjQLLP6/dn4cuVMitJXE8HtVgz749evlzrXRU2aEQxKSW5nKmEzZvJkSiBDA==",
   "tags": [
     "observability",
     "debugging",

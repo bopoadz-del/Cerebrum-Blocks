@@ -1,12 +1,22 @@
 {
+  "description": "LLM code generation and sandboxed execution for deterministic, auditable calculations across domain kits.",
+  "digests": {
+    "block.json": "aeb18c56a1454f98d957209314ed558d06619dd9a9d0aab896617f0b8fe93eae"
+  },
   "id": "formula_executor_v2",
   "name": "Formula Executor V2",
-  "version": "2.0.0",
-  "description": "LLM code generation and sandboxed execution for deterministic, auditable calculations across domain kits.",
   "permissions": {
-    "network": true,
+    "blocks": [],
     "filesystem": true,
-    "imports": ["httpx", "os", "re", "threading"],
-    "blocks": []
-  }
+    "imports": [
+      "httpx",
+      "os",
+      "re",
+      "threading"
+    ],
+    "network": true
+  },
+  "publisher_id": "cerebrum_platform",
+  "signature": "5/2ibg8M05IG6hxOxcrnB9ceTtVJko+9xhJtfuGH5XuGLYhRfYB+YGWndwOSCsl5yw8axUcWhWszijVGY9HbCA==",
+  "version": "2.0.0"
 }

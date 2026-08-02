@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Text-to-speech (gTTS) and speech-to-text (Google STT) \u2014 no API key needed",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "6ac382ca1a025702b4cf9ca76fb47de03de91a09beeec7ced0154e57464da1d1",
-    "block.py": "7331021784a858c22078b6f2562ee6f0daa485e36a2540eee6d60cc10469c3db"
+    "block.py": "9202b2fd1477f4c93dd777c0a0ad735ff09ad5dbc3cdc6487b10189519812532"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/voice:latest",
@@ -36,7 +36,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "ljGAOyOj7TWBsK0++wmZ37jAnpflNm8njp7Zzc5LrbmSETtq7c6z/P5clFQ24NVhoZNFkAd0T30i7DEUURjsDw==",
+  "signature": "XSFv2kCg73mCb3LXXGDVK3MsqdtsCwLa6fk3zyHJxcFsMQvA54bjpXu1EnB64J5g9XEP6TF1vG28e/qk5hj1Aw==",
   "tags": [
     "domain",
     "audio",

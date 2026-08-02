@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Construction semantic router: maps user messages to action queues with TF-IDF similarity scoring",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "31d986b505172e80a8d8704db4660fa642abbd3a75522619f6e69c86b9f8e845",
-    "block.py": "f35f43b91c42019c7ed62b1575e1468bbab09f20be50400536526b716f007ff5"
+    "block.py": "bd495852e0d87716d6f4c50389bb300c02e0618056d9fa0073343718b748bf42"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/smart_orchestrator:latest",
@@ -55,7 +55,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "GQK8rRjXBtjYmhvK5G0BcAu9lJnI/Xzf+R8bNmXuflosLx3GmA6i60HMBhTOKFKbi2Q3xhUTl47ytiG2TbJOAg==",
+  "signature": "LrB/gr5Ld5mTrA+Ta/vTI3gE8M595LVUx6FLCmopRbjw7eYIC32ZqQ1yYSKDivEhQP+aChKXqLAdgtHDcB10Cw==",
   "tags": [
     "infrastructure",
     "construction",

@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Parse Excel/CSV Bills of Quantities into structured quantities and cost breakdown",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "6ce2bc0a68d2f8a2041519d11f44d8adc15a4de59a7693365a54f72516d3bc3d",
-    "block.py": "9202cfbc6055d81422007bd2a6dd6f8d7c43384d2ce768dafd206f6493769321"
+    "block.py": "df5a267a3aa44ff217ca1c9ffb0a3024383bf507f42316dd745f0fee9e366f7b"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/boq_processor:latest",
@@ -65,7 +65,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "v1PQB4jmAcuYVuyRfuzP7jytg2+9aOvyJnW2ix8G1eQjN1a4GnIi57Ns2RHW/iVDaapZC6AWoZIMfh0/xoD0AA==",
+  "signature": "p4tlsBG5g77iT1BEgv/TtTQenZxe2GR3CBIOJeR/tGNuIGOoY/URW14xLo4zOCuOYV3w4xsbPw1NCt84I+cvCQ==",
   "tags": [
     "domain",
     "construction",

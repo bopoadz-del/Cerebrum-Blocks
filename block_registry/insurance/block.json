@@ -1,19 +1,22 @@
 {
+  "description": "Insurance domain container adapter.",
+  "digests": {
+    "block.json": "0e9ab8a8e508ab68137bfc82e80f5d46e3dabb78b00b0d3268e7b68e9b3adfee"
+  },
   "id": "insurance",
   "name": "Insurance Container",
-  "version": "2.0.0",
-  "description": "Insurance domain container adapter.",
   "permissions": {
-    "network": false,
+    "blocks": [],
     "filesystem": false,
     "imports": [],
-    "blocks": []
+    "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "",
+  "signature": "c3Yyk8a8/ztv6lE2jeV1mIQ02NKxZgAaYRYLW4RzWA04Hx4pqVqxZ45GIYR+rdLIlCILVBBJeXEIvlRIZ0iuAw==",
   "tags": [
     "domain",
     "container",
     "insurance"
-  ]
+  ],
+  "version": "2.0.0"
 }

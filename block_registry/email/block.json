@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "2e8118e0f58a006bb685b7a4ed3a6e645ee4e68a5aeeb2e5beb0a59fb280c55f",
-    "block.py": "170eb05a0256fdd35b327b3cd0328569f4e8b09356a7872aa38b0ddcb2cb41ed"
+    "block.py": "aa761b7316fbe5a5f96db989ed800460bd412965a5aef689861767c4589e4227"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/email:latest",
@@ -71,7 +71,7 @@
   "requires": [
     "config"
   ],
-  "signature": "t9HdgzF7v9UlqVZabFdabG3htEKDhuSyc5t11P06rXaMlAJgnEQUikW4AdQi41xvgGlFR5P00OHL3nSOcL7mBA==",
+  "signature": "8LxlV7LR6D+WhAENgs1DfhMoHUR4Du9b0tZSc28JqI5+TgboNvlXDAzEdI1koXqD+lM7vpwwgcXWbsdoN6xoCw==",
   "tags": [
     "email",
     "notification",

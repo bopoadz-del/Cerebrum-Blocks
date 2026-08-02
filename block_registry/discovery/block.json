@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "9b489199da01491f80162eccd60c9c05d4c502168eabfd873e725836374b5aef",
-    "block.py": "ca9abf32a07c41744027ee8f636be031dc88ce06662566ba532f1105f2c0f58d"
+    "block.py": "3b24555f515848fa7ab1a27162de719e3be35153be5f3aefb92bdbd151c2e965"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/discovery:latest",
@@ -98,7 +98,7 @@
     "vector",
     "analytics"
   ],
-  "signature": "js9ZpmGfdzgCeCryou276P5eJcO8D39ykd5rZXUN/q2YUHcKxIM9pUbksARbFr4P4a/EeUOAPKLUH0U4Dbs2Ag==",
+  "signature": "i6MqZmRX3fY7XjAdsukx+MAS2HQ9bb78oldykccFvEkxDXlTsfBPBmptaaEyez2G8AceBH+6WkHOxiJJr4WiDg==",
   "tags": [
     "store",
     "ai",

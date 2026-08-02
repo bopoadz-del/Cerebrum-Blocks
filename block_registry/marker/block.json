@@ -4,7 +4,7 @@
   "digests": {
     "Dockerfile": "70e53651ddc62a3acfa3095348f6a77ee5fff1dd809a6d5c4f0f10801059c54e",
     "block.json": "fc389eacd87524c2df4380bf7d0ca969435bb86a1b4277868c7839848314ce0d",
-    "block.py": "44933172363867354a0e3c07b59c2b5c4b925b854fcdf5f285284604e95ed652",
+    "block.py": "ccdb712d531cb0d753f12aa7f40f2a72c7908fccf21e3c99d92ec87f6c65ae01",
     "requirements.txt": "e6ecee1aa9bf3bf97901a1ae6f660cf1e46ca92b1d35c4581cf4c21ac3a346ad"
   },
   "execution": {
@@ -49,7 +49,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "SDSi0i24R/Om8MiAvhOLbtf11Ncgf+czN4ouPi1Zhnl5+5BBC/JWLXZnG7rDlvKz2WGwwMLKwWe+lcvK27ThAQ==",
+  "signature": "hWrSX6AlQyREEFNTPCPJrrZTMIB2Ftj89uqTNp6S7GUK7E1lERjnEpU5LlaIPQ4YpEOn5KT5WtpnsXKXcthTBg==",
   "tags": [
     "domain",
     "documents",

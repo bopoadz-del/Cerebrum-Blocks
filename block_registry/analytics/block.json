@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "abd78d8253b8a5bb71d0f746ebf30d2d61c86decd04cb8194877fcff605e0dd1",
-    "block.py": "717721cbaa2e04aec294545016e0e1949af1b8c35bf5addd80fcca40ae10ce11"
+    "block.py": "a1fd5700d68af75cf5c938f071a0daa5e772259a8f28199652ab2d50be4dca46"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/analytics:latest",
@@ -99,7 +99,7 @@
     "database",
     "monitoring"
   ],
-  "signature": "3kxSh4MWRrzOpMz1L3J5ORUaZDWrmBuIg3pekCizANYQJ94kwCkC+UxbjL2TGcQ+JnC2kng+4kOMYcf62wkOCw==",
+  "signature": "tlA6ytHCExKbCLmH+M2i43MFkfDHpWincIQCOPH6uTHVERinp++ly5uToxlM1RkYNGpmJDSMeDKR+XEdzDIQDw==",
   "tags": [
     "metrics",
     "reporting",

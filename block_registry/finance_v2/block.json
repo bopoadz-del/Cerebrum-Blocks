@@ -1,15 +1,48 @@
 {
-  "id": "finance_v2",
-  "name": "Finance Document Analysis V2",
-  "version": "2.0.0",
-  "description": "Typed financial document analysis for statements, audit reports, KYC/AML, formulas, regulatory flags, and risk scoring.",
   "author": "Cerebrum Team",
+  "description": "Typed financial document analysis for statements, audit reports, KYC/AML, formulas, regulatory flags, and risk scoring.",
+  "digests": {
+    "block.json": "72eb0e95a5a8df9eecc507102ff374b5588887683c46cac12d902b437f35ffdc"
+  },
+  "id": "finance_v2",
+  "inputs": [
+    {
+      "description": "Finance document payload",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    }
+  ],
+  "layer": 3,
+  "name": "Finance Document Analysis V2",
+  "outputs": [
+    {
+      "description": "Typed finance analysis",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "dataclasses",
+      "json",
+      "math",
+      "re",
+      "sympy",
+      "typing"
+    ],
+    "network": false
+  },
   "publisher_id": "cerebrum_platform",
-  "signature": "",
-  "digests": {},
-  "inputs": [{"name": "input", "type": "json", "required": false, "description": "Finance document payload"}],
-  "outputs": [{"name": "result", "type": "json", "description": "Typed finance analysis"}],
-  "permissions": {"network": false, "filesystem": false, "imports": ["dataclasses", "json", "math", "re", "sympy", "typing"], "blocks": []},
-  "tags": ["domain", "finance", "v2", "document_analysis", "deterministic"],
-  "layer": 3
+  "signature": "LdAN6JvDewtkeEj/t55mMGGCY9Ng0/5h0q4URyT75OXoOzx3r8HJohX9N3HwcZR3bUve7RAPp+5uPT9fc80YCA==",
+  "tags": [
+    "domain",
+    "finance",
+    "v2",
+    "document_analysis",
+    "deterministic"
+  ],
+  "version": "2.0.0"
 }

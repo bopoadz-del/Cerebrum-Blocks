@@ -1,9 +1,11 @@
 # Parked Blockers
 
-- Insurance kit v2 block signing is parked: `scripts/sign_block.py` exists, but
-  no publisher private key is present (only `data/publishers/cerebrum_platform.pub`).
-  New distribution block `signature` fields remain empty until a private key is
-  provided. Do not invent a replacement platform key in-repo.
+- Registry block signing: **resolved** (Phase 5). A platform keypair was
+  generated; all 105 `block_registry` blocks are signed and verify, and the
+  private key is held in the owner's secrets manager — never committed.
+  Rotate with `scripts/rotate_publisher_key.py`. Remaining: domain-kit
+  *bundle* signing (kit installs are provenance-verified via sha256 today,
+  not Ed25519-signed).
 - `CEREBRUM_DOMAIN_KITS=insurance` capability declaration warnings for
   `insurance` / `insurance_v2`: **resolved** by adding
   `block_registry/insurance/block.json` and

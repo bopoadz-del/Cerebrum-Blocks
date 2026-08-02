@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "965c3fac1047841f796664fdd37aa261f2e59d6dc65f71aa8b0b519fce214e2d",
-    "block.py": "13471a04ccd6d4950f18751edf01b72b798a6030f65517bdab2bda6f3f8c18bd"
+    "block.py": "0ce849faca61cb5c9bb12fa1a3250f73ce0ccc19c53a2fe67f0e54ec27784349"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/dashboard:latest",
@@ -86,7 +86,7 @@
     "auth",
     "monitoring"
   ],
-  "signature": "5emsUOIxhV672xL98o++W0+VjMeySNFeJB/GDlTGtW1tgKAvSdiAdG6IjbmtVGo7br0769FC6K902YgTOIk9Bw==",
+  "signature": "USu/7zuhINNSQq++iwvu6VIhuk4Jwp1kS8EdyZIUGryrMgAamByuzGpzBmtj7ljdwSaVxImFdU4MXoD0oZs9DQ==",
   "tags": [
     "ui",
     "platform",

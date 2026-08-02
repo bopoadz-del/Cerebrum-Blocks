@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Semantic search over in-memory document collections \u2014 no external DB needed",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "ac2a9c5dc70804172e8d8592e440e5f4356c415ff6d3a0c94ee54768fc672394",
-    "block.py": "dba571484469220b47050b105cbcf92ece2c5905fa80f269b5cf0a6679e7943d"
+    "block.py": "4ff603ae8a4943e86896ec3005f6a14257eecbdb1ae77750e0a545a74a1f9ea7"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/vector_search:latest",
@@ -36,7 +36,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "25wdFRZQPlf847EOcOEQoRcZGYWPsm0Qvmyj7ZPGWJryKhioO0OpXVkYYObdM2FsN9EDDEEJDEimC4jO40pGCg==",
+  "signature": "jVZIMmXgk5LI4YEhy24C8m1MQ66voBfmbV3m0/gboke+FS7aWE2+gHh4tvbAsDO6M7/PSB2Xb0TCTBaevtmbCA==",
   "tags": [
     "ai",
     "core",

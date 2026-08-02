@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "2911de6d516cd8153c978d6c0c50b3b3e8f3905475fdeec2e83dc4f6922dcde2",
-    "block.py": "097da05debf525c21b893bcbf0178fc4746792d2b2e366caa63cf9128598b144"
+    "block.py": "c1c629e04d0806e0b80fa7e4d586b7c52a67c24776b14d89e2935bfe98559e56"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/storage:latest",
@@ -66,7 +66,7 @@
   "requires": [
     "config"
   ],
-  "signature": "nfS4Zd9zDpM8Sw+rpFrghHyKOAH2LyZDxk2qf4Dj1+V3sskesLmjGJwjP6uaoqz5N7AOC3I5r00BGm5y4/5GAw==",
+  "signature": "F4hTC0wN4lAv1PK81QbbjVdigzhtYqYfieAdWQCpvWkyScwrbmmevvbGRlotQ1x6oHtaYybGqUMw1Ba8ifsrAw==",
   "tags": [
     "storage",
     "files",

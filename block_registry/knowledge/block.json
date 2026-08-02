@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "Ask questions across stored captures and swarm runs using RAG",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "b3c2795999fa2e6e9aa3f872aa9e092a2f19819dd7864c456ed7def5390a597a",
-    "block.py": "72304573d58ca6ba564631b53d105ac69c23cabe26a1528d3cdd320d2a3a01bf"
+    "block.py": "d1dea88780e5c8a02184b6d4c55fa88fb63fed4d3656466bb76e31b66bc7192c"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/knowledge:latest",
@@ -140,7 +140,7 @@
   "requires": [
     "vector_search"
   ],
-  "signature": "0OvC9EcDnz/bkBSMdhNLRO6yRFgOCUITNs6N2TjjxJKJNLUzdyaTSGmlQ4UWGNVnLBmydUpnKiHlUc9L8JSEBw==",
+  "signature": "eN5ot67UdfK6MlVfw3IJ1O6Jm3RJ52YFKm15xA5ambatQHqNMxTAS3pffLo1FUPQ3zDCVPbet+C6JlitcaclCA==",
   "tags": [
     "knowledge",
     "rag",

@@ -2,9 +2,9 @@
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
-    "Dockerfile": "601d37f8d7753cb18020a32d6002e579e552253bdcb7f809154ebb790161805d",
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "6a35b7d89ad67fde3a6bfbaf33508b50966ff6bcccb979e5d2b17be3cb612db1",
-    "block.py": "c158fd7f5f8527cc1bf61de2e5fa8f5e828124a5859dd74a6e6c393abd3feac7"
+    "block.py": "d8cf6be4f0d340e69a4ef55c6065c572931b821dd233800235e2093b54e6ed73"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/config:latest",
@@ -64,7 +64,7 @@
   "requires": [
     "hal"
   ],
-  "signature": "d/5F3Q+C5G8pPhD2P3yLznWt0yg7HqLp0z8o+c5KRRw04OyRtl0IdxZQo1LarjSxjfSYNIc3ze6t4KCcPp0ACQ==",
+  "signature": "dr1+nom4XwiAd/bebv4L1v+j2YsR6AsQdUyaOK4//mGYi4TuWZlKvW8cLu7CcgaZUXbQyu5JZGWneaxh3vNqAg==",
   "tags": [
     "infrastructure",
     "core"
