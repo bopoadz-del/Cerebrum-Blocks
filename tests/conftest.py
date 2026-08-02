@@ -16,6 +16,11 @@ sys.path.insert(0, str(ROOT))
 # tests via this env var.
 os.environ.setdefault("ENV", "test")
 
+# TestClient fires lifespan; without this every test app would arm the
+# nightly backup scheduler and take a bootstrap snapshot into ./data.
+# Scheduler tests opt back in explicitly with monkeypatch.
+os.environ.setdefault("BACKUP_SCHEDULE_ENABLED", "0")
+
 # Extended blocks are only registered when the platform boots in legacy mode.
 os.environ.setdefault("CEREBRUM_VIRGIN", "false")
 

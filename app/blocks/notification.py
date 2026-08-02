@@ -1,4 +1,4 @@
-"""Notification Hub Block — One endpoint for Telegram, Email, Webhook, Slack."""
+"""Notification Hub Block — One endpoint for Email, Webhook, Slack, MCP."""
 
 import os
 import time
@@ -71,7 +71,7 @@ class NotificationBlock(TypedBlock):
 
     name = "notification"
     version = "1.0.0"
-    description = "Send notifications via Telegram, Email, Webhook, or Slack"
+    description = "Send notifications via Email, Webhook, Slack, or MCP"
     layer = 2
     tags = ["notification", "messaging", "integration", "core"]
     requires = []
@@ -120,7 +120,7 @@ class NotificationBlock(TypedBlock):
         "input": {
             "type": "json",
             "accept": None,
-            "placeholder": '{"channel": "telegram", "to": "123456", "message": "Hello"}',
+            "placeholder": '{"channel": "email", "to": "ops@example.com", "message": "Hello"}',
             "multiline": True,
         },
         "output": {
@@ -163,7 +163,12 @@ class NotificationBlock(TypedBlock):
     # ── Core Send ──────────────────────────────────────────────────────────────
 
     async def _send(self, data: Dict) -> Dict:
-        channel = data.get("channel", "telegram").lower()
+        channel = (data.get("channel") or "").lower()
+        if not channel:
+            return {
+                "status": "error",
+                "error": "channel required: one of mcp | email | webhook | slack",
+            }
         handlers = {
             "mcp": self._send_mcp,
             "email": self._send_email,
@@ -191,7 +196,12 @@ class NotificationBlock(TypedBlock):
 
     async def _broadcast(self, data: Dict) -> Dict:
         """Send to multiple channels at once."""
-        channels = data.get("channels", ["telegram"])
+        channels = data.get("channels") or []
+        if not channels:
+            return {
+                "status": "error",
+                "error": "channels required: any of mcp | email | webhook | slack",
+            }
         results = []
         for channel in channels:
             result = await self._send({**data, "channel": channel})
@@ -321,7 +331,7 @@ class NotificationBlock(TypedBlock):
     async def _send_webhook(self, data: Dict) -> Dict:
         import httpx
         # `to` is the unified recipient field used by every other channel
-        # (telegram chat_id, email address). When the caller picks
+        # (an email address, a Slack channel). When the caller picks
         # channel=webhook and passes a URL through that field, accept it.
         url = data.get("url") or data.get("webhook_url")
         if not url:

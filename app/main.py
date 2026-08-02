@@ -81,9 +81,17 @@ async def lifespan(app: FastAPI):
     blocked on a 2s+ pre-warm.
     """
     import asyncio
+
+    from app.core import backup_scheduler
+
     await vector_store.init_pool()
     asyncio.create_task(init_blocks())
+    # Nightly DATA_DIR backups run in-process: Render cron jobs cannot mount
+    # persistent disks, so this is the only process that can take them.
+    backup_task = backup_scheduler.start()
     yield
+    if backup_task is not None:
+        backup_task.cancel()
     await vector_store.close_pool()
 
 
