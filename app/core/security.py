@@ -218,16 +218,35 @@ def enforce_tier_block_access(block_name: str, auth: Dict[str, Any]) -> None:
 
     Reads ``TIER_LIMITS[tier]["blocks_allowed"]`` — the declared (previously
     unenforced) per-tier block list. ``"all"`` means unrestricted.
-    """
-    from app.core.api_keys import TIER_LIMITS, Tier
 
-    raw_tier = (auth or {}).get("tier")
+    Tier strings are resolved through ``api_keys.TIER_ALIASES``. The audit
+    found this function constructed ``Tier(str(raw_tier).lower())`` directly,
+    which raises ValueError for "standard" and "unlimited" — the only two
+    values the live authenticator issues — so the ``except ValueError:
+    return`` branch swallowed every real request and the allowlist never
+    applied. An unrecognised tier now fails CLOSED (most restrictive tier)
+    and logs, rather than waving the request through.
+
+    A caller with no ``tier`` key at all is left permissive: that shape only
+    arises on internal call paths, and the primary gate
+    ``enforce_block_access`` — which runs first and keys off "unlimited"
+    directly — already covers the dangerous block set for it.
+    """
+    from app.core.api_keys import TIER_LIMITS, Tier, resolve_tier
+
+    if not auth or "tier" not in auth:
+        return
+    raw_tier = auth.get("tier")
     if raw_tier is None:
         return
-    try:
-        tier = raw_tier if isinstance(raw_tier, Tier) else Tier(str(raw_tier).lower())
-    except ValueError:
-        return
+    tier = resolve_tier(raw_tier)
+    if tier is None:
+        logger.warning(
+            "security: unrecognised tier %r — falling back to the most "
+            "restrictive tier (%s). Add it to api_keys.TIER_ALIASES.",
+            raw_tier, Tier.FREE.value,
+        )
+        tier = Tier.FREE
     allowed = TIER_LIMITS.get(tier, {}).get("blocks_allowed", "all")
     if allowed == "all" or block_name in allowed:
         return

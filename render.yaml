@@ -1,15 +1,20 @@
 # Render blueprint for the Cerebrum Blocks API.
 #
-# Key change vs. the dashboard-only config: `healthCheckPath: /health`.
-# With it set, Render waits for the new instance to return 2xx on /health
+# Key change vs. the dashboard-only config: `healthCheckPath: /ready`.
+# With it set, Render waits for the new instance to return 2xx on /ready
 # before swapping traffic. Without it, Render swaps as soon as the worker
 # binds to $PORT — which is BEFORE FastAPI's lifespan / route mounting
 # completes, so users see ~30-60s of CORS-stripped 502s on every deploy.
 #
+# /ready (not /health) is the probe target: /health is liveness and always
+# returns 200, so it can never fail a deploy or raise an alert. /ready runs
+# the real dependency checks (DATA_DIR writable, block registry populated)
+# and returns 503 when the service is up but broken.
+#
 # To apply:
 #   Option A (preferred — keeps dashboard env vars): Render dashboard →
 #     the cerebrum-platform-api service → Settings → Health & Alerts →
-#     Health Check Path → set to `/health` → Save. One-click; no
+#     Health Check Path → set to `/ready` → Save. One-click; no
 #     blueprint sync needed.
 #
 #   Option B (full blueprint adoption): Render dashboard → Blueprints
@@ -28,10 +33,12 @@ services:
     # --no-access-log matches entrypoint.sh; uvicorn binds to $PORT.
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --no-access-log
     # Zero-downtime gate — Render holds traffic on the old instance
-    # until the new one returns 2xx here. /health responds the moment
-    # uvicorn binds (lifespan() returns instantly; init_blocks runs as
-    # a background task) so this adds <1s to swap latency.
-    healthCheckPath: /health
+    # until the new one returns 2xx here. /ready runs two cheap checks
+    # (DATA_DIR write probe, block registry non-empty) and responds the
+    # moment uvicorn binds (lifespan() returns instantly; init_blocks
+    # runs as a background task) so this adds <1s to swap latency, while
+    # still being able to FAIL when the instance is genuinely broken.
+    healthCheckPath: /ready
     autoDeploy: true
     envVars:
       - key: ENV

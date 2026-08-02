@@ -29,6 +29,46 @@ class Tier(Enum):
     ENTERPRISE = "enterprise"
 
 
+# The billing vocabulary (`Tier`) and the vocabulary the live authenticator
+# issues are not the same. `app/core/auth.py::_load_keys` stamps keys with
+# "unlimited" (master / dev) or "standard" (CEREBRUM_API_KEY_*), neither of
+# which is a `Tier` member. The audit found that `Tier(str(raw).lower())`
+# therefore raised ValueError on every live request and the per-tier block
+# allowlist was silently skipped. This table is the single place where an
+# issued tier string is mapped onto a billing tier — extend it here when a
+# new tier string is introduced, and see `tests/core/test_tier_block_access.py`
+# for the matrix that pins it to what `_load_keys` actually emits.
+TIER_ALIASES: Dict[str, "Tier"] = {
+    "free": Tier.FREE,
+    "public": Tier.FREE,
+    "demo": Tier.FREE,
+    "trial": Tier.FREE,
+    "pro": Tier.PRO,
+    "standard": Tier.PRO,
+    "plus": Tier.PRO,
+    "paid": Tier.PRO,
+    "enterprise": Tier.ENTERPRISE,
+    "unlimited": Tier.ENTERPRISE,
+    "admin": Tier.ENTERPRISE,
+    "master": Tier.ENTERPRISE,
+}
+
+
+def resolve_tier(raw_tier: Any) -> Optional[Tier]:
+    """Map an issued tier value onto a billing `Tier`.
+
+    Accepts a `Tier` instance or any of the strings in `TIER_ALIASES`
+    (case-insensitive). Returns None for an unrecognised value — callers
+    are expected to treat that as untrusted and fail closed, not to skip
+    the check.
+    """
+    if isinstance(raw_tier, Tier):
+        return raw_tier
+    if raw_tier is None:
+        return None
+    return TIER_ALIASES.get(str(raw_tier).strip().lower())
+
+
 TIER_LIMITS = {
     Tier.FREE: {
         "requests_per_month": 1000,

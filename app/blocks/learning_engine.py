@@ -14,7 +14,23 @@ from app.core.credibility import (
 
 logger = logging.getLogger(__name__)
 
-_STORAGE_PATH = os.environ.get("LEARNING_ENGINE_STORAGE", "/tmp/cerebrum_learning_engine.json")
+def _default_storage_path() -> str:
+    """Default the learning store onto the persistent disk, not /tmp.
+
+    This block accumulates user-generated value: every correction, tier
+    promotion and tuned coefficient. The previous default put it in /tmp, so
+    all of it was wiped on every deploy -- and deploys are roughly daily. It
+    looked like the learning simply never converged.
+
+    DATA_DIR is the same convention the rest of the service uses for durable
+    state (see core/auth.py and routers/upload.py), and on Render it is the
+    mounted disk.
+    """
+    data_dir = os.getenv("DATA_DIR", "./data")
+    return os.path.join(data_dir, "learning_engine.json")
+
+
+_STORAGE_PATH = os.environ.get("LEARNING_ENGINE_STORAGE") or _default_storage_path()
 
 # Tier thresholds: (min_executions, max_mae_pct) → tier label
 _TIER_RULES = [

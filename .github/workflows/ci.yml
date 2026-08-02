@@ -76,7 +76,13 @@ jobs:
         run: pytest -q tests/finance_ops/
 
       - name: Run regression security tests
-        run: pytest -q tests/test_regression_security.py
+        run: |
+          pytest -q tests/test_regression_security.py \
+                    tests/core/test_sentry_scrubbing.py \
+                    tests/core/test_rate_limit_key_storage.py \
+                    tests/core/test_tier_block_access.py \
+                    tests/core/test_api_key_rejection.py \
+                    tests/routers/test_health_capability.py
 
   frontend:
     name: Frontend (tsc + vite build)

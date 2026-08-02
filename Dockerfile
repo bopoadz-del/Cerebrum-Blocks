@@ -38,9 +38,11 @@ RUN mkdir -p /app/data && chown -R cerebrum:cerebrum /app/data && \
     chmod +x /app/entrypoint.sh
 VOLUME /app/data
 
-# Healthcheck
+# Healthcheck. /ready, not /health: /health is liveness and always returns
+# 200, so it can never mark a container unhealthy. /ready probes the real
+# dependencies and returns 503 when the service is up but broken.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8000/ready || exit 1
 
 USER cerebrum
 EXPOSE 8000

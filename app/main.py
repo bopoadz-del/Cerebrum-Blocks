@@ -74,7 +74,9 @@ async def lifespan(app: FastAPI):
     user-visible 502 spikes.
 
     Now: lifespan returns instantly, init_blocks() runs as a background task.
-    /health responds the moment uvicorn binds. First /v1/execute call may pay
+    /health and /ready respond the moment uvicorn binds (liveness does no
+    I/O at all; readiness runs two cheap local checks). First /v1/execute
+    call may pay
     a small lazy-import cost (10ms in our profile), but no request is ever
     blocked on a 2s+ pre-warm.
     """
