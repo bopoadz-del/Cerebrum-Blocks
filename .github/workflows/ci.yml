@@ -84,6 +84,7 @@ jobs:
                     tests/core/test_api_key_rejection.py \
                     tests/core/test_file_crypto.py \
                     tests/core/test_file_crypto_imports_resolve.py \
+                    tests/core/test_backup_scheduler.py \
                     tests/routers/test_health_capability.py
 
   frontend:

@@ -208,13 +208,19 @@ def reset_kimi_probe_cache() -> None:
 @router.get("/v1/system/diagnostics")
 def diagnostics(refresh: bool = False, auth: dict = Depends(require_api_key)):
     """Detailed service diagnostics. Requires a valid API key."""
+    from app.core import backup_scheduler
+
     checks = _run_readiness_checks()
+    last_backup = backup_scheduler.last_status()
     return {
         "status": "ready" if all(checks.values()) else "degraded",
         "checks": {n: ("ok" if ok else "fail") for n, ok in checks.items()},
         "blocks_loaded": len(block_instances),
         "blocks_available": len(BLOCK_REGISTRY),
         "kimi_workbench": probe_kimi_cli(force=refresh),
+        "last_backup": {"ok": bool(last_backup.get("ok")), "at": last_backup.get("at")}
+        if last_backup
+        else None,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
