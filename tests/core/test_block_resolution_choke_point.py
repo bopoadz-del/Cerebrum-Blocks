@@ -23,16 +23,24 @@ from app import dependencies
 @pytest.fixture(autouse=True)
 def _reset_auth():
     security.set_current_auth(None)
+    security._in_request.set(False)
     yield
     security.set_current_auth(None)
+    security._in_request.set(False)
 
 
 RESTRICTED = ["database", "code", "sandbox", "secrets"]
 
 
+def _in_flight(auth):
+    """Simulate an in-flight request with the given auth (as the middleware does)."""
+    security._in_request.set(True)
+    security.set_current_auth(auth)
+
+
 @pytest.mark.parametrize("block", RESTRICTED)
 def test_standard_tier_cannot_resolve_restricted_block(block):
-    security.set_current_auth({"tier": "standard", "user": "attacker"})
+    _in_flight({"tier": "standard", "user": "attacker"})
     with pytest.raises(HTTPException) as exc:
         dependencies.get_block_instance(block)
     assert exc.value.status_code == 403
@@ -46,16 +54,28 @@ def test_create_block_instance_is_also_gated(block):
 
     if block not in BLOCK_REGISTRY:
         pytest.skip(f"{block} not registered in this environment")
-    security.set_current_auth({"tier": "standard", "user": "attacker"})
+    _in_flight({"tier": "standard", "user": "attacker"})
     with pytest.raises(HTTPException) as exc:
         dependencies._create_block_instance(BLOCK_REGISTRY[block])
+    assert exc.value.status_code == 403
+
+
+@pytest.mark.parametrize("block", RESTRICTED)
+def test_in_flight_request_with_unknown_tier_is_denied(block):
+    # FAIL CLOSED: a request is in flight but no tier was ever set (an
+    # unauthenticated or mis-wired route that skipped require_api_key). The gate
+    # must DENY, not wave it through.
+    security._in_request.set(True)
+    security.set_current_auth(None)  # tier unknown
+    with pytest.raises(HTTPException) as exc:
+        dependencies.get_block_instance(block)
     assert exc.value.status_code == 403
 
 
 def test_unlimited_tier_is_allowed_past_the_gate():
     # Unlimited tier passes the gate (it may still fail later on missing config,
     # but it must NOT be a 403 from the resolution gate).
-    security.set_current_auth({"tier": "unlimited", "user": "admin"})
+    _in_flight({"tier": "unlimited", "user": "admin"})
     try:
         dependencies.get_block_instance("database")
     except HTTPException as exc:
@@ -65,9 +85,10 @@ def test_unlimited_tier_is_allowed_past_the_gate():
 
 
 def test_no_request_context_is_permissive():
-    # Boot / registry validation / system warm-up resolve with no auth in
-    # context and must not be blocked.
+    # Boot / registry validation / system warm-up resolve with NO request in
+    # flight and must not be blocked (the only permissive case).
     security.set_current_auth(None)
+    security._in_request.set(False)
     try:
         dependencies.get_block_instance("database")
     except HTTPException as exc:
@@ -77,7 +98,7 @@ def test_no_request_context_is_permissive():
 
 
 def test_unrestricted_block_is_never_gated():
-    security.set_current_auth({"tier": "standard", "user": "normal"})
+    _in_flight({"tier": "standard", "user": "normal"})
     # memory is not a restricted primitive — standard tier resolves it fine.
     inst = dependencies.get_block_instance("memory")
     assert inst is not None
