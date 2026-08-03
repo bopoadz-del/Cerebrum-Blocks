@@ -64,9 +64,8 @@ def test_b5_unauthenticated_execute_is_rejected():
 
 
 # ── B6: construction container primary extraction (document -> structured) ──
-def test_b6_construction_document_extraction(tmp_path):
-    import asyncio
-
+@pytest.mark.asyncio
+async def test_b6_construction_document_extraction(tmp_path):
     from app.containers.construction import ConstructionContainer
 
     doc = tmp_path / "contract.txt"
@@ -78,9 +77,7 @@ def test_b6_construction_document_extraction(tmp_path):
         encoding="utf-8",
     )
     container = ConstructionContainer()
-    out = asyncio.get_event_loop().run_until_complete(
-        container.route("process_document", {"file_path": str(doc)}, {})
-    )
+    out = await container.route("process_document", {"file_path": str(doc)}, {})
     assert out.get("status") == "success", out
     # The container auto-classifies and routes (drawing / contract / spec / ...);
     # whichever path runs must return a real structured envelope, not a shrug.
