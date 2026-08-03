@@ -4,12 +4,12 @@
       "contact": "platform@cerebrum.local",
       "created_at": "2026-07-02T21:27:06.172765+00:00",
       "name": "Cerebrum Platform",
-      "public_key": "zLP6K1DrdY9ikFlCaffXYuDkilizENCGQPIdlFP0HuU=",
+      "public_key": "iwCMU+yHUj0aqS9A5T+6i0VD41jZd30sQ6JgEsuN0Ko=",
       "publisher_id": "cerebrum_platform",
       "revoked_at": null,
       "tier": "certified"
     }
   ],
-  "updated_at": "2026-07-30T06:58:49.463340+00:00",
+  "updated_at": "2026-08-03T08:50:39.754397+00:00",
   "version": 1
 }

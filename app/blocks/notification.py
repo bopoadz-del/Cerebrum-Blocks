@@ -79,7 +79,7 @@ class NotificationBlock(TypedBlock):
     input_schema = Schema(
         content_type=ContentType.JSON,
         required_fields=["channel", "message"],
-        optional_fields=["to", "subject", "html", "url", "headers", "payload", "parse_mode", "blocks"],
+        optional_fields=["to", "subject", "html", "url", "headers", "payload", "blocks"],
         format_hints={}
     )
 

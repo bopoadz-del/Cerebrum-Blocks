@@ -5,8 +5,12 @@ bot, no Telegram channel, no Telegram integration anywhere. Previous
 removals were partial — the bot was moved into ``block_store/`` instead of
 deleted, the notification block kept ``telegram`` as its *default* channel
 (which, with the handler gone, made the default silently broken), and the
-router schema still advertised it. This test encodes the directive itself
-so a partial removal can never look complete again.
+router schema still advertised it. A later pass still missed the *signed
+block-registry manifest*, which advertised Telegram as a channel and shipped
+``telegram`` example payloads to the UI, plus a ``parse_mode`` field (a
+Telegram-only concept) left in the notification block's input schema. This
+test now scans code AND registry metadata AND the parse_mode vestige so a
+partial removal can never look complete again.
 """
 
 from __future__ import annotations
@@ -16,23 +20,49 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SCANNED_DIRS = ("app", "block_store")
+# Per-directory scan rules. Code is scanned everywhere. JSON is scanned only
+# where it is *integration metadata* (app config + block-registry manifests
+# served to users and baked into signed manifests). ``block_store`` JSON is
+# code-only: it holds eval/benchmark datasets (e.g. legal contract corpora)
+# whose text legitimately contains the word "telegram" and must not trip the
+# guard. Docs are excluded too: a historical audit note recording the removal
+# legitimately says "telegram".
+SCAN_RULES = {
+    "app": ("*.py", "*.json"),
+    "block_registry": ("*.py", "*.json"),
+    "block_store": ("*.py",),
+}
 
 
 def test_no_telegram_anywhere_in_source():
     offenders = []
-    for base in SCANNED_DIRS:
+    for base, patterns in SCAN_RULES.items():
         root = REPO_ROOT / base
         if not root.is_dir():
             continue
-        for path in root.rglob("*.py"):
-            text = path.read_text(encoding="utf-8", errors="ignore")
-            if "telegram" in text.lower():
-                offenders.append(str(path.relative_to(REPO_ROOT)))
+        for pattern in patterns:
+            for path in root.rglob(pattern):
+                text = path.read_text(encoding="utf-8", errors="ignore")
+                if "telegram" in text.lower():
+                    offenders.append(str(path.relative_to(REPO_ROOT)))
     assert not offenders, (
         "Telegram references found — the owner has asked repeatedly for "
-        f"complete removal: {offenders}"
+        f"complete removal: {sorted(set(offenders))}"
     )
+
+
+def test_no_telegram_parse_mode_vestige():
+    """``parse_mode`` is a Telegram-only field. It must not survive in the
+    notification block's schema or its signed registry manifest."""
+    offenders = []
+    candidates = [
+        REPO_ROOT / "app" / "blocks" / "notification.py",
+        REPO_ROOT / "block_registry" / "notification" / "block.json",
+    ]
+    for path in candidates:
+        if path.is_file() and "parse_mode" in path.read_text(encoding="utf-8", errors="ignore"):
+            offenders.append(str(path.relative_to(REPO_ROOT)))
+    assert not offenders, f"Telegram-only 'parse_mode' vestige found in: {offenders}"
 
 
 def test_no_telegram_env_knob_documented():

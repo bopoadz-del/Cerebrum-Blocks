@@ -32,6 +32,12 @@ data/captures
 tests/__pycache__
 dev/
 
+# Secrets — never bake a local .env into the image (Dockerfile does COPY . .)
+.env
+.env.*
+!.env.example
+data/publishers/*.key
+
 # Render scripts
 scripts/render_api.sh
 

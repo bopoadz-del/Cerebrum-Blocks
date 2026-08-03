@@ -1,9 +1,9 @@
 {
   "author": "Cerebrum Team",
-  "description": "Send notifications via Telegram, Email, Webhook, or Slack",
+  "description": "Send notifications via Email, Webhook, Slack, or MCP",
   "digests": {
     "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
-    "block.json": "107a38ce9a9daa1a9304832876de9343f5e20aa68c3048a692b37962bc3ed15b",
+    "block.json": "ffc09eb2019c89be5901bc548a19164425ff03258b45a0ba5d23f90146df9e52",
     "block.py": "54b89f6527312074e29a1c5504bd0a6cc437dabd7f78b437c38baf4896c4fd4e"
   },
   "execution": {
@@ -13,7 +13,7 @@
   "id": "notification",
   "inputs": [
     {
-      "description": "{\"channel\": \"telegram\", \"to\": \"123456\", \"message\": \"Hello\"}",
+      "description": "{\"channel\": \"email\", \"to\": \"ops@example.com\", \"message\": \"Hello\"}",
       "name": "input",
       "required": false,
       "type": "json"
@@ -107,7 +107,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
-  "signature": "ecm+fU0SYQMVY/H3nOUr8rDneh+hDBR6vcB7UOUZB0zZiHf5/RKZXYdXCvNJaQqrMnoiT96t8gwL9ei/IbKDCQ==",
+  "signature": "S98VInJDoKrLn+iaXhENRfwrbKSVNg9MzM1LORS/HmR/dAUHpDUMgWCwhhZ/bwg4DIeDd3X8nE+ZLIlJlZ7MBA==",
   "tags": [
     "notification",
     "messaging",
@@ -116,7 +116,7 @@
   ],
   "ui_schema": [
     {
-      "label": "{\"channel\": \"telegram\", \"to\": \"123456\", \"message\": \"Hello\"}",
+      "label": "{\"channel\": \"email\", \"to\": \"ops@example.com\", \"message\": \"Hello\"}",
       "name": "input",
       "widget": "json"
     },
