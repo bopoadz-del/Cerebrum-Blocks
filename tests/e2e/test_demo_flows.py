@@ -63,6 +63,33 @@ def test_b5_unauthenticated_execute_is_rejected():
         assert resp.status_code in (401, 403), resp.text
 
 
+# ── B6: construction container primary extraction (document -> structured) ──
+def test_b6_construction_document_extraction(tmp_path):
+    import asyncio
+
+    from app.containers.construction import ConstructionContainer
+
+    doc = tmp_path / "contract.txt"
+    doc.write_text(
+        "CONTRACT AGREEMENT\n"
+        "The Contractor shall supply and install 1200 m3 of C40 concrete and "
+        "85000 kg of reinforcement. The Contract Sum is AED 12,500,000. "
+        "Practical Completion within 540 days. Retention shall be 10%.",
+        encoding="utf-8",
+    )
+    container = ConstructionContainer()
+    out = asyncio.get_event_loop().run_until_complete(
+        container.route("process_document", {"file_path": str(doc)}, {})
+    )
+    assert out.get("status") == "success", out
+    # The container auto-classifies and routes (drawing / contract / spec / ...);
+    # whichever path runs must return a real structured envelope, not a shrug.
+    assert out.get("file_name") == "contract.txt"
+    classified = out.get("doc_type") or out.get("action") or out.get("contract_type")
+    assert classified, f"document was not classified/processed: {out}"
+    assert len(out.keys()) > 4, f"extraction envelope too thin: {list(out.keys())}"
+
+
 # ── B3: ingest -> RAG query -> cited answer (needs pgvector) ────────────────
 @pytest.mark.skipif(
     os.getenv("DATABASE_URL") is None,
