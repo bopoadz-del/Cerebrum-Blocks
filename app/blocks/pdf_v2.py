@@ -82,7 +82,9 @@ class PDFBlockV2(TypedBlock):
         if pdf_path.startswith("http://") or pdf_path.startswith("https://"):
             import httpx, tempfile
             try:
-                async with httpx.AsyncClient(follow_redirects=True) as client:
+                from app.core.url_guard import validate_public_url
+                pdf_path = validate_public_url(pdf_path)  # SSRF guard
+                async with httpx.AsyncClient(follow_redirects=False) as client:
                     resp = await client.get(pdf_path, timeout=30)
                     resp.raise_for_status()
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as f:

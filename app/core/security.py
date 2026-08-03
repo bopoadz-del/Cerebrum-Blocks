@@ -20,13 +20,33 @@ tier, prefix with `-`:
 
 from __future__ import annotations
 
+import contextvars
 import logging
 import os
-from typing import Any, Dict, Set
+from typing import Any, Dict, Optional, Set
 
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
+
+
+# The tier of the request currently being served, set at the auth boundary
+# (require_api_key) and read at block RESOLUTION. Default None means "no request
+# context" — boot, registry validation, and internal warm-up resolve blocks
+# with no tier and are left permissive.
+_current_auth: contextvars.ContextVar[Optional[Dict[str, Any]]] = contextvars.ContextVar(
+    "cerebrum_current_auth", default=None
+)
+
+
+def set_current_auth(auth: Optional[Dict[str, Any]]) -> None:
+    """Record the auth dict of the in-flight request (called by require_api_key)."""
+    _current_auth.set(auth)
+
+
+def get_current_auth() -> Optional[Dict[str, Any]]:
+    """Return the in-flight request's auth dict, or None outside a request."""
+    return _current_auth.get()
 
 
 # Blocks that the audit identified as critical RCE / SSRF / vault / FS
@@ -88,6 +108,45 @@ logger.info(
 
 def is_restricted(block_name: str) -> bool:
     return block_name in RESTRICTED_BLOCKS
+
+
+def enforce_restricted_resolution(block_name: str) -> None:
+    """Choke-point gate applied at block RESOLUTION (instance creation).
+
+    The audit found ``enforce_block_access`` was only called by ``/v1/execute``
+    and ``/chain``. Every other dispatch path — ``/swarm/execute``,
+    ``/workflow/run``, ``/notify``, ``async_processor``, ``jetson_gateway`` —
+    reaches blocks by name via ``get_block_instance`` / ``_create_block_instance``
+    with no tier check, so a standard-tier key could reach the ``database``
+    (raw-SQL), ``code``/``sandbox`` (RCE), ``secrets`` (vault) primitives.
+
+    This gate runs wherever a block is instantiated. When it fires inside an
+    authenticated request (``_current_auth`` set), a restricted block requires
+    ``tier == "unlimited"``. Resolution with no request context (boot, registry
+    validation, system warm-up) has ``_current_auth is None`` and is permissive,
+    so nothing at start-up breaks.
+    """
+    if block_name not in RESTRICTED_BLOCKS:
+        return
+    auth = _current_auth.get()
+    if auth is None:
+        return  # no request context — system/boot resolution
+    tier = (auth or {}).get("tier")
+    if tier == "unlimited":
+        return
+    user = (auth or {}).get("user", "?")
+    logger.warning(
+        "security: blocked resolution of restricted block '%s' (tier=%s, user=%s) "
+        "— dispatch-path attempt to reach a privileged primitive",
+        block_name, tier, user,
+    )
+    raise HTTPException(
+        status_code=403,
+        detail=(
+            f"Block '{block_name}' is restricted to unlimited-tier keys. "
+            f"Your tier: {tier or 'unknown'}."
+        ),
+    )
 
 
 def enforce_block_access(block_name: str, auth: Dict[str, Any]) -> None:

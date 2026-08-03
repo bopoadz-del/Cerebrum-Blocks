@@ -30,9 +30,7 @@ class AnalyticsBlock(UniversalBlock):
         "aggregation_interval": 300,  # 5 minutes
         "prediction_window": 10,  # samples for prediction
         "cost_per_1k_requests": {
-            "deepseek": 0.14,
-            
-            
+            "kimi": 0.14,
         }
     }
 
@@ -200,7 +198,7 @@ class AnalyticsBlock(UniversalBlock):
     
     async def _predictive_analysis(self, data: Dict) -> Dict:
         """Predict failures based on trend analysis"""
-        provider = data.get("provider", "deepseek")
+        provider = data.get("provider", "kimi")
         window = data.get("window", self.config.get("prediction_window", 10))
         
         # Get recent latency/error data
@@ -332,7 +330,7 @@ class AnalyticsBlock(UniversalBlock):
     
     async def _compare_providers(self, data: Dict) -> Dict:
         """Compare providers across multiple dimensions"""
-        providers = data.get("providers", ["deepseek", "anthropic"])
+        providers = data.get("providers", ["kimi"])
         metrics = ["latency", "reliability", "cost"]
         
         comparison = {}

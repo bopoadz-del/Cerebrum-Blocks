@@ -518,7 +518,11 @@ async def require_api_key(credentials: HTTPAuthorizationCredentials = security) 
     usage = await manager.check_usage_limits(key_data["id"], key_data["tier"])
     if not usage["allowed"]:
         raise HTTPException(status_code=429, detail=usage["reason"])
-    
+
+    # Record tier for the block-resolution choke point (see security.py).
+    from app.core.security import set_current_auth
+    set_current_auth(key_data)
+
     return key_data
 
 

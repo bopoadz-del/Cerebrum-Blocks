@@ -70,6 +70,12 @@ def _create_block_instance(block_class, config: Optional[Dict] = None, allow_pla
     receive the platform registry; third-party blocks do not, to prevent them
     from obtaining unmediated access to other blocks or the memory cache.
     """
+    # Choke-point tier gate: any restricted primitive instantiated inside an
+    # authenticated request must pass the tier check, even on dispatch paths
+    # (swarm/workflow/notify/...) that never called enforce_block_access.
+    from app.core.security import enforce_restricted_resolution
+    enforce_restricted_resolution(getattr(block_class, "name", "") or "")
+
     sig = inspect.signature(block_class.__init__)
     params = list(sig.parameters.keys())
 
@@ -199,6 +205,10 @@ def _wire_block_dependencies(instance, block_class, name: str = None, caps=None)
 
 
 def get_block_instance(block_name: str, config: Optional[Dict] = None) -> Any:
+    # Choke-point tier gate — runs on every call, including cache hits, so a
+    # dispatch path cannot reach a restricted block by resolving a cached one.
+    from app.core.security import enforce_restricted_resolution
+    enforce_restricted_resolution(block_name)
     if block_name not in block_instances:
         block_class = BLOCK_REGISTRY[block_name]
         caps = get_block_capabilities(block_name)
@@ -257,7 +267,10 @@ async def require_api_key(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> Dict[str, Any]:
     """Require valid API key for protected endpoints"""
-    return auth_manager.validate_key(credentials)
+    auth = auth_manager.validate_key(credentials)
+    from app.core.security import set_current_auth
+    set_current_auth(auth)
+    return auth
 
 
 async def init_blocks():

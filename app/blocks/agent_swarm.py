@@ -2,7 +2,7 @@
 
 Lightweight async orchestrator. No heavy frameworks.
 - Dependency resolution (topological sort)
-- LLM routing: Ollama (local/Orin) ↔ OpenRouter/OpenAI (cloud)
+- LLM: Kimi (Moonshot) only — the platform's single provider (OpenAI-compatible)
 - Vector memory integration
 - Standard Cerebrum block contract
 - Tool-using agents via MCP contract + direct dispatch (no HTTP)
@@ -30,10 +30,8 @@ _MAX_TOOL_ITERATIONS = int(os.getenv("AGENT_MAX_TOOL_ITERATIONS", "6"))
 
 
 class LLMProvider(str, Enum):
-    OLLAMA = "ollama"
-    DEEPSEEK = "deepseek"
-    OPENROUTER = "openrouter"
-    ANTHROPIC = "anthropic"
+    # Kimi (Moonshot) is the platform's only LLM provider.
+    KIMI = "kimi"
 
 
 class AgentSwarmBlock(TypedBlock):
@@ -70,15 +68,10 @@ class AgentSwarmBlock(TypedBlock):
     produced_output_types = ["JSON", "SwarmResponse"]
 
     default_config = {
-        "llm_provider": os.getenv("LLM_PROVIDER", "ollama"),
-        "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
-        "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
-        "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
-        "deepseek_model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
-        "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
-        "openrouter_model": os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet"),
-        "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY", ""),
-        "anthropic_model": os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
+        "llm_provider": "kimi",
+        "kimi_base_url": os.getenv("KIMI_BASE_URL", os.getenv("MOONSHOT_BASE_URL", "https://api.moonshot.ai/v1")),
+        "kimi_model": os.getenv("KIMI_MODEL", os.getenv("MOONSHOT_MODEL", "kimi-k2-0905-preview")),
+        "kimi_api_key": os.getenv("KIMI_API_KEY", os.getenv("MOONSHOT_API_KEY", "")),
         "vector_db_url": os.getenv("VECTOR_DB_URL", "http://localhost:8001"),
         "max_concurrent_agents": int(os.getenv("MAX_CONCURRENT_AGENTS", "5")),
         "default_timeout": int(os.getenv("DEFAULT_TIMEOUT", "120")),
@@ -169,7 +162,7 @@ class AgentSwarmBlock(TypedBlock):
         agents = request.get("agents", [])
         tasks = request.get("tasks", [])
         store_memory = request.get("store_memory", self.config.get("store_memory", True))
-        llm_provider = request.get("llm_provider", self.config.get("llm_provider", "ollama"))
+        llm_provider = request.get("llm_provider", self.config.get("llm_provider", "kimi"))
 
         if not agents or not tasks:
             # Return a demo/example response so the block works end-to-end
@@ -415,7 +408,7 @@ class AgentSwarmBlock(TypedBlock):
         Returns:
             (tool_specs_for_llm, tool_name → block_name map)
             tool_specs are in OpenAI-compatible {type:"function", function:{...}}
-            shape — both DeepSeek and OpenRouter accept this.
+            shape — Kimi (Moonshot) accepts this.
         """
         allowed = agent.get("tools") or []
         if not allowed:
@@ -631,153 +624,25 @@ class AgentSwarmBlock(TypedBlock):
         temperature: float = 0.3,
         tools: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict:
-        import httpx  # noqa: F401  (used by the provider helpers)
+        import httpx  # noqa: F401  (used by the provider helper)
 
-        if provider == LLMProvider.OLLAMA:
-            # Ollama tool-call support varies wildly by model; pass tools through
-            # but expect plain text for unsupported models.
-            return await self._ollama_chat(messages, model, temperature, tools)
-        elif provider == "deepseek" or provider == LLMProvider.DEEPSEEK:
-            return await self._openai_compatible_chat(
-                messages=messages,
-                model=model or self.config.get("deepseek_model", "deepseek-chat"),
-                temperature=temperature,
-                tools=tools,
-                api_key=self.config.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY", ""),
-                url="https://api.deepseek.com/chat/completions",
-                provider_label="deepseek",
-            )
-        elif provider == LLMProvider.OPENROUTER:
-            return await self._openai_compatible_chat(
-                messages=messages,
-                model=model or self.config.get("openrouter_model", "anthropic/claude-3.5-sonnet"),
-                temperature=temperature,
-                tools=tools,
-                api_key=self.config.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY", ""),
-                url="https://openrouter.ai/api/v1/chat/completions",
-                provider_label="openrouter",
-            )
-        elif provider == "anthropic" or provider == LLMProvider.ANTHROPIC:
-            return await self._anthropic_chat(messages, model, temperature, tools)
-        else:
-            raise ValueError(f"Unknown provider: {provider}")
+        # Kimi (Moonshot) only. Its cloud API is OpenAI-compatible, so the
+        # swarm's tool-calling loop reaches it through _openai_compatible_chat.
+        base = (self.config.get("kimi_base_url") or "https://api.moonshot.ai/v1").rstrip("/")
+        return await self._openai_compatible_chat(
+            messages=messages,
+            model=model or self.config.get("kimi_model", "kimi-k2-0905-preview"),
+            temperature=temperature,
+            tools=tools,
+            api_key=(
+                self.config.get("kimi_api_key")
+                or os.getenv("KIMI_API_KEY")
+                or os.getenv("MOONSHOT_API_KEY", "")
+            ),
+            url=f"{base}/chat/completions",
+            provider_label="kimi",
+        )
 
-    async def _anthropic_chat(
-        self,
-        messages: List[Dict[str, Any]],
-        model: Optional[str],
-        temperature: float,
-        tools: Optional[List[Dict[str, Any]]],
-    ) -> Dict[str, Any]:
-        """Direct Anthropic /v1/messages call. Translates between OpenAI's
-        tools/tool_calls/role=tool format (what the rest of the swarm uses)
-        and Anthropic's messages-API native format.
-
-        Translation rules:
-          - System message in OpenAI → top-level `system` param
-          - {role:"tool",content,...} → {role:"user", content:[{type:tool_result}]}
-          - assistant tool_calls → already separated below into content blocks
-          - response.stop_reason=tool_use → unwrap to OpenAI-shape tool_calls
-        """
-        import httpx
-        api_key = self.config.get("anthropic_api_key") or os.getenv("ANTHROPIC_API_KEY", "")
-        if not api_key:
-            raise ValueError("anthropic API key not configured")
-        model = model or self.config.get("anthropic_model", "claude-sonnet-4-6")
-
-        # Pull the system message out — Anthropic wants it as a top-level param.
-        system_text = ""
-        chat_messages: List[Dict[str, Any]] = []
-        for m in messages:
-            role = m.get("role")
-            if role == "system":
-                system_text = (system_text + "\n\n" + (m.get("content") or "")).strip()
-            elif role == "tool":
-                chat_messages.append({
-                    "role": "user",
-                    "content": [{
-                        "type": "tool_result",
-                        "tool_use_id": m.get("tool_call_id"),
-                        "content": m.get("content", ""),
-                    }],
-                })
-            elif role == "assistant" and m.get("tool_calls"):
-                blocks: List[Dict[str, Any]] = []
-                if m.get("content"):
-                    blocks.append({"type": "text", "text": m["content"]})
-                for tc in m["tool_calls"]:
-                    fn = tc.get("function") or {}
-                    raw_args = fn.get("arguments", "{}")
-                    args = json.loads(raw_args) if isinstance(raw_args, str) else (raw_args or {})
-                    blocks.append({
-                        "type": "tool_use",
-                        "id": tc.get("id", ""),
-                        "name": fn.get("name", ""),
-                        "input": args,
-                    })
-                chat_messages.append({"role": "assistant", "content": blocks})
-            else:
-                chat_messages.append({"role": role, "content": m.get("content", "")})
-
-        # Translate OpenAI tools → Anthropic tools
-        anthropic_tools = None
-        if tools:
-            anthropic_tools = []
-            for t in tools:
-                fn = t.get("function") or {}
-                anthropic_tools.append({
-                    "name": fn.get("name", ""),
-                    "description": fn.get("description", ""),
-                    "input_schema": fn.get("parameters") or {"type": "object", "properties": {}},
-                })
-
-        payload: Dict[str, Any] = {
-            "model": model,
-            "max_tokens": 4096,
-            "temperature": temperature,
-            "messages": chat_messages,
-        }
-        if system_text:
-            payload["system"] = system_text
-        if anthropic_tools:
-            payload["tools"] = anthropic_tools
-
-        headers = {
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-        }
-
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post("https://api.anthropic.com/v1/messages", headers=headers, json=payload)
-            resp.raise_for_status()
-            data = resp.json()
-
-        # Anthropic returns content as a list of blocks; pull out text + tool_use
-        text_parts: List[str] = []
-        oa_tool_calls: List[Dict[str, Any]] = []
-        for block in data.get("content", []):
-            btype = block.get("type")
-            if btype == "text":
-                text_parts.append(block.get("text", ""))
-            elif btype == "tool_use":
-                oa_tool_calls.append({
-                    "id": block.get("id", ""),
-                    "type": "function",
-                    "function": {
-                        "name": block.get("name", ""),
-                        "arguments": json.dumps(block.get("input") or {}),
-                    },
-                })
-
-        usage = data.get("usage") or {}
-        return {
-            "content": "\n".join(text_parts),
-            "tool_calls": oa_tool_calls,
-            "model": model,
-            "provider": "anthropic",
-            "tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
-        }
 
     async def _openai_compatible_chat(
         self,
@@ -789,10 +654,10 @@ class AgentSwarmBlock(TypedBlock):
         url: str,
         provider_label: str,
     ) -> Dict[str, Any]:
-        """Single OpenAI-format call for DeepSeek / OpenRouter.
+        """Single OpenAI-format chat call — used for Kimi (Moonshot).
 
-        Both providers accept the same {messages, tools, tool_choice} shape
-        and return the same {choices: [{message: {content, tool_calls}}]}.
+        Kimi's cloud API accepts the OpenAI {messages, tools, tool_choice} shape
+        and returns {choices: [{message: {content, tool_calls}}]}.
         """
         import httpx
         if not api_key:
@@ -821,34 +686,6 @@ class AgentSwarmBlock(TypedBlock):
             "tokens": data.get("usage", {}).get("total_tokens", 0),
         }
 
-    async def _ollama_chat(self, messages, model, temperature, tools=None):
-        import httpx
-        model = model or self.config.get("ollama_model", "llama3.2:3b")
-        url = f"{self.config.get('ollama_base_url')}/api/chat"
-        payload = {
-            "model": model,
-            "messages": messages,
-            "stream": False,
-            "options": {"temperature": temperature},
-        }
-        if tools:
-            # Ollama follows the OpenAI tools schema for models that support it
-            # (llama3.1+, qwen2.5, mistral-nemo, etc.). For others it's ignored.
-            payload["tools"] = tools
-
-        async with httpx.AsyncClient(timeout=self.config.get("default_timeout", 120)) as client:
-            resp = await client.post(url, json=payload)
-            resp.raise_for_status()
-            data = resp.json()
-
-        message = data.get("message", {})
-        return {
-            "content": message.get("content", "") or "",
-            "tool_calls": message.get("tool_calls") or [],
-            "model": model,
-            "provider": "ollama",
-            "tokens": data.get("eval_count", 0) + data.get("prompt_eval_count", 0),
-        }
 
     # ── Vector Memory ──────────────────────────────────────────────────────────
 
@@ -915,26 +752,17 @@ class AgentSwarmBlock(TypedBlock):
             "status": "healthy" if llm_ready else "degraded",
             "block_id": self.name,
             "version": self.version,
-            "llm_provider": self.config.get("llm_provider", "ollama"),
+            "llm_provider": self.config.get("llm_provider", "kimi"),
             "llm_ready": llm_ready,
         }
 
     async def _check_llm_health(self) -> bool:
-        import httpx
-        provider = self.config.get("llm_provider", "ollama")
-        try:
-            if provider == LLMProvider.OLLAMA:
-                url = f"{self.config.get('ollama_base_url')}/api/tags"
-                async with httpx.AsyncClient(timeout=5) as client:
-                    resp = await client.get(url)
-                    return resp.status_code == 200
-            elif provider == "deepseek" or provider == LLMProvider.DEEPSEEK:
-                return bool(self.config.get("deepseek_api_key"))
-            elif provider == LLMProvider.OPENROUTER:
-                return bool(self.config.get("openrouter_api_key"))
-        except Exception:
-            return False
-        return False
+        # Kimi (Moonshot) only: healthy when an API key is configured.
+        return bool(
+            self.config.get("kimi_api_key")
+            or os.getenv("KIMI_API_KEY")
+            or os.getenv("MOONSHOT_API_KEY", "")
+        )
 
     # ── Helpers ────────────────────────────────────────────────────────────────
 

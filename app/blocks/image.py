@@ -37,7 +37,12 @@ async def _download_to_temp(url: str) -> str:
     import tempfile
     import httpx
 
-    async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+    from app.core.url_guard import validate_public_url
+
+    # SSRF guard: reject loopback / link-local (cloud metadata) / private hosts,
+    # and disable redirects so a public URL cannot bounce to a private one.
+    url = validate_public_url(url)
+    async with httpx.AsyncClient(timeout=15, follow_redirects=False) as client:
         resp = await client.get(url)
         resp.raise_for_status()
     content_type = resp.headers.get("content-type", "image/jpeg").split(";")[0].strip()

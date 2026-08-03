@@ -116,7 +116,9 @@ class MarkerBlock(TypedBlock):
             import httpx
 
             try:
-                async with httpx.AsyncClient(follow_redirects=True) as client:
+                from app.core.url_guard import validate_public_url
+                url = validate_public_url(url)  # SSRF guard
+                async with httpx.AsyncClient(follow_redirects=False) as client:
                     response = await client.get(url, timeout=30)
                     response.raise_for_status()
                     suffix = ".pdf" if ".pdf" in url.lower() else ".tmp"
