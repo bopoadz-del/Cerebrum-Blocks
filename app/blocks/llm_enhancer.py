@@ -1,18 +1,18 @@
-"""LLM Enhancer Block — augments regex-baseline extractions with Claude.
+"""LLM Enhancer Block — augments regex-baseline extractions with Kimi.
 
 Layer-3 domain block that runs AFTER the deterministic regex extractors in
 ``app/containers/construction.py`` have produced their best-effort baseline.
 Real-world construction RFPs (data-centre BoDs, GW-scale infrastructure
 specs) phrase quantities in tables, ranges, and named-subsystem prose that
-brittle regex misses. When ``ANTHROPIC_API_KEY`` is set and the SDK is
-installed, this block hands the document text + the regex baseline to
-Claude and asks for the additional items (quantities / risks / RFIs) the
-regex pipeline missed.
+brittle regex misses. When ``KIMI_API_KEY`` (or ``MOONSHOT_API_KEY``) is set,
+this block hands the document text + the regex baseline to Kimi (Moonshot's
+OpenAI-compatible API) and asks for the additional items (quantities / risks /
+RFIs) the regex pipeline missed.
 
-Defensive contract: if the SDK isn't installed OR the env var isn't set,
-``is_active()`` returns False and every ``enhance_*`` method short-circuits
-to ``{"additions": [], "skipped": True, "reason": "..."}`` — never raises.
-The container's ``auto_pipeline`` only invokes us behind ``is_active()``.
+Defensive contract: if no Kimi key is set, ``is_active()`` returns False and
+every ``enhance_*`` method short-circuits to ``{"additions": [], "skipped":
+True, "reason": "..."}`` — never raises. The container's ``auto_pipeline`` only
+invokes us behind ``is_active()``.
 """
 
 from __future__ import annotations
@@ -27,8 +27,8 @@ from app.core.universal_base import UniversalBlock
 logger = logging.getLogger(__name__)
 
 
-# Mid-tier Sonnet — fast + good quality for structured extraction.
-DEFAULT_MODEL = "claude-sonnet-4-6"
+# Kimi model for structured extraction (override via config "model" / KIMI_MODEL).
+DEFAULT_MODEL = "kimi-k2-0905-preview"
 
 # 30-second per-call timeout. Construction RFPs are large; we send up to
 # 50k chars of context plus baseline JSON, so the API can take a few
@@ -40,7 +40,7 @@ DEFAULT_TIMEOUT_S = 30.0
 # response budget.
 MAX_OUTPUT_TOKENS = 4000
 
-# Document-text cap — Claude has a large context window, but past 50k chars
+# Document-text cap — Kimi has a large context window, but past 50k chars
 # we hit diminishing returns and slow the call. The regex pipeline already
 # saw the full doc; we're only asking the LLM to fill gaps.
 MAX_TEXT_CHARS = 50_000
@@ -107,7 +107,7 @@ _RFIS_SYSTEM_PROMPT = (
 
 
 class LLMEnhancerBlock(UniversalBlock):
-    """Augments regex-baseline construction extractions with Claude."""
+    """Augments regex-baseline construction extractions with Kimi."""
 
     name = "llm_enhancer"
     version = "1.0"
@@ -153,43 +153,17 @@ class LLMEnhancerBlock(UniversalBlock):
 
     # ── client lifecycle ────────────────────────────────────────────────
 
-    def _anthropic_client(self) -> Optional[Any]:
-        """Lazy-init an ``anthropic.Anthropic`` instance.
+    def _kimi_key(self) -> Optional[str]:
+        """Return the Kimi (Moonshot) API key from env, or None."""
+        return os.environ.get("KIMI_API_KEY") or os.environ.get("MOONSHOT_API_KEY")
 
-        Returns None when the SDK isn't installed OR the API key isn't set.
-        Cached on the instance so repeat calls reuse the same client.
-        """
-        cached = getattr(self, "_client_cache", None)
-        if cached is not None:
-            return cached
-
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if not api_key:
-            return None
-
-        try:
-            import anthropic  # type: ignore
-        except Exception:  # ImportError or anthropic == None (test sentinel)
-            return None
-        if anthropic is None:
-            return None
-
-        try:
-            import httpx  # type: ignore
-            timeout = httpx.Timeout(float(self.config.get("timeout_seconds", DEFAULT_TIMEOUT_S)))
-            client = anthropic.Anthropic(api_key=api_key, timeout=timeout)
-        except Exception:
-            try:
-                client = anthropic.Anthropic(api_key=api_key)
-            except Exception:
-                return None
-
-        self._client_cache = client
-        return client
+    def _kimi_ready(self) -> bool:
+        """True iff a Kimi key is configured (the block can call the model)."""
+        return bool(self._kimi_key())
 
     def is_active(self) -> bool:
-        """True iff a Claude client can be constructed from current env."""
-        return self._anthropic_client() is not None
+        """True iff Kimi is configured from current env."""
+        return self._kimi_ready()
 
     # ── core LLM call ───────────────────────────────────────────────────
 
@@ -204,24 +178,6 @@ class LLMEnhancerBlock(UniversalBlock):
 
     def _skipped(self, reason: str) -> Dict[str, Any]:
         return {"additions": [], "skipped": True, "reason": reason}
-
-    @staticmethod
-    def _extract_text(message: Any) -> str:
-        """Concatenate text blocks from an anthropic Message response."""
-        content = getattr(message, "content", None)
-        if content is None and isinstance(message, dict):
-            content = message.get("content")
-        if not content:
-            return ""
-
-        parts: List[str] = []
-        for block in content:
-            text = getattr(block, "text", None)
-            if text is None and isinstance(block, dict):
-                text = block.get("text")
-            if isinstance(text, str):
-                parts.append(text)
-        return "".join(parts)
 
     @staticmethod
     def _parse_json_payload(raw: str) -> Dict[str, Any]:
@@ -248,37 +204,44 @@ class LLMEnhancerBlock(UniversalBlock):
             return json.loads(text[start : end + 1])
         raise ValueError("no JSON object found in response")
 
-    async def _call_claude(
+    async def _call_kimi(
         self, system_prompt: str, user_prompt: str
     ) -> Dict[str, Any]:
-        """Single Claude call with prompt caching on the system prompt.
+        """Single Kimi (Moonshot) call over the OpenAI-compatible API.
 
         Returns ``{"additions": [...], ...}`` on success, ``{"additions":
-        [], "skipped": True, "reason": ...}`` when the SDK / key are
-        missing, or ``{"additions": [], "error": "..."}`` on parse failure.
+        [], "skipped": True, "reason": ...}`` when the key is missing, or
+        ``{"additions": [], "error": "..."}`` on call/parse failure.
         """
-        client = self._anthropic_client()
-        if client is None:
-            return self._skipped("ANTHROPIC_API_KEY missing or anthropic SDK not installed")
+        api_key = self._kimi_key()
+        if not api_key:
+            return self._skipped("KIMI_API_KEY / MOONSHOT_API_KEY not set")
 
+        import httpx
+        from app.core.llm_config import _llm_config
+
+        cfg = _llm_config()
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        payload = {
+            "model": self._model(),
+            "max_tokens": self._max_tokens(),
+            "temperature": 0.2,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        }
         try:
-            message = client.messages.create(
-                model=self._model(),
-                max_tokens=self._max_tokens(),
-                system=[
-                    {
-                        "type": "text",
-                        "text": system_prompt,
-                        "cache_control": {"type": "ephemeral"},
-                    }
-                ],
-                messages=[{"role": "user", "content": user_prompt}],
-            )
+            timeout = float(self.config.get("timeout_seconds", DEFAULT_TIMEOUT_S))
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                resp = await client.post(cfg["url"], headers=headers, json=payload)
+                resp.raise_for_status()
+                data = resp.json()
+            raw = data["choices"][0]["message"].get("content", "") or ""
         except Exception as exc:
-            logger.warning("llm_enhancer: Claude call failed: %s", exc)
+            logger.warning("llm_enhancer: Kimi call failed: %s", exc)
             return {"additions": [], "error": f"api_call_failed: {exc}"}
 
-        raw = self._extract_text(message)
         try:
             payload = self._parse_json_payload(raw)
         except (ValueError, json.JSONDecodeError) as exc:
@@ -296,8 +259,8 @@ class LLMEnhancerBlock(UniversalBlock):
     async def enhance_quantities(
         self, text: str, baseline: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Ask Claude for quantity items the regex baseline missed."""
-        if self._anthropic_client() is None:
+        """Ask Kimi for quantity items the regex baseline missed."""
+        if not self._kimi_ready():
             return self._skipped("client_unavailable")
         baseline = baseline if isinstance(baseline, dict) else {}
         text = text or ""
@@ -305,13 +268,13 @@ class LLMEnhancerBlock(UniversalBlock):
             f"BASELINE: {json.dumps(baseline)}\n\n"
             f"DOCUMENT TEXT:\n{text[:MAX_TEXT_CHARS]}"
         )
-        return await self._call_claude(_QUANTITIES_SYSTEM_PROMPT, user_prompt)
+        return await self._call_kimi(_QUANTITIES_SYSTEM_PROMPT, user_prompt)
 
     async def enhance_risks(
         self, text: str, baseline: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
-        """Ask Claude for risks the regex baseline missed."""
-        if self._anthropic_client() is None:
+        """Ask Kimi for risks the regex baseline missed."""
+        if not self._kimi_ready():
             return self._skipped("client_unavailable")
         baseline = baseline if isinstance(baseline, list) else []
         text = text or ""
@@ -319,18 +282,18 @@ class LLMEnhancerBlock(UniversalBlock):
             f"BASELINE: {json.dumps(baseline)}\n\n"
             f"DOCUMENT TEXT:\n{text[:MAX_TEXT_CHARS]}"
         )
-        return await self._call_claude(_RISKS_SYSTEM_PROMPT, user_prompt)
+        return await self._call_kimi(_RISKS_SYSTEM_PROMPT, user_prompt)
 
     async def enhance_rfis(
         self, text: str, baseline: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
-        """Ask Claude for RFIs the regex baseline missed.
+        """Ask Kimi for RFIs the regex baseline missed.
 
         Defensive post-filter: drop entries whose ``question`` is shorter
         than 30 chars or reads as a bare trigger word — mirrors the regex
         pipeline's own RFI cleanliness gate.
         """
-        if self._anthropic_client() is None:
+        if not self._kimi_ready():
             return self._skipped("client_unavailable")
         baseline = baseline if isinstance(baseline, list) else []
         text = text or ""
@@ -338,7 +301,7 @@ class LLMEnhancerBlock(UniversalBlock):
             f"BASELINE: {json.dumps(baseline)}\n\n"
             f"DOCUMENT TEXT:\n{text[:MAX_TEXT_CHARS]}"
         )
-        result = await self._call_claude(_RFIS_SYSTEM_PROMPT, user_prompt)
+        result = await self._call_kimi(_RFIS_SYSTEM_PROMPT, user_prompt)
         additions = result.get("additions") or []
         cleaned: List[Dict[str, Any]] = []
         trigger_words = {"tbd", "tbc", "?", "n/a", "todo"}
