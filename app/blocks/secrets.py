@@ -47,53 +47,56 @@ class SecretsBlock(UniversalBlock):
         self.access_log = []
         
     async def _legacy_initialize(self) -> bool:
-        """Initialize encryption and load master key"""
-        print("🔐 Secrets Block initialized")
-        
-        # Load or generate master key
+        """Initialize encryption and load master key.
+
+        SECURITY: the master key must come from the environment. There is NO
+        hardcoded fallback — deriving a key from a constant means every
+        deployment that forgot to set the key shares one attacker-known key,
+        making every stored secret trivially decryptable. If
+        ``CEREBRUM_MASTER_KEY`` is absent we fail hard at init.
+        """
+        logger.info("Secrets Block initializing")
+
         key = await self._load_master_key()
         if not key:
-            print("   Warning: Using development key. Set CEREBRUM_MASTER_KEY for production.")
-            key = self._generate_dev_key()
-        
+            env_var = self.config.get("encryption_key_env", "CEREBRUM_MASTER_KEY")
+            raise RuntimeError(
+                f"{env_var} is not set. The secrets block refuses to boot with a "
+                f"derived-from-constant key — set {env_var} to a strong random value."
+            )
+
         # Initialize cipher
         try:
             from cryptography.fernet import Fernet
             if len(key) < 32:
-                key = hashlib.sha256(key.encode()).digest()
+                key = hashlib.sha256(key.encode() if isinstance(key, str) else key).digest()
                 key = base64.urlsafe_b64encode(key)
             elif isinstance(key, str):
                 key = key.encode()
-                
+
             self.cipher = Fernet(key)
-            print("   Encryption: AES-256 (Fernet)")
-            
+            logger.info("Secrets encryption: AES-256 (Fernet)")
+
         except ImportError:
-            print("   cryptography not installed. Secrets will be stored as hashes only.")
+            logger.warning("cryptography not installed; secrets stored as hashes only")
             self.cipher = None
-        
+
         # Create secrets table
         if hasattr(self, 'database_block') and self.database_block:
             await self._create_secrets_table()
-        
-        print(f"   Rotation: {self.config.get('rotation_days', 90)} days")
+
+        logger.info("Secrets rotation window: %s days", self.config.get('rotation_days', 90))
         self.initialized = True
         return True
-    
+
     async def _load_master_key(self) -> Optional[bytes]:
-        """Load master key from environment"""
+        """Load master key from environment (the only source; no fallback)."""
         env_var = self.config.get("encryption_key_env", "CEREBRUM_MASTER_KEY")
         key = os.getenv(env_var)
-        
+
         if key:
             return key.encode() if isinstance(key, str) else key
         return None
-    
-    def _generate_dev_key(self) -> bytes:
-        """Generate development key (NOT for production)"""
-        dev_secret = "cerebrum_dev_secret_v1"
-        key = hashlib.sha256(dev_secret.encode()).digest()
-        return base64.urlsafe_b64encode(key)
     
     async def _create_secrets_table(self):
         """Create secrets table"""
