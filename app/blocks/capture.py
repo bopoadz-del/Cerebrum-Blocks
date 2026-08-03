@@ -47,15 +47,8 @@ class CaptureBlock(TypedBlock):
     default_config = {
         "ocr_languages": "ara+eng",
         "ocr_engine": "tesseract",
-        "llm_provider": os.getenv("LLM_PROVIDER", "deepseek"),
-        "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
-        "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
-        "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
-        "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
-        "deepseek_model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
-        "openrouter_model": os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet"),
-        "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY", ""),
-        "anthropic_model": os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
+        "llm_provider": "kimi",
+        "kimi_vision_model": os.getenv("KIMI_VISION_MODEL", "moonshot-v1-8k-vision-preview"),
         "vector_db_url": os.getenv("VECTOR_DB_URL", "http://localhost:8001"),
         "store_captures": True,
         "capture_collection": "cerebrum_captures",
@@ -139,10 +132,10 @@ class CaptureBlock(TypedBlock):
         source = params.get("source", "unknown")
         user_id = params.get("user_id", "anonymous")
 
-        # Prefer Claude Vision when API key is available
-        anthropic_key = self.config.get("anthropic_api_key") or os.getenv("ANTHROPIC_API_KEY", "")
-        if anthropic_key:
-            vision_result = await self._vision_with_claude(image_path, params)
+        # Prefer Kimi Vision when an API key is available.
+        kimi_key = os.getenv("KIMI_API_KEY", "") or os.getenv("MOONSHOT_API_KEY", "")
+        if kimi_key:
+            vision_result = await self._vision_with_kimi(image_path, params)
             if vision_result.get("status") == "error":
                 return vision_result
             result = {
@@ -157,7 +150,7 @@ class CaptureBlock(TypedBlock):
                 "tags": vision_result.get("tags", []),
                 "summary": vision_result.get("summary", ""),
                 "language_detected": vision_result.get("language", "unknown"),
-                "ocr_engine": "claude-vision",
+                "ocr_engine": "kimi-vision",
                 "ocr_confidence": vision_result.get("confidence", 0.95),
                 "image_path": image_path,
             }
@@ -341,16 +334,18 @@ class CaptureBlock(TypedBlock):
         except Exception as e:
             return {"status": "error", "error": f"EasyOCR failed: {str(e)}"}
 
-    # ── Vision (Claude) ────────────────────────────────────────────────────────
+    # ── Vision (Kimi) ────────────────────────────────────────────────────────
 
-    async def _vision_with_claude(self, image_path: str, params: Dict) -> Dict:
+    async def _vision_with_kimi(self, image_path: str, params: Dict) -> Dict:
         import httpx
+        from app.core.llm_config import _llm_config
 
-        api_key = self.config.get("anthropic_api_key") or os.getenv("ANTHROPIC_API_KEY", "")
+        cfg = _llm_config()  # Kimi (Moonshot), OpenAI-compatible
+        api_key = os.getenv(cfg["env_key"], "") if cfg["env_key"] else ""
         if not api_key:
-            return {"status": "error", "error": "Anthropic API key not configured"}
+            return {"status": "error", "error": "Kimi API key not configured (set KIMI_API_KEY)"}
 
-        model = self.config.get("anthropic_model", "claude-3-5-sonnet-20241022")
+        model = self.config.get("kimi_vision_model", "moonshot-v1-8k-vision-preview")
 
         try:
             with open(image_path, "rb") as f:
@@ -387,48 +382,37 @@ class CaptureBlock(TypedBlock):
             "- confidence: estimated confidence 0-1"
         )
 
+        # OpenAI-compatible vision content (Kimi/Moonshot): image_url data URI.
         payload = {
             "model": model,
             "max_tokens": 4096,
-            "system": system_prompt,
+            "temperature": 0.2,
             "messages": [
+                {"role": "system", "content": system_prompt},
                 {
                     "role": "user",
                     "content": [
                         {
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": media_type,
-                                "data": image_b64,
-                            },
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{media_type};base64,{image_b64}"},
                         },
                         {"type": "text", "text": user_prompt},
                     ],
-                }
+                },
             ],
         }
 
         headers = {
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         }
 
         try:
             async with httpx.AsyncClient(timeout=120) as client:
-                resp = await client.post(
-                    "https://api.anthropic.com/v1/messages",
-                    headers=headers,
-                    json=payload,
-                )
+                resp = await client.post(cfg["url"], headers=headers, json=payload)
                 resp.raise_for_status()
                 data = resp.json()
-                content = data.get("content", [])
-                text_content = ""
-                for block in content:
-                    if block.get("type") == "text":
-                        text_content += block.get("text", "")
+                text_content = data["choices"][0]["message"].get("content", "") or ""
                 parsed = self._safe_parse_json(text_content)
                 return {
                     "status": "success",
@@ -441,15 +425,15 @@ class CaptureBlock(TypedBlock):
                     "confidence": parsed.get("confidence", 0.95),
                 }
         except httpx.HTTPStatusError as e:
-            return {"status": "error", "error": f"Claude Vision API error: {e.response.status_code} {e.response.text}"}
+            return {"status": "error", "error": f"Kimi Vision API error: {e.response.status_code} {e.response.text}"}
         except Exception as e:
-            return {"status": "error", "error": f"Claude Vision failed: {str(e)}"}
+            return {"status": "error", "error": f"Kimi Vision failed: {str(e)}"}
 
     # ── LLM Structuring ────────────────────────────────────────────────────────
 
     async def _structure_with_llm(self, raw_text: str, params: Dict) -> Dict:
         """Send raw OCR text to LLM for entity extraction, tagging, summarization."""
-        provider = params.get("llm_provider", self.config.get("llm_provider", "deepseek"))
+        provider = params.get("llm_provider", self.config.get("llm_provider", "kimi"))
         max_chars = params.get("max_chars", 4000)
         truncated = raw_text[:max_chars]
 
@@ -483,78 +467,33 @@ Return JSON with exactly these keys:
         parsed = self._safe_parse_json(content)
         return parsed
 
-    async def _llm_chat(self, messages: List[Dict], provider: str) -> Dict:
+    async def _llm_chat(self, messages: List[Dict], provider: str = "kimi") -> Dict:
         import httpx
+        from app.core.llm_config import _llm_config
 
-        if provider == "ollama":
-            url = f"{self.config.get('ollama_base_url')}/api/chat"
-            payload = {
-                "model": self.config.get("ollama_model", "llama3.2:3b"),
-                "messages": messages,
-                "stream": False,
-                "options": {"temperature": 0.2},
+        cfg = _llm_config()  # Kimi (Moonshot), OpenAI-compatible — the only provider
+        api_key = os.getenv(cfg["env_key"], "") if cfg["env_key"] else ""
+        if not api_key:
+            return {"status": "error", "error": "Kimi API key not configured (set KIMI_API_KEY)"}
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": cfg["default_model"],
+            "messages": messages,
+            "temperature": 0.2,
+        }
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(cfg["url"], headers=headers, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            return {
+                "content": data["choices"][0]["message"]["content"],
+                "model": cfg["default_model"],
+                "provider": "kimi",
+                "tokens": data.get("usage", {}).get("total_tokens", 0),
             }
-            async with httpx.AsyncClient(timeout=120) as client:
-                resp = await client.post(url, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                return {
-                    "content": data["message"]["content"],
-                    "model": self.config.get("ollama_model"),
-                    "provider": "ollama",
-                }
-
-        elif provider == "deepseek":
-            api_key = self.config.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY", "")
-            if not api_key:
-                return {"status": "error", "error": "DeepSeek API key not configured"}
-            model = self.config.get("deepseek_model", "deepseek-chat")
-            url = "https://api.deepseek.com/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
-            payload = {
-                "model": model,
-                "messages": messages,
-                "temperature": 0.3,
-            }
-            async with httpx.AsyncClient(timeout=60) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                return {
-                    "content": data["choices"][0]["message"]["content"],
-                    "model": model,
-                    "provider": "deepseek",
-                    "tokens": data.get("usage", {}).get("total_tokens", 0),
-                }
-
-        elif provider == "openrouter":
-            api_key = self.config.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY", "")
-            if not api_key:
-                return {"status": "error", "error": "OpenRouter API key not configured"}
-            url = "https://openrouter.ai/api/v1/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
-            payload = {
-                "model": self.config.get("openrouter_model", "anthropic/claude-3.5-sonnet"),
-                "messages": messages,
-                "temperature": 0.2,
-            }
-            async with httpx.AsyncClient(timeout=60) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                return {
-                    "content": data["choices"][0]["message"]["content"],
-                    "model": self.config.get("openrouter_model"),
-                    "provider": "openrouter",
-                }
-        else:
-            return {"status": "error", "error": f"Unknown provider: {provider}"}
 
     # ── Vector Store ───────────────────────────────────────────────────────────
 

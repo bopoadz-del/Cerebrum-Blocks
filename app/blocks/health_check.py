@@ -239,10 +239,10 @@ class HealthCheckBlock(UniversalBlock):
         """Register default system probes"""
         default_probes = [
             {
-                "id": "deepseek_api",
-                "name": "DeepSeek API",
+                "id": "kimi_api",
+                "name": "Kimi (Moonshot) API",
                 "type": "http",
-                "target": "https://api.deepseek.com/health",
+                "target": "https://api.moonshot.ai/v1/models",
                 "timeout": 5
             },
             {
@@ -327,7 +327,7 @@ class HealthCheckBlock(UniversalBlock):
         """Check external API health"""
         # Check configured external APIs
         apis = {
-            "deepseek": "https://api.deepseek.com/health",
+            "kimi": "https://api.moonshot.ai/v1/models",
             # Add more as configured
         }
         

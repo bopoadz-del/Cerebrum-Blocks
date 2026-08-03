@@ -18,8 +18,7 @@ import asyncio
 
 class AdaptiveRouterBlock(UniversalBlock):
     """
-    ML-based provider selection.
-    Learns from history: "DeepSeek slow on Tuesdays, use Groq instead"
+    ML-based routing/scoring over request history (single provider: Kimi).
     """
     name = "adaptive_router"
     version = "1.0.0"
