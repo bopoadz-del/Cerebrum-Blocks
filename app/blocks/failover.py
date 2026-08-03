@@ -55,7 +55,7 @@ class FailoverBlock(UniversalBlock):
         
         chain_config = {
             "type": FailoverType.PROVIDER,
-            "chain": ["deepseek", "anthropic"],
+            "chain": ["kimi"],
             "threshold": 3,  # failures before failover
             "timeout_ms": 8000,
         }

@@ -1,25 +1,18 @@
-"""Chat Block — Qwen primary with OpenAI-compatible fallbacks.
+"""Chat Block — Kimi (Moonshot) primary, template fallback.
 
-The chat must never go completely dark on the user. Order of attempts:
+Kimi is the platform's only LLM provider. The chat must never go completely
+dark on the user, so:
 
-1. **Qwen API (DashScope)** when ``QWEN_API_KEY`` is set and the endpoint is
-   reachable. Configure via ``QWEN_BASE_URL`` and ``QWEN_MODEL``.
-2. **Groq** when ``GROQ_API_KEY`` is set.
-3. **DeepSeek** when ``DEEPSEEK_API_KEY`` is set.
-4. **Local LLM** (kept *inside* the platform — no third-party cloud) via:
-   - Ollama HTTP at ``OLLAMA_URL`` (default ``http://localhost:11434``) when a
-     local model is installed. The default local model is
-     ``LOCAL_LLM_MODEL`` (default ``qwen2.5:3b-instruct`` — small, CPU-runnable).
-   - llama.cpp via ``LLAMA_CPP_MODEL_PATH`` when ``llama-cpp-python`` is
-     importable and a GGUF file is provided.
-5. **Graceful template responder** — a deterministic, non-AI fallback that
-   acknowledges the question, surfaces the reason the model layer is down,
-   and points the operator at the env vars that would restore it. This
-   path always succeeds, so the chat never returns an unhandled error.
+1. **Kimi (Moonshot)** via the OpenAI-compatible cloud API when ``KIMI_API_KEY``
+   (or ``MOONSHOT_API_KEY``) is set. Endpoint/model come from ``llm_config``
+   (override with ``KIMI_BASE_URL`` / ``KIMI_MODEL``).
+2. **Graceful template responder** — a deterministic, non-AI fallback that
+   acknowledges the question, surfaces the reason the model layer is down, and
+   points the operator at the env var that would restore it. This path always
+   succeeds, so the chat never returns an unhandled error.
 
 The block exposes a single ``provider`` field on the response so callers can
-see which path served the answer (``qwen`` / ``groq`` / ``deepseek`` /
-``local_ollama`` / ``local_llama_cpp`` / ``offline_template``).
+see which path served the answer (``kimi`` / ``offline_template``).
 """
 
 import json
@@ -32,22 +25,18 @@ import httpx
 from app.core.typed_block import TypedBlock, Schema, ContentType
 
 
-DEFAULT_OLLAMA_URL = "http://localhost:11434"
-DEFAULT_LOCAL_MODEL = "qwen2.5:3b-instruct"
-
-
 class ChatBlock(TypedBlock):
-    """AI chat completions — DeepSeek with local-inference fallback."""
+    """AI chat completions — Kimi (Moonshot) with a template fallback."""
 
     name = "chat"
     version = "3.0.0"
-    description = "AI chat completions — DeepSeek primary, local LLM fallback"
+    description = "AI chat completions — Kimi (Moonshot) primary, template fallback"
     layer = 2
     tags = ["ai", "core", "llm", "chat", "typed"]
     requires = []
 
     default_config = {
-        "default_provider": "qwen",
+        "default_provider": "kimi",
         "max_tokens": 2048,
         "temperature": 0.7,
     }
@@ -105,7 +94,7 @@ class ChatBlock(TypedBlock):
         max_tokens = params.get("max_tokens", self.config.get("max_tokens", 2048))
         temperature = params.get("temperature", self.config.get("temperature", 0.7))
         stream = params.get("stream", False)
-        model = params.get("model", "deepseek-chat")
+        model = params.get("model")  # None -> use Kimi default from llm_config
 
         system_prompt_text = self._resolve_system_prompt(input_data, params)
 
@@ -136,47 +125,12 @@ class ChatBlock(TypedBlock):
                     "RAG retrieval failed for project %s: %s", rag_project_id, exc
                 )
 
-        use_local_model = bool(
-            params.get("use_local_model")
-            or (isinstance(input_data, dict) and input_data.get("use_local_model"))
-        )
-        if use_local_model:
-            try:
-                from app.core.learning import local_model as _local
-            except ImportError:
-                _local = None  # type: ignore
-
-            if _local is not None and _local.available():
-                local_text = _local.generate(
-                    message,
-                    max_new_tokens=int(max_tokens),
-                    temperature=float(temperature),
-                )
-                if local_text:
-                    return {
-                        "status": "success",
-                        "response": local_text,
-                        "provider": "local_lora",
-                        "model": os.getenv("LOCAL_BASE_MODEL") or "Qwen/Qwen2.5-3B-Instruct",
-                        "adapter": os.getenv("LOCAL_ADAPTER_DIR") or "data/learning/adapters/default",
-                    }
-                logging.getLogger(__name__).info(
-                    "use_local_model requested but generate() returned None; falling back to cloud"
-                )
-            else:
-                logging.getLogger(__name__).info(
-                    "use_local_model requested but local stack unavailable; falling back to cloud"
-                )
-
         from app.core.llm_config import _llm_config  # local import: avoid cycle at module load
-        cfg = _llm_config()
-        primary_error = None
+        cfg = _llm_config()  # Kimi (Moonshot)
 
         api_key = os.getenv(cfg["env_key"]) if cfg["env_key"] else ""
-        if cfg["provider"] == "ollama" or (cfg["env_key"] and api_key):
-            effective_model = model
-            if cfg["provider"] != "deepseek" and effective_model.startswith("deepseek-"):
-                effective_model = cfg["default_model"]
+        if api_key:
+            effective_model = model or cfg["default_model"]
             extra_kwargs = {"system_prompt": system_prompt_text} if system_prompt_text else {}
             result = await self._call_cloud(
                 message, effective_model, max_tokens, temperature, stream,
@@ -185,18 +139,11 @@ class ChatBlock(TypedBlock):
             )
             if result.get("status") == "success":
                 return result
-            primary_error = result.get("error", f"{cfg['provider']} call failed")
+            primary_error = result.get("error", "Kimi call failed")
         else:
             primary_error = f"{cfg['env_key']} not configured"
 
-        local = await self._call_local(
-            message, max_tokens, temperature, primary_error,
-            system_prompt=system_prompt_text,
-        )
-        if local.get("status") == "success":
-            return local
-
-        return self._offline_template(message, primary_error, local.get("error"))
+        return self._offline_template(message, primary_error)
 
     @staticmethod
     def _build_messages(message: str, system_prompt: Optional[str]) -> list:
@@ -350,144 +297,21 @@ class ChatBlock(TypedBlock):
         except Exception as e:
             return {"status": "error", "error": f"{provider_name} failed: {e}"}
 
-    async def _call_local(
-        self,
-        message: str,
-        max_tokens: int,
-        temperature: float,
-        primary_error: str,
-        system_prompt: Optional[str] = None,
-    ) -> Dict:
-        ollama_url = os.getenv("OLLAMA_URL", DEFAULT_OLLAMA_URL)
-        local_model = os.getenv("LOCAL_LLM_MODEL", DEFAULT_LOCAL_MODEL)
-        ollama_result = await self._call_ollama(
-            message, local_model, max_tokens, temperature, ollama_url,
-            system_prompt=system_prompt,
-        )
-        if ollama_result.get("status") == "success":
-            ollama_result["fallback_reason"] = primary_error
-            return ollama_result
 
-        gguf_path = os.getenv("LLAMA_CPP_MODEL_PATH")
-        if gguf_path and os.path.exists(gguf_path):
-            llama_result = self._call_llama_cpp(
-                message, gguf_path, max_tokens, temperature,
-                system_prompt=system_prompt,
-            )
-            if llama_result.get("status") == "success":
-                llama_result["fallback_reason"] = primary_error
-                return llama_result
-            return {
-                "status": "error",
-                "error": f"ollama: {ollama_result.get('error')}; llama_cpp: {llama_result.get('error')}",
-            }
-
-        return {
-            "status": "error",
-            "error": f"ollama unavailable ({ollama_result.get('error')}); no LLAMA_CPP_MODEL_PATH set",
-        }
-
-    async def _call_ollama(
-        self,
-        message: str,
-        model: str,
-        max_tokens: int,
-        temperature: float,
-        base_url: str,
-        system_prompt: Optional[str] = None,
-    ) -> Dict:
-        try:
-            messages = self._build_messages(message, system_prompt)
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                response = await client.post(
-                    f"{base_url.rstrip('/')}/api/chat",
-                    json={
-                        "model": model,
-                        "messages": messages,
-                        "options": {
-                            "temperature": temperature,
-                            "num_predict": max_tokens,
-                        },
-                        "stream": False,
-                    },
-                )
-                if response.status_code != 200:
-                    return {
-                        "status": "error",
-                        "error": f"ollama HTTP {response.status_code}: {response.text[:200]}",
-                    }
-                data = response.json()
-                text = (data.get("message") or {}).get("content", "")
-                if not text:
-                    return {"status": "error", "error": "ollama returned empty content"}
-                return {
-                    "status": "success",
-                    "text": text,
-                    "provider": "local_ollama",
-                    "model": model,
-                    "tokens": {
-                        "input_tokens": data.get("prompt_eval_count"),
-                        "output_tokens": data.get("eval_count"),
-                    },
-                }
-        except httpx.ConnectError:
-            return {"status": "error", "error": f"ollama not reachable at {base_url}"}
-        except httpx.TimeoutException:
-            return {"status": "error", "error": "ollama request timed out"}
-        except Exception as e:
-            return {"status": "error", "error": f"ollama failed: {e}"}
-
-    def _call_llama_cpp(
-        self,
-        message: str,
-        gguf_path: str,
-        max_tokens: int,
-        temperature: float,
-        system_prompt: Optional[str] = None,
-    ) -> Dict:
-        try:
-            from llama_cpp import Llama  # type: ignore
-        except Exception as e:
-            return {"status": "error", "error": f"llama-cpp-python not importable: {e}"}
-
-        try:
-            llm = Llama(model_path=gguf_path, n_ctx=4096, verbose=False)
-            messages = self._build_messages(message, system_prompt)
-            out = llm.create_chat_completion(
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-            )
-            text = (out.get("choices") or [{}])[0].get("message", {}).get("content", "")
-            if not text:
-                return {"status": "error", "error": "llama.cpp returned empty content"}
-            return {
-                "status": "success",
-                "text": text,
-                "provider": "local_llama_cpp",
-                "model": os.path.basename(gguf_path),
-                "tokens": out.get("usage", {}),
-            }
-        except Exception as e:
-            return {"status": "error", "error": f"llama.cpp failed: {e}"}
-
-    def _offline_template(self, message: str, primary_error: str, local_error: str) -> Dict:
+    def _offline_template(self, message: str, primary_error: str) -> Dict:
         snippet = (message or "").strip()
         if len(snippet) > 240:
             snippet = snippet[:237] + "..."
         body = (
             "**Chat is running in offline mode.**\n\n"
-            "No cloud or local language model is currently reachable, so I can't "
-            "generate an AI response right now. Your message was received intact:\n\n"
+            "Kimi (the platform's language model) is not currently reachable, so I "
+            "can't generate an AI response right now. Your message was received "
+            "intact:\n\n"
             f"> {snippet or '(empty)'}\n\n"
             "**How to restore full chat:**\n"
-            "- Set `QWEN_API_KEY` (DashScope) in `.env` to use Qwen, **or**\n"
-            "- Set `GROQ_API_KEY` (free tier) or `DEEPSEEK_API_KEY` to use another cloud provider, **or**\n"
-            "- Run a local model: `ollama serve` + `ollama pull qwen2.5:3b-instruct`\n"
-            "  (optionally set `OLLAMA_URL` and `LOCAL_LLM_MODEL`), **or**\n"
-            "- Provide a GGUF file via `LLAMA_CPP_MODEL_PATH` with `llama-cpp-python` installed.\n\n"
-            f"_Primary provider: {primary_error}_  \n"
-            f"_Local inference: {local_error}_"
+            "- Set `KIMI_API_KEY` (or `MOONSHOT_API_KEY`) in `.env`.\n"
+            "  Optionally override `KIMI_BASE_URL` / `KIMI_MODEL`.\n\n"
+            f"_Kimi: {primary_error}_"
         )
         return {
             "status": "success",
@@ -495,5 +319,4 @@ class ChatBlock(TypedBlock):
             "provider": "offline_template",
             "model": "template:v1",
             "primary_error": primary_error,
-            "local_error": local_error,
         }
