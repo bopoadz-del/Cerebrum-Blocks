@@ -51,5 +51,5 @@ provider is the real default. The main app runtime does handler security via
 - block_store/recommendation_template.py :: __missing__  — dict fallback hook.
 - block_store/kits/universal_kernel/wave1/rate_limit_guard/code.py :: reset  — test/reset helper.
 - block_store/kits/universal_kernel/wave2/embedding_provider/code.py :: embed  — OpenAI provider stub; raises NotImplementedError honestly. Default is HashEmbeddingProvider.
-- block_store/kits/universal_kernel/wave2/llm_provider/code.py :: complete  — OpenAI provider stub; raises NotImplementedError honestly.
+- block_store/kits/universal_kernel/wave2/llm_provider/code.py :: complete  — the OpenAI provider is still a stub (raises NotImplementedError honestly); the kit's real provider is `KimiProvider` (Moonshot, live over the OpenAI-compatible API) via `get_provider("kimi")`.
 - block_store/kits/universal_kernel/wave4/block_runner/code.py :: _check_handler_security  — neutral-kit runner hook; the shipping runtime validates handlers in app/core/block_validation.py.

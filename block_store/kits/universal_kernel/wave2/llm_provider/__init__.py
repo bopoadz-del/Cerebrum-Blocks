@@ -1,8 +1,9 @@
-"""LLM provider sub-kit: deterministic stub + optional OpenAI provider."""
+"""LLM provider sub-kit: deterministic stub, optional OpenAI, live Kimi."""
 
 from .code import (
     Completion,
     DeterministicStubProvider,
+    KimiProvider,
     LLMConfigurationError,
     LLMProvider,
     OpenAIProvider,
@@ -12,6 +13,7 @@ from .code import (
 __all__ = [
     "Completion",
     "DeterministicStubProvider",
+    "KimiProvider",
     "LLMConfigurationError",
     "LLMProvider",
     "OpenAIProvider",

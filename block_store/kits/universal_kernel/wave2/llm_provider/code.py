@@ -1,9 +1,12 @@
-"""Neutral LLM provider: deterministic stub + optional OpenAI provider."""
+"""Neutral LLM provider: deterministic stub, optional OpenAI, live Kimi."""
 
 from __future__ import annotations
 
+import json
 import os
 import re
+import urllib.error
+import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
@@ -116,10 +119,89 @@ class OpenAIProvider(LLMProvider):
         raise NotImplementedError("OpenAI completion call is not implemented in this neutral kit")
 
 
+class KimiProvider(LLMProvider):
+    """Kimi (Moonshot) provider — the platform's LLM.
+
+    Real completions over Moonshot's OpenAI-compatible ``/chat/completions``
+    endpoint, using only the standard library (no third-party HTTP dep, so the
+    kit stays self-contained). Fails closed when no key is configured.
+
+    Env: ``KIMI_API_KEY`` (or ``MOONSHOT_API_KEY``); optional ``KIMI_BASE_URL``
+    (default ``https://api.moonshot.ai/v1``) and ``KIMI_MODEL``.
+    """
+
+    DEFAULT_BASE_URL = "https://api.moonshot.ai/v1"
+    DEFAULT_MODEL = "kimi-k2-0905-preview"
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> None:
+        self.api_key = api_key or os.getenv("KIMI_API_KEY") or os.getenv("MOONSHOT_API_KEY")
+        if not self.api_key:
+            raise LLMConfigurationError("KIMI_API_KEY (or MOONSHOT_API_KEY) is required")
+        base = (
+            base_url
+            or os.getenv("KIMI_BASE_URL")
+            or os.getenv("MOONSHOT_BASE_URL")
+            or self.DEFAULT_BASE_URL
+        ).rstrip("/")
+        self.url = base + "/chat/completions"
+        self.model_name = model or os.getenv("KIMI_MODEL") or self.DEFAULT_MODEL
+
+    def complete(
+        self,
+        prompt: str,
+        temperature: float = 0.0,
+        max_tokens: int = 256,
+    ) -> Completion:
+        body = json.dumps(
+            {
+                "model": self.model_name,
+                "messages": [{"role": "user", "content": prompt or ""}],
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            }
+        ).encode("utf-8")
+        request = urllib.request.Request(
+            self.url,
+            data=body,
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                data = json.loads(response.read().decode("utf-8"))
+        except (urllib.error.URLError, TimeoutError) as exc:  # network / HTTP error
+            raise LLMConfigurationError(f"Kimi request failed: {exc}") from exc
+
+        text = (data["choices"][0]["message"].get("content") or "")
+        usage = data.get("usage") or {}
+        prompt_tokens = usage.get("prompt_tokens", self._approximate_tokens(prompt or ""))
+        completion_tokens = usage.get("completion_tokens", self._approximate_tokens(text))
+        return Completion(
+            text=text,
+            model=self.model_name,
+            usage={
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": usage.get("total_tokens", prompt_tokens + completion_tokens),
+            },
+            honesty="live",
+        )
+
+
 def get_provider(provider_id: str = "stub", api_key: Optional[str] = None) -> LLMProvider:
     """Factory for the configured LLM provider."""
     if provider_id == "stub":
         return DeterministicStubProvider()
     if provider_id == "openai":
         return OpenAIProvider(api_key=api_key)
+    if provider_id in ("kimi", "moonshot"):
+        return KimiProvider(api_key=api_key)
     raise LLMConfigurationError(f"unknown provider_id: {provider_id!r}")
