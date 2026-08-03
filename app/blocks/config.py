@@ -82,7 +82,7 @@ class ConfigBlock(UniversalBlock):
                 self.configs["memory"]["max_size"] = 1000
             elif "embedded" in profile.value:
                 # Minimal config
-                self.configs["chat"]["default_provider"] = "deepseek"
+                self.configs["chat"]["default_provider"] = "kimi"
                 self.configs["vector"]["backend"] = "memory"
                 self.configs["memory"]["max_size"] = 100
     

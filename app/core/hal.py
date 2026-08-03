@@ -138,7 +138,7 @@ class HALBlock:
     def get_recommendations(self) -> Dict[str, Any]:
         """Get block recommendations based on hardware"""
         recs = {
-            "chat_provider": "deepseek",  # Default to cheapest
+            "chat_provider": "kimi",
             "vector_backend": "chroma",   # Default
             "use_local_embeddings": False,
             "use_local_ocr": False,

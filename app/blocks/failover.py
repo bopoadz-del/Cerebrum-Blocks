@@ -7,7 +7,7 @@ from enum import Enum
 
 
 class FailoverType(Enum):
-    PROVIDER = "provider"  # LLM provider failover (DeepSeek -> Groq -> OpenAI)
+    PROVIDER = "provider"  # LLM provider failover (single provider: Kimi)
     HARDWARE = "hardware"  # Hardware failover (Cloud -> Local -> Cache)
     LOGIC = "logic"        # Logic failover (OCR: Tesseract -> Cloud Vision)
 
