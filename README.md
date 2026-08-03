@@ -68,8 +68,13 @@ installs are provenance-verified (see Security model).
 git clone https://github.com/bopoadz-del/Cerebrum-Blocks.git
 cd Cerebrum-Blocks
 pip install -r requirements.txt
+
+# Required env (see .env.example):
+export CEREBRUM_MASTER_KEY="$(python -c 'import secrets;print(secrets.token_urlsafe(32))')"  # secrets block fails hard without it
+export KIMI_API_KEY="<moonshot key>"   # the platform's only LLM provider (chat/RAG/enhancer); omit and those paths return an honest offline/skip result
+
 python -m pytest tests/integration -q   # verify
-uvicorn app.main:app --reload           # serve on :8000
+uvicorn app.main:app --reload           # serve on :8000  (GET /health -> {"status":"ok"})
 ```
 
 ## Execution modes
@@ -91,10 +96,17 @@ uvicorn app.main:app --reload           # serve on :8000
   mandatory grounding stage (blocked answers are null, verdicts audited).
 - Kit installs verify a `provenance.json` (sha256 digests + root hash)
   when present; kits without one are labeled `absent — unverified` in the
-  install response. Ed25519 block signing exists (`scripts/sign_block.py`,
-  `app/core/block_validation.py`) but is **not yet operating**: no
-  publisher private key is present and kit signature fields are empty —
-  see `PARKED_BLOCKERS.md`. Do not describe blocks as signed today.
+  install response.
+- Ed25519 block signing is **operating**: all `block_registry/*` manifests
+  are signed by the `cerebrum_platform` publisher and verify at load
+  (`scripts/verify_block.py`; the runtime admission gate in
+  `app/core/block_validation.py` excludes a registry block whose signature
+  fails). The publisher public key ships in `data/publishers.json`; the
+  private key is held by the operator (rotate/re-sign with
+  `scripts/rotate_publisher_key.py`, which writes the private key OUTSIDE the
+  repo). A restricted primitive (`database`/`code`/`sandbox`/`secrets`/…) is
+  additionally gated to unlimited-tier at block resolution, failing closed on
+  an unauthenticated request.
 
 ## Docs
 

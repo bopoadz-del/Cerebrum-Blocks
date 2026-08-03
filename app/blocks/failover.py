@@ -7,7 +7,7 @@ from enum import Enum
 
 
 class FailoverType(Enum):
-    PROVIDER = "provider"  # LLM provider failover (DeepSeek -> Groq -> OpenAI)
+    PROVIDER = "provider"  # LLM provider failover (single provider: Kimi)
     HARDWARE = "hardware"  # Hardware failover (Cloud -> Local -> Cache)
     LOGIC = "logic"        # Logic failover (OCR: Tesseract -> Cloud Vision)
 
@@ -55,7 +55,7 @@ class FailoverBlock(UniversalBlock):
         
         chain_config = {
             "type": FailoverType.PROVIDER,
-            "chain": ["deepseek", "anthropic"],
+            "chain": ["kimi"],
             "threshold": 3,  # failures before failover
             "timeout_ms": 8000,
         }

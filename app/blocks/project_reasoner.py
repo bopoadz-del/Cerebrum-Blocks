@@ -116,7 +116,7 @@ class ProjectReasonerBlock(UniversalBlock):
     tags = ["domain", "construction", "reasoning", "agent", "llm"]
     requires = []
 
-    default_config = {"model": "deepseek-chat"}
+    default_config = {"model": "kimi-k2-0905-preview"}
 
     ui_schema = {
         "input": {
@@ -138,19 +138,16 @@ class ProjectReasonerBlock(UniversalBlock):
     }
 
     async def _call_llm(self, prompt: str) -> str:
-        """Active-LLM-provider call. Overridden by test doubles.
+        """Kimi (Moonshot) call. Overridden by test doubles.
 
-        Routes via app.agents.runtime._llm_config — auto-uses Groq when
-        GROQ_API_KEY is set, otherwise DeepSeek.
+        Routes via app.core.llm_config (the platform's single Kimi provider).
         """
-        from app.agents.runtime import _llm_config  # local import: avoid cycle at module load
+        from app.core.llm_config import _llm_config  # local import: avoid cycle at module load
         cfg = _llm_config()
         api_key = os.getenv(cfg["env_key"])
         if not api_key:
             raise RuntimeError(f"{cfg['env_key']} not configured")
-        model = self.config.get("model", cfg["default_model"])
-        if cfg["provider"] != "deepseek" and isinstance(model, str) and model.startswith("deepseek-"):
-            model = cfg["default_model"]
+        model = self.config.get("model") or cfg["default_model"]
         async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(
                 cfg["url"],

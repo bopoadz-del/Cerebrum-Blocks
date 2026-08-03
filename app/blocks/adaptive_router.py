@@ -18,8 +18,7 @@ import asyncio
 
 class AdaptiveRouterBlock(UniversalBlock):
     """
-    ML-based provider selection.
-    Learns from history: "DeepSeek slow on Tuesdays, use Groq instead"
+    ML-based routing/scoring over request history (single provider: Kimi).
     """
     name = "adaptive_router"
     version = "1.0.0"
@@ -346,12 +345,12 @@ class AdaptiveRouterBlock(UniversalBlock):
         """Get providers that support a task type"""
         # Default providers
         providers = {
-            "chat": ["deepseek", "anthropic"],
+            "chat": ["kimi"],
             "embed": ["local"],
             "image": ["stability"]
         }
-        
-        return providers.get(task_type, ["deepseek"])
+
+        return providers.get(task_type, ["kimi"])
         
     def _calculate_provider_score(
         self, 
@@ -458,7 +457,7 @@ class AdaptiveRouterBlock(UniversalBlock):
         return {
             "latency": round(sum(latencies) / len(latencies), 0) if latencies else 500,
             "cost": round(sum(costs) / len(costs), 4) if costs else 0.001,
-            "quality": 0.95 if provider == "anthropic" else 0.85
+            "quality": 0.95 if provider == "kimi" else 0.85
         }
         
     def _get_fallback(self, primary: str, providers: List[str]) -> Optional[str]:

@@ -79,7 +79,7 @@ class NotificationBlock(TypedBlock):
     input_schema = Schema(
         content_type=ContentType.JSON,
         required_fields=["channel", "message"],
-        optional_fields=["to", "subject", "html", "url", "headers", "payload", "parse_mode", "blocks"],
+        optional_fields=["to", "subject", "html", "url", "headers", "payload", "blocks"],
         format_hints={}
     )
 
@@ -345,8 +345,17 @@ class NotificationBlock(TypedBlock):
         if not url:
             return {"status": "error", "error": "url required (set 'url' or pass an http(s) URL as 'to')"}
 
+        # SSRF guard: a caller-supplied webhook URL must resolve to a public
+        # host, or it could read cloud-metadata / internal services (the method
+        # is caller-chosen and the response body is returned to the caller).
+        from app.core.url_guard import validate_public_url, UnsafeURLError
         try:
-            async with httpx.AsyncClient(timeout=30) as client:
+            url = validate_public_url(url)
+        except UnsafeURLError as e:
+            return {"status": "error", "error": f"unsafe webhook url: {e}"}
+
+        try:
+            async with httpx.AsyncClient(timeout=30, follow_redirects=False) as client:
                 if method == "GET":
                     resp = await client.get(url, headers=headers, params=payload if isinstance(payload, dict) else {})
                 else:

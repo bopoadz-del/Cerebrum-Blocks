@@ -4,7 +4,7 @@ Cerebrum Blocks MCP Server
 Exposes all blocks from BLOCK_REGISTRY as MCP tools.
 
 Usage:
-    # stdio (default — for Claude Desktop, Cursor, Kimi CLI, etc.)
+    # stdio (default — for the Kimi CLI)
     python -m app.mcp_server
 
     # SSE (HTTP) transport

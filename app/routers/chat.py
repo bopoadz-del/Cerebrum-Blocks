@@ -15,7 +15,7 @@ router = APIRouter()
 
 class ChatRequest(BaseModel):
     message: str
-    model: str = "deepseek-chat"
+    model: str = "kimi-k2-0905-preview"
     stream: bool = False
 
 
@@ -210,7 +210,7 @@ async def chat_stream_v1(request: Request, auth: dict = Depends(require_api_key)
         body = {}
 
     prompt = body.get("prompt", body.get("message", ""))
-    model = body.get("model", body.get("provider", "deepseek-chat"))
+    model = body.get("model", body.get("provider", "kimi-k2-0905-preview"))
     session_id = body.get("session_id", "default")
     history = body.get("history", [])
 

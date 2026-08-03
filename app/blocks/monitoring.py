@@ -18,7 +18,7 @@ class MonitoringBlock(UniversalBlock):
     layer = 2  # Monitoring layer
     tags = ["monitoring", "observability", "core"]
     default_config = {
-        "track_providers": ["deepseek", "anthropic"],
+        "track_providers": ["kimi"],
         "window_size": 100,
         "prediction_threshold": 0.3
     }
@@ -26,7 +26,7 @@ class MonitoringBlock(UniversalBlock):
     ui_schema = {
         'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
         'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
-        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['record_call', 'leaderboard', 'provider_status', 'recommend', 'health_report', 'predictive_failover'], 'default': 'record_call'}, {'name': 'track_providers', 'type': 'json', 'label': 'Track Providers', 'default': ['deepseek', 'anthropic']}, {'name': 'window_size', 'type': 'number', 'label': 'Window Size', 'default': 100}, {'name': 'prediction_threshold', 'type': 'number', 'label': 'Prediction Threshold', 'default': 0.3}],
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['record_call', 'leaderboard', 'provider_status', 'recommend', 'health_report', 'predictive_failover'], 'default': 'record_call'}, {'name': 'track_providers', 'type': 'json', 'label': 'Track Providers', 'default': ['kimi']}, {'name': 'window_size', 'type': 'number', 'label': 'Window Size', 'default': 100}, {'name': 'prediction_threshold', 'type': 'number', 'label': 'Prediction Threshold', 'default': 0.3}],
         'quick_actions': [],
     }
     
@@ -36,9 +36,7 @@ class MonitoringBlock(UniversalBlock):
         
         # Provider tracking
         self.providers = {
-            "deepseek": {"name": "DeepSeek", "type": "cloud", "region": "global"},
-            "anthropic": {"name": "Anthropic", "type": "cloud", "region": "us"},
-            "local_ollama": {"name": "Ollama (Local)", "type": "edge", "region": "local"}
+            "kimi": {"name": "Kimi (Moonshot)", "type": "cloud", "region": "global"},
         }
         
         # Metrics window (last 100 calls per provider)

@@ -20,13 +20,58 @@ tier, prefix with `-`:
 
 from __future__ import annotations
 
+import contextvars
 import logging
 import os
-from typing import Any, Dict, Set
+from typing import Any, Dict, Optional, Set
 
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
+
+
+# The tier of the request currently being served, set at the auth boundary
+# (require_api_key) and read at block RESOLUTION.
+_current_auth: contextvars.ContextVar[Optional[Dict[str, Any]]] = contextvars.ContextVar(
+    "cerebrum_current_auth", default=None
+)
+
+# True while an HTTP request is being served. Set by RequestContextMiddleware
+# (a raw ASGI middleware, so the contextvar propagates into the endpoint and its
+# internal block resolutions — BaseHTTPMiddleware runs the endpoint in a
+# separate task and would break propagation). This is what lets the resolution
+# gate FAIL CLOSED: an in-flight request whose tier is unknown is denied, while
+# genuine no-request contexts (boot, registry validation, warm-up) stay
+# permissive.
+_in_request: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "cerebrum_in_request", default=False
+)
+
+
+def set_current_auth(auth: Optional[Dict[str, Any]]) -> None:
+    """Record the auth dict of the in-flight request (called by require_api_key)."""
+    _current_auth.set(auth)
+
+
+def get_current_auth() -> Optional[Dict[str, Any]]:
+    """Return the in-flight request's auth dict, or None outside a request."""
+    return _current_auth.get()
+
+
+def begin_request_context() -> None:
+    """Mark the start of an in-flight HTTP request and clear any stale auth.
+
+    Called by RequestContextMiddleware at the top of every HTTP request so each
+    request starts with a known-clean context (in-flight, no tier yet); the auth
+    boundary then fills in the real tier.
+    """
+    _current_auth.set(None)
+    _in_request.set(True)
+
+
+def in_request_context() -> bool:
+    """True when an HTTP request is currently being served."""
+    return _in_request.get()
 
 
 # Blocks that the audit identified as critical RCE / SSRF / vault / FS
@@ -90,6 +135,48 @@ def is_restricted(block_name: str) -> bool:
     return block_name in RESTRICTED_BLOCKS
 
 
+def enforce_restricted_resolution(block_name: str) -> None:
+    """Choke-point gate applied at block RESOLUTION (instance creation).
+
+    The audit found ``enforce_block_access`` was only called by ``/v1/execute``
+    and ``/chain``. Every other dispatch path — ``/swarm/execute``,
+    ``/workflow/run``, ``/notify``, ``async_processor``, ``jetson_gateway`` —
+    reaches blocks by name via ``get_block_instance`` / ``_create_block_instance``
+    with no tier check, so a standard-tier key could reach the ``database``
+    (raw-SQL), ``code``/``sandbox`` (RCE), ``secrets`` (vault) primitives.
+
+    This gate runs wherever a block is instantiated and FAILS CLOSED:
+      - ``tier == "unlimited"`` → allowed.
+      - Any other tier while a request is in flight — including an *unknown*
+        tier (the contextvar was never set to a real auth) → DENIED. An
+        unauthenticated or mis-wired route must not reach a privileged
+        primitive just because it skipped the auth dependency.
+      - No request context at all (boot, registry validation, warm-up) →
+        permissive, so start-up and internal resolution never break.
+    """
+    if block_name not in RESTRICTED_BLOCKS:
+        return
+    tier = (_current_auth.get() or {}).get("tier")
+    if tier == "unlimited":
+        return
+    if not in_request_context():
+        return  # boot / registry validation / system warm-up — no request
+    # In-flight request without unlimited tier (unknown tier included) — deny.
+    user = (_current_auth.get() or {}).get("user", "?")
+    logger.warning(
+        "security: blocked resolution of restricted block '%s' (tier=%s, user=%s) "
+        "— dispatch-path attempt to reach a privileged primitive",
+        block_name, tier or "unknown", user,
+    )
+    raise HTTPException(
+        status_code=403,
+        detail=(
+            f"Block '{block_name}' is restricted to unlimited-tier keys. "
+            f"Your tier: {tier or 'unknown'}."
+        ),
+    )
+
+
 def enforce_block_access(block_name: str, auth: Dict[str, Any]) -> None:
     """Raise HTTPException(403) if `auth` lacks access to `block_name`.
 
@@ -131,6 +218,26 @@ _MCP_REQUIRED_TIER = os.getenv("CEREBRUM_MCP_REQUIRED_TIER", "unlimited").strip(
 _MCP_DISABLE_AUTH = os.getenv("CEREBRUM_MCP_DISABLE_AUTH", "").strip().lower() in (
     "1", "true", "yes",
 )
+
+
+class RequestContextMiddleware:
+    """Raw ASGI middleware that marks the in-flight request context.
+
+    Runs the downstream app in the SAME task, so the contextvars it sets
+    (``_in_request`` / cleared ``_current_auth``) propagate into the endpoint,
+    its dependencies, and any block resolution they trigger. A
+    ``BaseHTTPMiddleware`` would run the endpoint in a separate task and the
+    propagation would be lost — which is why this is a plain ASGI class added
+    via ``app.add_middleware(RequestContextMiddleware)``.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http":
+            begin_request_context()
+        await self.app(scope, receive, send)
 
 
 def _send_status_only(status: int, message: str):

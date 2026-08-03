@@ -164,6 +164,12 @@ app.add_middleware(
     max_age=600,
 )
 
+# Marks the in-flight request context so the block-resolution tier gate can fail
+# closed on an unauthenticated/unknown-tier request (see core/security.py). Raw
+# ASGI middleware — contextvars must propagate into the endpoint.
+from app.core.security import RequestContextMiddleware  # noqa: E402
+app.add_middleware(RequestContextMiddleware)
+
 
 # Security headers middleware — adds the standard browser-side defences.
 # Only applies to top-level FastAPI routes; the /mcp Starlette mount

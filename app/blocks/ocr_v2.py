@@ -80,7 +80,9 @@ class OCRBlockV2(TypedBlock):
         if image_path.startswith("http://") or image_path.startswith("https://"):
             import httpx, tempfile
             try:
-                async with httpx.AsyncClient(follow_redirects=True) as client:
+                from app.core.url_guard import validate_public_url
+                image_path = validate_public_url(image_path)  # SSRF guard
+                async with httpx.AsyncClient(follow_redirects=False) as client:
                     resp = await client.get(image_path, timeout=30)
                     resp.raise_for_status()
                     ext = ".jpg"

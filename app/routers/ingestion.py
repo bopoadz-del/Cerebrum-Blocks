@@ -165,11 +165,15 @@ async def ingestion_text(
     request: IngestTextRequest, auth: dict = Depends(require_api_key)
 ):
     """Ingest raw text into the vector store."""
-    source_path = request.source_path or os.path.join(
-        DATA_DIR, f"{str(uuid.uuid4())[:8]}_text.txt"
-    )
+    # SECURITY: never write to a caller-supplied path. ``request.source_path``
+    # is untrusted and reaching ``open(..., "w")`` with it is an arbitrary file
+    # write (overwrite app code -> RCE) for any API-key holder. Always persist
+    # to a generated path inside DATA_DIR; the caller's source_path, if any, is
+    # kept only as a provenance *label* in metadata and never touches the fs.
+    write_path = os.path.join(DATA_DIR, f"{str(uuid.uuid4())[:8]}_text.txt")
+    source_label = request.source_path or write_path
     try:
-        with open(source_path, "w", encoding="utf-8") as out:
+        with open(write_path, "w", encoding="utf-8") as out:
             out.write(request.text)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to save text: {exc}")
@@ -179,14 +183,14 @@ async def ingestion_text(
             "status": "success",
             "text": request.text,
             "pages": None,
-            "source_path": source_path,
+            "source_path": source_label,
         }
 
     return await _run_ingestion(
         tenant_id=request.tenant_id,
         project_name=request.project_name,
         title=request.title,
-        source_path=source_path,
+        source_path=source_label,
         extract_fn=_extract_text,
     )
 

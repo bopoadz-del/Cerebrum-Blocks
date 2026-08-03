@@ -42,10 +42,9 @@ class ConfigBlock(UniversalBlock):
         # Base config
         self.configs = {
             "chat": {
-                "default_provider": "deepseek",
+                "default_provider": "kimi",
                 "providers": {
-                    "deepseek": {"model": "deepseek-chat", "timeout": 30},
-                    "anthropic": {"model": "claude-3-haiku", "timeout": 30},
+                    "kimi": {"model": "kimi-k2-0905-preview", "timeout": 30},
                 },
                 "streaming": True,
                 "max_tokens": 1024,
@@ -83,7 +82,7 @@ class ConfigBlock(UniversalBlock):
                 self.configs["memory"]["max_size"] = 1000
             elif "embedded" in profile.value:
                 # Minimal config
-                self.configs["chat"]["default_provider"] = "deepseek"
+                self.configs["chat"]["default_provider"] = "kimi"
                 self.configs["vector"]["backend"] = "memory"
                 self.configs["memory"]["max_size"] = 100
     

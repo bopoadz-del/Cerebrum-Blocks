@@ -55,13 +55,7 @@ class KnowledgeBlock(TypedBlock):
         return super().validate_input(data)
 
     default_config = {
-        "llm_provider": os.getenv("LLM_PROVIDER", "deepseek"),
-        "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
-        "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
-        "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
-        "deepseek_model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
-        "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
-        "openrouter_model": os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet"),
+        "llm_provider": "kimi",
         "vector_db_url": os.getenv("VECTOR_DB_URL", "http://localhost:8001"),
         "default_top_k": 5,
         "default_collections": ["cerebrum_captures", "cerebrum_swarm"],
@@ -121,7 +115,7 @@ class KnowledgeBlock(TypedBlock):
         else:
             query = question if isinstance(question, str) else str(question)
         top_k = params.get("top_k", self.config.get("default_top_k", 5))
-        llm_provider = params.get("llm_provider", self.config.get("llm_provider", "deepseek"))
+        llm_provider = params.get("llm_provider", self.config.get("llm_provider", "kimi"))
 
         # Prefer the pgvector-backed project corpus when a project_id is given.
         project_id = params.get("project_id")
@@ -342,7 +336,7 @@ Answer the question and cite sources.
     async def _summarize_collection(self, params: Dict) -> Dict:
         collection = params.get("collection", "cerebrum_captures")
         n_docs = params.get("n_docs", 10)
-        llm_provider = params.get("llm_provider", self.config.get("llm_provider", "deepseek"))
+        llm_provider = params.get("llm_provider", self.config.get("llm_provider", "kimi"))
 
         # Get recent documents (query with empty string or list operation)
         docs = await self._list_collection_docs(collection, n_docs)
@@ -421,76 +415,34 @@ Answer the question and cite sources.
 
     # ── LLM Routing ────────────────────────────────────────────────────────────
 
-    async def _llm_chat(self, messages: List[Dict], provider: str) -> Dict:
+    async def _llm_chat(self, messages: List[Dict], provider: str = "kimi") -> Dict:
         import httpx
+        from app.core.llm_config import _llm_config
 
-        if provider == "ollama":
-            url = f"{self.config.get('ollama_base_url')}/api/chat"
-            payload = {
-                "model": self.config.get("ollama_model", "llama3.2:3b"),
-                "messages": messages,
-                "stream": False,
-                "options": {"temperature": 0.3},
-            }
-            async with httpx.AsyncClient(timeout=120) as client:
-                resp = await client.post(url, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                return {"content": data["message"]["content"]}
-
-        elif provider == "deepseek":
-            api_key = self.config.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY", "")
-            if not api_key:
-                return {"status": "error", "error": "DeepSeek API key not configured"}
-            url = "https://api.deepseek.com/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
-            payload = {
-                "model": self.config.get("deepseek_model", "deepseek-chat"),
-                "messages": messages,
-                "temperature": 0.3,
-            }
-            async with httpx.AsyncClient(timeout=60) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                return {"content": data["choices"][0]["message"]["content"]}
-
-        elif provider == "openrouter":
-            api_key = self.config.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY", "")
-            if not api_key:
-                return {"status": "error", "error": "OpenRouter API key not configured"}
-            url = "https://openrouter.ai/api/v1/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
-            payload = {
-                "model": self.config.get("openrouter_model"),
-                "messages": messages,
-                "temperature": 0.3,
-            }
-            async with httpx.AsyncClient(timeout=60) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                return {"content": data["choices"][0]["message"]["content"]}
-        else:
-            return {"status": "error", "error": f"Unknown provider: {provider}"}
+        cfg = _llm_config()  # Kimi (Moonshot), OpenAI-compatible — the only provider
+        api_key = os.getenv(cfg["env_key"], "") if cfg["env_key"] else ""
+        if not api_key:
+            return {"status": "error", "error": "Kimi API key not configured (set KIMI_API_KEY)"}
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": cfg["default_model"],
+            "messages": messages,
+            "temperature": 0.3,
+        }
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(cfg["url"], headers=headers, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            return {"content": data["choices"][0]["message"]["content"]}
 
     # ── Helpers ────────────────────────────────────────────────────────────────
 
-    def _provider_has_key(self, provider: str) -> bool:
-        """Return True when the configured provider has an API key available."""
-        if provider == "deepseek":
-            return bool(self.config.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY", ""))
-        if provider == "openrouter":
-            return bool(self.config.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY", ""))
-        if provider == "ollama":
-            return True
-        return False
+    def _provider_has_key(self, provider: str = "kimi") -> bool:
+        """Return True when Kimi (the only provider) has an API key available."""
+        return bool(os.getenv("KIMI_API_KEY", "") or os.getenv("MOONSHOT_API_KEY", ""))
 
     def _extract_citations(self, answer: str, source_map: Dict) -> List[Dict]:
         """Extract which sources were actually cited in the answer."""

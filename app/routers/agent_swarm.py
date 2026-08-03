@@ -14,7 +14,7 @@ class AgentConfig(BaseModel):
     role: str = Field(default="custom", description="Agent role: planner, researcher, coder, reviewer, executor")
     backstory: str = Field(default="", description="Personality/context prompt")
     goal: str = Field(default="", description="What this agent must achieve")
-    llm_provider: Optional[str] = Field(default=None, description="Override global LLM: ollama, openrouter, openai")
+    llm_provider: Optional[str] = Field(default=None, description="Override global LLM (kimi)")
     model: Optional[str] = Field(default=None, description="Override model name")
     temperature: float = Field(default=0.3, ge=0.0, le=2.0)
     tools: List[str] = Field(default_factory=list, description="Tool names this agent can use")
