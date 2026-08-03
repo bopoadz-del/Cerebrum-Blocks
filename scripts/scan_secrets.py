@@ -11,8 +11,9 @@ import os
 import re
 import sys
 
-SKIP_DIRS = {".git", "__pycache__", ".venv", "node_modules", "generated",
-             ".postgres", "dist", "build"}
+SKIP_DIRS = {".git", "__pycache__", ".venv", "venv", "env", "node_modules",
+             "generated", ".postgres", "dist", "build", "site-packages"}
+SKIP_FILES = {"scan_secrets.py"}  # the scanner contains the patterns it detects
 # secret-ish name = long hex/base64 literal
 ASSIGN = re.compile(
     r"(?i)(secret|token|key|password)\w*\s*[:=]\s*['\"]([A-Za-z0-9+/=]{32,})['\"]"
@@ -33,6 +34,8 @@ def main() -> int:
     for root, dirs, files in os.walk("."):
         dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
         for f in files:
+            if f in SKIP_FILES:
+                continue
             if f.endswith((".pyc", ".png", ".jpg", ".jpeg", ".gif", ".webp",
                            ".pdf", ".zip", ".db", ".jsonl")):
                 continue

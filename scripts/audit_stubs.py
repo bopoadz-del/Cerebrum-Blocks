@@ -45,11 +45,12 @@ def main():
     reachable = []
     for root, dirs, files in os.walk("."):
         dirs[:] = [d for d in dirs if d not in
-                   {".git","__pycache__",".venv","node_modules","generated"}]
+                   {".git","__pycache__",".venv","venv","env","node_modules","generated",
+                    "bundle","factory_outputs","deployments","site-packages",".postgres"}]
         for f in files:
             if not f.endswith(".py"): continue
             p = os.path.join(root, f)
-            rel = os.path.relpath(p, ".")
+            rel = os.path.relpath(p, ".").replace(os.sep, "/")  # portable keys
             try: tree = ast.parse(open(p, encoding="utf-8", errors="ignore").read())
             except SyntaxError: continue
             in_tests = rel.startswith("tests/") or "/tests/" in rel

@@ -43,3 +43,13 @@ advanced/secondary extractors below are deferred and must NOT return faked data.
 - app/blocks/medical_v2.py :: _phi_context  — PHI-context helper; roadmap.
 - app/blocks/migration.py :: _restore_backup  — migration restore helper (backup/restore path uses core/backup.py); roadmap.
 - app/blocks/document_engine/parsers/pdf_parser.py :: _blocks_to_tables  — PDF block→table reconstruction; primary text path works, table reconstruction is roadmap.
+
+## universal_kernel neutral-kit templates (off every demo flow B1-B6)
+The universal_kernel kit ships neutral provider templates; the `hash` embedding
+provider is the real default. The main app runtime does handler security via
+`app/core/block_validation.py` (AST scan + signature), not this kit runner.
+- block_store/recommendation_template.py :: __missing__  — dict fallback hook.
+- block_store/kits/universal_kernel/wave1/rate_limit_guard/code.py :: reset  — test/reset helper.
+- block_store/kits/universal_kernel/wave2/embedding_provider/code.py :: embed  — OpenAI provider stub; raises NotImplementedError honestly. Default is HashEmbeddingProvider.
+- block_store/kits/universal_kernel/wave2/llm_provider/code.py :: complete  — OpenAI provider stub; raises NotImplementedError honestly.
+- block_store/kits/universal_kernel/wave4/block_runner/code.py :: _check_handler_security  — neutral-kit runner hook; the shipping runtime validates handlers in app/core/block_validation.py.
