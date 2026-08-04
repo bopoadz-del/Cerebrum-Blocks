@@ -1,8 +1,8 @@
 {
   "id": "automotive",
   "name": "Automotive & Mobility Suite",
-  "version": "1.0.0",
-  "description": "Automotive & Mobility Suite: typed document analysis, entity extraction, metrics, compliance checks, and risk scoring for the automotive domain.",
+  "version": "2.0.0",
+  "description": "Automotive & Mobility Suite: typed document analysis, entity extraction, metrics, compliance checks, risk scoring, and governed RAG foundation pack for the automotive domain.",
   "status": "available",
   "author": "bopoadz-del",
   "tags": [
@@ -27,8 +27,21 @@
     "automotive_v2",
     "formula_executor_v2"
   ],
-  "prompts": [],
-  "data": [],
+  "prompts": [
+    "prompts/assistant_v1.txt"
+  ],
+  "data": [
+    "source_manifest.json",
+    "schemas/",
+    "evaluation/"
+  ],
+  "rag": {
+    "pack": "automotive_core_rag_v1",
+    "source_manifest": "source_manifest.json",
+    "schemas": ["schemas/"],
+    "prompts": ["prompts/"],
+    "evaluation": ["evaluation/golden_questions.jsonl"]
+  },
   "core_modules": [
     "app/core/automotive_knowledge.py",
     "app/core/automotive_types.py",
@@ -98,6 +111,22 @@
     {
       "src": "app/blocks/formula_executor_v2.py",
       "dest": "app/blocks/formula_executor_v2.py"
+    },
+    {
+      "src": "source_manifest.json",
+      "dest": "source_manifest.json"
+    },
+    {
+      "src": "schemas/",
+      "dest": "schemas/"
+    },
+    {
+      "src": "prompts/",
+      "dest": "prompts/"
+    },
+    {
+      "src": "evaluation/",
+      "dest": "evaluation/"
     }
   ],
   "price_cents": 0,
