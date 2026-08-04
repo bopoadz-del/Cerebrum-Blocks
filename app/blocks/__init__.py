@@ -326,6 +326,9 @@ def _build_block_caps(
 _BLOCK_VALIDATOR: Any = _create_validator()
 _BLOCK_DEFS: Dict[str, Tuple[str, str]] = _build_block_defs(_BLOCK_VALIDATOR)
 _BLOCK_CAPS: Dict[str, BlockCapabilities] = _build_block_caps(_BLOCK_DEFS, _BLOCK_VALIDATOR)
+# Lazily-resolved capabilities for registry-only blocks (not in _BLOCK_DEFS);
+# see get_block_capabilities. Static per boot, so cached after first lookup.
+_REGISTRY_ONLY_CAPS: Dict[str, BlockCapabilities] = {}
 
 
 class _LazyBlockRegistry:
@@ -405,8 +408,39 @@ def get_block_capabilities(name: str) -> BlockCapabilities:
 
     Core blocks default to safe (no network/filesystem/cross-block) capabilities.
     Non-core blocks return the parsed manifest permissions.
+
+    Registry-only blocks — present in ``block_registry/`` but not registered
+    in ``BLOCK_REGISTRY`` (the common case on a virgin boot) — previously fell
+    through to default-empty capabilities: their signed manifest's declared
+    ``permissions`` were never consulted and the community fail-closed tier
+    never applied, so ``must_run_out_of_process`` was always False and ~70
+    blocks ran as unsandboxed local subprocesses regardless of policy. They
+    now resolve exactly like registered non-core blocks: manifest permissions
+    plus publisher tier, fail-closed to "community". Platform-signed
+    (certified) blocks keep running in-process/subprocess as before; only
+    unsigned or unknown-publisher blocks get forced out-of-process.
     """
-    return _BLOCK_CAPS.get(name, BlockCapabilities())
+    caps = _BLOCK_CAPS.get(name)
+    if caps is not None:
+        return caps
+    cached = _REGISTRY_ONLY_CAPS.get(name)
+    if cached is not None:
+        return cached
+    if _load_manifest(name) is None:
+        # Not a registry block at all (or unreadable manifest): default caps.
+        # /v1/execute 404s unknown names before capabilities matter.
+        return BlockCapabilities()
+    base_caps = BlockCapabilities.from_registry(name, _REGISTRY_ROOT)
+    tier = _resolve_publisher_tier(name, _BLOCK_VALIDATOR)
+    caps = BlockCapabilities(
+        network=base_caps.network,
+        filesystem=base_caps.filesystem,
+        imports=base_caps.imports,
+        blocks=base_caps.blocks,
+        publisher_tier=tier,
+    )
+    _REGISTRY_ONLY_CAPS[name] = caps
+    return caps
 
 
 __all__ = [
