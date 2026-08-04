@@ -58,7 +58,12 @@ async def init_pool() -> Pool | None:
 
     dsn = get_database_url()
     if not dsn:
-        logger.warning("DATABASE_URL not set; vector store will remain unavailable")
+        # Intentional configuration, not a fault: the store service runs
+        # without RAG demo flows and never sets DATABASE_URL.
+        logger.info(
+            "DATABASE_URL not set — vector store disabled; expected when "
+            "running without the RAG demo flows"
+        )
         return None
 
     last_exc: Exception | None = None

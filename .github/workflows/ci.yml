@@ -54,6 +54,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Stub audit (implement-or-register gate)
+        run: python scripts/audit_stubs.py
+
+      - name: Secret scan (non-test paths)
+        run: python scripts/scan_secrets.py
+
       - name: Apply database migrations
         run: |
           sudo apt-get install -y --no-install-recommends postgresql-client
