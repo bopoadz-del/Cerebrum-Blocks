@@ -1,0 +1,5 @@
+# Seeded acceptance fixture: platform-specific fix (must decline).
+source_product: The_Fork
+bug_class: render-healthcheck-path
+source_ref: fixtures/carry_back/platform_specific_fix (seeded)
+expected_classification: platform_specific

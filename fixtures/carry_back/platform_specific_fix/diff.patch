@@ -1,0 +1,27 @@
+diff --git a/render.yaml b/render.yaml
+index 1111111..2222222 100644
+--- a/render.yaml
++++ b/render.yaml
+@@ -10,6 +10,7 @@ services:
+     healthCheckPath: /health
++    # product-only: bind health to Fork deploy layout
+     envVars:
+       - key: ENV
+         value: production
+diff --git a/frontend/src/App.tsx b/frontend/src/App.tsx
+index 1111111..2222222 100644
+--- a/frontend/src/App.tsx
++++ b/frontend/src/App.tsx
+@@ -1,3 +1,4 @@
++// product UI-only tweak — not a store block
+ export function App() {
+   return <div>Fork</div>;
+ }
+diff --git a/app/routers/health.py b/app/routers/health.py
+index 1111111..2222222 100644
+--- a/app/routers/health.py
++++ b/app/routers/health.py
+@@ -1,3 +1,4 @@
++# product router glue — not in store block identity paths
+ from fastapi import APIRouter
+ router = APIRouter()
