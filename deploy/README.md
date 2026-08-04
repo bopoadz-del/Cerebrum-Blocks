@@ -7,14 +7,14 @@ Multi-platform deployment configurations for cloud and edge environments.
 ```
 deploy/
 ├── cloud/              # Docker configs for cloud deployment
-│   ├── Dockerfile          # Main API container
-│   └── Dockerfile.worker   # Celery worker container
-├── render/             # Render.com deployment
-│   └── render.yaml         # Render blueprint
+│   └── Dockerfile          # Main API container
 ├── edge/               # Edge/Jetson deployment
 │   └── Dockerfile.jetson   # ARM64/CUDA optimized
 └── README.md
 ```
+
+(There is no Celery worker container and no blueprint here — the live
+service is dashboard-managed Docker; see ../docs/RUNBOOK.md.)
 
 ## 🚀 Quick Deploy
 

@@ -2,6 +2,15 @@
 
 Complete guide to deploy the Cerebrum Blocks API on Render.
 
+> **Live production truth (2026-08):** the store runs as Render service
+> **`cerebrum-blocks`** on the **Docker runtime** (`./Dockerfile` →
+> `entrypoint.sh`), managed in the dashboard — NOT via `render.yaml`, which
+> describes the suspended `cerebrum-platform-api` python-runtime service the
+> steps below were written for. For day-2 operations (health, rollback, key
+> rotation, backups) see **[docs/RUNBOOK.md](docs/RUNBOOK.md)**. The manual
+> steps below remain valid only for standing up a fresh python-runtime
+> instance from scratch.
+
 ## Quick Deploy (One-Click)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/bopoadz-del/cerebrum-blocks)

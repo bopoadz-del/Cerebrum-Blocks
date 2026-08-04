@@ -25,6 +25,7 @@ from typing import Any, Dict, Sequence
 # Ensure project root is on path when run as module
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from mcp import types
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
@@ -128,13 +129,17 @@ def _parse_tool_name(tool_name: str) -> str:
 
 # ---------------------------------------------------------------------------
 # MCP Server Setup
+#
+# mcp 2.x removed the decorator registration API (`@server.list_tools()` /
+# `@server.call_tool()`) from the low-level Server; handlers are now passed
+# to the constructor as `on_list_tools=` / `on_call_tool=` callables with a
+# `(ctx, params)` signature returning typed results. Booting the old
+# decorator code under mcp 2.0.0 raised `AttributeError: 'Server' object
+# has no attribute 'list_tools'` and the /mcp mount silently disappeared.
 # ---------------------------------------------------------------------------
 
-server = Server("cerebrum-blocks", version="2.0.0")
 
-
-@server.list_tools()
-async def list_tools() -> list[Tool]:
+def _build_tools() -> list[Tool]:
     """Expose every block in BLOCK_REGISTRY as an MCP tool."""
     tools: list[Tool] = []
 
@@ -204,8 +209,22 @@ async def list_tools() -> list[Tool]:
     return tools
 
 
-@server.call_tool()
-async def call_tool(name: str, arguments: Any) -> Sequence[TextContent]:
+async def _on_list_tools(ctx: Any, params: Any) -> types.ListToolsResult:
+    """mcp 2.x list-tools handler."""
+    return types.ListToolsResult(tools=_build_tools())
+
+
+async def _on_call_tool(ctx: Any, params: types.CallToolRequestParams) -> types.CallToolResult:
+    """mcp 2.x call-tool handler: unwrap params, wrap content into a result."""
+    content = await _dispatch_tool(params.name, params.arguments)
+    is_error = any(
+        isinstance(item, TextContent) and item.text.startswith(("Error", "Unknown tool:"))
+        for item in content
+    )
+    return types.CallToolResult(content=list(content), isError=is_error)
+
+
+async def _dispatch_tool(name: str, arguments: Any) -> Sequence[TextContent]:
     """Route MCP tool calls to block execution."""
     if arguments is None:
         arguments = {}
@@ -278,6 +297,14 @@ async def _handle_chain(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     except Exception as e:
         logger.exception("Chain execution failed")
         return [TextContent(type="text", text=f"Error executing chain: {str(e)}")]
+
+
+server = Server(
+    "cerebrum-blocks",
+    version="2.0.0",
+    on_list_tools=_on_list_tools,
+    on_call_tool=_on_call_tool,
+)
 
 
 # ---------------------------------------------------------------------------

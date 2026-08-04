@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 import os
 
 import httpx
+from anyio import to_thread
 
 from app.blocks import BLOCK_REGISTRY, get_block_capabilities
 from app.dependencies import require_api_key
@@ -294,7 +295,13 @@ async def _run_block(request: ExecuteRequest, auth: dict) -> dict:
             raise HTTPException(status, err)
 
     # Registry-only blocks with safe capabilities fall back to local subprocess.
-    registry_result = _run_registry_block(block_name, scoped_input, scoped_params)
+    # subprocess.run blocks for up to 60s; run it in a worker thread so the
+    # single uvicorn event loop (and with it /health and /ready) stays
+    # responsive — same fix as the pre-warm offload in
+    # app/dependencies.py::init_blocks.
+    registry_result = await to_thread.run_sync(
+        _run_registry_block, block_name, scoped_input, scoped_params
+    )
     if registry_result.get("success"):
         return _with_scope_warnings({
             "block": block_name,
