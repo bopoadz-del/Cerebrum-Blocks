@@ -116,3 +116,25 @@ async def test_a_failed_last_step_does_not_crash_the_run_summary(workflow_block)
     step = inner["results"][-1]
     assert step["status"] == "failed"
     assert step.get("error")
+
+
+@pytest.mark.asyncio
+async def test_a_step_may_name_its_block_with_block_id(workflow_block):
+    """Every consumer outside this repo (the CerebrumDev factory, block.json,
+    the lockfile) calls the identifier block_id; a pipeline written in that
+    vocabulary used to fail every step with "No block specified"."""
+    result = await workflow_block.execute(
+        {
+            "pipeline_id": "alias-probe",
+            "steps": [
+                {"id": "s1", "block_id": "does_not_exist", "input": {}, "params": {}}
+            ],
+        },
+        {"action": "run"},
+    )
+    step = result["result"]["results"][-1]
+    # The block name RESOLVED (and then failed on the unknown block) --
+    # proving the alias was read; the old code failed earlier with
+    # "No block specified".
+    assert step["status"] == "failed"
+    assert step.get("error") != "No block specified"

@@ -243,7 +243,11 @@ class WorkflowBlock(TypedBlock):
 
         for idx, step in enumerate(steps):
             step_id = step.get("id", f"step_{idx}")
-            block_name = step.get("block")
+            # "block_id" accepted as an alias: every consumer outside this
+            # repo (the CerebrumDev factory, block.json, the lockfile) calls
+            # the identifier block_id, so pipelines written against that
+            # vocabulary failed here with "No block specified".
+            block_name = step.get("block") or step.get("block_id")
             step_input = step.get("input", {})
             step_params = step.get("params", {})
 
