@@ -226,7 +226,17 @@ class NotificationBlock(TypedBlock):
 
         try:
             from app.blocks import BLOCK_REGISTRY
-            from app.dependencies import _create_block_instance
+
+            try:
+                from app.dependencies import _create_block_instance
+            except ImportError:
+                # Standalone/vendored runtime (a factory-built platform):
+                # there is no platform wiring, tier gate or memory cache to
+                # thread through, and plain construction is exactly what the
+                # block adapters themselves do. Inside the Blocks platform
+                # the import succeeds and nothing changes.
+                def _create_block_instance(block_class, config=None, allow_platform=True):
+                    return block_class()
 
             if block_name not in BLOCK_REGISTRY:
                 return {"status": "error", "error": f"Block '{block_name}' not found"}
