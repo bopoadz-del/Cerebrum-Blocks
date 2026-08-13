@@ -337,7 +337,12 @@ class WorkflowBlock(TypedBlock):
             "step_count": len(steps),
             "results": step_results,
             "execution_time_ms": execution_time_ms,
-            "final_output": step_results[-1]["result"] if step_results else {},
+            # .get, not []: a FAILED last step's entry carries status/error and
+            # no "result" key, and the whole run summary used to KeyError on
+            # it — measured live when a factory-built platform ran a pipeline
+            # whose only step failed. The caller still sees the failure via
+            # "status" and the step's own error entry.
+            "final_output": step_results[-1].get("result", {}) if step_results else {},
         }
 
     # ── Scheduling ─────────────────────────────────────────────────────────────

@@ -88,3 +88,31 @@ async def test_workflow_cron_parser(workflow_block):
     assert workflow_block._cron_next_wait("*/5 * * * *") == 300
     assert workflow_block._cron_next_wait("*/10 * * * *") == 600
     assert workflow_block._cron_next_wait("bad") == 300  # fallback
+
+
+@pytest.mark.asyncio
+async def test_a_failed_last_step_does_not_crash_the_run_summary(workflow_block):
+    """New-shape test for the KeyError('result') found live.
+
+    A failed step appends {"step_id", "block", "status", "error"} -- no
+    "result" key -- and the run summary indexed step_results[-1]["result"]
+    unconditionally. Any pipeline whose LAST step failed crashed the whole
+    workflow block instead of reporting the failure it had already recorded.
+    """
+    result = await workflow_block.execute(
+        {
+            "pipeline_id": "crash-probe",
+            "steps": [
+                {"id": "s1", "block": "does_not_exist", "input": {}, "params": {}}
+            ],
+        },
+        {"action": "run"},
+    )
+    # The block must ANSWER (with the failure recorded), not raise KeyError.
+    assert result["block"] == "workflow"
+    inner = result["result"]
+    assert inner["status"] in ("partial", "failed")
+    assert inner["final_output"] == {}
+    step = inner["results"][-1]
+    assert step["status"] == "failed"
+    assert step.get("error")
