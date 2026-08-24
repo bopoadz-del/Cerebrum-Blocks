@@ -208,6 +208,41 @@ def main() -> int:
 
     print(f"Published '{domain}' kit: {copied} artifacts -> {bundle_dir}")
     print(f"Manifest written: {manifest_path}")
+
+    # Publish gate. CI catches a bad manifest on the next push; this catches
+    # it before the kit is on the shelf, which is the point at which a
+    # consumer could install it. Reported, not silently swallowed -- and it
+    # runs after the write so the findings name the manifest as published.
+    from audit_kit_composition import (
+        MODULES_DIR,
+        REGISTRY_DIR,
+        _dirs,
+        _modules,
+        audit_kit,
+        load_known,
+    )
+
+    known = _dirs(REGISTRY_DIR) | _modules(MODULES_DIR)
+    # Same registration contract as CI: a gap that is declared in
+    # KNOWN_KIT_GAPS.md does not block, or publishing any already-registered
+    # kit would fail while CI passes -- two gates disagreeing about the same
+    # manifest is worse than either one alone.
+    registered = load_known()
+    findings = [
+        (code, detail)
+        for code, detail in audit_kit(domain, str(kit_dir.parent), known)
+        if f"{domain} :: {code}" not in registered
+    ]
+    if findings:
+        print(f"\nCOMPOSITION FINDINGS for '{domain}':")
+        for code, detail in findings:
+            print(f"  {code}: {detail}")
+        print(
+            "Kit is on the shelf but does not pass the composition audit. "
+            f"Fix it, or register it in KNOWN_KIT_GAPS.md as '{domain} :: <code>'."
+        )
+        return 1
+    print("Composition audit: clean.")
     return 0
 
 
