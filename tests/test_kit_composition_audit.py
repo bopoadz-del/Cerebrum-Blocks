@@ -380,3 +380,36 @@ def test_some_other_string_is_not_a_declaration(tmp_path):
     """Only the declared value counts; a free-text note is still silence."""
     _kit(tmp_path, "demo", _base(flow="see the README"))
     assert "composition_incomplete" in _codes(tmp_path, "demo")
+
+
+# --------------------------------------------------------------------------
+# The generator must produce kits this audit accepts.
+# --------------------------------------------------------------------------
+
+
+def test_a_freshly_generated_kit_passes_the_audit(tmp_path, monkeypatch):
+    """The loop that matters: 18 kits lack a composition declaration because
+    the generator never emitted one. If this regresses, kit number 21 is a
+    new registration rather than a clean kit."""
+    spec = importlib.util.spec_from_file_location(
+        "generate_domain_kit", REPO / "scripts" / "generate_domain_kit.py"
+    )
+    gen = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gen)
+
+    domain = next(
+        d for d in gen.DOMAIN_CATALOG
+        if d not in gen.SKIP_KITS and not (REPO / "block_store" / "kits" / d).exists()
+    )
+    kits = tmp_path / "kits"
+    kits.mkdir()
+    monkeypatch.setattr(gen, "KITS_DIR", kits)
+    gen.generate_domain_kit(domain, quiet=True)
+
+    manifest = json.loads((kits / domain / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["flow"] == "independent", (
+        "the generator emitted a kit with no composition declaration; that is "
+        "how the existing 18 gaps were created"
+    )
+    codes = [c for c, _ in audit.audit_kit(domain, str(kits), set(manifest["blocks"]))]
+    assert "no_composition" not in codes
