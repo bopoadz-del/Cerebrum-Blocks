@@ -35,6 +35,16 @@ REQUIRED_KEYS = ("id", "name", "version", "description", "status", "blocks")
 # inventing a second key for the same idea would leave two half-truths.
 COMPOSITION_KEYS = ("flow", "waves")
 
+# Not every kit is a pipeline. The 6-block domain kits ship a BUNDLE of
+# capabilities whose container resolves a single block; there is no ordering
+# to write down, and demanding a flow of them would invite a fabricated one.
+#
+# Declaring this is still required. "silence is not permission" is about the
+# difference between a kit that says its blocks are independent and a kit
+# that says nothing -- the first is a decision, the second is an omission,
+# and only the author can tell them apart.
+INDEPENDENT = "independent"
+
 # Where an encoded figure came from. A rate, threshold or limit with no
 # recorded origin is not "probably fine" -- it is a number nobody can check.
 #   regulator             published rule from a supervisory authority
@@ -84,6 +94,9 @@ def _composition_blocks(manifest):
         if key not in manifest:
             continue
         val = manifest[key]
+        # An explicit "these do not compose" is a declaration, not silence.
+        if isinstance(val, str) and val.strip().lower() == INDEPENDENT:
+            return key, None
         if isinstance(val, dict):
             out = []
             for stage in val.values():
@@ -271,6 +284,8 @@ def audit_kit(kit, kits_dir, known_blocks):
                     % (len(blocks), "/".join(COMPOSITION_KEYS)),
                 )
             )
+    elif ordered is None:
+        pass  # declared independent; there is no ordering to agree with
     else:
         uncovered = [b for b in blocks if b not in set(ordered)]
         if uncovered:

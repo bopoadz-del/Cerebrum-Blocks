@@ -355,3 +355,28 @@ def test_the_gn16_ruleset_still_passes_on_its_own_citations(monkeypatch):
     ).read_text(encoding="utf-8"))
     assert audit._every_item_cited(data)
     assert all(r.get("citation") for r in data["rules"])
+
+
+def test_declaring_blocks_independent_is_accepted(tmp_path):
+    """Not every kit is a pipeline. The 6-block domain kits ship a bundle
+    whose container resolves a single block; demanding a flow of them would
+    invite a fabricated one."""
+    _kit(tmp_path, "demo", _base(flow="independent"))
+    assert _codes(tmp_path, "demo") == []
+
+
+def test_independent_is_case_insensitive(tmp_path):
+    _kit(tmp_path, "demo", _base(waves="Independent"))
+    assert _codes(tmp_path, "demo") == []
+
+
+def test_independent_does_not_excuse_an_unresolved_block(tmp_path):
+    """Declaring no ordering says nothing about whether the blocks exist."""
+    _kit(tmp_path, "demo", _base(blocks=["alpha", "ghost"], flow="independent"))
+    assert "unresolved_block" in _codes(tmp_path, "demo")
+
+
+def test_some_other_string_is_not_a_declaration(tmp_path):
+    """Only the declared value counts; a free-text note is still silence."""
+    _kit(tmp_path, "demo", _base(flow="see the README"))
+    assert "composition_incomplete" in _codes(tmp_path, "demo")

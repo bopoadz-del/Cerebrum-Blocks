@@ -9,20 +9,27 @@ Format matches `KNOWN_INCOMPLETE.md`: `- <kit> :: <code>  <note>`.
 ## Why these are registered rather than fixed
 
 Every domain kit below declares its blocks and says nothing about how they
-compose. That is the finding the audit exists to surface: **silence is not
-permission.** A kit with six blocks and no `flow` is not a kit whose steps
-may run in any order — it is a kit whose ordering was never written down,
-and the two are indistinguishable to anything that reads the manifest.
+compose. **Silence is not permission:** a kit that says its blocks are
+independent has made a decision; a kit that says nothing has left an
+omission, and only the author can tell the two apart.
 
-They are registered rather than fixed in one sweep because the ordering is
-domain knowledge, not a mechanical edit. Guessing a `flow` and committing it
-would convert an honest blank into a confident wrong answer, which is the
-failure mode this repo is built to avoid. Each is authored when its domain
-is next touched, or by the kit pipeline that generates `flow`-complete kits
-going forward.
+What the code shows, so the gap is not overstated: these are **bundles, not
+pipelines.** The 6-block domain kits ship pdf/ocr/chat/image alongside a
+`<domain>_v2` block, and each generated container declares
+`requires = ["<domain>_v2"]` and resolves exactly that one block. There is
+very likely no ordering here to write down — the honest missing value is
+`"flow": "independent"`, not a sequence.
 
-`universal_kernel` is the worked example and is NOT registered: it declares
-`waves` covering all 24 of its blocks, in agreement with its `blocks` list.
+They are registered rather than filled in because that judgement belongs to
+the kit author. Asserting `independent` across seventeen kits on the
+strength of their containers would be the same error as inventing a
+sequence: a confident claim standing in for the author's decision. The
+declaration is now available and the checker accepts it.
+
+Two kits are not bundles and need a real answer:
+`finance_ops` declares six finance blocks in `requires` and resolves them
+by name, and `construction` (18 blocks) has no container under
+`app/containers/` to read.
 
 Registered 2026-08-24.
 
