@@ -35,6 +35,19 @@ REQUIRED_KEYS = ("id", "name", "version", "description", "status", "blocks")
 # inventing a second key for the same idea would leave two half-truths.
 COMPOSITION_KEYS = ("flow", "waves")
 
+# Where an encoded figure came from. A rate, threshold or limit with no
+# recorded origin is not "probably fine" -- it is a number nobody can check.
+#   regulator             published rule from a supervisory authority
+#   spc                   statistical process control / measured data
+#   internal_protocol     the operator's own documented procedure
+#   contributor_unverified supplied by a contributor, not yet checked
+SOURCE_KINDS = ("regulator", "spc", "internal_protocol", "contributor_unverified")
+
+# Accepted spellings of a provenance record. "citation" predates this audit
+# (gn16_ruleset.json carries one on all 12 of its rules) and is accepted for
+# the same reason "waves" is.
+PROVENANCE_KEYS = ("provenance", "source", "citation")
+
 
 def load_known():
     """Registered gaps, one per '- kit :: code' line, same shape as
@@ -83,6 +96,127 @@ def _composition_blocks(manifest):
             return key, out
         return key, []
     return None, None
+
+
+def _has_record(obj):
+    """Does this mapping carry a non-empty provenance record?"""
+    if not isinstance(obj, dict):
+        return False
+    for key in PROVENANCE_KEYS:
+        val = obj.get(key)
+        if isinstance(val, str) and val.strip():
+            return True
+        if isinstance(val, dict) and val:
+            return True
+    return False
+
+
+# Collections that ARE the provenance. Requiring each entry of a "sources"
+# list to cite its own source is circular.
+_SOURCE_COLLECTIONS = frozenset({"sources", "references", "citations", "bibliography"})
+
+
+def _every_item_cited(data):
+    """gn16_ruleset.json records provenance per rule rather than per file.
+
+    EVERY collection of mappings must be fully cited, not merely one of them.
+    An earlier version passed a file if any single collection was cited,
+    which let hkia_gn16_corpus.json through on its 8/8 section_summaries
+    while its sources collection was 0/2 -- a document can always be made to
+    pass by adding one well-cited list beside the uncited figures.
+
+    11 of 12 cited is not a cited document either; it is a document with an
+    uncited rule in it.
+    """
+    seen = False
+    for key, val in data.items():
+        if key in _SOURCE_COLLECTIONS:
+            continue
+        items = list(val.values()) if isinstance(val, dict) else val
+        if not isinstance(items, (list, tuple)):
+            continue
+        items = list(items)
+        mappings = [i for i in items if isinstance(i, dict)]
+        if not mappings or len(mappings) != len(items):
+            continue
+        seen = True
+        if not all(_has_record(i) for i in mappings):
+            return False
+    return seen
+
+
+def _provenance_findings(kit, kits_dir, manifest):
+    """Every declared data file must say where its figures came from."""
+    findings = []
+    declared = manifest.get("data")
+    if not isinstance(declared, list):
+        return findings
+
+    # Published kits carry their data under bundle/; a kit that has not been
+    # published yet carries it at the kit root.
+    roots = [
+        os.path.join(kits_dir, kit, "bundle"),
+        os.path.join(kits_dir, kit),
+    ]
+
+    for rel in declared:
+        if not isinstance(rel, str):
+            continue
+        # A manifest may declare a directory ("schemas/"); its presence is
+        # what is checked, not its contents.
+        path = next(
+            (os.path.join(r, rel) for r in roots if os.path.exists(os.path.join(r, rel))),
+            None,
+        )
+        if path is None:
+            findings.append(("data_file_missing", "declared but not on disk: %s" % rel))
+            continue
+        if os.path.isdir(path) or not rel.endswith(".json"):
+            continue
+        try:
+            data = json.loads(open(path, encoding="utf-8").read())
+        except (ValueError, OSError) as exc:
+            findings.append(("data_unparseable", "%s: %s" % (rel, str(exc)[:80])))
+            continue
+        if not isinstance(data, dict):
+            continue
+
+        record = None
+        for key in ("provenance", "source"):
+            if isinstance(data.get(key), dict):
+                record = data[key]
+                break
+
+        if record is None:
+            if not (_has_record(data) or _every_item_cited(data)):
+                findings.append(
+                    (
+                        "data_provenance_missing",
+                        "%s records no source for its figures" % rel,
+                    )
+                )
+            continue
+
+        kind = record.get("kind")
+        if kind not in SOURCE_KINDS:
+            findings.append(
+                ("data_provenance_kind_unknown", "%s: kind=%r" % (rel, kind))
+            )
+            continue
+        if kind != "contributor_unverified" and not str(record.get("reference", "")).strip():
+            findings.append(
+                ("data_provenance_unreferenced", "%s: kind=%s with no reference" % (rel, kind))
+            )
+        if kind == "contributor_unverified" and record.get("parked") is not True:
+            # The intake rule, enforced rather than remembered: unverified
+            # figures are parked, never shipped.
+            findings.append(
+                (
+                    "data_unverified_not_parked",
+                    "%s carries contributor_unverified figures without parked: true" % rel,
+                )
+            )
+    return findings
 
 
 def audit_kit(kit, kits_dir, known_blocks):
@@ -149,6 +283,7 @@ def audit_kit(kit, kits_dir, known_blocks):
                 ("composition_unknown_block", "%s orders non-member: %s" % (comp_key, ", ".join(extra)))
             )
 
+    findings.extend(_provenance_findings(kit, kits_dir, manifest))
     return findings
 
 

@@ -232,3 +232,126 @@ def test_universal_kernel_declares_a_complete_composition(monkeypatch):
     monkeypatch.chdir(REPO)
     known = audit._dirs(audit.REGISTRY_DIR) | audit._modules(audit.MODULES_DIR)
     assert audit.audit_kit("universal_kernel", audit.KITS_DIR, known) == []
+
+
+# --------------------------------------------------------------------------
+# Provenance: an encoded figure must say where it came from.
+# --------------------------------------------------------------------------
+
+
+def _data_kit(root: Path, name: str, files: dict, declared=None):
+    """A kit declaring data files, written at the kit root (unpublished)."""
+    body = _base(id=name, blocks=["alpha"], data=list(declared if declared is not None else files))
+    d = _kit(root, name, body)
+    for rel, content in files.items():
+        p = d / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(content), encoding="utf-8")
+    return d
+
+
+def _pcodes(root: Path, name: str):
+    return [c for c, _ in audit._provenance_findings(name, str(root), json.loads(
+        (root / name / "manifest.json").read_text(encoding="utf-8")))]
+
+
+def test_a_data_file_with_no_provenance_is_a_finding(tmp_path):
+    _data_kit(tmp_path, "demo", {"rates.json": {"rates": {"a": 0.5}}})
+    assert "data_provenance_missing" in _pcodes(tmp_path, "demo")
+
+
+def test_a_top_level_provenance_record_satisfies_the_check(tmp_path):
+    _data_kit(tmp_path, "demo", {"rates.json": {
+        "provenance": {"kind": "regulator", "reference": "HKIA GN16 s3.2"},
+        "rates": {"a": 0.5},
+    }})
+    assert _pcodes(tmp_path, "demo") == []
+
+
+def test_per_item_citation_satisfies_the_check(tmp_path):
+    """gn16_ruleset.json records provenance per rule, not per file."""
+    _data_kit(tmp_path, "demo", {"rules.json": {
+        "rules": [{"rule_id": "r1", "citation": "GN16 s1.2"},
+                  {"rule_id": "r2", "citation": "GN16 s3.2"}],
+    }})
+    assert _pcodes(tmp_path, "demo") == []
+
+
+def test_one_uncited_item_fails_the_whole_document(tmp_path):
+    _data_kit(tmp_path, "demo", {"rules.json": {
+        "rules": [{"rule_id": "r1", "citation": "GN16 s1.2"}, {"rule_id": "r2"}],
+    }})
+    assert "data_provenance_missing" in _pcodes(tmp_path, "demo")
+
+
+def test_a_cited_collection_cannot_cover_for_an_uncited_one(tmp_path):
+    """Regression: an earlier rule passed a file if ANY collection was fully
+    cited, so hkia_gn16_corpus.json passed on its 8/8 section_summaries while
+    its figures went uncited. Adding one well-cited list must not launder the
+    rest of the document."""
+    _data_kit(tmp_path, "demo", {"mixed.json": {
+        "summaries": [{"id": "s1", "citation": "GN16 s1"}],
+        "rates": [{"level": "standard", "rate": 0.75}],
+    }})
+    assert "data_provenance_missing" in _pcodes(tmp_path, "demo")
+
+
+def test_a_sources_collection_need_not_cite_itself(tmp_path):
+    """Requiring each entry of a 'sources' list to cite a source is circular."""
+    _data_kit(tmp_path, "demo", {"corpus.json": {
+        "sources": [{"title": "GN16", "url": "https://example.invalid"}],
+        "sections": [{"id": "1", "citation": "GN16 s1"}],
+    }})
+    assert _pcodes(tmp_path, "demo") == []
+
+
+def test_unverified_figures_must_be_parked(tmp_path):
+    """The intake rule enforced rather than remembered."""
+    _data_kit(tmp_path, "demo", {"rates.json": {
+        "provenance": {"kind": "contributor_unverified", "reference": "sheet from D."},
+        "rates": {"a": 0.5},
+    }})
+    assert "data_unverified_not_parked" in _pcodes(tmp_path, "demo")
+
+
+def test_parked_unverified_figures_are_accepted(tmp_path):
+    _data_kit(tmp_path, "demo", {"rates.json": {
+        "provenance": {"kind": "contributor_unverified", "parked": True},
+        "rates": {"a": 0.5},
+    }})
+    assert _pcodes(tmp_path, "demo") == []
+
+
+def test_an_unknown_source_kind_is_a_finding(tmp_path):
+    _data_kit(tmp_path, "demo", {"rates.json": {
+        "provenance": {"kind": "vibes", "reference": "x"}, "rates": {"a": 1},
+    }})
+    assert "data_provenance_kind_unknown" in _pcodes(tmp_path, "demo")
+
+
+def test_a_cited_kind_without_a_reference_is_a_finding(tmp_path):
+    _data_kit(tmp_path, "demo", {"rates.json": {
+        "provenance": {"kind": "regulator"}, "rates": {"a": 1},
+    }})
+    assert "data_provenance_unreferenced" in _pcodes(tmp_path, "demo")
+
+
+def test_a_declared_data_file_that_is_absent_is_a_finding(tmp_path):
+    _data_kit(tmp_path, "demo", {}, declared=["nope.json"])
+    assert "data_file_missing" in _pcodes(tmp_path, "demo")
+
+
+def test_a_declared_directory_is_satisfied_by_the_directory(tmp_path):
+    d = _data_kit(tmp_path, "demo", {}, declared=["schemas/"])
+    (d / "schemas").mkdir()
+    assert _pcodes(tmp_path, "demo") == []
+
+
+def test_the_gn16_ruleset_still_passes_on_its_own_citations(monkeypatch):
+    """The worked example for provenance, as universal_kernel is for flow."""
+    monkeypatch.chdir(REPO)
+    data = json.loads(Path(
+        "block_store/kits/insurance/bundle/app/data/gn16_ruleset.json"
+    ).read_text(encoding="utf-8"))
+    assert audit._every_item_cited(data)
+    assert all(r.get("citation") for r in data["rules"])

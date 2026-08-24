@@ -44,3 +44,27 @@ Registered 2026-08-24.
 - real_estate :: no_composition  6 blocks; flow unauthored
 - retail :: no_composition  6 blocks; flow unauthored
 - supply_chain :: no_composition  6 blocks; flow unauthored
+
+## Provenance gaps
+
+An encoded rate, threshold or limit with no recorded origin is not
+"probably fine" — it is a number nobody can check. These files carry
+figures whose source was never written down.
+
+They are registered rather than filled in because **I cannot supply a
+provenance I do not have.** Writing `"kind": "regulator"` above rates whose
+origin is unknown would be worse than the blank: it would make an unchecked
+number look checked, which is the exact failure this field exists to
+prevent. Each needs its actual source recorded by whoever knows it.
+
+`gn16_ruleset.json` is the worked example and is NOT registered: all 12 of
+its rules carry a `citation` naming the HKIA GL16/GN16 section they came
+from. `hkia_gn16_corpus.json` and `construction_kb.json` likewise cite per
+entry.
+
+Registered 2026-08-24.
+
+- insurance :: data_provenance_missing  6 files: commission_formulas, routing_sops, retention_playbook, incentive_playbook, sample_bordereaux, hierarchy_model. commission_formulas.json is the priority — it holds live commission rates (0.5–1.2 of annualized premium) consumed by agency_commission_engine.
+- construction :: data_provenance_missing  app/data/procedures/procedures_db.json
+- automotive :: data_provenance_missing  source_manifest.json
+- automotive :: data_file_missing  manifest declares "evaluation/", which is not on disk
