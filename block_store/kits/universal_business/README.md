@@ -55,11 +55,44 @@ evaluates the set; `chat` asks questions of it. Neither feeds the other and
 either is a valid entry point. The kit ships no domain container, so there is
 no resolution order to state.
 
-## Using it
+## What consumes it — and what does not
 
-The kit installs one artifact, `app/data/universal_formulas.json`, into the
-target platform, where `formula_executor_v2` evaluates entries by `id`. Each
-formula carries its `expression`, its named `inputs`, an `output` unit, and
-where relevant a `guards` list naming the domain conditions
-(`revenue != 0`, `unit_price > unit_variable_cost`) that the caller must
-satisfy for the result to mean anything.
+**`formula_executor_v2` does not read this file.** It is an LLM
+code-generation block: it takes `{"task": ..., "variables": {...}}`, asks the
+model to write Python, and runs that in a restricted sandbox. It has no
+formula-file loader and no lookup by `id`.
+
+That is worth stating plainly, because fifteen kits ship
+`formula_executor_v2` and declare no formulas at all — agriculture, aviation,
+education, finance, finance_ops, hotel_management, hr, legal, manufacturing,
+medical, oil_gas, pharma, real_estate, retail, supply_chain. Each vendors the
+executor's source into its bundle and gives it nothing to work from, so
+"calculate gross margin" is answered by whatever the model recalls at that
+moment, per call, unaudited.
+
+This set is therefore a **definitions catalogue**: the canonical statement of
+what each quantity means, so a generated calculation can be checked against
+it rather than trusted. Each entry carries its `expression`, named `inputs`,
+an `output` unit, and where relevant a `guards` list naming the conditions
+(`revenue != 0`, `unit_price > unit_variable_cost`) the caller must satisfy
+for the result to mean anything.
+
+Wiring it into the executor's prompt — so generated code starts from the
+canonical identity instead of inventing one — is deliberately NOT done in
+this PR. It changes how every generated calculation is produced, in fifteen
+kits, and belongs in its own change with its own tests.
+
+## Sharing it across kits
+
+There is no kit-dependency mechanism today: no `requires_kit`, `depends_on`
+or `extends` key exists in any manifest, and nothing in
+`container_kit_store` or `domain_kit_loader` resolves one. So this kit is
+installable on its own and is not yet inherited by any domain kit. Making the
+set genuinely shared needs one of:
+
+* a base-asset path, the way `virgin_shelf._BASE_BLOCKS` makes pdf/ocr/chat/
+  image present before any kit installs; or
+* a real dependency key in the manifest schema, resolved at install time.
+
+Vendoring a copy into each kit is the third option and the wrong one: twenty
+copies of a definition drift, and the drift is silent.
