@@ -116,3 +116,53 @@ def test_kit_manifest_exposes_formula_executor_v2(kit_id: str):
 def test_kit_bundle_includes_formula_executor_v2(kit_id: str):
     bundle_file = KITS_DIR / kit_id / "bundle" / "app" / "blocks" / "formula_executor_v2.py"
     assert bundle_file.exists(), f"{kit_id} bundle missing formula_executor_v2.py"
+
+
+def test_the_universal_kit_declares_a_universal_set():
+    """No jurisdiction-specific figure may be encoded in the universal set.
+
+    A tax or interest rate written here would be wrong for most businesses
+    that load it, and would be a figure nobody can check. Rates are inputs;
+    the one convention that does carry numbers says so.
+    """
+    manifest = _load_manifest("universal_business")
+    assert manifest["status"] == "available"
+    assert manifest.get("flow") == "independent", "composition must be declared"
+
+    data = json.loads(
+        (KITS_DIR / "universal_business" / "app" / "data" / "universal_formulas.json")
+        .read_text(encoding="utf-8")
+    )
+    assert data["provenance"]["kind"] in ("internal_protocol", "regulator", "spc")
+    assert data["provenance"]["reference"].strip()
+
+    for formula in data["formulas"]:
+        assert formula["expression"].strip(), formula["id"]
+        assert formula["inputs"], formula["id"]
+        # Every rate must arrive as a named input. A bare decimal literal in an
+        # expression is an encoded rate wearing a formula's clothes.
+        for token in formula["expression"].replace("(", " ").replace(")", " ").split():
+            if token.replace(".", "", 1).isdigit():
+                assert float(token) in (0.0, 1.0, 2.0), (
+                    f"{formula['id']} encodes the literal {token!r}; "
+                    "rates belong in inputs, not in the expression"
+                )
+
+
+def test_every_installable_kit_registers_its_blocks():
+    """An installable kit with no block spec map installs and does nothing.
+
+    ``kit_block_specs`` logs "no block spec map -- skipped" and registers zero
+    blocks, so the kit is offered, installs cleanly, and is inert. Nothing
+    else catches that: the composition audit passes it and ``_installable``
+    passes it. This is the only gate that would notice.
+    """
+    from app.core.container_kit_store import list_kits
+    from app.core.domain_kit_loader import _KIT_BLOCK_SPECS
+
+    inert = [
+        kit["id"]
+        for kit in list_kits()
+        if kit.get("installable") and kit["id"] not in _KIT_BLOCK_SPECS
+    ]
+    assert not inert, f"installable but registers no blocks: {inert}"

@@ -18,6 +18,16 @@ _FORMULA_EXECUTOR_V2_SPEC = (
 )
 
 _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
+    # The universal formula set. Only formula_executor_v2 is listed: the kit's
+    # other declared block, chat, is one of virgin_shelf._BASE_BLOCKS and is
+    # already registered before any kit installs.
+    #
+    # A kit absent from this map installs and then does nothing -- kit_block_specs
+    # logs "no block spec map" and registers zero blocks -- so the entry is the
+    # difference between an installable kit and a usable one.
+    "universal_business": [
+        _FORMULA_EXECUTOR_V2_SPEC,
+    ],
     "construction": [
         ("construction", "app.containers.construction", "ConstructionContainer"),
         ("construction_v2", "app.blocks.construction_v2", "ConstructionBlockV2"),
