@@ -1,0 +1,289 @@
+{
+  "version": 1,
+  "formula_set": "universal_business",
+  "provenance": {
+    "kind": "internal_protocol",
+    "reference": "block_store/kits/universal_business/README.md - Cerebrum universal business formula set. Every entry below is a definitional identity (an accounting or arithmetic definition), not an observed or mandated figure. See 'Why this file has no rates' in the README.",
+    "recorded_on": "2026-08-25"
+  },
+  "principle": {
+    "no_encoded_rates": "Not one formula in this file contains a tax rate, interest rate, fee percentage or statutory threshold. Every such value is a named INPUT the caller supplies. That is what makes the set universal: a jurisdiction-specific number encoded here would be wrong for most of the businesses that load it, and would be a figure nobody could check. Where a business needs a real rate, it belongs in that business's own kit, entered through scripts/intake_formulas.py with a source.",
+    "units": "Money inputs must share one currency; the set is currency-agnostic and performs no conversion. Rates are decimal fractions (0.15, not 15).",
+    "margin_is_not_markup": "gross_margin_ratio divides by REVENUE; markup_on_cost divides by COST. Confusing them is the most common costing error this set exists to prevent - see price_from_margin vs price_from_markup."
+  },
+  "formulas": [
+    {
+      "id": "gross_profit",
+      "name": "Gross profit",
+      "category": "margin",
+      "expression": "revenue - cogs",
+      "inputs": ["revenue", "cogs"],
+      "output": "money"
+    },
+    {
+      "id": "gross_margin_ratio",
+      "name": "Gross margin ratio",
+      "category": "margin",
+      "expression": "(revenue - cogs) / revenue",
+      "inputs": ["revenue", "cogs"],
+      "output": "ratio",
+      "guards": ["revenue != 0"]
+    },
+    {
+      "id": "net_profit_margin",
+      "name": "Net profit margin",
+      "category": "margin",
+      "expression": "net_profit / revenue",
+      "inputs": ["net_profit", "revenue"],
+      "output": "ratio",
+      "guards": ["revenue != 0"]
+    },
+    {
+      "id": "markup_on_cost",
+      "name": "Markup on cost",
+      "category": "pricing",
+      "expression": "(price - unit_cost) / unit_cost",
+      "inputs": ["price", "unit_cost"],
+      "output": "ratio",
+      "guards": ["unit_cost != 0"]
+    },
+    {
+      "id": "price_from_markup",
+      "name": "Price from a markup rate",
+      "category": "pricing",
+      "expression": "unit_cost * (1 + markup_rate)",
+      "inputs": ["unit_cost", "markup_rate"],
+      "output": "money"
+    },
+    {
+      "id": "price_from_margin",
+      "name": "Price from a target margin",
+      "category": "pricing",
+      "expression": "unit_cost / (1 - target_margin_rate)",
+      "inputs": ["unit_cost", "target_margin_rate"],
+      "output": "money",
+      "guards": ["target_margin_rate < 1"],
+      "note": "NOT unit_cost * (1 + target_margin_rate). A 25% margin needs a 33.3% markup."
+    },
+    {
+      "id": "contribution_margin_per_unit",
+      "name": "Contribution margin per unit",
+      "category": "break_even",
+      "expression": "unit_price - unit_variable_cost",
+      "inputs": ["unit_price", "unit_variable_cost"],
+      "output": "money"
+    },
+    {
+      "id": "break_even_units",
+      "name": "Break-even volume",
+      "category": "break_even",
+      "expression": "fixed_costs / (unit_price - unit_variable_cost)",
+      "inputs": ["fixed_costs", "unit_price", "unit_variable_cost"],
+      "output": "units",
+      "guards": ["unit_price > unit_variable_cost"]
+    },
+    {
+      "id": "break_even_revenue",
+      "name": "Break-even revenue",
+      "category": "break_even",
+      "expression": "fixed_costs / contribution_margin_ratio",
+      "inputs": ["fixed_costs", "contribution_margin_ratio"],
+      "output": "money",
+      "guards": ["contribution_margin_ratio != 0"]
+    },
+    {
+      "id": "tax_amount",
+      "name": "Tax on a net amount",
+      "category": "tax",
+      "expression": "net_amount * tax_rate",
+      "inputs": ["net_amount", "tax_rate"],
+      "output": "money",
+      "note": "tax_rate is supplied by the caller. No jurisdiction's rate is encoded here."
+    },
+    {
+      "id": "gross_from_net",
+      "name": "Tax-inclusive total from a net amount",
+      "category": "tax",
+      "expression": "net_amount * (1 + tax_rate)",
+      "inputs": ["net_amount", "tax_rate"],
+      "output": "money"
+    },
+    {
+      "id": "net_from_gross",
+      "name": "Net amount inside a tax-inclusive price",
+      "category": "tax",
+      "expression": "gross_amount / (1 + tax_rate)",
+      "inputs": ["gross_amount", "tax_rate"],
+      "output": "money",
+      "note": "Extracting tax is division, not multiplication. gross * tax_rate overstates the tax on every tax-inclusive price."
+    },
+    {
+      "id": "discount_amount",
+      "name": "Discount amount",
+      "category": "pricing",
+      "expression": "list_price * discount_rate",
+      "inputs": ["list_price", "discount_rate"],
+      "output": "money"
+    },
+    {
+      "id": "net_price_after_discount",
+      "name": "Price after discount",
+      "category": "pricing",
+      "expression": "list_price * (1 - discount_rate)",
+      "inputs": ["list_price", "discount_rate"],
+      "output": "money"
+    },
+    {
+      "id": "late_fee_simple",
+      "name": "Simple late fee on an overdue balance",
+      "category": "receivables",
+      "expression": "overdue_amount * annual_rate * (days_overdue / days_in_year)",
+      "inputs": ["overdue_amount", "annual_rate", "days_overdue", "days_in_year"],
+      "output": "money",
+      "note": "days_in_year is an input because the day-count convention (360 or 365) is a contract term, not a universal constant."
+    },
+    {
+      "id": "proration",
+      "name": "Pro-rated amount",
+      "category": "billing",
+      "expression": "amount * (days_used / days_in_period)",
+      "inputs": ["amount", "days_used", "days_in_period"],
+      "output": "money",
+      "guards": ["days_in_period != 0"]
+    },
+    {
+      "id": "straight_line_depreciation",
+      "name": "Straight-line depreciation per year",
+      "category": "assets",
+      "expression": "(asset_cost - salvage_value) / useful_life_years",
+      "inputs": ["asset_cost", "salvage_value", "useful_life_years"],
+      "output": "money",
+      "guards": ["useful_life_years != 0"],
+      "note": "useful_life_years is an input: statutory lives differ by jurisdiction and asset class."
+    },
+    {
+      "id": "working_capital",
+      "name": "Working capital",
+      "category": "liquidity",
+      "expression": "current_assets - current_liabilities",
+      "inputs": ["current_assets", "current_liabilities"],
+      "output": "money"
+    },
+    {
+      "id": "current_ratio",
+      "name": "Current ratio",
+      "category": "liquidity",
+      "expression": "current_assets / current_liabilities",
+      "inputs": ["current_assets", "current_liabilities"],
+      "output": "ratio",
+      "guards": ["current_liabilities != 0"]
+    },
+    {
+      "id": "quick_ratio",
+      "name": "Quick ratio",
+      "category": "liquidity",
+      "expression": "(current_assets - inventory) / current_liabilities",
+      "inputs": ["current_assets", "inventory", "current_liabilities"],
+      "output": "ratio",
+      "guards": ["current_liabilities != 0"]
+    },
+    {
+      "id": "days_sales_outstanding",
+      "name": "Days sales outstanding (DSO)",
+      "category": "cash_cycle",
+      "expression": "(accounts_receivable / revenue) * days_in_period",
+      "inputs": ["accounts_receivable", "revenue", "days_in_period"],
+      "output": "days",
+      "guards": ["revenue != 0"]
+    },
+    {
+      "id": "days_payable_outstanding",
+      "name": "Days payable outstanding (DPO)",
+      "category": "cash_cycle",
+      "expression": "(accounts_payable / cogs) * days_in_period",
+      "inputs": ["accounts_payable", "cogs", "days_in_period"],
+      "output": "days",
+      "guards": ["cogs != 0"]
+    },
+    {
+      "id": "days_inventory_outstanding",
+      "name": "Days inventory outstanding (DIO)",
+      "category": "cash_cycle",
+      "expression": "(average_inventory / cogs) * days_in_period",
+      "inputs": ["average_inventory", "cogs", "days_in_period"],
+      "output": "days",
+      "guards": ["cogs != 0"]
+    },
+    {
+      "id": "cash_conversion_cycle",
+      "name": "Cash conversion cycle",
+      "category": "cash_cycle",
+      "expression": "days_sales_outstanding + days_inventory_outstanding - days_payable_outstanding",
+      "inputs": [
+        "days_sales_outstanding",
+        "days_inventory_outstanding",
+        "days_payable_outstanding"
+      ],
+      "output": "days"
+    },
+    {
+      "id": "inventory_turnover",
+      "name": "Inventory turnover",
+      "category": "cash_cycle",
+      "expression": "cogs / average_inventory",
+      "inputs": ["cogs", "average_inventory"],
+      "output": "times",
+      "guards": ["average_inventory != 0"]
+    },
+    {
+      "id": "compound_annual_growth_rate",
+      "name": "Compound annual growth rate (CAGR)",
+      "category": "growth",
+      "expression": "(ending_value / beginning_value) ** (1 / years) - 1",
+      "inputs": ["ending_value", "beginning_value", "years"],
+      "output": "ratio",
+      "guards": ["beginning_value > 0", "years > 0"]
+    },
+    {
+      "id": "period_over_period_growth",
+      "name": "Period-over-period growth",
+      "category": "growth",
+      "expression": "(current_value - prior_value) / prior_value",
+      "inputs": ["current_value", "prior_value"],
+      "output": "ratio",
+      "guards": ["prior_value != 0"]
+    },
+    {
+      "id": "simple_interest",
+      "name": "Simple interest",
+      "category": "finance",
+      "expression": "principal * annual_rate * years",
+      "inputs": ["principal", "annual_rate", "years"],
+      "output": "money"
+    },
+    {
+      "id": "compound_interest_amount",
+      "name": "Compound interest, future value",
+      "category": "finance",
+      "expression": "principal * (1 + annual_rate / periods_per_year) ** (periods_per_year * years)",
+      "inputs": ["principal", "annual_rate", "periods_per_year", "years"],
+      "output": "money",
+      "guards": ["periods_per_year > 0"]
+    }
+  ],
+  "conventions": [
+    {
+      "id": "receivables_aging_buckets",
+      "name": "Receivables aging buckets",
+      "kind": "default_convention",
+      "value": [
+        [0, 30],
+        [31, 60],
+        [61, 90],
+        [91, null]
+      ],
+      "note": "The one place in this file carrying numbers rather than an identity. 30/60/90 is a widespread reporting convention, not a rule - it is a DEFAULT that a client kit is expected to override. It is declared here rather than hidden inside a report so that overriding it is a visible act.",
+      "source": "Cerebrum universal set default; override per client in the client's own kit."
+    }
+  ]
+}

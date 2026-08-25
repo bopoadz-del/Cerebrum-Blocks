@@ -1,0 +1,32 @@
+{
+  "id": "universal_business",
+  "name": "Universal Business Formulas",
+  "version": "1.0.0",
+  "description": "The baseline formula set every business needs, independent of domain: margin and pricing, break-even, tax arithmetic, receivables, liquidity, the cash conversion cycle, depreciation and growth. Carries no jurisdiction-specific rate - every rate is an input the caller supplies. Intended as the starting point a new domain kit is built on top of.",
+  "status": "available",
+  "author": "Cerebrum",
+  "tags": ["universal", "baseline", "formulas", "finance"],
+  "source": {
+    "repo": "https://github.com/bopoadz-del/Cerebrum-Blocks",
+    "ref": "main",
+    "publish_script": "scripts/publish_kit.py"
+  },
+  "container": null,
+  "blocks": ["formula_executor_v2", "chat"],
+  "flow": "independent",
+  "_flow_note": "Declared, not inferred. formula_executor_v2 evaluates the set and chat asks questions of it; neither feeds the other, and either is a valid entry point. This kit ships no domain container, so there is no resolution order to state.",
+  "prompts": [],
+  "data": ["app/data/universal_formulas.json"],
+  "core_modules": [],
+  "artifacts": [
+    {
+      "src": "app/data/universal_formulas.json",
+      "dest": "app/data/universal_formulas.json"
+    }
+  ],
+  "price_cents": 0,
+  "install_requires": {
+    "min_platform_version": "2.0.0",
+    "python": ">=3.10"
+  }
+}
