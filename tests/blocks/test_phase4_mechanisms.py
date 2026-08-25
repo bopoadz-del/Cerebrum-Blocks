@@ -9,6 +9,7 @@ from unittest.mock import patch
 import pytest
 
 from app.blocks import _knowledge as kb
+from app.core.credibility import CredibilityTier
 from app.core.grounding import check_scope_refusal, verdict_log_path
 
 
@@ -143,12 +144,33 @@ class TestSourcePrecedence:
         _temp_kb(
             tmp_path,
             monkeypatch,
-            [_entry("roads.low_tier", 2), _entry("roads.high_tier", 5)],
+            [
+                _entry("roads.quarantine", int(CredibilityTier.QUARANTINE)),
+                _entry("roads.operational", int(CredibilityTier.OPERATIONAL)),
+            ],
         )
         results = kb.search_knowledge("asphalt laying temperature minimum", top_k=2)
-        assert [r["id"] for r in results] == ["roads.high_tier", "roads.low_tier"], (
-            "at equal relevance the higher credibility tier must win"
+        assert [r["id"] for r in results] == [
+            "roads.operational",
+            "roads.quarantine",
+        ], "at equal relevance the lower int (higher authority) must win"
+
+    def test_certified_ranks_before_quarantine_at_equal_relevance(
+        self, tmp_path, monkeypatch
+    ):
+        """Two otherwise-equal hits: CERTIFIED must return first, QUARANTINE second."""
+        _temp_kb(
+            tmp_path,
+            monkeypatch,
+            [
+                _entry("roads.quarantine", int(CredibilityTier.QUARANTINE)),
+                _entry("roads.certified", int(CredibilityTier.CERTIFIED)),
+            ],
         )
+        results = kb.search_knowledge("asphalt laying temperature minimum", top_k=2)
+        assert [r["id"] for r in results] == ["roads.certified", "roads.quarantine"]
+        assert results[0]["credibility_tier"] == int(CredibilityTier.CERTIFIED)
+        assert results[1]["credibility_tier"] == int(CredibilityTier.QUARANTINE)
 
 
 class TestRevisionCurrency:

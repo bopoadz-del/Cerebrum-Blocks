@@ -33,6 +33,8 @@ from typing import Any, Dict, List, Optional
 
 import sympy
 
+from app.core.credibility import CredibilityTier
+
 
 _KB_PATH = os.path.join(
     os.path.dirname(__file__), "..", "knowledge", "construction_kb.json"
@@ -42,6 +44,10 @@ _KB_OVERRIDE_ENV = "CONSTRUCTION_KB_FILE"
 _LOCK = threading.RLock()
 _KB_CACHE: Optional[Dict[str, Any]] = None
 _KB_MTIME: float = 0.0
+
+# Missing/invalid tiers must not outrank CERTIFIED. QUARANTINE is the
+# least-credible documented value on the shared ladder.
+_MISSING_TIER = int(CredibilityTier.QUARANTINE)
 
 
 def _kb_path() -> str:
@@ -107,15 +113,27 @@ def _tokens(text: str) -> set:
     return set(_TOKEN_RE.findall((text or "").lower()))
 
 
+def credibility_rank(entry: Dict[str, Any]) -> int:
+    """Sort key for source precedence: lower int ranks first.
+
+    Shares ``CredibilityTier`` (CERTIFIED=1 … QUARANTINE=5). A missing or
+    non-int tier sorts as QUARANTINE so it cannot outrank a certified hit.
+    """
+    tier = entry.get("credibility_tier")
+    if isinstance(tier, int):
+        return tier
+    return _MISSING_TIER
+
+
 def search_knowledge(
     query: str, top_k: int = 5, domain: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """Free-text retrieval over the KB: rank entries by token overlap between
     the query and each entry's id + title + statement, return the top-K.
 
-    Lightweight + dependency-free (no vector index needed) so the construction
-    blocks can map a natural-language question to the relevant rule(s). Empty /
-    no-match query returns []. ``domain`` restricts to one applies_to namespace.
+    Equal relevance is resolved by credibility tier — lower int wins
+    (CERTIFIED before QUARANTINE). Empty / no-match query returns [].
+    ``domain`` restricts to one applies_to namespace.
     """
     qt = _tokens(query)
     if not qt:
@@ -138,8 +156,8 @@ def search_knowledge(
                 total *= 0.25
             scored.append((total, e))
     # Source precedence: equal relevance is resolved by credibility tier —
-    # the higher-authority source wins.
-    scored.sort(key=lambda x: (-x[0], -(x[1].get("credibility_tier") or 0)))
+    # the higher-authority source wins (lower int on the shared ladder).
+    scored.sort(key=lambda x: (-x[0], credibility_rank(x[1])))
     return [e for _, e in scored[:top_k]]
 
 
