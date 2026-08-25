@@ -135,18 +135,49 @@ def test_the_universal_kit_declares_a_universal_set():
     )
     assert data["provenance"]["kind"] in ("internal_protocol", "regulator", "spc")
     assert data["provenance"]["reference"].strip()
+    assert data["tier"] == "base"
 
-    for formula in data["formulas"]:
-        assert formula["expression"].strip(), formula["id"]
-        assert formula["inputs"], formula["id"]
+    for definition in data["definitions"]:
+        assert definition["expression"].strip(), definition["id"]
+        assert definition["inputs"], definition["id"]
         # Every rate must arrive as a named input. A bare decimal literal in an
         # expression is an encoded rate wearing a formula's clothes.
-        for token in formula["expression"].replace("(", " ").replace(")", " ").split():
+        for token in definition["expression"].replace("(", " ").replace(")", " ").split():
             if token.replace(".", "", 1).isdigit():
                 assert float(token) in (0.0, 1.0, 2.0), (
-                    f"{formula['id']} encodes the literal {token!r}; "
+                    f"{definition['id']} encodes the literal {token!r}; "
                     "rates belong in inputs, not in the expression"
                 )
+
+
+def test_every_definition_is_addressable_and_sourced():
+    """An overlay overrides an ADDRESS, and every tier answers for itself.
+
+    Both properties are load-bearing for the overlay contract. Without a
+    versioned address, a base definition can change under an override that was
+    written against the old arithmetic and the override keeps applying. Without
+    per-definition provenance, "which tier said what, on whose authority"
+    collapses to one record for the whole file and a domain override has
+    nothing to be compared against.
+    """
+    data = json.loads(
+        (KITS_DIR / "universal_business" / "app" / "data" / "universal_formulas.json")
+        .read_text(encoding="utf-8")
+    )
+    scheme = data["addressing"]["scheme"]
+    assert scheme == "<set_id>:<definition_id>_v<definition_version>"
+
+    keys = []
+    for item in data["definitions"] + data["conventions"]:
+        expected = f"{data['set_id']}:{item['id']}_v{item['definition_version']}"
+        assert item["key"] == expected, f"{item['id']} address does not match the scheme"
+        assert item["tier"] == "base"
+        record = item["provenance"]
+        assert record["kind"], item["id"]
+        assert record["reference"].strip(), item["id"]
+        keys.append(item["key"])
+
+    assert len(keys) == len(set(keys)), "two definitions share one address"
 
 
 def test_every_installable_kit_registers_its_blocks():
