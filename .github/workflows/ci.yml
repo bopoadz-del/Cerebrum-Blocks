@@ -78,6 +78,13 @@ jobs:
       - name: Run core RAG + vector + registry tests
         run: pytest -q tests/core/test_vector_store.py tests/core/test_registry_integrity.py tests/core/test_block_contracts.py tests/core/test_rag_ingestion.py
 
+      - name: Run kit bundle completeness fence
+        # CI names test files explicitly rather than running tests/, so a new
+        # test file is not executed until it is listed here. This fence went
+        # green on its own PR without ever running; that is the failure mode
+        # it exists to prevent, one level up.
+        run: pytest -q tests/test_kit_bundle_completeness.py
+
       - name: Run formula grounding + executor tests
         # test_formula_executor_v2.py was among the 103 test files this repo
         # never ran: CI names files explicitly rather than running tests/.

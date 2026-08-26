@@ -32,8 +32,7 @@
   ],
   "data": [
     "source_manifest.json",
-    "schemas/",
-    "evaluation/"
+    "schemas/"
   ],
   "rag": {
     "pack": "automotive_core_rag_v1",
@@ -123,10 +122,6 @@
     {
       "src": "prompts/",
       "dest": "prompts/"
-    },
-    {
-      "src": "evaluation/",
-      "dest": "evaluation/"
     }
   ],
   "price_cents": 0,
