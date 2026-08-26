@@ -22,6 +22,12 @@ import httpx
 
 from app.core.universal_base import UniversalBlock
 from app.core.sandbox import run_sandboxed, SandboxResult
+from app.core.formula_definitions import (
+    definitions_prompt_block,
+    grounding_report,
+    load_definitions,
+    match_definitions,
+)
 
 from app.prompts.codegen_system import build_codegen_prompt
 
@@ -138,6 +144,11 @@ class FormulaExecutorV2Block(UniversalBlock):
             "fields": [
                 {"name": "generated_code", "type": "code", "label": "Generated Code"},
                 {"name": "result", "type": "text", "label": "Result"},
+                # Surfaced beside the number, not filed in an audit log. A
+                # reader must be able to see "this came from the platform's
+                # definition" or "the model derived this" without leaving the
+                # answer.
+                {"name": "grounding", "type": "json", "label": "Grounding"},
                 {"name": "attempts", "type": "number", "label": "Attempts"},
             ],
         },
@@ -194,6 +205,16 @@ class FormulaExecutorV2Block(UniversalBlock):
         session = data.get("session") or params.get("session")
         key = _cache_key(task, variables)
 
+        # --- grounding ------------------------------------------------------
+        # Resolved once and attached to every success, including cache hits: a
+        # cached answer is exactly as grounded (or as invented) as the answer
+        # that was cached, and a result whose provenance disappears on the
+        # second call is worse than one that never claimed any.
+        definitions = load_definitions()
+        matched = match_definitions(task, definitions)
+        grounding = grounding_report(task, definitions)
+        definitions_block = definitions_prompt_block(matched)
+
         # --- cache hit: re-run the previously generated code, skip the LLM --
         if session is not None and key in session.code_cache:
             cached_code = session.code_cache[key]
@@ -209,6 +230,7 @@ class FormulaExecutorV2Block(UniversalBlock):
                     "attempts": 0,
                     "cache_hit": True,
                     "task": task,
+                    "grounding": grounding,
                 }
             # stale cache (e.g. variable set changed) — fall through to regen
 
@@ -224,6 +246,7 @@ class FormulaExecutorV2Block(UniversalBlock):
             prompt = build_codegen_prompt(
                 task, variables,
                 prior_code=prior_code, prior_error=prior_error,
+                definitions_block=definitions_block,
             )
             try:
                 raw = await self._call_llm(prompt)
@@ -267,6 +290,7 @@ class FormulaExecutorV2Block(UniversalBlock):
                     "attempts": attempt,
                     "cache_hit": False,
                     "task": task,
+                    "grounding": grounding,
                 }
             # failed — carry context into the next attempt
             last_error = sandbox.error or "Sandbox execution failed"

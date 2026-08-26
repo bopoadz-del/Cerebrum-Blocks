@@ -82,6 +82,11 @@ jobs:
         # it exists to prevent, one level up.
         run: pytest -q tests/test_kit_bundle_completeness.py
 
+      - name: Run formula grounding + executor tests
+        # test_formula_executor_v2.py was among the 103 test files this repo
+        # never ran: CI names files explicitly rather than running tests/.
+        run: pytest -q tests/test_formula_grounding.py tests/test_formula_executor_v2.py
+
       - name: Run all-blocks tests
         run: pytest -q tests/test_all_blocks.py
 
