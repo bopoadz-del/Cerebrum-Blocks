@@ -72,6 +72,12 @@ jobs:
       - name: Run typed-block tests
         run: pytest -q tests/test_typed_block.py
 
+      - name: Run kit publisher tests
+        # Publishing decides whether a kit the store advertises can be
+        # installed. CI names test files explicitly rather than running
+        # tests/, so a new file runs only once it is listed here.
+        run: pytest -q tests/test_publish_kit.py
+
       - name: Run core RAG + vector + registry tests
         run: pytest -q tests/core/test_vector_store.py tests/core/test_registry_integrity.py tests/core/test_block_contracts.py tests/core/test_rag_ingestion.py
 
