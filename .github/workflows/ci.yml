@@ -84,6 +84,13 @@ jobs:
       - name: Run core RAG + vector + registry tests
         run: pytest -q tests/core/test_vector_store.py tests/core/test_registry_integrity.py tests/core/test_block_contracts.py tests/core/test_rag_ingestion.py
 
+      - name: Run kit bundle freshness fence
+        # Completeness is not freshness: a kit can hold every declared
+        # artifact and still ship a copy from months ago. All 17 kits shipped
+        # a pre-grounding formula_executor_v2 while the current one sat in the
+        # repo, so the grounding work reached no product at all.
+        run: pytest -q tests/test_kit_bundle_freshness.py
+
       - name: Run kit bundle completeness fence
         # CI names test files explicitly rather than running tests/, so a new
         # test file is not executed until it is listed here. This fence went

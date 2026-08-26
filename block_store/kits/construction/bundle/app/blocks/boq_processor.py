@@ -34,15 +34,15 @@ class BOQProcessorBlock(UniversalBlock):
             ],
         },
         "quick_actions": [
-            {"icon": "", "label": "Parse BOQ", "prompt": "Parse and summarize this Bill of Quantities"},
-            {"icon": "", "label": "Cost Summary", "prompt": "Give me a cost breakdown by trade/division"},
+            {"icon": "📊", "label": "Parse BOQ", "prompt": "Parse and summarize this Bill of Quantities"},
+            {"icon": "💰", "label": "Cost Summary", "prompt": "Give me a cost breakdown by trade/division"},
         ],
     }
 
     # Common BOQ column name aliases
     _COL_MAP = {
         "description": ["description", "item_description", "work_item", "item", "activity", "desc", "name"],
-        "quantity": ["quantity", "qty", "no", "number", "count"],
+        "quantity": ["quantity", "qty", "amount", "no", "number", "count"],
         "unit": ["unit", "uom", "u/m", "unit_of_measure", "measure"],
         "rate": ["rate", "unit_cost", "unit_price", "price", "unit_rate", "cost_per_unit", "cost/unit"],
         "total": ["total", "total_cost", "amount", "line_total", "extended_price", "cost", "value"],
@@ -51,30 +51,29 @@ class BOQProcessorBlock(UniversalBlock):
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
+        if params.get("action") in ("status", "health"):
+            return {"status": "success", "ready": True}
+        params = params or {}
         data = input_data if isinstance(input_data, dict) else {}
 
         file_path = data.get("file_path") or params.get("file_path") or data.get("text") or data.get("input") or (input_data if isinstance(input_data, str) else "")
-        if not file_path:
-            return {"status": "error", "error": "No file_path provided. Requires an .xlsx or .csv BOQ file path."}
-        if not os.path.exists(str(file_path)):
-            return {"status": "error", "error": f"File not found: {file_path}"}
+        if not file_path or not os.path.exists(str(file_path)):
+            return {
+                "status": "error",
+                "error": "No valid BOQ file provided. Upload .xlsx, .xls, or .csv",
+            }
 
         ext = os.path.splitext(file_path)[1].lower()
         try:
-            # open_plaintext transparently decrypts when DATA_ENCRYPTION_KEY is
-            # set on the server (uploads go through file_crypto.write_document)
-            # and is a no-op for legacy plaintext files.
-            from app.core.file_crypto import open_plaintext
-            with open_plaintext(file_path) as plain_path:
-                if ext == ".csv":
-                    return await self._parse_csv(plain_path, params)
-                elif ext in (".xlsx", ".xls"):
-                    return await self._parse_excel(plain_path, params)
-                else:
-                    return {
-                        "status": "error",
-                        "error": f"Unsupported format: {ext}. Use .xlsx or .csv",
-                    }
+            if ext == ".csv":
+                return await self._parse_csv(file_path, params)
+            elif ext in (".xlsx", ".xls"):
+                return await self._parse_excel(file_path, params)
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Unsupported format: {ext}. Use .xlsx or .csv",
+                }
         except ImportError as e:
             return {
                 "status": "error",
@@ -94,60 +93,15 @@ class BOQProcessorBlock(UniversalBlock):
         df = pd.read_excel(file_path, sheet_name=sheet, engine="openpyxl")
         return self._process_dataframe(df, params)
 
-    @staticmethod
-    def _normalize_col(name: str) -> str:
-        """Reduce a raw column header to a canonical token for alias matching.
-
-        Strips parenthesized suffixes (currency / unit hints) and a small set of
-        trailing currency tokens, then lowercases and replaces spaces/slashes
-        with underscores. Lets us match real BOQ headers like 'Rate (SAR)',
-        'Amount (USD)', 'Qty.', 'Item No.' against the short alias list.
-        """
-        import re
-        n = name.strip()
-        # Strip any (...) suffix — usually a currency or unit qualifier.
-        n = re.sub(r"\s*\([^)]*\)\s*$", "", n)
-        # Strip trailing currency tokens with optional punctuation.
-        n = re.sub(
-            r"[\s,;:]+(SAR|USD|AED|EUR|GBP|JPY|CNY|AUD|CAD|KWD|QAR|BHD|OMR)\b\.?$",
-            "",
-            n,
-            flags=re.IGNORECASE,
-        )
-        # Drop trailing punctuation ("Qty.", "Item No.").
-        n = n.rstrip(" .,:;")
-        n = n.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
-        # Collapse repeats of underscore so 'item__no' becomes 'item_no'.
-        n = re.sub(r"_+", "_", n).strip("_")
-        return n
-
     def _resolve_columns(self, columns: List[str]) -> Dict[str, str]:
-        """Map alias-set field names to actual DataFrame column names.
-
-        Two-pass: exact normalized match first (cheap, deterministic), then
-        substring match against the same alias set as a fallback so columns
-        like 'unit_rate_in_sar' still resolve when the prefix is recognised.
-        """
-        resolved: Dict[str, str] = {}
-        normalized = [self._normalize_col(c) for c in columns]
+        """Map field names to actual DataFrame column names."""
+        resolved = {}
+        normalized = [c.strip().lower().replace(" ", "_") for c in columns]
         for field, candidates in self._COL_MAP.items():
-            chosen_idx = None
-            # Pass 1: exact normalized match.
             for c in candidates:
                 if c in normalized:
-                    chosen_idx = normalized.index(c)
+                    resolved[field] = columns[normalized.index(c)]
                     break
-            # Pass 2: substring match (longest alias first so "unit_rate" beats "unit").
-            if chosen_idx is None:
-                for c in sorted(candidates, key=len, reverse=True):
-                    for i, ncol in enumerate(normalized):
-                        if c in ncol.split("_") or ncol.startswith(c + "_") or ncol.endswith("_" + c):
-                            chosen_idx = i
-                            break
-                    if chosen_idx is not None:
-                        break
-            if chosen_idx is not None:
-                resolved[field] = columns[chosen_idx]
         return resolved
 
     def _process_dataframe(self, df, params: Dict) -> Dict:
@@ -159,31 +113,18 @@ class BOQProcessorBlock(UniversalBlock):
 
         line_items: List[Dict] = []
         section_totals: Dict[str, float] = {}
-        warnings: List[str] = []
-        skipped_items: List[Dict] = []
-
-        quantity_col_resolved = "quantity" in resolved
-        if not quantity_col_resolved:
-            warnings.append(
-                "No quantity column detected; zero-quantity filter disabled and all rows retained."
-            )
 
         for _, row in df.iterrows():
             description = str(row.get(resolved.get("description", ""), "")).strip()
             if not description or description.lower() == "nan":
                 continue
 
-            raw_qty = row.get(resolved.get("quantity", ""), 0)
-            try:
-                qty = _to_float(raw_qty)
-            except ValueError:
-                skipped_items.append({"description": description, "raw_value": raw_qty})
-                continue
-            if quantity_col_resolved and not include_zero and qty == 0:
+            qty = _to_float(row.get(resolved.get("quantity", ""), 0))
+            if not include_zero and qty == 0:
                 continue
 
-            rate = _to_float_safe(row.get(resolved.get("rate", ""), 0))
-            total = _to_float_safe(row.get(resolved.get("total", ""), 0))
+            rate = _to_float(row.get(resolved.get("rate", ""), 0))
+            total = _to_float(row.get(resolved.get("total", ""), 0))
             if total == 0 and qty > 0 and rate > 0:
                 total = qty * rate
 
@@ -217,7 +158,7 @@ class BOQProcessorBlock(UniversalBlock):
             for section, v in sorted(section_totals.items(), key=lambda x: x[1], reverse=True)
         }
 
-        result = {
+        return {
             "status": "success",
             "item_count": len(line_items),
             "total_cost": round(total_cost, 2),
@@ -227,31 +168,10 @@ class BOQProcessorBlock(UniversalBlock):
             "sections": list(section_totals.keys()),
             "columns_detected": resolved,
         }
-        if warnings:
-            result["warnings"] = warnings
-        if skipped_items:
-            result["skipped_items"] = skipped_items
-        return result
 
 
 def _to_float(val) -> float:
-    """Coerce ``val`` to float. Raises ``ValueError`` for non-empty non-numeric
-    strings so callers can distinguish a true zero from an unparseable value
-    like ``"Lot"`` or ``"Provisional Sum"``."""
-    if val is None:
-        return 0.0
-    s = str(val).replace(",", "").strip()
-    if s == "" or s.lower() == "nan":
-        return 0.0
     try:
-        return float(s)
-    except TypeError:
-        return 0.0
-
-
-def _to_float_safe(val) -> float:
-    """Best-effort coercion to float; returns 0.0 on any failure."""
-    try:
-        return _to_float(val)
+        return float(str(val).replace(",", "").strip())
     except (ValueError, TypeError):
         return 0.0

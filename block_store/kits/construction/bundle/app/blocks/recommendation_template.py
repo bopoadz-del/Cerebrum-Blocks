@@ -1,162 +1,17 @@
-"""Recommendation Template Block - Rule-based recommendation generation from variance data"""
+"""Recommendation Block - Data-driven recommendation generation from variance data"""
 
 import json
 import os
-import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from app.core.universal_base import UniversalBlock
-
-
-# ── Built-in rule + template database ─────────────────────────────────────────
-_RULE_DB: Dict[str, Dict] = {
-    # Cost variance rules
-    "cost_over_critical": {
-        "condition": {"field": "variance_pct", "op": "gt", "value": 20},
-        "template": "CRITICAL OVERRUN: {item} exceeds benchmark by {variance_pct:.1f}%. Estimated excess cost: {cost_impact_usd:,.0f} USD. Immediate action required.",
-        "severity": "critical",
-        "action_items": [
-            "Suspend procurement pending cost review",
-            "Issue Re-Tender to minimum 3 pre-qualified suppliers",
-            "Escalate to Project Director within 24 hours",
-            "Prepare Variation Order if scope changed",
-        ],
-        "category": "cost",
-    },
-    "cost_over_high": {
-        "condition": {"field": "variance_pct", "op": "between", "value": [10, 20]},
-        "template": "HIGH VARIANCE: {item} is {variance_pct:.1f}% above benchmark. Review pricing and negotiate.",
-        "severity": "high",
-        "action_items": [
-            "Request detailed cost breakdown from supplier",
-            "Check current market index (ENR, MEED)",
-            "Negotiate volume discount or phased delivery",
-        ],
-        "category": "cost",
-    },
-    "cost_over_medium": {
-        "condition": {"field": "variance_pct", "op": "between", "value": [5, 10]},
-        "template": "MEDIUM VARIANCE: {item} is {variance_pct:.1f}% above benchmark. Monitor closely.",
-        "severity": "medium",
-        "action_items": [
-            "Request at least one alternative quotation",
-            "Compare with RS Means or regional index",
-        ],
-        "category": "cost",
-    },
-    "cost_under_warning": {
-        "condition": {"field": "variance_pct", "op": "lt", "value": -15},
-        "template": "QUALITY RISK: {item} is {variance_pct:.1f}% below benchmark. Verify specification compliance.",
-        "severity": "warning",
-        "action_items": [
-            "Confirm material grade matches specification",
-            "Check if scope items are missing",
-            "Request material approval submission",
-            "Audit contractor's method statement",
-        ],
-        "category": "cost",
-    },
-    # Schedule rules
-    "schedule_delay_critical": {
-        "condition": {"field": "delay_days", "op": "gt", "value": 30},
-        "template": "CRITICAL DELAY: {item} is {delay_days} days behind schedule. Recovery plan required.",
-        "severity": "critical",
-        "action_items": [
-            "Submit Recovery Programme within 7 days",
-            "Add resources / shift to 24-hour operations",
-            "Identify Critical Path impact",
-            "Assess EOT entitlement",
-        ],
-        "category": "schedule",
-    },
-    "schedule_delay_high": {
-        "condition": {"field": "delay_days", "op": "between", "value": [14, 30]},
-        "template": "DELAY ALERT: {item} is {delay_days} days behind. Corrective action required.",
-        "severity": "high",
-        "action_items": [
-            "Update programme with recovery logic",
-            "Increase resource allocation on critical activities",
-        ],
-        "category": "schedule",
-    },
-    # Quality rules
-    "qc_failure": {
-        "condition": {"field": "test_result", "op": "eq", "value": "fail"},
-        "template": "QC FAILURE: {item} failed inspection. Non-Conformance Report to be raised.",
-        "severity": "critical",
-        "action_items": [
-            "Issue NCR within 24 hours",
-            "Stop work on affected area",
-            "Implement corrective action before reinspection",
-            "Update QA/QC log",
-        ],
-        "category": "quality",
-    },
-    "qc_marginal": {
-        "condition": {"field": "test_result", "op": "eq", "value": "marginal"},
-        "template": "QC MARGINAL: {item} is at the edge of acceptance criteria. Monitor and retest.",
-        "severity": "medium",
-        "action_items": [
-            "Perform repeat test within 48 hours",
-            "Check curing conditions",
-            "Review mix design",
-        ],
-        "category": "quality",
-    },
-    # Safety rules
-    "safety_critical": {
-        "condition": {"field": "risk_level", "op": "eq", "value": "critical"},
-        "template": "SAFETY STOP: {item} presents critical safety risk. Work must stop immediately.",
-        "severity": "critical",
-        "action_items": [
-            "Issue STOP WORK order immediately",
-            "Report to HSE Manager",
-            "Conduct incident investigation",
-            "Retrain personnel before resuming",
-        ],
-        "category": "safety",
-    },
-    "safety_high": {
-        "condition": {"field": "risk_level", "op": "eq", "value": "high"},
-        "template": "SAFETY RISK: {item} requires immediate safety controls.",
-        "severity": "high",
-        "action_items": [
-            "Update Risk Assessment and Method Statement (RAMS)",
-            "Conduct toolbox talk",
-            "Verify PPE compliance",
-        ],
-        "category": "safety",
-    },
-    # Carbon / ESG rules
-    "carbon_high": {
-        "condition": {"field": "carbon_kgco2e", "op": "gt", "value": 10000},
-        "template": "HIGH CARBON: {item} contributes {carbon_kgco2e:,.0f} kgCO₂e. Review low-carbon alternatives.",
-        "severity": "medium",
-        "action_items": [
-            "Consider supplementary cementitious materials (SCM)",
-            "Evaluate recycled steel content",
-            "Report in ESG dashboard",
-        ],
-        "category": "sustainability",
-    },
-}
-
-_CATEGORY_ICONS: Dict[str, str] = {
-    "cost": "💰",
-    "schedule": "📅",
-    "quality": "✅",
-    "safety": "⚠️",
-    "sustainability": "🌱",
-}
-
-_SEVERITY_ORDER = ["critical", "high", "warning", "medium", "low", "info"]
 
 
 class RecommendationTemplateBlock(UniversalBlock):
     name = "recommendation_template"
     version = "1.0.0"
-    description = "Rule-based construction recommendation engine: variance data → severity-ranked recommendation text + action items"
+    description = "Data-driven construction recommendation engine: variance data → severity-ranked recommendations + action items"
     layer = 3
-    tags = ["domain", "construction", "recommendations", "rules", "templates", "reporting"]
+    tags = ["domain", "construction", "recommendations", "analytics", "reporting"]
     requires = []
 
     default_config = {
@@ -168,7 +23,7 @@ class RecommendationTemplateBlock(UniversalBlock):
     ui_schema = {
         "input": {
             "type": "json",
-            "placeholder": '{"variance_data": [{"item": "concrete_c30", "variance_pct": 18.5, "cost_impact_usd": 42000}], "rule_key": "cost_over_high"}',
+            "placeholder": '{"variance_data": [{"item": "concrete_c30", "variance_pct": 18.5, "cost_impact_usd": 42000}]}',
             "multiline": True,
         },
         "output": {
@@ -182,13 +37,12 @@ class RecommendationTemplateBlock(UniversalBlock):
         "quick_actions": [
             {"icon": "📋", "label": "Analyze Variances", "prompt": "Generate recommendations from variance data"},
             {"icon": "⚠️", "label": "Critical Only", "prompt": "Show only critical recommendations"},
-            {"icon": "📚", "label": "Rule Library", "prompt": "Show all available recommendation rules"},
         ],
     }
 
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)
-        self._rules = dict(_RULE_DB)
+        self._custom_rules: Dict = {}
         self._load_custom_rules()
 
     def _load_custom_rules(self):
@@ -199,8 +53,7 @@ class RecommendationTemplateBlock(UniversalBlock):
         if env_path and os.path.exists(env_path):
             try:
                 with open(env_path) as f:
-                    custom = json.load(f)
-                self._rules.update(custom)
+                    self._custom_rules = json.load(f)
             except Exception:
                 pass
 
@@ -209,7 +62,6 @@ class RecommendationTemplateBlock(UniversalBlock):
         data = input_data if isinstance(input_data, dict) else {}
 
         operation = data.get("operation") or params.get("operation", "recommend")
-        rule_key = data.get("rule_key") or params.get("rule_key")
 
         if operation == "list_rules":
             return self._list_rules()
@@ -218,36 +70,31 @@ class RecommendationTemplateBlock(UniversalBlock):
         if isinstance(variance_data, dict):
             variance_data = [variance_data]
 
-        # Single rule application
-        if rule_key and rule_key in self._rules and not variance_data:
-            item = data.get("item_data", data)
-            return self._apply_single_rule(rule_key, item)
-
-        # Auto-match rules to variance data
         recommendations = []
         max_recs = int(params.get("max_recommendations", self.config.get("max_recommendations", 20)))
 
         for item in variance_data:
-            for rkey, rule in self._rules.items():
-                if self._matches(item, rule["condition"]):
-                    rec = self._render(rkey, rule, item, params)
+            rec = self._analyze_item(item, params)
+            if rec:
+                recommendations.append(rec)
+
+        # Apply custom rules if any exist
+        for item in variance_data:
+            for rkey, rule in self._custom_rules.items():
+                if self._matches(item, rule.get("condition", {})):
+                    rec = self._render_custom(rkey, rule, item, params)
                     if rec:
                         recommendations.append(rec)
 
-        # If rule_key specified, also run that rule on each item
-        if rule_key and rule_key in self._rules:
-            rule = self._rules[rule_key]
-            for item in variance_data:
-                rec = self._render(rule_key, rule, item, params)
-                if rec and rec not in recommendations:
-                    recommendations.append(rec)
-
-        # Sort by severity
-        recommendations.sort(key=lambda r: _SEVERITY_ORDER.index(r["severity"]) if r["severity"] in _SEVERITY_ORDER else 99)
+        # Sort by severity then by absolute cost impact
+        severity_order = {"critical": 0, "high": 1, "warning": 2, "medium": 3, "low": 4, "info": 5}
+        recommendations.sort(
+            key=lambda r: (
+                severity_order.get(r.get("severity"), 99),
+                -abs(r.get("cost_impact_usd", 0)),
+            )
+        )
         recommendations = recommendations[:max_recs]
-
-        if not recommendations and variance_data:
-            recommendations = [self._default_recommendation(variance_data)]
 
         primary = recommendations[0] if recommendations else {}
         return {
@@ -258,6 +105,125 @@ class RecommendationTemplateBlock(UniversalBlock):
             "all_recommendations": recommendations,
             "recommendation_count": len(recommendations),
             "rules_applied": list({r.get("rule_key") for r in recommendations}),
+        }
+
+    def _analyze_item(self, item: Dict, params: Dict) -> Optional[Dict]:
+        """Analyze a single variance item and generate a real data-driven recommendation."""
+        variance_pct = float(item.get("variance_pct", 0))
+        cost_impact = float(item.get("cost_impact_usd", item.get("cost_impact", 0)))
+        delay_days = float(item.get("delay_days", 0))
+        test_result = str(item.get("test_result", "")).lower()
+        risk_level = str(item.get("risk_level", "")).lower()
+        carbon_kg = float(item.get("carbon_kgco2e", item.get("carbon", 0)))
+
+        # Determine category from available fields
+        category = "cost"
+        if delay_days > 0:
+            category = "schedule"
+        elif test_result:
+            category = "quality"
+        elif risk_level:
+            category = "safety"
+        elif carbon_kg > 0:
+            category = "sustainability"
+
+        # Determine severity from actual values
+        if category == "cost":
+            if abs(variance_pct) > 20:
+                severity = "critical"
+            elif abs(variance_pct) > 10:
+                severity = "high"
+            elif abs(variance_pct) > 5:
+                severity = "medium"
+            else:
+                severity = "low"
+        elif category == "schedule":
+            if delay_days > 30:
+                severity = "critical"
+            elif delay_days > 14:
+                severity = "high"
+            else:
+                severity = "medium"
+        elif category == "quality":
+            severity = "critical" if test_result == "fail" else "medium" if test_result == "marginal" else "low"
+        elif category == "safety":
+            severity = "critical" if risk_level == "critical" else "high" if risk_level == "high" else "medium"
+        elif category == "sustainability":
+            severity = "medium" if carbon_kg > 10000 else "low"
+        else:
+            severity = "info"
+
+        if severity in ("low", "info"):
+            return None
+
+        direction = "over" if variance_pct > 0 else "under" if variance_pct < 0 else "neutral"
+        item_name = item.get("item") or item.get("item_key") or item.get("description", "Unknown")
+
+        # Build contextual action items from the data
+        action_items = []
+        if category == "cost":
+            if direction == "over":
+                action_items.append("Request detailed cost breakdown from supplier")
+                action_items.append("Check current market index (ENR, MEED)")
+                if severity in ("critical", "high"):
+                    action_items.append("Re-tender to minimum 3 pre-qualified suppliers")
+                    action_items.append("Escalate to Project Director within 24 hours")
+            else:
+                action_items.append("Confirm material grade matches specification")
+                action_items.append("Check if scope items are missing")
+                if severity == "critical":
+                    action_items.append("Audit contractor's method statement")
+        elif category == "schedule":
+            action_items.append("Submit Recovery Programme within 7 days")
+            action_items.append("Identify Critical Path impact")
+            if severity == "critical":
+                action_items.append("Add resources / shift to extended hours")
+                action_items.append("Assess EOT entitlement")
+        elif category == "quality":
+            action_items.append("Issue NCR within 24 hours")
+            action_items.append("Stop work on affected area")
+            action_items.append("Implement corrective action before reinspection")
+        elif category == "safety":
+            action_items.append("Issue STOP WORK order immediately")
+            action_items.append("Report to HSE Manager")
+            action_items.append("Conduct incident investigation")
+        elif category == "sustainability":
+            action_items.append("Consider supplementary cementitious materials (SCM)")
+            action_items.append("Evaluate recycled steel content")
+            action_items.append("Report in ESG dashboard")
+
+        category_icons = {
+            "cost": "💰",
+            "schedule": "📅",
+            "quality": "✅",
+            "safety": "⚠️",
+            "sustainability": "🌱",
+        }
+        icon = category_icons.get(category, "📌")
+
+        # Build recommendation text from real data
+        if category == "cost":
+            text = f"{severity.upper()}: {item_name} is {abs(variance_pct):.1f}% {direction} benchmark. Estimated impact: {abs(cost_impact):,.0f} USD."
+        elif category == "schedule":
+            text = f"{severity.upper()} DELAY: {item_name} is {delay_days:.0f} days behind schedule."
+        elif category == "quality":
+            text = f"QC {severity.upper()}: {item_name} failed inspection. Non-Conformance Report to be raised."
+        elif category == "safety":
+            text = f"SAFETY {severity.upper()}: {item_name} presents {risk_level} safety risk."
+        elif category == "sustainability":
+            text = f"HIGH CARBON: {item_name} contributes {carbon_kg:,.0f} kgCO₂e. Review low-carbon alternatives."
+        else:
+            text = f"{severity.upper()}: {item_name} requires attention."
+
+        return {
+            "rule_key": f"auto_{category}_{severity}",
+            "recommendation_text": f"{icon} {text}",
+            "severity": severity,
+            "action_items": action_items,
+            "category": category,
+            "item": item_name,
+            "cost_impact_usd": cost_impact,
+            "variance_pct": variance_pct,
         }
 
     def _matches(self, item: Dict, condition: Dict) -> bool:
@@ -289,14 +255,14 @@ class RecommendationTemplateBlock(UniversalBlock):
             pass
         return False
 
-    def _render(self, rule_key: str, rule: Dict, item: Dict, params: Dict) -> Optional[Dict]:
+    def _render_custom(self, rule_key: str, rule: Dict, item: Dict, params: Dict) -> Optional[Dict]:
         try:
             text = rule["template"].format_map(_DefaultDict(item))
         except Exception:
             text = rule["template"]
 
         category = rule.get("category", "general")
-        icon = _CATEGORY_ICONS.get(category, "📌")
+        icon = {"cost": "💰", "schedule": "📅", "quality": "✅", "safety": "⚠️", "sustainability": "🌱"}.get(category, "📌")
         include_actions = params.get("include_action_items", self.config.get("include_action_items", True))
 
         return {
@@ -306,40 +272,19 @@ class RecommendationTemplateBlock(UniversalBlock):
             "action_items": rule.get("action_items", []) if include_actions else [],
             "category": category,
             "item": item.get("item") or item.get("item_key") or item.get("description", ""),
-        }
-
-    def _apply_single_rule(self, rule_key: str, item: Dict) -> Dict:
-        rule = self._rules[rule_key]
-        rec = self._render(rule_key, rule, item, {})
-        return {
-            "status": "success",
-            "recommendation_text": rec["recommendation_text"] if rec else "",
-            "severity": rec["severity"] if rec else "info",
-            "action_items": rec["action_items"] if rec else [],
-            "all_recommendations": [rec] if rec else [],
-            "recommendation_count": 1 if rec else 0,
-            "rules_applied": [rule_key],
-        }
-
-    def _default_recommendation(self, variance_data: List[Dict]) -> Dict:
-        return {
-            "rule_key": "default",
-            "recommendation_text": "📌 No critical issues detected. Continue monitoring per QA/QC plan.",
-            "severity": "info",
-            "action_items": ["Continue regular monitoring", "Update status in next progress report"],
-            "category": "general",
-            "item": "",
+            "cost_impact_usd": item.get("cost_impact_usd", 0),
+            "variance_pct": item.get("variance_pct", 0),
         }
 
     def _list_rules(self) -> Dict:
         summary = {
             k: {
-                "condition": v["condition"],
-                "severity": v["severity"],
+                "condition": v.get("condition"),
+                "severity": v.get("severity"),
                 "category": v.get("category", "general"),
-                "template_preview": v["template"][:80] + "..." if len(v["template"]) > 80 else v["template"],
+                "template_preview": v["template"][:80] + "..." if len(v.get("template", "")) > 80 else v.get("template", ""),
             }
-            for k, v in self._rules.items()
+            for k, v in self._custom_rules.items()
         }
         return {
             "status": "success",
@@ -347,8 +292,8 @@ class RecommendationTemplateBlock(UniversalBlock):
             "severity": "info",
             "action_items": [],
             "rule_library": summary,
-            "total_rules": len(self._rules),
-            "categories": list({v.get("category", "general") for v in self._rules.values()}),
+            "total_rules": len(self._custom_rules),
+            "categories": list({v.get("category", "general") for v in self._custom_rules.values()}),
         }
 
 

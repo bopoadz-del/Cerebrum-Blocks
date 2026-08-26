@@ -155,8 +155,15 @@ def test_mirror_refuses_when_an_artifact_is_authored_nowhere(tmp_path, capsys):
     assert "authored nowhere" in capsys.readouterr().err
 
 
-def test_mirror_publishes_and_then_verifies(tmp_path):
-    """The happy path still ends in a completeness check, not a hope."""
+def test_mirror_publishes_and_then_verifies(tmp_path, monkeypatch):
+    """The happy path still ends in a completeness check, not a hope.
+
+    The composition audit is stubbed here because it inspects the real
+    ``block_store/kits`` tree; a demo kit in tmp_path is not registered there
+    and the audit would report on the wrong thing. That mirror *calls* the
+    audit is pinned separately below.
+    """
+    monkeypatch.setattr(publish_kit, "composition_audit", lambda *a, **k: 0)
     kit_dir = tmp_path / "demo"
     (kit_dir / "schemas").mkdir(parents=True)
     (kit_dir / "schemas" / "a.json").write_text("{}", encoding="utf-8")
@@ -191,3 +198,115 @@ def test_a_kit_with_no_artifacts_is_not_an_error(tmp_path, check_only):
     manifest_path.write_text(json.dumps({"id": "universal_kernel"}), encoding="utf-8")
 
     assert publish_kit.mirror(kit_dir, manifest_path, False, check_only) == 0
+
+
+def test_mirror_runs_the_composition_audit(tmp_path, monkeypatch):
+    """#69's publish gate must be on the DEFAULT path.
+
+    After #69 and #74 merged, the audit call sat inside ``scaffold()`` only.
+    ``mirror`` is the default and the mode every already-authored kit takes,
+    so the gate had quietly stopped guarding anything that actually ships.
+    """
+    kit_dir = tmp_path / "demo"
+    kit_dir.mkdir()
+    (kit_dir / "source_manifest.json").write_text("{}", encoding="utf-8")
+    manifest_path = kit_dir / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "id": "demo",
+                "artifacts": [
+                    {"src": "source_manifest.json", "dest": "source_manifest.json"}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    calls = []
+    monkeypatch.setattr(
+        publish_kit, "composition_audit", lambda d, k: calls.append(d) or 0
+    )
+    assert publish_kit.mirror(kit_dir, manifest_path, False, False) == 0
+    assert calls == ["demo"], "mirror published without running the composition audit"
+
+
+def test_the_audit_verdict_decides_the_exit_code(tmp_path, monkeypatch):
+    """A clean copy with a failing audit must not report success."""
+    kit_dir = tmp_path / "demo"
+    kit_dir.mkdir()
+    (kit_dir / "source_manifest.json").write_text("{}", encoding="utf-8")
+    manifest_path = kit_dir / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "id": "demo",
+                "artifacts": [
+                    {"src": "source_manifest.json", "dest": "source_manifest.json"}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(publish_kit, "composition_audit", lambda *a, **k: 1)
+    assert publish_kit.mirror(kit_dir, manifest_path, False, False) == 1
+
+
+def test_refresh_copies_what_it_can_and_still_fails(tmp_path, monkeypatch):
+    """construction/insurance: sources partly gone, bundle is the only copy.
+
+    Refresh must bring their shared platform code up to date -- otherwise a
+    kit whose sources vanished is frozen on an old formula executor forever --
+    while still exiting non-zero so nobody reads it as a complete publish.
+    """
+    kit_dir = tmp_path / "demo"
+    kit_dir.mkdir()
+    (kit_dir / "present.json").write_text('{"v": 2}', encoding="utf-8")
+    manifest_path = kit_dir / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "id": "demo",
+                "artifacts": [
+                    {"src": "present.json", "dest": "present.json"},
+                    {"src": "vanished.json", "dest": "vanished.json"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    # A stale bundled copy of the orphan, as construction/insurance have.
+    bundle = kit_dir / "bundle"
+    bundle.mkdir()
+    (bundle / "vanished.json").write_text('{"old": true}', encoding="utf-8")
+
+    monkeypatch.setattr(publish_kit, "composition_audit", lambda *a, **k: 0)
+    code = publish_kit.mirror(kit_dir, manifest_path, False, False, refresh=True)
+
+    assert code == 1, "a partial publish must not report success"
+    assert (bundle / "present.json").read_text(encoding="utf-8") == '{"v": 2}'
+    assert (bundle / "vanished.json").exists(), "refresh destroyed the only copy"
+
+
+def test_without_refresh_an_unreachable_source_writes_nothing(tmp_path):
+    """Strict mirror refuses BEFORE copying -- no partial writes by default."""
+    kit_dir = tmp_path / "demo"
+    kit_dir.mkdir()
+    (kit_dir / "present.json").write_text("{}", encoding="utf-8")
+    manifest_path = kit_dir / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "id": "demo",
+                "artifacts": [
+                    {"src": "present.json", "dest": "present.json"},
+                    {"src": "vanished.json", "dest": "vanished.json"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert publish_kit.mirror(kit_dir, manifest_path, False, False) == 1
+    assert not (kit_dir / "bundle").exists(), "strict mirror wrote a partial bundle"

@@ -1,30 +1,39 @@
 """Drawing QTO Block - Quantity Take-Off from DXF/DWG construction drawings"""
 
 import os
+import re
 import math
-from typing import Any, Dict, List, Tuple
+import tempfile
+from typing import Any, Dict, List, Tuple, Optional
 from app.core.universal_base import UniversalBlock
 
 
-def _to_metres_factor(doc_units: int) -> float:
-    """Map ezdxf unit codes (INSUNITS) to a multiplier that converts to metres.
+# DXF INSUNITS code → multiplier to convert that unit to meters.
+# 0 = unitless (legacy default mm); 1 = in; 2 = ft; 3 = miles;
+# 4 = mm; 5 = cm; 6 = m; 7 = km.
+_DXF_UNIT_TO_METERS = {
+    0: 0.001,
+    1: 0.0254,
+    2: 0.3048,
+    3: 1609.344,
+    4: 0.001,
+    5: 0.01,
+    6: 1.0,
+    7: 1000.0,
+}
 
-    Reference ezdxf.units constants:
-        0 = Unitless, 1 = Inches, 2 = Feet, 4 = Millimeters,
-        5 = Centimeters, 6 = Meters
-    Anything else falls back to 0.001 (assume mm), preserving prior behaviour.
+
+def _doc_units_to_meters(doc, override_scale: float = 1.0) -> Tuple[float, int]:
+    """Return (multiplier-to-meters, raw_INSUNITS_code) for a DXF doc.
+
+    Falls back to mm for unitless drawings — that matches the previous
+    hard-coded behaviour and keeps existing call sites stable.
     """
-    mapping = {
-        1: 0.0254,   # inches  -> m
-        2: 0.3048,   # feet    -> m
-        4: 0.001,    # mm      -> m
-        5: 0.01,     # cm      -> m
-        6: 1.0,      # m       -> m
-    }
     try:
-        return mapping.get(int(doc_units), 0.001)
+        u = int(doc.units) if hasattr(doc, "units") else 0
     except (TypeError, ValueError):
-        return 0.001
+        u = 0
+    return _DXF_UNIT_TO_METERS.get(u, 0.001) * override_scale, u
 
 
 class DrawingQTOBlock(UniversalBlock):
@@ -52,65 +61,215 @@ class DrawingQTOBlock(UniversalBlock):
             "fields": [
                 {"name": "measurements", "type": "list", "label": "Linear Measurements"},
                 {"name": "areas", "type": "list", "unit": "m²", "label": "Areas"},
-                {"name": "estimated_volumes", "type": "list", "unit": "m³", "label": "Estimated Volumes (area × assumed height)"},
+                {"name": "volumes", "type": "list", "unit": "m³", "label": "Volumes"},
                 {"name": "total_area_m2", "type": "number", "unit": "m²", "label": "Total Area"},
             ],
         },
         "quick_actions": [
-            {"icon": "", "label": "Full QTO", "prompt": "Extract all quantities from this drawing"},
-            {"icon": "", "label": "Measurements", "prompt": "List all linear measurements"},
-            {"icon": "", "label": "Floor Areas", "prompt": "Calculate floor areas by room"},
+            {"icon": "📐", "label": "Full QTO", "prompt": "Extract all quantities from this drawing"},
+            {"icon": "📏", "label": "Measurements", "prompt": "List all linear measurements"},
+            {"icon": "🔲", "label": "Floor Areas", "prompt": "Calculate floor areas by room"},
         ],
     }
 
+    async def merge_drawings(self, input_data: Any, params: Dict = None) -> Dict:
+        """Connect 2+ DXF drawings: extract metadata per sheet, find lines that
+        continue across sheet boundaries.
+
+        Inputs:
+          input_data: {"file_paths": ["a.dxf", "b.dxf", ...]} OR list of paths
+          params: {"angle_tol_rad": 0.05, "coord_tol_pct": 0.02}
+
+        Returns sheets[] (per-drawing metadata + bbox + boundary line count)
+        and pairings[] (cross-sheet line continuity matches sorted by
+        confidence). Useful for stitching adjacent floor plans, verifying
+        match-line alignment between disciplines, or detecting that a wall on
+        sheet A-101 keeps going on sheet A-102.
+        """
+        params = params or {}
+        if isinstance(input_data, list):
+            file_paths = input_data
+        elif isinstance(input_data, dict):
+            file_paths = input_data.get("file_paths") or input_data.get("files") or []
+        else:
+            file_paths = []
+        if isinstance(file_paths, dict):
+            file_paths = list(file_paths.values())
+        if not isinstance(file_paths, list) or len(file_paths) < 2:
+            return {
+                "status": "error",
+                "error": "merge_drawings requires file_paths list with ≥2 DXF files",
+            }
+
+        try:
+            import ezdxf  # noqa: F401
+        except ImportError:
+            return {"status": "error", "error": "ezdxf not installed. pip install ezdxf"}
+        import ezdxf
+
+        scale = float(params.get("unit_scale", self.config.get("unit_scale", 1.0)))
+        angle_tol = float(params.get("angle_tol_rad", 0.05))
+        coord_tol = float(params.get("coord_tol_pct", 0.02))
+
+        # Parse each drawing — collect lines + bbox + sheet metadata
+        sheets: List[Dict] = []
+        for fp in file_paths:
+            entry: Dict[str, Any] = {"file": os.path.basename(str(fp)), "path": str(fp)}
+            if not os.path.exists(fp):
+                entry.update({"status": "error", "error": "file not found"})
+                sheets.append(entry)
+                continue
+            ext = os.path.splitext(fp)[1].lower()
+            if ext != ".dxf":
+                entry.update({"status": "error", "error": f"unsupported format {ext} (DXF only — convert DWG via ODA)"})
+                sheets.append(entry)
+                continue
+            try:
+                doc = ezdxf.readfile(fp)
+            except Exception as e:
+                entry.update({"status": "error", "error": f"DXF read error: {e}"})
+                sheets.append(entry)
+                continue
+
+            msp = doc.modelspace()
+            to_meters, units_code = _doc_units_to_meters(doc, scale)
+            measurements = self._extract_measurements(msp, to_meters)
+            line_endpoints: List[Tuple[float, float]] = []
+            for m in measurements:
+                if m.get("type") == "line":
+                    s = m.get("start") or [0, 0]
+                    e = m.get("end") or [0, 0]
+                    line_endpoints.extend([(s[0], s[1]), (e[0], e[1])])
+            bbox = _bbox(line_endpoints)
+            boundary = _find_boundary_lines(measurements, bbox, tol_pct=coord_tol)
+            metadata = _extract_sheet_metadata(doc)
+
+            entry.update({
+                "status": "success",
+                "sheet_id": metadata.get("sheet_id"),
+                "scale": metadata.get("scale_annotation"),
+                "title": metadata.get("title_text"),
+                "project": metadata.get("project_text"),
+                "drawing_units": metadata.get("drawing_units"),
+                "_units_code": units_code,
+                "bbox": [round(c, 3) for c in bbox],
+                "total_lines": sum(1 for m in measurements if m.get("type") == "line"),
+                "boundary_lines": len(boundary),
+                "_lines": measurements,
+                "_boundary": boundary,
+                "_bbox": bbox,
+            })
+            sheets.append(entry)
+
+        # Cross-match every successful sheet pair. Skip pairings where the
+        # two sheets disagree on units — they'd be at radically different
+        # scales after normalisation anyway, and the user probably meant
+        # to convert one of them first.
+        pairings: List[Dict] = []
+        unit_mismatches: List[Dict] = []
+        successful = [s for s in sheets if s.get("status") == "success"]
+        for i, sa in enumerate(successful):
+            for sb in successful[i + 1:]:
+                if sa.get("_units_code") != sb.get("_units_code"):
+                    unit_mismatches.append({
+                        "sheet_a": sa.get("sheet_id") or sa.get("file"),
+                        "sheet_b": sb.get("sheet_id") or sb.get("file"),
+                        "units_a": sa.get("drawing_units"),
+                        "units_b": sb.get("drawing_units"),
+                    })
+                    continue
+                pairs = _match_continuity(
+                    sa["_boundary"], sa["_bbox"],
+                    sb["_boundary"], sb["_bbox"],
+                    angle_tol_rad=angle_tol,
+                    coord_tol_pct=coord_tol,
+                )
+                if pairs:
+                    pairings.append({
+                        "sheet_a": sa.get("sheet_id") or sa.get("file"),
+                        "sheet_b": sb.get("sheet_id") or sb.get("file"),
+                        "match_count": len(pairs),
+                        "top_confidence": pairs[0]["confidence"],
+                        "edge_distribution": _summarise_edge_distribution(pairs),
+                        "matches": pairs[:50],  # cap to keep response size bounded
+                    })
+
+        # Strip the heavy internal arrays before returning
+        for s in sheets:
+            for k in ("_lines", "_boundary", "_bbox", "_units_code"):
+                s.pop(k, None)
+
+        # Suggest a stitching order: pair sheets by their adjacency edges.
+        stitching_suggestion: List[str] = []
+        if pairings:
+            top = max(pairings, key=lambda p: p["top_confidence"])
+            stitching_suggestion.append(
+                f"Strongest match: {top['sheet_a']} ↔ {top['sheet_b']} "
+                f"({top['match_count']} aligned lines, confidence {top['top_confidence']:.2f})"
+            )
+            for p in pairings:
+                if p is top:
+                    continue
+                stitching_suggestion.append(
+                    f"  - {p['sheet_a']} ↔ {p['sheet_b']}: {p['match_count']} matches"
+                )
+        else:
+            stitching_suggestion.append(
+                "No line-continuity matches found — drawings may not share a match-line "
+                "or may be at different scales/orientations."
+            )
+
+        return {
+            "status": "success",
+            "action": "merge_drawings",
+            "sheets_processed": len(sheets),
+            "sheets_successful": len(successful),
+            "sheets": sheets,
+            "pairings": pairings,
+            "unit_mismatches": unit_mismatches,
+            "total_matches": sum(p["match_count"] for p in pairings),
+            "stitching_suggestion": stitching_suggestion,
+            "tolerances_used": {"angle_rad": angle_tol, "coord_pct": coord_tol},
+        }
+
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
-        data = input_data if isinstance(input_data, dict) else {}
 
-        # Support string path input directly, or InputAdapter {"text": "/path/to/file.dxf"}
-        if isinstance(input_data, str) and not data:
-            file_path = input_data
-        else:
-            file_path = data.get("file_path") or params.get("file_path") or data.get("text") or data.get("input") or ""
-        if not file_path:
-            return {"status": "error", "error": "No file_path provided. Requires a DXF or IFC file path."}
-        if not os.path.exists(file_path):
+        # Multi-drawing route: action=merge_drawings with file_paths list
+        if (params.get("action") == "merge_drawings"
+                or (isinstance(input_data, dict) and isinstance(input_data.get("file_paths"), list))):
+            return await self.merge_drawings(input_data, params)
+
+        file_path = self._resolve_file_path(input_data, params)
+
+        # If no valid file path, try text-based quantity extraction
+        if not file_path or not os.path.exists(file_path):
+            text_input = self._extract_text_from_input(input_data, params)
+            if text_input:
+                return self._extract_quantities_from_text(text_input)
+            if not file_path:
+                return {"status": "error", "error": "No file_path provided. Requires a DXF or DWG file path, or text containing dimensions."}
             return {"status": "error", "error": f"File not found: {file_path}"}
 
         ext = os.path.splitext(file_path)[1].lower()
-
-        # --- PDF input: extract vector drawings via PyMuPDF -----------------
-        # PDF drawings carry their geometry as vector paths in the page
-        # content stream. We can pull lines, rectangles, and closed shapes
-        # straight out — coordinates come back in PDF points (1pt = 1/72")
-        # at the page's scale, NOT real-world metres. The caller usually
-        # knows the title-block scale (e.g. 1:100) and can pass
-        # `pdf_scale_factor` to convert from page-units to metres.
-        if ext == ".pdf":
-            return self._extract_from_pdf(file_path, params)
-
-        # --- DWG input: attempt ODA File Converter, else clear guidance ----
         if ext == ".dwg":
-            converted = self._try_convert_dwg(file_path)
-            if isinstance(converted, dict):  # error envelope
-                return converted
-            file_path = converted  # ezdxf will read the converted DXF below
-
-        if ext not in (".dxf", ".dwg"):
-            return {"status": "error", "error": f"Unsupported format: {ext}. Use .dxf, .dwg, or .pdf"}
+            return {
+                "status": "error",
+                "error": (
+                    "DWG format requires ODA File Converter. "
+                    "Convert to DXF first: https://www.opendesign.com/guestfiles/oda_file_converter"
+                ),
+            }
+        if ext != ".dxf":
+            return {"status": "error", "error": f"Unsupported format: {ext}. Use .dxf"}
 
         try:
             import ezdxf
         except ImportError:
             return {"status": "error", "error": "ezdxf not installed. Run: pip install ezdxf"}
 
-        # open_plaintext transparently decrypts when DATA_ENCRYPTION_KEY is set
-        # on the server (uploads go through file_crypto.write_document); no-op
-        # for plaintext files.
-        from app.core.file_crypto import open_plaintext
         try:
-            with open_plaintext(file_path) as plain_path:
-                doc = ezdxf.readfile(plain_path)
+            doc = ezdxf.readfile(file_path)
         except Exception as e:
             return {"status": "error", "error": f"DXF read error: {e}"}
 
@@ -118,227 +277,199 @@ class DrawingQTOBlock(UniversalBlock):
         layer_filter = params.get("area_layer_filter", self.config.get("area_layer_filter", []))
         min_area = float(params.get("min_area_m2", self.config.get("min_area_m2", 0.01)))
 
-        # Honour the DXF's declared units instead of assuming millimetres.
-        to_metres_factor = _to_metres_factor(doc.units)
-        unit_factor = scale * to_metres_factor
-
         msp = doc.modelspace()
-        measurements, bulge_segments_count = self._extract_measurements(msp, unit_factor)
-        areas, hatch_hole_fallback = self._extract_areas(msp, unit_factor, layer_filter, min_area)
+        to_meters, _units_code = _doc_units_to_meters(doc, scale)
+        measurements = self._extract_measurements(msp, to_meters)
+        areas = self._extract_areas(msp, to_meters, layer_filter, min_area)
         volumes = self._estimate_volumes(areas, params)
         layers = list({e.dxf.layer for e in msp if hasattr(e.dxf, "layer")})
 
         total_area = sum(a["area_m2"] for a in areas)
         total_length = sum(m["length_m"] for m in measurements)
 
-        response = {
+        return {
             "status": "success",
             "measurements": measurements,
             "areas": areas,
-            "estimated_volumes": volumes,
+            "volumes": volumes,
             "total_area_m2": round(total_area, 3),
             "total_length_m": round(total_length, 3),
             "entity_count": len(list(msp)),
             "layers": layers[:50],
             "drawing_units": str(doc.units),
-            "input_units": doc.units,
-            "to_metres_factor": to_metres_factor,
-            "bulge_segments_count": bulge_segments_count,
-            "polyline_area_note": (
-                "Arc-bounded polygon area approximated as chord polygon area; "
-                "difference < 5% for typical bulges"
-            ),
         }
-        if hatch_hole_fallback:
-            response["hatch_hole_handling"] = "may include holes as positive area"
-        return response
 
-    def _extract_from_pdf(self, file_path: str, params: Dict) -> Dict:
-        """Extract vector geometry from a PDF drawing via PyMuPDF.
+    def _extract_text_from_input(self, input_data: Any, params: Dict) -> str:
+        """Extract raw text from input when no file is provided."""
+        if isinstance(input_data, str):
+            return input_data
+        if isinstance(input_data, dict):
+            return (
+                input_data.get("text", "") or
+                input_data.get("content", "") or
+                input_data.get("extracted_text", "") or
+                ""
+            )
+        if isinstance(params, dict):
+            return params.get("text", "") or params.get("content", "") or ""
+        return ""
 
-        PDF drawings carry their geometry as ``page.get_drawings()`` items —
-        each item has a ``type`` (``'l'`` line, ``'re'`` rect, ``'c'`` curve)
-        and a ``rect`` bbox plus an ``items`` path. We translate those into
-        the same shape ``drawing_qto`` produces for DXF (measurements +
-        areas + estimated_volumes), with coordinates in **PDF points** by
-        default. Pass ``pdf_scale_factor`` to convert to metres (e.g.
-        ``0.000352778`` to go from 1pt to mm-of-paper, then multiply by the
-        drawing's plot scale).
-        """
-        try:
-            import fitz
-        except ImportError:
-            return {"status": "error", "error": "PyMuPDF (fitz) not installed."}
-        from app.core.file_crypto import open_plaintext
+    def _extract_quantities_from_text(self, text: str) -> Dict:
+        """Extract measurements and quantities from text descriptions."""
+        import re
+        t = text.lower()
 
-        scale = float(params.get("pdf_scale_factor", 1.0))
-        max_pages = int(params.get("max_pages", self.config.get("max_pages", 20)))
-        min_length = float(params.get("min_length_units", 0.5))  # in input units
+        measurements = []
+        areas = []
+        volumes = []
 
-        measurements: List[Dict] = []
-        areas: List[Dict] = []
-        pages_inspected = 0
-        page_dims: List[Dict] = []
+        # Dimension patterns: 5.5m x 3.2m, 10' x 12', etc.
+        dim_pat = re.compile(
+            r'(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')\s*(?:x|by|×)\s*(\d+(?:\.\d+)?)\s*(?:m|m\.|meter|meters|ft|feet|foot|\')',
+            re.IGNORECASE
+        )
+        for m in dim_pat.finditer(t):
+            w = float(m.group(1))
+            h = float(m.group(2))
+            unit = "m" if "m" in m.group(0).lower() else "ft"
+            area_val = w * h
+            measurements.append({
+                "type": "dimension",
+                "length_m": round((w + h) * 2, 3),
+                "width": w,
+                "height": h,
+                "unit": unit,
+                "raw": m.group(0),
+            })
+            areas.append({
+                "type": "rectangular",
+                "area_m2": round(area_val, 3) if unit == "m" else round(area_val * 0.092903, 3),
+                "width": w,
+                "height": h,
+                "unit": unit,
+                "source": "text_extraction",
+            })
 
-        try:
-            with open_plaintext(file_path) as plain_path:
-                doc = fitz.open(plain_path)
-                pages_inspected = min(len(doc), max_pages)
-                for pi in range(pages_inspected):
-                    page = doc[pi]
-                    page_dims.append({
-                        "page": pi + 1,
-                        "width_pt": page.rect.width,
-                        "height_pt": page.rect.height,
-                    })
-                    drawings = page.get_drawings() or []
-                    for d in drawings:
-                        # `items` is a list of path commands: ("l", p1, p2)
-                        # for lines, ("re", rect) for rectangles, ("c", ...)
-                        # for cubic Béziers, ("qu", quad) for quads.
-                        for item in d.get("items") or []:
-                            kind = item[0]
-                            if kind == "l" and len(item) >= 3:
-                                p1, p2 = item[1], item[2]
-                                length_pt = math.hypot(p2.x - p1.x, p2.y - p1.y)
-                                if length_pt < min_length:
-                                    continue
-                                measurements.append({
-                                    "type": "line",
-                                    "page": pi + 1,
-                                    "length_pt": round(length_pt, 3),
-                                    "length_scaled": round(length_pt * scale, 6),
-                                    "start": [round(p1.x, 2), round(p1.y, 2)],
-                                    "end":   [round(p2.x, 2), round(p2.y, 2)],
-                                })
-                            elif kind == "re" and len(item) >= 2:
-                                r = item[1]
-                                w, h = abs(r.width), abs(r.height)
-                                if w < min_length and h < min_length:
-                                    continue
-                                area = w * h
-                                areas.append({
-                                    "type": "rect",
-                                    "page": pi + 1,
-                                    "width_pt": round(w, 3),
-                                    "height_pt": round(h, 3),
-                                    "area_pt2": round(area, 3),
-                                    "area_scaled": round(area * scale * scale, 6),
-                                })
-        except Exception as e:
-            return {"status": "error", "error": f"PDF drawing read error: {e}"}
+        # Single dimensions: 150mm, 5.5m, etc.
+        single_pat = re.compile(r'\b(\d+(?:\.\d+)?)\s*(mm|cm|m|ft|in)\b', re.IGNORECASE)
+        for m in single_pat.finditer(t):
+            val = float(m.group(1))
+            unit = m.group(2).lower()
+            if unit == "mm":
+                val_m = val / 1000.0
+            elif unit == "cm":
+                val_m = val / 100.0
+            elif unit == "ft":
+                val_m = val * 0.3048
+            elif unit == "in":
+                val_m = val * 0.0254
+            else:
+                val_m = val
+            measurements.append({
+                "type": "length",
+                "length_m": round(val_m, 4),
+                "unit": unit,
+                "raw": m.group(0),
+            })
 
-        total_area = sum(a["area_pt2"] for a in areas)
-        total_length = sum(m["length_pt"] for m in measurements)
+        # Area patterns: 100m2, 500 sqm, etc.
+        area_pat = re.compile(r'(\d+(?:\.\d+)?)\s*(?:m2|m²|sqm|sq\.?\s*m|sf|sq\.?\s*ft)', re.IGNORECASE)
+        for m in area_pat.finditer(t):
+            val = float(m.group(1))
+            unit = "m2" if any(u in m.group(0).lower() for u in ["m2", "m²", "sqm", "sq m"]) else "ft2"
+            area_m2 = val if unit == "m2" else val * 0.092903
+            areas.append({
+                "type": "area",
+                "area_m2": round(area_m2, 3),
+                "unit": unit,
+                "source": "text_extraction",
+            })
+
+        # Volume patterns: 45m3, 100 cubic metres, etc.
+        vol_pat = re.compile(r'(\d+(?:\.\d+)?)\s*(?:m3|m³|cbm|cu\.?\s*m|cubic\s*m)', re.IGNORECASE)
+        for m in vol_pat.finditer(t):
+            val = float(m.group(1))
+            volumes.append({
+                "type": "volume",
+                "volume_m3": round(val, 3),
+                "unit": "m3",
+                "source": "text_extraction",
+            })
+
+        # Concrete / steel quantities from descriptive text
+        concrete_pat = re.compile(r'concrete[^\n]*?(\d[\d,\.\s]*)\s*(?:m3|m³|cbm)', re.IGNORECASE)
+        m = concrete_pat.search(t)
+        if m:
+            try:
+                vol = float(m.group(1).replace(",", "").replace(" ", ""))
+                volumes.append({"type": "concrete", "volume_m3": round(vol, 2), "unit": "m3", "source": "text_extraction"})
+            except ValueError:
+                pass
+
+        steel_pat = re.compile(r'(?:steel|rebar|reinforcement)[^\n]*?(\d[\d,\.\s]*)\s*(?:kg|ton|tonne)', re.IGNORECASE)
+        m = steel_pat.search(t)
+        if m:
+            try:
+                weight = float(m.group(1).replace(",", "").replace(" ", ""))
+                if "ton" in m.group(0).lower():
+                    weight = weight * 1000
+                measurements.append({"type": "steel_weight", "length_m": round(weight, 2), "unit": "kg", "source": "text_extraction"})
+            except ValueError:
+                pass
+
+        total_area = sum(a["area_m2"] for a in areas)
+        total_length = sum(m["length_m"] for m in measurements)
+
+        # Estimate volumes from areas + thickness
+        estimated_volumes = self._estimate_volumes(areas, {})
+
         return {
             "status": "success",
-            "source_format": "pdf",
-            "pages_inspected": pages_inspected,
-            "page_dimensions": page_dims,
-            "measurements_count": len(measurements),
-            "measurements": measurements[:200],   # cap for response size
-            "areas_count": len(areas),
-            "areas": areas[:200],
-            "totals": {
-                "length_pt": round(total_length, 3),
-                "length_scaled": round(total_length * scale, 6),
-                "area_pt2": round(total_area, 3),
-                "area_scaled": round(total_area * scale * scale, 6),
-            },
-            "pdf_scale_factor": scale,
-            "scale_note": (
-                "PDF drawings carry no intrinsic scale — coordinates are in "
-                "PDF points (1pt = 1/72\"). Pass `pdf_scale_factor` to convert "
-                "to your target unit (e.g. for a 1:100 plotted drawing in mm, "
-                "use 0.000352778 * 100 = 0.0352778 pt → m)."
-            ),
+            "source": "text_extraction",
+            "note": "No DXF/DWG file provided. Quantities extracted from text description.",
+            "measurements": measurements,
+            "areas": areas,
+            "volumes": volumes + estimated_volumes,
+            "total_area_m2": round(total_area, 3),
+            "total_length_m": round(total_length, 3),
+            "entity_count": 0,
+            "layers": [],
+            "drawing_units": "text",
         }
 
-    def _try_convert_dwg(self, file_path: str):
-        """Best-effort DWG → DXF conversion via ODA File Converter CLI.
+    def _resolve_file_path(self, input_data: Any, params: Dict) -> Optional[str]:
+        """Resolve file path from input_data and params, writing bytes to temp if needed."""
+        if isinstance(input_data, str):
+            return input_data
+        if isinstance(input_data, bytes):
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".dxf") as f:
+                f.write(input_data)
+                return f.name
+        if isinstance(input_data, dict):
+            file_bytes = input_data.get("file") or input_data.get("bytes")
+            if isinstance(file_bytes, bytes):
+                ext = ".dxf"
+                for candidate in [".dxf", ".dwg"]:
+                    if candidate in str(input_data.get("filename", "")).lower():
+                        ext = candidate
+                        break
+                with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as f:
+                    f.write(file_bytes)
+                    return f.name
+            return (
+                input_data.get("file_path")
+                or input_data.get("path")
+                or input_data.get("text")
+                or input_data.get("input")
+            )
+        if isinstance(params, dict):
+            return params.get("file_path")
+        return None
 
-        Returns the converted DXF path on success, or a structured error
-        dict on failure. The CLI is shipped as ``ODAFileConverter`` on most
-        Linux/Mac installs and as ``ODAFileConverter.exe`` on Windows; we
-        also look for ``oda_file_converter`` for image builds that ship a
-        symlink. If neither is present, return the long-standing
-        "convert to DXF first" guidance.
-        """
-        import shutil
-        import subprocess
-        import tempfile
-
-        for candidate in ("ODAFileConverter", "ODAFileConverter.exe",
-                          "oda_file_converter", "oda-file-converter"):
-            tool = shutil.which(candidate)
-            if tool:
-                break
-        else:
-            return {
-                "status": "error",
-                "error": (
-                    "DWG format requires the ODA File Converter CLI, which is "
-                    "not bundled in this image (no pure-Python DWG reader "
-                    "exists). Either: (a) install ODA File Converter — "
-                    "https://www.opendesign.com/guestfiles/oda_file_converter — "
-                    "and ensure `ODAFileConverter` is on PATH, or (b) export "
-                    "the drawing as .dxf from AutoCAD/BricsCAD/LibreCAD "
-                    "(File → Save As → DXF R2018) and upload that."
-                ),
-                "hint": "Upload the .dxf instead of .dwg",
-            }
-
-        try:
-            with tempfile.TemporaryDirectory() as src_dir, tempfile.TemporaryDirectory() as dst_dir:
-                # ODA CLI converts an input DIRECTORY to an output directory.
-                # Copy the single DWG into a clean source dir, then convert.
-                src_path = os.path.join(src_dir, os.path.basename(file_path))
-                from app.core.file_crypto import open_plaintext
-                with open_plaintext(file_path) as plain:
-                    with open(plain, "rb") as fh, open(src_path, "wb") as fo:
-                        fo.write(fh.read())
-                # Args: in_dir out_dir output_version output_format
-                #       (ACAD2018, DXF, recurse-flag, audit-flag)
-                subprocess.run(
-                    [tool, src_dir, dst_dir, "ACAD2018", "DXF", "0", "1"],
-                    timeout=60, check=False, capture_output=True,
-                )
-                dxf_name = os.path.splitext(os.path.basename(file_path))[0] + ".dxf"
-                converted = os.path.join(dst_dir, dxf_name)
-                if not os.path.exists(converted):
-                    return {
-                        "status": "error",
-                        "error": (
-                            "ODA File Converter ran but produced no DXF; the "
-                            "DWG may be corrupt or a future-version export "
-                            "the bundled CLI doesn't yet support."
-                        ),
-                    }
-                # Move into a path that survives the temp-dir teardown.
-                stable = os.path.join(
-                    tempfile.gettempdir(), f"converted_{os.path.basename(dxf_name)}"
-                )
-                with open(converted, "rb") as fh, open(stable, "wb") as fo:
-                    fo.write(fh.read())
-                return stable
-        except FileNotFoundError as e:
-            return {"status": "error", "error": f"DWG conversion launcher error: {e}"}
-        except Exception as e:
-            return {"status": "error", "error": f"DWG conversion failed: {e}"}
-
-    def _extract_measurements(self, msp, unit_factor: float) -> Tuple[List[Dict], int]:
-        """``unit_factor`` converts raw drawing units straight to metres.
-
-        Returns (measurements, bulge_segments_count) so the caller can know
-        how many LWPOLYLINE segments were arc-faced vs straight chords.
-        """
+    def _extract_measurements(self, msp, to_meters: float) -> List[Dict]:
+        """Extract linear measurements. `to_meters` is the multiplier from
+        native drawing units → meters (already accounts for INSUNITS)."""
         results = []
-        bulge_segments_count = 0
-        # Import bulge_to_arc lazily; only LWPOLYLINE with non-zero bulge needs it.
-        try:
-            from ezdxf.math import bulge_to_arc
-        except Exception:
-            bulge_to_arc = None
         for entity in msp:
             etype = entity.dxftype()
             try:
@@ -348,16 +479,16 @@ class DrawingQTOBlock(UniversalBlock):
                     length = math.dist(
                         (start.x, start.y, start.z),
                         (end.x, end.y, end.z)
-                    ) * unit_factor
+                    ) * to_meters
                     results.append({
                         "type": "line",
                         "length_m": round(length, 4),
                         "layer": entity.dxf.layer,
-                        "start": [round(start.x * unit_factor, 3), round(start.y * unit_factor, 3)],
-                        "end": [round(end.x * unit_factor, 3), round(end.y * unit_factor, 3)],
+                        "start": [round(start.x * to_meters, 3), round(start.y * to_meters, 3)],
+                        "end": [round(end.x * to_meters, 3), round(end.y * to_meters, 3)],
                     })
                 elif etype == "CIRCLE":
-                    radius = entity.dxf.radius * unit_factor
+                    radius = entity.dxf.radius * to_meters
                     circumference = 2 * math.pi * radius
                     results.append({
                         "type": "circle",
@@ -367,7 +498,7 @@ class DrawingQTOBlock(UniversalBlock):
                         "layer": entity.dxf.layer,
                     })
                 elif etype == "ARC":
-                    radius = entity.dxf.radius * unit_factor
+                    radius = entity.dxf.radius * to_meters
                     start_angle = math.radians(entity.dxf.start_angle)
                     end_angle = math.radians(entity.dxf.end_angle)
                     if end_angle < start_angle:
@@ -380,94 +511,30 @@ class DrawingQTOBlock(UniversalBlock):
                         "length_m": round(arc_length, 4),
                         "layer": entity.dxf.layer,
                     })
-                elif etype == "LWPOLYLINE":
-                    # get_points() returns (x, y, start_w, end_w, bulge) tuples.
-                    pts = list(entity.get_points())
+                elif etype in ("LWPOLYLINE", "POLYLINE"):
+                    pts = list(entity.get_points() if etype == "LWPOLYLINE" else entity.points())
                     length = 0.0
-                    entity_bulge_segs = 0
-
-                    def seg_len(p_a, p_b):
-                        # p_a is the start vertex (carries the bulge to p_b).
-                        nonlocal entity_bulge_segs
-                        bulge = p_a[4] if len(p_a) >= 5 else 0.0
-                        if bulge_to_arc is not None and abs(bulge) >= 1e-9:
-                            try:
-                                _center, _start_a, _end_a, radius = bulge_to_arc(
-                                    (p_a[0], p_a[1]), (p_b[0], p_b[1]), bulge
-                                )
-                                entity_bulge_segs += 1
-                                return radius * abs(_end_a - _start_a)
-                            except Exception:
-                                pass
-                        return math.dist((p_a[0], p_a[1]), (p_b[0], p_b[1]))
-
                     for i in range(len(pts) - 1):
-                        length += seg_len(pts[i], pts[i + 1])
+                        length += math.dist(
+                            (pts[i][0], pts[i][1]),
+                            (pts[i + 1][0], pts[i + 1][1])
+                        )
                     if entity.is_closed and len(pts) > 1:
-                        length += seg_len(pts[-1], pts[0])
-                    length = length * unit_factor
-                    bulge_segments_count += entity_bulge_segs
+                        length += math.dist(
+                            (pts[-1][0], pts[-1][1]),
+                            (pts[0][0], pts[0][1])
+                        )
+                    length = length * to_meters
                     results.append({
                         "type": "polyline",
                         "length_m": round(length, 4),
                         "closed": entity.is_closed,
                         "vertex_count": len(pts),
-                        "bulge_segments": entity_bulge_segs,
-                        "layer": entity.dxf.layer,
-                    })
-                elif etype == "POLYLINE":
-                    pts = list(entity.points())
-                    # POLYLINE flag bit 8 = is_3d_polyline (also exposed as
-                    # `is_3d_polyline` attribute on ezdxf objects).
-                    is_3d = bool(getattr(entity, "is_3d_polyline", False))
-                    if not is_3d:
-                        try:
-                            is_3d = bool(int(getattr(entity.dxf, "flags", 0)) & 8)
-                        except Exception:
-                            is_3d = False
-
-                    def _pt_xyz(p):
-                        # Vertex coords may be Vec3 or tuple — be defensive.
-                        x = getattr(p, "x", None)
-                        if x is None:
-                            x = p[0]
-                            y = p[1]
-                            z = p[2] if len(p) > 2 else 0.0
-                        else:
-                            y = p.y
-                            z = getattr(p, "z", 0.0)
-                        return (x, y, z)
-
-                    length = 0.0
-                    if is_3d:
-                        coords = [_pt_xyz(p) for p in pts]
-                        for i in range(len(coords) - 1):
-                            length += math.dist(coords[i], coords[i + 1])
-                        if entity.is_closed and len(coords) > 1:
-                            length += math.dist(coords[-1], coords[0])
-                    else:
-                        for i in range(len(pts) - 1):
-                            length += math.dist(
-                                (pts[i][0], pts[i][1]),
-                                (pts[i + 1][0], pts[i + 1][1])
-                            )
-                        if entity.is_closed and len(pts) > 1:
-                            length += math.dist(
-                                (pts[-1][0], pts[-1][1]),
-                                (pts[0][0], pts[0][1])
-                            )
-                    length = length * unit_factor
-                    results.append({
-                        "type": "polyline_3d" if is_3d else "polyline",
-                        "length_m": round(length, 4),
-                        "closed": entity.is_closed,
-                        "vertex_count": len(pts),
-                        "is_3d": is_3d,
                         "layer": entity.dxf.layer,
                     })
                 elif etype == "DIMENSION":
                     if hasattr(entity.dxf, "actual_measurement"):
-                        val = entity.dxf.actual_measurement * unit_factor
+                        val = entity.dxf.actual_measurement * to_meters
                         results.append({
                             "type": "dimension",
                             "length_m": round(val, 4),
@@ -476,19 +543,12 @@ class DrawingQTOBlock(UniversalBlock):
                         })
             except Exception:
                 continue
-        return results, bulge_segments_count
+        return results
 
     def _extract_areas(
-        self, msp, unit_factor: float, layer_filter: List[str], min_area: float
-    ) -> Tuple[List[Dict], bool]:
-        """``unit_factor`` converts raw drawing units straight to metres.
-
-        Returns (areas, hatch_hole_fallback). hatch_hole_fallback is True if
-        any HATCH path lacked readable path_type_flags so the caller is
-        warned that holes may have been added as positive area.
-        """
+        self, msp, to_meters: float, layer_filter: List[str], min_area: float
+    ) -> List[Dict]:
         results = []
-        hatch_hole_fallback = False
         try:
             from shapely.geometry import Polygon
             use_shapely = True
@@ -502,7 +562,7 @@ class DrawingQTOBlock(UniversalBlock):
                 continue
             try:
                 if etype == "CIRCLE":
-                    r = entity.dxf.radius * unit_factor
+                    r = entity.dxf.radius * to_meters
                     area = math.pi * r * r
                     if area >= min_area:
                         results.append({
@@ -513,7 +573,7 @@ class DrawingQTOBlock(UniversalBlock):
                         })
                 elif etype in ("LWPOLYLINE", "POLYLINE") and entity.is_closed:
                     pts = list(entity.get_points() if etype == "LWPOLYLINE" else entity.points())
-                    coords = [(p[0] * unit_factor, p[1] * unit_factor) for p in pts]
+                    coords = [(p[0] * to_meters, p[1] * to_meters) for p in pts]
                     if use_shapely and len(coords) >= 3:
                         poly = Polygon(coords)
                         area = poly.area
@@ -534,68 +594,25 @@ class DrawingQTOBlock(UniversalBlock):
                         })
                 elif etype == "HATCH":
                     if hasattr(entity, "paths"):
-                        # Aggregate one entry per HATCH entity: external/outermost
-                        # boundary paths add area, internal islands subtract it.
-                        # If we can't read path_type_flags, fall back to summing
-                        # |shoelace| per path (legacy behaviour) and flag it.
-                        net_area = 0.0
-                        per_path_legacy_area = 0.0
-                        flags_readable = True
-                        path_count = 0
                         for path in entity.paths:
-                            if not (hasattr(path, "vertices") and len(path.vertices) >= 3):
-                                continue
-                            path_count += 1
-                            coords = [
-                                (v[0] * unit_factor, v[1] * unit_factor)
-                                for v in path.vertices
-                            ]
-                            a = abs(_shoelace(coords))
-                            per_path_legacy_area += a
-                            ptf = getattr(path, "path_type_flags", None)
-                            if ptf is None:
-                                flags_readable = False
-                                continue
-                            try:
-                                ptf_int = int(ptf)
-                            except Exception:
-                                flags_readable = False
-                                continue
-                            # Bit 1 = external boundary, Bit 4 = outermost.
-                            # Either marks an outer (additive) contour; otherwise
-                            # treat as a hole/island to subtract.
-                            if ptf_int & 1 or ptf_int & 4:
-                                net_area += a
-                            else:
-                                net_area -= a
-                        if path_count == 0:
-                            continue
-                        if flags_readable:
-                            area_value = max(net_area, 0.0)
-                        else:
-                            hatch_hole_fallback = True
-                            area_value = per_path_legacy_area
-                        if area_value >= min_area:
-                            results.append({
-                                "type": "hatch_area",
-                                "area_m2": round(area_value, 4),
-                                "path_count": path_count,
-                                "hole_handling": (
-                                    "outer_minus_holes" if flags_readable
-                                    else "may_include_holes_as_positive_area"
-                                ),
-                                "layer": layer,
-                            })
+                            if hasattr(path, "vertices") and len(path.vertices) >= 3:
+                                coords = [
+                                    (v[0] * to_meters, v[1] * to_meters)
+                                    for v in path.vertices
+                                ]
+                                area = abs(_shoelace(coords))
+                                if area >= min_area:
+                                    results.append({
+                                        "type": "hatch_area",
+                                        "area_m2": round(area, 4),
+                                        "layer": layer,
+                                    })
             except Exception:
                 continue
-        return sorted(results, key=lambda x: x["area_m2"], reverse=True), hatch_hole_fallback
+        return sorted(results, key=lambda x: x["area_m2"], reverse=True)
 
     def _estimate_volumes(self, areas: List[Dict], params: Dict) -> List[Dict]:
-        # Default ceiling height comes from app.core.construction_constants
-        # so all blocks share the same domain assumption. Caller overrides
-        # via params["height_m"] for project-specific data.
-        from app.core.construction_constants import DEFAULT_CEILING_HEIGHT_M
-        height = float(params.get("height_m", DEFAULT_CEILING_HEIGHT_M))
+        height = float(params.get("height_m", 3.0))  # default floor height 3m
         volumes = []
         for a in areas:
             if a["area_m2"] > 1.0:
@@ -603,8 +620,6 @@ class DrawingQTOBlock(UniversalBlock):
                     "type": f"{a['type']}_volume",
                     "area_m2": a["area_m2"],
                     "height_m": height,
-                    "assumed_height_m": height,
-                    "method": "area_x_height_assumption",
                     "volume_m3": round(a["area_m2"] * height, 4),
                     "layer": a.get("layer", ""),
                 })
@@ -619,3 +634,224 @@ def _shoelace(coords: List[Tuple[float, float]]) -> float:
         area += coords[i][0] * coords[j][1]
         area -= coords[j][0] * coords[i][1]
     return area / 2.0
+
+
+# ── Multi-drawing analysis (sheet matching + line continuity) ─────────────
+# Used by the construction container's `merge_drawings` action. Detects
+# when two drawings cover adjacent regions: line endpoints near the sheet
+# boundary on drawing A that match line endpoints + direction on the
+# corresponding edge of drawing B = a continuity candidate.
+
+def _bbox(points: List[Tuple[float, float]]) -> Tuple[float, float, float, float]:
+    """Return (min_x, min_y, max_x, max_y) bounding box."""
+    if not points:
+        return (0.0, 0.0, 0.0, 0.0)
+    xs = [p[0] for p in points]
+    ys = [p[1] for p in points]
+    return (min(xs), min(ys), max(xs), max(ys))
+
+
+def _classify_boundary_edge(
+    point: Tuple[float, float],
+    bbox: Tuple[float, float, float, float],
+    tol_pct: float = 0.05,
+) -> Optional[str]:
+    """Return 'left'/'right'/'top'/'bottom' if point is within tol_pct of the
+    matching edge of bbox; None if interior. Uses % of the bbox side length
+    for tolerance so the same threshold works at any drawing scale."""
+    min_x, min_y, max_x, max_y = bbox
+    width = max_x - min_x or 1.0
+    height = max_y - min_y or 1.0
+    tol_x = width * tol_pct
+    tol_y = height * tol_pct
+    px, py = point
+    edges = []
+    if abs(px - min_x) <= tol_x:
+        edges.append(("left", abs(px - min_x)))
+    if abs(px - max_x) <= tol_x:
+        edges.append(("right", abs(px - max_x)))
+    if abs(py - min_y) <= tol_y:
+        edges.append(("bottom", abs(py - min_y)))
+    if abs(py - max_y) <= tol_y:
+        edges.append(("top", abs(py - max_y)))
+    if not edges:
+        return None
+    # Closest wins
+    edges.sort(key=lambda e: e[1])
+    return edges[0][0]
+
+
+def _line_direction_angle(start: Tuple[float, float], end: Tuple[float, float]) -> float:
+    """Return line direction in radians, normalised to [0, π) so that a
+    line and its reverse get the same angle."""
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    angle = math.atan2(dy, dx)
+    if angle < 0:
+        angle += math.pi
+    if angle >= math.pi:
+        angle -= math.pi
+    return angle
+
+
+def _find_boundary_lines(
+    measurements: List[Dict],
+    bbox: Tuple[float, float, float, float],
+    tol_pct: float = 0.05,
+) -> List[Dict]:
+    """Filter the measurements list down to lines with at least one
+    endpoint near the bbox edge — those are continuity candidates."""
+    boundary: List[Dict] = []
+    for m in measurements:
+        if m.get("type") != "line":
+            continue
+        start = m.get("start") or [0, 0]
+        end = m.get("end") or [0, 0]
+        s_edge = _classify_boundary_edge((start[0], start[1]), bbox, tol_pct)
+        e_edge = _classify_boundary_edge((end[0], end[1]), bbox, tol_pct)
+        if s_edge or e_edge:
+            boundary.append({
+                **m,
+                "start_edge": s_edge,
+                "end_edge": e_edge,
+                "angle_rad": round(_line_direction_angle(tuple(start[:2]), tuple(end[:2])), 4),
+            })
+    return boundary
+
+
+_OPPOSITE_EDGE = {"left": "right", "right": "left", "top": "bottom", "bottom": "top"}
+
+
+def _match_continuity(
+    bdy_a: List[Dict],
+    bbox_a: Tuple[float, float, float, float],
+    bdy_b: List[Dict],
+    bbox_b: Tuple[float, float, float, float],
+    *,
+    angle_tol_rad: float = 0.05,
+    coord_tol_pct: float = 0.02,
+) -> List[Dict]:
+    """Pair lines across two drawings that look like the same physical line
+    continuing across a match-line boundary.
+
+    Algorithm:
+      - Drawing A's right-edge candidates pair with Drawing B's left-edge.
+        Top/bottom and other edge orientations work the same way.
+      - Lines must share the same direction angle (mod π) within angle_tol.
+      - The endpoint-coordinate perpendicular to the match edge must match
+        within coord_tol_pct of bbox extent (e.g. for a right-left pairing,
+        the y-coords of the endpoints must agree).
+
+    Returns: list of pairings each with both line dicts + a confidence
+    score derived from angle delta + coord delta.
+    """
+    pairs: List[Dict] = []
+    # Average the two bboxes when computing perpendicular-coordinate
+    # tolerance — sheets that share a match-line often differ in extent,
+    # so locking the tolerance to bbox_a alone biased small-vs-large
+    # pairings.
+    width_avg = (((bbox_a[2] - bbox_a[0]) + (bbox_b[2] - bbox_b[0])) / 2) or 1.0
+    height_avg = (((bbox_a[3] - bbox_a[1]) + (bbox_b[3] - bbox_b[1])) / 2) or 1.0
+
+    for la in bdy_a:
+        # The edge that touches the boundary
+        edge_a = la.get("end_edge") or la.get("start_edge")
+        if not edge_a:
+            continue
+        opp = _OPPOSITE_EDGE[edge_a]
+        # Coordinate perpendicular to the match (the one we expect to align)
+        if edge_a in ("left", "right"):
+            tol_perp = height_avg * coord_tol_pct
+            perp_a = (la.get("start") or [0, 0])[1] if la.get("start_edge") == edge_a else (la.get("end") or [0, 0])[1]
+        else:
+            tol_perp = width_avg * coord_tol_pct
+            perp_a = (la.get("start") or [0, 0])[0] if la.get("start_edge") == edge_a else (la.get("end") or [0, 0])[0]
+
+        for lb in bdy_b:
+            edge_b = lb.get("start_edge") or lb.get("end_edge")
+            if edge_b != opp:
+                continue
+            # Direction must match (lines are 'same' if angles within tol mod π)
+            d_angle = abs((la.get("angle_rad", 0) - lb.get("angle_rad", 0)) % math.pi)
+            d_angle = min(d_angle, math.pi - d_angle)
+            if d_angle > angle_tol_rad:
+                continue
+            if edge_b in ("left", "right"):
+                perp_b = (lb.get("start") or [0, 0])[1] if lb.get("start_edge") == edge_b else (lb.get("end") or [0, 0])[1]
+            else:
+                perp_b = (lb.get("start") or [0, 0])[0] if lb.get("start_edge") == edge_b else (lb.get("end") or [0, 0])[0]
+            d_perp = abs(perp_a - perp_b)
+            if d_perp > tol_perp:
+                continue
+            # Confidence: blend of angle delta + coord delta
+            angle_score = max(0, 1 - d_angle / max(angle_tol_rad, 1e-6))
+            perp_score = max(0, 1 - d_perp / max(tol_perp, 1e-6))
+            confidence = round((angle_score * 0.4 + perp_score * 0.6), 3)
+            pairs.append({
+                "drawing_a_line": la,
+                "drawing_b_line": lb,
+                "edge": f"{edge_a}↔{opp}",
+                "angle_delta_rad": round(d_angle, 4),
+                "coord_delta": round(d_perp, 4),
+                "confidence": confidence,
+                "same_layer": la.get("layer") == lb.get("layer"),
+            })
+    pairs.sort(key=lambda p: -p["confidence"])
+    return pairs
+
+
+def _extract_sheet_metadata(doc) -> Dict:
+    """Pull title-block hints from a DXF: sheet number, scale annotation,
+    drawing units. Best-effort — DXF doesn't standardise title blocks so we
+    look for common conventions (TEXT entities on TITLE_BLOCK / TITLE layer
+    + scale strings like '1:50' or 'SCALE: 1/100')."""
+    sheet_id = None
+    scale_text = None
+    project_text = None
+    title_text = None
+    msp = doc.modelspace()
+    sheet_re = re.compile(r"\b([A-Z]{1,2}-?\d{2,4}[A-Z]?)\b")  # A-101, S101, M-201A
+    scale_re = re.compile(r"\b(?:scale|esc\.?)\s*[:=]?\s*(1\s*[:/]\s*\d{1,4}|\d+/\d+|\d+\"\s*=\s*\d+'?)", re.IGNORECASE)
+    for entity in msp:
+        etype = entity.dxftype()
+        if etype not in ("TEXT", "MTEXT"):
+            continue
+        try:
+            text = entity.text if etype == "MTEXT" else entity.dxf.text
+            text = str(text or "").strip()
+            if not text:
+                continue
+            layer = (getattr(entity.dxf, "layer", "") or "").upper()
+            if "TITLE" in layer or "TBLOCK" in layer or "BORDER" in layer:
+                if not title_text:
+                    title_text = text[:120]
+            if not sheet_id:
+                m = sheet_re.search(text)
+                if m and len(m.group(1)) <= 10:
+                    sheet_id = m.group(1)
+            if not scale_text:
+                m = scale_re.search(text)
+                if m:
+                    scale_text = m.group(1).strip()
+            if not project_text and ("project" in text.lower() or "proyecto" in text.lower()):
+                project_text = text[:120]
+        except Exception:
+            continue
+    return {
+        "sheet_id": sheet_id,
+        "scale_annotation": scale_text,
+        "project_text": project_text,
+        "title_text": title_text,
+        "drawing_units": str(doc.units) if hasattr(doc, "units") else None,
+    }
+
+
+def _summarise_edge_distribution(pairs: List[Dict]) -> Dict[str, int]:
+    """Count which edge-orientations matched. Tells the user whether the
+    drawings stitch primarily horizontally (left↔right) or vertically
+    (top↔bottom)."""
+    out: Dict[str, int] = {}
+    for p in pairs:
+        edge = p.get("edge", "?")
+        out[edge] = out.get(edge, 0) + 1
+    return dict(sorted(out.items(), key=lambda kv: -kv[1]))

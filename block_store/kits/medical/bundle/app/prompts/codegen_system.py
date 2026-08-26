@@ -67,11 +67,20 @@ def build_codegen_prompt(
     *,
     prior_code: Optional[str] = None,
     prior_error: Optional[str] = None,
+    definitions_block: Optional[str] = None,
 ) -> str:
     """Assemble the system prompt for one code-generation attempt.
 
     `prior_code` / `prior_error` are supplied on a retry so the LLM can see
     what failed and why; they are omitted on the first attempt.
+
+    `definitions_block` carries the platform's authoritative definitions for
+    any quantity the task names (see `app.core.formula_definitions`). It is
+    placed immediately after the task and before the variables, because it
+    constrains what the task *means* -- the model must not invent a rival
+    derivation for a quantity the platform has already defined. Omitted when
+    nothing matched, in which case the result is flagged `model_generated`
+    rather than silently presented as grounded.
     """
     if variables:
         var_lines = "\n".join(
@@ -81,7 +90,10 @@ def build_codegen_prompt(
     else:
         var_block = "INPUT VARIABLES: none."
 
-    parts = [_CONTRACT, f"TASK:\n{task}", var_block]
+    parts = [_CONTRACT, f"TASK:\n{task}"]
+    if definitions_block:
+        parts.append(definitions_block)
+    parts.append(var_block)
 
     if prior_code is not None and prior_error is not None:
         parts.append(
