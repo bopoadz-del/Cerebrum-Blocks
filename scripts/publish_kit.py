@@ -1,9 +1,36 @@
 #!/usr/bin/env python3
 """Publish a domain container kit to the Cerebrum Block Store.
 
+TWO MODES, AND WHY THE DEFAULT IS MIRROR
+----------------------------------------
+``scaffold`` generates a manifest from the standard template -- the right
+thing for a brand-new kit, and the only thing this script used to do.
+
+``mirror`` reads the manifest the kit author already wrote and copies every
+artifact it declares into ``bundle/``. This is the mode the store actually
+needs, because ``container_kit_store.install_kit`` reads install artifacts
+from ``bundle/`` and nowhere else.
+
+The default is mirror-when-a-manifest-exists, and scaffold refuses to
+overwrite one without ``--regenerate``. That is not politeness. The template
+emits a fixed 14-artifact list; ``automotive`` had been hand-extended to 18
+by #64 (source_manifest.json, schemas/, prompts/, evaluation/). Running the
+old script against it would have silently reverted the manifest to the
+template and republished a kit stripped of everything that made it a RAG kit.
+
+WHAT PUBLISH REFUSES
+--------------------
+After copying, every declared artifact must exist in ``bundle/`` or the
+publish fails. ``automotive`` shipped 14 of the 18 it declared while the
+store still listed it ``available``, and install raised ContainerKitError at
+the last step. Declared-but-absent is now a publish-time error rather than an
+install-time surprise.
+
 Usage:
-    python scripts/publish_kit.py --domain medical
-    python scripts/publish_kit.py --domain medical --dry-run
+    python scripts/publish_kit.py --domain automotive             # mirror
+    python scripts/publish_kit.py --domain automotive --check     # verify only
+    python scripts/publish_kit.py --domain automotive --dry-run
+    python scripts/publish_kit.py --domain medical --scaffold     # new kit
 """
 
 from __future__ import annotations
@@ -13,6 +40,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
+from typing import Any, List, Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 KITS_DIR = PROJECT_ROOT / "block_store" / "kits"
@@ -72,7 +100,6 @@ def _build_manifest(domain: str) -> dict[str, object]:
     pascal = _pascal_name(domain)
     container_class = f"app.containers.{domain}.{pascal}Container"
     block_name = f"{domain}_v2"
-    block_class = f"{pascal}BlockV2"
 
     title = _KIT_TITLES.get(domain, f"{pascal} Suite")
     description = (
@@ -156,34 +183,154 @@ def _build_manifest(domain: str) -> dict[str, object]:
     }
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Publish a domain kit to the Block Store")
-    parser.add_argument("--domain", required=True, help="Domain kit id (e.g. medical)")
-    parser.add_argument("--dry-run", action="store_true", help="Print actions only")
-    args = parser.parse_args()
+# -- publishing ------------------------------------------------------------
 
-    domain = args.domain.strip().lower()
-    kit_dir = KITS_DIR / domain
+
+def resolve_source(kit_dir: Path, rel: str) -> Optional[Path]:
+    """Where an artifact is authored.
+
+    Kit-authored content (``schemas/``, ``prompts/``, ``source_manifest.json``)
+    lives at the kit root; shared platform code (``app/core/sandbox.py`` and
+    friends) lives at the repo root. The kit root wins, so a kit can carry its
+    own copy of a shared file without editing the repo.
+    """
+    for candidate in (kit_dir / rel, PROJECT_ROOT / rel):
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def copy_artifact(src: Path, dest: Path) -> None:
+    """Copy a file or a whole directory.
+
+    An artifact may be a directory (``schemas/``, ``prompts/``).
+    ``shutil.copy2`` raises IsADirectoryError on those, so the kind is checked
+    rather than assumed -- three of automotive's artifacts are directories.
+    """
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if src.is_dir():
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.copytree(
+            src, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc")
+        )
+    else:
+        shutil.copy2(src, dest)
+
+
+def missing_from_bundle(bundle_dir: Path, artifacts: List[Any]) -> List[str]:
+    """Declared artifacts absent from the bundle. Empty means installable.
+
+    This is the same invariant ``tests/test_kit_bundle_completeness.py``
+    asserts in CI and ``container_kit_store.install_kit`` enforces at install.
+    Checked here too so a bad publish fails at the keyboard of the person who
+    caused it, not in someone else's install.
+    """
+    return [
+        item["src"] for item in artifacts if not (bundle_dir / item["src"]).exists()
+    ]
+
+
+def mirror(kit_dir: Path, manifest_path: Path, dry_run: bool, check_only: bool) -> int:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    artifacts = manifest.get("artifacts") or []
     bundle_dir = kit_dir / "bundle"
-    manifest_path = kit_dir / "manifest.json"
+    kit_id = manifest.get("id", kit_dir.name)
+
+    if not artifacts:
+        print(f"'{kit_id}' declares no artifacts; nothing to mirror.")
+        return 0
+
+    if check_only:
+        missing = missing_from_bundle(bundle_dir, artifacts)
+        if missing:
+            print(
+                f"INCOMPLETE '{kit_id}': {len(missing)} of {len(artifacts)} declared "
+                f"artifacts are absent from bundle/:",
+                file=sys.stderr,
+            )
+            for item in missing:
+                print(f"  - {item}", file=sys.stderr)
+            return 1
+        print(
+            f"'{kit_id}': all {len(artifacts)} declared artifacts present in bundle/."
+        )
+        return 0
+
+    unresolved: List[str] = []
+    plan = []
+    for item in artifacts:
+        src = resolve_source(kit_dir, item["src"])
+        if src is None:
+            unresolved.append(item["src"])
+        else:
+            plan.append((src, bundle_dir / item["src"]))
+
+    if unresolved:
+        print(
+            f"Cannot mirror '{kit_id}': {len(unresolved)} declared artifact(s) are "
+            f"authored nowhere -- not at the kit root, not at the repo root:",
+            file=sys.stderr,
+        )
+        for item in unresolved:
+            print(f"  - {item}", file=sys.stderr)
+        print(
+            "Write them, or remove them from the manifest. Publishing a kit that "
+            "declares what does not exist is exactly what broke automotive.",
+            file=sys.stderr,
+        )
+        return 1
+
+    if dry_run:
+        for src, dest in plan:
+            print(f"[dry-run] {'dir ' if src.is_dir() else 'file'} {src} -> {dest}")
+        return 0
+
+    for src, dest in plan:
+        copy_artifact(src, dest)
+
+    missing = missing_from_bundle(bundle_dir, artifacts)
+    if missing:
+        print(
+            f"Publish FAILED for '{kit_id}': still missing after copy: {missing}",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(f"Mirrored '{kit_id}': {len(plan)} artifacts -> {bundle_dir}")
+    print(f"Completeness: {len(artifacts)}/{len(artifacts)} declared artifacts present.")
+    return 0
+
+
+def scaffold(
+    kit_dir: Path, manifest_path: Path, domain: str, dry_run: bool, regenerate: bool
+) -> int:
+    if manifest_path.exists() and not regenerate:
+        print(
+            f"'{domain}' already has an authored manifest at {manifest_path}.",
+            file=sys.stderr,
+        )
+        print(
+            "Refusing to overwrite it with the standard template. The template "
+            "emits a fixed artifact list and would drop anything hand-added -- "
+            "this is how automotive's RAG artifacts would have been lost. Publish "
+            "it as authored (default), or pass --regenerate to insist.",
+            file=sys.stderr,
+        )
+        return 1
 
     manifest = _build_manifest(domain)
     artifacts = manifest["artifacts"]
+    bundle_dir = kit_dir / "bundle"
 
-    # Validate source files.
-    missing: list[str] = []
-    for item in artifacts:
-        src_path = PROJECT_ROOT / item["src"]
-        if not src_path.exists():
-            missing.append(item["src"])
-    if missing:
+    absent = [i["src"] for i in artifacts if not (PROJECT_ROOT / i["src"]).exists()]
+    if absent:
         print(f"Missing source files for '{domain}':", file=sys.stderr)
-        for m in missing:
-            print(f"  - {m}", file=sys.stderr)
+        for item in absent:
+            print(f"  - {item}", file=sys.stderr)
         return 1
 
-    if args.dry_run:
-        print(f"[dry-run] would create {kit_dir}")
+    if dry_run:
         print(f"[dry-run] would write {manifest_path}")
         for item in artifacts:
             print(f"[dry-run] would copy {item['src']} -> {bundle_dir / item['src']}")
@@ -191,22 +338,22 @@ def main() -> int:
 
     kit_dir.mkdir(parents=True, exist_ok=True)
     bundle_dir.mkdir(parents=True, exist_ok=True)
-
-    # Copy artifacts into bundle preserving relative paths.
-    copied = 0
     for item in artifacts:
-        src = PROJECT_ROOT / item["src"]
-        dest = bundle_dir / item["src"]
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src, dest)
-        copied += 1
+        copy_artifact(PROJECT_ROOT / item["src"], bundle_dir / item["src"])
 
-    # Write manifest.
-    with open(manifest_path, "w", encoding="utf-8") as f:
-        json.dump(manifest, f, indent=2)
-        f.write("\n")
+    with open(manifest_path, "w", encoding="utf-8") as handle:
+        json.dump(manifest, handle, indent=2)
+        handle.write("\n")
 
-    print(f"Published '{domain}' kit: {copied} artifacts -> {bundle_dir}")
+    missing = missing_from_bundle(bundle_dir, artifacts)
+    if missing:
+        print(
+            f"Publish FAILED for '{domain}': still missing after copy: {missing}",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(f"Scaffolded '{domain}': {len(artifacts)} artifacts -> {bundle_dir}")
     print(f"Manifest written: {manifest_path}")
 
     # Publish gate. CI catches a bad manifest on the next push; this catches
@@ -244,6 +391,62 @@ def main() -> int:
         return 1
     print("Composition audit: clean.")
     return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Publish a domain kit to the Cerebrum Block Store."
+    )
+    parser.add_argument("--domain", required=True, help="Kit id (e.g. automotive)")
+    parser.add_argument("--dry-run", action="store_true", help="Print actions only")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Verify bundle completeness without copying anything",
+    )
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--mirror",
+        action="store_true",
+        help="Publish the manifest as authored (the default when one exists)",
+    )
+    mode.add_argument(
+        "--scaffold",
+        action="store_true",
+        help="Generate a manifest from the standard template (new kits)",
+    )
+    parser.add_argument(
+        "--regenerate",
+        action="store_true",
+        help="Allow --scaffold to overwrite an authored manifest",
+    )
+    args = parser.parse_args()
+
+    domain = args.domain.strip().lower()
+    kit_dir = KITS_DIR / domain
+    manifest_path = kit_dir / "manifest.json"
+
+    if args.scaffold:
+        if args.check:
+            print(
+                "--check inspects an authored manifest; drop --scaffold to use it.",
+                file=sys.stderr,
+            )
+            return 2
+        return scaffold(kit_dir, manifest_path, domain, args.dry_run, args.regenerate)
+
+    if not manifest_path.exists():
+        if args.mirror or args.check:
+            print(
+                f"No manifest at {manifest_path}; nothing to mirror. "
+                f"Use --scaffold to create one.",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"No manifest for '{domain}' -- scaffolding a new kit.")
+        return scaffold(kit_dir, manifest_path, domain, args.dry_run, args.regenerate)
+
+    return mirror(kit_dir, manifest_path, args.dry_run, args.check)
 
 
 if __name__ == "__main__":
