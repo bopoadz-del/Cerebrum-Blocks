@@ -48,6 +48,10 @@ pypdf==6.14.2
 sympy==1.14.0
 pandas==2.3.3
 openpyxl==3.1.5
+# Imported by app/blocks/document_engine/{main,mapper}.py and by
+# scripts/intake_kit.py, but never declared -- it has been arriving
+# transitively, which is luck rather than a dependency.
+PyYAML==6.0.3
 
 # Sandboxed code execution for formula_executor_v2 / reasoning engine
 RestrictedPython==8.4
