@@ -92,6 +92,12 @@ jobs:
         # corpus-sighted by construction.
         run: pytest -q tests/test_build_kit_eval.py
 
+      - name: Run kit pipeline runner tests (K7)
+        # Pins that the runner blocks at K4 and calls it the expected
+        # terminal state -- a runner reporting "done" after scaffolding would
+        # invite exactly the outcome the pipeline exists to refuse.
+        run: pytest -q tests/test_pipeline_kit.py
+
       - name: Run kit publisher tests
         # Publishing decides whether a kit the store advertises can be
         # installed. CI names test files explicitly rather than running
