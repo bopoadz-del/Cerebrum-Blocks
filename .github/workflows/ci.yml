@@ -80,6 +80,12 @@ jobs:
         # and .docx, not just structured fixtures.
         run: pytest -q tests/test_intake_kit.py
 
+      - name: Run kit scaffold tests (stage K3)
+        # K1 -> K3 -> K2: the scaffold writes the domain overlay to the exact
+        # path formula_definitions reads, so a formula that survived the
+        # source gate becomes a grounded definition without a further step.
+        run: pytest -q tests/test_scaffold_kit.py
+
       - name: Run kit publisher tests
         # Publishing decides whether a kit the store advertises can be
         # installed. CI names test files explicitly rather than running
