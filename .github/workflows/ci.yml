@@ -75,6 +75,11 @@ jobs:
       - name: Run typed-block tests
         run: pytest -q tests/test_typed_block.py
 
+      - name: Run kit intake tests (stage K1)
+        # The source gate: no source, no encode. Exercised against real .xlsx
+        # and .docx, not just structured fixtures.
+        run: pytest -q tests/test_intake_kit.py
+
       - name: Run kit publisher tests
         # Publishing decides whether a kit the store advertises can be
         # installed. CI names test files explicitly rather than running
