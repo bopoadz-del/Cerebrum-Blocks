@@ -86,6 +86,12 @@ jobs:
         # source gate becomes a grounded definition without a further step.
         run: pytest -q tests/test_scaffold_kit.py
 
+      - name: Run kit eval-seed tests (stage K6)
+        # Pins that a generated eval can never be mistaken for an authored
+        # one: authored stays null, and the method string says the set is
+        # corpus-sighted by construction.
+        run: pytest -q tests/test_build_kit_eval.py
+
       - name: Run kit publisher tests
         # Publishing decides whether a kit the store advertises can be
         # installed. CI names test files explicitly rather than running
