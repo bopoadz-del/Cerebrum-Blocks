@@ -152,6 +152,71 @@ jobs:
                     tests/core/test_trust_scope_enforcement.py \
                     tests/routers/test_health_capability.py
 
+  full-suite:
+    # WHY THIS EXISTS
+    # The backend job names test files explicitly. That was invisible until
+    # it was counted: 25 of this repository's 134 test files were listed, and
+    # 103 never executed. A new test file therefore passed by never being
+    # asked -- which is how a bundle-completeness fence went green on its own
+    # PR without running.
+    #
+    # This job runs tests/ whole, so "green" stops meaning "green on a fifth
+    # of the suite". It is a SEPARATE job on purpose: the targeted steps keep
+    # their meaning and stay fast, and a failure here is attributable to this
+    # change rather than mixed into an existing check.
+    #
+    # It is required, not informational. A job allowed to fail is a job
+    # nobody reads.
+    name: Full suite (every test file)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      ENV: test
+      DATABASE_URL: postgresql://cerebrum:cerebrum@localhost:5433/cerebrum
+      EMBEDDING_MODEL: all-MiniLM-L6-v2
+      VECTOR_DIMENSION: "384"
+      CEREBRUM_VIRGIN: "false"
+    services:
+      postgres:
+        image: ankane/pgvector:v0.5.1
+        env:
+          POSTGRES_USER: cerebrum
+          POSTGRES_PASSWORD: cerebrum
+          POSTGRES_DB: cerebrum
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system deps for OCR/PDF/MIME blocks
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends             tesseract-ocr poppler-utils libgl1 libglib2.0-0 libmagic1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Apply database migrations
+        run: |
+          sudo apt-get install -y --no-install-recommends postgresql-client
+          psql "$DATABASE_URL" -f migrations/001_historical_benchmark.sql
+          psql "$DATABASE_URL" -f migrations/002_vector_ingestion.sql
+
+      - name: Run every test file
+        run: pytest -q tests/
+
   frontend:
     name: Frontend (tsc + vite build)
     runs-on: ubuntu-latest
