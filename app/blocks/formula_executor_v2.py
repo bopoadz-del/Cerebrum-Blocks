@@ -27,6 +27,7 @@ from app.core.formula_definitions import (
     grounding_report,
     load_definitions,
     match_definitions,
+    not_assessed,
 )
 
 from app.prompts.codegen_system import build_codegen_prompt
@@ -56,6 +57,7 @@ def _error(
     traceback: Optional[str] = None,
     error_type: Optional[str] = None,
     task: str = "",
+    grounding: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Build an error result with the FULL key set every error path emits.
 
@@ -71,6 +73,12 @@ def _error(
         "error_type": error_type,
         "attempts": attempts,
         "task": task,
+        # Present on EVERY exit. Adding it to the success paths alone
+        # reintroduced the exact defect this helper exists to prevent: a
+        # caller reading result["grounding"] would KeyError depending on
+        # which failure fired.
+        "grounding": grounding
+        or not_assessed("the calculation did not complete, so nothing was grounded"),
     }
 
 
@@ -265,6 +273,7 @@ class FormulaExecutorV2Block(UniversalBlock):
                     error_type=last_error_type,
                     attempts=attempt,
                     task=task,
+                    grounding=grounding,
                 )
 
             code = _strip_fences(raw)
@@ -305,4 +314,5 @@ class FormulaExecutorV2Block(UniversalBlock):
             error_type=last_error_type,
             attempts=max_attempts,
             task=task,
+            grounding=grounding,
         )
