@@ -98,6 +98,11 @@ jobs:
         # invite exactly the outcome the pipeline exists to refuse.
         run: pytest -q tests/test_pipeline_kit.py
 
+      - name: Run kit review tests (stage K4)
+        # Pins that sign-off cannot manufacture a judgement: it refuses while
+        # the reviewer's work is outstanding, demands a name, and records it.
+        run: pytest -q tests/test_review_kit.py
+
       - name: Run kit publisher tests
         # Publishing decides whether a kit the store advertises can be
         # installed. CI names test files explicitly rather than running
