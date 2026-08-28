@@ -71,6 +71,28 @@ GROUNDED = "grounded"
 USER_SPECIFIED = "user_specified"
 MODEL_GENERATED = "model_generated"
 
+#: The task never reached grounding -- it was rejected before assessment, or
+#: the calculation failed. Distinct from the three real states: reporting
+#: model_generated here would claim the model derived something, and reporting
+#: nothing at all would let a caller's ``result["grounding"]`` raise KeyError
+#: on some paths and not others.
+NOT_ASSESSED = "not_assessed"
+
+
+def not_assessed(reason: str) -> Dict[str, Any]:
+    """A grounding record for an answer that does not exist.
+
+    Every result the executor emits carries the same keys, so a caller can
+    read ``result["grounding"]["derivation"]`` without first working out which
+    exit fired.
+    """
+    return {
+        "derivation": NOT_ASSESSED,
+        "definitions": [],
+        "definition_set_size": 0,
+        "note": reason,
+    }
+
 #: Where the kernel drops the base set inside a generated product.
 _KERNEL_RELATIVE = Path("app") / "cerebrum_product_kernel" / "formulas" / "universal_definitions.json"
 
