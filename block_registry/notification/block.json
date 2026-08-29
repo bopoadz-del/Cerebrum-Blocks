@@ -114,6 +114,7 @@
     "integration",
     "core"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"channel\": \"email\", \"to\": \"ops@example.com\", \"message\": \"Hello\"}",

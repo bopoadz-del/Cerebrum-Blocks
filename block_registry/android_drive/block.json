@@ -42,6 +42,7 @@
     "storage",
     "mobile"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Access Android device storage...",

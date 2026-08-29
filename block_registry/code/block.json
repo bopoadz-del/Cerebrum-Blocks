@@ -52,6 +52,7 @@
     "code",
     "execution"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Paste code to execute or describe code to analyze...",

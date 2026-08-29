@@ -105,6 +105,7 @@
     "recommendation",
     "discovery"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Project goal, block query, or indexing payload",

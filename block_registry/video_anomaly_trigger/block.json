@@ -112,6 +112,7 @@
     "anomaly",
     "reactive"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"metadata\": {...}} or {\"event_id\": \"...\"}",

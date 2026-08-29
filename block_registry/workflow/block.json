@@ -97,6 +97,7 @@
     "automation",
     "core"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"pipeline_id\": \"daily-report\", \"steps\": [...]}",

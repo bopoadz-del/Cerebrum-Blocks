@@ -62,6 +62,7 @@
     "http",
     "integration"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Enter your request...",

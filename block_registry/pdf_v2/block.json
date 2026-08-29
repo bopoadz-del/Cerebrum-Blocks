@@ -83,6 +83,7 @@
     "pdf",
     "v2"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Upload PDF...",

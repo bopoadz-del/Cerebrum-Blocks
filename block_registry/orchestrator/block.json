@@ -85,6 +85,7 @@
     "chain",
     "typed"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"steps\": [{\"block\": \"chat\", \"params\": {}}]}",

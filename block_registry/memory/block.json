@@ -81,6 +81,7 @@
     "cache",
     "infrastructure"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Cache key/value payload, e.g. {\"key\": \"session\", \"value\": {...}}",

@@ -80,6 +80,7 @@
     "async",
     "core"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Job type, payload, queue name",

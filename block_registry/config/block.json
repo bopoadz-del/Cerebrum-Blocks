@@ -69,6 +69,7 @@
     "infrastructure",
     "core"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Config key/value payload",

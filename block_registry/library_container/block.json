@@ -59,6 +59,7 @@
     "domain",
     "registry"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"action\": \"evaluate\", \"backend\": \"sympy\", \"expression\": \"a + b\", \"variables\": {\"a\": 1, \"b\": 2}}",

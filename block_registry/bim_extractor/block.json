@@ -88,6 +88,7 @@
     "quantities",
     "clash"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Upload IFC BIM model...",

@@ -64,6 +64,7 @@
     "queue",
     "worker"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"action\": \"dispatch\", \"task\": \"process_pdf\", \"args\": {}}",

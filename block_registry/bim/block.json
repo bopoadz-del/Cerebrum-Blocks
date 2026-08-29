@@ -86,6 +86,7 @@
     "cad",
     "domain"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "IFC/DWG/PDF path or folder payload",

@@ -43,6 +43,7 @@
     "vector",
     "search"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Search knowledge base...",

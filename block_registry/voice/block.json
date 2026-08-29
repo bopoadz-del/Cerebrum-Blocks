@@ -43,6 +43,7 @@
     "tts",
     "stt"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Record or upload audio...",
