@@ -246,5 +246,21 @@ def test_known_incomplete_records_the_insurance_park():
     text = (REPO / "KNOWN_INCOMPLETE.md").read_text(encoding="utf-8")
     assert "block_store/kits/insurance/parked" in text
     assert "contributor_unverified" in text
+    assert "EMBEDDED_FORMULAS" in text
     for name in PARKED_INSURANCE:
         assert name in text
+
+
+def test_commission_engine_cannot_see_the_parked_rate_table():
+    """Parking is a location, not a flag. The engine's hardcoded search
+    path must not include parked/, and those default files must be gone.
+    """
+    src = (REPO / "app" / "blocks" / "agency_commission_engine.py").read_text(
+        encoding="utf-8"
+    )
+    assert "kits/insurance/parked" not in src
+    assert "EMBEDDED_FORMULAS" in src
+    assert not (REPO / "app" / "data" / "commission_formulas.json").exists()
+    assert not (
+        INSURANCE / "bundle" / "app" / "data" / "commission_formulas.json"
+    ).exists()
