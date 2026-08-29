@@ -42,13 +42,7 @@
     "app/prompts/codegen_system.py"
   ],
   "data": [
-    "app/data/routing_sops.json",
-    "app/data/retention_playbook.json",
-    "app/data/incentive_playbook.json",
-    "app/data/sample_bordereaux.json",
     "app/data/gn16_ruleset.json",
-    "app/data/commission_formulas.json",
-    "app/data/hierarchy_model.json",
     "app/knowledge/hkia_gn16_corpus.json"
   ],
   "playbooks": [
@@ -163,32 +157,8 @@
       "dest": "app/prompts/codegen_system.py"
     },
     {
-      "src": "app/data/routing_sops.json",
-      "dest": "app/data/routing_sops.json"
-    },
-    {
-      "src": "app/data/retention_playbook.json",
-      "dest": "app/data/retention_playbook.json"
-    },
-    {
-      "src": "app/data/incentive_playbook.json",
-      "dest": "app/data/incentive_playbook.json"
-    },
-    {
-      "src": "app/data/sample_bordereaux.json",
-      "dest": "app/data/sample_bordereaux.json"
-    },
-    {
       "src": "app/data/gn16_ruleset.json",
       "dest": "app/data/gn16_ruleset.json"
-    },
-    {
-      "src": "app/data/commission_formulas.json",
-      "dest": "app/data/commission_formulas.json"
-    },
-    {
-      "src": "app/data/hierarchy_model.json",
-      "dest": "app/data/hierarchy_model.json"
     },
     {
       "src": "app/knowledge/hkia_gn16_corpus.json",

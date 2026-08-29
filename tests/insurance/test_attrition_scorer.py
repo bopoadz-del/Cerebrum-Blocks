@@ -84,5 +84,10 @@ def test_attrition_scorer_registry_and_bundle_entries():
     )
     assert verdict["verified"], verdict.get("reason")
     assert "attrition_scorer" in manifest["blocks"]
-    assert "app/data/retention_playbook.json" in manifest["data"]
+    assert "app/data/retention_playbook.json" not in manifest["data"]
+    parked = (
+        root / "block_store" / "kits" / "insurance" / "parked" / "retention_playbook.json"
+    )
+    assert parked.exists()
+    assert json.loads(parked.read_text())["provenance"]["parked"] is True
     assert (root / "block_store" / "kits" / "insurance" / "bundle" / "app" / "blocks" / "attrition_scorer.py").exists()

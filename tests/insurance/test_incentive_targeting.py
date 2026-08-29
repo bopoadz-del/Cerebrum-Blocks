@@ -81,5 +81,10 @@ def test_incentive_targeting_registry_bundle_and_playbook_entries():
     )
     assert verdict["verified"], verdict.get("reason")
     assert "incentive_targeting" in manifest["blocks"]
-    assert "app/data/incentive_playbook.json" in manifest["data"]
+    assert "app/data/incentive_playbook.json" not in manifest["data"]
+    parked = (
+        root / "block_store" / "kits" / "insurance" / "parked" / "incentive_playbook.json"
+    )
+    assert parked.exists()
+    assert json.loads(parked.read_text())["provenance"]["parked"] is True
     assert (root / "block_store" / "kits" / "insurance" / "bundle" / "app" / "blocks" / "incentive_targeting.py").exists()
