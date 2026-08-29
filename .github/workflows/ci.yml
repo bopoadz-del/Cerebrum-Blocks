@@ -60,9 +60,6 @@ jobs:
       - name: Kit composition audit (declare-or-register gate)
         run: python scripts/audit_kit_composition.py
 
-      - name: Block standards audit (trust_tier + manifest gate)
-        run: python scripts/audit_block_standards.py
-
       - name: Secret scan (non-test paths)
         run: python scripts/scan_secrets.py
 

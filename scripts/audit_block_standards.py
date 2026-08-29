@@ -3,14 +3,21 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
 
-from app.core.trust_tier import check_trust_tier  # noqa: E402
+# Load the pin without importing app.core (that package pulls the API stack).
+_spec = importlib.util.spec_from_file_location(
+    "trust_tier_pin", ROOT / "app" / "core" / "trust_tier.py"
+)
+_trust = importlib.util.module_from_spec(_spec)
+assert _spec.loader is not None
+_spec.loader.exec_module(_trust)
+check_trust_tier = _trust.check_trust_tier
 
 REGISTRY_ROOT = ROOT / "block_registry"
 SKIP_DIRS = {"__pycache__"}
