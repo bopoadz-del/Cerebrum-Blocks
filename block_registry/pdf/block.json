@@ -55,6 +55,7 @@
     "pdf",
     "typed"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Upload PDF...",

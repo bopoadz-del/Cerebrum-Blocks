@@ -61,6 +61,7 @@
     "knowledge",
     "orchestrator"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Deliverable type or workflow name...",

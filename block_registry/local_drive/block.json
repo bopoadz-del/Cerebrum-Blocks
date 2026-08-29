@@ -47,6 +47,7 @@
     "storage",
     "local"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Browse local files...",

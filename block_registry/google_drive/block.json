@@ -43,6 +43,7 @@
     "cloud",
     "google"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "File ID, folder name, or search query...",

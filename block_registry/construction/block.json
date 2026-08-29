@@ -13,5 +13,6 @@
   },
   "publisher_id": "cerebrum_platform",
   "signature": "U9n3MFAYzhKtJU1RdIwc129+bSKgYld9nrtzcFeBPZQHzvKW+jpZx9D8nO/Y4rH3hrEbs8ziTxNcnPolo4/TAA==",
+  "trust_tier": "platform",
   "version": "1.0.0"
 }

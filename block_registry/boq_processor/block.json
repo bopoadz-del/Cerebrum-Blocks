@@ -73,6 +73,7 @@
     "quantities",
     "excel"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Upload BOQ spreadsheet (.xlsx or .csv)...",

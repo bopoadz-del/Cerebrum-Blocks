@@ -72,6 +72,7 @@
     "gl16",
     "rules"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"text\": \"Paste policy or control evidence...\"}",

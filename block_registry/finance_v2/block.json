@@ -44,5 +44,6 @@
     "document_analysis",
     "deterministic"
   ],
+  "trust_tier": "platform",
   "version": "2.0.0"
 }

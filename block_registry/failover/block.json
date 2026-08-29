@@ -66,6 +66,7 @@
     "failover",
     "core"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Structured input payload",

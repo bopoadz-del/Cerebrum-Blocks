@@ -76,6 +76,7 @@
     "coefficients",
     "tier"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"correction_data\": {\"formula_id\": \"concrete_cost\", \"predicted\": 125000, \"actual\": 118000}, \"operation\": \"record_correction\"}",

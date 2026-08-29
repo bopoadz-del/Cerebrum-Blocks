@@ -95,6 +95,7 @@
     "gateway",
     "construction"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"action_name\": \"drawing_qto\", \"file_path\": \"/data/plan.dxf\", \"parameters\": {}}",

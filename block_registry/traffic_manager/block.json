@@ -99,6 +99,7 @@
     "traffic",
     "core"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"source\": \"chat\", \"target\": \"pdf\", \"payload\": {}}",

@@ -175,6 +175,7 @@
     "ai",
     "multi-agent"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"objective\": \"Write a FastAPI endpoint\", \"agents\": [...], \"tasks\": [...]}",

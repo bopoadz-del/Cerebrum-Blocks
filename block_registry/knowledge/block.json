@@ -149,6 +149,7 @@
     "memory",
     "ai"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Ask a question about your knowledge base...",

@@ -93,6 +93,7 @@
     "aec",
     "v2"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Paste construction document text or chain from PDF/OCR...",

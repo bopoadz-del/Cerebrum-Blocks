@@ -84,6 +84,7 @@
     "units",
     "sandbox"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"formula_key\": \"concrete_volume_slab\", \"input_values\": {\"length_m\": 10, \"width_m\": 8, \"thickness_m\": 0.2}}",

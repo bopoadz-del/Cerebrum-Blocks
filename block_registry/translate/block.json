@@ -52,6 +52,7 @@
     "nlp",
     "translation"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Enter text to translate...",

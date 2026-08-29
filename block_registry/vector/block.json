@@ -88,6 +88,7 @@
     "search",
     "core"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Vector id, embedding, or query",

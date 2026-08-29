@@ -106,6 +106,7 @@
     "smart",
     "routing"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Task, quality tier, budget, provider constraints...",

@@ -41,5 +41,6 @@
     "controls",
     "deterministic"
   ],
+  "trust_tier": "platform",
   "version": "1.0.0"
 }

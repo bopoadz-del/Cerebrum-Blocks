@@ -79,6 +79,7 @@
     "documents",
     "v2"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Upload image to extract text...",

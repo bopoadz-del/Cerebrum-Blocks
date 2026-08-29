@@ -48,6 +48,7 @@
     "vector",
     "zero-shot"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Text to embed or compare...",

@@ -3,11 +3,23 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import sys
 from pathlib import Path
 
-REGISTRY_ROOT = Path(__file__).parent.parent / "block_registry"
+ROOT = Path(__file__).resolve().parent.parent
+
+# Load the pin without importing app.core (that package pulls the API stack).
+_spec = importlib.util.spec_from_file_location(
+    "trust_tier_pin", ROOT / "app" / "core" / "trust_tier.py"
+)
+_trust = importlib.util.module_from_spec(_spec)
+assert _spec.loader is not None
+_spec.loader.exec_module(_trust)
+check_trust_tier = _trust.check_trust_tier
+
+REGISTRY_ROOT = ROOT / "block_registry"
 SKIP_DIRS = {"__pycache__"}
 
 REQUIRED_MANIFEST_KEYS = [
@@ -22,6 +34,7 @@ REQUIRED_MANIFEST_KEYS = [
     "tags",
     "layer",
     "requires",
+    "trust_tier",
 ]
 
 RECOMMENDED_MANIFEST_KEYS = ["author"]
@@ -48,6 +61,15 @@ def audit_block(block_dir: Path) -> dict:
     for key in REQUIRED_MANIFEST_KEYS:
         if key not in manifest:
             result["errors"].append(f"missing required field: {key}")
+
+    # Value-check trust_tier even when the key is present: an empty or
+    # unknown tier is not a synonym for "fine". Distinct from publisher_tier.
+    if "trust_tier" in manifest:
+        for reason in check_trust_tier(manifest):
+            if reason.startswith("missing required"):
+                result["errors"].append("missing required field: trust_tier")
+            else:
+                result["errors"].append(reason)
 
     for key in RECOMMENDED_MANIFEST_KEYS:
         if not manifest.get(key):

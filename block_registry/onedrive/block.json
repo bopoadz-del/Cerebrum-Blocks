@@ -43,6 +43,7 @@
     "cloud",
     "microsoft"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "File path, ID, or search query...",

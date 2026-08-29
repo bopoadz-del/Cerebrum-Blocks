@@ -65,6 +65,7 @@
     "ingest",
     "analytics"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"camera_id\": \"lobby-1\", \"zones\": [], \"anomalies\": []}",

@@ -120,6 +120,7 @@
     "testing",
     "pipeline"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Pipeline definition to validate",

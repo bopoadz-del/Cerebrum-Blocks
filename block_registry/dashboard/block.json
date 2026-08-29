@@ -93,6 +93,7 @@
     "dashboard",
     "domain"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "JSON payload for the selected action",

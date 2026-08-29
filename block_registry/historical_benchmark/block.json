@@ -103,6 +103,7 @@
     "rsmeans",
     "aec"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Item description, unit, location, project type",
