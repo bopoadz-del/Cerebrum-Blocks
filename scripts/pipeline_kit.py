@@ -186,21 +186,37 @@ def run_eval(intake_path: Path, kit: str, stage: Stage):
     return document
 
 
-def check_author_pass(kit: str, stage: Stage):
-    """K4. Everything here is a claim, not a computation."""
+#: K4 findings a reviewer must resolve themselves, versus state that the
+#: sign-off itself writes. review_kit filters on these keys: refusing to sign
+#: off because trust_tier is still unraised would be circular, since raising
+#: it is what signing off does.
+SET_BY_SIGN_OFF = ("trust_tier", "status")
+
+
+def author_pass_findings(kit: str):
+    """(key, message) for everything K4 still requires.
+
+    Keyed rather than flat so callers can tell "the reviewer has work left"
+    from "this kit has not been signed off yet". Both are reasons the kit is
+    not ready; only the first is a reason a reviewer cannot proceed.
+    """
     scaffold_kit = _load("scaffold_kit")
     kit_dir = KITS_DIR / kit
     manifest = _read_json(kit_dir / "manifest.json") or {}
-    todo: List[str] = []
+    findings = []
 
     tier = manifest.get("trust_tier", "")
     if tier == scaffold_kit.SCAFFOLD_TRUST_TIER or not tier:
-        todo.append(
+        findings.append((
+            "trust_tier",
             f"trust_tier is {tier or 'unset'}: a reviewer must read the content "
-            f"and raise it to contributor_reviewed"
-        )
+            f"and raise it to contributor_reviewed",
+        ))
     if manifest.get("status") == scaffold_kit.SCAFFOLD_STATUS:
-        todo.append("status is draft: not installable until the kit is complete")
+        findings.append((
+            "status",
+            "status is draft: not installable until the kit is complete",
+        ))
 
     empty_schemas = [
         p.name
@@ -208,18 +224,25 @@ def check_author_pass(kit: str, stage: Stage):
         if not ((_read_json(p) or {}).get("properties"))
     ]
     if empty_schemas:
-        todo.append(
+        findings.append((
+            "schemas",
             f"{len(empty_schemas)} schema(s) have no properties: "
-            f"{', '.join(empty_schemas[:3])}"
-        )
+            f"{', '.join(empty_schemas[:3])}",
+        ))
 
     evaluation = _read_json(kit_dir / "evaluation" / "golden_questions.json") or {}
     if evaluation and not evaluation.get("authored"):
-        todo.append(
+        findings.append((
+            "evaluation",
             "the only evaluation is corpus-sighted seeds; a blind evaluation "
-            "must be authored before quality can be claimed"
-        )
+            "must be authored before quality can be claimed",
+        ))
+    return findings
 
+
+def check_author_pass(kit: str, stage: Stage):
+    """K4. Everything here is a claim, not a computation."""
+    todo = [message for _key, message in author_pass_findings(kit)]
     stage.set(BLOCKED if todo else OK, "a person, not a script", todo)
     return not todo
 
