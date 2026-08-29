@@ -1,9 +1,44 @@
 {
-  "id": "finance_reconciliation", "name": "Finance Reconciliation", "version": "1.0.0",
+  "author": "Cerebrum Team",
   "description": "Decimal-safe grouped reconciliation with exception evidence.",
-  "author": "Cerebrum Team", "publisher_id": "cerebrum_platform", "signature": "", "digests": {},
-  "inputs": [{"name": "input", "type": "json", "required": false, "description": "FinanceOps payload"}],
-  "outputs": [{"name": "result", "type": "json", "description": "Deterministic FinanceOps result"}],
-  "permissions": {"network": false, "filesystem": false, "imports": ["decimal", "typing"], "blocks": []},
-  "tags": ["domain", "finance_ops", "reconciliation", "controls", "deterministic"], "layer": 3
+  "digests": {
+    "block.json": "f7dc7251b085a292cc489b7cab7835e40313c20c4aed1e672cdeedad23fdfe2c"
+  },
+  "id": "finance_reconciliation",
+  "inputs": [
+    {
+      "description": "FinanceOps payload",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    }
+  ],
+  "layer": 3,
+  "name": "Finance Reconciliation",
+  "outputs": [
+    {
+      "description": "Deterministic FinanceOps result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "decimal",
+      "typing"
+    ],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "signature": "t26QQ9lpQpvIkqVOUBrjRdTzLHzgVwFWSx0BzGWq6yXR6aJftXJhCSK8bIMJNC1e7Jwek2XnMsrg6i09rELGAA==",
+  "tags": [
+    "domain",
+    "finance_ops",
+    "reconciliation",
+    "controls",
+    "deterministic"
+  ],
+  "version": "1.0.0"
 }

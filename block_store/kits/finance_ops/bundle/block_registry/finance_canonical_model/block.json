@@ -1,9 +1,43 @@
 {
-  "id": "finance_canonical_model", "name": "Finance Canonical Model", "version": "1.0.0",
+  "author": "Cerebrum Team",
   "description": "Governed FinanceOps dimensions, fact types, normalization, and validation.",
-  "author": "Cerebrum Team", "publisher_id": "cerebrum_platform", "signature": "", "digests": {},
-  "inputs": [{"name": "input", "type": "json", "required": false, "description": "FinanceOps payload"}],
-  "outputs": [{"name": "result", "type": "json", "description": "Deterministic FinanceOps result"}],
-  "permissions": {"network": false, "filesystem": false, "imports": ["typing"], "blocks": []},
-  "tags": ["domain", "finance_ops", "data_model", "governance", "deterministic"], "layer": 3
+  "digests": {
+    "block.json": "dc473aaaec9a88a4331ed5dc784f6d621eafddb86805479b0d7bce27d8fcb8e6"
+  },
+  "id": "finance_canonical_model",
+  "inputs": [
+    {
+      "description": "FinanceOps payload",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    }
+  ],
+  "layer": 3,
+  "name": "Finance Canonical Model",
+  "outputs": [
+    {
+      "description": "Deterministic FinanceOps result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "typing"
+    ],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "signature": "1u1PuymbKYwY1dLZK5ECws91+mgACJlanRlkJpHGnzNrff4e9XpV/cC1XLUzFLN/hdDrSAp33v9HyqGnROYPDA==",
+  "tags": [
+    "domain",
+    "finance_ops",
+    "data_model",
+    "governance",
+    "deterministic"
+  ],
+  "version": "1.0.0"
 }

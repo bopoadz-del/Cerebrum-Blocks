@@ -26,11 +26,21 @@ store still listed it ``available``, and install raised ContainerKitError at
 the last step. Declared-but-absent is now a publish-time error rather than an
 install-time surprise.
 
+WHEN THE SOURCE IS GONE
+-----------------------
+``construction`` and ``insurance`` were published from The_Fork, and most of
+what they declare is authored in neither this repo nor the current Fork
+checkout -- their ``bundle/`` is the only surviving copy. A strict mirror can
+only refuse them, which would freeze their vendored platform code forever.
+``--refresh`` copies every artifact whose source it can find, reports the
+orphans, and still exits non-zero.
+
 Usage:
     python scripts/publish_kit.py --domain automotive             # mirror
     python scripts/publish_kit.py --domain automotive --check     # verify only
     python scripts/publish_kit.py --domain automotive --dry-run
     python scripts/publish_kit.py --domain medical --scaffold     # new kit
+    python scripts/publish_kit.py --domain insurance --refresh    # sources partly gone
 """
 
 from __future__ import annotations
@@ -231,7 +241,80 @@ def missing_from_bundle(bundle_dir: Path, artifacts: List[Any]) -> List[str]:
     ]
 
 
-def mirror(kit_dir: Path, manifest_path: Path, dry_run: bool, check_only: bool) -> int:
+def composition_audit(domain: str, kit_dir: Path) -> int:
+    """The publish gate from #69, reachable from BOTH publish paths.
+
+    CI catches a bad manifest on the next push; this catches it before the kit
+    is on the shelf, which is the point at which a consumer could install it.
+    Reported, not silently swallowed -- and it runs after the write so the
+    findings name the manifest as published.
+
+    It lived inside ``scaffold()`` alone after #69 and #74 merged, which meant
+    it stopped running on ``mirror`` -- the default path, and the one every
+    already-authored kit takes. A gate that only guards the branch nobody
+    takes is not a gate.
+    """
+    # Import by path, not by luck. Running this file as a script puts
+    # scripts/ on sys.path implicitly; importing it as a module (tests, or any
+    # caller that wants publish_kit's helpers) does not, and the audit then
+    # raised ModuleNotFoundError from inside the publish path.
+    if str(Path(__file__).resolve().parent) not in sys.path:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+    from audit_kit_composition import (
+        MODULES_DIR,
+        REGISTRY_DIR,
+        _dirs,
+        _modules,
+        audit_kit,
+        load_known,
+    )
+
+    known = _dirs(REGISTRY_DIR) | _modules(MODULES_DIR)
+    # Same registration contract as CI: a gap that is declared in
+    # KNOWN_KIT_GAPS.md does not block, or publishing any already-registered
+    # kit would fail while CI passes -- two gates disagreeing about the same
+    # manifest is worse than either one alone.
+    registered = load_known()
+    findings = [
+        (code, detail)
+        for code, detail in audit_kit(domain, str(kit_dir.parent), known)
+        if f"{domain} :: {code}" not in registered
+    ]
+    if findings:
+        print(f"\nCOMPOSITION FINDINGS for '{domain}':")
+        for code, detail in findings:
+            print(f"  {code}: {detail}")
+        print(
+            "Kit is on the shelf but does not pass the composition audit. "
+            f"Fix it, or register it in KNOWN_KIT_GAPS.md as '{domain} :: <code>'."
+        )
+        return 1
+    print("Composition audit: clean.")
+    return 0
+
+
+def mirror(
+    kit_dir: Path,
+    manifest_path: Path,
+    dry_run: bool,
+    check_only: bool,
+    refresh: bool = False,
+) -> int:
+    """Copy declared artifacts into ``bundle/``.
+
+    ``refresh`` exists for kits whose sources are partly unreachable.
+    ``construction`` and ``insurance`` were published from The_Fork, and most
+    of what they declare is authored in neither this repo nor the current
+    Fork checkout -- their ``bundle/`` is the only surviving copy. A strict
+    mirror can only refuse them, which would leave their vendored platform
+    code frozen forever, including a ``formula_executor_v2`` with no
+    grounding.
+
+    So ``refresh`` copies every artifact whose source it can find and reports
+    the orphans, still exiting non-zero. The kit gets current shared code; no
+    one is told the publish succeeded.
+    """
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     artifacts = manifest.get("artifacts") or []
     bundle_dir = kit_dir / "bundle"
@@ -266,7 +349,7 @@ def mirror(kit_dir: Path, manifest_path: Path, dry_run: bool, check_only: bool) 
         else:
             plan.append((src, bundle_dir / item["src"]))
 
-    if unresolved:
+    if unresolved and not refresh:
         print(
             f"Cannot mirror '{kit_id}': {len(unresolved)} declared artifact(s) are "
             f"authored nowhere -- not at the kit root, not at the repo root:",
@@ -289,6 +372,23 @@ def mirror(kit_dir: Path, manifest_path: Path, dry_run: bool, check_only: bool) 
     for src, dest in plan:
         copy_artifact(src, dest)
 
+    if unresolved:
+        print(f"Refreshed '{kit_id}': {len(plan)} of {len(artifacts)} artifacts.")
+        print(
+            f"\n{len(unresolved)} declared artifact(s) have no reachable source; the "
+            f"copy already in bundle/ is all that exists of them:",
+            file=sys.stderr,
+        )
+        for item in unresolved:
+            print(f"  - {item}", file=sys.stderr)
+        print(
+            "This kit cannot be rebuilt from source. Recorded in "
+            "KNOWN_INCOMPLETE.md; --refresh keeps its shared code current "
+            "without pretending the publish was complete.",
+            file=sys.stderr,
+        )
+        return 1
+
     missing = missing_from_bundle(bundle_dir, artifacts)
     if missing:
         print(
@@ -299,7 +399,7 @@ def mirror(kit_dir: Path, manifest_path: Path, dry_run: bool, check_only: bool) 
 
     print(f"Mirrored '{kit_id}': {len(plan)} artifacts -> {bundle_dir}")
     print(f"Completeness: {len(artifacts)}/{len(artifacts)} declared artifacts present.")
-    return 0
+    return composition_audit(kit_id, kit_dir)
 
 
 def scaffold(
@@ -356,41 +456,7 @@ def scaffold(
     print(f"Scaffolded '{domain}': {len(artifacts)} artifacts -> {bundle_dir}")
     print(f"Manifest written: {manifest_path}")
 
-    # Publish gate. CI catches a bad manifest on the next push; this catches
-    # it before the kit is on the shelf, which is the point at which a
-    # consumer could install it. Reported, not silently swallowed -- and it
-    # runs after the write so the findings name the manifest as published.
-    from audit_kit_composition import (
-        MODULES_DIR,
-        REGISTRY_DIR,
-        _dirs,
-        _modules,
-        audit_kit,
-        load_known,
-    )
-
-    known = _dirs(REGISTRY_DIR) | _modules(MODULES_DIR)
-    # Same registration contract as CI: a gap that is declared in
-    # KNOWN_KIT_GAPS.md does not block, or publishing any already-registered
-    # kit would fail while CI passes -- two gates disagreeing about the same
-    # manifest is worse than either one alone.
-    registered = load_known()
-    findings = [
-        (code, detail)
-        for code, detail in audit_kit(domain, str(kit_dir.parent), known)
-        if f"{domain} :: {code}" not in registered
-    ]
-    if findings:
-        print(f"\nCOMPOSITION FINDINGS for '{domain}':")
-        for code, detail in findings:
-            print(f"  {code}: {detail}")
-        print(
-            "Kit is on the shelf but does not pass the composition audit. "
-            f"Fix it, or register it in KNOWN_KIT_GAPS.md as '{domain} :: <code>'."
-        )
-        return 1
-    print("Composition audit: clean.")
-    return 0
+    return composition_audit(domain, kit_dir)
 
 
 def main() -> int:
@@ -420,6 +486,12 @@ def main() -> int:
         action="store_true",
         help="Allow --scaffold to overwrite an authored manifest",
     )
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Copy artifacts whose source exists and report the rest, for kits "
+             "whose sources are no longer reachable (construction, insurance)",
+    )
     args = parser.parse_args()
 
     domain = args.domain.strip().lower()
@@ -446,7 +518,7 @@ def main() -> int:
         print(f"No manifest for '{domain}' -- scaffolding a new kit.")
         return scaffold(kit_dir, manifest_path, domain, args.dry_run, args.regenerate)
 
-    return mirror(kit_dir, manifest_path, args.dry_run, args.check)
+    return mirror(kit_dir, manifest_path, args.dry_run, args.check, args.refresh)
 
 
 if __name__ == "__main__":

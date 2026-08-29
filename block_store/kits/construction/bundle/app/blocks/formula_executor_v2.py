@@ -22,6 +22,12 @@ import httpx
 
 from app.core.universal_base import UniversalBlock
 from app.core.sandbox import run_sandboxed, SandboxResult
+from app.core.formula_definitions import (
+    definitions_prompt_block,
+    grounding_report,
+    load_definitions,
+    match_definitions,
+)
 
 from app.prompts.codegen_system import build_codegen_prompt
 
@@ -124,7 +130,7 @@ class FormulaExecutorV2Block(UniversalBlock):
     default_config = {
         "max_retries": 2,        # extra attempts after the first
         "timeout_seconds": 10,
-        "model": "deepseek-chat",
+        "model": "kimi-k2-0905-preview",
     }
 
     ui_schema = {
@@ -138,6 +144,11 @@ class FormulaExecutorV2Block(UniversalBlock):
             "fields": [
                 {"name": "generated_code", "type": "code", "label": "Generated Code"},
                 {"name": "result", "type": "text", "label": "Result"},
+                # Surfaced beside the number, not filed in an audit log. A
+                # reader must be able to see "this came from the platform's
+                # definition" or "the model derived this" without leaving the
+                # answer.
+                {"name": "grounding", "type": "json", "label": "Grounding"},
                 {"name": "attempts", "type": "number", "label": "Attempts"},
             ],
         },
@@ -147,21 +158,18 @@ class FormulaExecutorV2Block(UniversalBlock):
     }
 
     async def _call_llm(self, prompt: str) -> str:
-        """Send the code-gen prompt to the active LLM provider and return the reply.
+        """Send the code-gen prompt to Kimi (Moonshot) and return the reply.
 
-        Routes via app.agents.runtime._llm_config so the block honours the same
-        LLM_PROVIDER / GROQ_API_KEY precedence the agent runtime uses. Overridden
-        by test doubles. Raises RuntimeError when no key is set so callers get a
-        clear, non-secret error.
+        Routes via app.core.llm_config (the platform's single Kimi provider).
+        Overridden by test doubles. Raises RuntimeError when no key is set so
+        callers get a clear, non-secret error.
         """
-        from app.agents.runtime import _llm_config  # local import: avoid cycle at module load
+        from app.core.llm_config import _llm_config  # local import: avoid cycle at module load
         cfg = _llm_config()
         api_key = os.getenv(cfg["env_key"])
         if not api_key:
             raise RuntimeError(f"{cfg['env_key']} not configured")
-        model = self.config.get("model", cfg["default_model"])
-        if cfg["provider"] != "deepseek" and isinstance(model, str) and model.startswith("deepseek-"):
-            model = cfg["default_model"]
+        model = self.config.get("model") or cfg["default_model"]
         async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(
                 cfg["url"],
@@ -197,6 +205,16 @@ class FormulaExecutorV2Block(UniversalBlock):
         session = data.get("session") or params.get("session")
         key = _cache_key(task, variables)
 
+        # --- grounding ------------------------------------------------------
+        # Resolved once and attached to every success, including cache hits: a
+        # cached answer is exactly as grounded (or as invented) as the answer
+        # that was cached, and a result whose provenance disappears on the
+        # second call is worse than one that never claimed any.
+        definitions = load_definitions()
+        matched = match_definitions(task, definitions)
+        grounding = grounding_report(task, definitions)
+        definitions_block = definitions_prompt_block(matched)
+
         # --- cache hit: re-run the previously generated code, skip the LLM --
         if session is not None and key in session.code_cache:
             cached_code = session.code_cache[key]
@@ -212,6 +230,7 @@ class FormulaExecutorV2Block(UniversalBlock):
                     "attempts": 0,
                     "cache_hit": True,
                     "task": task,
+                    "grounding": grounding,
                 }
             # stale cache (e.g. variable set changed) — fall through to regen
 
@@ -227,6 +246,7 @@ class FormulaExecutorV2Block(UniversalBlock):
             prompt = build_codegen_prompt(
                 task, variables,
                 prior_code=prior_code, prior_error=prior_error,
+                definitions_block=definitions_block,
             )
             try:
                 raw = await self._call_llm(prompt)
@@ -270,6 +290,7 @@ class FormulaExecutorV2Block(UniversalBlock):
                     "attempts": attempt,
                     "cache_hit": False,
                     "task": task,
+                    "grounding": grounding,
                 }
             # failed — carry context into the next attempt
             last_error = sandbox.error or "Sandbox execution failed"

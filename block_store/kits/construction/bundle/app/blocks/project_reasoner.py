@@ -6,10 +6,50 @@ answer from the executed results).
 """
 
 import json
+import logging
 import os
 from typing import Any, Dict
 
 import httpx
+
+logger = logging.getLogger(__name__)
+
+# Shown when the planner cannot produce a JSON plan AND there is no project
+# context to answer from. Deliberately user-facing — no planner internals.
+_NO_PLAN_NO_CONTEXT_MESSAGE = (
+    "I could not build a structured project plan for this question, but I "
+    "also could not confirm an answer from the indexed project sources. "
+    "Please narrow the question or provide a specific document or reference."
+)
+
+# Shown when the plan built and executed but writing the final answer failed
+# (LLM error or empty reply). Never exposes the raw exception.
+_DELIVER_FAILED_MESSAGE = (
+    "I found relevant project context, but I could not generate the final "
+    "written answer for this turn. Please retry or narrow the question."
+)
+
+
+def _build_sources_from_excerpts(excerpts: list) -> list:
+    """Project-doc excerpts -> the clean source shape the chat path uses
+    (``doc_name``/``doc_id``/``score``).
+
+    The raw ``snippet`` is deliberately NOT carried through: chunk text can
+    embed raw Drive/Windows paths (``G:\\My Drive\\…``), and the chat path's
+    structured sources don't expose snippets either."""
+    out = []
+    for e in excerpts or []:
+        if not isinstance(e, dict):
+            continue
+        name = e.get("filename") or e.get("document_id")
+        if not name:
+            continue
+        out.append({
+            "doc_name": name,
+            "doc_id": e.get("document_id"),
+            "score": e.get("score"),
+        })
+    return out
 
 from app.core.universal_base import UniversalBlock
 from app.core.plan_executor import PlanExecutor
@@ -76,7 +116,7 @@ class ProjectReasonerBlock(UniversalBlock):
     tags = ["domain", "construction", "reasoning", "agent", "llm"]
     requires = []
 
-    default_config = {"model": "deepseek-chat"}
+    default_config = {"model": "kimi-k2-0905-preview"}
 
     ui_schema = {
         "input": {
@@ -98,19 +138,16 @@ class ProjectReasonerBlock(UniversalBlock):
     }
 
     async def _call_llm(self, prompt: str) -> str:
-        """Active-LLM-provider call. Overridden by test doubles.
+        """Kimi (Moonshot) call. Overridden by test doubles.
 
-        Routes via app.agents.runtime._llm_config — auto-uses Groq when
-        GROQ_API_KEY is set, otherwise DeepSeek.
+        Routes via app.core.llm_config (the platform's single Kimi provider).
         """
-        from app.agents.runtime import _llm_config  # local import: avoid cycle at module load
+        from app.core.llm_config import _llm_config  # local import: avoid cycle at module load
         cfg = _llm_config()
         api_key = os.getenv(cfg["env_key"])
         if not api_key:
             raise RuntimeError(f"{cfg['env_key']} not configured")
-        model = self.config.get("model", cfg["default_model"])
-        if cfg["provider"] != "deepseek" and isinstance(model, str) and model.startswith("deepseek-"):
-            model = cfg["default_model"]
+        model = self.config.get("model") or cfg["default_model"]
         async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(
                 cfg["url"],
@@ -125,6 +162,44 @@ class ProjectReasonerBlock(UniversalBlock):
                     f"{cfg['provider']} API error (HTTP {resp.status_code})"
                 )
             return resp.json()["choices"][0]["message"]["content"]
+
+    async def _fallback_answer(self, request: str, excerpts: list) -> tuple:
+        """Direct answer used when the planner can't produce a JSON plan.
+
+        With project excerpts, answer grounded in them and return their
+        sources. Without context, return a controlled message and no sources.
+        Never raises and never exposes planner internals or raw LLM/tool
+        output to the caller.
+        """
+        if not excerpts:
+            return _NO_PLAN_NO_CONTEXT_MESSAGE, []
+
+        excerpt_block = "\n\n".join(
+            f"[{i}] {e.get('filename') or e.get('document_id') or 'source'}: "
+            f"{(e.get('snippet') or '').strip()}"
+            for i, e in enumerate(excerpts, 1)
+            if isinstance(e, dict)
+        )
+        prompt = (
+            "Answer the user's question about their project using ONLY the "
+            "document excerpts below. If the excerpts do not contain the "
+            "answer, say you could not confirm it in the indexed project "
+            "sources. Cite filenames where relevant. Do not invent figures.\n\n"
+            f"QUESTION:\n{request}\n\n"
+            f"DOCUMENT EXCERPTS:\n{excerpt_block}"
+        )
+        try:
+            answer = await self._call_llm(prompt)
+        except Exception as e:                              # noqa: BLE001
+            logger.warning(
+                "project_reasoner: fallback answer call failed: %s", e
+            )
+            return _NO_PLAN_NO_CONTEXT_MESSAGE, []
+
+        answer = (answer or "").strip()
+        if not answer:
+            return _NO_PLAN_NO_CONTEXT_MESSAGE, []
+        return answer, _build_sources_from_excerpts(excerpts)
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
@@ -165,8 +240,26 @@ class ProjectReasonerBlock(UniversalBlock):
             )
             plan = ExecutionPlan.model_validate(_extract_json(plan_reply))
         except Exception as e:                              # noqa: BLE001
-            return {"status": "error",
-                    "error": f"Could not build a plan: {e}"}
+            # Small models often answer general/conversational questions in
+            # prose instead of emitting plan JSON, so the parse/validate
+            # fails here. Degrade gracefully instead of surfacing the raw
+            # planner error: answer directly from the project excerpts when
+            # we have them (with sources), else a controlled message.
+            logger.warning(
+                "project_reasoner: plan build failed, degrading to direct "
+                "answer: %s", e,
+            )
+            answer, sources = await self._fallback_answer(request, excerpts)
+            session.add_message("assistant", answer)
+            return {
+                "status": "success",
+                "answer": answer,
+                "understanding": "",
+                "plan": None,
+                "execution": None,
+                "sources": sources,
+                "degraded": True,
+            }
 
         # ── EXECUTE ──────────────────────────────────────────────────────
         run = await PlanExecutor().run(plan, session)
@@ -184,10 +277,19 @@ class ProjectReasonerBlock(UniversalBlock):
             f"Write a clear, concise answer for the user from these results. "
             f"If the status is error or partial, explain what is missing."
         )
+        deliver_sources: list = []
         try:
-            answer = await self._call_llm(deliver_prompt)
+            answer = (await self._call_llm(deliver_prompt) or "").strip()
         except Exception as e:                              # noqa: BLE001
-            answer = f"(Could not generate the written answer: {e})"
+            logger.warning("project_reasoner: deliver step failed: %s", e)
+            answer = ""
+        if not answer:
+            # The plan built and executed, but writing the final answer failed
+            # (LLM error or empty reply). Never surface the raw exception or a
+            # blank answer — return a controlled message and preserve any
+            # retrieved sources so the turn still carries evidence.
+            answer = _DELIVER_FAILED_MESSAGE
+            deliver_sources = _build_sources_from_excerpts(excerpts)
 
         session.add_message("assistant", answer)
 
@@ -198,4 +300,5 @@ class ProjectReasonerBlock(UniversalBlock):
             "understanding": plan.understanding,
             "plan": plan.model_dump(mode="json"),
             "execution": run.model_dump(mode="json"),
+            "sources": deliver_sources,
         }

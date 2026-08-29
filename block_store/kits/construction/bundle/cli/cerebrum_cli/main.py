@@ -12,7 +12,14 @@ import httpx
 
 from .auth import bearer_header, resolve_auth
 from .config import load_config, mask, save_config
+from ._encoding import ensure_utf8_output
 from .sse import stream_turn
+
+
+# Reconfigure stdout/stderr to UTF-8 once at import time so that non-ASCII
+# output (box-drawing characters, document content, etc.) does not crash on
+# Windows terminals defaulting to cp1252.
+ensure_utf8_output()
 
 
 def _client() -> httpx.Client:
@@ -26,6 +33,24 @@ def _session_id(args: argparse.Namespace, cfg: dict[str, Any]) -> str:
     return sid
 
 
+def _read_mode(args: argparse.Namespace, default: str) -> str:
+    """Resolve init mode: CLI flag > prompt > non-tty default."""
+    if args.mode:
+        return args.mode
+    if not sys.stdin.isatty():
+        print(
+            "stdin is not a TTY; defaulting init mode to 'configurator'. "
+            "Use --mode {configurator,deployed} to select a mode non-interactively.",
+            file=sys.stderr,
+        )
+        return default
+    choice = input(f"Mode (configurator/deployed) [{default}]: ").strip() or default
+    if choice in ("configurator", "deployed"):
+        return choice
+    print(f"Invalid mode '{choice}', using {default}.", file=sys.stderr)
+    return default
+
+
 def cmd_init(args: argparse.Namespace, cfg: dict[str, Any]) -> None:
     """Interactively write ~/.cerebrum/config.toml."""
     print("Cerebrum CLI init")
@@ -36,6 +61,7 @@ def cmd_init(args: argparse.Namespace, cfg: dict[str, Any]) -> None:
         input(f"Instance name [{cfg['instance_name']}]: ").strip() or cfg["instance_name"]
     )
     session_id = input("Default session ID (optional): ").strip()
+    mode = _read_mode(args, cfg.get("mode", "configurator"))
     save_config(
         {
             "base_url": base_url,
@@ -43,6 +69,7 @@ def cmd_init(args: argparse.Namespace, cfg: dict[str, Any]) -> None:
             "domain": domain,
             "instance_name": instance_name,
             "session_id": session_id,
+            "mode": mode,
         }
     )
     print(f"Wrote {Path.home() / '.cerebrum' / 'config.toml'}")
@@ -85,17 +112,27 @@ def cmd_chat(args: argparse.Namespace, cfg: dict[str, Any]) -> None:
         email=args.email,
         password=args.password,
     )
-    sid = _session_id(args, cfg)
-    url = f"{cfg['base_url']}/v1/sessions/{sid}/chat"
     headers = bearer_header(cred)
+
+    mode = cfg.get("mode", "configurator")
+    if mode == "deployed":
+        url = f"{cfg['base_url']}/v1/deployed/chat"
+
+        def _body(msg: str) -> dict[str, Any]:
+            return {"message": msg, "history": []}
+    else:
+        sid = _session_id(args, cfg)
+        url = f"{cfg['base_url']}/v1/sessions/{sid}/chat"
+
+        def _body(msg: str) -> dict[str, Any]:
+            return {"message": msg}
 
     with _client() as client:
         if args.message:
-            body: dict[str, Any] = {"message": args.message}
             stream_turn(
                 client,
                 url,
-                body,
+                _body(args.message),
                 headers,
                 raw=args.raw,
                 events=args.events,
@@ -112,7 +149,7 @@ def cmd_chat(args: argparse.Namespace, cfg: dict[str, Any]) -> None:
                 stream_turn(
                     client,
                     url,
-                    {"message": msg},
+                    _body(msg),
                     headers,
                     raw=args.raw,
                     events=args.events,
@@ -202,6 +239,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--password", help="Login password")
     p.add_argument("--session", help="Session ID")
     p.add_argument(
+        "--mode",
+        choices=["configurator", "deployed"],
+        help="CLI mode override (configurator or deployed)",
+    )
+    p.add_argument(
         "--pack",
         action="store_true",
         help="Placeholder flag for future packaging integration. (TODO)",
@@ -209,7 +251,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("init", help="interactively create ~/.cerebrum/config.toml")
+    i = sub.add_parser("init", help="interactively create ~/.cerebrum/config.toml")
+    i.add_argument(
+        "--mode",
+        choices=["configurator", "deployed"],
+        help="select the mode non-interactively",
+    )
     sub.add_parser("config", help="show resolved config")
 
     h = sub.add_parser("health", help="GET /health")
@@ -247,6 +294,7 @@ def main(argv: list[str] | None = None) -> int:
         base_url=args.base_url,
         api_key=args.api_key,
         session_id=args.session,
+        mode=args.mode,
     )
 
     if args.cmd == "init":

@@ -1,110 +1,15 @@
-"""SymPy Reasoning Block — symbolic variance analysis + construction recommendations.
+"""SymPy Reasoning Block - Symbolic variance analysis + data-driven recommendations"""
 
-This block lives up to its name: it builds real symbolic expressions for
-each metric using sympy.symbols, lets sympy simplify them once at module
-import, then substitutes the per-item numerics in to produce both:
-- the closed-form formula string (so the caller can see the math)
-- the evaluated numeric value
-
-A previous version of this block wrapped every float in ``sp.Float()`` then
-immediately unwrapped via ``float()`` with no symbolic manipulation in
-between, which made the "symbolic" naming a lie. The current version emits
-formulas alongside numbers so a user can see exactly what was computed.
-"""
-
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 from app.core.universal_base import UniversalBlock
-
-# Symbolic expressions built once at import time. These are the closed-form
-# formulas the block uses; they're exposed to the caller in the output so the
-# computation is auditable.
-try:
-    import sympy as _sp
-    _SP_AVAILABLE = True
-except ImportError:  # pragma: no cover — sympy is in requirements.txt
-    _sp = None
-    _SP_AVAILABLE = False
-
-if _SP_AVAILABLE:
-    _ACTUAL, _AVG, _STD, _QTY = _sp.symbols(
-        "actual avg std_dev quantity", real=True
-    )
-    # variance_pct = (actual - avg) / avg * 100   — simplified canonical form
-    _VARIANCE_PCT_EXPR = _sp.simplify((_ACTUAL - _AVG) / _AVG * 100)
-    # z_score        = (actual - avg) / std_dev
-    _Z_SCORE_EXPR = _sp.simplify((_ACTUAL - _AVG) / _STD)
-    # cost_impact    = (actual - avg) * quantity
-    _COST_IMPACT_EXPR = _sp.simplify((_ACTUAL - _AVG) * _QTY)
-    # Formula strings — exposed in output so the caller sees the math.
-    _VARIANCE_PCT_STR = str(_VARIANCE_PCT_EXPR)
-    _Z_SCORE_STR = str(_Z_SCORE_EXPR)
-    _COST_IMPACT_STR = str(_COST_IMPACT_EXPR)
-    # Tag → sympy expression. Callers pass the tag (a stable string), not the
-    # expression object, so the no-sympy fallback below doesn't reference any
-    # symbol that only exists inside this branch.
-    _EXPR_BY_NAME = {
-        "variance_pct": _VARIANCE_PCT_EXPR,
-        "z_score": _Z_SCORE_EXPR,
-        "cost_impact": _COST_IMPACT_EXPR,
-    }
-else:
-    _VARIANCE_PCT_STR = "(actual - avg) / avg * 100"
-    _Z_SCORE_STR = "(actual - avg) / std_dev"
-    _COST_IMPACT_STR = "(actual - avg) * quantity"
-    _EXPR_BY_NAME = {}
-
-
-def _eval_symbolic(formula_name: str, subs: Dict) -> float:
-    """Substitute numerics for a named formula and return a float.
-
-    The formula is identified by a string tag — `"variance_pct"`, `"z_score"`,
-    or `"cost_impact"` — rather than a sympy expression object, so the
-    no-sympy fallback never references any symbol that only exists inside the
-    `_SP_AVAILABLE` branch.
-
-    `subs` may be keyed by sympy Symbols (when sympy is available) OR by the
-    plain string names ``"actual"``, ``"avg"``, ``"std_dev"``, ``"quantity"``.
-    The pure-Python fallback uses the latter.
-    """
-    if _SP_AVAILABLE:
-        expr = _EXPR_BY_NAME.get(formula_name)
-        if expr is None:
-            raise RuntimeError(f"Unknown formula: {formula_name}")
-        return float(expr.subs(subs))
-
-    # Pure-Python fallback. Read values from the subs dict by string key so we
-    # don't depend on the sympy Symbol objects existing.
-    def _lookup(key_str, default):
-        # Accept either string keys or sympy-symbol-style keys with that name.
-        for k, val in subs.items():
-            if getattr(k, "name", None) == key_str or k == key_str:
-                return val
-        return default
-
-    a = _lookup("actual", 0)
-    v = _lookup("avg", 0)
-    s = _lookup("std_dev", 0)
-    q = _lookup("quantity", 1)
-
-    if formula_name == "variance_pct":
-        return (a - v) / v * 100 if v else 0.0
-    if formula_name == "z_score":
-        return (a - v) / s if s else 0.0
-    if formula_name == "cost_impact":
-        return (a - v) * q
-    raise RuntimeError(f"Unknown formula: {formula_name}")
 
 
 class SymPyReasoningBlock(UniversalBlock):
     name = "sympy_reasoning"
-    version = "1.1.0"
-    description = (
-        "Symbolic variance analysis: builds real sympy expressions for "
-        "variance %, z-score, and cost impact; emits both the formula "
-        "strings and the evaluated values."
-    )
+    version = "1.0.0"
+    description = "Heavy reasoning engine: symbolic variance analysis + data-driven construction recommendations"
     layer = 3
-    tags = ["domain", "construction", "reasoning", "math", "symbolic", "sympy"]
+    tags = ["domain", "construction", "reasoning", "math", "ai"]
     requires = []
 
     default_config = {
@@ -124,7 +29,6 @@ class SymPyReasoningBlock(UniversalBlock):
                 {"name": "recommendations", "type": "list", "label": "Recommendations"},
                 {"name": "variances", "type": "list", "label": "Variances"},
                 {"name": "cost_impacts", "type": "list", "label": "Cost Impacts"},
-                {"name": "formulas", "type": "json", "label": "Formulas"},
             ],
         },
         "quick_actions": [
@@ -142,7 +46,9 @@ class SymPyReasoningBlock(UniversalBlock):
         spec_data = data.get("spec_data", {})
         historical_benchmarks = data.get("historical_benchmarks", {})
 
-        if not _SP_AVAILABLE:
+        try:
+            import sympy as sp
+        except ImportError:
             return {"status": "error", "error": "sympy not installed. Run: pip install sympy"}
 
         threshold = float(
@@ -150,16 +56,9 @@ class SymPyReasoningBlock(UniversalBlock):
                         self.config.get("variance_threshold_pct", 10.0))
         )
 
-        # Two variance sources, both stay in the same `variances` list so
-        # downstream consumers don't need to branch:
-        #   1. BOQ rate vs historical_benchmarks (the original design — needs
-        #      a populated benchmarks dict to fire).
-        #   2. BOQ quantity vs drawing_data quantity (the construction-domain
-        #      headline use case; what the heavy-reasoning prompt expects).
-        variances = self._compute_variances(boq_data, historical_benchmarks, threshold)
-        variances.extend(self._compute_qty_variances(boq_data, drawing_data, threshold))
-        cost_impacts = self._compute_cost_impacts(variances)
-        recommendations = self._generate_recommendations(variances, spec_data, drawing_data)
+        variances = self._compute_variances(boq_data, historical_benchmarks, sp, threshold)
+        cost_impacts = self._compute_cost_impacts(variances, sp)
+        recommendations = self._generate_recommendations(variances, spec_data, drawing_data, sp)
 
         return {
             "status": "success",
@@ -168,18 +67,10 @@ class SymPyReasoningBlock(UniversalBlock):
             "cost_impacts": cost_impacts,
             "items_analyzed": len(boq_data),
             "high_variance_count": sum(1 for v in variances if v.get("severity") == "high"),
-            # Expose the closed-form formulas the block evaluated. This makes
-            # the math auditable — anyone reading the response can verify the
-            # block isn't doing something different from what its name suggests.
-            "formulas": {
-                "variance_pct": _VARIANCE_PCT_STR,
-                "z_score": _Z_SCORE_STR,
-                "cost_impact": _COST_IMPACT_STR,
-            },
         }
 
     def _compute_variances(
-        self, boq_data: List, benchmarks: Dict, threshold: float
+        self, boq_data: List, benchmarks: Dict, sp, threshold: float
     ) -> List[Dict]:
         variances = []
         for item in boq_data:
@@ -187,12 +78,7 @@ class SymPyReasoningBlock(UniversalBlock):
                 item.get("item_key")
                 or item.get("description", "").lower().replace(" ", "_")
             )
-            # An item with `unit_cost: 0` was previously silently falling
-            # through to `rate` — explicit None checks now disambiguate.
-            actual_raw = item.get("unit_cost")
-            if actual_raw is None:
-                actual_raw = item.get("rate", 0)
-            actual = float(actual_raw or 0)
+            actual = float(item.get("unit_cost") or item.get("rate", 0))
             benchmark = benchmarks.get(key, {})
             avg_cost = float(benchmark.get("avg_cost", 0))
             std_dev = float(benchmark.get("std_dev", 0))
@@ -200,9 +86,14 @@ class SymPyReasoningBlock(UniversalBlock):
             if avg_cost <= 0:
                 continue
 
-            subs = {_ACTUAL: actual, _AVG: avg_cost, _STD: std_dev}
-            variance_pct = _eval_symbolic("variance_pct", subs)
-            z_score = _eval_symbolic("z_score", subs) if std_dev > 0 else 0.0
+            actual_sym = sp.Float(actual)
+            avg_sym = sp.Float(avg_cost)
+            variance_pct = float(((actual_sym - avg_sym) / avg_sym) * 100)
+            z_score = (
+                float((actual_sym - avg_sym) / sp.Float(std_dev))
+                if std_dev > 0
+                else 0.0
+            )
 
             if abs(variance_pct) > threshold * 2:
                 severity = "high"
@@ -227,73 +118,13 @@ class SymPyReasoningBlock(UniversalBlock):
 
         return sorted(variances, key=lambda x: abs(x["variance_pct"]), reverse=True)
 
-    def _compute_qty_variances(
-        self, boq_data: List, drawing_data: Dict, threshold: float
-    ) -> List[Dict]:
-        """Quantity variance: each BOQ row matched against a drawing_data entry.
-
-        Match key precedence: ``item_key`` on the row -> ``description``
-        lowered+snake-cased -> ``item``. Drawing values can be either a
-        bare scalar (``"concrete": 1380``) or a dict
-        (``"concrete": {"qty": 1380}``). Variance % is computed off the
-        BOQ value so the sign matches "drawing minus BOQ" intuition.
-        """
-        out: List[Dict] = []
-        for item in boq_data:
-            key = (
-                item.get("item_key")
-                or (item.get("description", "") or "").lower().replace(" ", "_")
-                or item.get("item")
-            )
-            if not key:
-                continue
-            dval = drawing_data.get(key)
-            if dval is None:
-                # also try the original ``item`` / ``description`` verbatim
-                dval = drawing_data.get(item.get("item")) or drawing_data.get(item.get("description"))
-            if dval is None:
-                continue
-            drawing_qty = float(dval.get("qty", dval.get("quantity", 0))) if isinstance(dval, dict) else float(dval)
-            boq_qty = float(item.get("quantity") or 0)
-            if boq_qty <= 0:
-                continue
-            qty_diff = drawing_qty - boq_qty
-            variance_pct = (qty_diff / boq_qty) * 100.0
-            rate = float(item.get("rate") or item.get("unit_cost") or 0)
-            cost_impact = qty_diff * rate
-
-            if abs(variance_pct) > threshold * 2:
-                severity = "high"
-            elif abs(variance_pct) > threshold:
-                severity = "medium"
-            else:
-                severity = "low"
-
-            out.append({
-                "item_key": key,
-                "description": item.get("description", key),
-                "source": "boq_vs_drawing",
-                "boq_quantity": boq_qty,
-                "drawing_quantity": drawing_qty,
-                "qty_diff": qty_diff,
-                "variance_pct": round(variance_pct, 2),
-                "rate": rate,
-                "cost_impact": round(cost_impact, 2),
-                "severity": severity,
-                "quantity": boq_qty,
-                "unit": item.get("unit", ""),
-            })
-        return out
-
-    def _compute_cost_impacts(self, variances: List[Dict]) -> List[Dict]:
+    def _compute_cost_impacts(self, variances: List[Dict], sp) -> List[Dict]:
         impacts = []
         for v in variances:
-            subs = {
-                _ACTUAL: float(v.get("actual_cost", 0)),
-                _AVG: float(v.get("benchmark_avg", 0)),
-                _QTY: float(v.get("quantity", 1)),
-            }
-            impact = _eval_symbolic("cost_impact", subs)
+            qty = sp.Float(v.get("quantity", 1))
+            actual = sp.Float(v.get("actual_cost", 0))
+            benchmark = sp.Float(v.get("benchmark_avg", 0))
+            impact = float((actual - benchmark) * qty)
             if abs(impact) < 0.01:
                 continue
             impacts.append(
@@ -307,57 +138,75 @@ class SymPyReasoningBlock(UniversalBlock):
         return sorted(impacts, key=lambda x: abs(x["cost_impact_usd"]), reverse=True)
 
     def _generate_recommendations(
-        self, variances: List[Dict], spec_data: Dict, drawing_data: Dict
+        self, variances: List[Dict], spec_data: Dict, drawing_data: Dict, sp
     ) -> List[Dict]:
-        templates = {
-            "high_over": {
-                "text": "URGENT: {item} is {pct:.1f}% over benchmark. Review supplier pricing and re-tender.",
-                "severity": "critical",
-                "action_items": [
-                    "Re-tender to 3 suppliers",
-                    "Check market rates",
-                    "Negotiate volume discount",
-                ],
-            },
-            "high_under": {
-                "text": "ALERT: {item} is {pct:.1f}% under benchmark. Verify scope and quality compliance.",
-                "severity": "warning",
-                "action_items": [
-                    "Verify specification compliance",
-                    "Check material grade",
-                    "Audit scope inclusion",
-                ],
-            },
-            "medium_over": {
-                "text": "REVIEW: {item} is {pct:.1f}% above benchmark. Monitor and negotiate.",
-                "severity": "medium",
-                "action_items": ["Request quote breakdown", "Compare with market index"],
-            },
-            "medium_under": {
-                "text": "NOTE: {item} is {pct:.1f}% below benchmark. Confirm quality.",
-                "severity": "low",
-                "action_items": [
-                    "Confirm material specification",
-                    "Check labor inclusion",
-                ],
-            },
-        }
+        """Generate data-driven recommendations using sympy statistical analysis."""
+        if not variances:
+            return []
+
+        # Compute aggregate statistics with sympy
+        var_pcts = [sp.Float(v["variance_pct"]) for v in variances]
+        mean_var = float(sum(var_pcts) / len(var_pcts))
+        sq_diffs = [(v - sp.Float(mean_var)) ** 2 for v in var_pcts]
+        std_var = float(sp.sqrt(sum(sq_diffs) / len(sq_diffs)))
 
         recs = []
         for v in variances:
             if v["severity"] == "low":
                 continue
+
             direction = "over" if v["variance_pct"] > 0 else "under"
-            tpl = templates.get(f"{v['severity']}_{direction}", templates["medium_over"])
+            pct = abs(v["variance_pct"])
+            z = v.get("z_score", 0)
+
+            # Derive severity label from z-score distribution
+            if z > 2.0:
+                severity_label = "critical"
+            elif z > 1.0:
+                severity_label = "high"
+            elif z > 0.5:
+                severity_label = "medium"
+            else:
+                severity_label = "low"
+
+            # Build contextual action items from actual data
+            action_items = []
+            if direction == "over":
+                action_items.append("Re-tender to 3+ suppliers")
+                action_items.append("Check market rates")
+                if pct > 20:
+                    action_items.append("Negotiate volume discount")
+                    action_items.append("Escalate to Project Director")
+                if spec_data:
+                    action_items.append("Verify spec compliance against quoted grade")
+            else:
+                action_items.append("Verify specification compliance")
+                action_items.append("Check material grade")
+                if pct > 15:
+                    action_items.append("Audit scope inclusion")
+                    action_items.append("Request material approval submission")
+                if drawing_data:
+                    action_items.append("Cross-check quantities against drawings")
+
+            # Use sympy to compute a recommendation score
+            score = float(sp.Abs(sp.Float(v["variance_pct"])) * sp.Float(v.get("quantity", 1)))
+
             recs.append(
                 {
                     "item_key": v["item_key"],
-                    "recommendation": tpl["text"].format(
-                        item=v["description"], pct=abs(v["variance_pct"])
+                    "recommendation": (
+                        f"{severity_label.upper()}: {v['description']} is {pct:.1f}% "
+                        f"{direction} benchmark (z={z:.2f}). "
+                        f"Review pricing and {'re-tender' if direction == 'over' else 'verify scope'}."
                     ),
-                    "severity": tpl["severity"],
-                    "action_items": tpl["action_items"],
+                    "severity": severity_label,
+                    "action_items": action_items,
                     "variance_pct": v["variance_pct"],
+                    "recommendation_score": round(score, 2),
+                    "statistics": {
+                        "mean_variance_pct": round(mean_var, 2),
+                        "std_variance_pct": round(std_var, 2),
+                    },
                 }
             )
         return recs

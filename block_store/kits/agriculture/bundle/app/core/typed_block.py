@@ -393,15 +393,28 @@ class TypedBlock(UniversalBlock):
         # Call parent execute (runs process)
         result = await super().execute(input_data, params)
         
-        # Validate output if schema defined
-        if self.output_schema:
+        # Validate output if schema defined — fail closed: an output that
+        # violates the declared contract must never reach a caller as success.
+        if self.output_schema and result.get("status") != "error":
             output_validation = self.validate_output(result)
             if not output_validation["valid"]:
-                # Output validation failed - add warning but don't fail
-                # (existing blocks may not conform yet)
-                if "metadata" not in result:
-                    result["metadata"] = {}
-                result["metadata"]["output_validation_warnings"] = output_validation["errors"]
+                return self._serialize_value({
+                    "block": self.name,
+                    "request_id": request_id,
+                    "status": "error",
+                    "result": {
+                        "error": "Output validation failed",
+                        "details": output_validation["errors"],
+                    },
+                    "confidence": 0.0,
+                    "source_id": f"{self.name}-{request_id}",
+                    "metadata": {
+                        "version": self.version,
+                        "validation_errors": output_validation["errors"],
+                        **params,
+                    },
+                    "processing_time_ms": int((time.time() - start) * 1000),
+                })
 
         # Ensure result is JSON-serializable (convert dataclasses, enums, etc.)
         result = self._serialize_value(result)
