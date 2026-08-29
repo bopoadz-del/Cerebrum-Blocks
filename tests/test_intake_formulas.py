@@ -170,3 +170,81 @@ def test_intake_is_idempotent_on_the_manifest(kit):
     for _ in range(2):
         intake_mod.intake("demo", str(src), kind="spc", reference="run log")
     assert _manifest(kits)["data"].count("app/data/rates.json") == 1
+
+
+# -- applied to the insurance kit ------------------------------------------
+
+INSURANCE = REPO / "block_store" / "kits" / "insurance"
+PARKED_INSURANCE = (
+    "commission_formulas.json",
+    "hierarchy_model.json",
+    "incentive_playbook.json",
+    "retention_playbook.json",
+    "routing_sops.json",
+    "sample_bordereaux.json",
+)
+
+
+def test_insurance_uncited_files_were_parked_through_intake():
+    """The shipped rate table never went through the gate. Now it has.
+
+    Six files had no source. The honest path is contributor_unverified,
+    which parks them outside declared data. A regulator stamp we cannot
+    check would have been worse than the blank.
+    """
+    parked = INSURANCE / "parked"
+    manifest = json.loads((INSURANCE / "manifest.json").read_text(encoding="utf-8"))
+    declared = set(manifest.get("data") or [])
+    artifact_srcs = {item["src"] for item in manifest.get("artifacts") or []}
+
+    for name in PARKED_INSURANCE:
+        body = json.loads((parked / name).read_text(encoding="utf-8"))
+        record = body["provenance"]
+        assert record["kind"] == "contributor_unverified"
+        assert record["parked"] is True
+        assert record.get("reference"), "park records why it could not be sourced"
+        assert "regulator" not in record["kind"]
+        assert "HKIA" not in record.get("reference", "")
+        assert "GN16" not in record.get("reference", "")
+        rel = f"app/data/{name}"
+        assert rel not in declared, f"{name} is still declared data; an engine can load it"
+        assert rel not in artifact_srcs
+        assert not (INSURANCE / "bundle" / "app" / "data" / name).exists(), (
+            f"{name} is still in the shipped bundle"
+        )
+
+
+def test_insurance_gn16_ruleset_stays_shipped_on_its_own_citations():
+    """The cited file is not parked. Per-rule HKIA cites already satisfy
+    the composition audit; inventing a second file-level cite is not needed.
+    """
+    ruleset = INSURANCE / "bundle" / "app" / "data" / "gn16_ruleset.json"
+    data = json.loads(ruleset.read_text(encoding="utf-8"))
+    assert all(rule.get("citation") for rule in data["rules"])
+    manifest = json.loads((INSURANCE / "manifest.json").read_text(encoding="utf-8"))
+    assert "app/data/gn16_ruleset.json" in manifest["data"]
+    assert not (INSURANCE / "parked" / "gn16_ruleset.json").exists()
+
+
+def test_insurance_no_longer_ships_uncited_declared_data():
+    """Parking closed the registered provenance gap. If a new uncited
+    file lands in declared data, this fails before the audit is silenced.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "audit_kit_composition", REPO / "scripts" / "audit_kit_composition.py"
+    )
+    audit = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(audit)
+    known = audit._dirs(str(REPO / audit.REGISTRY_DIR)) | audit._modules(
+        str(REPO / audit.MODULES_DIR)
+    )
+    findings = audit.audit_kit("insurance", str(REPO / audit.KITS_DIR), known)
+    assert "data_provenance_missing" not in [code for code, _ in findings]
+
+
+def test_known_incomplete_records_the_insurance_park():
+    text = (REPO / "KNOWN_INCOMPLETE.md").read_text(encoding="utf-8")
+    assert "block_store/kits/insurance/parked" in text
+    assert "contributor_unverified" in text
+    for name in PARKED_INSURANCE:
+        assert name in text

@@ -69,9 +69,14 @@ its rules carry a `citation` naming the HKIA GL16/GN16 section they came
 from. `hkia_gn16_corpus.json` and `construction_kb.json` likewise cite per
 entry.
 
+Insurance's six uncited data files (commission_formulas, routing_sops,
+retention_playbook, incentive_playbook, sample_bordereaux, hierarchy_model)
+were parked 2026-08-29 via `scripts/intake_formulas.py --kind
+contributor_unverified`. They are no longer declared data. The gap is
+closed by parking, not by inventing a regulator cite.
+
 Registered 2026-08-24.
 
-- insurance :: data_provenance_missing  6 files: commission_formulas, routing_sops, retention_playbook, incentive_playbook, sample_bordereaux, hierarchy_model. commission_formulas.json is the priority — it holds live commission rates (0.5–1.2 of annualized premium) consumed by agency_commission_engine.
 - construction :: data_provenance_missing  app/data/procedures/procedures_db.json
 - automotive :: data_provenance_missing  source_manifest.json
 - automotive :: data_file_missing  manifest declares "evaluation/", which is not on disk

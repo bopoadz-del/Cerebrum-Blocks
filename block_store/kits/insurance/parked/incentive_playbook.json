@@ -21,5 +21,11 @@
     "Fund eligible producers in rank order until budget is exhausted.",
     "Document unfunded eligible producers for next-cycle review.",
     "Re-run simulation after any manual compliance or data corrections."
-  ]
+  ],
+  "provenance": {
+    "kind": "contributor_unverified",
+    "recorded_on": "2026-08-29",
+    "reference": "The_Fork-published bundle orphan; no checkable source recovered",
+    "parked": true
+  }
 }

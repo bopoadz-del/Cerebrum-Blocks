@@ -80,6 +80,11 @@ jobs:
         # and .docx, not just structured fixtures.
         run: pytest -q tests/test_intake_kit.py
 
+      - name: Run formula intake tests
+        # Encoded figures enter through intake_formulas.py. Unverified
+        # insurance rates are parked, not given invented regulator cites.
+        run: pytest -q tests/test_intake_formulas.py
+
       - name: Run kit scaffold tests (stage K3)
         # K1 -> K3 -> K2: the scaffold writes the domain overlay to the exact
         # path formula_definitions reads, so a formula that survived the
