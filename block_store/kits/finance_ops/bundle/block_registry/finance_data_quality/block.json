@@ -1,9 +1,46 @@
 {
-  "id": "finance_data_quality", "name": "Finance Data Quality", "version": "1.0.0",
+  "author": "Cerebrum Team",
   "description": "Finance-side data quality and journal-balance controls.",
-  "author": "Cerebrum Team", "publisher_id": "cerebrum_platform", "signature": "", "digests": {},
-  "inputs": [{"name": "input", "type": "json", "required": false, "description": "FinanceOps payload"}],
-  "outputs": [{"name": "result", "type": "json", "description": "Deterministic FinanceOps result"}],
-  "permissions": {"network": false, "filesystem": false, "imports": ["collections", "decimal", "typing"], "blocks": []},
-  "tags": ["domain", "finance_ops", "data_quality", "controls", "deterministic"], "layer": 3
+  "digests": {
+    "block.json": "02557be5e028f4162f35292530918600fd2e9c914ff1d3834d35c28400978244"
+  },
+  "id": "finance_data_quality",
+  "inputs": [
+    {
+      "description": "FinanceOps payload",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    }
+  ],
+  "layer": 3,
+  "name": "Finance Data Quality",
+  "outputs": [
+    {
+      "description": "Deterministic FinanceOps result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "collections",
+      "decimal",
+      "typing"
+    ],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "signature": "xaagVSQ+TOCqDPRRi4yye7ND+i66+IaL4jqx1ikX9SDeErdM7o8Yu4AXdqDLjdtHCjCN7pZcF2GsPe43JPEDAQ==",
+  "tags": [
+    "domain",
+    "finance_ops",
+    "data_quality",
+    "controls",
+    "deterministic"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0"
 }

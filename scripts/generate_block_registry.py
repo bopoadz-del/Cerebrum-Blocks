@@ -244,6 +244,7 @@ def generate_block_json(block_name: str, block_class) -> Optional[Dict[str, Any]
         },
         "ui_schema": ui_schema,
         "tags": tags,
+        "trust_tier": "platform",
     }
 
     return manifest

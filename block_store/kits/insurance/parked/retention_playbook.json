@@ -31,5 +31,11 @@
     "login_frequency": "Low portal usage may indicate workflow friction, missing access, or reduced engagement.",
     "complaint_count": "Review complaint root cause and confirm remediation ownership.",
     "open_service_tickets": "Prioritize stale or blocking service cases before retention outreach."
+  },
+  "provenance": {
+    "kind": "contributor_unverified",
+    "recorded_on": "2026-08-29",
+    "reference": "The_Fork-published bundle orphan; no checkable source recovered",
+    "parked": true
   }
 }

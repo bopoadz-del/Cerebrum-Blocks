@@ -55,6 +55,7 @@
     "analytics",
     "bordereaux"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Distribution dataset",

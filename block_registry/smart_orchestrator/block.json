@@ -63,6 +63,7 @@
     "routing",
     "nlp"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Describe what you need (e.g. 'analyze the BOQ and check specs')...",

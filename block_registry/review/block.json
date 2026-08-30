@@ -101,6 +101,7 @@
     "quality",
     "ratings"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Review item id and metadata",

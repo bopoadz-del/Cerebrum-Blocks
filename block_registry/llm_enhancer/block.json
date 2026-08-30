@@ -74,6 +74,7 @@
     "llm",
     "enhancement"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"action\": \"status\"}  \u2014 or {\"action\": \"enhance_quantities\", \"text\": \"...\", \"baseline\": {...}}",

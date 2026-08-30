@@ -81,6 +81,7 @@ def normalize_manifest(block_name: str, manifest: dict) -> dict:
     manifest.setdefault("layer", meta.get("layer", 3))
     manifest.setdefault("requires", meta.get("requires", []))
     manifest.setdefault("tags", meta.get("tags", []))
+    manifest.setdefault("trust_tier", "platform")
 
     if isinstance(manifest.get("ui_schema"), dict):
         manifest["ui_schema"] = _legacy_ui_to_widgets(manifest["ui_schema"])

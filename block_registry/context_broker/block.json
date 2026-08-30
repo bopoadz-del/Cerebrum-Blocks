@@ -67,6 +67,7 @@
     "session",
     "core"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"action\": \"get_context\", \"session_id\": \"user_123\"}",

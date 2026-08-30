@@ -52,6 +52,7 @@
     "web",
     "scraping"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Enter URL to scrape...",

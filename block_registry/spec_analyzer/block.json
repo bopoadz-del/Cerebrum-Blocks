@@ -84,6 +84,7 @@
     "compliance",
     "materials"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Upload project specification PDF...",

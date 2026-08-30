@@ -44,5 +44,11 @@
       "premium": "not-a-number",
       "channel": "broker"
     }
-  ]
+  ],
+  "provenance": {
+    "kind": "contributor_unverified",
+    "recorded_on": "2026-08-29",
+    "reference": "The_Fork-published bundle orphan; no checkable source recovered",
+    "parked": true
+  }
 }

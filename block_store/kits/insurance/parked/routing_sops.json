@@ -31,5 +31,11 @@
     "Any channel constraint conflicts with the recommended channel",
     "High complexity submission recommended for direct or partner without manual review",
     "MGA recommendation where no active authority or appetite exists"
-  ]
+  ],
+  "provenance": {
+    "kind": "contributor_unverified",
+    "recorded_on": "2026-08-29",
+    "reference": "The_Fork-published bundle orphan; no checkable source recovered",
+    "parked": true
+  }
 }

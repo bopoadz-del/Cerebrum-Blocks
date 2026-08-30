@@ -170,6 +170,7 @@
     "multimodal",
     "knowledge"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Upload or push an image to capture and structure...",

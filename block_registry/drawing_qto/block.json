@@ -81,6 +81,7 @@
     "dxf",
     "quantities"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Upload DXF or DWG drawing...",

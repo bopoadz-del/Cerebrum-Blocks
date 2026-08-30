@@ -53,6 +53,7 @@
     "image",
     "local"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Upload image to analyze...",

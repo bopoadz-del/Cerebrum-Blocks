@@ -112,6 +112,7 @@
     "reasoning",
     "scheduling"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Upload BOD, RFP, or spec documents...",

@@ -74,6 +74,7 @@
     "xer",
     "cpm"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Upload Primavera P6 .xer schedule file...",

@@ -63,6 +63,7 @@
     "cache",
     "redis"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"action\": \"get\", \"key\": \"my-key\"}",

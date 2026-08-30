@@ -37,7 +37,17 @@ def validate_manifest(path: Path) -> list:
     with open(path) as f:
         manifest = json.load(f)
 
-    required = ["id", "name", "version", "description", "inputs", "outputs", "execution", "ui_schema"]
+    required = [
+        "id",
+        "name",
+        "version",
+        "description",
+        "inputs",
+        "outputs",
+        "execution",
+        "ui_schema",
+        "trust_tier",
+    ]
     for key in required:
         if key not in manifest:
             errors.append(f"Missing required field: {key}")

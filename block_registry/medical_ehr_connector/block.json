@@ -133,6 +133,7 @@
     "ehr",
     "healthcare"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"resource\": \"Patient\", \"patient_id\": \"123\"}",

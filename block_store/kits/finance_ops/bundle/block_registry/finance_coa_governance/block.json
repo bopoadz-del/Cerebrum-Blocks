@@ -1,9 +1,46 @@
 {
-  "id": "finance_coa_governance", "name": "Finance CoA Governance", "version": "1.0.0",
+  "author": "Cerebrum Team",
   "description": "Chart of Accounts hierarchy, mapping, effective dating, and impact controls.",
-  "author": "Cerebrum Team", "publisher_id": "cerebrum_platform", "signature": "", "digests": {},
-  "inputs": [{"name": "input", "type": "json", "required": false, "description": "FinanceOps payload"}],
-  "outputs": [{"name": "result", "type": "json", "description": "Deterministic FinanceOps result"}],
-  "permissions": {"network": false, "filesystem": false, "imports": ["collections", "datetime", "typing"], "blocks": []},
-  "tags": ["domain", "finance_ops", "chart_of_accounts", "master_data", "governance"], "layer": 3
+  "digests": {
+    "block.json": "b34498e5f8fc4fb22d7a24d8e518f68dfeebfe5581232e583fbebfac70b112ce"
+  },
+  "id": "finance_coa_governance",
+  "inputs": [
+    {
+      "description": "FinanceOps payload",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    }
+  ],
+  "layer": 3,
+  "name": "Finance CoA Governance",
+  "outputs": [
+    {
+      "description": "Deterministic FinanceOps result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "collections",
+      "datetime",
+      "typing"
+    ],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "signature": "dSWl99tdqZ/hQadYTLJwEWcNK9FXo8g5uyX6+TP5tp8mZr/Wsk9EsliV/eJuICZ2qxD0yeSIQdEtilYKC0I6CA==",
+  "tags": [
+    "domain",
+    "finance_ops",
+    "chart_of_accounts",
+    "master_data",
+    "governance"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0"
 }

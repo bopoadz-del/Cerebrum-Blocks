@@ -52,13 +52,7 @@ ROOT_ARTIFACTS = [
 ]
 
 BUNDLE_RESOURCES = [
-    "app/data/routing_sops.json",
-    "app/data/retention_playbook.json",
-    "app/data/incentive_playbook.json",
-    "app/data/sample_bordereaux.json",
     "app/data/gn16_ruleset.json",
-    "app/data/commission_formulas.json",
-    "app/data/hierarchy_model.json",
     "app/knowledge/hkia_gn16_corpus.json",
     "app/playbooks/distribution.json",
     "app/playbooks/compensation.json",

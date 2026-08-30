@@ -68,6 +68,7 @@
     "math",
     "ai"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"boq_data\": [...], \"drawing_data\": {}, \"spec_data\": {}, \"historical_benchmarks\": {}}",

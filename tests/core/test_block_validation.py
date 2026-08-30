@@ -72,6 +72,7 @@ def _write_manifest(
             "imports": [],
             "blocks": [],
         },
+        "trust_tier": "platform",
     }
     if extra:
         manifest.update(extra)
@@ -234,6 +235,54 @@ def test_unknown_publisher_defaults_to_community_tier(
     )
     result = validator.validate_block(temp_block)
     assert result.publisher_tier == "community"
+
+
+def test_failing_validation_for_missing_trust_tier(
+    test_publisher: PublisherRegistry,
+    temp_block: Path,
+    private_key: Ed25519PrivateKey,
+):
+    _write_manifest(temp_block, remove=("trust_tier",))
+    BlockSigner.sign_block(
+        block_path=temp_block,
+        publisher_id="test_corp",
+        private_key=private_key,
+    )
+
+    validator = BlockValidator(
+        publisher_registry=test_publisher,
+        certification_store_path=temp_block.parent / "certifications.json",
+    )
+    result = validator.validate_block(temp_block)
+
+    assert result.status == "failed"
+    assert any(
+        "missing required manifest field: trust_tier" in reason
+        for reason in result.reasons
+    )
+
+
+def test_failing_validation_for_invalid_trust_tier(
+    test_publisher: PublisherRegistry,
+    temp_block: Path,
+    private_key: Ed25519PrivateKey,
+):
+    _write_manifest(temp_block, extra={"trust_tier": "contributor_unverified"})
+    BlockSigner.sign_block(
+        block_path=temp_block,
+        publisher_id="test_corp",
+        private_key=private_key,
+    )
+
+    validator = BlockValidator(
+        publisher_registry=test_publisher,
+        certification_store_path=temp_block.parent / "certifications.json",
+    )
+    result = validator.validate_block(temp_block)
+
+    assert result.status == "failed"
+    assert any("invalid trust_tier" in reason for reason in result.reasons)
+    assert result.publisher_tier == "reviewed"
 
 
 def test_failing_validation_for_missing_permissions(

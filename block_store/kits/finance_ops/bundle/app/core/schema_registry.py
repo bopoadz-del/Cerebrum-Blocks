@@ -656,26 +656,6 @@ def get_registry() -> SchemaRegistry:
 # CONVENIENCE FUNCTIONS
 # ============================================================================
 
-def validate_text_content(data: Any) -> Dict[str, Any]:
-    """Quick validation for TextContent."""
-    return registry.validate(data, "TextContent")
-
-
-def validate_image_content(data: Any) -> Dict[str, Any]:
-    """Quick validation for ImageContent."""
-    return registry.validate(data, "ImageContent")
-
-
-def validate_pdf_content(data: Any) -> Dict[str, Any]:
-    """Quick validation for PDFContent."""
-    return registry.validate(data, "PDFContent")
-
-
-def validate_chat_message(data: Any) -> Dict[str, Any]:
-    """Quick validation for ChatMessage."""
-    return registry.validate(data, "ChatMessage")
-
-
 # Export all types
 __all__ = [
     # Registry
@@ -716,8 +696,4 @@ __all__ = [
     "TranslationResult",
     
     # Validation helpers
-    "validate_text_content",
-    "validate_image_content",
-    "validate_pdf_content",
-    "validate_chat_message",
 ]

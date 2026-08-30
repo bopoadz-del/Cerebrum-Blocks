@@ -72,6 +72,7 @@
     "typed",
     "v2"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "Paste legal document text...",

@@ -1,22 +1,36 @@
 """Learning Engine Block - Tier promotion + coefficient tuning via scikit-learn"""
 
+import logging
 import os
 import json
-import threading
 import time
 from typing import Any, Dict, List, Optional
 from app.core.universal_base import UniversalBlock
+from app.core.credibility import (
+    CredibilityRecord,
+    CredibilityScorer,
+    CredibilityTier,
+)
 
-def _storage_path() -> str:
-    """Read LEARNING_ENGINE_STORAGE at call time so tests can swap DATA_DIR
-    via monkeypatch.setenv. Reading once at module import means production
-    is fine but tests share /tmp state across the suite."""
-    return os.environ.get("LEARNING_ENGINE_STORAGE", "/tmp/cerebrum_learning_engine.json")
+logger = logging.getLogger(__name__)
+
+def _default_storage_path() -> str:
+    """Default the learning store onto the persistent disk, not /tmp.
+
+    This block accumulates user-generated value: every correction, tier
+    promotion and tuned coefficient. The previous default put it in /tmp, so
+    all of it was wiped on every deploy -- and deploys are roughly daily. It
+    looked like the learning simply never converged.
+
+    DATA_DIR is the same convention the rest of the service uses for durable
+    state (see core/auth.py and routers/upload.py), and on Render it is the
+    mounted disk.
+    """
+    data_dir = os.getenv("DATA_DIR", "./data")
+    return os.path.join(data_dir, "learning_engine.json")
 
 
-# Kept for backwards-compat in default_config below; callers should now go
-# through _storage_path() directly so env overrides take effect.
-_STORAGE_PATH = _storage_path()
+_STORAGE_PATH = os.environ.get("LEARNING_ENGINE_STORAGE") or _default_storage_path()
 
 # Tier thresholds: (min_executions, max_mae_pct) → tier label
 _TIER_RULES = [
@@ -38,10 +52,7 @@ class LearningEngineBlock(UniversalBlock):
     default_config = {
         "promotion_mae_threshold": 0.05,   # 5% MAE to promote
         "min_samples_for_training": 5,
-        # Keep storage_path absent from default_config so _load_state /
-        # _save_state fall through to _storage_path() which reads the env
-        # at call time. Setting it here would freeze the path at class
-        # definition and break LEARNING_ENGINE_STORAGE overrides in tests.
+        "storage_path": _STORAGE_PATH,
     }
 
     ui_schema = {
@@ -65,59 +76,135 @@ class LearningEngineBlock(UniversalBlock):
         ],
     }
 
-    # ── Process-local singleton cache ───────────────────────────────────
-    #
-    # Path-keyed cache so different LEARNING_ENGINE_STORAGE values (one per
-    # test via monkeypatch.setenv, or one per worker in a future multi-tenant
-    # setup) get distinct instances. Mirrors app/core/rag/vector_store.py:63-70
-    # (get_store keyed on db_path under _CACHE_LOCK) so the same reset_*_cache
-    # shape works for test teardown.
-    #
-    # Process-local. If we ever move to multi-worker uvicorn, replace this
-    # with a fcntl lock around _save_state OR migrate _state to SQLite.
-
-    _instance_by_path: Dict[str, "LearningEngineBlock"] = {}
-    _instance_cache_lock = threading.Lock()
-
-    @classmethod
-    def shared_instance(cls) -> "LearningEngineBlock":
-        """Process-cached instance keyed on the current LEARNING_ENGINE_STORAGE
-        path. Hot paths (smart_orchestrator._predict_learned + _record_routing_decision,
-        routers/feedback.py:submit_routing_correction) use this instead of
-        ``cls()`` so they avoid a full JSON load+save per request. The
-        per-instance state lock makes the read-modify-write window inside
-        ``_record_pattern`` safe under concurrent dispatches — before this,
-        concurrent writes would last-write-wins and silently lose observations.
-        Tests that need a fresh instance can call ``reset_shared_instance_cache()``
-        or construct ``cls()`` directly (which bypasses the cache)."""
-        path = _storage_path()
-        with cls._instance_cache_lock:
-            inst = cls._instance_by_path.get(path)
-            if inst is None:
-                inst = cls()
-                cls._instance_by_path[path] = inst
-        return inst
-
-    @classmethod
-    def reset_shared_instance_cache(cls) -> None:
-        """Drop cached instances. Used by tests to pick up a swapped storage
-        path or to force a fresh state load."""
-        with cls._instance_cache_lock:
-            cls._instance_by_path.clear()
-
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)
-        # Reentrant lock guarding _record_pattern's read-modify-write window
-        # (and any future op that mutates _state then calls _save_state).
-        # RLock so a single thread can re-enter via nested ops without deadlock.
-        self._state_lock = threading.RLock()
         self._state: Dict = self._load_state()
+        # Shared credibility scorer — pure functions; safe to memoise.
+        self._credibility_scorer = CredibilityScorer()
+
+    # ── credibility helpers ────────────────────────────────────────────
+
+    def _credibility_record(self, formula_id: str) -> CredibilityRecord:
+        """Load or initialise the CredibilityRecord for ``formula_id``."""
+        formula = self._state["formulas"].setdefault(formula_id, {
+            "samples": [],
+            "tier": "bronze",
+            "coefficients": {"bias": 0.0, "scale": 1.0},
+            "executions": 0,
+            "created_at": time.time(),
+        })
+        cred = formula.get("credibility")
+        if isinstance(cred, dict) and cred.get("item_id"):
+            try:
+                return CredibilityRecord.from_dict(cred)
+            except Exception:
+                pass
+        return CredibilityRecord(item_id=formula_id)
+
+    def _sample_count(self, formula_id: str) -> int:
+        """Number of recorded correction samples for ``formula_id``."""
+        formula = self._state.get("formulas", {}).get(formula_id) or {}
+        return len(formula.get("samples", []))
+
+    def get_correction_history(self, formula_id: str) -> List[Dict]:
+        """Return the raw correction samples (predicted/actual/ts) for
+        ``formula_id``. Public so the retrain Celery task can pull it."""
+        formula = self._state.get("formulas", {}).get(formula_id) or {}
+        return list(formula.get("samples", []))
+
+    def set_coefficients(self, formula_id: str, coefficients: Dict[str, float]) -> None:
+        """Persist ``coefficients`` for ``formula_id``. Used by the
+        retrain task to commit a new fit."""
+        formula = self._state.setdefault("formulas", {}).setdefault(formula_id, {
+            "samples": [],
+            "tier": "bronze",
+            "coefficients": {},
+            "executions": 0,
+            "created_at": time.time(),
+        })
+        formula["coefficients"] = dict(coefficients)
+        self._save_state()
+
+    def get_coefficient_mae(self, formula_id: str, history: List[Dict]) -> Optional[float]:
+        """Return the MAE of the currently-stored coefficients evaluated
+        against ``history``. Returns ``None`` when no usable coefficients
+        are persisted yet (the retrain task treats that as "any fit is
+        an improvement")."""
+        formula = self._state.get("formulas", {}).get(formula_id) or {}
+        coeffs = formula.get("coefficients") or {}
+        scale = float(coeffs.get("scale", coeffs.get("multiplier", 1.0) or 1.0))
+        bias = float(coeffs.get("bias", 0.0))
+        errs: List[float] = []
+        for h in history:
+            try:
+                p = float(h.get("predicted", 0))
+                a = float(h.get("actual", 0))
+            except (TypeError, ValueError):
+                continue
+            errs.append(abs((p * scale + bias) - a))
+        if not errs:
+            return None
+        return sum(errs) / len(errs)
+
+    @staticmethod
+    def _accuracy_from_samples(samples: List[Dict]) -> float:
+        """Compute rolling accuracy in [0, 1] from predicted/actual pairs.
+
+        Defined as ``1 - MAPE`` (mean absolute percentage error), clamped.
+        Empty samples → 0.0 so it doesn't masquerade as perfect.
+        """
+        if not samples:
+            return 0.0
+        errs: List[float] = []
+        for s in samples:
+            try:
+                p = float(s["predicted"])
+                a = float(s["actual"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if a == 0:
+                # Avoid divide-by-zero; treat as exact when both are 0.
+                errs.append(0.0 if p == 0 else 1.0)
+            else:
+                errs.append(min(1.0, abs(a - p) / abs(a)))
+        if not errs:
+            return 0.0
+        mape = sum(errs) / len(errs)
+        return max(0.0, min(1.0, 1.0 - mape))
+
+    def _update_credibility(self, formula_id: str, reason: Optional[str] = None) -> Dict[str, Any]:
+        """Recompute and persist the credibility record for ``formula_id``.
+
+        Returns a dict shaped for the action response:
+            {tier, previous_tier, accuracy, sample_size, promoted}
+        """
+        formula = self._state["formulas"][formula_id]
+        record = self._credibility_record(formula_id)
+        previous_tier = record.tier
+
+        accuracy = self._accuracy_from_samples(formula.get("samples", []))
+        sample_size = len(formula.get("samples", []))
+        record = self._credibility_scorer.evaluate_promotion(
+            record, accuracy, sample_size, reason=reason,
+        )
+        formula["credibility"] = record.to_dict()
+        promoted = (
+            int(record.tier) < int(previous_tier)
+            if previous_tier is not None else False
+        )
+        return {
+            "tier": record.tier.name,
+            "tier_value": int(record.tier),
+            "previous_tier": previous_tier.name,
+            "previous_tier_value": int(previous_tier),
+            "accuracy": record.accuracy,
+            "sample_size": record.sample_size,
+            "promoted": record.tier != previous_tier,  # True on either direction change
+            "promoted_up": promoted,
+        }
 
     def _load_state(self) -> Dict:
-        # Read env at call time so tests using monkeypatch.setenv get
-        # isolated state. Production unaffected (env set once at startup).
-        default = _storage_path()
-        path = self.config.get("storage_path", default) if hasattr(self, "config") else default
+        path = self.config.get("storage_path", _STORAGE_PATH) if hasattr(self, "config") else _STORAGE_PATH
         try:
             if os.path.exists(path):
                 with open(path, "r") as f:
@@ -127,7 +214,7 @@ class LearningEngineBlock(UniversalBlock):
         return {"formulas": {}, "history": []}
 
     def _save_state(self):
-        path = self.config.get("storage_path", _storage_path())
+        path = self.config.get("storage_path", _STORAGE_PATH)
         try:
             with open(path, "w") as f:
                 json.dump(self._state, f, indent=2)
@@ -154,193 +241,8 @@ class LearningEngineBlock(UniversalBlock):
         elif operation == "reset":
             formula_id = data.get("formula_id") or params.get("formula_id")
             return self._reset_formula(formula_id)
-        elif operation == "hydrate":
-            # Nightly "sleep on it" pass — see app/core/learning/hydration.py.
-            # Reads the day's conversations and files, indexes new docs,
-            # writes recurring topics/friction back to the project_facts +
-            # agent_facts the chat path consults, and records each friction
-            # signal here as a pattern (durable across runs).
-            from app.core.learning import hydration as _hydration
-
-            return await _hydration.run(
-                target_date=data.get("target_date") or params.get("target_date"),
-                project_ids=data.get("project_ids") or params.get("project_ids"),
-            )
-        elif operation == "hydration_latest":
-            from app.core.learning import hydration as _hydration
-
-            return _hydration.get_latest(
-                scope=data.get("scope") or params.get("scope") or "global",
-                project_id=data.get("project_id") or params.get("project_id"),
-            )
-        elif operation == "hydration_history":
-            from app.core.learning import hydration as _hydration
-
-            return _hydration.list_history(
-                scope=data.get("scope") or params.get("scope"),
-                project_id=data.get("project_id") or params.get("project_id"),
-                limit=int(data.get("limit") or params.get("limit") or 20),
-            )
-        elif operation == "record_pattern":
-            return self._record_pattern(data, params)
-        elif operation == "list_patterns":
-            return self._list_patterns(data, params)
-        elif operation == "train_router":
-            return self._train_router(data, params)
-        elif operation == "predict_route":
-            return self._predict_route(data, params)
-        elif operation == "route_metrics":
-            return self._route_metrics(data, params)
         else:
-            return {
-                "status": "error",
-                "error": (
-                    f"Unknown operation: {operation}. Use: record_correction, tune, "
-                    "promote, status, reset, hydrate, hydration_latest, hydration_history, "
-                    "record_pattern, list_patterns, train_router, predict_route, route_metrics"
-                ),
-            }
-
-    # ── Non-numeric observations (the hydration writeback target) ─────────
-    #
-    # `_record_correction` above is strictly for predicted-vs-actual numeric
-    # tuning. The hydration pass produces a different kind of signal — "user
-    # asked about rebar three times this week", "this project's chats keep
-    # surfacing complaint language". These are categorical observations,
-    # not regression samples, so they live in their own state slot.
-
-    def _record_pattern(self, data: Dict, params: Dict) -> Dict:
-        """Append one observation to the patterns corpus.
-
-        Schema: ``_state["patterns"][project_id][category]`` is a list of
-        ``{observation, source, run_date, ts}`` dicts. The corpus stays
-        unbounded for now — hydration only adds a handful per run; if it
-        ever grows beyond practical limits we can age it out by run_date.
-        """
-        project_id = data.get("project_id") or params.get("project_id")
-        category = data.get("category") or params.get("category") or "general"
-        observation = data.get("observation") or params.get("observation")
-        if not project_id or not observation:
-            return {"status": "error", "error": "project_id and observation required"}
-
-        # Lock the read-modify-write window. Before this lock, two threads
-        # calling _record_pattern concurrently would both serialise + write
-        # _state and the second's _save_state would silently overwrite any
-        # bucket changes the first had committed to disk. The list.append
-        # itself is GIL-atomic, but the write-to-file is not. Reviewer fix
-        # from PRs #19-#23 retro.
-        with self._state_lock:
-            # Defensive init for state loaded from disk before this slot existed
-            if "patterns" not in self._state:
-                self._state["patterns"] = {}
-            bucket = self._state["patterns"].setdefault(project_id, {}).setdefault(category, [])
-            bucket.append({
-                "observation": str(observation),
-                "source": data.get("source") or params.get("source") or "manual",
-                "run_date": data.get("run_date") or params.get("run_date"),
-                "ts": time.time(),
-            })
-            self._save_state()
-            total = len(bucket)
-        return {
-            "status": "success",
-            "project_id": project_id,
-            "category": category,
-            "total_observations": total,
-        }
-
-    # ── Learned chat router (PR 1 — Applied ML) ───────────────────────────
-    #
-    # See app/core/learning/router.py for the heavy logic. The block keeps
-    # only the dispatch layer and the metadata-in-state plumbing — same
-    # pattern as the hydrate / hydration_latest / hydration_history ops.
-
-    def _train_router(self, data: Dict, params: Dict) -> Dict:
-        from app.core.learning import router as _router
-
-        prefer_corrected = bool(data.get("prefer_corrected") or params.get("prefer_corrected"))
-        min_samples = int(data.get("min_samples") or params.get("min_samples") or _router._MIN_TOTAL_SAMPLES)
-        # feature_mode: "tfidf" (PR 1 baseline, no extra deps) or "embeddings"
-        # (PR 2.5, needs sentence-transformers). Defaults to tfidf so a fresh
-        # repo with no RAG deps installed still trains successfully.
-        feature_mode = (
-            data.get("feature_mode")
-            or params.get("feature_mode")
-            or os.environ.get("ROUTER_FEATURE_MODE", "tfidf")
-        )
-        result = _router.train(
-            prefer_corrected=prefer_corrected,
-            min_samples=min_samples,
-            feature_mode=feature_mode,
-        )
-
-        # Persist metadata on the block's state so predict_route can do
-        # integrity checks (sha256 + label set) without re-reading the file.
-        if result.get("status") == "success":
-            if "models" not in self._state:
-                self._state["models"] = {}
-            # Strip per_class_metrics from the persisted snapshot to keep the
-            # state JSON readable; route_metrics returns them fresh from the
-            # full result on the response.
-            persisted = {k: v for k, v in result.items() if k not in ("status", "per_class_metrics")}
-            persisted["per_class_metrics"] = result.get("per_class_metrics", {})
-            self._state["models"]["router"] = persisted
-            self._save_state()
-            # Cache invalidation (P2 from Codex on PR #27 review): /v1/execute
-            # runs train_router through app.dependencies.block_instances which
-            # is a DIFFERENT instance than the smart_orchestrator's cached
-            # shared_instance(). Without this drop, the singleton keeps the
-            # OLD models.router.sha256 in its _state; the next _predict_route
-            # compares it against the freshly-rewritten joblib file, the
-            # integrity check fails, and learned routing silently falls back
-            # to the keyword regex until the process restarts. Drop here so
-            # the next shared_instance() call loads the new metadata.
-            #
-            # If `self` happens to be the cached singleton (e.g. auto-retrain
-            # via hydration_scheduler), self stays alive for the rest of this
-            # call; the next shared_instance() builds a fresh instance.
-            self.__class__.reset_shared_instance_cache()
-        return result
-
-    def _predict_route(self, data: Dict, params: Dict) -> Dict:
-        from app.core.learning import router as _router
-
-        text = data.get("text") or data.get("message") or data.get("input") or params.get("text") or ""
-        threshold = float(
-            data.get("confidence_threshold")
-            or params.get("confidence_threshold")
-            or _router.DEFAULT_CONFIDENCE_THRESHOLD
-        )
-        metadata = self._state.get("models", {}).get("router")
-        result = _router.predict(text, metadata=metadata, confidence_threshold=threshold)
-        return {"status": "success", **result}
-
-    def _route_metrics(self, data: Dict, params: Dict) -> Dict:
-        from app.core.learning import router as _router
-
-        metadata = self._state.get("models", {}).get("router")
-        return _router.evaluate(metadata=metadata)
-
-    def _list_patterns(self, data: Dict, params: Dict) -> Dict:
-        """Read the patterns corpus. Filter by project_id and/or category."""
-        if "patterns" not in self._state:
-            return {"status": "success", "patterns": {}, "count": 0}
-        project_id = data.get("project_id") or params.get("project_id")
-        category = data.get("category") or params.get("category")
-        patterns = self._state["patterns"]
-        if project_id:
-            patterns = {project_id: patterns.get(project_id, {})}
-        if category:
-            patterns = {
-                pid: {category: bucket.get(category, [])}
-                for pid, bucket in patterns.items()
-            }
-        count = sum(
-            len(items)
-            for buckets in patterns.values()
-            for items in buckets.values()
-        )
-        return {"status": "success", "patterns": patterns, "count": count}
+            return {"status": "error", "error": f"Unknown operation: {operation}. Use: record_correction, tune, promote, status, reset"}
 
     async def _record_correction(self, data: Dict, params: Dict) -> Dict:
         correction = data.get("correction_data", {})
@@ -383,6 +285,52 @@ class LearningEngineBlock(UniversalBlock):
         if promoted:
             formula["tier"] = tier
 
+        # ── credibility + drift detection ─────────────────────────────
+        # Snapshot the credibility record BEFORE recompute so we can:
+        #   1. compare current accuracy against accuracy_at_promotion
+        #   2. detect tier transitions (record.tier vs updated.tier)
+        # `_credibility_record` returns a fresh CredibilityRecord copy
+        # built from persisted state — mutating it is safe.
+        record_before = self._credibility_record(formula_id)
+        previous_tier = record_before.tier
+        # Capture the pre-evaluation baseline because evaluate_promotion
+        # rewrites accuracy_at_promotion on tier change.
+        baseline_at_promotion = record_before.accuracy_at_promotion
+
+        new_accuracy = self._accuracy_from_samples(formula.get("samples", []))
+        new_sample_size = self._sample_count(formula_id)
+
+        # `detect_drift` gates on `record.sample_size`. The persisted
+        # record carries the previous eval's sample count; bump it to
+        # `max(persisted, current)` so a stream of fresh corrections
+        # actually counts toward the min_samples floor without losing
+        # prior history that lived in `formula["credibility"]`.
+        if new_sample_size > record_before.sample_size:
+            record_before.sample_size = new_sample_size
+        drift_detected = self._credibility_scorer.detect_drift(
+            record_before, new_accuracy,
+        )
+
+        # Recompute tier with the latest stats (mutates record_before).
+        updated = self._credibility_scorer.evaluate_promotion(
+            record_before, new_accuracy, new_sample_size,
+            reason="correction recorded",
+        )
+        formula["credibility"] = updated.to_dict()
+
+        if drift_detected:
+            self._handle_drift_event(
+                formula_id=formula_id,
+                baseline_accuracy=baseline_at_promotion,
+                new_accuracy=new_accuracy,
+                new_sample_size=new_sample_size,
+                tier_before=previous_tier,
+                tier_after=updated.tier,
+            )
+
+            if updated.tier > CredibilityTier.OPERATIONAL:
+                self._enqueue_retrain(formula_id)
+
         self._save_state()
 
         return {
@@ -393,8 +341,81 @@ class LearningEngineBlock(UniversalBlock):
             "promotion_flag": promoted,
             "sample_count": len(formula["samples"]),
             "auto_tuned": tuned,
-            "tier_gated_by": formula.get("tier_gated_by"),
+            "credibility": {
+                "tier": str(updated.tier),
+                "tier_name": updated.tier.name,
+                "previous_tier": str(previous_tier),
+                "previous_tier_name": previous_tier.name,
+                "accuracy": new_accuracy,
+                "sample_size": new_sample_size,
+                "drift_detected": drift_detected,
+                "promoted": updated.tier != previous_tier,
+            },
         }
+
+    def _handle_drift_event(
+        self,
+        *,
+        formula_id: str,
+        baseline_accuracy: float,
+        new_accuracy: float,
+        new_sample_size: int,
+        tier_before: CredibilityTier,
+        tier_after: CredibilityTier,
+    ) -> None:
+        """Persist a drift event and forward to MLflow.
+
+        Both writes are best-effort: MLflow is no-op when not configured,
+        and state writes are wrapped because callers must never have a
+        correction-recording flow fail because of a logging side effect.
+        """
+        try:
+            from app.core.mlflow_tracker import tracker
+            with tracker.start_run(f"drift-{formula_id}"):
+                tracker.log_metrics({
+                    "accuracy_at_promotion": float(baseline_accuracy),
+                    "current_accuracy": float(new_accuracy),
+                    "drift_delta": float(baseline_accuracy) - float(new_accuracy),
+                    "sample_size": float(new_sample_size),
+                })
+                tracker.log_param("formula_id", formula_id)
+                tracker.log_param("tier_before", str(tier_before))
+                tracker.log_param("tier_after", str(tier_after))
+        except Exception:
+            logger.exception("learning: MLflow drift logging failed")
+
+        # Persist into learning_state.json so operators can audit drift
+        # without a separate event store.
+        self._state.setdefault("drift_events", []).append({
+            "formula_id": formula_id,
+            "at": time.time(),
+            "from_accuracy": float(baseline_accuracy),
+            "to_accuracy": float(new_accuracy),
+            "tier_before": str(tier_before),
+            "tier_after": str(tier_after),
+        })
+        self._save_state()
+
+    def _enqueue_retrain(self, formula_id: str) -> None:
+        """Best-effort retrain enqueue.
+
+        When Celery is wired and the broker is reachable, ``.delay()``
+        ships the task. When it isn't (CI, local dev without Redis),
+        record the formula_id in a ``pending_retrains`` queue inside the
+        learning state file so an operator/cron job can pick them up
+        later. Either way, never raise — drift handling must not break
+        correction recording.
+        """
+        try:
+            from app.tasks.learning_retrain import retrain_formula
+            retrain_formula.delay(formula_id)
+        except Exception:
+            logger.exception("learning: retrain enqueue failed; recording as pending")
+            self._state.setdefault("pending_retrains", []).append({
+                "formula_id": formula_id,
+                "at": time.time(),
+            })
+            self._save_state()
 
     async def _tune_coefficients(self, data: Dict, params: Dict) -> Dict:
         formula_id = data.get("formula_id") or params.get("formula_id")
@@ -422,7 +443,6 @@ class LearningEngineBlock(UniversalBlock):
                 "mae": mae,
                 "tier_level": formula["tier"],
                 "promotion_flag": promoted,
-                "tier_gated_by": formula.get("tier_gated_by"),
             }
 
         self._save_state()
@@ -448,13 +468,14 @@ class LearningEngineBlock(UniversalBlock):
             tier, promoted = self._compute_tier(formula)
             if promoted:
                 formula["tier"] = tier
+            credibility = self._update_credibility(fid, reason="promotion eval")
             results[fid] = {
                 "old_tier": old_tier,
                 "new_tier": formula["tier"],
                 "promoted": promoted,
                 "executions": formula["executions"],
                 "sample_count": len(formula["samples"]),
-                "tier_gated_by": formula.get("tier_gated_by"),
+                "credibility": credibility,
             }
 
         self._save_state()
@@ -464,18 +485,27 @@ class LearningEngineBlock(UniversalBlock):
             "tier_level": list({v["new_tier"] for v in results.values()}),
             "updated_coefficients": {},
             "promotion_flag": any(v["promoted"] for v in results.values()),
+            "credibility_promotion_flag": any(
+                v["credibility"]["promoted"] for v in results.values()
+            ),
         }
 
     def _get_status(self) -> Dict:
         summary = {}
+        credibility_dist: Dict[str, int] = {}
         for fid, formula in self._state["formulas"].items():
+            cred = formula.get("credibility") or {}
             summary[fid] = {
                 "tier": formula["tier"],
                 "executions": formula["executions"],
                 "samples": len(formula["samples"]),
                 "coefficients": formula["coefficients"],
                 "last_mae": formula.get("last_mae"),
+                "credibility": cred,
             }
+            cred_name = cred.get("tier_name")
+            if cred_name:
+                credibility_dist[cred_name] = credibility_dist.get(cred_name, 0) + 1
         tier_dist: Dict[str, int] = {}
         for f in self._state["formulas"].values():
             t = f["tier"]
@@ -484,6 +514,7 @@ class LearningEngineBlock(UniversalBlock):
             "status": "success",
             "total_formulas": len(self._state["formulas"]),
             "tier_distribution": tier_dist,
+            "credibility_distribution": credibility_dist,
             "formula_summary": summary,
             "tier_level": list(tier_dist.keys()),
             "updated_coefficients": {},
@@ -524,51 +555,14 @@ class LearningEngineBlock(UniversalBlock):
             return {"scale": round(scale, 6), "bias": 0.0}, round(mae, 5)
 
     def _compute_tier(self, formula: Dict) -> tuple:
-        """Determine a formula's tier from both exec count AND last MAE.
-
-        A formula must satisfy BOTH gates to be promoted:
-          - n_exec  >= the tier's exec-count threshold (from _TIER_RULES)
-          - last_mae < the configured promotion_mae_threshold
-
-        A model with 200 runs but 40% error has no business reaching platinum,
-        so a poor MAE caps the tier at the previous level. The returned dict
-        carries `tier_gated_by` so the caller can see which gate kept a
-        formula from advancing.
-        """
         n_exec = formula["executions"]
         current_tier = formula["tier"]
         tier_order = ["bronze", "silver", "gold", "platinum"]
 
-        mae_threshold = float(self.config.get("promotion_mae_threshold", 0.05))
-        last_mae = formula.get("last_mae")
-
-        # Compute the tier the exec count alone would justify.
-        exec_tier = "bronze"
+        new_tier = "bronze"
         for threshold, tier in _TIER_RULES:
             if n_exec >= threshold:
-                exec_tier = tier
-
-        # MAE gate: only allow advancement past bronze when MAE is known and
-        # below the threshold. Unknown MAE means we have no signal yet — keep
-        # the formula at bronze until tuning has produced an MAE.
-        mae_passes = last_mae is not None and last_mae < mae_threshold
-
-        if mae_passes:
-            new_tier = exec_tier
-            tier_gated_by = "exec_count"
-        else:
-            new_tier = "bronze"
-            tier_gated_by = "mae_threshold"
-
-        # Never demote: if the formula is already higher than what the gates
-        # justify (e.g. MAE just regressed), keep its existing tier.
-        if tier_order.index(new_tier) < tier_order.index(current_tier):
-            new_tier = current_tier
+                new_tier = tier
 
         promoted = tier_order.index(new_tier) > tier_order.index(current_tier)
-
-        # Stash the gating reason on the formula so callers can debug stalled
-        # promotions without re-deriving it.
-        formula["tier_gated_by"] = tier_gated_by
-
         return new_tier, promoted

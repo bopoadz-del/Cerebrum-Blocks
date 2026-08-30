@@ -75,6 +75,7 @@
     "analytics",
     "reporting"
   ],
+  "trust_tier": "platform",
   "ui_schema": [
     {
       "label": "{\"variance_data\": [{\"item\": \"concrete_c30\", \"variance_pct\": 18.5, \"cost_impact_usd\": 42000}]}",

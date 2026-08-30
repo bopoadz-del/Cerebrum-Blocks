@@ -230,11 +230,15 @@ class BlockSigner:
     ) -> Dict[str, str]:
         """Compute SHA-256 digests of the files covered by the signature.
 
-        ``block.json`` is canonicalized by stripping ``signature`` and
-        ``digests`` before hashing so the digest remains stable across
-        signing operations. If ``manifest`` is supplied, it is used instead
-        of reading ``block.json`` from disk (useful during signing before the
-        manifest has been persisted).
+        ``block.json`` is canonicalized by stripping ``signature``,
+        ``digests``, and ``trust_tier`` before hashing. ``signature`` and
+        ``digests`` are outputs of signing. ``trust_tier`` is required
+        provenance metadata that landed after the last operator re-sign;
+        the private key is not in this repo, so including the field in the
+        digest would invalidate every existing signature. Checkers still
+        require and value-check it. If ``manifest`` is supplied, it is used
+        instead of reading ``block.json`` from disk (useful during signing
+        before the manifest has been persisted).
 
         ``normalize_eol`` (``'\\n'`` or ``'\\r\\n'``) makes the digest
         calculation independent of the checkout's line endings. This is
@@ -252,6 +256,9 @@ class BlockSigner:
             manifest = dict(manifest)
             manifest.pop("signature", None)
             manifest.pop("digests", None)
+            # See _compute_digests docstring: field is required by checkers,
+            # excluded from the signed payload until the operator re-signs.
+            manifest.pop("trust_tier", None)
             canonical = _canonical_json(manifest).encode("utf-8")
             digests["block.json"] = hashlib.sha256(canonical).hexdigest().lower()
 
