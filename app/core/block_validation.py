@@ -21,6 +21,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set
 
+from app.core.manifest_contract import check_contract_fields
 from app.core.trust_tier import check_trust_tier
 
 logger = logging.getLogger(__name__)
@@ -291,6 +292,9 @@ class BlockValidator:
                 reasons.append(f"missing required manifest field: {field_name}")
         if "trust_tier" in manifest and manifest.get("trust_tier") not in (None, ""):
             reasons.extend(check_trust_tier(manifest))
+        # Contract fields are optional in this phase; only declared ones are
+        # checked. See app/core/manifest_contract.py.
+        reasons.extend(check_contract_fields(manifest))
         return reasons
 
     def _verify_signature(self, block_path: Path, publisher_id: Optional[str]) -> List[str]:
