@@ -19,6 +19,18 @@ assert _spec.loader is not None
 _spec.loader.exec_module(_trust)
 check_trust_tier = _trust.check_trust_tier
 
+# Same treatment for the contract fields (KERNEL_DEFAULTS 1.2 / L2.2).
+# manifest_contract.py resolves the BlockResult status set by path when it is
+# loaded this way, so there is still only one definition of the four.
+_spec_contract = importlib.util.spec_from_file_location(
+    "manifest_contract_pin", ROOT / "app" / "core" / "manifest_contract.py"
+)
+_contract = importlib.util.module_from_spec(_spec_contract)
+assert _spec_contract.loader is not None
+_spec_contract.loader.exec_module(_contract)
+check_contract_fields = _contract.check_contract_fields
+CONTRACT_MANIFEST_KEYS = _contract.CONTRACT_MANIFEST_KEYS
+
 REGISTRY_ROOT = ROOT / "block_registry"
 SKIP_DIRS = {"__pycache__"}
 
@@ -70,6 +82,12 @@ def audit_block(block_dir: Path) -> dict:
                 result["errors"].append("missing required field: trust_tier")
             else:
                 result["errors"].append(reason)
+
+    # Contract fields are OPTIONAL in this phase, so absence is silent. A
+    # field that IS declared gets checked: a half-filled requires_inputs is
+    # worse than none, because a planner reading it will guess or crash.
+    for reason in check_contract_fields(manifest):
+        result["errors"].append(reason)
 
     for key in RECOMMENDED_MANIFEST_KEYS:
         if not manifest.get(key):
