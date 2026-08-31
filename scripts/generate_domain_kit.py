@@ -69,7 +69,18 @@ SKELETON_FILES = [
     "prompts/{domain}_expert.txt",
     "prompts/{domain}_workflow.md",
     "blocks/README.md",
+    # KERNEL_DEFAULTS 1.3: a block and the three tests it must ship with.
+    # The template renders both without edits -- see
+    # tests/core/test_template_three_tests.py, which generates a throwaway
+    # kit, runs the rendered tests, and deletes it.
+    "blocks/{domain}_block.py",
+    "tests/test_{domain}_block.py",
 ]
+
+#: Template paths whose FILENAME carries the domain. On disk the template is
+#: ``prompts/{{domain}}_expert.txt``; the rendered kit gets
+#: ``prompts/dental_expert.txt``. Both halves of that mapping live here.
+_DOMAIN_NAMED_DIRS = ("prompts/", "blocks/", "tests/")
 
 CONNECTOR_STUBS: dict[str, list[str]] = {
     "medical": [
@@ -232,7 +243,7 @@ def generate_domain_kit(
     for rel in SKELETON_FILES:
         rel_rendered = rel.format(domain=domain_id)
         template_rel = rel_rendered
-        if rel.startswith("prompts/"):
+        if rel.startswith(_DOMAIN_NAMED_DIRS):
             template_rel = rel.replace("{domain}", "{{domain}}")
         content = _render(_load_template(template_rel), context)
         dest = kit_dir / rel_rendered

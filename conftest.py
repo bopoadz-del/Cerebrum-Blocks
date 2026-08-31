@@ -16,5 +16,11 @@ os.environ.setdefault("CEREBRUM_VIRGIN", "false")
 collect_ignore_glob = [
     "cli/tests",
     "block_store/kits/_template/cli/tests",
+    # The block template renders to tests/test_<domain>_block.py. Un-rendered,
+    # its filename still holds the {{domain}} placeholder, which is not an
+    # importable module name -- collecting it from the repo root is an error,
+    # not a failing test. It is exercised by generating a kit from the
+    # template: tests/core/test_template_three_tests.py.
+    "block_store/kits/_template/tests",
     "block_store/kits/construction/bundle/cli/tests",
 ]
