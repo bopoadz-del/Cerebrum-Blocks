@@ -8,9 +8,37 @@ from app.core.universal_base import UniversalBlock
 from typing import Dict, Any, List, Optional
 import asyncio
 import hashlib
+import json
+import logging
+import os
 import secrets
 from datetime import datetime, timedelta
 from enum import Enum
+from pathlib import Path
+
+_LOG = logging.getLogger(__name__)
+
+# Actions that change team state and therefore have to survive the call.
+# A dispatcher constructs a fresh block per call, so anything held only in
+# instance attributes is gone before the next action runs.
+_MUTATING_ACTIONS = frozenset({
+    "create_team",
+    "delete_team",
+    "invite_member",
+    "accept_invitation",
+    "remove_member",
+    "set_role",
+    "update_team",
+    "leave_team",
+})
+
+
+def _state_path() -> Path:
+    """Where team state lives. Same STORAGE_PATH convention as the rest of
+    the platform (see app/core/grounding.py)."""
+    root = Path(os.getenv("STORAGE_PATH", "./storage")) / "team"
+    root.mkdir(parents=True, exist_ok=True)
+    return root / "state.json"
 
 
 class TeamRole(Enum):
@@ -76,9 +104,50 @@ class TeamBlock(UniversalBlock):
     
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)
-        self.teams: Dict[str, Dict] = {}  # In-memory cache
-        self.memberships: Dict[str, List[Dict]] = {}  # team_id -> members
-        self.invitations: Dict[str, Dict] = {}  # token -> invitation
+        # Loaded from disk, not started empty: a dispatcher builds a fresh
+        # TeamBlock for every action, so create_team followed by get_team
+        # used to answer "Team not found" even inside one process.
+        state = self._load_state()
+        self.teams: Dict[str, Dict] = state["teams"]
+        self.memberships: Dict[str, List[Dict]] = state["memberships"]
+        self.invitations: Dict[str, Dict] = state["invitations"]
+
+    @staticmethod
+    def _load_state() -> Dict[str, Dict]:
+        empty: Dict[str, Dict] = {"teams": {}, "memberships": {}, "invitations": {}}
+        try:
+            raw = json.loads(_state_path().read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return empty
+        except (OSError, ValueError) as exc:
+            _LOG.warning("team: unreadable state file, starting empty (%s)", exc)
+            return empty
+        if not isinstance(raw, dict):
+            _LOG.warning("team: state file is not an object, starting empty")
+            return empty
+        for key in empty:
+            value = raw.get(key)
+            if isinstance(value, dict):
+                empty[key] = value
+        return empty
+
+    def _save_state(self) -> None:
+        """Persist after a mutating action. Written whole and swapped in, so a
+        crash mid-write cannot leave a half-written team registry behind."""
+        payload = {
+            "teams": self.teams,
+            "memberships": self.memberships,
+            "invitations": self.invitations,
+        }
+        target = _state_path()
+        tmp = target.with_name(target.name + ".tmp")
+        try:
+            tmp.write_text(json.dumps(payload, default=str), encoding="utf-8")
+            tmp.replace(target)
+        except (OSError, TypeError, ValueError) as exc:
+            # Loud, not silent: losing this write is the exact defect this
+            # method exists to end.
+            _LOG.error("team: could not persist state to %s (%s)", target, exc)
         
     async def _legacy_initialize(self) -> bool:
         """Initialize team management"""
@@ -86,11 +155,11 @@ class TeamBlock(UniversalBlock):
         print(f"   Max members/team: {self.config['max_members_per_team']}")
         print(f"   Max teams/org: {self.config['max_teams_per_org']}")
         
-        # TODO: Create database tables if using persistent storage
-        # - teams: id, name, slug, owner_id, plan, created_at
-        # - team_memberships: team_id, user_id, role, joined_at
-        # - invitations: token, team_id, email, role, expires_at
-        # - team_resources: team_id, resource_type, resource_id, quota
+        # State is persisted as JSON under STORAGE_PATH/team/state.json and
+        # reloaded in __init__ (see _load_state / _save_state). That is what
+        # makes create_team -> get_team survive a fresh block instance.
+        # Still TODO, and deliberately not done here: real tables for
+        # team_resources quotas, and indexed lookups for large tenancies.
         
         self.initialized = True
         return True
@@ -117,7 +186,12 @@ class TeamBlock(UniversalBlock):
         }
         
         if action in actions:
-            return await actions[action](input_data)
+            result = await actions[action](input_data)
+            if action in _MUTATING_ACTIONS and not (
+                isinstance(result, dict) and result.get("error")
+            ):
+                self._save_state()
+            return result
             
         return {"error": f"Unknown action: {action}", "available": list(actions.keys())}
         
