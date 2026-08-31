@@ -141,7 +141,7 @@ jobs:
         # report-only conformance checks: this covers a module added in
         # the same PR, so a red here is this PR's own defect.
         run: |
-          pytest -q tests/core/test_block_result.py tests/core/test_manifest_contract.py tests/core/test_template_three_tests.py
+          pytest -q tests/core/test_block_result.py tests/core/test_manifest_contract.py tests/core/test_template_three_tests.py tests/core/test_lane2_conformance.py
 
       - name: Run all-blocks tests
         run: pytest -q tests/test_all_blocks.py
