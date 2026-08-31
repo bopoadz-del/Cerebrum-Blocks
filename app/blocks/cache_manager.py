@@ -46,8 +46,17 @@ class CacheManagerBlock(UniversalBlock):
         super().__init__(hal_block, config)
         self._local_cache: Dict[str, Dict] = {}
 
+    @property
     def _redis(self):
-        """Return the shared sync Redis client (lazy, singleton, fail-soft)."""
+        """Return the shared sync Redis client, or None (lazy, fail-soft).
+
+        MUST stay a property. It was a plain method while every call site
+        used it as an attribute (`if self._redis:` / `self._redis.get`).
+        A bound method is always truthy, so the Redis branch was taken even
+        with no Redis configured, `.get`/`.setex` raised AttributeError into
+        the `except Exception` handlers, and every cache call returned
+        {"status": "error"}. The local in-memory fallback was unreachable.
+        """
         return get_sync_redis_client()
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
@@ -74,7 +83,7 @@ class CacheManagerBlock(UniversalBlock):
         if not key:
             return {"status": "error", "error": "No key provided"}
 
-        if self._redis:
+        if self._redis is not None:
             try:
                 raw = self._redis.get(key)
                 if raw is None:
@@ -97,7 +106,7 @@ class CacheManagerBlock(UniversalBlock):
         value = params.get("value") or (input_data.get("value") if isinstance(input_data, dict) else None)
         ttl = params.get("ttl", self.config.get("default_ttl", 3600))
 
-        if self._redis:
+        if self._redis is not None:
             try:
                 self._redis.setex(key, ttl, json.dumps(value))
                 return {"status": "success", "action": "set", "key": key, "ttl": ttl}
@@ -117,7 +126,7 @@ class CacheManagerBlock(UniversalBlock):
         if not key:
             return {"status": "error", "error": "No key provided"}
 
-        if self._redis:
+        if self._redis is not None:
             try:
                 deleted = self._redis.delete(key)
                 return {"status": "success", "deleted": bool(deleted), "key": key}
@@ -134,7 +143,7 @@ class CacheManagerBlock(UniversalBlock):
         if not key:
             return {"status": "error", "error": "No key provided"}
 
-        if self._redis:
+        if self._redis is not None:
             try:
                 return {"status": "success", "exists": bool(self._redis.exists(key)), "key": key}
             except Exception as e:
@@ -146,7 +155,7 @@ class CacheManagerBlock(UniversalBlock):
 
     async def flush(self, input_data: Any = None, params: Dict = None) -> Dict:
         """Clear all cached entries."""
-        if self._redis:
+        if self._redis is not None:
             try:
                 self._redis.flushdb()
                 return {"status": "success", "action": "flush"}
@@ -159,7 +168,7 @@ class CacheManagerBlock(UniversalBlock):
 
     async def stats(self, input_data: Any = None, params: Dict = None) -> Dict:
         """Return cache statistics."""
-        if self._redis:
+        if self._redis is not None:
             try:
                 info = self._redis.info()
                 return {
