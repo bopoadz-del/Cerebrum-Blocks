@@ -35,7 +35,29 @@ class DatabaseBlock(UniversalBlock):
         'quick_actions': [],
     }
 
-    def __init__(self, hal_block, config: Dict[str, Any]):
+    def __init__(self, hal_block=None, config: Optional[Dict[str, Any]] = None):
+        """Both arguments optional, as UniversalBlock declares them.
+
+        This block was the only one in the roster that narrowed its base
+        class's signature to two REQUIRED arguments. Every sibling --
+        storage, team, workflow, dashboard, capture -- takes
+        ``(hal_block=None, config=None)``, and so does UniversalBlock itself,
+        so every generic caller constructs blocks as ``block_cls()``.
+
+        On ``database`` that raised, and the caller could only report the
+        raw TypeError. From a booted generated platform, running a two-step
+        pipeline whose first step writes a punch-list item:
+
+            {"status": "partial", "results": [{"step_id": "step_0",
+              "block": "database", "status": "failed",
+              "error": "DatabaseBlock.__init__() missing 2 required
+                        positional arguments: 'hal_block' and 'config'"}]}
+
+        No workflow pipeline could ever include a database step. Nothing is
+        invented here: the body already reads config with ``.get`` defaults
+        and already falls back to ``_default_sqlite_path()``.
+        """
+        config = config or {}
         super().__init__(hal_block, config)
         self.backend = config.get("backend", "sqlite")
         configured = config.get("connection_string")
