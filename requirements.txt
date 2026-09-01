@@ -52,6 +52,11 @@ openpyxl==3.1.5
 # scripts/intake_kit.py, but never declared -- it has been arriving
 # transitively, which is luck rather than a dependency.
 PyYAML==6.0.3
+# Imported by block_store/kits/universal_kernel/wave1/identity/code.py
+# and never declared. Undetectable while CI ran a fifth of the suite:
+# the only test that reaches it, tests/universal_kernel/test_trust_chain.py,
+# was one of the 103 files never executed.
+bcrypt==4.2.1
 
 # Sandboxed code execution for formula_executor_v2 / reasoning engine
 RestrictedPython==8.4
