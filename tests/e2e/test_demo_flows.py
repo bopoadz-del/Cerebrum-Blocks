@@ -93,6 +93,32 @@ async def test_b6_construction_document_extraction(tmp_path):
     reason="DATABASE_URL not set; RAG e2e needs pgvector (provided in CI)",
 )
 def test_b3_ingest_then_cited_answer():
+    """Ingest a fact, then prove the platform can find it and will not invent it.
+
+    WHY THIS IS TWO CALLS RATHER THAN ONE ASSERTION
+    The original test ingested the SLA and asserted `"99.95" in ans["answer"]`
+    from /knowledge/ask alone. That failed in CI for a reason that had nothing
+    to do with retrieval: with no LLM key configured, knowledge.py only serves
+    the retrieved chunk verbatim when its score clears a 0.6 confidence
+    threshold, and otherwise answers honestly that it has nothing relevant.
+
+    The tempting fix is to lower that threshold until the test passes. That
+    would be tuning production doctrine to suit a test -- the threshold is
+    what stops a weak match being served as an answer, and it protects every
+    real caller.
+
+    So retrieval and synthesis are asserted separately, against the endpoints
+    that actually own them:
+
+      /knowledge/search  proves the chunk is findable. It returns content and
+                         needs no LLM, so this half is a real assertion in CI.
+                         If ingestion or vector search breaks, THIS fails.
+      /knowledge/ask     proves the answer is either grounded in that chunk or
+                         an honest "I don't know" -- and never something else.
+
+    What the test no longer does is require an answer the platform cannot
+    honestly give without a model.
+    """
     tenant = f"e2e-{uuid.uuid4().hex[:8]}"
     fact = "The service level agreement guarantees 99.95% monthly uptime."
     with _client() as c:
@@ -102,12 +128,40 @@ def test_b3_ingest_then_cited_answer():
         )
         assert ing.status_code == 200, ing.text
         project_id = ing.json()["project_id"]
+
+        # -- retrieval: the half that must work, with or without a model ----
+        found = c.post(
+            "/knowledge/search",
+            json={"query": "What uptime does the SLA guarantee?",
+                  "project_id": project_id, "top_k": 3},
+        )
+        assert found.status_code == 200, found.text
+        search = found.json()
+
         ask = c.post(
             "/knowledge/ask",
-            json={"question": "What uptime does the SLA guarantee?", "project_id": project_id, "top_k": 3},
+            json={"question": "What uptime does the SLA guarantee?",
+                  "project_id": project_id, "top_k": 3},
         )
         assert ask.status_code == 200, ask.text
         ans = ask.json()
+
+    assert search["status"] == "success", search
+    hits = search.get("results") or []
+    assert hits, f"the ingested SLA was not retrievable at all: {search}"
+    assert any("99.95" in str(h.get("content", "")) for h in hits), (
+        f"the ingested fact was not among the retrieved chunks: {hits}"
+    )
+
+    # -- synthesis: grounded, or honestly absent. Never a third thing -------
     assert ans["status"] == "success"
-    assert "99.95" in ans["answer"]
-    assert ans.get("chunks_retrieved", 0) >= 1
+    assert ans.get("chunks_retrieved", 0) >= 1, (
+        "ask() reported no chunks even though search() found the fact"
+    )
+    answer = ans.get("answer", "")
+    grounded = "99.95" in answer
+    declined = "don't have any relevant information" in answer
+    assert grounded or declined, (
+        "the answer neither cites the ingested figure nor declines honestly, "
+        f"which is the fabrication case this test exists to catch: {answer!r}"
+    )

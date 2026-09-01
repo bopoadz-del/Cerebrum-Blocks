@@ -202,9 +202,28 @@ async def test_monitoring_block():
     print("\n6. Testing PROVIDER STATUS...")
     status = await monitoring.process({
         "action": "provider_status",
-        "provider": "deepseek"
+        # The platform tracks kimi only. This asked for "deepseek" and
+        # read status["reliability_score"] straight out, so the block
+        # correctly answered {"error": "Unknown provider"} and the test
+        # raised KeyError. It had been failing since the provider list
+        # changed, unseen, because this file was one of the 103 CI never
+        # ran. Ask about a tracked provider, and pin the unknown answer
+        # rather than tripping over it.
+        "provider": next(iter(monitoring.providers))
     }, {"action": "provider_status"})
-    print(f"   DeepSeek reliability: {status['reliability_score']}%")
+    assert "reliability_score" in status, status
+    assert status["provider"] == next(iter(monitoring.providers))
+    print(f"   {status['provider']} reliability: {status['reliability_score']}%")
+
+    unknown = await monitoring.process({
+        "action": "provider_status",
+        "provider": "a-provider-nobody-configured"
+    }, {"action": "provider_status"})
+    assert unknown.get("error") == "Unknown provider", unknown
+    assert "reliability_score" not in unknown, (
+        "an unknown provider must not be given a score"
+    )
+    print("   unknown provider -> reported, not scored")
 
     print("\n✅ Monitoring Block tests PASSED!")
     return True
