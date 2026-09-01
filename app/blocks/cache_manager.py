@@ -5,6 +5,7 @@ import time
 from typing import Any, Dict, Optional
 from app.core.universal_base import UniversalBlock
 from app.core.redis_infra import get_sync_redis_client
+from app.core.block_config import Config, fallback_note
 
 
 class CacheManagerBlock(UniversalBlock):
@@ -47,8 +48,20 @@ class CacheManagerBlock(UniversalBlock):
         self._local_cache: Dict[str, Dict] = {}
 
     @property
+    def settings(self) -> Config:
+        """The settings this block was HANDED.
+
+        A property rather than an attribute set in ``__init__`` so it cannot
+        go stale when a caller edits ``config`` after construction.
+
+        This module calls ``os.getenv`` nowhere. Reference implementation for
+        KERNEL_DEFAULTS 1.5 -- see app/core/block_config.py for why.
+        """
+        return Config(self.config)
+
+    @property
     def _redis(self):
-        """Return the shared sync Redis client, or None (lazy, fail-soft).
+        """The cache client this block was given, or None for the local rung.
 
         MUST stay a property. It was a plain method while every call site
         used it as an attribute (`if self._redis:` / `self._redis.get`).
@@ -56,8 +69,29 @@ class CacheManagerBlock(UniversalBlock):
         with no Redis configured, `.get`/`.setex` raised AttributeError into
         the `except Exception` handlers, and every cache call returned
         {"status": "error"}. The local in-memory fallback was unreachable.
+        (#87.)
+
+        Resolution, in order, and all of it injected:
+
+        1. ``redis_client``          -- a client handed straight in. This is
+           what makes the Redis-present path testable without a server.
+        2. ``cache_backend="memory"`` -- pins the fallback rung, so a zip can
+           be told to boot with no services at all.
+        3. ``redis_client_factory``  -- defaults to the shared factory, which
+           is what an un-configured block used before this change and still
+           uses now. That default is the whole non-breaking guarantee.
         """
-        return get_sync_redis_client()
+        client = self.settings.get("redis_client")
+        if client is not None:
+            return client
+        if str(self.settings.backend("cache") or "").lower() in ("memory", "local"):
+            return None
+        factory = self.settings.get("redis_client_factory") or get_sync_redis_client
+        return factory()
+
+    def _rung(self) -> str:
+        """Which rung of the ladder this block actually landed on."""
+        return "redis" if self._redis is not None else "memory"
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         """Route to appropriate cache action."""
@@ -187,16 +221,27 @@ class CacheManagerBlock(UniversalBlock):
         return {
             "status": "success",
             "backend": "local",
-            "entries": len(self._local_cache)
+            "entries": len(self._local_cache),
+            "note": fallback_note("cache", "memory"),
         }
 
     async def health_check(self, input_data: Any = None, params: Dict = None) -> Dict:
         """Health check for cache manager."""
+        rung = self._rung()
         return {
             "status": "success",
             "block": self.name,
             "version": self.version,
-            "redis_connected": get_sync_redis_client() is not None
+            # Unchanged key and meaning; now resolved through the same seam
+            # as every other method, so an injected client is not invisible
+            # here while it is honoured everywhere else.
+            "redis_connected": rung == "redis",
+            "backend": rung,
+            # Degrading is legitimate. Degrading QUIETLY is not: serving from
+            # an in-process dict while the caller believes it is talking to
+            # Redis is how a cache works in testing and loses every write in
+            # production.
+            "note": fallback_note("cache", rung),
         }
 
     def _resolve_key(self, input_data: Any, params: Dict) -> Optional[str]:
