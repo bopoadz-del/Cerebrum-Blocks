@@ -36,6 +36,8 @@
     {"src": "container.py", "dest": "app/containers/{{domain}}.py"},
     {"src": "knowledge.py", "dest": "app/core/{{domain}}_knowledge.py"},
     {"src": "types.py", "dest": "app/core/{{domain}}_types.py"},
+    {"src": "blocks/{{domain}}_block.py", "dest": "app/blocks/{{domain}}_block.py"},
+    {"src": "tests/test_{{domain}}_block.py", "dest": "tests/test_{{domain}}_block.py"},
     {"src": "prompts/{{domain}}_expert.txt", "dest": "app/prompts/{{domain}}_expert.txt"},
     {"src": "prompts/{{domain}}_workflow.md", "dest": "app/prompts/{{domain}}_workflow.md"},
     {"src": "cli/config.toml.example", "dest": "cli/config.toml.example"},
