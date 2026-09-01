@@ -31,7 +31,17 @@ def isolated_storage(tmp_path, monkeypatch):
 
 
 def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
+    """Drive one coroutine to completion, on a loop of its own.
+
+    Not ``get_event_loop()``: that only works while some *other* test has left
+    a usable loop lying around in this thread. Run this file alone and it
+    passes; run it after a test that closed the loop and all ten die on
+    "There is no current event loop" -- a failure about test ordering wearing
+    the costume of a persistence bug, which is the one thing this file must
+    never report. ``asyncio.run`` owns its loop and cannot be poisoned by a
+    neighbour. Matches tests/test_pdf_ocr_fallback.py.
+    """
+    return asyncio.run(coro)
 
 
 def _create(block, name="Acme Lettings", slug="acme-lettings", user_id="u-1"):
