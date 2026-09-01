@@ -21,6 +21,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Literal, Optional
 
+from app.core.manifest_contract import UNSIGNED_CONTRACT_KEYS
+
 try:
     from cryptography.exceptions import InvalidSignature
     from cryptography.hazmat.primitives import serialization
@@ -259,6 +261,14 @@ class BlockSigner:
             # See _compute_digests docstring: field is required by checkers,
             # excluded from the signed payload until the operator re-signs.
             manifest.pop("trust_tier", None)
+            # Same treatment, same reason (KERNEL_DEFAULTS 1.2 / L2.2): the
+            # contract fields landed after the last operator re-sign. No
+            # manifest in this repo carries one of them today, so stripping
+            # them leaves every existing digest byte-for-byte identical --
+            # tests/core/test_manifest_contract.py recomputes all 114 and
+            # proves it. Checkers still validate the fields.
+            for _field in UNSIGNED_CONTRACT_KEYS:
+                manifest.pop(_field, None)
             canonical = _canonical_json(manifest).encode("utf-8")
             digests["block.json"] = hashlib.sha256(canonical).hexdigest().lower()
 
