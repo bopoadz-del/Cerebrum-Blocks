@@ -54,6 +54,18 @@ class ConstructionContainer(
             return "bim"
         if any(x in name for x in [".xer", ".xml", "schedule", "primavera", "p6"]):
             return "schedule"
+        # XLSX/XLS — schedule when filename hints at one OR a sheet looks
+        # schedule-shaped. We extend classification here (rather than in
+        # auto_pipeline) because it's the single chokepoint for doc-typing
+        # and keeps the existing schedule branch in auto_pipeline untouched.
+        if name.endswith((".xlsx", ".xls")):
+            if any(x in name for x in ("schedule", "plan", "timeline", "programme", "program", "wbs", "l2", "l3", "l4")):
+                return "schedule"
+            try:
+                if self._xlsx_has_schedule_sheet(file_path):
+                    return "schedule"
+            except Exception:
+                logger.debug("xlsx schedule pre-classify failed for %s", file_path, exc_info=True)
         if any(x in name for x in ["contract", "agreement", "terms", "conditions", "legal"]):
             return "contract"
         if any(x in name for x in ["spec", "specification", "masterformat", "csi"]):
