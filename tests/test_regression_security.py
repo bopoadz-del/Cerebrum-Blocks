@@ -7,7 +7,8 @@ Covers:
   - APIKeyAuth: role/tier population, constant-time compare, dev-env check
   - Rate-limit SQLite store
   - capture_id form-field validation
-  - local_drive sandbox (read-only, DATA_DIR-scoped)
+  - local_drive sandbox (DATA_DIR-scoped: jails absolute paths, refuses
+    traversal, and confines writes)
   - Drive query injection guards
 """
 
@@ -17,6 +18,7 @@ import asyncio
 import os
 import sys
 import tempfile
+from pathlib import Path
 from typing import List, Tuple
 
 import pytest
@@ -302,26 +304,91 @@ def test_capture_id_regex_rejects_traversal_attempts():
 # ── local_drive sandbox (prior C1) ───────────────────────────────────────
 
 
-@pytest.mark.xfail(strict=False, reason="TODO: local_drive block treats leading-slash paths as relative and does not reject them; test expectation is outdated")
 @pytest.mark.asyncio
-async def test_local_drive_rejects_path_outside_data_dir(tmp_path, monkeypatch):
+async def test_local_drive_cannot_reach_outside_its_root(tmp_path, monkeypatch):
+    """Audit C1. The property is containment, not a particular error string.
+
+    The block jails rather than rejects: a leading slash is stripped, so
+    "/etc" resolves to <root>/etc. That is safe, and asserting on the words
+    "outside"/"permitted" (as this test used to) only checked the wording of
+    a message. What must be true is that no request reaches a real path
+    outside the root -- so that is what is asserted, by every route in.
+    """
     monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    monkeypatch.delenv("LOCAL_DRIVE_ROOT", raising=False)
     from app.blocks.local_drive import LocalDriveBlock
     b = LocalDriveBlock()
-    res = await b.process("/etc", {"operation": "list"})
-    assert res["status"] == "error"
-    assert "outside" in res.get("error", "").lower() or "permitted" in res.get("error", "").lower()
+
+    # 1. An absolute path is jailed, never followed to the real filesystem.
+    listed = await b.process("/etc", {"operation": "list"})
+    names = [f["name"] for f in listed.get("files", [])]
+    assert "passwd" not in names, f"listed the real /etc: {listed}"
+
+    # 2. Reading a real system file gets nothing back.
+    read = await b.process(None, {"operation": "read", "file_path": "/etc/passwd"})
+    assert read["status"] == "error", f"read the real /etc/passwd: {read}"
+    assert "root:" not in str(read)
+
+    # 3. Traversal is refused outright -- this one the realpath check owns.
+    # POSIX separators only: on Linux a backslash is an ordinary filename
+    # character, so "..\..\etc" is not a traversal there at all -- asserting
+    # it were would be asserting the platform, not the block.
+    for escape in ("../", "../../etc", "a/../../.."):
+        out = await b.process(escape, {"operation": "list"})
+        assert out["status"] == "error", f"{escape!r} was not refused: {out}"
+        assert "escapes" in out.get("error", "").lower(), out
+
+    # 4. A symlink pointing out is refused too. realpath resolves it before
+    #    the prefix check, which is the reason that check uses realpath.
+    outside = tmp_path.parent / "outside_the_root"
+    outside.mkdir(exist_ok=True)
+    (outside / "secret.txt").write_text("do not read me", encoding="utf-8")
+    link = tmp_path / "escape_link"
+    try:
+        link.symlink_to(outside, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pass  # unprivileged Windows cannot create one; the other routes stand
+    else:
+        via_link = await b.process("escape_link", {"operation": "list"})
+        assert via_link["status"] == "error", f"followed a symlink out: {via_link}"
 
 
-@pytest.mark.xfail(strict=False, reason="TODO: local_drive block permits safe-path writes; test expectation of 'not supported' is outdated")
 @pytest.mark.asyncio
-async def test_local_drive_rejects_write_op(tmp_path, monkeypatch):
+async def test_local_drive_writes_only_inside_its_root(tmp_path, monkeypatch):
+    """The old test asserted writes were "not supported". They are -- the
+    block is declared as "list, read, write files" and generated platforms
+    use it. Asserting the opposite made this a check on a design that had
+    already changed; the property that still matters is that a write cannot
+    land outside the root.
+    """
     monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    monkeypatch.delenv("LOCAL_DRIVE_ROOT", raising=False)
     from app.blocks.local_drive import LocalDriveBlock
     b = LocalDriveBlock()
-    res = await b.process(None, {"operation": "write", "file_path": "/tmp/x", "content": "x"})
-    assert res["status"] == "error"
-    assert "not supported" in res.get("error", "").lower()
+
+    # An absolute target is jailed into the root, not written to the real path.
+    victim = Path("/tmp/cerebrum_local_drive_escape_probe.txt")
+    if victim.exists():
+        victim.unlink()
+    res = await b.process(
+        None,
+        {"operation": "write",
+         "file_path": "/tmp/cerebrum_local_drive_escape_probe.txt",
+         "content": "x"},
+    )
+    assert res["status"] == "success", res
+    assert not victim.exists(), "the write escaped to the real /tmp"
+    assert (tmp_path / "tmp" / "cerebrum_local_drive_escape_probe.txt").is_file(), (
+        "the write did not land inside the root either -- it went nowhere"
+    )
+
+    # Traversal is refused rather than jailed.
+    escaped = await b.process(
+        None, {"operation": "write", "file_path": "../escaped.txt", "content": "x"}
+    )
+    assert escaped["status"] == "error", escaped
+    assert "escapes" in escaped.get("error", "").lower(), escaped
+    assert not (tmp_path.parent / "escaped.txt").exists()
 
 
 @pytest.mark.asyncio
@@ -341,7 +408,6 @@ async def test_local_drive_lists_data_dir(tmp_path, monkeypatch):
 # ── Drive query injection (I5) ───────────────────────────────────────────
 
 
-@pytest.mark.xfail(strict=False, reason="TODO: google_drive block has no _get_access_token helper and no quote-rejection logic; test is outdated")
 @pytest.mark.asyncio
 async def test_google_drive_rejects_quote_in_query(monkeypatch):
     """Audit I5: query containing single-quote is rejected before hitting
@@ -357,6 +423,23 @@ async def test_google_drive_rejects_quote_in_query(monkeypatch):
     res = await b.process("' OR trashed=false OR '", {"operation": "list"})
     assert res["status"] == "error"
     assert "single quote" in res.get("error", "").lower()
+
+
+@pytest.mark.asyncio
+async def test_google_drive_rejects_quote_in_folder_id(monkeypatch):
+    """The second interpolation site. ``'{folder_id}' in parents`` is the same
+    literal-delimited construction as the name filter, so a guard on the
+    search box alone would leave the door open one parameter along."""
+    from app.blocks import google_drive as gd
+
+    async def fake_token():
+        return "fake_access_token"
+
+    monkeypatch.setattr(gd, "_get_access_token", fake_token)
+    b = gd.GoogleDriveBlock()
+    res = await b.process("", {"operation": "list", "folder_id": "x' or trashed=false or '"})
+    assert res["status"] == "error"
+    assert "single quote" in res.get("error", "").lower(), res
 
 
 @pytest.mark.asyncio
