@@ -61,22 +61,26 @@ def test_module_singleton_is_tracker_instance() -> None:
 
 
 # ---------------------------------------------------------------------
-# Real-backend smoke test — only runs when mlflow is importable.
+# Real-backend smoke test — always runs; mlflow is a pinned dependency.
 # ---------------------------------------------------------------------
 
 
-@pytest.mark.mlflow
 def test_real_backend_round_trip(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
-    """If mlflow is installed, exercise a real start_run + log_metric.
+    """Exercise a real start_run + log_metric.
 
-    Skips cleanly otherwise — this lets the test suite stay green on
-    minimal environments without compromising coverage where it matters.
+    mlflow is pinned in requirements.txt, so it is present wherever this
+    suite is meant to run. It used to importorskip -- which meant the one
+    test that touches real mlflow reported green on every environment that
+    did not have it, including any that was supposed to.
     """
-    pytest.importorskip("mlflow")
+    import mlflow  # noqa: F401
 
-    # Use a fresh file-based tracking URI per run so we don't collide
-    # with other tests or with a developer's local mlruns.
-    uri = f"file:{tmp_path}/mlruns"
+    # A sqlite backend, not a file: URI. MLflow 3 refuses the filesystem
+    # store outright ("in maintenance mode ... migrate to a database
+    # backend"), and MLflowTracker catches that and falls back to a no-op --
+    # so the file: URI this used to pass made the tracker silently do
+    # nothing while the test still called it "the real backend".
+    uri = f"sqlite:///{tmp_path}/mlflow.db"
     monkeypatch.setenv("MLFLOW_TRACKING_URI", uri)
 
     t = MLflowTracker(experiment_name="cerebrum-tests")

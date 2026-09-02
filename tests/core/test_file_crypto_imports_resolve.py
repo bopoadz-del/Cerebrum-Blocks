@@ -26,7 +26,7 @@ def test_file_crypto_module_exists():
 
 def test_image_block_metadata_path_executes(tmp_path):
     """_pil_metadata performs the lazy import at call time — run it for real."""
-    PIL_Image = pytest.importorskip("PIL.Image")
+    from PIL import Image as PIL_Image
 
     from app.blocks.image import _pil_metadata
 
@@ -46,7 +46,6 @@ async def test_ocr_block_reaches_processing_not_modulenotfound(tmp_path):
     is fine and returns an error dict. What must never happen is
     ModuleNotFoundError before processing starts.
     """
-    pytest.importorskip("PIL.Image")
     from PIL import Image as PIL_Image
 
     from app.blocks.ocr import OCRBlock

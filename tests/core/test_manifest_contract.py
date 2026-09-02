@@ -245,7 +245,6 @@ def test_no_stored_digest_moved(manifest_path: Path):
     passes, which is exactly the point: the field is outside the signature
     until the operator re-signs.
     """
-    pytest.importorskip("cryptography")
     from app.core.publisher_registry import BlockSigner
 
     manifest = _load(manifest_path)
@@ -259,7 +258,6 @@ def test_no_stored_digest_moved(manifest_path: Path):
 
 def test_adding_a_contract_field_does_not_move_the_digest():
     """Stated directly, rather than only as a property of today's manifests."""
-    pytest.importorskip("cryptography")
     from app.core.publisher_registry import BlockSigner
 
     base = {
