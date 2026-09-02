@@ -299,9 +299,32 @@ class TestStoreCatalog:
         for entries in _KIT_BLOCK_SPECS.values():
             known |= {name for name, _module, _cls in entries}
 
+        kit_root = ROOT / "block_store" / "kits"
+
+        def _shipped_by(kit_id: str) -> set[str]:
+            """Blocks a kit carries in its own tree.
+
+            Not every kit distributes through _KIT_BLOCK_SPECS. universal_kernel
+            ships 23 blocks as wave<N>/<name>/code.py with their own
+            kernel_manifest.json and tests -- real blocks, simply not app
+            modules. A check that only knew about app modules would call all 23
+            phantom, which is the opposite of the truth.
+            """
+            base = kit_root / kit_id
+            if not base.is_dir():
+                return set()
+            found = {p.stem for p in base.glob("blocks/*.py") if p.stem != "__init__"}
+            found |= {
+                d.name
+                for d in base.glob("wave*/*")
+                if d.is_dir() and (d / "code.py").is_file()
+            }
+            return found
+
         undeclared = {}
         for kit in client.get("/store/containers").json()["containers"]:
-            unknown = [b for b in kit.get("blocks", []) if b not in known]
+            allowed = known | _shipped_by(kit["id"])
+            unknown = [b for b in kit.get("blocks", []) if b not in allowed]
             if unknown:
                 undeclared[kit["id"]] = unknown
 
