@@ -25,6 +25,66 @@ def _build_service(access_token: str = None):
     )
 
 
+async def _get_access_token() -> str:
+    """Refresh an access token, or fall back to GOOGLE_ACCESS_TOKEN.
+
+    Mirrors onedrive._get_access_token so both drive blocks authenticate the
+    same way. A long-lived GOOGLE_ACCESS_TOKEN expires in an hour, so a
+    deployment that only ever sets that variable stops working silently after
+    the first hour; the refresh grant is what makes it keep working.
+    """
+    import httpx
+
+    refresh_token = os.getenv("GOOGLE_REFRESH_TOKEN")
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+
+    if refresh_token and client_id and client_secret:
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.post(
+                _OAUTH_TOKEN_URL,
+                data={
+                    "grant_type": "refresh_token",
+                    "refresh_token": refresh_token,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+            if resp.status_code == 200:
+                return resp.json()["access_token"]
+            raise RuntimeError(
+                f"Token refresh failed ({resp.status_code}): {resp.text[:500]}"
+            )
+
+    token = os.getenv("GOOGLE_ACCESS_TOKEN", "")
+    if not token:
+        raise RuntimeError(
+            "No Google credentials: set GOOGLE_REFRESH_TOKEN + GOOGLE_CLIENT_ID "
+            "+ GOOGLE_CLIENT_SECRET, or GOOGLE_ACCESS_TOKEN."
+        )
+    return token
+
+
+def _reject_quote(value: str, field: str) -> Dict | None:
+    """Drive Query Language delimits literals with single quotes.
+
+    ``name contains '<query>'`` with an unescaped quote in <query> closes the
+    literal and everything after it is parsed as query syntax -- so a search
+    box becomes a way to enumerate files the caller was never shown, e.g.
+    ``' or trashed=false or '``. Google offers no parameter binding here, and
+    a lone backslash-escape is easy to get subtly wrong, so the block refuses
+    the character outright. onedrive.py already does exactly this; google_drive
+    did not, which is the whole of the bug.
+    """
+    if value and "'" in value:
+        return {
+            "status": "error",
+            "error": f"{field} may not contain single quotes",
+        }
+    return None
+
+
 def _oauth_url() -> str:
     client_id = os.getenv("GOOGLE_CLIENT_ID", "")
     if not client_id:
@@ -100,13 +160,25 @@ class GoogleDriveBlock(UniversalBlock):
 
         # ── List files ────────────────────────────────────────────────────────
         if operation == "list":
+            # Validate before authenticating: a bad query is bad regardless of
+            # who is asking, and checking after the token would make this
+            # unreachable wherever the refresh grant raises first.
+            bad = _reject_quote(query, "Search query") or _reject_quote(
+                params.get("folder_id") or "", "folder_id"
+            )
+            if bad:
+                return bad
+
             access_token = params.get("access_token") or os.getenv("GOOGLE_ACCESS_TOKEN", "")
             if not access_token:
-                return {
-                    "status": "error",
-                    "error": "Not authenticated. Run with operation=auth to get the auth URL, then set GOOGLE_ACCESS_TOKEN.",
-                    "auth_url": _oauth_url() or None,
-                }
+                try:
+                    access_token = await _get_access_token()
+                except Exception as exc:  # noqa: BLE001
+                    return {
+                        "status": "error",
+                        "error": f"Not authenticated: {exc}",
+                        "auth_url": _oauth_url() or None,
+                    }
             try:
                 import httpx
                 # Build the Drive-API q filter. Search wins if present (name
@@ -164,7 +236,10 @@ class GoogleDriveBlock(UniversalBlock):
             if not file_id:
                 return {"status": "error", "error": "file_id required for download"}
             if not access_token:
-                return {"status": "error", "error": "Not authenticated"}
+                try:
+                    access_token = await _get_access_token()
+                except Exception as exc:  # noqa: BLE001
+                    return {"status": "error", "error": f"Not authenticated: {exc}"}
             try:
                 import httpx
                 from app.core import drive_mime
