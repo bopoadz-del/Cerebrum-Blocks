@@ -27,18 +27,48 @@ def client():
     return TestClient(app, headers={"Authorization": "Bearer cb_dev_key"})
 
 
-@pytest.fixture
-def virgin_block_registry():
-    """Reload block registry with virgin boot (no domain kits)."""
-    os.environ["CEREBRUM_VIRGIN"] = "1"
-    os.environ.pop("CEREBRUM_DOMAIN_KITS", None)
+def _reload_registry():
+    """Rebuild BLOCK_REGISTRY from whatever the environment now says."""
     import app.blocks as blocks_mod
     import app.core.domain_kit_loader as loader
 
     importlib.reload(loader)
     importlib.reload(blocks_mod)
-    yield blocks_mod.BLOCK_REGISTRY
+    return blocks_mod.BLOCK_REGISTRY
+
+
+@pytest.fixture(autouse=True)
+def _restore_block_registry():
+    """Put the registry back the way it was found.
+
+    Every virgin-boot test in this file reloads app.blocks with
+    CEREBRUM_VIRGIN=1, which empties BLOCK_REGISTRY *for the rest of the
+    pytest session* -- the module object is shared. That is why these tests
+    were deselected rather than fixed: unskipping them took unrelated files
+    (tests/test_library_container.py) down with them, which looks like a
+    flaky suite and is really one test leaking global state.
+
+    Restoring the environment is not enough on its own; the module has to be
+    reloaded again afterwards or the emptied registry survives.
+    """
+    saved = {k: os.environ.get(k) for k in ("CEREBRUM_VIRGIN", "CEREBRUM_DOMAIN_KITS")}
+    try:
+        yield
+    finally:
+        for key, value in saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+        _reload_registry()
+
+
+@pytest.fixture
+def virgin_block_registry():
+    """Reload block registry with virgin boot (no domain kits)."""
+    os.environ["CEREBRUM_VIRGIN"] = "1"
     os.environ.pop("CEREBRUM_DOMAIN_KITS", None)
+    return _reload_registry()
 
 
 @pytest.fixture
@@ -77,7 +107,19 @@ class TestVirginBoot:
 
 
 class TestMedicalKitInstall:
-    def test_install_medical_skeleton_registers_connector(self, tmp_install_target):
+    def test_install_medical_registers_the_kit(self, tmp_install_target):
+        """Install writes the kit into the target's registry.
+
+        This used to also assert that install copied
+        app/blocks/medical_ehr_connector.py into the target. It never did,
+        for any kit: no bundle in block_store ships a connector, because
+        connectors are app-level blocks that domain_kit_loader activates when
+        the kit is enabled (see app/core/domain_kit_loader.py). The test was
+        asserting a distribution mechanism that does not exist, so it was
+        deselected instead of corrected. The connector half is asserted
+        against the real mechanism in
+        test_the_medical_connector_is_reachable_once_the_kit_is_enabled.
+        """
         from app.core.container_kit_store import install_kit
 
         target = tmp_install_target
@@ -85,13 +127,27 @@ class TestMedicalKitInstall:
         result = install_kit("medical", target_root=target, force=True)
         assert result["status"] == "success"
         assert result.get("install_mode") in ("skeleton", "bundle")
-        assert (target / "app" / "blocks" / "medical_ehr_connector.py").exists()
 
         registry_path = target / "data" / "domain_kit_registry.json"
-        assert registry_path.exists()
+        assert registry_path.exists(), f"install wrote no registry: {result}"
         registry = json.loads(registry_path.read_text(encoding="utf-8"))
         assert "medical" in registry.get("kits", {})
-        assert "medical_ehr_connector" in registry["kits"]["medical"].get("blocks", [])
+
+    def test_the_medical_connector_is_reachable_once_the_kit_is_enabled(self):
+        """The property the copy-assertion was reaching for.
+
+        Enabling the kit must make its connector resolvable, because that is
+        what "installing the medical kit gets you an EHR connector" means on
+        the mechanism this repo actually uses.
+        """
+        os.environ["CEREBRUM_VIRGIN"] = "0"
+        os.environ["CEREBRUM_DOMAIN_KITS"] = "medical"
+        registry = _reload_registry()
+
+        assert "medical_ehr_connector" in registry, (
+            "enabling the medical kit did not make its connector resolvable: "
+            f"{sorted(registry)[:20]}"
+        )
 
 
 class TestMedicalEHRConnector:
@@ -181,28 +237,63 @@ class TestReactiveVideoWorkflow:
 
 
 class TestStoreCatalog:
-    def test_store_lists_required_kits(self, client):
+    """The catalog must describe kits that exist.
+
+    These two tests used to name six kits by hand -- including `law` and
+    `maintenance`, which have never existed in block_store/kits (the legal
+    kit is `legal`, and there is no maintenance kit at all) -- and three
+    connectors, two of which were never written (`pacer_connector`,
+    `cmms_connector`). Deselecting them turned a standing product question
+    into a green run.
+
+    Naming kits nobody built is not a test, it is a wish. What is worth
+    enforcing, and what these now enforce, is that everything the store
+    advertises is real: every listed kit exists on disk, and every block it
+    claims to ship can actually be resolved. That goes red the moment the
+    catalog starts advertising something that is not there, which is the
+    failure the hand-written list was groping for.
+    """
+
+    def test_every_advertised_kit_exists_on_disk(self, client):
         response = client.get("/store/containers")
         assert response.status_code == 200
         data = response.json()
-        assert data["total"] >= 7
-        kit_ids = {k["id"] for k in data["containers"]}
-        required = {
-            "construction",
-            "medical",
-            "hotel_management",
-            "law",
-            "finance",
-            "maintenance",
-        }
-        assert required.issubset(kit_ids)
 
-    def test_coming_soon_kits_have_connectors(self, client):
-        response = client.get("/store/containers")
-        kits = {k["id"]: k for k in response.json()["containers"]}
-        assert "pacer_connector" in kits["law"].get("blocks", [])
-        assert "market_data_connector" in kits["finance"].get("blocks", [])
-        assert "cmms_connector" in kits["maintenance"].get("blocks", [])
+        kit_root = ROOT / "block_store" / "kits"
+        listed = {k["id"] for k in data["containers"]}
+        assert listed, "the store advertises no kits at all"
+        assert data["total"] == len(data["containers"])
+
+        missing = sorted(k for k in listed if not (kit_root / k).is_dir())
+        assert not missing, f"catalog advertises kits with no source: {missing}"
+
+    def test_every_kit_on_disk_is_advertised(self, client):
+        """The other direction: a kit that ships and is never listed is a kit
+        nobody can install."""
+        kit_root = ROOT / "block_store" / "kits"
+        on_disk = {
+            d.name
+            for d in kit_root.iterdir()
+            if d.is_dir() and not d.name.startswith("_") and (d / "manifest.json").is_file()
+        }
+        listed = {k["id"] for k in client.get("/store/containers").json()["containers"]}
+
+        assert on_disk <= listed, f"kits on disk but not in the catalog: {sorted(on_disk - listed)}"
+
+    def test_every_block_a_kit_advertises_can_be_resolved(self, client):
+        """A catalog entry promising a block that cannot be built is exactly
+        the "coming soon" gap the old test was aimed at."""
+        from app.blocks import BLOCK_REGISTRY
+
+        unresolvable = {}
+        for kit in client.get("/store/containers").json()["containers"]:
+            missing = [b for b in kit.get("blocks", []) if b not in BLOCK_REGISTRY]
+            if missing:
+                unresolvable[kit["id"]] = missing
+
+        assert not unresolvable, (
+            f"kits advertise blocks that do not resolve: {unresolvable}"
+        )
 
 
 class TestWorkflowTriggersAPI:
