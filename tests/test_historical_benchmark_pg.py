@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-asyncpg = pytest.importorskip("asyncpg")
+import asyncpg  # noqa: E402  (pinned in requirements.txt)
 
 from tests._fixtures import historical_benchmark as hb_mod  # noqa: E402
 from tests._fixtures.historical_benchmark import (  # noqa: E402

@@ -65,14 +65,15 @@ def test_module_singleton_is_tracker_instance() -> None:
 # ---------------------------------------------------------------------
 
 
-@pytest.mark.mlflow
 def test_real_backend_round_trip(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
-    """If mlflow is installed, exercise a real start_run + log_metric.
+    """Exercise a real start_run + log_metric.
 
-    Skips cleanly otherwise — this lets the test suite stay green on
-    minimal environments without compromising coverage where it matters.
+    mlflow is pinned in requirements.txt, so it is present wherever this
+    suite is meant to run. It used to importorskip -- which meant the one
+    test that touches real mlflow reported green on every environment that
+    did not have it, including any that was supposed to.
     """
-    pytest.importorskip("mlflow")
+    import mlflow  # noqa: F401
 
     # Use a fresh file-based tracking URI per run so we don't collide
     # with other tests or with a developer's local mlruns.

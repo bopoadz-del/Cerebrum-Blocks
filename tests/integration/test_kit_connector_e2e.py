@@ -47,7 +47,6 @@ def tmp_install_target(tmp_path):
 
 
 class TestVirginBoot:
-    @pytest.mark.requires_local_registry
     def test_construction_not_in_app_blocks(self):
         """Virgin boot must not ship construction blocks in app/blocks."""
         construction_blocks = [
@@ -69,7 +68,6 @@ class TestVirginBoot:
             importlib.reload(blocks_mod)
             assert name not in blocks_mod.BLOCK_REGISTRY
 
-    @pytest.mark.requires_local_registry
     def test_virgin_boot_flag(self):
         from app.core.domain_kit_loader import is_virgin_boot
 
@@ -79,7 +77,6 @@ class TestVirginBoot:
 
 
 class TestMedicalKitInstall:
-    @pytest.mark.requires_local_registry
     def test_install_medical_skeleton_registers_connector(self, tmp_install_target):
         from app.core.container_kit_store import install_kit
 
@@ -184,7 +181,6 @@ class TestReactiveVideoWorkflow:
 
 
 class TestStoreCatalog:
-    @pytest.mark.requires_local_registry
     def test_store_lists_required_kits(self, client):
         response = client.get("/store/containers")
         assert response.status_code == 200
@@ -201,7 +197,6 @@ class TestStoreCatalog:
         }
         assert required.issubset(kit_ids)
 
-    @pytest.mark.requires_local_registry
     def test_coming_soon_kits_have_connectors(self, client):
         response = client.get("/store/containers")
         kits = {k["id"]: k for k in response.json()["containers"]}

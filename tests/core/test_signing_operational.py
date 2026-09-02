@@ -13,7 +13,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 
-cryptography = pytest.importorskip("cryptography")
+import cryptography  # noqa: E402  (pinned in requirements.txt)
 
 
 def _registry_blocks():

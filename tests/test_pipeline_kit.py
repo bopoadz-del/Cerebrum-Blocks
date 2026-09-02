@@ -146,7 +146,7 @@ def test_only_a_fully_clean_run_reports_publishable(capsys):
 
 def test_a_sheet_whose_items_all_lack_sources_stops_at_k1(tmp_path, monkeypatch):
     """No source, no encode -- so there is nothing to scaffold from."""
-    openpyxl = pytest.importorskip("openpyxl")
+    import openpyxl
     book = openpyxl.Workbook()
     sheet = book.active
     sheet.title = "Formulas"
@@ -167,7 +167,7 @@ def test_a_sheet_whose_items_all_lack_sources_stops_at_k1(tmp_path, monkeypatch)
 
 
 def test_a_sourced_sheet_produces_an_intake(tmp_path):
-    openpyxl = pytest.importorskip("openpyxl")
+    import openpyxl
     book = openpyxl.Workbook()
     sheet = book.active
     sheet.title = "Formulas"

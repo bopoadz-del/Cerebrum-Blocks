@@ -238,7 +238,7 @@ def test_dropped_items_are_absent_from_the_sections(tmp_path):
 
 
 def test_a_real_xlsx_round_trips(tmp_path):
-    openpyxl = pytest.importorskip("openpyxl")
+    import openpyxl
     book = openpyxl.Workbook()
     sheet = book.active
     sheet.title = "Formulas"
@@ -268,7 +268,7 @@ def test_a_real_docx_attributes_each_table_to_its_own_heading(tmp_path):
     Pairing table N with heading N would misfile the third table. This is the
     case that made the first implementation wrong.
     """
-    docx = pytest.importorskip("docx")
+    import docx
     document = docx.Document()
     document.add_heading("Formulas", level=1)
     table = document.add_table(rows=2, cols=3)
