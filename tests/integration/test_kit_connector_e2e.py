@@ -280,19 +280,33 @@ class TestStoreCatalog:
 
         assert on_disk <= listed, f"kits on disk but not in the catalog: {sorted(on_disk - listed)}"
 
-    def test_every_block_a_kit_advertises_can_be_resolved(self, client):
-        """A catalog entry promising a block that cannot be built is exactly
-        the "coming soon" gap the old test was aimed at."""
-        from app.blocks import BLOCK_REGISTRY
+    def test_every_block_a_kit_advertises_is_declared_somewhere(self, client):
+        """A catalog entry promising a block nothing has ever heard of.
 
-        unresolvable = {}
+        Deliberately not checked against BLOCK_REGISTRY: at test time that is
+        the virgin registry, so `agriculture_v2` is legitimately absent until
+        the agriculture kit is enabled. Asserting against it would call every
+        kit-specific block in the store unresolvable, which says nothing.
+
+        What must hold regardless of which kits are switched on is that the
+        name is declared -- as a generic block, or in some kit's spec.
+        """
+        import app.blocks as blocks_mod
+        from app.core.domain_kit_loader import _KIT_BLOCK_SPECS
+
+        known = set(blocks_mod._GENERIC_BLOCK_DEFS)
+        known |= set(getattr(blocks_mod, "_EXTENDED_BLOCK_DEFS", {}))
+        for entries in _KIT_BLOCK_SPECS.values():
+            known |= {name for name, _module, _cls in entries}
+
+        undeclared = {}
         for kit in client.get("/store/containers").json()["containers"]:
-            missing = [b for b in kit.get("blocks", []) if b not in BLOCK_REGISTRY]
-            if missing:
-                unresolvable[kit["id"]] = missing
+            unknown = [b for b in kit.get("blocks", []) if b not in known]
+            if unknown:
+                undeclared[kit["id"]] = unknown
 
-        assert not unresolvable, (
-            f"kits advertise blocks that do not resolve: {unresolvable}"
+        assert not undeclared, (
+            f"kits advertise blocks that are declared nowhere: {undeclared}"
         )
 
 
