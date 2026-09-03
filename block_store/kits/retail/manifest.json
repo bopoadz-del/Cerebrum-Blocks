@@ -1,4 +1,5 @@
 {
+  "learning_engine_enabled": false,
   "id": "retail",
   "name": "Retail & E-commerce Suite",
   "version": "1.0.0",

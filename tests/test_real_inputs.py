@@ -35,7 +35,16 @@ TEST_INPUTS = {
     "android_drive": {"input": {"action": "list"}, "params": {}},
     "vector_search": {"input": {"text": "concrete curing methods"}, "params": {"action": "search"}},
     "zvec":       {"input": {"text": "concrete curing methods"}, "params": {"action": "search"}},
-    "cache_manager": {"input": {"action": "get", "key": "test"}, "params": {}},
+    "cache_manager": {
+        "input": {
+            "action": "get",
+            "key": "test",
+            "tenant_id": "t1",
+            "project_id": "p1",
+            "source_class": "official_guidance",
+        },
+        "params": {},
+    },
     "capture":    {"input": {"text": "Screenshot of building plan"}, "params": {"action": "capture"}},
     "agent_swarm": {"input": {"objective": "Analyze construction costs", "agents": []}, "params": {}},
     "workflow":   {"input": {"steps": [{"block": "chat", "action": "status"}]}, "params": {"action": "run"}},

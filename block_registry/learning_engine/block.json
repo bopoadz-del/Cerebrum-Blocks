@@ -67,6 +67,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
+  "provenance_policy": "independently_labeled_only",
   "signature": "RRlRoFQcLkAmLAaCdbgWbHZCpBuZ51RmfJiTndP0bgl298a6rJd1zQ1aBub8lJx8xhy8SbueY9uA4BmJRHypDQ==",
   "tags": [
     "domain",
