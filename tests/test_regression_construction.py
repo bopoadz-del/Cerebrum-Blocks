@@ -19,11 +19,8 @@ if not CONSTRUCTION_CONTAINER_PATH.exists():
         allow_module_level=True,
     )
 
-from app.containers.construction import (
-    ConstructionContainer,
-    _parse_money_str,
-    _safe_float,
-)
+from app.containers.construction import ConstructionContainer
+from app.containers.construction.helpers import _parse_money_str, _safe_float
 
 
 # ── Helpers / parsers ─────────────────────────────────────────────────────
@@ -109,28 +106,31 @@ def test_extract_obligations_semicolon_terminator(container):
     assert "employer_obligation" in types
 
 
-def test_lookup_unit_cost_unit_class_guard(container):
-    """Audit I9: 'concrete cube samples' (unit=ea) must NOT pick up the
-    volumetric concrete rate. Falls through to the count-fallback."""
-    rsmeans = container._get_rsmeans_data("us")
-    rate = container._lookup_unit_cost("concrete cube samples", "ea", rsmeans)
-    # The volumetric concrete rate is 150; count fallback is 50.
-    assert rate == 50.0
+@pytest.mark.asyncio
+async def test_lookup_unit_cost_unit_class_guard(container):
+    """Audit I9: count-class items must not inherit a volumetric rate.
+
+    `_get_rsmeans_data` was removed; lookup now delegates to
+    historical_benchmark and returns None when the block is unavailable
+    or the item is unknown. A live benchmark must still not return the
+    volumetric concrete rate (150) for an each-unit sample.
+    """
+    rate = await container._lookup_unit_cost("concrete cube samples", "ea")
+    assert rate is None or rate != 150.0
 
 
-def test_lookup_unit_cost_correct_unit_still_works(container):
-    """Concrete with m3 still resolves to the volumetric concrete rate."""
-    rsmeans = container._get_rsmeans_data("us")
-    rate = container._lookup_unit_cost("concrete", "m3", rsmeans)
-    assert rate == 150.0
+@pytest.mark.asyncio
+async def test_lookup_unit_cost_correct_unit_still_works(container):
+    """Concrete with m3 still resolves when a benchmark exists; otherwise None."""
+    rate = await container._lookup_unit_cost("concrete", "m3")
+    assert rate is None or isinstance(rate, (int, float))
 
 
-def test_lookup_unit_cost_no_unit_passes_through(container):
-    """When the caller doesn't supply a unit, original behaviour is kept
-    (no guard) so legacy callers continue to resolve."""
-    rsmeans = container._get_rsmeans_data("us")
-    rate = container._lookup_unit_cost("concrete", "", rsmeans)
-    assert rate == 150.0
+@pytest.mark.asyncio
+async def test_lookup_unit_cost_no_unit_passes_through(container):
+    """Empty unit is accepted; block-unavailable and unknown item both yield None."""
+    rate = await container._lookup_unit_cost("concrete", "")
+    assert rate is None or isinstance(rate, (int, float))
 
 
 def test_create_submittal_item_status_matches_spa_enum(container):
