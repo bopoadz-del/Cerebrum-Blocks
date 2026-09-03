@@ -17,6 +17,7 @@ on:
     branches: [main]
     paths:
       - block_store/kits/construction/manifest.json
+      - .github/workflows/publish-construction-kit.yml
 
 concurrency:
   group: publish-construction-kit-${{ github.ref }}
