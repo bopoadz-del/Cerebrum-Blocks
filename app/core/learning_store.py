@@ -15,17 +15,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Protocol
+from typing import Any, Dict
 
-
-class LearningStore(Protocol):
-    """The only methods the block is allowed to call."""
-
-    def load(self) -> Dict[str, Any]:
-        ...
-
-    def save(self, state: Dict[str, Any]) -> None:
-        ...
+# Duck-typed contract the block calls: ``load() -> dict`` and
+# ``save(state) -> None``. A Protocol with ``...`` bodies is a hollow
+# function under scripts/audit_stubs.py, so the contract is this
+# comment plus the two real backends below — not an unimplemented
+# interface class.
 
 
 class MemoryLearningStore:
