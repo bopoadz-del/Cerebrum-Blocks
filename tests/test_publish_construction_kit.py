@@ -209,6 +209,38 @@ def test_incomplete_fork_lists_every_missing_path(tmp_path, capsys):
     assert (bundle / "app" / "containers" / "construction.py").is_file()
 
 
+def test_refresh_keeps_bundle_orphans_when_fork_dropped_them(tmp_path, capsys):
+    """Fork drift: paths declared in the manifest but gone from Fork live on in bundle/."""
+    fork = _write_tree(
+        tmp_path / "The_Fork",
+        {"app/containers/construction.py": "class ConstructionContainer:\n    pass\n"},
+    )
+    manifest = _write_json(
+        tmp_path / "manifest.json",
+        _manifest(
+            artifacts=[
+                {"src": "app/containers/construction.py", "dest": "app/containers/construction.py"},
+                {"src": "app/blocks/construction_v2.py", "dest": "app/blocks/construction_v2.py"},
+            ]
+        ),
+    )
+    bundle = tmp_path / "bundle"
+    orphan = bundle / "app" / "blocks" / "construction_v2.py"
+    orphan.parent.mkdir(parents=True, exist_ok=True)
+    orphan.write_text("# bundle-only orphan\n", encoding="utf-8")
+
+    code = publisher.publish(
+        fork, manifest_path=manifest, bundle_dir=bundle, refresh=True
+    )
+
+    assert code == 0
+    err = capsys.readouterr().err
+    assert "Retained 1 artifact(s) from bundle/" in err
+    assert "app/blocks/construction_v2.py" in err
+    assert orphan.read_text(encoding="utf-8") == "# bundle-only orphan\n"
+    assert (bundle / "app" / "containers" / "construction.py").is_file()
+
+
 def test_malformed_manifest_json_is_a_clear_error(tmp_path, capsys):
     fork = _write_tree(tmp_path / "The_Fork", _FIXTURE_FILES)
     manifest = tmp_path / "manifest.json"

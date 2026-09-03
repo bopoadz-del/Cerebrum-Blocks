@@ -69,7 +69,7 @@ jobs:
             FORK_ROOT="${{ github.workspace }}/The_Fork"
           fi
           echo "Using Fork root: $FORK_ROOT"
-          python scripts/publish_construction_kit.py --fork-root "$FORK_ROOT"
+          python scripts/publish_construction_kit.py --fork-root "$FORK_ROOT" --refresh
 
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v7

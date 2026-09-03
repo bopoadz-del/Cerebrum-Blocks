@@ -113,11 +113,18 @@ def publish(
     manifest_path: Path | None = None,
     bundle_dir: Path | None = None,
     dry_run: bool = False,
+    refresh: bool = False,
 ) -> int:
     """Copy manifest artifacts from a Fork tree into the construction kit bundle.
 
     Paths default to the store's construction kit. Tests pass a fixture
     manifest and a temp bundle so this never needs a network clone.
+
+    ``refresh`` copies every artifact present in the Fork checkout and retains
+    paths already in ``bundle/`` when Fork no longer ships them (the
+    construction monolith and CLI were removed from Fork but remain in the
+    store bundle). Exit is still non-zero if any declared artifact is absent
+    from both Fork and bundle.
     """
     manifest_path = Path(manifest_path or MANIFEST_PATH)
     bundle_dir = Path(bundle_dir or BUNDLE_DIR)
@@ -139,12 +146,21 @@ def publish(
 
     copied = 0
     missing: list[str] = []
+    retained: list[str] = []
 
     for rel_src in artifacts:
         fork_src = fork_root / rel_src
         bundle_dest = bundle_dir / rel_src
 
         if not fork_src.exists():
+            if refresh and bundle_dest.exists():
+                if dry_run:
+                    print(f"would keep {rel_src} (not in Fork, retained from bundle)")
+                else:
+                    print(f"kept {rel_src} (not in Fork, retained from bundle)")
+                retained.append(rel_src)
+                copied += 1
+                continue
             missing.append(rel_src)
             continue
 
@@ -171,6 +187,15 @@ def publish(
             f"Check --fork-root or add the files to the {FORK_REPO} tree.",
             file=sys.stderr,
         )
+    elif retained:
+        print(
+            f"\nRetained {len(retained)} artifact(s) from bundle/ because Fork "
+            f"no longer ships them. Update the manifest when Fork and the store "
+            f"layout converge.",
+            file=sys.stderr,
+        )
+        for rel in retained:
+            print(f"  - {rel}", file=sys.stderr)
 
     total = len(artifacts)
     print(f"\n{'Would copy' if dry_run else 'Copied'} {copied}/{total} artifacts")
@@ -211,6 +236,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Override bundle output directory (tests / fixtures)",
     )
     parser.add_argument("--dry-run", action="store_true", help="Print actions only")
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Copy what Fork has and retain bundle/ copies for paths Fork dropped",
+    )
     args = parser.parse_args(argv)
 
     return publish(
@@ -218,6 +248,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         manifest_path=args.manifest,
         bundle_dir=args.bundle_dir,
         dry_run=args.dry_run,
+        refresh=args.refresh,
     )
 
 
