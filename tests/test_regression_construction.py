@@ -10,15 +10,9 @@ from __future__ import annotations
 
 import pytest
 
-from tests.conftest import CONSTRUCTION_CONTAINER_PATH
-
-if not CONSTRUCTION_CONTAINER_PATH.exists():
-    pytest.skip(
-        "Construction kit not installed — run store install or copy from "
-        "block_store/kits/construction/bundle/",
-        allow_module_level=True,
-    )
-
+# No module-level skip. A stale probe used to skip this file while the
+# construction kit was installed (same class of miss as test_xlsx_schedule).
+# If the container cannot be imported, that is a failure, not a skip.
 from app.containers.construction import ConstructionContainer
 from app.containers.construction.helpers import _parse_money_str, _safe_float
 
