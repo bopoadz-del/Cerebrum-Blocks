@@ -26,6 +26,7 @@ from app.core.manifest_contract import (
     CONTRACT_MANIFEST_KEYS,
     DECLARED_TYPES,
     PRECONDITION_KINDS,
+    TRAINING_ELIGIBILITY_POLICY,
     UNSIGNED_CONTRACT_KEYS,
     check_contract_fields,
     check_failure_modes,
@@ -76,6 +77,13 @@ def test_version_and_trust_tier_are_not_redefined_here():
     accepted-value set is the drift AGENTS.md warns about."""
     assert "version" not in CONTRACT_MANIFEST_KEYS
     assert "trust_tier" not in CONTRACT_MANIFEST_KEYS
+
+
+def test_learning_engine_training_eligibility_is_independently_labeled_only():
+    """Strict: only independently labeled samples may train."""
+    manifest = _load(REGISTRY / "learning_engine" / "block.json")
+    assert manifest.get("provenance_policy") == TRAINING_ELIGIBILITY_POLICY
+    assert check_contract_fields(manifest) == []
 
 
 def test_a_null_field_is_not_the_same_as_an_absent_one():

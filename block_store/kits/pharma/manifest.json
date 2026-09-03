@@ -1,4 +1,5 @@
 {
+  "learning_engine_enabled": false,
   "id": "pharma",
   "name": "Pharmaceuticals & Life Sciences Suite",
   "version": "1.0.0",

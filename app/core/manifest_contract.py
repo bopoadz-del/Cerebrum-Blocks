@@ -92,6 +92,12 @@ KILL_SWITCH = "kill_switch"
 SOURCE_COMMIT = "source_commit"
 PROVENANCE_POLICY = "provenance_policy"
 
+#: Training-eligibility label. KERNEL_DEFAULTS names this for
+#: ``learning_engine``: only independently labeled samples may train.
+#: Other blocks may still declare a free-text policy; this pin is the
+#: one value that is store-enforced for the learning block.
+TRAINING_ELIGIBILITY_POLICY = "independently_labeled_only"
+
 #: Every contract field, all optional. Ordered as KERNEL_DEFAULTS 1.2 lists
 #: them. ``trust_tier`` and ``version`` are absent on purpose: both already
 #: exist and are already required.

@@ -1,4 +1,5 @@
 {
+  "learning_engine_enabled": false,
   "id": "hotel_management",
   "name": "Hotel Management & Hospitality Suite",
   "version": "1.0.0",

@@ -1,4 +1,5 @@
 {
+  "learning_engine_enabled": false,
   "id": "finance",
   "name": "Finance & Investment Suite",
   "version": "1.0.0",

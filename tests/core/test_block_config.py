@@ -127,6 +127,18 @@ def test_an_unknown_dependency_still_produces_a_line_rather_than_a_crash():
 # -- CacheManager: Redis ABSENT -------------------------------------------
 
 
+def _scope(key, **extra):
+    """A cache payload that carries the load-bearing scope fields."""
+    payload = {
+        "key": key,
+        "tenant_id": extra.pop("tenant_id", "tenant-a"),
+        "project_id": extra.pop("project_id", "project-1"),
+        "source_class": extra.pop("source_class", "official_guidance"),
+    }
+    payload.update(extra)
+    return payload
+
+
 def _memory_block():
     """The fallback rung, pinned. No environment involved."""
     return CacheManagerBlock(config={"cache_backend": "memory"})
@@ -137,10 +149,10 @@ def test_with_no_redis_the_local_fallback_is_reachable():
     block = _memory_block()
     assert block._redis is None
 
-    setter = run(block.set({"key": "k", "value": "hello"}, {}))
+    setter = run(block.set(_scope("k", value="hello"), {}))
     assert setter["status"] == "success"
 
-    getter = run(block.get({"key": "k"}, {}))
+    getter = run(block.get(_scope("k"), {}))
     assert getter["status"] == "success"
     assert getter["found"] is True
     assert getter["value"] == "hello"
@@ -156,16 +168,16 @@ def test_the_memory_rung_says_it_is_the_memory_rung():
 
 def test_delete_and_exists_work_on_the_local_rung():
     block = _memory_block()
-    run(block.set({"key": "k", "value": 1}, {}))
+    run(block.set(_scope("k", value=1), {}))
 
-    assert run(block.exists({"key": "k"}, {}))["exists"] is True
-    assert run(block.delete({"key": "k"}, {}))["deleted"] is True
-    assert run(block.exists({"key": "k"}, {}))["exists"] is False
+    assert run(block.exists(_scope("k"), {}))["exists"] is True
+    assert run(block.delete(_scope("k"), {}))["deleted"] is True
+    assert run(block.exists(_scope("k"), {}))["exists"] is False
 
 
 def test_stats_on_the_local_rung_names_the_fallback():
     block = _memory_block()
-    run(block.set({"key": "k", "value": 1}, {}))
+    run(block.set(_scope("k", value=1), {}))
     stats = run(block.stats())
 
     assert stats["backend"] == "local"
@@ -222,10 +234,10 @@ def test_with_redis_present_the_redis_branch_is_taken():
     block, client = _redis_block()
     assert block._redis is client
 
-    run(block.set({"key": "k", "value": "hello"}, {}))
+    run(block.set(_scope("k", value="hello"), {}))
     assert any(call[0] == "setex" for call in client.calls), "Redis was not written to"
 
-    getter = run(block.get({"key": "k"}, {}))
+    getter = run(block.get(_scope("k"), {}))
     assert getter["found"] is True
     assert getter["value"] == "hello"
 
@@ -234,7 +246,7 @@ def test_with_redis_present_nothing_is_written_to_the_local_cache():
     """The two rungs must not both be live: a write that lands in memory and
     is read back from memory looks identical to a working cache."""
     block, _ = _redis_block()
-    run(block.set({"key": "k", "value": "hello"}, {}))
+    run(block.set(_scope("k", value="hello"), {}))
 
     assert block._local_cache == {}
 
@@ -250,7 +262,7 @@ def test_the_redis_rung_says_it_is_the_redis_rung():
 
 def test_stats_reports_the_redis_backend():
     block, _ = _redis_block()
-    run(block.set({"key": "k", "value": 1}, {}))
+    run(block.set(_scope("k", value=1), {}))
     stats = run(block.stats())
 
     assert stats["backend"] == "redis"
@@ -266,7 +278,7 @@ def test_a_broken_redis_is_reported_rather_than_silently_served_from_memory():
             raise ConnectionError("connection refused")
 
     block = CacheManagerBlock(config={"redis_client": _Broken()})
-    result = run(block.get({"key": "k"}, {}))
+    result = run(block.get(_scope("k"), {}))
 
     assert result["status"] == "error"
     assert "connection refused" in result["error"]
@@ -324,3 +336,73 @@ def test_this_module_does_not_reach_for_the_environment():
         and node.attr in ("getenv", "environ")
     ]
     assert reaches == [], "block code reached for the environment: %s" % reaches
+
+
+# -- scope keys: tenant / project / source class --------------------------
+
+
+def test_scope_key_carries_tenant_project_and_source_class():
+    block = _memory_block()
+    key = block.scope_key("secret", "tenant-a", "project-1", "official_guidance")
+
+    assert "tenant-a" in key
+    assert "project-1" in key
+    assert "official_guidance" in key
+    assert "secret" in key
+    assert key != "secret"
+
+
+def test_cross_tenant_hit_is_impossible():
+    block = _memory_block()
+    run(block.set(_scope("secret", value="alpha-only"), {}))
+
+    other = run(
+        block.get(
+            _scope("secret", tenant_id="tenant-b"),
+            {},
+        )
+    )
+    assert other["status"] == "success"
+    assert other["found"] is False
+
+
+def test_cross_source_class_hit_is_impossible():
+    block = _memory_block()
+    run(block.set(_scope("secret", value="regulator-only", source_class="regulator"), {}))
+
+    other = run(block.get(_scope("secret", source_class="contributor_unverified"), {}))
+    assert other["found"] is False
+
+
+def test_a_bare_key_is_refused_rather_than_written_unscoped():
+    block = _memory_block()
+    result = run(block.set({"key": "secret", "value": "leak"}, {}))
+
+    assert result["status"] == "error"
+    assert "scope" in result["error"].lower()
+    assert block._local_cache == {}
+
+
+def test_mutation_probe_dropping_tenant_from_the_key_would_leak():
+    """The same scope-key test as the isolation contract: if the on-wire
+    key were only the logical name, tenant B would read tenant A's value.
+
+    This is the mutation. The real resolver must not be that formula, and
+    the leak must be demonstrable on the mutated one so a later edit that
+    'simplifies' the key is caught by the difference.
+    """
+    block = _memory_block()
+    run(block.set(_scope("secret", value="alpha-only"), {}))
+
+    scoped = block.scope_key("secret", "tenant-a", "project-1", "official_guidance")
+    assert scoped in block._local_cache
+    assert "secret" not in block._local_cache, (
+        "the logical name was stored unscoped; that is the cross-tenant leak"
+    )
+
+    mutated = "secret"
+    assert mutated != scoped
+    # A cache that keyed on the mutated form would return tenant A's value
+    # to anyone who asked for the same logical name.
+    assert block._local_cache[scoped]["value"] == "alpha-only"
+    assert mutated not in block._local_cache

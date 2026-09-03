@@ -1,4 +1,5 @@
 {
+  "learning_engine_enabled": false,
   "id": "automotive",
   "name": "Automotive & Mobility Suite",
   "version": "2.0.0",

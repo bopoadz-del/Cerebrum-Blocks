@@ -113,9 +113,9 @@ class CacheManagerBlock(UniversalBlock):
 
     async def get(self, input_data: Any, params: Dict) -> Dict:
         """Retrieve value by key."""
-        key = self._resolve_key(input_data, params)
-        if not key:
-            return {"status": "error", "error": "No key provided"}
+        key, error = self._scoped_key(input_data, params)
+        if error:
+            return error
 
         if self._redis is not None:
             try:
@@ -133,9 +133,9 @@ class CacheManagerBlock(UniversalBlock):
 
     async def set(self, input_data: Any, params: Dict) -> Dict:
         """Store value by key with optional TTL."""
-        key = self._resolve_key(input_data, params)
-        if not key:
-            return {"status": "error", "error": "No key provided"}
+        key, error = self._scoped_key(input_data, params)
+        if error:
+            return error
 
         value = params.get("value") or (input_data.get("value") if isinstance(input_data, dict) else None)
         ttl = params.get("ttl", self.config.get("default_ttl", 3600))
@@ -156,9 +156,9 @@ class CacheManagerBlock(UniversalBlock):
 
     async def delete(self, input_data: Any, params: Dict) -> Dict:
         """Remove key from cache."""
-        key = self._resolve_key(input_data, params)
-        if not key:
-            return {"status": "error", "error": "No key provided"}
+        key, error = self._scoped_key(input_data, params)
+        if error:
+            return error
 
         if self._redis is not None:
             try:
@@ -173,9 +173,9 @@ class CacheManagerBlock(UniversalBlock):
 
     async def exists(self, input_data: Any, params: Dict) -> Dict:
         """Check if key exists."""
-        key = self._resolve_key(input_data, params)
-        if not key:
-            return {"status": "error", "error": "No key provided"}
+        key, error = self._scoped_key(input_data, params)
+        if error:
+            return error
 
         if self._redis is not None:
             try:
@@ -244,8 +244,74 @@ class CacheManagerBlock(UniversalBlock):
             "note": fallback_note("cache", rung),
         }
 
+    #: Unit separator. A tenant/project/class/key that contains ``:`` or
+    #: ``/`` must not be able to collide with another scope by picking a
+    #: clever logical key.
+    _SCOPE_SEP = "\x1f"
+
+    def scope_key(
+        self,
+        logical_key: str,
+        tenant_id: str,
+        project_id: str,
+        source_class: str,
+    ) -> str:
+        """The on-wire cache key. Tenant, project and source class are load-bearing.
+
+        A key that is only the caller's logical name is how tenant A reads
+        tenant B's value. The mutation probe in the tests drops ``tenant_id``
+        from this formula and shows the leak; this method is the one that
+        must not regress to that formula.
+        """
+        parts = (str(tenant_id), str(project_id), str(source_class), str(logical_key))
+        if not all(part.strip() for part in parts):
+            raise ValueError(
+                "cache scope requires tenant_id, project_id, source_class, and key"
+            )
+        return self._SCOPE_SEP.join(parts)
+
+    def _scope_fields(self, input_data: Any, params: Dict) -> tuple:
+        data = input_data if isinstance(input_data, dict) else {}
+        tenant = params.get("tenant_id") or data.get("tenant_id") or self.settings.get("tenant_id")
+        project = (
+            params.get("project_id")
+            or data.get("project_id")
+            or self.settings.get("project_id")
+        )
+        source_class = (
+            params.get("source_class")
+            or data.get("source_class")
+            or self.settings.get("source_class")
+        )
+        return tenant, project, source_class
+
     def _resolve_key(self, input_data: Any, params: Dict) -> Optional[str]:
-        return params.get("key") or (input_data.get("key") if isinstance(input_data, dict) else None)
+        """Return the scoped key, or None when the logical key is missing.
+
+        Missing scope is not None: it is an error the caller must see.
+        Use :meth:`_scoped_key` from action methods.
+        """
+        key, error = self._scoped_key(input_data, params)
+        if error and "No key" in error.get("error", ""):
+            return None
+        return key
+
+    def _scoped_key(self, input_data: Any, params: Dict) -> tuple:
+        logical = params.get("key") or (
+            input_data.get("key") if isinstance(input_data, dict) else None
+        )
+        if not logical:
+            return None, {"status": "error", "error": "No key provided"}
+        tenant, project, source_class = self._scope_fields(input_data, params)
+        if not (tenant and project and source_class):
+            return None, {
+                "status": "error",
+                "error": "Cache scope requires tenant_id, project_id, and source_class",
+            }
+        return (
+            self.scope_key(str(logical), str(tenant), str(project), str(source_class)),
+            None,
+        )
 
     def _evict_oldest(self):
         if self._local_cache:

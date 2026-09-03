@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Store-wide conformance report. REPORT-ONLY: this never fails a build.
 
-KERNEL_DEFAULTS 1.4 and 1.6. Three checks over every block in
-``BLOCK_REGISTRY``:
+KERNEL_DEFAULTS 1.4 and 1.6, plus K2 / K3. Five checks over every
+block in ``BLOCK_REGISTRY``:
 
 ``constructor``
     Liskov. Can the block be constructed the way the base class promises --
@@ -19,6 +19,17 @@ KERNEL_DEFAULTS 1.4 and 1.6. Three checks over every block in
 ``three_tests``
     Does the block have a test file, and does it carry the happy path, the
     planted failure and the mutation probe? (KERNEL_DEFAULTS 1.3.)
+
+``source_class_render``
+    KERNEL_DEFAULTS K2. For a RAG-derived block (tags include ``rag``,
+    or the module uses the answer contract): does every citation path
+    emit ``source_class`` and does the answer layer render it?
+    Non-RAG blocks are skipped. REPORT-ONLY.
+
+``coverage_honesty``
+    KERNEL_DEFAULTS K3. For a RAG-derived block: is the ``N of M
+    indexed`` line present, and is a ``does-not-exist`` claim refused
+    below 100% coverage? Non-RAG blocks are skipped. REPORT-ONLY.
 
 WHY THIS EXITS 0 NO MATTER WHAT
 -------------------------------
@@ -72,7 +83,18 @@ PASS = "pass"
 FAIL = "fail"
 SKIP = "skip"
 
-CHECKS = ("constructor", "smoke", "three_tests")
+CHECKS = (
+    "constructor",
+    "smoke",
+    "three_tests",
+    "source_class_render",
+    "coverage_honesty",
+)
+
+#: A block is RAG-derived when its tags say so. There is no ``rag_core``
+#: base class in this store (evidence-blocked at ddda63f); inventing one
+#: so this check had a parent would be a parallel architecture.
+RAG_TAG = "rag"
 
 #: Markers the three mandatory tests leave behind. Matched case-insensitively
 #: against a block's test file. Kept loose on purpose: the point is to find
@@ -295,6 +317,86 @@ def check_three_tests(block_name: str, cls: Any) -> Row:
     return Row(block_name, "three_tests", PASS, where)
 
 
+# -- checks (d) and (e): KERNEL_DEFAULTS K2 / K3 --------------------------
+
+
+def is_rag_derived(cls: Any) -> bool:
+    """True when the block is an answer layer this store treats as RAG.
+
+    Tags are the only honest signal until a ``rag_core`` base exists.
+    ``grounded_answer`` lives in the kernel kit, not BLOCK_REGISTRY, and
+    is covered by store-enforced tests rather than this table.
+    """
+    tags = [str(tag).lower() for tag in (getattr(cls, "tags", None) or [])]
+    return RAG_TAG in tags
+
+
+def _module_source(cls: Any) -> str:
+    module = inspect.getmodule(cls)
+    if module is None or not getattr(module, "__file__", None):
+        return ""
+    try:
+        return Path(module.__file__).read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return ""
+
+
+def check_source_class_render(block_name: str, cls: Any) -> Row:
+    """K2, report-only: RAG blocks emit and render ``source_class``."""
+    if not is_rag_derived(cls):
+        return Row(block_name, "source_class_render", SKIP, "not a RAG answer layer")
+
+    text = _module_source(cls)
+    uses_contract = "answer_contract" in text
+    emits_class = "source_class" in text
+    if uses_contract and emits_class:
+        return Row(
+            block_name,
+            "source_class_render",
+            PASS,
+            "emits source_class via the answer contract",
+        )
+    missing = []
+    if not uses_contract:
+        missing.append("answer_contract")
+    if not emits_class:
+        missing.append("source_class")
+    return Row(
+        block_name,
+        "source_class_render",
+        FAIL,
+        "RAG answer layer missing %s" % "+".join(missing),
+    )
+
+
+def check_coverage_honesty(block_name: str, cls: Any) -> Row:
+    """K3, report-only: RAG blocks carry the coverage line and the ban."""
+    if not is_rag_derived(cls):
+        return Row(block_name, "coverage_honesty", SKIP, "not a RAG answer layer")
+
+    text = _module_source(cls)
+    has_line = "coverage_line" in text or " of " in text and "indexed" in text
+    has_ban = "does-not-exist" in text or "does_not_exist" in text
+    if has_line and has_ban:
+        return Row(
+            block_name,
+            "coverage_honesty",
+            PASS,
+            "N of M indexed + does-not-exist prohibition",
+        )
+    missing = []
+    if not has_line:
+        missing.append("coverage_line")
+    if not has_ban:
+        missing.append("does-not-exist prohibition")
+    return Row(
+        block_name,
+        "coverage_honesty",
+        FAIL,
+        "RAG answer layer missing %s" % "+".join(missing),
+    )
+
+
 # -- the run ---------------------------------------------------------------
 
 
@@ -323,6 +425,8 @@ def collect(invoke: bool = True, timeout: float = 20.0) -> List[Row]:
         else:
             rows.append(Row(block_name, "smoke", SKIP, "--no-invoke"))
         rows.append(check_three_tests(block_name, cls))
+        rows.append(check_source_class_render(block_name, cls))
+        rows.append(check_coverage_honesty(block_name, cls))
     return rows
 
 

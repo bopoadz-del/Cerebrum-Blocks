@@ -195,6 +195,49 @@ def test_a_test_file_missing_a_category_names_which_one(tmp_path, monkeypatch):
     assert "happy" not in row.note.split("(")[0]
 
 
+# -- (d) / (e) K2 / K3 report-only ----------------------------------------
+
+
+class _RagTagged:
+    name = "raggy"
+    tags = ["knowledge", "rag"]
+
+
+class _NotRag:
+    name = "plain"
+    tags = ["infrastructure"]
+
+
+def test_non_rag_blocks_are_skipped_for_k2_and_k3():
+    assert conformance.check_source_class_render("plain", _NotRag).status == conformance.SKIP
+    assert conformance.check_coverage_honesty("plain", _NotRag).status == conformance.SKIP
+
+
+def test_a_rag_block_using_the_answer_contract_passes_k2(tmp_path, monkeypatch):
+    path = tmp_path / "rag_block.py"
+    path.write_text(
+        "from app.core.answer_contract import emit_chunk, source_class\n"
+        "class X:\n    tags = ['rag']\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        conformance.inspect, "getmodule", lambda cls: type("M", (), {"__file__": str(path)})()
+    )
+    row = conformance.check_source_class_render("raggy", _RagTagged)
+    assert row.status == conformance.PASS
+
+
+def test_a_rag_block_missing_the_coverage_line_is_reported(tmp_path, monkeypatch):
+    path = tmp_path / "rag_block.py"
+    path.write_text("class X:\n    tags = ['rag']\n", encoding="utf-8")
+    monkeypatch.setattr(
+        conformance.inspect, "getmodule", lambda cls: type("M", (), {"__file__": str(path)})()
+    )
+    row = conformance.check_coverage_honesty("raggy", _RagTagged)
+    assert row.status == conformance.FAIL
+    assert "coverage_line" in row.note
+
+
 def test_a_file_with_all_three_categories_passes(tmp_path, monkeypatch):
     path = tmp_path / "test_full.py"
     path.write_text(

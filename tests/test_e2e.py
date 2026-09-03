@@ -1016,9 +1016,24 @@ class TestInfrastructureBlocks:
         from app.blocks.cache_manager import CacheManagerBlock
         b = CacheManagerBlock()
         # CacheManager accepts action in params
-        set_r = await b.execute({"key": "e2e_test", "value": "hello"}, {"action": "set"})
+        scoped = {
+            "key": "e2e_test",
+            "value": "hello",
+            "tenant_id": "e2e-tenant",
+            "project_id": "e2e-project",
+            "source_class": "official_guidance",
+        }
+        set_r = await b.execute(scoped, {"action": "set"})
         assert set_r["status"] == "success"
-        get_r = await b.execute({"key": "e2e_test"}, {"action": "get"})
+        get_r = await b.execute(
+            {
+                "key": "e2e_test",
+                "tenant_id": "e2e-tenant",
+                "project_id": "e2e-project",
+                "source_class": "official_guidance",
+            },
+            {"action": "get"},
+        )
         assert _r(get_r).get("value") == "hello"
 
     @pytest.mark.asyncio
