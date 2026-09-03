@@ -92,3 +92,23 @@ def _safe_iso_date(value: Any) -> Optional[datetime]:
         except ValueError:
             continue
     return None
+
+
+def _unit_class(unit: str) -> str:
+    """Map a unit string to a class used by the lookup unit-class guard.
+
+    Audit I9: a count-class item ('ea') must not inherit a volumetric rate.
+    Empty/unknown units return the stripped token so only like-with-like match.
+    """
+    u = (unit or "").lower().strip()
+    if u in {"m3", "cu m", "cubic meter", "cubic metre", "m³"}:
+        return "volume"
+    if u in {"m2", "sq m", "square meter", "square metre", "m²"}:
+        return "area"
+    if u in {"kg", "kilogram", "tonne", "tonnes", "t", "ton"}:
+        return "weight"
+    if u in {"lm", "m", "linear meter", "linear metre", "rm"}:
+        return "length"
+    if u in {"ea", "no", "nr", "each", "item", "unit"}:
+        return "count"
+    return u
