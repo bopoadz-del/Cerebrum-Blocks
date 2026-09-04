@@ -145,7 +145,7 @@ jobs:
         # report-only conformance checks: this covers a module added in
         # the same PR, so a red here is this PR's own defect.
         run: |
-          pytest -q tests/core/test_block_result.py tests/core/test_manifest_contract.py tests/core/test_template_three_tests.py tests/core/test_lane2_conformance.py tests/core/test_block_config.py tests/core/test_answer_contract.py tests/core/test_learning_engine_config.py
+          pytest -q tests/core/test_block_result.py tests/core/test_manifest_contract.py tests/core/test_template_three_tests.py tests/core/test_lane2_conformance.py tests/core/test_block_config.py tests/core/test_answer_contract.py tests/core/test_learning_engine_config.py tests/core/test_registry_reuse.py tests/routers/test_registry_reuse.py
 
       - name: Run lockfile-consistency mutation tests
         # A pin change that does not touch the lock must fail. These tests

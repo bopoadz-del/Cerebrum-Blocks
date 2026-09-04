@@ -71,6 +71,53 @@ Authorization: Bearer YOUR_API_KEY
 
 ---
 
+## ♻️ Exact-id REUSE / present (Factory STEP 0)
+
+Auth required. This is a **registry query**, not a guess: the path segment
+is the exact store id (`block_registry/{id}/block.json`). Factory should
+call this for STEP 0 inventory instead of inferring whether a block exists.
+
+```bash
+GET /v1/registry/blocks/{block_id}
+GET /v1/registry/reuse/{block_id}
+Authorization: Bearer YOUR_API_KEY
+```
+
+**Present:**
+```json
+{
+  "present": true,
+  "id": "document_engine",
+  "reuse": true,
+  "source": "registry",
+  "reads": [{"kind": "file", "scope": "input_document"}],
+  "writes": [{"kind": "caller", "scope": "output"}],
+  "never": [],
+  "acceptance": [{"id": "...", "check": "...", "status": "refused"}],
+  "manifest": { "...": "full block.json including L2.2 brief-scope fields" }
+}
+```
+
+**Absent** — always HTTP 200; `present` is the inventory bit:
+```json
+{
+  "present": false,
+  "id": "no_such_block",
+  "reuse": false
+}
+```
+
+Unversioned alias: `GET /registry/blocks/{block_id}`.
+
+`block.json` L2.2 brief-scope fields (`reads`, `writes`, `never`,
+`acceptance`) are **report-only until the flip**. Lane 2 / the store
+audit warn on missing or invalid values; they do not fail-close the
+store. `BRIEF_SCOPE_FAIL_CLOSED` stays `False` until an owner-gated PR.
+Empty `acceptance` on a measured backfill means the handler has no
+fail-loud sentence this store could pin — do not invent one.
+
+---
+
 ## 📦 List Blocks
 
 ```bash

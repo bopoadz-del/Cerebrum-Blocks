@@ -28,6 +28,7 @@ def api_info():
         "blocks": len(BLOCK_REGISTRY),
         "endpoints": {
             "blocks": "/v1/blocks",
+            "registry": "/v1/registry/blocks/{block_id}",
             "execute": "/v1/execute",
             "chain": "/v1/chain",
             "chat": "/v1/chat",
