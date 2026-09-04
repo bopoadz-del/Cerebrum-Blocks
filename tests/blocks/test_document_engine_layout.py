@@ -5,6 +5,8 @@ Factory CLONER scans ``app.blocks.(\\w+)`` and requires
 ``app/blocks/document_engine_block.py`` (or a package of that name) on disk.
 """
 
+import secrets
+import sys
 from pathlib import Path
 
 from app.blocks import get_block
@@ -33,3 +35,20 @@ def test_get_block_document_engine_returns_wrapper():
     cls = get_block("document_engine")
     assert cls is PackageBlock
     assert cls is FileBlock
+
+
+def test_package_import_does_not_shadow_stdlib_secrets():
+    """Importing the package must not put app/blocks on sys.path.
+
+    That shadow made ``from secrets import token_hex`` load
+    ``app/blocks/secrets.py`` and broke FastAPI collection in the full suite.
+    """
+    blocks_dir = (_REPO_ROOT / "app" / "blocks").resolve()
+    polluted = [
+        Path(entry).resolve()
+        for entry in sys.path
+        if entry and Path(entry).resolve() == blocks_dir
+    ]
+    assert not polluted, f"app/blocks leaked onto sys.path: {polluted}"
+    assert hasattr(secrets, "token_hex")
+    assert Path(secrets.__file__).resolve() != (blocks_dir / "secrets.py").resolve()
