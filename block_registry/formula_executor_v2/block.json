@@ -19,5 +19,45 @@
   "publisher_id": "cerebrum_platform",
   "signature": "o8rLeg3PHdNNr/14L/XiM1zzANXGuUMEb9L5LZdjmdTpgxmVsXgnh1S/M4PNmsVVPyBuxNEz0TYe2e0TWkLsBA==",
   "trust_tier": "platform",
-  "version": "2.0.0"
+  "version": "2.0.0",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    },
+    {
+      "kind": "llm",
+      "scope": "provider"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "memory",
+      "scope": "cache"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "missing_credential",
+      "check": "fails loud when a required credential or key is absent",
+      "status": "failed"
+    }
+  ]
 }

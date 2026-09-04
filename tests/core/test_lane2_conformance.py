@@ -249,6 +249,51 @@ def test_a_file_with_all_three_categories_passes(tmp_path, monkeypatch):
     assert conformance.check_three_tests("full", _Conformant).status == conformance.PASS
 
 
+# -- (f) L2.2 brief-scope, report-only ------------------------------------
+
+
+def test_brief_scope_is_in_the_report_and_empty_lists_pass(monkeypatch):
+    monkeypatch.setattr(
+        conformance,
+        "_manifest_for",
+        lambda name: {"reads": [], "writes": [], "never": [], "acceptance": []},
+    )
+    row = conformance.check_brief_scope("measured")
+    assert row.status == conformance.PASS
+    assert "reads=empty" in row.note
+
+
+def test_brief_scope_reports_missing_fields(monkeypatch):
+    monkeypatch.setattr(conformance, "_manifest_for", lambda name: {"id": "x"})
+    row = conformance.check_brief_scope("bare")
+    assert row.status == conformance.FAIL
+    assert "missing" in row.note
+    assert "reads" in row.note
+
+
+def test_brief_scope_reports_invalid_fields(monkeypatch):
+    monkeypatch.setattr(
+        conformance,
+        "_manifest_for",
+        lambda name: {
+            "reads": [{"kind": "vibes", "scope": "x"}],
+            "writes": [],
+            "never": [],
+            "acceptance": [],
+        },
+    )
+    row = conformance.check_brief_scope("bad")
+    assert row.status == conformance.FAIL
+    assert "invalid" in row.note
+
+
+def test_brief_scope_reports_a_missing_manifest(monkeypatch):
+    monkeypatch.setattr(conformance, "_manifest_for", lambda name: None)
+    row = conformance.check_brief_scope("ghost")
+    assert row.status == conformance.FAIL
+    assert "no block.json" in row.note
+
+
 # -- the table -------------------------------------------------------------
 
 

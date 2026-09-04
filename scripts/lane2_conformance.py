@@ -31,6 +31,14 @@ block in ``BLOCK_REGISTRY``:
     indexed`` line present, and is a ``does-not-exist`` claim refused
     below 100% coverage? Non-RAG blocks are skipped. REPORT-ONLY.
 
+``brief_scope``
+    L2.2. Does ``block.json`` carry valid ``reads`` / ``writes`` /
+    ``never`` / ``acceptance``? Missing or invalid fields are reported.
+    Empty lists are valid (measured nothing / could not measure).
+    REPORT-ONLY -- ``BRIEF_SCOPE_FAIL_CLOSED`` is False until the
+    owner-gated flip. This check walks ``block_registry/``, not just
+    ``BLOCK_REGISTRY``, because Factory inventory is a store query.
+
 WHY THIS EXITS 0 NO MATTER WHAT
 -------------------------------
 Cowork is booting generated zips from this store right now, and these checks
@@ -89,6 +97,7 @@ CHECKS = (
     "three_tests",
     "source_class_render",
     "coverage_honesty",
+    "brief_scope",
 )
 
 #: A block is RAG-derived when its tags say so. There is no ``rag_core``
@@ -409,6 +418,9 @@ def collect(invoke: bool = True, timeout: float = 20.0) -> List[Row]:
             cls = BLOCK_REGISTRY[block_name]
         except Exception as exc:
             for check in CHECKS:
+                if check == "brief_scope":
+                    # Disk-manifest check; collected separately below.
+                    continue
                 rows.append(
                     Row(
                         block_name,
@@ -427,6 +439,74 @@ def collect(invoke: bool = True, timeout: float = 20.0) -> List[Row]:
         rows.append(check_three_tests(block_name, cls))
         rows.append(check_source_class_render(block_name, cls))
         rows.append(check_coverage_honesty(block_name, cls))
+
+    rows.extend(collect_brief_scope())
+    return rows
+
+
+# -- check (f): L2.2 brief-scope fields (report-only until the flip) ------
+
+
+def check_brief_scope(block_name: str) -> Row:
+    """Report missing or invalid ``reads``/``writes``/``never``/``acceptance``.
+
+    Never fail-closes the store. Empty lists pass. Missing keys and
+    malformed entries fail the *row* so the table shows the backlog;
+    ``main()`` still exits 0. Flip gate: ``BRIEF_SCOPE_FAIL_CLOSED``.
+    """
+    from app.core.manifest_contract import (
+        BRIEF_SCOPE_KEYS,
+        check_brief_scope_fields,
+        missing_brief_scope_fields,
+    )
+
+    manifest = _manifest_for(block_name)
+    if manifest is None:
+        return Row(
+            block_name,
+            "brief_scope",
+            FAIL,
+            "no block.json on disk -- Factory cannot query this id",
+        )
+
+    invalid = check_brief_scope_fields(manifest)
+    missing = missing_brief_scope_fields(manifest)
+    if invalid:
+        return Row(
+            block_name,
+            "brief_scope",
+            FAIL,
+            "invalid: %s" % "; ".join(invalid)[:200],
+        )
+    if missing:
+        return Row(
+            block_name,
+            "brief_scope",
+            FAIL,
+            "missing %s (report-only until flip)" % "+".join(missing),
+        )
+
+    declared = []
+    for field in BRIEF_SCOPE_KEYS:
+        value = manifest.get(field)
+        if isinstance(value, list) and value:
+            declared.append("%s=%d" % (field, len(value)))
+        else:
+            declared.append("%s=empty" % field)
+    return Row(block_name, "brief_scope", PASS, ", ".join(declared))
+
+
+def collect_brief_scope() -> List[Row]:
+    """Every on-disk registry entry, including ids not in BLOCK_REGISTRY."""
+    if not REGISTRY_ROOT.is_dir():
+        return []
+    rows: List[Row] = []
+    for path in sorted(REGISTRY_ROOT.iterdir()):
+        if not path.is_dir() or path.name.startswith("__"):
+            continue
+        if not (path / "block.json").is_file():
+            continue
+        rows.append(check_brief_scope(path.name))
     return rows
 
 
