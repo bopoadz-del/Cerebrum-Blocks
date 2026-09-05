@@ -1,0 +1,94 @@
+{
+  "lane": "mep_coordination",
+  "order": "K-MEP — BIM clash-resolution kit (\"clash judge\")",
+  "standard": "FLEET_OPS/PROMPT_STANDARD_v2.md (rails R8/R9/R10), retrieved from owner Drive 2026-09-05 and vendored to the kit",
+  "goal": "Take an IFC model, find TRUE clashes and clearance violations in MEP services, triage by congestion and programme, propose sourced resolutions on a CLONE. Ships as a hat on The Fork; extraction to standalone is a manifest change.",
+  "done_when": [
+    "true clash + clearance results with zero bounding-box false positives in the top-50",
+    "every proposed move carries a clause",
+    "BCF exports open in BIMcollab/Solibri",
+    "a change set round-trips Revit -> Speckle and version_diff marks the clash resolved",
+    "original model byte-identical before/after (hash proof)",
+    "three tests + mutants per block, receipts in every PR",
+    "kit manifest complete enough that standalone deploy is config only"
+  ],
+  "current_step": "block 1 geometry_engine landed; block 2 clearance_rules next",
+  "rollback_point": "790e8f99",
+  "blocks": {
+    "1_geometry_engine": "LANDED — exact boolean + min distance, AABB demoted to padded pre-filter. 6 tests, mutant killed by 3.",
+    "2_clearance_rules": "NEXT — rule table with citations, RAG-ingested from spec",
+    "3_triage": "PENDING",
+    "4_resolver": "PENDING",
+    "5_model_clone": "PENDING",
+    "6_version_diff": "PENDING",
+    "7_fork_hat": "PENDING — thin mount, reviewed by the Fork lane not this one"
+  },
+  "decisions": [
+    {
+      "id": "D1",
+      "decision": "Keep the AABB test as a PADDED pre-filter, not a verdict.",
+      "why": "Unpadded it discards exactly the near-miss pairs the clearance check exists to find. Padding by the largest active rule keeps it honest. Pinned by test_the_aabb_prefilter_must_pad_by_the_clearance_or_it_hides_violations."
+    },
+    {
+      "id": "D2",
+      "decision": "A hard clash cites no rule; a clearance finding MUST cite one.",
+      "why": "Interpenetration is a clash under every rule, so inventing a citation for it would be false precision. Clearance is only meaningful against a stated requirement."
+    },
+    {
+      "id": "D3",
+      "decision": "Elements with no usable geometry are reported UNJUDGED, never CLEAR.",
+      "why": "Silence is not a pass. A report that calls an unexamined zone clean is the failure mode this kit exists to remove."
+    },
+    {
+      "id": "D4",
+      "decision": "Every finding carries the METHOD that produced it (exact_boolean / surface_intersection / min_distance).",
+      "why": "Without the manifold3d backend or a watertight mesh, contact can be proven but penetration depth cannot. A consumer ranking by severity must know which it has."
+    }
+  ],
+  "failures": [
+    {
+      "id": "F1",
+      "state": "OPEN",
+      "item": "No clearance rule source with clauses",
+      "evidence_gap": "Knowledge pool SBC content is an index of code part numbers, not clearance tables. Whole-RAG sweep found IMC 49, IPC 53, NFPA 13 56, sprinkler 399, riser 407, ceiling void 52 — real content, but scattered across specs/BOQs/minutes, not a structured table. Zero chunks match (separation|clearance) + MEP service + dimension + shall.",
+      "attempts": [
+        "curated_kb/training_material term sweep",
+        "whole-RAG sweep across 18 code/standard terms",
+        "clause-shaped regex against Specification volumes (returned traffic-management clauses, not MEP)",
+        "utility-separation regex for the infra equivalent (0 matches)"
+      ],
+      "next": "Block 2 ingests rules from the project spec via RAG at run time rather than shipping a table. Source text is proven to exist (42 chunks of clearance+shall in the spec volumes). Any rule without a retrievable clause is emitted flagged unsourced and is never proposed as settled."
+    },
+    {
+      "id": "F2",
+      "state": "OPEN",
+      "item": "No congested MEP fixture",
+      "evidence_gap": "Schependomlaan 404s at the location its own README and the order both name. buildingSMART Simple-Scene models download and parse (HTTP 200, extractor status success) but are conformance scenes: Building-Hvac 4 elements, Infra-Electrical 2, Infra-Plumbing 24 pipes only. Zero clashes in all three; single-discipline so cross-system clash is impossible by construction. HuggingFace NNTS/BIM_IFC holds 6 real IFC files but is gated (HTTP 401).",
+      "attempts": [
+        "buildingSMART Sample-Test-Files main branch — enumerated and downloaded",
+        "openBIMstandards/DataSetSchependomlaan — README only, forwarding pointer dead",
+        "buildingSMART master branch + IFC 2x3/Schependomlaan path — 404",
+        "HuggingFace dataset search (ifc, bim, ifc+bim) — best candidate gated"
+      ],
+      "next": "Build a DECLARED synthetic congested corridor as the fixture, labelled constructed not real. Owner-supplied real model remains OWNER-GATED."
+    },
+    {
+      "id": "F3",
+      "state": "CLOSED",
+      "item": "Order premise false: four named functions said to be restored by Lane 2",
+      "evidence_gap": "_detect_model_clashes, _categorize_clash_severity, _suggest_clash_resolution, _parse_ifc_geometries do not exist in The_Fork or Cerebrum-Blocks by any name or import.",
+      "resolution": "Recorded in INVENTORY_2026-09-05.md. Equivalent capability exists as _basic_clash_report/_geometric_clash_report. The Lane 2 report claiming restoration should itself be re-checked."
+    }
+  ],
+  "pending_owner": [
+    "A real client model for fixtures (OWNER-GATED)",
+    "Autodesk API credentials / spend (OWNER-GATED)",
+    "Name and pricing of the standalone product (OWNER-GATED)"
+  ],
+  "artifacts": [
+    "FLEET_OPS/artifacts/mep/INVENTORY_2026-09-05.md",
+    "FLEET_OPS/artifacts/mep/RUNLOG.md",
+    "block_store/kits/mep_coordination/"
+  ],
+  "updated": "2026-09-05"
+}
