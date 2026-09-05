@@ -307,13 +307,25 @@ class TestStoreCatalog:
             Not every kit distributes through _KIT_BLOCK_SPECS. universal_kernel
             ships 23 blocks as wave<N>/<name>/code.py with their own
             kernel_manifest.json and tests -- real blocks, simply not app
-            modules. A check that only knew about app modules would call all 23
-            phantom, which is the opposite of the truth.
+            modules. Kit-first work (mep_coordination) ships the same way
+            domain kits do: bundle/app/blocks/<name>.py. A check that only
+            knew about app modules would call those phantom, which is the
+            opposite of the truth.
             """
             base = kit_root / kit_id
             if not base.is_dir():
                 return set()
             found = {p.stem for p in base.glob("blocks/*.py") if p.stem != "__init__"}
+            found |= {
+                p.stem
+                for p in base.glob("bundle/app/blocks/*.py")
+                if p.stem != "__init__"
+            }
+            found |= {
+                p.stem
+                for p in base.glob("app/blocks/*.py")
+                if p.stem != "__init__"
+            }
             found |= {
                 d.name
                 for d in base.glob("wave*/*")

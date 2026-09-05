@@ -2,6 +2,7 @@
   "id": "mep_coordination",
   "name": "MEP Coordination — Clash Judge",
   "version": "0.1.0",
+  "learning_engine_enabled": false,
   "description": "Takes an IFC model, finds true clashes and clearance violations in MEP services, triages by congestion and programme, and proposes sourced resolutions on a clone. The original model is never written to.",
   "status": "in_development",
   "author": "bopoadz-del",
