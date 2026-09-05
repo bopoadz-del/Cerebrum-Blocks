@@ -1,6 +1,6 @@
 {
   "lane": "mep_coordination",
-  "order": "K-MEP — BIM clash-resolution kit (\"clash judge\")",
+  "order": "K-MEP \u2014 BIM clash-resolution kit (\"clash judge\")",
   "standard": "FLEET_OPS/PROMPT_STANDARD_v2.md (rails R8/R9/R10), retrieved from owner Drive 2026-09-05 and vendored to the kit",
   "goal": "Take an IFC model, find TRUE clashes and clearance violations in MEP services, triage by congestion and programme, propose sourced resolutions on a CLONE. Ships as a hat on The Fork; extraction to standalone is a manifest change.",
   "done_when": [
@@ -12,16 +12,18 @@
     "three tests + mutants per block, receipts in every PR",
     "kit manifest complete enough that standalone deploy is config only"
   ],
-  "current_step": "block 1 geometry_engine landed; block 2 clearance_rules next",
-  "rollback_point": "790e8f99",
+  "current_step": "CAMPAIGN COMPLETE \u2014 7 blocks landed, acceptance run, receipt posted. F4 open.",
+  "rollback_point": "512347ad",
   "blocks": {
-    "1_geometry_engine": "LANDED — exact boolean + min distance, AABB demoted to padded pre-filter. 6 tests, mutant killed by 3.",
-    "2_clearance_rules": "NEXT — rule table with citations, RAG-ingested from spec",
-    "3_triage": "PENDING",
-    "4_resolver": "PENDING",
-    "5_model_clone": "PENDING",
-    "6_version_diff": "PENDING",
-    "7_fork_hat": "PENDING — thin mount, reviewed by the Fork lane not this one"
+    "1_geometry_engine": "LANDED \u2014 100% branch coverage, mutant killed",
+    "2_clearance_rules": "LANDED \u2014 100%, 3 cited rules, citation guard",
+    "3_clash_triage": "LANDED \u2014 100%, order.yaml as data",
+    "4_clash_resolver": "LANDED \u2014 98%, gravity fall guard + defence in depth",
+    "5_model_clone": "LANDED \u2014 hash assertion raises if the original is written",
+    "6_bcf_export": "LANDED \u2014 BCF 2.1 validated structurally",
+    "7_version_diff": "LANDED \u2014 unordered pair key, regressed distinct from new",
+    "8_kit_wiring": "LANDED \u2014 kit.json, 32-row golden matrix, MEP_KIT.md",
+    "9_fork_hat": "PR #512 OPEN for the Fork lane \u2014 deliberately not merged by this lane"
   },
   "decisions": [
     {
@@ -48,29 +50,31 @@
   "failures": [
     {
       "id": "F1",
-      "state": "OPEN",
+      "state": "CLOSED",
       "item": "No clearance rule source with clauses",
-      "evidence_gap": "Knowledge pool SBC content is an index of code part numbers, not clearance tables. Whole-RAG sweep found IMC 49, IPC 53, NFPA 13 56, sprinkler 399, riser 407, ceiling void 52 — real content, but scattered across specs/BOQs/minutes, not a structured table. Zero chunks match (separation|clearance) + MEP service + dimension + shall.",
+      "evidence_gap": "Knowledge pool SBC content is an index of code part numbers, not clearance tables. Whole-RAG sweep found IMC 49, IPC 53, NFPA 13 56, sprinkler 399, riser 407, ceiling void 52 \u2014 real content, but scattered across specs/BOQs/minutes, not a structured table. Zero chunks match (separation|clearance) + MEP service + dimension + shall.",
       "attempts": [
         "curated_kb/training_material term sweep",
         "whole-RAG sweep across 18 code/standard terms",
         "clause-shaped regex against Specification volumes (returned traffic-management clauses, not MEP)",
         "utility-separation regex for the infra equivalent (0 matches)"
       ],
-      "next": "Block 2 ingests rules from the project spec via RAG at run time rather than shipping a table. Source text is proven to exist (42 chunks of clearance+shall in the spec volumes). Any rule without a retrievable clause is emitted flagged unsourced and is never proposed as settled."
+      "next": "Block 2 ingests rules from the project spec via RAG at run time rather than shipping a table. Source text is proven to exist (42 chunks of clearance+shall in the spec volumes). Any rule without a retrievable clause is emitted flagged unsourced and is never proposed as settled.",
+      "resolution": "CLEARED by retrieval. Three real cited rules from drawing IP-INF-053-0000-JCB-DWG-LP-600-0000002 NOTES 4/5/6 (gas-to-LV 400mm, gas-to-any 300mm, building-to-gas 5.0m), doc 'DD-2023-118_DG2 Infra P1_Vol 3 - Drawings (3 of 7).pdf', chunk 628, hash 2d085ef2123b39a9. Seeded with citations; the citation guard refuses any rule without a clause."
     },
     {
       "id": "F2",
-      "state": "OPEN",
+      "state": "CLOSED",
       "item": "No congested MEP fixture",
       "evidence_gap": "Schependomlaan 404s at the location its own README and the order both name. buildingSMART Simple-Scene models download and parse (HTTP 200, extractor status success) but are conformance scenes: Building-Hvac 4 elements, Infra-Electrical 2, Infra-Plumbing 24 pipes only. Zero clashes in all three; single-discipline so cross-system clash is impossible by construction. HuggingFace NNTS/BIM_IFC holds 6 real IFC files but is gated (HTTP 401).",
       "attempts": [
-        "buildingSMART Sample-Test-Files main branch — enumerated and downloaded",
-        "openBIMstandards/DataSetSchependomlaan — README only, forwarding pointer dead",
-        "buildingSMART master branch + IFC 2x3/Schependomlaan path — 404",
-        "HuggingFace dataset search (ifc, bim, ifc+bim) — best candidate gated"
+        "buildingSMART Sample-Test-Files main branch \u2014 enumerated and downloaded",
+        "openBIMstandards/DataSetSchependomlaan \u2014 README only, forwarding pointer dead",
+        "buildingSMART master branch + IFC 2x3/Schependomlaan path \u2014 404",
+        "HuggingFace dataset search (ifc, bim, ifc+bim) \u2014 best candidate gated"
       ],
-      "next": "Build a DECLARED synthetic congested corridor as the fixture, labelled constructed not real. Owner-supplied real model remains OWNER-GATED."
+      "next": "Build a DECLARED synthetic congested corridor as the fixture, labelled constructed not real. Owner-supplied real model remains OWNER-GATED.",
+      "resolution": "CLEARED. Schependomlaan found in the ARCHIVED repo openBIMstandards/Archive-DataSetSchependomlaan. Design model 47MB IFC2X3: 73 MEP elements, 2954 structural, 6 storeys. Valid fixture, acceptance run against it. The companion utilities model had 0 MEP elements and was deleted per the order's own rule."
     },
     {
       "id": "F3",
@@ -78,6 +82,18 @@
       "item": "Order premise false: four named functions said to be restored by Lane 2",
       "evidence_gap": "_detect_model_clashes, _categorize_clash_severity, _suggest_clash_resolution, _parse_ifc_geometries do not exist in The_Fork or Cerebrum-Blocks by any name or import.",
       "resolution": "Recorded in INVENTORY_2026-09-05.md. Equivalent capability exists as _basic_clash_report/_geometric_clash_report. The Lane 2 report claiming restoration should itself be re-checked."
+    },
+    {
+      "id": "F4",
+      "state": "OPEN",
+      "item": "Resolver effectiveness ~20%",
+      "evidence_gap": "Of proposals made, ~1 in 5 clears its target clash on re-detection; applying moves in a congested zone creates new clashes. Detection is production-grade; automated resolution is not.",
+      "attempts": [
+        "unified clash_id across triage/version_diff (score 0.0 -> 0.24; the 0.0 was a silent key mismatch, not a resolution failure)",
+        "neighbour selection by proximity instead of zone equality",
+        "sequential validation \u2014 each accepted move committed to the working state before the next is judged"
+      ],
+      "next": "candidate_moves() offers a FIXED magnitude on free axes. A congested ceiling needs a search over magnitude AND axis, ranked by fewest new conflicts. Different algorithm, not a tuning fix."
     }
   ],
   "pending_owner": [
@@ -88,7 +104,9 @@
   "artifacts": [
     "FLEET_OPS/artifacts/mep/INVENTORY_2026-09-05.md",
     "FLEET_OPS/artifacts/mep/RUNLOG.md",
+    "FLEET_OPS/artifacts/mep/RECEIPT.md",
+    "block_store/kits/mep_coordination/ACCEPTANCE.md",
     "block_store/kits/mep_coordination/"
   ],
-  "updated": "2026-09-05"
+  "updated": "2026-09-06"
 }

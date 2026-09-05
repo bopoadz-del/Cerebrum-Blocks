@@ -122,6 +122,18 @@ def pair_key(a: str, b: str) -> tuple[str, str]:
     return (a, b) if a <= b else (b, a)
 
 
+def clash_id_for(a: str, b: str) -> str:
+    """The ONE canonical clash identifier, shared with version_diff.
+
+    Two blocks deriving "the same" id independently is how an integration
+    silently reports nothing: triage produced "A__B", version_diff produced
+    "A::B", every unit test passed, and the proposal score sat at 0.0 because
+    no key ever matched. One definition, imported by both.
+    """
+    x, y = pair_key(a, b)
+    return f"{x}::{y}"
+
+
 def _is_workflow_noise(system_a: str, system_b: str, name_a: str, name_b: str) -> bool:
     """A fitting overlapping its own segment, in the same system, is assembly
     -- not a conflict. Both conditions are required: two DIFFERENT systems
@@ -242,7 +254,12 @@ def triage(
 
         result.queue.append(
             QueueItem(
-                clash_id=f"{pair_key(a, b)[0]}__{pair_key(a, b)[1]}",
+                # Canonical form is "A::B" over the SORTED pair. version_diff
+                # derives the same id independently, and the two must agree or
+                # score_proposals silently reports 0% forever -- which is
+                # exactly what happened before this was unified. Pinned by
+                # test_clash_id_format_matches_version_diff.
+                clash_id=clash_id_for(a, b),
                 element_a=a, element_b=b,
                 kind=KIND_HARD if kind == "clash" else KIND_CLEARANCE,
                 system_a=sys_a, system_b=sys_b,

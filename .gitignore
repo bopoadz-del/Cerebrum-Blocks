@@ -113,3 +113,6 @@ storage/
 
 # MEP kit fixture: 47MB public model, fetched by fixtures/fetch_fixtures.sh
 block_store/kits/mep_coordination/fixtures/*.ifc
+
+# MEP kit: acceptance run output (contains 47MB model clones)
+block_store/kits/mep_coordination/acceptance_out/

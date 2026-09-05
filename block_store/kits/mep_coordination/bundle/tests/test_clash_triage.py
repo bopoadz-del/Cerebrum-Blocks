@@ -14,7 +14,12 @@ import pytest
 from app.blocks.clash_triage import (
     KIND_CLEARANCE,
     KIND_HARD,
+    QueueItem,
+    TriageResult,
+    _severity_mm,
+    _zone_of,
     load_order,
+    load_programme,
     pair_key,
     resolution_rank,
     triage,
@@ -142,3 +147,181 @@ def test_mutation_probe_ordered_pair_key_reopens_double_counting():
     els = {"A": E("A", "ventilation"), "B": E("B", "electrical")}
     real = triage([F("A", "B"), F("B", "A")], els)
     assert len(real.queue) == 1, "engine regressed to counting both orderings"
+
+
+def test_queue_item_as_dict_is_a_plain_copy_of_its_fields():
+    """as_dict() is what a report/JSON export actually consumes -- it must
+    carry every field through, not just a subset."""
+    item = QueueItem(
+        clash_id="A::B", element_a="A", element_b="B", kind=KIND_HARD,
+        system_a="ventilation", system_b="electrical", zone_key="L1|0_0",
+        level="L1", severity_mm=42.0, resolution_rank=1,
+    )
+    d = item.as_dict()
+    assert d["clash_id"] == "A::B"
+    assert d["severity_mm"] == 42.0
+    assert d["resolution_rank"] == 1
+    # It's a copy, not a view -- mutating it must not touch the QueueItem.
+    d["severity_mm"] = 0.0
+    assert item.severity_mm == 42.0
+
+
+def test_triage_result_as_dict_reports_queue_length_and_counts():
+    """The dict form is what a caller checks the run's shape from -- if
+    queue_length disagrees with len(queue), a report could claim a different
+    row count than it actually renders."""
+    els = {"A": E("A", "ventilation"), "B": E("B", "electrical")}
+    r = triage([F("A", "B")], els)
+    d = r.as_dict()
+    assert d["queue_length"] == len(r.queue) == 1
+    assert d["dropped_workflow"] == r.dropped_workflow
+    assert d["deduped"] == r.deduped
+    assert d["zones"] == r.zones
+    assert d["queue"][0]["clash_id"] == r.queue[0].clash_id
+
+
+def test_load_order_falls_back_to_builtin_when_pyyaml_is_unavailable(monkeypatch):
+    """This block must not fail closed on a missing optional dependency --
+    the whole triage queue would become unavailable over a formatting
+    library, which the module's own docstring calls out as unacceptable."""
+    import sys
+
+    from app.blocks.clash_triage import _DEFAULT_ORDER
+
+    monkeypatch.setitem(sys.modules, "yaml", None)  # forces ImportError
+    order = load_order()
+    assert order == list(_DEFAULT_ORDER)
+
+
+def test_load_order_falls_back_when_order_yaml_is_unreadable(tmp_path):
+    """A corrupt or restructured order.yaml (bad syntax, or missing the
+    resolution_order key) must not crash the triage run -- it must fall back
+    to the built-in order, the same as a missing PyYAML."""
+    from app.blocks.clash_triage import _DEFAULT_ORDER
+
+    bad_yaml = tmp_path / "order.yaml"
+    bad_yaml.write_text("not_resolution_order: [1, 2, 3]\n", encoding="utf-8")
+
+    order = load_order(bad_yaml)
+    assert order == list(_DEFAULT_ORDER)
+
+
+def test_severity_mm_for_a_clash_with_measured_penetration():
+    """A hard clash WITH a measured penetration volume must scale to a
+    millimetre-comparable severity so it can be ranked against a clearance
+    shortfall on the same axis -- the module's own formula is
+    ``volume_m3 * 1e9 ** (1/3)``, i.e. a flat x1000 scaling of the volume."""
+    finding = F("A", "B", kind="clash", penetration_volume_m3=1.0)
+    assert _severity_mm(finding) == pytest.approx(1000.0, abs=1e-6)
+
+    smaller = F("A", "B", kind="clash", penetration_volume_m3=1e-3)
+    assert _severity_mm(smaller) == pytest.approx(1.0, abs=1e-9)
+
+
+def test_severity_mm_for_a_clash_without_a_measured_penetration():
+    """Contact proven by surface intersection alone (no volume, e.g.
+    non-watertight source geometry) must still get a real, comparable
+    severity number -- not zero, which would rank it below a trivial
+    clearance nick."""
+    finding = F("A", "B", kind="clash", penetration_volume_m3=None)
+    assert _severity_mm(finding) == 1000.0
+
+    finding_zero_pen = F("A", "B", kind="clash", penetration_volume_m3=0.0)
+    assert _severity_mm(finding_zero_pen) == 1000.0
+
+
+def test_severity_mm_for_a_clearance_shortfall():
+    """A clearance violation's severity is how far short of the requirement
+    the measured distance fell, in millimetres -- not the raw distance."""
+    finding = F(
+        "A", "B", kind="clearance", distance_m=0.1,
+        required_clearance_m=0.3, penetration_volume_m3=None,
+    )
+    assert _severity_mm(finding) == pytest.approx(200.0, abs=1e-6)
+
+
+def test_severity_mm_is_zero_when_neither_penetration_nor_clearance_data_exists():
+    """Anything that is not a clash and carries no rule-checked
+    distance/requirement pair has no comparable severity to report -- 0.0,
+    not a crash or a fabricated number."""
+    finding = F(
+        "A", "B", kind="clear", distance_m=None,
+        required_clearance_m=None, penetration_volume_m3=None,
+    )
+    assert _severity_mm(finding) == 0.0
+
+
+def test_zone_congestion_skips_an_element_with_no_bbox():
+    """An element the parser could not mesh has no bbox. It must be excluded
+    from the congestion calculation, not crash it or silently count as zero
+    volume in a real zone."""
+
+    @dataclass
+    class NoBBox:
+        global_id: str
+        zone_key: str = "L1|0_0"
+        discipline: str = "mep"
+        bbox: tuple | None = None
+
+    result = zone_congestion([NoBBox("X")])
+    assert result == {}, "an element with no geometry must not fabricate a zone entry"
+
+
+def test_zone_of_is_used_when_an_element_has_no_explicit_zone_key():
+    """zone_congestion must derive a zone from the bbox when zone_key is
+    absent -- this is the fallback the module relies on for elements that
+    were never assigned a zone upstream."""
+    # E always sets zone_key explicitly, so a distinct element type with no
+    # zone_key attribute at all is needed for getattr(...) to genuinely fall
+    # through to the _zone_of() derivation.
+    @dataclass
+    class NoZoneKey:
+        global_id: str
+        discipline: str = "mep"
+        bbox: tuple = (7, 7, 0, 8, 8, 1)
+        level: str = "L1"
+
+    el = NoZoneKey("A")
+    expected_key = _zone_of(el, 6.0)
+    result = zone_congestion([el])
+    assert expected_key in result
+    assert result[expected_key] > 0.0
+
+
+def test_load_programme_with_a_missing_file_returns_an_empty_mapping():
+    """No programme CSV supplied (or the wrong path) must not fail the
+    triage run -- congestion alone drives ranking, which the module allows
+    explicitly."""
+    assert load_programme("this/path/does/not/exist.csv") == {}
+
+
+def test_load_programme_skips_a_malformed_row_but_keeps_the_valid_ones(tmp_path):
+    """A row missing zone or planned_install_date cannot be used to sequence
+    work -- it must be dropped, not turned into a bogus '' key or crash the
+    whole load over one bad line."""
+    csv_path = tmp_path / "programme.csv"
+    csv_path.write_text(
+        "zone,planned_install_date\n"
+        "L1|0_0,2026-01-15\n"
+        ",2026-02-01\n"          # missing zone
+        "L1|1_1,\n"              # missing date
+        "L2|0_0,2026-03-01\n",
+        encoding="utf-8",
+    )
+    programme = load_programme(csv_path)
+    assert programme == {"L1|0_0": "2026-01-15", "L2|0_0": "2026-03-01"}
+
+
+def test_triage_skips_clear_and_unjudged_findings():
+    """A finding that geometry_engine already judged clean, or could not
+    judge at all, has no place in a resolution queue -- it must be filtered
+    out before dedupe/classification, not queued as a phantom conflict."""
+    els = {"A": E("A", "ventilation"), "B": E("B", "electrical")}
+    findings = [
+        F("A", "B", kind="clear"),
+        F("A", "B", kind="unjudged"),
+    ]
+    r = triage(findings, els)
+    assert r.queue == []
+    assert r.dropped_workflow == 0
+    assert r.deduped == 0

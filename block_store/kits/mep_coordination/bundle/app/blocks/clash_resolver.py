@@ -202,6 +202,13 @@ def resolve(
             break
         attempts += 1
 
+        # DEFENCE IN DEPTH, and currently unreachable through this function:
+        # candidate_moves() already withholds the Z axis from a gravity run, so
+        # no vertical vector reaches here today. It stays because resolve() is
+        # public and a caller may one day supply its own candidates, and
+        # because the cost of the check is nothing against the cost of a
+        # flattened drain. Do not delete it as dead code -- it is the second
+        # lock on the one failure this block must never allow.
         if not preserves_fall(element, vector):
             rejected.append(f"{move_type} {vector}: would alter the fall of a gravity run")
             continue

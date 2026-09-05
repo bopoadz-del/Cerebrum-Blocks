@@ -12,9 +12,11 @@ from types import SimpleNamespace
 import pytest
 
 from app.blocks.clearance_rules import (
+    InvalidRule,
     RuleWithoutCitation,
     evaluate,
     load_rules,
+    resolve_precedence,
 )
 
 SEED_RULES_PATH = Path(__file__).resolve().parent.parent / "app" / "blocks" / "seed_rules.json"
@@ -286,3 +288,104 @@ def test_the_specific_gas_lv_seed_rule_beats_the_wildcard_gas_seed_rule():
     other_violations = evaluate([gas_other_finding], rules)
     assert len(other_violations) == 1
     assert other_violations[0].rule_id == "MEP-GAS-ANY-300"
+
+
+def test_a_rule_missing_a_required_field_other_than_the_citation_is_refused():
+    """_require() guards every structural field, not just the citation. A
+    rule with no system_a cannot be matched against anything, so it must be
+    refused just as loudly as an uncited one -- as InvalidRule, distinct from
+    RuleWithoutCitation, so a caller can tell the two failure modes apart."""
+    bad_rule = _code_rule(rule_id="NO-SYSTEM-A")
+    del bad_rule["system_a"]
+
+    with pytest.raises(InvalidRule) as exc_info:
+        load_rules([bad_rule])
+    assert "system_a" in str(exc_info.value)
+    assert "NO-SYSTEM-A" in str(exc_info.value)
+
+
+def test_a_rule_whose_source_is_missing_doc_is_refused():
+    """A clause and a hash with no document name still cannot be traced back
+    to the drawing it came from -- 'doc' is part of the citation's identity,
+    not decoration."""
+    bad_rule = _code_rule(rule_id="NO-DOC")
+    del bad_rule["source"]["doc"]
+
+    with pytest.raises(InvalidRule) as exc_info:
+        load_rules([bad_rule])
+    assert "doc" in str(exc_info.value)
+
+
+def test_a_rule_with_an_axis_outside_the_enum_is_refused():
+    """'diagonal' is not a real axis this block understands. Silently
+    accepting it would mean matches_axis() later has to guess, which this
+    block refuses to do anywhere else -- so it must be caught at load time."""
+    bad_rule = _code_rule(rule_id="BAD-AXIS")
+    bad_rule["axis"] = "diagonal"
+
+    with pytest.raises(InvalidRule) as exc_info:
+        load_rules([bad_rule])
+    assert "diagonal" in str(exc_info.value)
+
+
+def test_a_rule_with_a_precedence_outside_the_enum_is_refused():
+    """Precedence drives the code-vs-project-spec asymmetry. A typo'd
+    precedence value (e.g. 'vendor_preference') must not silently fall
+    through resolve_precedence() uncounted as either bucket."""
+    bad_rule = _code_rule(rule_id="BAD-PRECEDENCE")
+    bad_rule["precedence"] = "vendor_preference"
+
+    with pytest.raises(InvalidRule) as exc_info:
+        load_rules([bad_rule])
+    assert "vendor_preference" in str(exc_info.value)
+
+
+def test_a_rule_with_a_non_numeric_min_gap_is_refused():
+    """A clearance value that cannot even be parsed as a number would make
+    every downstream millimetre comparison throw or lie. Refusing it at load
+    time is the only safe response."""
+    bad_rule = _code_rule(rule_id="NON-NUMERIC-GAP")
+    bad_rule["min_gap_mm"] = "wide enough"
+
+    with pytest.raises(InvalidRule) as exc_info:
+        load_rules([bad_rule])
+    assert "NON-NUMERIC-GAP" in str(exc_info.value)
+
+
+def test_a_rule_with_a_non_positive_min_gap_is_refused():
+    """A zero or negative required gap is not a real clearance requirement --
+    it would mean every finding automatically passes it, silently disabling
+    the rule while looking like it is still in force."""
+    bad_rule = _code_rule(rule_id="ZERO-GAP", min_gap_mm=0.0)
+
+    with pytest.raises(InvalidRule) as exc_info:
+        load_rules([bad_rule])
+    assert "ZERO-GAP" in str(exc_info.value)
+
+
+def test_load_rules_rejects_a_source_that_is_not_a_json_array(tmp_path):
+    """A rule *file* whose top level is an object, not an array, is a
+    malformed rule source -- load_rules() must refuse it outright rather
+    than iterate over its keys as if they were rules."""
+    bad_path = tmp_path / "not_a_list.json"
+    bad_path.write_text('{"rule_id": "X"}', encoding="utf-8")
+
+    with pytest.raises(InvalidRule):
+        load_rules(bad_path)
+
+
+def test_resolve_precedence_with_no_candidates_returns_none():
+    """find_applicable_rule() never calls resolve_precedence() on an empty
+    tier, but resolve_precedence() is public and must still behave sanely
+    (no governing rule, not a crash) if a caller ever does."""
+    assert resolve_precedence([]) is None
+
+
+def test_evaluate_skips_a_finding_with_no_measured_distance():
+    """A Finding with kind 'clear'/'clearance' but no distance_m (e.g. a
+    partially-populated record from an upstream bug) cannot be judged against
+    a millimetre threshold -- evaluate() must skip it, not crash or treat a
+    missing distance as zero."""
+    rules = load_rules([_code_rule(min_gap_mm=150.0)])
+    finding = _finding(distance_m=None)
+    assert evaluate([finding], rules) == []
