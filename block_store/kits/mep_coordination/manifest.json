@@ -15,8 +15,8 @@
     "extractable": true,
     "note": "Built kit-first so extraction to a standalone product is a manifest change, not a rewrite. No code depends on the construction container."
   },
-  "blocks": ["geometry_engine"],
-  "planned_blocks": ["clearance_rules", "triage", "resolver", "model_clone", "version_diff"],
+  "blocks": ["geometry_engine", "clearance_rules"],
+  "planned_blocks": ["triage", "resolver", "model_clone", "version_diff"],
   "contracts": {
     "READS": ["IFC file path", "element pairs", "clearance rule table"],
     "WRITES": ["findings list", "BCF issues", "change sets on a clone"],
