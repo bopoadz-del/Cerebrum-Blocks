@@ -176,3 +176,80 @@ listed in `kit.json` under `helpers`, not `blocks`.
 See `kit.json` for the machine-readable action map, and
 `routing/golden_matrix.json` for the utterances this kit is expected (and
 expected *not*) to route on.
+
+---
+
+## Joint filter — PROVISIONAL calibration
+
+> **Status: PROVISIONAL.** The threshold below was calibrated on two fixtures,
+> **neither of which carries any port connectivity data**. It is the best answer
+> available from the evidence to hand, and it is explicitly not yet confirmed
+> against a production model. Treat it as a working value, not a settled one.
+
+### What the filter decides
+
+Whether two touching elements are a **joint** (segments that meet by design —
+assembly, not conflict) or a **real clash**.
+
+Two signals, in order of authority:
+
+1. **Topology.** Elements whose `IfcDistributionPort`s are linked by
+   `IfcRelConnectsPorts`, or joined by a fitting via `IfcRelNests`, are
+   connected because *the model says so*. This is evidence, and it wins
+   outright wherever it exists.
+2. **Measured volume fraction.** Where the model carries no ports, the shared
+   volume as a **fraction of the smaller element** separates the two cases.
+   This is exact geometry, not a proximity guess.
+
+### The calibration set — 24 + 1
+
+| | source | shared volume | fraction of smaller element |
+|---|---|---|---|
+| 24 joints | every touching pair in `Infra-Plumbing.ifc` (real fixture) | 4.2×10⁻¹⁷ … 1.6×10⁻⁸ m³ | **< 10⁻⁶** |
+| 1 real crossing | constructed pipe-through-pipe, same system, no port link | 5.2×10⁻³ m³ | **0.0844** |
+
+The band between them is empty by roughly five orders of magnitude — a real
+conflict measures about **84,000×** the joint ceiling. The threshold
+(`TOUCH_VOLUME_FRACTION = 1e-4`) sits inside that gap: ~100× above the worst
+observed joint, ~800× below the smallest observed real overlap.
+
+### Why a fraction and not an absolute volume
+
+An absolute floor was tried **first and rejected**. At 10⁻⁹ m³ it excluded only
+**3 of 24** joints, because triangulated cylinders that merely touch still
+enclose a small faceting volume, and that volume **scales with pipe diameter**.
+An absolute floor therefore cannot tell a 50 mm pipe's joint from a 2 m
+culvert's real overlap. A fraction is scale-invariant and means the same thing
+at both sizes.
+
+### Why it is provisional
+
+The calibration set has three weaknesses, all of them stated rather than
+discovered later:
+
+- **One real source.** 24 of the 25 data points come from a single 26-element
+  drainage model. Its pipes are one diameter, one material, one export tool.
+- **One synthetic counter-example.** The "real crossing" is constructed. It is
+  unambiguous, but it is not a conflict anyone actually built.
+- **No port data anywhere.** The topology path — the signal that should
+  normally decide this — has never run against a model that exercises it.
+  Its tests use a synthetic graph.
+
+A model from a different authoring tool, at a different mesh resolution, or
+with genuinely shallow real conflicts, could land inside the gap.
+
+### Re-calibration on the first production model
+
+The watcher on `fixtures/owner_models/` runs the full pipeline on the first
+exported IFC that appears. Its first row **includes a re-calibration table
+before any verdict is reported**:
+
+- the observed joint volume-fraction distribution (min / median / p90 / max)
+- the observed real-clash distribution
+- whether the empty band still exists, and where its edges now sit
+- whether `IfcRelConnectsPorts` is present — if it is, topology decides and the
+  fraction becomes a fallback that should rarely fire
+
+If the band has closed, the verdict is withheld and the threshold is re-derived
+from the production data. A number calibrated on two toy models must not be
+allowed to quietly become a fact about a real building.
