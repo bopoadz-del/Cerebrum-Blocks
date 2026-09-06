@@ -206,5 +206,37 @@
       "widget": "number"
     }
   ],
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "missing_credential",
+      "check": "fails loud when a required credential or key is absent",
+      "status": "failed"
+    }
+  ]
 }

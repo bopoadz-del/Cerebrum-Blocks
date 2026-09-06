@@ -50,6 +50,23 @@ not redefined here.
 ``trust_tier`` is pinned in :mod:`app.core.trust_tier` and consumed, never
 restated -- two copies of an accepted-value set drift, and the failure mode
 of that drift is a block that one checker admits and another rejects.
+
+L2.2 BRIEF-SCOPE FIELDS (``reads`` / ``writes`` / ``never`` / ``acceptance``)
+---------------------------------------------------------------------------
+These four fields are what the Factory brief compiler reads for STEP 0
+inventory (READS / WRITES / NEVER / ACCEPTANCE). They are **report-only
+until the flip**.
+
+``BRIEF_SCOPE_FAIL_CLOSED`` is ``False`` in this phase. Lane 2 and the
+store audit *report* missing or invalid brief-scope fields; they do not
+fail the store on an empty or partial backfill. Absence is not an error
+in ``check_contract_fields`` (the fail-closed validator). A later
+owner-gated PR flips ``BRIEF_SCOPE_FAIL_CLOSED`` to ``True`` after
+leftovers are gone -- do not flip it here.
+
+Empty lists are valid and mean "measured, nothing claimed" or "could not
+be measured honestly". Fabricating a scope the block's code does not
+touch is the defect these fields exist to prevent.
 """
 
 from __future__ import annotations
@@ -92,6 +109,12 @@ KILL_SWITCH = "kill_switch"
 SOURCE_COMMIT = "source_commit"
 PROVENANCE_POLICY = "provenance_policy"
 
+#: Training-eligibility label. KERNEL_DEFAULTS names this for
+#: ``learning_engine``: only independently labeled samples may train.
+#: Other blocks may still declare a free-text policy; this pin is the
+#: one value that is store-enforced for the learning block.
+TRAINING_ELIGIBILITY_POLICY = "independently_labeled_only"
+
 #: Every contract field, all optional. Ordered as KERNEL_DEFAULTS 1.2 lists
 #: them. ``trust_tier`` and ``version`` are absent on purpose: both already
 #: exist and are already required.
@@ -105,9 +128,36 @@ CONTRACT_MANIFEST_KEYS = (
     PROVENANCE_POLICY,
 )
 
+# -- L2.2 brief-scope field names (Factory STEP 0 inventory) ---------------
+
+READS = "reads"
+WRITES = "writes"
+NEVER = "never"
+ACCEPTANCE = "acceptance"
+
+#: Scoped resources + fail-loud checks the brief compiler reads.
+#: Optional and report-only until ``BRIEF_SCOPE_FAIL_CLOSED`` flips.
+BRIEF_SCOPE_KEYS = (
+    READS,
+    WRITES,
+    NEVER,
+    ACCEPTANCE,
+)
+
+#: Flip gate. ``False`` = report-only (Lane 2 / audit warnings).
+#: Do not set ``True`` in a feature PR. Owner-gated separate PR after
+#: backfill leftovers are gone and the Factory compiler is ready to
+#: require the fields.
+BRIEF_SCOPE_FAIL_CLOSED = False
+
 #: Fields stripped before the manifest is hashed. See "THE SIGNATURE
 #: PROBLEM" above. Consumed by ``BlockSigner._compute_digests``.
-UNSIGNED_CONTRACT_KEYS = frozenset(CONTRACT_MANIFEST_KEYS)
+#: Brief-scope keys are excluded for the same reason as the original
+#: seven: adding them to live manifests must not invalidate signatures
+#: the operator cannot re-sign from this repo.
+UNSIGNED_CONTRACT_KEYS = frozenset(CONTRACT_MANIFEST_KEYS) | frozenset(
+    BRIEF_SCOPE_KEYS
+)
 
 
 # -- vocabularies ----------------------------------------------------------
@@ -140,6 +190,28 @@ DECLARED_TYPES = frozenset(
 #: resources blocks in this store actually wait on.
 PRECONDITION_KINDS = frozenset(
     {"team", "file", "index", "service", "dataset", "credential", "block"}
+)
+
+#: Kinds a brief-scope ``reads`` / ``writes`` / ``never`` entry may name.
+#: Starts from the precondition kinds this store already uses, plus the
+#: other resource classes block code in this repo actually touches. Not
+#: invented for the compiler -- taken from measured handlers.
+SCOPE_RESOURCE_KINDS = PRECONDITION_KINDS | frozenset(
+    {
+        "caller",
+        "network",
+        "database",
+        "secrets",
+        "llm",
+        "memory",
+        "subprocess",
+        "config",
+        "env",
+        "audit",
+        "email",
+        "queue",
+        "notification",
+    }
 )
 
 #: An environment variable name: upper snake case.
@@ -325,6 +397,95 @@ def check_provenance_policy(value: Any) -> List[str]:
     return []
 
 
+def _scoped_resources(value: Any, field: str) -> List[str]:
+    """Shape shared by ``reads``, ``writes`` and ``never``.
+
+    Each entry names a ``kind`` from :data:`SCOPE_RESOURCE_KINDS` and a
+    non-empty ``scope`` string that a planner can check. A kind with no
+    scope is the half-filled declaration this field exists to refuse.
+    """
+    reasons = _entries(value, field)
+    if reasons:
+        return reasons
+    for index, entry in enumerate(value):
+        kind = entry.get("kind")
+        if kind not in SCOPE_RESOURCE_KINDS:
+            reasons.append(
+                "%s[%d] has unknown kind %r (accepted: %s)"
+                % (field, index, kind, ", ".join(sorted(SCOPE_RESOURCE_KINDS)))
+            )
+        scope = entry.get("scope")
+        if not isinstance(scope, str) or not scope.strip():
+            reasons.append(
+                "%s[%d] names no scope -- a resource nobody can locate is "
+                "not a scoped resource" % (field, index)
+            )
+    return reasons
+
+
+def check_reads(value: Any) -> List[str]:
+    """Scoped resources this block reads. Measured from code, not hoped."""
+    return _scoped_resources(value, READS)
+
+
+def check_writes(value: Any) -> List[str]:
+    """Scoped resources this block writes. Measured from code, not hoped."""
+    return _scoped_resources(value, WRITES)
+
+
+def check_never(value: Any) -> List[str]:
+    """Scoped resources / actions this block must never touch.
+
+    Only populate when the block's own code or policy enforces the ban.
+    Absence of a use is not a ``never`` -- that would fabricate a
+    prohibition the handler does not actually police.
+    """
+    return _scoped_resources(value, NEVER)
+
+
+def check_acceptance(value: Any) -> List[str]:
+    """Block-level fail-loud checks the brief compiler can quote.
+
+    Each check names an ``id``, a human ``check`` sentence, and the
+    :class:`~app.core.block_result.BlockResult` status it surfaces as.
+    A check that reports ``ok`` is the defect: fail-loud that looks like
+    success is how a planner is taught to ignore it.
+    """
+    reasons = _entries(value, ACCEPTANCE)
+    if reasons:
+        return reasons
+    for index, entry in enumerate(value):
+        ident = entry.get("id")
+        if not isinstance(ident, str) or not ident.strip():
+            reasons.append("%s[%d] has no id" % (ACCEPTANCE, index))
+        check = entry.get("check")
+        if not isinstance(check, str) or not check.strip():
+            reasons.append(
+                "%s[%d] (%s) has no check sentence"
+                % (ACCEPTANCE, index, ident or "?")
+            )
+        status = entry.get("status")
+        if status not in STATUSES:
+            reasons.append(
+                "%s[%d] (%s) declares status %r, which is not a BlockResult "
+                "status (accepted: %s)"
+                % (
+                    ACCEPTANCE,
+                    index,
+                    ident or "?",
+                    status,
+                    ", ".join(sorted(STATUSES)),
+                )
+            )
+        elif status == "ok":
+            reasons.append(
+                "%s[%d] (%s) declares status 'ok' -- a fail-loud check that "
+                "reports success is the defect this field exists to surface"
+                % (ACCEPTANCE, index, ident or "?")
+            )
+    return reasons
+
+
 _CHECKS = {
     REQUIRES_INPUTS: check_requires_inputs,
     PRODUCES: check_produces,
@@ -333,6 +494,13 @@ _CHECKS = {
     KILL_SWITCH: check_kill_switch,
     SOURCE_COMMIT: check_source_commit,
     PROVENANCE_POLICY: check_provenance_policy,
+}
+
+_BRIEF_SCOPE_CHECKS = {
+    READS: check_reads,
+    WRITES: check_writes,
+    NEVER: check_never,
+    ACCEPTANCE: check_acceptance,
 }
 
 
@@ -367,3 +535,40 @@ def declared_contract_fields(manifest: Dict[str, Any]) -> List[str]:
     this phase is how many manifests have adopted anything at all.
     """
     return [field for field in CONTRACT_MANIFEST_KEYS if field in manifest]
+
+
+def check_brief_scope_fields(manifest: Dict[str, Any]) -> List[str]:
+    """Validate whichever brief-scope fields a manifest declares.
+
+    Same rule as :func:`check_contract_fields`: absence is never an error
+    here. A field that IS present is checked. Invalid brief-scope data is
+    reported by Lane 2 / the audit; it is not fed into the fail-closed
+    store validator until ``BRIEF_SCOPE_FAIL_CLOSED`` flips.
+    """
+    reasons: List[str] = []
+    for field in BRIEF_SCOPE_KEYS:
+        if field not in manifest:
+            continue
+        value = manifest[field]
+        if value is None:
+            reasons.append(
+                "%s is present but null; omit the field or use [] if "
+                "nothing could be measured" % field
+            )
+            continue
+        reasons.extend(_BRIEF_SCOPE_CHECKS[field](value))
+    return reasons
+
+
+def missing_brief_scope_fields(manifest: Dict[str, Any]) -> List[str]:
+    """Which of the four brief-scope fields this manifest has not declared.
+
+    Empty lists count as declared -- that is the honest "measured nothing"
+    state. Missing keys are the backfill leftovers Lane 2 reports.
+    """
+    return [field for field in BRIEF_SCOPE_KEYS if field not in manifest]
+
+
+def declared_brief_scope_fields(manifest: Dict[str, Any]) -> List[str]:
+    """Which brief-scope fields this manifest actually carries."""
+    return [field for field in BRIEF_SCOPE_KEYS if field in manifest]

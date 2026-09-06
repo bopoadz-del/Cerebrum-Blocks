@@ -13,12 +13,16 @@ import sys
 from pathlib import Path
 import yaml
 
-# Allow standalone execution from blocks/document_engine/
 _HERE = Path(__file__).parent
-if str(_HERE) not in sys.path:
-    sys.path.insert(0, str(_HERE))
-if str(_HERE.parent) not in sys.path:
-    sys.path.insert(0, str(_HERE.parent))
+
+# Standalone `python main.py` needs the repo root on sys.path. Do not insert
+# app/blocks/ when this file is imported as a package module — that shadows
+# the stdlib `secrets` module with app/blocks/secrets.py and breaks
+# FastAPI/Starlette collection in the full pytest suite.
+if __name__ == "__main__":
+    _repo_root = str(_HERE.parents[2])
+    if _repo_root not in sys.path:
+        sys.path.insert(0, _repo_root)
 
 from app.blocks.document_engine.parsers.pdf_parser import PDFParser
 from app.blocks.document_engine.parsers.docx_parser import DOCXParser

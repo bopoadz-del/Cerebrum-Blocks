@@ -23,18 +23,29 @@ import pytest
 
 from app.core.block_result import STATUSES
 from app.core.manifest_contract import (
+    BRIEF_SCOPE_FAIL_CLOSED,
+    BRIEF_SCOPE_KEYS,
     CONTRACT_MANIFEST_KEYS,
     DECLARED_TYPES,
     PRECONDITION_KINDS,
+    SCOPE_RESOURCE_KINDS,
+    TRAINING_ELIGIBILITY_POLICY,
     UNSIGNED_CONTRACT_KEYS,
+    check_acceptance,
+    check_brief_scope_fields,
     check_contract_fields,
     check_failure_modes,
     check_kill_switch,
+    check_never,
     check_preconditions,
     check_produces,
+    check_reads,
     check_requires_inputs,
     check_source_commit,
+    check_writes,
+    declared_brief_scope_fields,
     declared_contract_fields,
+    missing_brief_scope_fields,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -63,7 +74,25 @@ def test_the_repo_has_manifests_to_check():
 )
 def test_every_current_manifest_still_validates_unchanged(manifest_path: Path):
     """The non-breaking claim, stated once per manifest."""
-    assert check_contract_fields(_load(manifest_path)) == []
+    manifest = _load(manifest_path)
+    assert check_contract_fields(manifest) == []
+    assert check_brief_scope_fields(manifest) == []
+
+
+def test_every_store_registry_manifest_declares_brief_scope_fields():
+    """Backfill pin: Factory inventory is a registry query, not a guess.
+
+    Empty lists are allowed (measured nothing / could not measure).
+    Missing keys are the leftovers Lane 2 reports.
+    """
+    store = sorted(REGISTRY.glob("*/block.json"))
+    assert len(store) >= 100, len(store)
+    leftovers = []
+    for path in store:
+        missing = missing_brief_scope_fields(_load(path))
+        if missing:
+            leftovers.append((path.parent.name, missing))
+    assert leftovers == []
 
 
 def test_an_empty_manifest_declares_nothing_and_that_is_fine():
@@ -76,6 +105,13 @@ def test_version_and_trust_tier_are_not_redefined_here():
     accepted-value set is the drift AGENTS.md warns about."""
     assert "version" not in CONTRACT_MANIFEST_KEYS
     assert "trust_tier" not in CONTRACT_MANIFEST_KEYS
+
+
+def test_learning_engine_training_eligibility_is_independently_labeled_only():
+    """Strict: only independently labeled samples may train."""
+    manifest = _load(REGISTRY / "learning_engine" / "block.json")
+    assert manifest.get("provenance_policy") == TRAINING_ELIGIBILITY_POLICY
+    assert check_contract_fields(manifest) == []
 
 
 def test_a_null_field_is_not_the_same_as_an_absent_one():
@@ -227,7 +263,67 @@ def test_declared_contract_fields_reports_what_a_manifest_adopted():
 
 
 def test_the_contract_fields_are_all_excluded_from_the_signed_digest():
-    assert UNSIGNED_CONTRACT_KEYS == frozenset(CONTRACT_MANIFEST_KEYS)
+    assert UNSIGNED_CONTRACT_KEYS == frozenset(CONTRACT_MANIFEST_KEYS) | frozenset(
+        BRIEF_SCOPE_KEYS
+    )
+    assert set(BRIEF_SCOPE_KEYS) <= UNSIGNED_CONTRACT_KEYS
+
+
+def test_brief_scope_is_report_only_until_the_flip():
+    """The fail-closed flip is a separate owner-gated PR."""
+    assert BRIEF_SCOPE_FAIL_CLOSED is False
+    assert BRIEF_SCOPE_KEYS == ("reads", "writes", "never", "acceptance")
+
+
+def test_empty_brief_scope_lists_are_valid_measured_nothing():
+    assert check_brief_scope_fields(
+        {"reads": [], "writes": [], "never": [], "acceptance": []}
+    ) == []
+    assert missing_brief_scope_fields(
+        {"reads": [], "writes": [], "never": [], "acceptance": []}
+    ) == []
+
+
+def test_missing_brief_scope_fields_are_the_backfill_leftovers():
+    assert missing_brief_scope_fields({}) == list(BRIEF_SCOPE_KEYS)
+    assert declared_brief_scope_fields({"reads": []}) == ["reads"]
+
+
+def test_reads_writes_never_require_a_kind_and_a_scope():
+    assert check_reads([{"kind": "file", "scope": "input_pdf"}]) == []
+    assert check_writes([{"kind": "database", "scope": "sql"}]) == []
+    assert check_never([{"kind": "network", "scope": "outbound"}]) == []
+    assert check_reads([{"kind": "file"}])
+    assert check_writes([{"kind": "vibes", "scope": "x"}])
+
+
+def test_the_scope_kinds_cover_what_the_store_actually_touches():
+    assert {"file", "network", "database", "secrets", "llm"} <= SCOPE_RESOURCE_KINDS
+    assert {"team", "index", "block"} <= SCOPE_RESOURCE_KINDS
+
+
+def test_acceptance_is_a_fail_loud_check_tied_to_block_result():
+    assert (
+        check_acceptance(
+            [
+                {
+                    "id": "missing_pdf",
+                    "check": "refuses when no PDF is provided",
+                    "status": "refused",
+                }
+            ]
+        )
+        == []
+    )
+    reasons = check_acceptance(
+        [{"id": "quiet", "check": "returns zero", "status": "ok"}]
+    )
+    assert any("reports success" in reason for reason in reasons), reasons
+
+
+def test_a_null_brief_scope_field_is_not_the_same_as_an_absent_one():
+    assert check_brief_scope_fields({"reads": None})
+    assert check_brief_scope_fields({}) == []
 
 
 @pytest.mark.parametrize(
@@ -287,6 +383,38 @@ def test_adding_a_contract_field_does_not_move_the_digest():
     assert set(enriched) - set(base) == set(CONTRACT_MANIFEST_KEYS)
 
 
+def test_adding_brief_scope_fields_does_not_move_the_digest():
+    """Same strip as the seven contract fields, stated for the four new ones."""
+    from app.core.publisher_registry import BlockSigner
+
+    base = {
+        "id": "demo",
+        "name": "Demo",
+        "version": "1.0.0",
+        "publisher_id": "cerebrum_platform",
+        "trust_tier": "platform",
+        "permissions": {},
+    }
+    enriched = {
+        **base,
+        "reads": [{"kind": "file", "scope": "input_pdf"}],
+        "writes": [{"kind": "caller", "scope": "output"}],
+        "never": [{"kind": "secrets", "scope": "vault"}],
+        "acceptance": [
+            {
+                "id": "missing_pdf",
+                "check": "refuses when no PDF is provided",
+                "status": "refused",
+            }
+        ],
+    }
+    missing = Path("does-not-exist")
+    before = BlockSigner._compute_digests(missing, base)["block.json"]
+    after = BlockSigner._compute_digests(missing, enriched)["block.json"]
+    assert before == after
+    assert set(enriched) - set(base) == set(BRIEF_SCOPE_KEYS)
+
+
 # -- the audit script sees the same rules ---------------------------------
 
 
@@ -302,6 +430,11 @@ def test_the_audit_script_loads_the_same_checker():
     spec.loader.exec_module(module)
 
     assert module.CONTRACT_MANIFEST_KEYS == CONTRACT_MANIFEST_KEYS
+    assert module.BRIEF_SCOPE_KEYS == BRIEF_SCOPE_KEYS
+    assert module.BRIEF_SCOPE_FAIL_CLOSED is False
     assert module.check_contract_fields({"kill_switch": "lower"}), (
         "the audit loaded the module but is not calling the checker"
     )
+    warnings = module.audit_block(ROOT / "block_registry" / "pdf")
+    # Report-only: missing brief-scope fields must not fail-close the store.
+    assert not any("brief-scope" in err for err in warnings["errors"])

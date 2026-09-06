@@ -1,10 +1,13 @@
 """CI gates and intentional-absence logging.
 
-Two hardening guarantees pinned here:
+Hardening guarantees pinned here:
 
 * The backend CI job actually runs the stub audit and the secret scan —
   both scripts existed but were never wired into the workflow, so their
   gates had never fired on a PR.
+* The lockfile-consistency job is scheduled and required. A checker that
+  is not in the workflow is a skip; a job with continue-on-error is the
+  same skip under another name.
 * A vector store deliberately deployed without ``DATABASE_URL`` (the
   store service runs no RAG demo flows) logs its absence at INFO, not
   WARNING. Intentional configuration must not read as a fault in the
@@ -29,6 +32,35 @@ def test_ci_workflow_runs_stub_audit_and_secret_scan():
     assert "python scripts/scan_secrets.py" in workflow, (
         "CI must run the secret scan on non-test paths"
     )
+
+
+def _job_body(workflow: str, job_id: str) -> str:
+    marker = f"  {job_id}:"
+    start = workflow.find(marker)
+    assert start != -1, f"CI is missing required job {job_id}"
+    rest = workflow[start + len(marker) :]
+    end = len(rest)
+    for i, line in enumerate(rest.splitlines()[1:], start=1):
+        if line.startswith("  ") and not line.startswith("   ") and line.endswith(":"):
+            end = sum(len(part) + 1 for part in rest.splitlines()[:i])
+            break
+    return rest[:end]
+
+
+def test_ci_workflow_requires_lockfile_consistency_job():
+    """Census fence: the lockfile gate is scheduled and is not allowed to fail.
+
+    A checker that is not in the workflow is a skip. A job with
+    continue-on-error is the same skip under another name.
+    """
+    workflow = (_REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(
+        encoding="utf-8"
+    )
+    body = _job_body(workflow, "lockfile-consistency")
+    assert "python scripts/check_lockfile_consistency.py" in body
+    assert "tests/test_lockfile_consistency.py" in body
+    assert "continue-on-error:" not in body
+    assert "allow_failure:" not in body
 
 
 @pytest.mark.asyncio

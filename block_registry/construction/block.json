@@ -14,5 +14,63 @@
   "publisher_id": "cerebrum_platform",
   "signature": "U9n3MFAYzhKtJU1RdIwc129+bSKgYld9nrtzcFeBPZQHzvKW+jpZx9D8nO/Y4rH3hrEbs8ziTxNcnPolo4/TAA==",
   "trust_tier": "platform",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "file",
+      "scope": "input_document"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    },
+    {
+      "kind": "memory",
+      "scope": "cache"
+    },
+    {
+      "kind": "block",
+      "scope": "peer"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "file",
+      "scope": "local.write"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "missing_required_input",
+      "check": "refuses or errors when a required input is absent",
+      "status": "refused"
+    },
+    {
+      "id": "unknown_action",
+      "check": "errors on an unknown or missing action",
+      "status": "failed"
+    },
+    {
+      "id": "missing_credential",
+      "check": "fails loud when a required credential or key is absent",
+      "status": "failed"
+    }
+  ]
 }

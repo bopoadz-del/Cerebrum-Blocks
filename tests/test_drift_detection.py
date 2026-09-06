@@ -15,6 +15,7 @@ import os
 import pytest
 
 from app.blocks.learning_engine import LearningEngineBlock
+from app.core.learning_store import FileLearningStore
 from app.core.credibility import (
     CredibilityRecord,
     CredibilityScorer,
@@ -108,7 +109,9 @@ def engine(tmp_path, monkeypatch):
     """
     storage = tmp_path / "learning_state.json"
     monkeypatch.delenv("CELERY_BROKER_URL", raising=False)
-    block = LearningEngineBlock(config={"storage_path": str(storage)})
+    block = LearningEngineBlock(
+        config={"storage_backend": FileLearningStore(str(storage))}
+    )
     return block
 
 
@@ -256,7 +259,7 @@ async def test_drift_event_persists_to_state_file(engine, tmp_path):
             {},
         )
 
-    storage_path = engine.config["storage_path"]
+    storage_path = engine.config["storage_backend"].path
     assert os.path.exists(storage_path)
     with open(storage_path) as f:
         on_disk = json.load(f)

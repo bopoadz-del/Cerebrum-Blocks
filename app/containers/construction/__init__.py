@@ -12,6 +12,7 @@ from app.core.universal_base import UniversalContainer
 from .boq import ConstructionBoqMixin
 from .chat import ConstructionChatMixin
 from .documents import ConstructionDocumentsMixin
+from .helpers import _parse_money_str, _safe_float
 from .qto import ConstructionQtoMixin
 from .schedule import ConstructionScheduleMixin
 
@@ -54,6 +55,18 @@ class ConstructionContainer(
             return "bim"
         if any(x in name for x in [".xer", ".xml", "schedule", "primavera", "p6"]):
             return "schedule"
+        # XLSX/XLS — schedule when filename hints at one OR a sheet looks
+        # schedule-shaped. We extend classification here (rather than in
+        # auto_pipeline) because it's the single chokepoint for doc-typing
+        # and keeps the existing schedule branch in auto_pipeline untouched.
+        if name.endswith((".xlsx", ".xls")):
+            if any(x in name for x in ("schedule", "plan", "timeline", "programme", "program", "wbs", "l2", "l3", "l4")):
+                return "schedule"
+            try:
+                if self._xlsx_has_schedule_sheet(file_path):
+                    return "schedule"
+            except Exception:
+                logger.debug("xlsx schedule pre-classify failed for %s", file_path, exc_info=True)
         if any(x in name for x in ["contract", "agreement", "terms", "conditions", "legal"]):
             return "contract"
         if any(x in name for x in ["spec", "specification", "masterformat", "csi"]):
@@ -190,20 +203,31 @@ class ConstructionContainer(
             ocr_quality=result.get("ocr_quality"),
         )
     def _extract_obligations(self, text: str) -> List[Dict]:
-        obligations = []
+        """Pull '<party> shall <do something>' clauses out of contract text.
+
+        Body terminator accepts '.', ';', or end-of-line so multi-clause
+        legalese paragraphs register as separate obligations (Audit I10).
+        """
+        obligations: List[Dict] = []
         obligation_patterns = [
-            (r'(?:contractor|builder)[\s\w]{0,50}(?:shall|must|will|agrees to)[\s\w]{0,100}(?:\.)', "contractor_obligation"),
-            (r'(?:employer|owner|client)[\s\w]{0,50}(?:shall|must|will|agrees to)[\s\w]{0,100}(?:\.)', "employer_obligation"),
-            (r'(?:both parties|each party)[\s\w]{0,50}(?:shall|must|will)[\s\w]{0,100}(?:\.)', "mutual_obligation"),
-            (r'(?:architect|engineer|supervisor)[\s\w]{0,50}(?:shall|must|will)[\s\w]{0,100}(?:\.)', "consultant_obligation"),
+            (r'(?:contractor|builder|contratista|empreiteiro|entrepreneur)[^\n]{0,80}(?:shall|must|will|agrees? to|deber[áa]|debe|deve|s\'engage)[^\n.;]{0,180}(?:[.;]|(?=\n))', "contractor_obligation"),
+            (r'(?:employer|owner|client|propietari[oa]|propriet[áa]ri[oa]|ma[îi]tre d\'ouvrage)[^\n]{0,80}(?:shall|must|will|agrees? to|deber[áa]|debe|deve|s\'engage)[^\n.;]{0,180}(?:[.;]|(?=\n))', "employer_obligation"),
+            (r'(?:both parties|each party|ambas partes|cada parte|les deux parties)[^\n]{0,80}(?:shall|must|will|deber[áa]n|deber[áa]|s\'engagent)[^\n.;]{0,180}(?:[.;]|(?=\n))', "mutual_obligation"),
+            (r'(?:architect|engineer|supervisor|arquitect[oa]|ingenier[oa]|supervisor[a]?|architecte|ing[ée]nieur)[^\n]{0,80}(?:shall|must|will|deber[áa]|debe|deve|s\'engage)[^\n.;]{0,180}(?:[.;]|(?=\n))', "consultant_obligation"),
         ]
+        seen_text: set = set()
         for pattern, obl_type in obligation_patterns:
             for match in re.finditer(pattern, text, re.IGNORECASE):
+                snippet = match.group(0).strip()[:300]
+                key = " ".join(snippet.lower().split())
+                if key in seen_text:
+                    continue
+                seen_text.add(key)
                 obligations.append({
                     "type": obl_type,
-                    "text": match.group(0),
-                    "category": self._categorize_obligation(match.group(0)),
-                    "priority": self._assess_obligation_priority(match.group(0))
+                    "text": snippet,
+                    "category": self._categorize_obligation(snippet),
+                    "priority": self._assess_obligation_priority(snippet),
                 })
         return obligations[:20]
     def _categorize_obligation(self, text: str) -> str:
@@ -252,19 +276,66 @@ class ConstructionContainer(
         risk_level = "low" if score > 80 else "medium" if score > 60 else "high"
         return {"score": max(0, score), "level": risk_level, "critical": critical, "warnings": warnings, "recommendations": recommendations}
     def _extract_financial_terms(self, text: str) -> Dict:
-        terms = {}
-        value_match = re.search(r'(?:contract (?:value|sum|price|amount)|total)[\s:]*[$\u20ac£]?[\s]*(\d[\d,\.]*)', text, re.IGNORECASE)
+        """Pull headline numbers from contract text.
+
+        Currency prefix allows ISO codes (USD/EUR/GBP/BRL/...) as well as
+        symbols, so 'Contract value: USD 5,250,000.50' matches. Values are
+        parsed via `_parse_money_str` (US and EU thousands/decimal) and
+        stored as numeric strings.
+        """
+        terms: Dict[str, Any] = {}
+
+        value_match = re.search(
+            r"(?:contract\s+(?:value|sum|price|amount)|total\s+(?:contract\s+)?(?:value|sum|price)|valor\s+(?:del?\s+)?contrato|valor\s+do\s+contrato)\s*[:=]?\s*(?:USD|EUR|GBP|BRL|MXN|AED|SAR|QAR|R\$|\$|€|£)?\s*(\d[\d,\.]{3,})",
+            text, re.IGNORECASE,
+        )
         if value_match:
-            terms["contract_value"] = value_match.group(1)
-        advance_match = re.search(r'(?:advance|mobilization)[\s\w]{0,30}(\d+)%', text, re.IGNORECASE)
+            parsed = _parse_money_str(value_match.group(1))
+            if parsed is not None:
+                terms["contract_value"] = (
+                    str(int(parsed)) if parsed == int(parsed) else str(parsed)
+                )
+
+        advance_match = re.search(
+            r"(?:advance|mobilization|advance\s+payment|anticipo|adiantamento|acompte)[^\n]{0,60}?(\d+(?:\.\d+)?)\s*%",
+            text, re.IGNORECASE,
+        )
         if advance_match:
-            terms["advance_payment"] = f"{advance_match.group(1)}%"
-        retention_match = re.search(r'(?:retention|retainage)[\s\w]{0,30}(\d+)%', text, re.IGNORECASE)
+            terms["advance_payment_percent"] = _safe_float(advance_match.group(1))
+
+        retention_match = re.search(
+            r"(?:retention|retainage|retenci[óo]n|reten[çc][aã]o|retenue)[^\n]{0,60}?(\d+(?:\.\d+)?)\s*%",
+            text, re.IGNORECASE,
+        )
         if retention_match:
-            terms["retention"] = f"{retention_match.group(1)}%"
-        currency_match = re.search(r'(?:currency|in|amounts)[\s\w]{0,20}(USD|EUR|GBP|AED|SAR|QAR)', text, re.IGNORECASE)
+            terms["retention_percent"] = _safe_float(retention_match.group(1))
+
+        ld_match = re.search(
+            r"(?:liquidated\s+damages|delay\s+damages|penalit[éy]|multa\s+por\s+atraso)[^\n]{0,80}?(?:USD|EUR|R\$|\$|€|£|AED|SAR)?\s*(\d[\d,\.]*)\s*(?:per|/|por|/dia)\s*(?:day|d[íi]a)",
+            text, re.IGNORECASE,
+        )
+        if ld_match:
+            parsed_ld = _parse_money_str(ld_match.group(1))
+            if parsed_ld is not None:
+                terms["liquidated_damages_per_day"] = (
+                    str(int(parsed_ld)) if parsed_ld == int(parsed_ld) else str(parsed_ld)
+                )
+
+        net_match = re.search(r"\bnet\s+(\d{1,3})\b|\beom\b|\bend\s+of\s+month\b", text, re.IGNORECASE)
+        if net_match:
+            if net_match.group(1):
+                terms["payment_terms_net_days"] = int(net_match.group(1))
+            else:
+                terms["payment_terms"] = "EOM"
+
+        currency_match = re.search(
+            r"\b(USD|EUR|GBP|BRL|MXN|ARS|AED|SAR|QAR|INR|JPY|CNY|R\$)\b",
+            text,
+        )
         if currency_match:
-            terms["currency"] = currency_match.group(1)
+            symbol = currency_match.group(1)
+            terms["currency"] = "BRL" if symbol == "R$" else symbol.upper()
+
         return terms
     def _generate_contract_summary(self, clauses: Dict, financial: Dict) -> str:
         summary_parts = []

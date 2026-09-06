@@ -16,15 +16,14 @@ from datetime import datetime
 import pytest
 from openpyxl import Workbook
 
-from tests.conftest import CONSTRUCTION_CONTAINER_PATH
-
-if not CONSTRUCTION_CONTAINER_PATH.exists():
-    pytest.skip(
-        "Construction kit not installed — run store install or copy from "
-        "block_store/kits/construction/bundle/",
-        allow_module_level=True,
-    )
-
+# No module-level skip. The old one probed for the *file*
+# app/containers/construction.py, which this repo replaced with an
+# app/containers/construction/ package, so .exists() was permanently False
+# and all seven tests below skipped themselves under "Construction kit not
+# installed". The kit was installed the whole time; the guard was blind, and
+# a blind guard is how _parse_xlsx_schedule was dropped without anyone
+# noticing. If the container cannot be imported, that is a failure to see,
+# not a reason to stay quiet.
 from app.containers.construction import ConstructionContainer
 
 

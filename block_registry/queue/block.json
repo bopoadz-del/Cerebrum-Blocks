@@ -114,5 +114,41 @@
       "widget": "number"
     }
   ],
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "memory",
+      "scope": "cache"
+    },
+    {
+      "kind": "queue",
+      "scope": "jobs"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "queue",
+      "scope": "jobs"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "unknown_action",
+      "check": "errors on an unknown or missing action",
+      "status": "failed"
+    }
+  ]
 }

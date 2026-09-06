@@ -50,5 +50,25 @@
       "widget": "file"
     }
   ],
-  "version": "1.0"
+  "version": "1.0",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "not_implemented",
+      "check": "returns not_implemented rather than inventing a result",
+      "status": "refused"
+    }
+  ]
 }
