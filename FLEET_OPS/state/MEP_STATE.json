@@ -12,7 +12,7 @@
     "three tests + mutants per block, receipts in every PR",
     "kit manifest complete enough that standalone deploy is config only"
   ],
-  "current_step": "Items 1-5 complete. F4 closed. F5 open (segment-to-segment topology filter).",
+  "current_step": "COMPLETE. All failures closed. 119 tests. Hat PR #512 awaiting the Fork lane.",
   "rollback_point": "512347ad",
   "blocks": {
     "1_geometry_engine": "LANDED \u2014 100% branch coverage, mutant killed",
@@ -98,13 +98,14 @@
     },
     {
       "id": "F5",
-      "state": "OPEN",
+      "state": "CLOSED",
       "item": "Connected same-system segments read as hard clashes",
       "evidence_gap": "Infra-Plumbing.ifc (single discipline, 26 elements): all 48 admitted pairs judged hard clash, 0 false positives. Pipe segments that JOIN genuinely interpenetrate -- assembly, not conflict. The workflow-noise filter misses them because it requires a fitting name hint (bend/tee/elbow) and these are plain IfcFlowSegment with no such name.",
       "attempts": [
         "ran the second buildingSMART fixture and filed the row as measured rather than tuning the filter to flatter it"
       ],
-      "next": "Classify same-system segment-to-segment contact as workflow noise on TOPOLOGY (a shared IfcRelConnectsPorts / shared connection) rather than on the name. Must not suppress cross-system contact, which is a real clash."
+      "next": "Classify same-system segment-to-segment contact as workflow noise on TOPOLOGY (a shared IfcRelConnectsPorts / shared connection) rather than on the name. Must not suppress cross-system contact, which is a real clash.",
+      "resolution": "CLEARED by connectivity.py. Port graph (IfcRelConnectsPorts/IfcRelNests) is built and outranks measurement, but NEITHER fixture carries any port data (verified 0), so a second signal was calibrated: shared volume as a FRACTION of the smaller element. Joints measure <1e-6, a real pipe-through-pipe crossing measures 0.0844 \u2014 an empty band of 84,000x. Absolute volume was tried and rejected (excluded only 3 of 24). Result: Infra-Plumbing 48 admitted -> 48 joints, 0 hard; Schependomlaan sheds 5 joints with all 399 clearance findings and 287 false-positive eliminations intact."
     }
   ],
   "pending_owner": [

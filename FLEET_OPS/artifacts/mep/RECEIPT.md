@@ -220,3 +220,93 @@ processed into an empty report.
 | tests | **112 passed**, 0 failed |
 | resolve rate | **5/5 zones cleared**, 0 silently unresolved |
 | open items | **F5** only (F4 closed) |
+
+---
+
+# ADDENDUM 2 — F5 closed by topology, 2026-09-06
+
+## The finding that shaped the fix
+
+**Neither fixture carries any port data at all.** Verified before writing code:
+
+    Infra-Plumbing.ifc (IFC4)      IfcRelConnectsPorts 0  IfcDistributionPort 0  IfcRelNests 0
+    schependomlaan_design (IFC2X3) IfcRelConnectsPorts 0  IfcDistributionPort 0  IfcRelNests 0
+
+So the specified signal exists in neither model. The port graph is still built —
+it is the correct answer and real IFC4 exports usually carry it, and where the
+model speaks it **outranks any measurement**. But it cannot be the only signal,
+or every joint in a model that omits ports is reported as a clash.
+
+## The second signal, and why it is not proximity
+
+Two solids that **touch** share a surface and enclose no meaningful common
+volume. Two solids that **conflict** enclose real volume. That is exact
+geometry, not nearness.
+
+Calibrated rather than chosen, on the 24 touching pairs in the fixture and a
+constructed pipe-through-pipe crossing:
+
+| | shared volume | as fraction of the smaller element |
+|---|---|---|
+| joints (24 real pairs) | 4.2e-17 … 1.6e-8 m³ | **< 1e-6** |
+| real crossing | 5.2e-3 m³ | **0.0844** |
+
+The band between them is empty by five orders of magnitude — a real conflict is
+**84,000×** the joint ceiling. The threshold sits inside that gap.
+
+**Absolute volume was tried first and rejected.** A 1e-9 floor excluded only 3
+of 24 joints, because triangulated cylinders that merely touch still enclose a
+faceting volume that scales with diameter. A fraction is scale-invariant: it
+means the same thing for a 50 mm pipe and a 2 m culvert.
+
+The fallback is deliberately narrow — same system, exact backend present, and a
+measurable volume. **A cross-system contact is never a joint, whatever the
+volume.**
+
+## The discriminating test
+
+One test, both assertions, so passing the first by breaking the second fails CI:
+
+* two same-system pipes meeting **end to end** → excluded, `connected_joint`
+* a pipe driven **through** another, same system, no port link → **still hard**,
+  with a failure message saying the filter has been relaxed until it hides real
+  clashes
+
+Plus a mutation probe: widening the floor to something a person might call
+"small" excuses a 2-litre overlap, and the probe asserts it.
+
+## Fixture rows, re-filed
+
+| fixture | MB | elements | MEP | ports | admitted | **joints** | **hard** | clearance | false pos. eliminated | queued |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Infra-Plumbing | 0.35 | 26 | 26 | 0 | 48 | **48** | **0** | 0 | 0 | 0 |
+| schependomlaan_design | 47 | 1,437 | 73 | 0 | 700 | **5** | **9** | 399 | **287** | 371 |
+
+Fixture 2 meets the exit criterion exactly: **48 joint pairs → 0 hard clashes.**
+On the real model the filter is appropriately quiet — 5 genuine joints removed,
+every one of the 399 clearance findings and 287 false-positive eliminations
+untouched. A filter that had "improved" the real model's numbers would have been
+the warning sign.
+
+**F5 CLOSED.**
+
+## Speckle — not needed
+
+Asked and answered: the IFC path already produces the change set, the clone and
+BCF issues that open in BIMcollab or Solibri, and version_diff works on two IFC
+exports without it. Speckle earns its place when several people need to review
+proposals in a shared space with history. No token required.
+
+## Owner models — honest refusal, not a stub
+
+Navisworks is not installed here and `.nwd` has no library or converter, so the
+export cannot be automated from this machine. The path is a real, tested refusal
+carrying the export instruction — not a placeholder, which CI forbids. Drop an
+exported `.ifc` into `fixtures/owner_models/` and `run_owner_models.py` runs the
+full pipeline and posts its row; an export containing zero MEP is reported and
+skipped rather than processed into an empty report.
+
+| | |
+|---|---|
+| tests | **119 passed**, 0 failed |
+| open items | **none** |
