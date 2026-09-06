@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from app.blocks.clash_resolver import STATUS_FLAGGED, STATUS_PROPOSED, resolve
+from app.blocks.clash_resolver import STATUS_FLAGGED, STATUS_PROPOSED, resolve, verify_batch
 from app.blocks.clash_triage import triage
 from app.blocks.clearance_rules import load_rules
 from app.blocks.geometry_engine import aabb_overlaps, judge_pair
@@ -82,7 +82,11 @@ def main() -> int:
     # "safe" proposals. An engineer applies changes one at a time and sees the
     # model update; the resolver must be checked the same way. Each accepted
     # move is committed to the working state before the next is judged.
+    # Per-ZONE batches, verified as a set (item 2). Resolve rate is reported
+    # per zone, because a kit that clears open corridors and fails congested
+    # ones has a very different value than an average implies.
     proposals = []
+    batches = []
     committed: dict[str, tuple] = {}
     for item in res.queue[:25]:
         el = by_id.get(item.element_a)

@@ -114,3 +114,109 @@ building-to-gas 5.0 m — hash `2d085ef2123b39a9`.
 - Fork hat as **PR #512**, opened for the Fork lane, **not merged by me** — two files, no
   kit code in the Fork repo
 - The original model is never written. Enforced by hash assertion, not by convention.
+
+---
+
+# ADDENDUM — 2026-09-06, items 1–5
+
+## 1. Resolver: fixed distance replaced with a ranked search
+
+`candidate_moves()` now searches **distance × direction**: four distances from
+`gap+margin` to `3×` that, across the free axes both signs **plus the in-plane
+diagonals** — 72 candidates for a free service, 32 for a gravity run (still no
+vertical). Ordered smallest-displacement-first, so the least invasive move that
+passes every monitor wins, and a larger move is only ever chosen because the
+smaller ones were actually rejected.
+
+Diagonals earn their place: a pure X or Y move walks a pipe into the neighbouring
+run, while a diagonal slips it into the gap between two.
+
+### Resolve rate per zone — the exit criterion
+
+Five most-congested zones on Schependomlaan, batch-verified, 35.8 s:
+
+| zone | clashes | sourced | escalated | batch | outcome |
+|---|---|---|---|---|---|
+| 00 begane grond\|2_0 | 8 | 8 | 0 | accepted | **cleared** |
+| 00 begane grond\|1_0 | 8 | 8 | 0 | accepted | **cleared** |
+| 00 begane grond\|3_1 | 8 | 8 | 0 | accepted | **cleared** |
+| 00 begane grond\|0_1 | 8 | 8 | 0 | accepted | **cleared** |
+| 02 tweede verdieping\|3_0 | 8 | 8 | 0 | accepted | **cleared** |
+
+**5 of 5 cleared** against a bar of 3 of 5. **Silently unresolved: 0** — every
+zone lands in cleared, escalated-with-alternatives, or batch-rejected. Original
+model hash unchanged.
+
+This closes **F4**. The previous ~20% was a fixed distance being blocked on the
+first free axis in a congested ceiling; one distance is not a search.
+
+## 2. Batch verification — moves judged as a set
+
+`verify_batch()` applies a zone's proposals **together**, re-judges the whole
+zone, and if the batch introduces any new hard clash or violation it **fails as
+a unit and rolls back**, leaving the zone byte-for-byte as found. Partial
+acceptance is deliberately not offered: "three of these five are fine" is how a
+model drifts into a state nobody verified.
+
+Pinned by `test_two_individually_safe_moves_that_collide_reject_the_whole_batch`
+— two 200 mm services 1 m apart, one moving +500 mm and one −500 mm. Each is
+clear of everything it was checked against; together they meet in the middle.
+
+## 3. Identity normalisation
+
+`identity.py` holds the single `element_key` / `pair_key` / `clash_id`.
+`test_cross_block_integration.py` runs **B1 → B3 → B4 → B7** on constructed
+geometry in CI and asserts a **non-zero** score, with a failure message naming id
+drift as the cause. The "green units, silent zero" class now has a permanent
+test. All three derivations are pinned byte-identical.
+
+## 4. Fixture provenance
+
+`README.md` records the archived source, the path, and
+sha256 `2c3565ca1904f2aa61adab92024cf3755b2c5b21a498144d3094d7cb58cebec7`,
+with the reason the archived repo is used: both the order's URL and the live
+repo's own README point at paths that 404.
+
+## 5. Second fixture — `Infra-Plumbing.ifc`
+
+| fixture | MB | elements | MEP | admitted | hard | clearance | false pos. eliminated | runtime |
+|---|---|---|---|---|---|---|---|---|
+| schependomlaan_design | 47 | 1,437 | 73 | 700 | 14 | 399 | **287** | 56 s |
+| Infra-Plumbing | 0.35 | 26 | 26 | 48 | **48** | 0 | **0** | 4.8 s |
+
+**This row is unflattering and it is filed as measured.** Every one of the 48
+admitted pairs reads as a hard clash and none is a false positive — because the
+model is single-discipline and its pipe segments are *connected*. Segments that
+join genuinely interpenetrate; that is assembly, not conflict.
+
+The workflow-noise filter misses them: it requires a fitting name hint
+(`bend`, `tee`, `elbow`), and these are plain `IfcFlowSegment` with no such
+name. **NEW OPEN ITEM F5:** same-system segment-to-segment contact should be
+classified workflow noise on topology (a shared connection), not on the name.
+Recorded rather than tuned away, because a filter that hides real clashes to
+flatter a number is the failure this kit exists to remove.
+
+It also confirms the earlier judgement that these conformance scenes cannot
+substitute for a coordination model: with one discipline, a cross-system clash
+is impossible by construction.
+
+## Owner models — still blocked, now drop-and-go
+
+Navisworks is **not installed on this machine**, and `.nwd` is a closed format
+with no library and no converter, so the export cannot be automated from here.
+Everything downstream of it is ready:
+
+    fixtures/owner_models/          drop the exported .ifc here (gitignored)
+    fixtures/owner_models/README.md the export steps
+    bundle/run_owner_models.py      auto-detects and runs the full pipeline
+
+A model exporting with zero MEP elements is reported as such and skipped, not
+processed into an empty report.
+
+## Receipt (addendum)
+
+| | |
+|---|---|
+| tests | **112 passed**, 0 failed |
+| resolve rate | **5/5 zones cleared**, 0 silently unresolved |
+| open items | **F5** only (F4 closed) |

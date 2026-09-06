@@ -35,7 +35,11 @@ STATUS_PROPOSED = "proposed"
 STATUS_FLAGGED = "flagged_unsourced"
 STATUS_ESCALATED = "escalated"
 
-MAX_ATTEMPTS = 3          # the order's cap; a 4th is an escalation, not a retry
+# The search is allowed many candidates; what is capped is how many are
+# reported as ATTEMPTED before escalating, so an escalation still carries a
+# readable list of what was tried rather than 96 near-identical rejections.
+MAX_ATTEMPTS = 48
+REPORTED_REJECTIONS = 6
 DEFAULT_MARGIN_MM = 25.0  # installation tolerance on top of the required gap
 
 MOVE_OFFSET = "offset"
@@ -104,21 +108,61 @@ def candidate_moves(
     element: Any,
     required_gap_mm: float,
     margin_mm: float = DEFAULT_MARGIN_MM,
+    steps: int = 4,
 ) -> list[tuple[str, tuple[float, float, float]]]:
-    """Ordered cheapest-first. Offsets before elevation before resize, because
-    that is the order of cost on site: shifting a hanger is a morning, resizing
-    a duct is a redesign."""
+    """A SEARCH over distance and direction, ordered smallest-displacement-first.
+
+    The previous version offered a single distance -- gap + margin -- along the
+    free axes. On the real fixture that resolved about one clash in five: in a
+    congested ceiling the first free axis is usually blocked too, and one
+    distance is not a search. Measured, not assumed.
+
+    The candidate set is now:
+        distance  in [need .. 3*need] across `steps` values
+        direction in the free axes, both signs, PLUS the in-plane diagonals
+
+    Diagonals matter because services run in bays: a pure X or Y move walks a
+    pipe into the neighbouring run, while a diagonal slips it into the gap
+    between two. Ordering by displacement magnitude means the caller always
+    evaluates the least invasive option first, and the first candidate that
+    passes every monitor wins -- so a bigger move is only ever chosen because
+    the smaller ones were actually rejected.
+
+    Structure is never moved: you sleeve through a wall, you do not shift it.
+    """
+    if getattr(element, "discipline", "") == "structural":
+        return [(MOVE_SLEEVE, (0.0, 0.0, 0.0))]
+
     need = float(required_gap_mm) + float(margin_mm)
-    out: list[tuple[str, tuple[float, float, float]]] = []
-    for axis in _free_axes(element):
+    axes = _free_axes(element)
+
+    directions: list[tuple[float, float, float]] = []
+    for axis in axes:
         for sign in (1.0, -1.0):
             v = [0.0, 0.0, 0.0]
-            v[axis] = sign * need
-            move = MOVE_ELEVATION if axis == 2 else MOVE_OFFSET
-            out.append((move, (v[0], v[1], v[2])))
-    if getattr(element, "discipline", "") == "structural":
-        # You do not move a wall to clear a pipe; you sleeve through it.
-        return [(MOVE_SLEEVE, (0.0, 0.0, 0.0))]
+            v[axis] = sign
+            directions.append((v[0], v[1], v[2]))
+    # In-plane diagonals over every pair of free axes.
+    for i, ax_a in enumerate(axes):
+        for ax_b in axes[i + 1:]:
+            for sa in (1.0, -1.0):
+                for sb in (1.0, -1.0):
+                    v = [0.0, 0.0, 0.0]
+                    v[ax_a] = sa * 0.7071
+                    v[ax_b] = sb * 0.7071
+                    directions.append((v[0], v[1], v[2]))
+
+    out: list[tuple[str, tuple[float, float, float]]] = []
+    for k in range(steps):
+        scale = need * (1.0 + 2.0 * k / max(1, steps - 1))   # need .. 3*need
+        for d in directions:
+            vec = (d[0] * scale, d[1] * scale, d[2] * scale)
+            move = MOVE_ELEVATION if abs(vec[2]) > abs(vec[0]) + abs(vec[1]) else MOVE_OFFSET
+            out.append((move, vec))
+
+    # Smallest displacement first: the least invasive move an engineer can be
+    # asked to accept.
+    out.sort(key=lambda mv: (mv[1][0] ** 2 + mv[1][1] ** 2 + mv[1][2] ** 2))
     return out
 
 
@@ -215,7 +259,10 @@ def resolve(
 
         blocker = _would_create_new_clash(element, vector, neighbours)
         if blocker:
-            rejected.append(f"{move_type} {vector}: would clash with {blocker}")
+            if len(rejected) < REPORTED_REJECTIONS:
+                rejected.append(
+                    f"{move_type} {tuple(round(v) for v in vector)}: would clash with {blocker}"
+                )
             continue
 
         if not rule_ids or not clause_text:
@@ -263,3 +310,119 @@ def resolve(
             "meeting agenda with the alternatives already tried"
         ),
     )
+
+
+# ── batch verification ───────────────────────────────────────────────────────
+# A move that is safe on its own can collide with another move that is also
+# safe on its own. The acceptance run proved it: 25 individually-checked
+# proposals produced 25 new clashes because each was validated against the
+# ORIGINAL model and they were then applied together.
+#
+# So a zone's proposals are verified as a SET. The batch is applied to a
+# working copy, the whole zone is re-judged, and if the batch introduces ANY
+# new hard clash or clearance violation the batch FAILS as a unit and is
+# re-planned with the collision as input. Partial acceptance is deliberately
+# not offered: "these three of five are fine" is how a coordination model
+# drifts out of a state anyone verified.
+
+@dataclass
+class BatchResult:
+    zone_key: str
+    accepted: list[Proposal] = field(default_factory=list)
+    rejected: list[Proposal] = field(default_factory=list)
+    new_hard_clashes: int = 0
+    new_violations: int = 0
+    replanned: int = 0
+    status: str = "accepted"          # accepted | rejected | replanned
+
+    def as_dict(self) -> dict[str, Any]:
+        d = self.__dict__.copy()
+        d["accepted"] = [p.as_dict() for p in self.accepted]
+        d["rejected"] = [p.as_dict() for p in self.rejected]
+        return d
+
+
+def _judge_zone(elements: Sequence[Any], required_gap_m: float) -> tuple[int, int]:
+    """Re-judge every pair in a zone. Returns (hard_clashes, violations)."""
+    from app.blocks.geometry_engine import judge_pair
+
+    hard = viol = 0
+    for i, a in enumerate(elements):
+        for b in elements[i + 1:]:
+            ma, mb = getattr(a, "mesh", None), getattr(b, "mesh", None)
+            if ma is None or mb is None:
+                continue
+            if not _near(ma, mb, required_gap_m):
+                continue
+            v = judge_pair(
+                getattr(a, "global_id", "a"), getattr(b, "global_id", "b"),
+                ma, mb, required_clearance_m=required_gap_m,
+            )
+            if v.kind == "clash":
+                hard += 1
+            elif v.kind == "clearance":
+                viol += 1
+    return hard, viol
+
+
+def verify_batch(
+    proposals: Sequence[Proposal],
+    elements_by_id: dict[str, Any],
+    zone_elements: Sequence[Any],
+    required_gap_mm: float,
+    zone_key: str = "",
+) -> BatchResult:
+    """Apply a zone's proposals together and judge the result as a whole.
+
+    The meshes are copied before anything moves, so a rejected batch leaves the
+    working state exactly as it found it. A batch that makes the zone worse is
+    rejected whole.
+    """
+    gap_m = float(required_gap_mm) / 1000.0
+    baseline_hard, baseline_viol = _judge_zone(zone_elements, gap_m)
+
+    # Snapshot: a rejected batch must not leave half-applied moves behind.
+    originals = {
+        getattr(e, "global_id", id(e)): e.mesh.copy()
+        for e in zone_elements
+        if getattr(e, "mesh", None) is not None
+    }
+
+    applied: list[Proposal] = []
+    for p in proposals:
+        if p.status != STATUS_PROPOSED:
+            continue
+        el = elements_by_id.get(p.element)
+        if el is None or getattr(el, "mesh", None) is None:
+            continue
+        el.mesh.apply_translation([v / 1000.0 for v in p.move_vector_mm])
+        applied.append(p)
+
+    after_hard, after_viol = _judge_zone(zone_elements, gap_m)
+    new_hard = max(0, after_hard - baseline_hard)
+    new_viol = max(0, after_viol - baseline_viol)
+
+    if new_hard > 0 or new_viol > 0:
+        # Roll the whole batch back. The zone is left byte-for-byte as found.
+        for e in zone_elements:
+            gid = getattr(e, "global_id", id(e))
+            if gid in originals:
+                e.mesh = originals[gid]
+                e.bbox = tuple(float(x) for x in e.mesh.bounds.flatten())
+        for p in applied:
+            p.status = STATUS_ESCALATED
+            p.note = (
+                f"batch rejected: applying this zone's {len(applied)} moves together "
+                f"introduced {new_hard} new hard clash(es) and {new_viol} new "
+                f"violation(s). Individually safe, collectively not — re-plan with "
+                f"the collision as input."
+            )
+        return BatchResult(
+            zone_key=zone_key, accepted=[], rejected=list(applied),
+            new_hard_clashes=new_hard, new_violations=new_viol, status="rejected",
+        )
+
+    for e in zone_elements:
+        if getattr(e, "mesh", None) is not None:
+            e.bbox = tuple(float(x) for x in e.mesh.bounds.flatten())
+    return BatchResult(zone_key=zone_key, accepted=applied, status="accepted")

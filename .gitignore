@@ -116,3 +116,6 @@ block_store/kits/mep_coordination/fixtures/*.ifc
 
 # MEP kit: acceptance run output (contains 47MB model clones)
 block_store/kits/mep_coordination/acceptance_out/
+
+# Owner-supplied client models — never committed
+block_store/kits/mep_coordination/fixtures/owner_models/

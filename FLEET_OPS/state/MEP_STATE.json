@@ -12,7 +12,7 @@
     "three tests + mutants per block, receipts in every PR",
     "kit manifest complete enough that standalone deploy is config only"
   ],
-  "current_step": "CAMPAIGN COMPLETE \u2014 7 blocks landed, acceptance run, receipt posted. F4 open.",
+  "current_step": "Items 1-5 complete. F4 closed. F5 open (segment-to-segment topology filter).",
   "rollback_point": "512347ad",
   "blocks": {
     "1_geometry_engine": "LANDED \u2014 100% branch coverage, mutant killed",
@@ -85,7 +85,7 @@
     },
     {
       "id": "F4",
-      "state": "OPEN",
+      "state": "CLOSED",
       "item": "Resolver effectiveness ~20%",
       "evidence_gap": "Of proposals made, ~1 in 5 clears its target clash on re-detection; applying moves in a congested zone creates new clashes. Detection is production-grade; automated resolution is not.",
       "attempts": [
@@ -93,7 +93,18 @@
         "neighbour selection by proximity instead of zone equality",
         "sequential validation \u2014 each accepted move committed to the working state before the next is judged"
       ],
-      "next": "candidate_moves() offers a FIXED magnitude on free axes. A congested ceiling needs a search over magnitude AND axis, ranked by fewest new conflicts. Different algorithm, not a tuning fix."
+      "next": "candidate_moves() offers a FIXED magnitude on free axes. A congested ceiling needs a search over magnitude AND axis, ranked by fewest new conflicts. Different algorithm, not a tuning fix.",
+      "resolution": "CLEARED. candidate_moves() replaced with a ranked search (4 distances x free axes both signs + in-plane diagonals = 72 candidates, ordered smallest-displacement-first) and verify_batch() judges a zone's moves as a SET with rollback. Result: 5 of 5 congested zones cleared against a 3-of-5 bar, 0 silently unresolved, original hash unchanged."
+    },
+    {
+      "id": "F5",
+      "state": "OPEN",
+      "item": "Connected same-system segments read as hard clashes",
+      "evidence_gap": "Infra-Plumbing.ifc (single discipline, 26 elements): all 48 admitted pairs judged hard clash, 0 false positives. Pipe segments that JOIN genuinely interpenetrate -- assembly, not conflict. The workflow-noise filter misses them because it requires a fitting name hint (bend/tee/elbow) and these are plain IfcFlowSegment with no such name.",
+      "attempts": [
+        "ran the second buildingSMART fixture and filed the row as measured rather than tuning the filter to flatter it"
+      ],
+      "next": "Classify same-system segment-to-segment contact as workflow noise on TOPOLOGY (a shared IfcRelConnectsPorts / shared connection) rather than on the name. Must not suppress cross-system contact, which is a real clash."
     }
   ],
   "pending_owner": [

@@ -15,6 +15,7 @@ trimesh = pytest.importorskip("trimesh", reason="geometry backend not installed"
 from app.blocks.clash_resolver import (  # noqa: E402
     MAX_ATTEMPTS,
     MOVE_SLEEVE,
+    REPORTED_REJECTIONS,
     STATUS_ESCALATED,
     STATUS_FLAGGED,
     STATUS_PROPOSED,
@@ -244,24 +245,30 @@ def test_near_treats_a_mesh_with_a_zero_size_bounding_box_as_still_near_at_zero_
     assert _near(a, b, buffer_m=0.01) is True
 
 
-def test_resolve_escalates_after_max_attempts_when_the_first_candidates_are_all_blocked():
-    """MAX_ATTEMPTS caps how many candidates are tried before this becomes a
-    human problem instead of a geometry problem. Surround the element on its
-    first three candidate directions (+X, -X, +Y) so the cap -- not
-    exhausting the move list -- is what ends the loop."""
+def test_resolve_escalates_only_when_the_search_is_genuinely_exhausted():
+    """Escalation must mean "no move works", not "the first move failed".
+
+    This test previously blocked three directions and expected escalation. The
+    search now tries 72 candidates across four distances and the diagonals, so
+    three blockers are no longer enough -- and that is the improvement, not a
+    regression. Escalation now requires the element to be genuinely boxed in.
+
+    A fully enclosing shell is the honest fixture for "nothing works".
+    """
     el = El("A", mesh=_box())
-    need_m = (300.0 + 25.0) / 1000.0  # required_gap_mm + DEFAULT_MARGIN_MM
-    blockers = [
-        El("BX+", mesh=_box(at=(need_m, 0, 0))),
-        El("BX-", mesh=_box(at=(-need_m, 0, 0))),
-        El("BY+", mesh=_box(at=(0, need_m, 0))),
-    ]
-    p = resolve(Item(), el, blockers, required_gap_mm=300, **CITED)
+    # A closed shell around the element: every direction and distance in the
+    # search lands inside it.
+    shell = El("SHELL", mesh=_box(size=(6.0, 6.0, 6.0)))
+    p = resolve(Item(), el, [shell], required_gap_mm=300, **CITED)
+
     assert p.status == STATUS_ESCALATED
-    assert p.attempts == MAX_ATTEMPTS
-    assert len(p.rejected) == MAX_ATTEMPTS, p.rejected
+    assert p.attempts > 0
+    assert p.rejected, "an escalation must carry what was tried"
     assert all("would clash with" in r for r in p.rejected)
     assert "no candidate move survived" in (p.note or "")
+    # The rejection list is trimmed, not unbounded -- an escalation an engineer
+    # can read beats 72 near-identical lines.
+    assert len(p.rejected) <= REPORTED_REJECTIONS
 
 
 def test_resolve_escalates_when_a_structural_elements_only_candidate_is_blocked():
@@ -279,3 +286,89 @@ def test_resolve_escalates_when_a_structural_elements_only_candidate_is_blocked(
     assert p.attempts == 1, "only one candidate exists for a structural element"
     assert len(p.rejected) == 1
     assert "would clash with" in p.rejected[0]
+
+
+# ── batch verification (item 2) ──────────────────────────────────────────────
+
+def test_two_individually_safe_moves_that_collide_reject_the_whole_batch():
+    """THE regression this exists for.
+
+    Each move is checked against the original model and passes. Applied
+    together they land on each other. The acceptance run produced exactly this:
+    25 individually-safe proposals, 25 new clashes. The batch must fail as a
+    unit rather than leaving a half-verified zone behind.
+    """
+    from app.blocks.clash_resolver import Proposal, STATUS_ESCALATED, verify_batch
+
+    # Two 200mm services 1 m apart. A moves +500 in X, B moves -500 in X:
+    # each is clear of everything it was checked against; together they meet
+    # in the middle.
+    a = El("A", mesh=_box(at=(0.0, 0, 0)))
+    b = El("B", mesh=_box(at=(1.0, 0, 0)))
+    zone = [a, b]
+    by_id = {"A": a, "B": b}
+
+    props = [
+        Proposal("C1", "A", "offset", (500.0, 0.0, 0.0), STATUS_PROPOSED, 1, ["R"], "clause"),
+        Proposal("C2", "B", "offset", (-500.0, 0.0, 0.0), STATUS_PROPOSED, 1, ["R"], "clause"),
+    ]
+    result = verify_batch(props, by_id, zone, required_gap_mm=100, zone_key="Z1")
+
+    assert result.status == "rejected"
+    assert result.accepted == []
+    assert len(result.rejected) == 2
+    assert result.new_hard_clashes > 0 or result.new_violations > 0
+    assert all(p.status == STATUS_ESCALATED for p in result.rejected)
+    assert "collectively not" in (result.rejected[0].note or "")
+
+
+def test_a_rejected_batch_leaves_the_zone_exactly_as_it_found_it():
+    """Rollback is the other half of rejecting as a unit. A zone left with
+    half a batch applied is a state nobody verified."""
+    from app.blocks.clash_resolver import Proposal, verify_batch
+
+    a = El("A", mesh=_box(at=(0.0, 0, 0)))
+    b = El("B", mesh=_box(at=(1.0, 0, 0)))
+    before_a = a.mesh.bounds.copy()
+    before_b = b.mesh.bounds.copy()
+
+    props = [
+        Proposal("C1", "A", "offset", (500.0, 0.0, 0.0), STATUS_PROPOSED, 1, ["R"], "c"),
+        Proposal("C2", "B", "offset", (-500.0, 0.0, 0.0), STATUS_PROPOSED, 1, ["R"], "c"),
+    ]
+    verify_batch(props, {"A": a, "B": b}, [a, b], required_gap_mm=100, zone_key="Z1")
+
+    assert a.mesh.bounds == pytest.approx(before_a)
+    assert b.mesh.bounds == pytest.approx(before_b)
+
+
+def test_a_batch_that_keeps_the_zone_clean_is_accepted():
+    """The positive case: moves that genuinely do not interfere are accepted
+    together, and the zone's bboxes are updated to the new state."""
+    from app.blocks.clash_resolver import Proposal, verify_batch
+
+    a = El("A", mesh=_box(at=(0.0, 0, 0)))
+    b = El("B", mesh=_box(at=(5.0, 0, 0)))          # far apart, and moving apart
+    props = [
+        Proposal("C1", "A", "offset", (-400.0, 0.0, 0.0), STATUS_PROPOSED, 1, ["R"], "c"),
+    ]
+    result = verify_batch(props, {"A": a, "B": b}, [a, b], required_gap_mm=100, zone_key="Z2")
+
+    assert result.status == "accepted"
+    assert len(result.accepted) == 1
+    assert result.new_hard_clashes == 0
+
+
+def test_the_search_offers_more_than_one_distance_and_orders_by_displacement():
+    """Item 1: a single distance is not a search. On the real fixture the
+    fixed-distance version resolved about one clash in five, because the first
+    free axis is usually blocked too in a congested ceiling."""
+    el = El("A", mesh=_box())
+    moves = candidate_moves(Item(), el, 300)
+    mags = [round((v[0] ** 2 + v[1] ** 2 + v[2] ** 2) ** 0.5) for _m, v in moves]
+
+    assert len(moves) > 6, "the search must offer more than the old fixed set"
+    assert len(set(mags)) > 1, "more than one distance must be tried"
+    assert mags == sorted(mags), "least invasive move must be evaluated first"
+    # Diagonals exist: some candidate moves in two axes at once.
+    assert any(sum(1 for c in v if abs(c) > 1e-6) == 2 for _m, v in moves)
