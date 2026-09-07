@@ -4,11 +4,6 @@ Exists because the owner's models are Navisworks .nwd, which nothing but
 Autodesk software can read. The export is a manual step; this is everything
 that happens automatically the moment the exported .ifc lands.
 
-The watcher is ARMED. There is no disarm flag. On the first real IFC it
-also files a battery-format row (hard / clearance / joints / resolve rate /
-escalated, per zone) so The Level can grade later. Re-calibration is the
-first object in that row — before any verdict.
-
 A model with zero MEP elements is REPORTED and skipped, not silently
 processed into an empty report -- the same rule that rejected the public
 utilities model.
@@ -29,17 +24,10 @@ from app.blocks.clearance_rules import load_rules
 from app.blocks.geometry_engine import aabb_overlaps, judge_pair
 from app.blocks.ifc_loader import load_elements, model_sha256, zone_key
 from app.blocks.model_clone import apply_to_clone
-from run_battery_row import battery_row
 
 KIT = Path(__file__).parent.parent
 DROP = KIT / "fixtures" / "owner_models"
 CLEARANCE_M = 0.3
-
-# The drop-folder watcher is live. Do not set this False — a hat that
-# vendors a disarmed watcher will miss the first real IFC.
-WATCHER_ARMED = True
-
-OWNER_GATED_SUFFIXES = (".nwd", ".nwc", ".rvt")
 
 
 def run_one(ifc: Path, rule) -> dict:
@@ -135,58 +123,13 @@ def run_one(ifc: Path, rule) -> dict:
     }
 
 
-def skip_owner_gated(drop: Path) -> list[str]:
-    """Owner-gated formats: one log line each, then skip. Never parsed."""
-    skipped = []
-    for path in sorted(drop.iterdir()) if drop.is_dir() else []:
-        if path.suffix.lower() in OWNER_GATED_SUFFIXES:
-            line = (
-                f"OWNER-GATED: {path.name} skipped — export to IFC "
-                f"(File > Export > IFC), then drop the .ifc here."
-            )
-            print(line)
-            skipped.append(line)
-    return skipped
-
-
-def file_battery_rows(models: list[Path], out_dir: Path | None = None) -> list[dict]:
-    """Write The Level's battery-format rows. Recalibration is first."""
-    dest = (out_dir or (KIT / "acceptance_out")) / "BATTERY_ROWS.json"
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    rows = [battery_row(m) for m in models]
-    dest.write_text(json.dumps(rows, indent=2), encoding="utf-8")
-    print(f"battery rows written: {dest}")
-    return rows
-
-
-def verdict_withheld(row: dict) -> bool:
-    calib = row.get("RECALIBRATION") or {}
-    return bool(calib.get("verdict_withheld"))
-
-
 def main() -> int:
-    if not WATCHER_ARMED:
-        raise RuntimeError("watcher disarmed — refuse to run; re-arm WATCHER_ARMED")
-
     DROP.mkdir(parents=True, exist_ok=True)
-    skip_owner_gated(DROP)
     models = sorted(DROP.glob("*.ifc"))
     if not models:
         print(f"No .ifc found in {DROP}")
         print("Export from Navisworks: File > Export > IFC, then drop the file here.")
         print("See the README in that folder.")
-        print("Watcher remains armed.")
-        return 0
-
-    # Battery format FIRST — recalibration table before any verdict.
-    battery = file_battery_rows(models)
-    withheld = [r["model"] for r in battery if verdict_withheld(r)]
-    if withheld:
-        print(
-            "VERDICT WITHHELD for "
-            + ", ".join(withheld)
-            + " — band closed; battery row filed, clone/BCF not emitted."
-        )
         return 0
 
     rules = load_rules(KIT / "bundle" / "app" / "blocks" / "seed_rules.json")

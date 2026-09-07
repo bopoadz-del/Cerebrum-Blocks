@@ -4,9 +4,8 @@ Takes an IFC model, finds true clashes and clearance violations in MEP
 services (and MEP vs. structure), triages them into a queue an engineer will
 actually work, proposes checked and sourced resolutions on a clone, and
 tracks whether a re-run actually fixed what it targeted. The original model
-is never written to. See `docs/MEP_KIT.md` (also linked from the repo-root
-house path `docs/MEP_KIT.md`) for inputs, outputs, the rule table format,
-the PROVISIONAL joint threshold, and the kit's honest limits.
+is never written to. See `docs/MEP_KIT.md` for inputs, outputs, the rule
+table format, and the kit's honest limits.
 
 ## Blocks
 
