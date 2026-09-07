@@ -52,3 +52,32 @@ def list_registry_blocks() -> List[Dict]:
 def registry_block_exists(block_name: str) -> bool:
     """Check if a block exists in the registry."""
     return (REGISTRY_ROOT / block_name / "block.json").exists()
+
+
+def registry_reuse_lookup(block_id: str) -> dict:
+    """Exact-id REUSE present? query for Factory STEP 0 inventory.
+
+    ``block_id`` is matched against the on-disk registry folder name
+    (the store id), not guessed from tags or descriptions. A hit returns
+    the manifest including L2.2 brief-scope fields. A miss is a negative
+    answer, not an HTTP-level defect -- callers treat ``present`` as the
+    inventory bit.
+    """
+    if not block_id or "/" in block_id or "\\" in block_id or block_id in {".", ".."}:
+        return {"present": False, "id": block_id, "reuse": False}
+
+    manifest = load_manifest(block_id)
+    if manifest is None:
+        return {"present": False, "id": block_id, "reuse": False}
+
+    return {
+        "present": True,
+        "id": manifest.get("id", block_id),
+        "reuse": True,
+        "source": "registry",
+        "reads": manifest.get("reads", []),
+        "writes": manifest.get("writes", []),
+        "never": manifest.get("never", []),
+        "acceptance": manifest.get("acceptance", []),
+        "manifest": manifest,
+    }

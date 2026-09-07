@@ -11,6 +11,15 @@ from typing import Any, Dict, List, Optional
 from app.core.universal_base import UniversalBlock
 from app.core.typed_block import TypedBlock, Schema, ContentType
 from app.core import vector_store
+from app.core.answer_contract import (
+    SOURCE_CLASS_KEY,
+    AnswerContractViolation,
+    coverage_line,
+    emit_chunk,
+    forbid_does_not_exist_claim,
+    render_source_class,
+    source_class_of,
+)
 
 
 class KnowledgeBlock(TypedBlock):
@@ -149,14 +158,30 @@ class KnowledgeBlock(TypedBlock):
         for idx, chunk in enumerate(top_chunks):
             doc_id = chunk.get("id", f"chunk_{idx}")
             text = chunk.get("text", chunk.get("document", ""))
-            meta = chunk.get("metadata", {})
-            context_parts.append(f"[Source {idx+1}] {text}")
-            source_map[f"Source {idx+1}"] = {
+            meta = chunk.get("metadata", {}) if isinstance(chunk.get("metadata"), dict) else {}
+            classified = source_class_of(chunk) or source_class_of(meta)
+            class_line = ""
+            if classified:
+                try:
+                    emitted = emit_chunk({**chunk, "metadata": {**meta, SOURCE_CLASS_KEY: classified}})
+                    meta = emitted.get("metadata", meta)
+                    class_line = render_source_class(emitted)
+                except AnswerContractViolation:
+                    class_line = ""
+            label = f"[Source {idx+1}]"
+            if class_line:
+                label = f"{label} {class_line}"
+            context_parts.append(f"{label} {text}")
+            source_entry = {
                 "id": doc_id,
                 "collection": chunk.get("collection", "unknown"),
                 "score": chunk.get("score", 0),
                 "metadata": meta,
             }
+            if classified:
+                source_entry[SOURCE_CLASS_KEY] = classified
+                source_entry["source_class_line"] = class_line
+            source_map[f"Source {idx+1}"] = source_entry
 
         context = "\n\n".join(context_parts)
 
@@ -187,11 +212,12 @@ Answer the question and cite sources.
                 "confidence": 0.0,
             }
         answer_text = answer_data.get("content", "")
+        answer_text = self._honest_answer(answer_text, params)
 
         # 5. Extract cited sources from answer
         cited_sources = self._extract_citations(answer_text, source_map)
 
-        return {
+        payload = {
             "status": "success",
             "answer": answer_text,
             "sources": cited_sources,
@@ -199,6 +225,8 @@ Answer the question and cite sources.
             "query": query,
             "chunks_retrieved": len(top_chunks),
         }
+        payload.update(self._coverage_fields(params, retrieved=len(top_chunks)))
+        return payload
 
     async def _ask_pgvector(
         self, query: str, project_id: str, top_k: int, llm_provider: str
@@ -221,15 +249,7 @@ Answer the question and cite sources.
             }
 
         top = results[0]
-        sources = [
-            {
-                "chunk_id": r.get("chunk_id"),
-                "document_id": r.get("document_id"),
-                "score": r.get("score"),
-                "metadata": r.get("metadata"),
-            }
-            for r in results
-        ]
+        sources = [self._classified_source(r) for r in results]
 
         # Avoid cloud LLM dependency in local/no-key mode. Only emit a raw
         # chunk as the answer when the retrieval score is high enough that the
@@ -260,7 +280,7 @@ Answer the question and cite sources.
             }
 
         context = "\n\n".join(
-            f"[Source {i+1}] {r['content']}" for i, r in enumerate(results)
+            self._source_context_line(i + 1, r) for i, r in enumerate(results)
         )
         messages = [
             {
@@ -285,15 +305,17 @@ Answer the question and cite sources.
                 "confidence": 0.0,
                 "project_id": project_id,
             }
-        return {
+        payload = {
             "status": "success",
-            "answer": answer_data.get("content", ""),
+            "answer": self._honest_answer(answer_data.get("content", ""), params),
             "sources": sources,
             "confidence": top["score"],
             "query": query,
             "chunks_retrieved": len(results),
             "project_id": project_id,
         }
+        payload.update(self._coverage_fields(params, retrieved=len(results)))
+        return payload
 
     # ── Search Only ────────────────────────────────────────────────────────────
 
@@ -439,6 +461,79 @@ Answer the question and cite sources.
             return {"content": data["choices"][0]["message"]["content"]}
 
     # ── Helpers ────────────────────────────────────────────────────────────────
+
+    def _classified_source(self, result: Dict) -> Dict:
+        """A retrieved row with ``source_class`` lifted onto the citation."""
+        meta = result.get("metadata") if isinstance(result.get("metadata"), dict) else {}
+        classified = source_class_of(result) or source_class_of(meta)
+        source = {
+            "chunk_id": result.get("chunk_id") or result.get("id"),
+            "document_id": result.get("document_id"),
+            "score": result.get("score"),
+            "metadata": meta,
+        }
+        if classified:
+            try:
+                emitted = emit_chunk({**result, "metadata": {**meta, SOURCE_CLASS_KEY: classified}})
+                source[SOURCE_CLASS_KEY] = emitted[SOURCE_CLASS_KEY]
+                source["source_class_line"] = render_source_class(emitted)
+                source["metadata"] = emitted.get("metadata", meta)
+            except AnswerContractViolation:
+                pass
+        return source
+
+    def _source_context_line(self, index: int, result: Dict) -> str:
+        classified = source_class_of(result) or source_class_of(result.get("metadata") or {})
+        prefix = f"[Source {index}]"
+        if classified:
+            prefix = f"{prefix} source_class: {classified}"
+        return f"{prefix} {result.get('content', '')}"
+
+    def _coverage_fields(self, params: Dict, retrieved: int) -> Dict:
+        """K3: emit ``N of M indexed`` when the caller knows the corpus size."""
+        total = params.get("corpus_total")
+        if total is None and isinstance(params.get("input"), dict):
+            total = params["input"].get("corpus_total")
+        if total is None:
+            return {
+                "coverage_line": None,
+                "source_class_rendered": True,
+            }
+        try:
+            total_int = int(total)
+            indexed = params.get("documents_indexed")
+            indexed_int = int(indexed) if indexed is not None else retrieved
+            return {
+                "coverage_line": coverage_line(indexed_int, total_int),
+                "source_class_rendered": True,
+            }
+        except (AnswerContractViolation, TypeError, ValueError):
+            return {
+                "coverage_line": None,
+                "source_class_rendered": True,
+            }
+
+    def _honest_answer(self, answer_text: str, params: Dict) -> str:
+        """K3: a does-not-exist claim is refused below 100% coverage."""
+        total = params.get("corpus_total")
+        indexed = params.get("documents_indexed")
+        try:
+            indexed_int = int(indexed) if indexed is not None else 0
+            total_int = int(total) if total is not None else None
+            return forbid_does_not_exist_claim(answer_text, indexed_int, total_int)
+        except AnswerContractViolation:
+            return (
+                "I could not confirm this in the indexed sources "
+                "(coverage is below 100%; a does-not-exist claim is prohibited)."
+            )
+        except (TypeError, ValueError):
+            try:
+                return forbid_does_not_exist_claim(answer_text, 0, None)
+            except AnswerContractViolation:
+                return (
+                    "I could not confirm this in the indexed sources "
+                    "(coverage is below 100%; a does-not-exist claim is prohibited)."
+                )
 
     def _provider_has_key(self, provider: str = "kimi") -> bool:
         """Return True when Kimi (the only provider) has an API key available."""

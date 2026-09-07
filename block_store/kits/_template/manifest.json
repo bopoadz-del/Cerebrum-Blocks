@@ -16,6 +16,7 @@
     "default_chat_prompt": "{{domain}}_expert.txt"
   },
   "blocks": [],
+  "learning_engine_enabled": false,
   "_flow_note": "The generated container resolves a single <domain>_v2 block, so a generated kit ships a bundle rather than a pipeline. A kit whose blocks DO compose replaces this with a flow: [[stage], [stage]] covering every block.",
   "flow": "independent",
   "prompts": [

@@ -50,5 +50,37 @@
       "widget": "text"
     }
   ],
-  "version": "2.0"
+  "version": "2.0",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    },
+    {
+      "kind": "credential",
+      "scope": "env"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "missing_required_input",
+      "check": "refuses or errors when a required input is absent",
+      "status": "refused"
+    }
+  ]
 }

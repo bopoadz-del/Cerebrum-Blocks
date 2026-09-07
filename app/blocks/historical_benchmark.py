@@ -217,6 +217,7 @@ class HistoricalBenchmarkBlock(UniversalBlock):
             "item": item,
             "matched_key": key,
             "unit": unit or base.get("unit"),
+            "canonical_unit": base.get("unit"),
             "rates": {
                 "base_usd": base["base_usd"],
                 "adjusted_usd": adjusted,

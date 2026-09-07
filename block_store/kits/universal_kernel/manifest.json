@@ -1,4 +1,5 @@
 {
+  "learning_engine_enabled": false,
   "name": "universal_kernel",
   "version": "0.1.0",
   "waves": {

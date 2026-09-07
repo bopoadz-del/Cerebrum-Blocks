@@ -262,11 +262,11 @@ class BlockSigner:
             # excluded from the signed payload until the operator re-signs.
             manifest.pop("trust_tier", None)
             # Same treatment, same reason (KERNEL_DEFAULTS 1.2 / L2.2): the
-            # contract fields landed after the last operator re-sign. No
-            # manifest in this repo carries one of them today, so stripping
-            # them leaves every existing digest byte-for-byte identical --
-            # tests/core/test_manifest_contract.py recomputes all 114 and
-            # proves it. Checkers still validate the fields.
+            # contract fields and the brief-scope fields (reads/writes/
+            # never/acceptance) landed after the last operator re-sign.
+            # Stripping them keeps existing signatures valid.
+            # tests/core/test_manifest_contract.py recomputes stored
+            # digests and proves the strip. Checkers still validate.
             for _field in UNSIGNED_CONTRACT_KEYS:
                 manifest.pop(_field, None)
             canonical = _canonical_json(manifest).encode("utf-8")

@@ -164,5 +164,31 @@
       "widget": "json"
     }
   ],
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "block",
+      "scope": "peer"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "notification",
+      "scope": "outbound"
+    }
+  ],
+  "never": [],
+  "acceptance": []
 }

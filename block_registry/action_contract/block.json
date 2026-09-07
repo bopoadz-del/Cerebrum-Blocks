@@ -40,5 +40,34 @@
     "registry"
   ],
   "trust_tier": "platform",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ],
+  "never": [
+    {
+      "kind": "caller",
+      "scope": "trust_scope"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "missing_required_input",
+      "check": "refuses or errors when a required input is absent",
+      "status": "refused"
+    }
+  ]
 }

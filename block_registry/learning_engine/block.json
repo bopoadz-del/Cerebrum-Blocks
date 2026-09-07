@@ -67,6 +67,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "requires": [],
+  "provenance_policy": "independently_labeled_only",
   "signature": "RRlRoFQcLkAmLAaCdbgWbHZCpBuZ51RmfJiTndP0bgl298a6rJd1zQ1aBub8lJx8xhy8SbueY9uA4BmJRHypDQ==",
   "tags": [
     "domain",
@@ -99,5 +100,42 @@
       "widget": "text"
     }
   ],
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "queue",
+      "scope": "jobs"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "unknown_action",
+      "check": "errors on an unknown or missing action",
+      "status": "failed"
+    },
+    {
+      "id": "missing_credential",
+      "check": "fails loud when a required credential or key is absent",
+      "status": "failed"
+    }
+  ]
 }

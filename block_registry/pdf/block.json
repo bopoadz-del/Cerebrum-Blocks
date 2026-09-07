@@ -68,5 +68,53 @@
       "widget": "toggle"
     }
   ],
-  "version": "2.0.0"
+  "version": "2.0.0",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "file",
+      "scope": "input_document"
+    },
+    {
+      "kind": "file",
+      "scope": "input_image"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "file",
+      "scope": "local.write"
+    },
+    {
+      "kind": "file",
+      "scope": "temp"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "missing_required_input",
+      "check": "refuses or errors when a required input is absent",
+      "status": "refused"
+    }
+  ]
 }

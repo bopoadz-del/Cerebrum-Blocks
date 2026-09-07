@@ -55,6 +55,7 @@ from app.routers import (
     memory,
     metrics as metrics_router,
     monitoring,
+    registry,
     skills,
     static,
     store,
@@ -232,6 +233,7 @@ app.include_router(knowledge.router)
 app.include_router(skills.router)
 app.include_router(notification.router)
 app.include_router(store.router)
+app.include_router(registry.router)
 app.include_router(video.router)
 app.include_router(workflows.router)
 app.include_router(connectors.router)

@@ -1,11 +1,11 @@
 """Learning Engine Block - Tier promotion + coefficient tuning via scikit-learn"""
 
 import logging
-import os
-import json
 import time
 from typing import Any, Dict, List, Optional
 from app.core.universal_base import UniversalBlock
+from app.core.block_config import Config
+from app.core.learning_store import MemoryLearningStore
 from app.core.credibility import (
     CredibilityRecord,
     CredibilityScorer,
@@ -13,24 +13,6 @@ from app.core.credibility import (
 )
 
 logger = logging.getLogger(__name__)
-
-def _default_storage_path() -> str:
-    """Default the learning store onto the persistent disk, not /tmp.
-
-    This block accumulates user-generated value: every correction, tier
-    promotion and tuned coefficient. The previous default put it in /tmp, so
-    all of it was wiped on every deploy -- and deploys are roughly daily. It
-    looked like the learning simply never converged.
-
-    DATA_DIR is the same convention the rest of the service uses for durable
-    state (see core/auth.py and routers/upload.py), and on Render it is the
-    mounted disk.
-    """
-    data_dir = os.getenv("DATA_DIR", "./data")
-    return os.path.join(data_dir, "learning_engine.json")
-
-
-_STORAGE_PATH = os.environ.get("LEARNING_ENGINE_STORAGE") or _default_storage_path()
 
 # Tier thresholds: (min_executions, max_mae_pct) → tier label
 _TIER_RULES = [
@@ -52,7 +34,9 @@ class LearningEngineBlock(UniversalBlock):
     default_config = {
         "promotion_mae_threshold": 0.05,   # 5% MAE to promote
         "min_samples_for_training": 5,
-        "storage_path": _STORAGE_PATH,
+        # No storage_path. The backend is injected via config
+        # (``storage_backend``). A local file path in a block is the
+        # thing KERNEL_DEFAULTS 1.5 exists to stop.
     }
 
     ui_schema = {
@@ -78,9 +62,33 @@ class LearningEngineBlock(UniversalBlock):
 
     def __init__(self, hal_block=None, config: Dict = None):
         super().__init__(hal_block, config)
+        self._memory_store: Optional[MemoryLearningStore] = None
         self._state: Dict = self._load_state()
         # Shared credibility scorer — pure functions; safe to memoise.
         self._credibility_scorer = CredibilityScorer()
+
+    @property
+    def settings(self) -> Config:
+        """The settings this block was HANDED. No ``os.getenv`` in this module."""
+        return Config(self.config)
+
+    @property
+    def _store(self):
+        """The storage backend this block was given, or the memory fallback.
+
+        Resolution, in order, and all of it injected:
+
+        1. ``storage_backend`` — an object with ``load`` / ``save``. This is
+           what makes durability testable without the block choosing a path.
+        2. An in-process :class:`MemoryLearningStore`. Visible as the
+           fallback rung; lost on restart.
+        """
+        backend = self.settings.get("storage_backend")
+        if backend is not None:
+            return backend
+        if self._memory_store is None:
+            self._memory_store = MemoryLearningStore()
+        return self._memory_store
 
     # ── credibility helpers ────────────────────────────────────────────
 
@@ -204,20 +212,19 @@ class LearningEngineBlock(UniversalBlock):
         }
 
     def _load_state(self) -> Dict:
-        path = self.config.get("storage_path", _STORAGE_PATH) if hasattr(self, "config") else _STORAGE_PATH
         try:
-            if os.path.exists(path):
-                with open(path, "r") as f:
-                    return json.load(f)
+            loaded = self._store.load()
         except Exception:
-            pass
+            return {"formulas": {}, "history": []}
+        if isinstance(loaded, dict):
+            loaded.setdefault("formulas", {})
+            loaded.setdefault("history", [])
+            return loaded
         return {"formulas": {}, "history": []}
 
     def _save_state(self):
-        path = self.config.get("storage_path", _STORAGE_PATH)
         try:
-            with open(path, "w") as f:
-                json.dump(self._state, f, indent=2)
+            self._store.save(self._state)
         except Exception:
             pass
 

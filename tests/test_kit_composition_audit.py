@@ -125,6 +125,15 @@ def test_a_kit_may_vendor_its_own_blocks(tmp_path):
     assert _codes(tmp_path, "demo", known=()) == []
 
 
+def test_a_kit_may_vendor_blocks_in_the_bundle_app_blocks_layout(tmp_path):
+    """Published kits put modules at bundle/app/blocks/<name>.py."""
+    d = _kit(tmp_path, "demo", _base(blocks=["local_one"], flow=["local_one"]))
+    blocks = d / "bundle" / "app" / "blocks"
+    blocks.mkdir(parents=True)
+    (blocks / "local_one.py").write_text("# vendored\n", encoding="utf-8")
+    assert _codes(tmp_path, "demo", known=()) == []
+
+
 def test_duplicate_blocks_are_a_finding(tmp_path):
     _kit(tmp_path, "demo", _base(blocks=["alpha", "alpha"], flow=["alpha"]))
     assert "duplicate_blocks" in _codes(tmp_path, "demo")

@@ -98,7 +98,11 @@ def test_rag_chain_end_to_end():
             id=f"chunk-{i}",
             text=text,
             vector=vector,
-            metadata={"filename": FILENAME, "chunk_index": i},
+            metadata={
+                "filename": FILENAME,
+                "chunk_index": i,
+                "source_class": "official_guidance",
+            },
         )
         for i, (text, vector) in enumerate(zip(document.chunks, embeddings["vectors"]))
     ]

@@ -30,6 +30,10 @@ assert _spec_contract.loader is not None
 _spec_contract.loader.exec_module(_contract)
 check_contract_fields = _contract.check_contract_fields
 CONTRACT_MANIFEST_KEYS = _contract.CONTRACT_MANIFEST_KEYS
+check_brief_scope_fields = _contract.check_brief_scope_fields
+missing_brief_scope_fields = _contract.missing_brief_scope_fields
+BRIEF_SCOPE_FAIL_CLOSED = _contract.BRIEF_SCOPE_FAIL_CLOSED
+BRIEF_SCOPE_KEYS = _contract.BRIEF_SCOPE_KEYS
 
 REGISTRY_ROOT = ROOT / "block_registry"
 SKIP_DIRS = {"__pycache__"}
@@ -88,6 +92,19 @@ def audit_block(block_dir: Path) -> dict:
     # worse than none, because a planner reading it will guess or crash.
     for reason in check_contract_fields(manifest):
         result["errors"].append(reason)
+
+    # L2.2 brief-scope fields: report-only until BRIEF_SCOPE_FAIL_CLOSED
+    # flips. Missing or invalid reads/writes/never/acceptance are
+    # warnings (or errors after the owner-gated flip). Empty lists pass.
+    brief_invalid = check_brief_scope_fields(manifest)
+    brief_missing = missing_brief_scope_fields(manifest)
+    brief_notes = brief_invalid + [
+        "missing brief-scope field: %s" % field for field in brief_missing
+    ]
+    if BRIEF_SCOPE_FAIL_CLOSED:
+        result["errors"].extend(brief_notes)
+    else:
+        result["warnings"].extend(brief_notes)
 
     for key in RECOMMENDED_MANIFEST_KEYS:
         if not manifest.get(key):

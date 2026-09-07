@@ -55,5 +55,42 @@
       "widget": "file"
     }
   ],
-  "version": "1.1"
+  "version": "1.1",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "file",
+      "scope": "local.write"
+    }
+  ],
+  "never": [
+    {
+      "kind": "file",
+      "scope": "escape_root"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "path_escape_rejected",
+      "check": "rejects paths that escape the configured root",
+      "status": "refused"
+    }
+  ]
 }

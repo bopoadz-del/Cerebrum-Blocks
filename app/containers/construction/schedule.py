@@ -13,6 +13,303 @@ logger = logging.getLogger(__name__)
 
 
 class ConstructionScheduleMixin:
+    # ------------------------------------------------------------------
+    # xlsx schedules
+    #
+    # Restored from the pre-package flat module (app/containers/
+    # construction.py, last living at ccbd440a^). The port to this package
+    # dropped _parse_xlsx_schedule, its three header-classification helpers
+    # and _normalise_date, and parse_primavera_schedule quietly lost its
+    # '.xlsx'/'.xls' branch with them -- an authored xlsx programme, which is
+    # the commonest thing a contractor actually hands over, came back
+    # "Unsupported format: .xlsx".
+    #
+    # Nobody saw it because tests/conftest.py probed for the *file*
+    # app/containers/construction.py, which this package replaced, so
+    # tests/test_xlsx_schedule.py skipped itself at module level under
+    # "Construction kit not installed".
+    # ------------------------------------------------------------------
+
+    # Header alias tables — case-insensitive substring match on cell text.
+    _XLSX_NAME_ALIASES = (
+        "task name", "activity name", "description",
+        "activity", "task", "name", "wbs name",
+    )
+    _XLSX_DURATION_ALIASES = (
+        "duration (days)", "total duration", "target duration",
+        "duration", "dur",
+    )
+    _XLSX_START_ALIASES = (
+        "early start", "target start", "planned start", "actual start",
+        "start date", "start",
+    )
+    _XLSX_FINISH_ALIASES = (
+        "early finish", "target finish", "planned finish", "actual finish",
+        "target end", "end date", "finish", "end",
+    )
+    _XLSX_WBS_ALIASES = (
+        "activity id", "task id", "wbs code", "wbs", "code", "id",
+    )
+    _XLSX_PRED_ALIASES = ("predecessors", "pred", "dependencies")
+    _XLSX_PROGRESS_ALIASES = (
+        "% complete", "pct complete", "percent complete", "progress", "status",
+    )
+
+    @staticmethod
+    def _xlsx_match_alias(cell_text: str, aliases: tuple) -> bool:
+        if not cell_text:
+            return False
+        ct = str(cell_text).strip().lower()
+        if not ct:
+            return False
+        return any(alias in ct for alias in aliases)
+
+    @classmethod
+    def _xlsx_classify_header_row(cls, row_values: List[Any]) -> Optional[Dict[str, int]]:
+        """Return {field: column_index} mapping if this row looks like a
+        schedule header, else None. Requires activity-name + at least one of
+        (duration, start, finish).
+
+        Order matters: WBS-id aliases (`activity id`, `task id`) are checked
+        before name aliases (`activity`, `task`) because the former is a
+        strict superset of the latter and we want "Activity ID" to bind to
+        wbs, not name.
+        """
+        mapping: Dict[str, int] = {}
+        for idx, val in enumerate(row_values):
+            text = str(val).strip().lower() if val is not None else ""
+            if not text:
+                continue
+            # First-match-wins per field — header columns are unique.
+            # Check WBS aliases BEFORE name aliases — see docstring.
+            if "wbs" not in mapping and cls._xlsx_match_alias(text, cls._XLSX_WBS_ALIASES):
+                mapping["wbs"] = idx
+                continue
+            if "name" not in mapping and cls._xlsx_match_alias(text, cls._XLSX_NAME_ALIASES):
+                mapping["name"] = idx
+                continue
+            if "duration" not in mapping and cls._xlsx_match_alias(text, cls._XLSX_DURATION_ALIASES):
+                mapping["duration"] = idx
+                continue
+            # Finish before start — "early finish" / "target finish" contain
+            # the word "start" nowhere, but plain "start" is a substring of
+            # "start date" only, so this is mostly defensive ordering.
+            if "finish" not in mapping and cls._xlsx_match_alias(text, cls._XLSX_FINISH_ALIASES):
+                mapping["finish"] = idx
+                continue
+            if "start" not in mapping and cls._xlsx_match_alias(text, cls._XLSX_START_ALIASES):
+                mapping["start"] = idx
+                continue
+            if "predecessors" not in mapping and cls._xlsx_match_alias(text, cls._XLSX_PRED_ALIASES):
+                mapping["predecessors"] = idx
+                continue
+            if "progress" not in mapping and cls._xlsx_match_alias(text, cls._XLSX_PROGRESS_ALIASES):
+                mapping["progress"] = idx
+                continue
+        if "name" not in mapping:
+            return None
+        if not any(k in mapping for k in ("duration", "start", "finish")):
+            return None
+        return mapping
+
+    def _xlsx_has_schedule_sheet(self, file_path: str) -> bool:
+        """Lightweight pre-classify: any sheet header row 1..10 matches?"""
+        try:
+            from openpyxl import load_workbook
+        except Exception:
+            return False
+        try:
+            wb = load_workbook(file_path, read_only=True, data_only=True)
+        except Exception:
+            return False
+        try:
+            for sheet_name in wb.sheetnames:
+                ws = wb[sheet_name]
+                row_iter = ws.iter_rows(min_row=1, max_row=10, values_only=True)
+                for row in row_iter:
+                    if row and self._xlsx_classify_header_row(list(row)) is not None:
+                        return True
+            return False
+        finally:
+            try:
+                wb.close()
+            except Exception:
+                pass
+
+    @staticmethod
+    def _normalise_date(value: Any) -> Optional[str]:
+        """Coerce datetime/date/string → ISO-8601 string. None on failure."""
+        if value is None:
+            return None
+        # datetime / date types from openpyxl come through directly when
+        # data_only=True is set on load_workbook.
+        try:
+            from datetime import date as _date
+        except Exception:
+            _date = None  # type: ignore
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if _date is not None and isinstance(value, _date):
+            return value.isoformat()
+        if isinstance(value, str):
+            parsed = _safe_iso_date(value)
+            if parsed is not None:
+                return parsed.isoformat()
+            return None
+        # Numeric / bool / other → not a date.
+        return None
+
+    def _parse_xlsx_schedule(self, file_path: str) -> Dict:
+        """Parse an Excel schedule into the same shape as `_parse_xer_file`.
+
+        Heuristic: walk every sheet, scan rows 1..10 for a schedule-shaped
+        header (activity-name + duration/start/finish), pick the first match,
+        then read every row below it.
+        """
+        try:
+            from openpyxl import load_workbook
+        except Exception as e:
+            return {"status": "error", "error": f"openpyxl unavailable: {e}"}
+
+        try:
+            wb = load_workbook(file_path, read_only=True, data_only=True)
+        except Exception as e:
+            return {"status": "error", "error": f"XLSX open failed: {e}"}
+
+        sheets_inspected: List[str] = []
+        chosen_sheet: Optional[str] = None
+        chosen_header_row: Optional[int] = None
+        chosen_mapping: Optional[Dict[str, int]] = None
+
+        try:
+            for sheet_name in wb.sheetnames:
+                sheets_inspected.append(sheet_name)
+                ws = wb[sheet_name]
+                for row_idx, row in enumerate(
+                    ws.iter_rows(min_row=1, max_row=10, values_only=True), start=1
+                ):
+                    if not row:
+                        continue
+                    mapping = self._xlsx_classify_header_row(list(row))
+                    if mapping is not None:
+                        chosen_sheet = sheet_name
+                        chosen_header_row = row_idx
+                        chosen_mapping = mapping
+                        break
+                if chosen_sheet is not None:
+                    break
+
+            if chosen_sheet is None or chosen_mapping is None or chosen_header_row is None:
+                return {
+                    "status": "error",
+                    "error": "no schedule-shaped sheet found",
+                    "sheets_inspected": sheets_inspected,
+                }
+
+            ws = wb[chosen_sheet]
+            activities: List[Dict[str, Any]] = []
+            for i, row in enumerate(
+                ws.iter_rows(min_row=chosen_header_row + 1, values_only=True), start=1
+            ):
+                if not row:
+                    continue
+                # Skip fully empty rows.
+                if not any(cell not in (None, "") for cell in row):
+                    continue
+
+                def _cell(field: str) -> Any:
+                    idx = chosen_mapping.get(field)
+                    if idx is None or idx >= len(row):
+                        return None
+                    return row[idx]
+
+                name_val = _cell("name")
+                if name_val is None or str(name_val).strip() == "":
+                    # Skip rows that have no activity name — likely group/blank.
+                    continue
+
+                wbs_val = _cell("wbs")
+                wbs_str = "" if wbs_val is None else str(wbs_val).strip()
+
+                pred_val = _cell("predecessors")
+                if pred_val in (None, ""):
+                    predecessors: List[str] = []
+                else:
+                    predecessors = [t.strip() for t in str(pred_val).split(",") if t.strip()]
+
+                start_iso = self._normalise_date(_cell("start"))
+                finish_iso = self._normalise_date(_cell("finish"))
+                duration_val = _safe_float(_cell("duration"), 0)
+                progress_val = _safe_float(_cell("progress"), 0)
+
+                activity = {
+                    "id": wbs_str or str(i),
+                    "task_id": wbs_str or str(i),
+                    "task_code": wbs_str,
+                    "task_name": str(name_val).strip(),
+                    "name": str(name_val).strip(),
+                    "duration": duration_val,
+                    "target_start_date": start_iso,
+                    "target_end_date": finish_iso,
+                    "start": start_iso or "",
+                    "finish": finish_iso or "",
+                    "percent_complete": progress_val,
+                    "total_float": 0,
+                    "free_float": 0,
+                    "wbs": wbs_str,
+                    "predecessors": predecessors,
+                    "successors": [],
+                }
+                activities.append(activity)
+        finally:
+            try:
+                wb.close()
+            except Exception:
+                pass
+
+        # Near-critical-path approximation: longest-duration items, sorted by
+        # start date when available. Real CPM stays XER-only.
+        with_dates = sum(
+            1 for a in activities
+            if a.get("target_start_date") and a.get("target_end_date")
+        )
+        with_duration = sum(1 for a in activities if a.get("duration", 0) > 0)
+        avg_duration = (
+            round(sum(a.get("duration", 0) for a in activities) / len(activities), 2)
+            if activities else 0
+        )
+
+        # Sort activities by start date, then mark the longest-duration
+        # quartile as near-critical-path candidates.
+        if activities:
+            def _sort_key(a):
+                d = _safe_iso_date(a.get("target_start_date"))
+                return (d is None, d or datetime.max)
+            activities.sort(key=_sort_key)
+            sorted_by_dur = sorted(
+                activities, key=lambda a: a.get("duration", 0), reverse=True
+            )
+            top_n = max(1, len(sorted_by_dur) // 4)
+            critical_ids = {id(a) for a in sorted_by_dur[:top_n]}
+            for a in activities:
+                if id(a) in critical_ids:
+                    a["near_critical"] = True
+
+        return {
+            "status": "success",
+            "file_type": "xlsx",
+            "engine": "xlsx-heuristic",
+            "sheet": chosen_sheet,
+            "activities": activities,
+            "data_date": datetime.now(timezone.utc).date().isoformat() if activities else None,
+            "summary": {
+                "total_activities": len(activities),
+                "with_dates": with_dates,
+                "with_duration": with_duration,
+                "average_duration_days": avg_duration,
+            },
+        }
+
     async def parse_primavera_schedule(self, input_data: Any, params: Dict) -> Dict:
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
@@ -28,6 +325,8 @@ class ConstructionScheduleMixin:
             schedule_data = await self._parse_xer_file(file_path)
         elif ext == '.xml':
             schedule_data = self._parse_xml_schedule(file_path)
+        elif ext in ('.xlsx', '.xls'):
+            schedule_data = self._parse_xlsx_schedule(file_path)
         else:
             return {"status": "error", "error": f"Unsupported format: {ext}"}
     
@@ -38,8 +337,11 @@ class ConstructionScheduleMixin:
     
         delay_analysis = None
         if baseline_file:
-            if Path(baseline_file).suffix.lower() == '.xer':
+            base_ext = Path(baseline_file).suffix.lower()
+            if base_ext == '.xer':
                 baseline_data = await self._parse_xer_file(baseline_file)
+            elif base_ext in ('.xlsx', '.xls'):
+                baseline_data = self._parse_xlsx_schedule(baseline_file)
             else:
                 baseline_data = self._parse_xml_schedule(baseline_file)
             if baseline_data.get("status") != "error":

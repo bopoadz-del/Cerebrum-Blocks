@@ -267,6 +267,14 @@ def audit_kit(kit, kits_dir, known_blocks):
     kit_root = os.path.join(kits_dir, kit)
     for entry in sorted(_dirs(kit_root)):
         local |= _dirs(os.path.join(kit_root, entry))
+    # Kit-first blocks ship as bundle/app/blocks/<name>.py once published,
+    # or app/blocks/<name>.py before that. The waveN/<name>/ walk above only
+    # sees directories two levels down, so a module in the bundle layout
+    # would otherwise look unresolved even though it is on disk.
+    for root in (os.path.join(kit_root, "bundle"), kit_root):
+        blocks_dir = os.path.join(root, "app", "blocks")
+        local |= _modules(blocks_dir)
+        local |= _dirs(blocks_dir)
     resolvable = known_blocks | local
 
     unresolved = [b for b in blocks if b not in resolvable]

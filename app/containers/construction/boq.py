@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.core.construction_types import Measurement, SpecItem, RiskItem
 
-from .helpers import _parse_money_str, _safe_float, _safe_iso_date
+from .helpers import _parse_money_str, _safe_float, _safe_iso_date, _unit_class
 
 logger = logging.getLogger(__name__)
 
@@ -49,17 +49,7 @@ class ConstructionBoqMixin:
         project_type = p.get("project_type", "general_building")
 
         block = self._get_historical_benchmark_block()
-        if block is None:
-            return {
-                "status": "error",
-                "action": "cost_estimate",
-                "error": (
-                    "No historical benchmark source configured. The hardcoded "
-                    "2024 USD rate book was removed; the system will accumulate "
-                    "real rates via learning_engine over time. Provide unit "
-                    "rates directly in the BOQ, or request supplier quotes."
-                ),
-            }
+        missing_block = block is None
 
         _UNIT_SUFFIXES = {"_m3": "m3", "_m2": "m2", "_kg": "kg", "_lm": "lm", "_ea": "ea", "_nr": "nr"}
 
@@ -78,18 +68,21 @@ class ConstructionBoqMixin:
                         unit = u
                         break
 
-            result = await block.process(
-                {},
-                {
-                    "action": "lookup",
-                    "item": item_name,
-                    "unit": unit,
-                    "location": location,
-                    "project_type": project_type,
-                },
-            )
-            if not isinstance(result, dict) or result.get("status") != "success":
+            result = None
+            if block is not None:
+                result = await block.process(
+                    {},
+                    {
+                        "action": "lookup",
+                        "item": item_name,
+                        "unit": unit,
+                        "location": location,
+                        "project_type": project_type,
+                    },
+                )
+            if missing_block or not isinstance(result, dict) or result.get("status") != "success":
                 # No benchmark for this item — record honestly, do not fabricate a rate.
+                # Still emit the takeoff row so auto_pipeline is not an empty list.
                 unpriced_items.append(item_name)
                 line_items.append({
                     "item": item_name,
@@ -99,7 +92,13 @@ class ConstructionBoqMixin:
                     "adjusted_rate": None,
                     "location_factor": None,
                     "total": None,
-                    "note": "no benchmark rate found — excluded from totals",
+                    "amount": None,
+                    "currency": "USD",
+                    "note": (
+                        "historical_benchmark block unavailable — excluded from totals"
+                        if missing_block
+                        else "no benchmark rate found — excluded from totals"
+                    ),
                 })
                 continue
 
@@ -118,6 +117,8 @@ class ConstructionBoqMixin:
                 "adjusted_rate": adjusted_rate,
                 "location_factor": location_factor,
                 "total": round(total, 2),
+                "amount": round(total, 2),
+                "currency": "USD",
             })
 
         subtotal = sum(item["total"] for item in line_items if item["total"] is not None)
@@ -126,7 +127,7 @@ class ConstructionBoqMixin:
         contingency = subtotal * 0.05
         total = subtotal + overhead + profit + contingency
 
-        return {
+        result = {
             "status": "success",
             "action": "cost_estimate",
             "location": location,
@@ -142,6 +143,15 @@ class ConstructionBoqMixin:
             },
             "confidence": "medium"
         }
+        if missing_block:
+            result["status"] = "error"
+            result["error"] = (
+                "No historical benchmark source configured. The hardcoded "
+                "2024 USD rate book was removed; the system will accumulate "
+                "real rates via learning_engine over time. Provide unit "
+                "rates directly in the BOQ, or request supplier quotes."
+            )
+        return result
     async def _lookup_unit_cost(
         self, item_name: str, unit: str,
         location: str = "US National Average",
@@ -168,6 +178,12 @@ class ConstructionBoqMixin:
             },
         )
         if not isinstance(result, dict) or result.get("status") != "success":
+            return None
+        caller_unit = (unit or "").lower().strip()
+        canonical = (result.get("canonical_unit") or "").lower().strip()
+        if caller_unit and canonical and _unit_class(caller_unit) != _unit_class(canonical):
+            # Count-class items must not inherit a volumetric (or other
+            # mismatched) rate. Same outcome as "unknown item": None.
             return None
         return result.get("rates", {}).get("adjusted_usd")
     @staticmethod
@@ -675,7 +691,10 @@ class ConstructionBoqMixin:
             "ref": ref_num,
             "description": name,
             "type": sub_type,
-            "status": "Not Submitted",
+            # Status uses the SPA Submittal enum (PENDING / APPROVED /
+            # REJECTED / REQUIRED). "Pending" maps to PENDING after the
+            # mapper's .toUpperCase().
+            "status": "Pending",
             "due_date": due_date,
             "review_days": 14,
         }

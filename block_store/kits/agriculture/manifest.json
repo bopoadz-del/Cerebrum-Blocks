@@ -1,4 +1,5 @@
 {
+  "learning_engine_enabled": false,
   "id": "agriculture",
   "name": "Agriculture & AgriTech Suite",
   "version": "1.0.0",

@@ -24,8 +24,23 @@ os.environ.setdefault("BACKUP_SCHEDULE_ENABLED", "0")
 # Extended blocks are only registered when the platform boots in legacy mode.
 os.environ.setdefault("CEREBRUM_VIRGIN", "false")
 
-CONSTRUCTION_CONTAINER_PATH = ROOT / "app" / "containers" / "construction.py"
-CONSTRUCTION_V2_PATH = ROOT / "app" / "blocks" / "construction_v2.py"
+def _module_path(*parts: str) -> Path:
+    """Where a module lives, whether it is a file or a package.
+
+    app.containers.construction was refactored from construction.py into a
+    construction/ package. This constant kept pointing at the .py file, so
+    `.exists()` went False and two whole test files skipped themselves at
+    module level -- tests/test_regression_construction.py and
+    tests/test_xlsx_schedule.py, guarding the C1..C6 audit fixes. The kit was
+    installed the entire time; only the probe was stale.
+    """
+    base = ROOT.joinpath(*parts)
+    package_init = base / "__init__.py"
+    return package_init if package_init.is_file() else base.with_suffix(".py")
+
+
+CONSTRUCTION_CONTAINER_PATH = _module_path("app", "containers", "construction")
+CONSTRUCTION_V2_PATH = _module_path("app", "blocks", "construction_v2")
 
 requires_construction_kit = pytest.mark.skipif(
     not CONSTRUCTION_CONTAINER_PATH.exists(),

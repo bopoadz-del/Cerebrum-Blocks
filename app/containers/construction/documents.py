@@ -1201,6 +1201,7 @@ class ConstructionDocumentsMixin:
         quantities = {}
         patterns = [
             (r"concrete[^\n]*?(\d[\d,\.]*)\s*m3", "concrete_m3", "m3"),
+            (r"floor area[^\n]*?(\d[\d,\.]*)\s*m2", "floor_area_m2", "m2"),
             (r"rebar[^\n]*?(\d[\d,\.]*)\s*kg", "rebar_kg", "kg"),
             (r"reinforcement[^\n]*?(\d[\d,\.]*)\s*kg", "rebar_kg", "kg"),
             (r"steel[^\n]*?(\d[\d,\.]*)\s*kg", "structural_steel_kg", "kg"),
@@ -1432,6 +1433,45 @@ class ConstructionDocumentsMixin:
                 return _safe_float(q.get("quantity", 0))
             return _safe_float(q)
 
+        def _normalize_cost_line_items(raw_items, quantities_src) -> List[Dict]:
+            """SPA cost panel contract: quantity + unit + amount + currency.
+
+            Preserve existing rows (including unpriced amount=None) and, if
+            generate_cost_estimate returned an empty list, synthesise rows
+            from extracted quantities so the panel is never a hard-coded [].
+            """
+            currency = (p.get("currency") or "USD").upper()
+            normalized: List[Dict] = []
+            for li in raw_items or []:
+                if not isinstance(li, dict):
+                    continue
+                item = dict(li)
+                if "amount" not in item:
+                    item["amount"] = item.get("total")
+                item.setdefault("currency", currency)
+                item.setdefault("quantity", None)
+                item.setdefault("unit", None)
+                normalized.append(item)
+            if normalized:
+                return normalized
+            for name, qty_data in (quantities_src or {}).items():
+                if isinstance(qty_data, dict):
+                    quantity = _qty_val(qty_data)
+                    unit = qty_data.get("unit", "ea")
+                else:
+                    quantity = _qty_val(qty_data)
+                    unit = "ea"
+                if quantity <= 0:
+                    continue
+                normalized.append({
+                    "item": name,
+                    "quantity": quantity,
+                    "unit": unit,
+                    "amount": None,
+                    "currency": currency,
+                })
+            return normalized
+
         # Only show quantities panel when at least one value is non-zero
         has_quantities = bool(quantities) and any(
             _qty_val(v) > 0 for v in quantities.values()
@@ -1451,24 +1491,34 @@ class ConstructionDocumentsMixin:
                         "project_type": p.get("project_type", "general_building"),
                     },
                 )
+                raw_items = (
+                    cost_result.get("line_items", [])
+                    if isinstance(cost_result, dict) else []
+                )
+                line_items = _normalize_cost_line_items(raw_items, quantities)
+                unpriced_items = (
+                    cost_result.get("unpriced_items", [])
+                    if isinstance(cost_result, dict) else []
+                )
                 if isinstance(cost_result, dict) and cost_result.get("status") == "success":
                     downstream["cost_estimate"] = cost_result
                     panels.append({
                         "type": "cost_estimate",
                         "title": "Cost Estimate",
                         "data": cost_result.get("summary", {}),
-                        "line_items": cost_result.get("line_items", []),
-                        "unpriced_items": cost_result.get("unpriced_items", []),
+                        "line_items": line_items,
+                        "unpriced_items": unpriced_items,
                     })
                 else:
-                    # Estimate failed — surface the reason honestly, no fake number.
+                    # Estimate failed — keep the takeoff rows, surface the reason.
                     downstream["cost_estimate"] = cost_result
                     panels.append({
                         "type": "cost_estimate",
                         "title": "Cost Estimate",
-                        "data": {},
-                        "line_items": [],
-                        "unpriced_items": [],
+                        "data": (cost_result or {}).get("summary", {})
+                        if isinstance(cost_result, dict) else {},
+                        "line_items": line_items,
+                        "unpriced_items": unpriced_items,
                         "error": (cost_result or {}).get(
                             "error", "Cost estimate unavailable"
                         ) if isinstance(cost_result, dict) else "Cost estimate unavailable",
@@ -1476,13 +1526,11 @@ class ConstructionDocumentsMixin:
             except Exception as exc:
                 logger.exception("auto_pipeline: cost estimate calculation failed")
                 pipeline_warnings.append({"panel": "cost_estimate", "error": str(exc)})
-                # Surface the failure honestly rather than silently dropping
-                # the panel — consistent with the else-branch above.
                 panels.append({
                     "type": "cost_estimate",
                     "title": "Cost Estimate",
                     "data": {},
-                    "line_items": [],
+                    "line_items": _normalize_cost_line_items([], quantities),
                     "unpriced_items": [],
                     "error": f"Cost estimate failed: {exc}",
                 })
@@ -1633,17 +1681,23 @@ class ConstructionDocumentsMixin:
                 contract_result = await self.process_contract(
                     {"file_path": file_path, "extracted_text": extracted_text}, {}
                 )
-                downstream["contract"] = contract_result
-                panels.append({
-                    "type": "contract",
-                    "title": "Contract Analysis",
-                    "data": contract_result
-                })
-                next_actions.append({
-                    "action": "payment_certificate",
-                    "label": "Issue Payment Certificate",
-                    "reason": "Contract terms identified"
-                })
+                if isinstance(contract_result, dict) and contract_result.get("status") == "error":
+                    pipeline_warnings.append({
+                        "panel": "contract",
+                        "error": contract_result.get("error", "Contract analysis failed"),
+                    })
+                else:
+                    downstream["contract"] = contract_result
+                    panels.append({
+                        "type": "contract",
+                        "title": "Contract Analysis",
+                        "data": contract_result
+                    })
+                    next_actions.append({
+                        "action": "payment_certificate",
+                        "label": "Issue Payment Certificate",
+                        "reason": "Contract terms identified"
+                    })
             except Exception as exc:
                 logger.exception("auto_pipeline: process_contract failed")
                 pipeline_warnings.append({"panel": "contract", "error": str(exc)})
@@ -1664,11 +1718,44 @@ class ConstructionDocumentsMixin:
         if extracted_text:
             chat_context_parts.append(f"\nExtracted text (first 3000 chars):\n{extracted_text[:3000]}")
 
+        # Audit I2: placeholder panels so a missing schedule/contract does
+        # not silently empty the SPA section. Emitted when the dedicated
+        # panel was not produced — either because doc_type didn't trigger
+        # that branch, or because the branch ran and failed.
+        _failed_panels = {w["panel"] for w in pipeline_warnings}
+        if not any(p["type"] == "schedule" for p in panels):
+            note = (
+                "Schedule generation failed — see warnings."
+                if "schedule" in _failed_panels
+                else "Schedule not auto-detected. Use Run Action → Parse Schedule (XER/XML)."
+            )
+            panels.append({
+                "type": "schedule_hint",
+                "title": "Schedule",
+                "data": {"note": note},
+            })
+        if not any(p["type"] == "contract" for p in panels):
+            note = (
+                "Contract analysis failed — see warnings."
+                if "contract" in _failed_panels
+                else "Contract not auto-detected. Use Run Action → Process Contract."
+            )
+            panels.append({
+                "type": "contract_hint",
+                "title": "Contract Analysis",
+                "data": {"note": note},
+            })
+
         # Boundary validation: every panel passes through the typed contract
         # so a shape regression surfaces as a typed error_panel rather than
-        # rendering as raw JSON in the UI. (See app/core/panels.py)
-        from app.core.panels import validate_panel
-        validated_panels = [validate_panel(p) for p in panels]
+        # rendering as raw JSON in the UI. app/core/panels.py is optional —
+        # it is not dual-registered in this repo, so a missing module must
+        # not crash the pipeline.
+        try:
+            from app.core.panels import validate_panel
+            validated_panels = [validate_panel(p) for p in panels]
+        except ImportError:
+            validated_panels = panels
 
         return {
             "status": "success",

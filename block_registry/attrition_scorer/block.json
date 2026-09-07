@@ -14,5 +14,29 @@
   "publisher_id": "cerebrum_platform",
   "signature": "KcjijNMbD+bF4tbX1agKTt/vxwvQMHvPnRUJB8OB62kyiS3+iIR6ePsMnlQgiFWDJNyb2EMOwYF18hIrbiryCA==",
   "trust_tier": "platform",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "unknown_action",
+      "check": "errors on an unknown or missing action",
+      "status": "failed"
+    }
+  ]
 }
