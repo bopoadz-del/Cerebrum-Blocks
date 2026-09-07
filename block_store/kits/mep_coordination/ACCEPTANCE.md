@@ -60,4 +60,4 @@ False positives in the top-50 queue: **0**
 | 14 | clearance | drainage_storm vs structure | 00 begane grond | 10 | MEP-GAS-ANY-300 |
 | 15 | clearance | drainage_storm vs structure | 00 begane grond | 10 | MEP-GAS-ANY-300 |
 
-Every clearance row cites `MEP-GAS-ANY-300`, sourced to drawing IP-INF-053-0000-JCB-DWG-LP-600-0000002 A, NOTES item 6 (`DD-2023-118_DG2 Infra P1_Vol 3 – Drawings (3 of 7).pdf`, hash 2d085ef2123b39a9). Hard clashes cite no rule, deliberately: interpenetration is a clash under every rule.
+Every clearance row cites `MEP-GAS-ANY-300`, sourced to `PROJECT-UTILITIES-DRAWING-001`, NOTES item 6 (chunk hash 2d085ef2123b39a9; the client drawing it maps to is not named in this repository). Hard clashes cite no rule, deliberately: interpenetration is a clash under every rule.
