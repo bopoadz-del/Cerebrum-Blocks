@@ -2,6 +2,7 @@
   "id": "mep_coordination",
   "name": "MEP Coordination — Clash Judge",
   "version": "0.1.0",
+  "learning_engine_enabled": false,
   "description": "Takes an IFC model, finds true clashes and clearance violations in MEP services, triages by congestion and programme, and proposes sourced resolutions on a clone. The original model is never written to.",
   "status": "in_development",
   "author": "bopoadz-del",
@@ -25,6 +26,15 @@
     "model_clone"
   ],
   "planned_blocks": [],
+  "flow": [
+    ["geometry_engine"],
+    ["clearance_rules"],
+    ["clash_triage"],
+    ["clash_resolver"],
+    ["model_clone"],
+    ["version_diff"],
+    ["bcf_export"]
+  ],
   "contracts": {
     "READS": ["IFC file path", "element pairs", "clearance rule table"],
     "WRITES": ["findings list", "BCF issues", "change sets on a clone"],

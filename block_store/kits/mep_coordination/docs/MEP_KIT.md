@@ -80,8 +80,8 @@ full schema):
   "min_gap_mm": 300,
   "axis": "any",
   "source": {
-    "doc": "DD-2023-118_DG2 Infra P1_Vol 3 – Drawings (3 of 7).pdf",
-    "clause": "IP-INF-053-0000-JCB-DWG-LP-600-0000002 A, NOTES item 6",
+    "doc": "PROJECT-UTILITIES-DRAWING-001",
+    "clause": "NOTES item 6",
     "text_hash": "2d085ef2123b39a9"
   },
   "precedence": "project_spec"

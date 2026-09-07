@@ -137,8 +137,8 @@ def main() -> int:
     lines += [
         "",
         "Every clearance row cites `MEP-GAS-ANY-300`, sourced to drawing "
-        "IP-INF-053-0000-JCB-DWG-LP-600-0000002 A, NOTES item 6 "
-        "(`DD-2023-118_DG2 Infra P1_Vol 3 – Drawings (3 of 7).pdf`, hash 2d085ef2123b39a9). "
+        "`PROJECT-UTILITIES-DRAWING-001`, NOTES item 6 "
+        "(chunk hash 2d085ef2123b39a9; the client drawing is not named here). "
         "Hard clashes cite no rule, deliberately: interpenetration is a clash under every rule.",
         "",
     ]

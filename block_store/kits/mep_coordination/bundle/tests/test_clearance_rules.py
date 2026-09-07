@@ -253,7 +253,7 @@ def test_clash_kind_findings_are_never_judged_by_this_block():
 def test_seed_rules_load_cleanly_and_are_all_citable():
     """seed_rules.json ships three real, retrieval-sourced rules (gas main
     vs. low-voltage electrical / any utility / building, off drawing
-    IP-INF-053-0000-JCB-DWG-LP-600-0000002 A). load_rules() must accept the
+    PROJECT-UTILITIES-DRAWING-001). load_rules() must accept the
     file as-is -- if this ever raises, the seed file itself has drifted out
     of the citation invariant it is supposed to demonstrate."""
     rules = load_rules(SEED_RULES_PATH)
