@@ -253,25 +253,3 @@ before any verdict is reported**:
 If the band has closed, the verdict is withheld and the threshold is re-derived
 from the production data. A number calibrated on two toy models must not be
 allowed to quietly become a fact about a real building.
-
-## Watcher — armed; battery-format row on the first real IFC
-
-The watcher on `fixtures/owner_models/` is **armed**. There is no second
-switch and no disarm flag. Drop an exported `.ifc` and
-`bundle/run_owner_models.py` runs the full pipeline.
-
-On that first real IFC the watcher **also** files the row in battery format
-(`acceptance_out/BATTERY_ROWS.json`) so The Level can grade later. The
-re-calibration table is the first object in that row — before any verdict.
-Per zone the row carries:
-
-| field | meaning |
-|---|---|
-| `hard` | hard clashes in the zone sample |
-| `clearance` | clearance violations |
-| `joints` | joints excluded (assembly, not conflict) |
-| `resolve_rate` | sourced proposals accepted as a batch |
-| `escalated` | proposals that could not be sourced or verified |
-
-Owner-gated inputs (`.nwd` / `.nwc` / `.rvt`) get **one log line and skip**.
-They are not parsed. Export to IFC first.

@@ -117,7 +117,5 @@ block_store/kits/mep_coordination/fixtures/*.ifc
 # MEP kit: acceptance run output (contains 47MB model clones)
 block_store/kits/mep_coordination/acceptance_out/
 
-# Owner-supplied client models — never committed. README stays so the
-# drop-folder watcher remains documented and armed.
-block_store/kits/mep_coordination/fixtures/owner_models/*
-!block_store/kits/mep_coordination/fixtures/owner_models/README.md
+# Owner-supplied client models — never committed
+block_store/kits/mep_coordination/fixtures/owner_models/
