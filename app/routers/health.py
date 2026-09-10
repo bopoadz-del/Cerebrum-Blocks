@@ -23,6 +23,7 @@ Three distinct concerns, deliberately kept apart:
   off the probe path entirely.
 """
 
+import logging
 import os
 import subprocess
 import threading
@@ -41,6 +42,8 @@ from app.dependencies import (
     require_api_key,
 )
 
+logger = logging.getLogger("cerebrum.blocks.health")
+
 router = APIRouter()
 
 
@@ -56,6 +59,64 @@ def health():
 def health_v1():
     """Liveness probe (v1 API)."""
     return health()
+
+
+def _sha_from_env() -> Optional[str]:
+    return (os.getenv("RENDER_GIT_COMMIT") or os.getenv("GIT_COMMIT") or "").strip() or None
+
+
+def _sha_from_git() -> Optional[str]:
+    """Local-checkout fallback. Import-time only — never the request path.
+
+    RENDER_GIT_COMMIT is set by the platform on every deploy; this probe
+    is for a local checkout. Forking git from a request handler is both
+    slow and, under TestClient, deadlock-prone. Import is still
+    single-threaded.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True, text=True, timeout=2,
+            cwd=os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        )
+        if out.returncode == 0 and out.stdout.strip():
+            return out.stdout.strip()
+    except Exception as exc:  # noqa: BLE001 -- unknown is reported, never raised
+        # Degraded, but VISIBLY degraded: /version answering null because git
+        # is missing and /version answering null because nobody set the env
+        # are different problems, and a silent pass makes them the same one.
+        logger.warning("build sha unresolved (%s); /version reports null", exc)
+    return None
+
+
+#: Resolved once, before any TestClient or worker thread exists.
+_GIT_FALLBACK_SHA = _sha_from_git()
+
+
+def _build_sha() -> Optional[str]:
+    return _sha_from_env() or _GIT_FALLBACK_SHA
+
+
+@router.get("/version")
+def version():
+    """Which commit is actually serving. No auth: it is a deploy fact.
+
+    Every claim about this service in a report has had to say COULD NOT
+    VERIFY for the deployed SHA, because no HTTP route exposed it and only
+    the Render dashboard could settle it. The Factory publishes the same
+    route (api.cerebrum-dev.com/version) and that is the difference between
+    "the fix is merged" and "the fix is live".
+
+    ``git_sha`` is null when neither the platform env nor a git checkout can
+    answer -- reported as unknown rather than guessed.
+    """
+    sha = _build_sha()
+    return {
+        "service": "cerebrum-blocks",
+        "git_sha": sha,
+        "git_sha_short": sha[:7] if sha else None,
+        "env": os.getenv("ENV", "").strip() or None,
+    }
 
 
 # ── Readiness ─────────────────────────────────────────────────────────────
