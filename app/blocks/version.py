@@ -4,11 +4,15 @@ Handles versioning, dependency management, breaking changes,
 rollbacks, and migration paths for block updates.
 """
 
+import logging
 from app.core.universal_base import UniversalBlock
 from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 from packaging import version as pkg_version
+
+
+logger = logging.getLogger("cerebrum.blocks.version")
 
 
 class VersionBlock(UniversalBlock):
@@ -537,7 +541,10 @@ class VersionBlock(UniversalBlock):
             else:
                 # Exact version
                 return v == pkg_version.parse(constraint)
-        except:
+        except Exception as exc:  # noqa: BLE001 -- an unparseable constraint
+            # "does not satisfy" is the right answer for a constraint we
+            # cannot read, but it must not look like a considered no.
+            logger.debug("version constraint %r unparseable: %s", constraint, exc)
             return False
             
     async def _build_dependency_tree(self, version_key: str, visited: set, depth: int = 0) -> Dict:

@@ -129,7 +129,9 @@ class KnowledgeBlock(TypedBlock):
         # Prefer the pgvector-backed project corpus when a project_id is given.
         project_id = params.get("project_id")
         if project_id:
-            return await self._ask_pgvector(query, str(project_id), top_k, llm_provider)
+            return await self._ask_pgvector(
+                query, str(project_id), top_k, llm_provider, params
+            )
 
         # Legacy collection path (vector_search dependency / HTTP vector DB)
         collections = params.get("collections") or self.config.get("default_collections", ["cerebrum_captures"])
@@ -229,7 +231,12 @@ Answer the question and cite sources.
         return payload
 
     async def _ask_pgvector(
-        self, query: str, project_id: str, top_k: int, llm_provider: str
+        self,
+        query: str,
+        project_id: str,
+        top_k: int,
+        llm_provider: str,
+        params: Dict,
     ) -> Dict:
         """RAG path backed by the pgvector store.
 

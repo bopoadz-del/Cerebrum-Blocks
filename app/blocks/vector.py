@@ -69,7 +69,7 @@ class VectorBlock(UniversalBlock):
         
         # Dummy embedding for testing
         # Use hash to make it deterministic
-        hash_val = hashlib.md5(text.encode()).hexdigest()
+        hash_val = hashlib.md5(text.encode(), usedforsecurity=False).hexdigest()
         vec = [int(hash_val[i:i+2], 16) / 255.0 for i in range(0, min(len(hash_val), self.dimension * 2), 2)]
         # Pad to dimension
         vec = vec + [0.0] * (self.dimension - len(vec))
