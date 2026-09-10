@@ -61,13 +61,19 @@ def health_v1():
     return health()
 
 
-#: Resolved once. RENDER_GIT_COMMIT is set by the platform on every deploy;
-#: the git fallback is for a local checkout, and neither is allowed to make
-#: this route slow or failure-prone.
-def _build_sha() -> Optional[str]:
-    sha = (os.getenv("RENDER_GIT_COMMIT") or os.getenv("GIT_COMMIT") or "").strip()
-    if sha:
-        return sha
+def _sha_from_env() -> Optional[str]:
+    return (os.getenv("RENDER_GIT_COMMIT") or os.getenv("GIT_COMMIT") or "").strip() or None
+
+
+def _sha_from_git() -> Optional[str]:
+    """Local-checkout fallback. Import-time only — never the request path.
+
+    RENDER_GIT_COMMIT is set by the platform on every deploy; this probe
+    is for a local checkout. It must not run inside a request: TestClient
+    already has a portal and lifespan threads by then, and ``subprocess.run``
+    on ``GET /version`` deadlocked the Full suite at ~96% (PR #112, 21
+    minutes, no further dots). Import is still single-threaded.
+    """
     try:
         out = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -82,6 +88,14 @@ def _build_sha() -> Optional[str]:
         # are different problems, and a silent pass makes them the same one.
         logger.warning("build sha unresolved (%s); /version reports null", exc)
     return None
+
+
+#: Resolved once, before any TestClient or worker thread exists.
+_GIT_FALLBACK_SHA = _sha_from_git()
+
+
+def _build_sha() -> Optional[str]:
+    return _sha_from_env() or _GIT_FALLBACK_SHA
 
 
 @router.get("/version")

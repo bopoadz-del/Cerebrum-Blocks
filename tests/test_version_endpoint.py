@@ -23,7 +23,9 @@ def client():
         yield c
 
 
-def test_version_is_public(client):
+def test_version_is_public(client, monkeypatch):
+    # Env, not git: the request path must not fork. See _sha_from_git.
+    monkeypatch.setenv("RENDER_GIT_COMMIT", "a" * 40)
     assert client.get("/version").status_code == 200
 
 
@@ -65,7 +67,26 @@ def test_the_sha_probe_never_raises(monkeypatch):
         raise OSError("git not found")
 
     monkeypatch.setattr(subprocess, "run", boom)
-    assert health._build_sha() is None
+    assert health._sha_from_git() is None
+
+
+def test_version_route_does_not_shell_out(client, monkeypatch):
+    """GET /version must not call subprocess — that deadlocks TestClient.
+
+    The Full suite reached 96% in 48s on PR #112, then hung 21 minutes on
+    this file because the handler forked ``git rev-parse`` inside the
+    portal. Env (or the import-time cache) answers; the probe stays off
+    the request path, same as the Kimi CLI diagnostic.
+    """
+    import subprocess
+
+    monkeypatch.setenv("RENDER_GIT_COMMIT", "d" * 40)
+
+    def boom(*a, **k):
+        raise AssertionError("GET /version must not call subprocess.run")
+
+    monkeypatch.setattr(subprocess, "run", boom)
+    assert client.get("/version").status_code == 200
 
 
 def test_the_platform_env_wins_over_git(monkeypatch):
