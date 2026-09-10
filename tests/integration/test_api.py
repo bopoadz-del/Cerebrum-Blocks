@@ -90,10 +90,25 @@ class TestAPIEndpoints:
         a router-only test harness."""
         assert anon_client.get(path).status_code == 401
 
-    @pytest.mark.parametrize("path", ["/health", "/v1/health", "/ready", "/v1/ready"])
+    @pytest.mark.parametrize(
+        "path",
+        ["/health", "/v1/health", "/ready", "/v1/ready", "/version"],
+    )
     def test_probe_endpoints_stay_anonymous_on_the_real_app(self, path):
         """Render and Docker cannot present a bearer token."""
         assert anon_client.get(path).status_code in (200, 503)
+
+    def test_version_names_the_service_on_the_real_app(self):
+        """Assembled-app cover for /version without opening a second portal.
+
+        ``TestClient(app)`` as a fresh context at the end of the Full suite
+        deadlocks (PR #112). This client is the module-level one.
+        """
+        body = anon_client.get("/version").json()
+        assert body["service"] == "cerebrum-blocks"
+        assert "git_sha" in body
+        assert "git_sha_short" in body
+        assert set(body) == {"service", "git_sha", "git_sha_short", "env"}
 
 
 class TestExecuteEndpoint:
