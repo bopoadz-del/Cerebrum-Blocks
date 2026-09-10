@@ -292,7 +292,12 @@ jobs:
           python -m pip_audit -r requirements.txt --progress-spinner off
 
       - name: Run every test file
-        run: pytest -q tests/
+        # pytest-timeout turns a deadlock into a named failure instead of
+        # burning the 25m job cap with no last-test line. Main's pytest
+        # step is ~45s; 90s per test is headroom, not a skip.
+        run: |
+          python -m pip install pytest-timeout==2.4.0
+          pytest -q tests/ --timeout=90 --timeout-method=signal
 
   lockfile-consistency:
     # WHY THIS EXISTS

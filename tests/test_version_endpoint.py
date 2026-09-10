@@ -9,44 +9,42 @@ and "the fix is live", and it is one route wide.
 Unauthenticated on purpose: a deploy fact is not a secret, and a probe that
 needs a credential is a probe an uptime monitor cannot make.
 
-HTTP tests mount the health router on a bare FastAPI app. They must not
-construct ``TestClient(app.main)``: a second portal + lifespan on the
-already-warmed process deadlocks the Full suite at ~96% (PR #112 hung 21
-minutes after every other file had finished). The assembled app is
-covered by ``tests/integration/test_api.py``, whose module-level client
-already exists.
+These tests call the handler as a function. They must not construct a
+TestClient: PR #112's Full suite reached ~96% (same tail as main, ~2s
+there) then hung until the 25m job timeout, on every revision that
+opened a client from this file — including a bare FastAPI mount. HTTP
+coverage lives on the health-router harness in
+``tests/routers/test_health_capability.py``, which runs earlier and
+already uses that pattern safely.
 """
 from __future__ import annotations
-
-import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 from app.routers import health
 
 
-@pytest.fixture
-def client():
-    app = FastAPI()
-    app.include_router(health.router)
-    with TestClient(app) as c:
-        yield c
+def test_version_is_public():
+    """No auth dependency on the route — a monitor cannot present a key."""
+    route = next(r for r in health.router.routes if getattr(r, "path", None) == "/version")
+    assert "GET" in getattr(route, "methods", set())
+    names = []
+    dependant = getattr(route, "dependant", None)
+    if dependant is not None:
+        for dep in dependant.dependencies:
+            call = getattr(dep, "call", None)
+            if call is not None:
+                names.append(getattr(call, "__name__", ""))
+    assert "require_api_key" not in names
 
 
-def test_version_is_public(client, monkeypatch):
+def test_version_names_the_service_and_a_sha(monkeypatch):
     monkeypatch.setenv("RENDER_GIT_COMMIT", "a" * 40)
-    assert client.get("/version").status_code == 200
-
-
-def test_version_names_the_service_and_a_sha(client, monkeypatch):
-    monkeypatch.setenv("RENDER_GIT_COMMIT", "a" * 40)
-    body = client.get("/version").json()
+    body = health.version()
     assert body["service"] == "cerebrum-blocks"
     assert body["git_sha"] == "a" * 40
     assert body["git_sha_short"] == "a" * 7
 
 
-def test_an_unknown_sha_is_null_not_invented(client, monkeypatch):
+def test_an_unknown_sha_is_null_not_invented(monkeypatch):
     """Reported as unknown rather than guessed.
 
     A route that returns a plausible-looking wrong SHA is worse than one
@@ -55,7 +53,7 @@ def test_an_unknown_sha_is_null_not_invented(client, monkeypatch):
     monkeypatch.delenv("RENDER_GIT_COMMIT", raising=False)
     monkeypatch.delenv("GIT_COMMIT", raising=False)
     monkeypatch.setattr(health, "_build_sha", lambda: None)
-    body = client.get("/version").json()
+    body = health.version()
     assert body["git_sha"] is None
     assert body["git_sha_short"] is None
     assert body["service"] == "cerebrum-blocks"
@@ -75,17 +73,17 @@ def test_the_sha_probe_never_raises(monkeypatch):
     assert health._sha_from_git() is None
 
 
-def test_version_route_does_not_shell_out(client, monkeypatch):
-    """GET /version must not call subprocess on the request path."""
+def test_version_route_does_not_shell_out(monkeypatch):
+    """The handler must not call subprocess — that belongs at import."""
     import subprocess
 
     monkeypatch.setenv("RENDER_GIT_COMMIT", "d" * 40)
 
     def boom(*a, **k):
-        raise AssertionError("GET /version must not call subprocess.run")
+        raise AssertionError("version() must not call subprocess.run")
 
     monkeypatch.setattr(subprocess, "run", boom)
-    assert client.get("/version").status_code == 200
+    assert health.version()["git_sha"] == "d" * 40
 
 
 def test_the_platform_env_wins_over_git(monkeypatch):
@@ -94,10 +92,10 @@ def test_the_platform_env_wins_over_git(monkeypatch):
     assert health._build_sha() == "b" * 40
 
 
-def test_version_carries_no_secret_shaped_field(client, monkeypatch):
+def test_version_carries_no_secret_shaped_field(monkeypatch):
     """It is public, so it may only say what is safe to say publicly."""
     monkeypatch.setenv("RENDER_GIT_COMMIT", "c" * 40)
-    body = client.get("/version").json()
+    body = health.version()
     assert set(body) == {"service", "git_sha", "git_sha_short", "env"}
 
 

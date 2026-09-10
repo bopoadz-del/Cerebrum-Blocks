@@ -55,6 +55,31 @@ def _completed(returncode=0, stdout="kimi 1.2.3", stderr=""):
     )
 
 
+# ── /version is a deploy fact, not a secret ───────────────────────────────
+
+def test_version_is_unauthenticated_and_closed(client, monkeypatch):
+    """Public, names the service, closed key set. Handler-only tests live
+    in tests/test_version_endpoint.py so the Full suite never opens a
+    TestClient from that late file (PR #112 deadlock)."""
+    monkeypatch.setenv("RENDER_GIT_COMMIT", "a" * 40)
+    response = client.get("/version")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["service"] == "cerebrum-blocks"
+    assert body["git_sha"] == "a" * 40
+    assert body["git_sha_short"] == "a" * 7
+    assert set(body) == {"service", "git_sha", "git_sha_short", "env"}
+
+
+def test_unknown_version_is_null_not_invented(client, monkeypatch):
+    monkeypatch.delenv("RENDER_GIT_COMMIT", raising=False)
+    monkeypatch.delenv("GIT_COMMIT", raising=False)
+    monkeypatch.setattr(health_router, "_build_sha", lambda: None)
+    body = client.get("/version").json()
+    assert body["git_sha"] is None
+    assert body["git_sha_short"] is None
+
+
 # ── Liveness stays cheap and says nothing ─────────────────────────────────
 
 @pytest.mark.parametrize("path", ["/health", "/v1/health"])
