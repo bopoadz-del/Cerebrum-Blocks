@@ -1,5 +1,6 @@
 """Construction container — documents submodule."""
 
+import json
 import logging
 import os
 import re

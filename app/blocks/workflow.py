@@ -54,21 +54,6 @@ class WorkflowBlock(TypedBlock):
     produced_output_types = ["JSON", "PipelineResult"]
 
 
-    async def execute(self, input_data: Any, params: Dict = None) -> Dict:
-        params = params or {}
-        action = params.get("action") if isinstance(params, dict) else None
-        if isinstance(input_data, str):
-            if action in {"get", "unschedule"}:
-                input_data = {"pipeline_id": input_data}
-            else:
-                input_data = {"steps": [{"id": "s1", "block": input_data}]}
-        return await super().execute(input_data, params)
-
-    def validate_input(self, data: Any) -> Dict[str, Any]:
-        if isinstance(data, dict) and data.get("action") in {"health", "status", "list", "history", "get", "unschedule", "broadcast", "search", "summarize", "structure", "execute_async"}:
-            return {"valid": True, "errors": [], "warnings": [], "data": data}
-        return super().validate_input(data)
-
     default_config = {
         "max_pipeline_steps": int(os.getenv("MAX_PIPELINE_STEPS", "20")),
         "enable_scheduler": os.getenv("ENABLE_WORKFLOW_SCHEDULER", "true").lower() == "true",

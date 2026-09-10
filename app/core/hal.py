@@ -5,10 +5,14 @@ Core utility module; migrated from ``blocks/hal/src/detector.py``.
 
 __all__ = ["HardwareProfile", "HALBlock"]
 
+import logging
 from enum import Enum
 from typing import Dict, Any
 import os
 import platform
+
+
+logger = logging.getLogger("cerebrum.hal")
 
 
 class HardwareProfile(Enum):
@@ -85,8 +89,8 @@ class HALBlock:
             result = subprocess.run(['nvidia-smi'], capture_output=True)
             if result.returncode == 0:
                 return True
-        except:
-            pass
+        except Exception as exc:  # noqa: BLE001 -- absent GPU tooling is normal
+            logger.debug("nvidia-smi probe failed: %s", exc)
         
         # Check for Metal (Mac)
         if platform.system() == "Darwin":
@@ -95,8 +99,8 @@ class HALBlock:
                 result = subprocess.run(['system_profiler', 'SPDisplaysDataType'], capture_output=True, text=True)
                 if "Metal" in result.stdout:
                     return True
-            except:
-                pass
+            except Exception as exc:  # noqa: BLE001 -- absent on non-Mac
+                logger.debug("Metal probe failed: %s", exc)
         
         return False
     
@@ -105,8 +109,10 @@ class HALBlock:
         try:
             import psutil
             return psutil.virtual_memory().total // (1024**3)
-        except:
-            # Fallback - assume 8GB
+        except Exception as exc:  # noqa: BLE001 -- psutil is optional
+            # 8 GB is a guess, and a guess a caller may size work against.
+            # Say so, rather than letting an assumed number look measured.
+            logger.warning("memory probe unavailable (%s); assuming 8 GB", exc)
             return 8
     
     def _detect_environment(self) -> str:

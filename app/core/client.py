@@ -17,7 +17,6 @@ class CerebrumClient:
     
     async def execute_block(self, block_name: str, input_data: Any, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Execute a block with the given input."""
-        import aiohttp
         
         async with aiohttp.ClientSession() as session:
             payload = {
@@ -35,7 +34,6 @@ class CerebrumClient:
     async def ingest(self, file_path: Optional[str] = None, url: Optional[str] = None, 
                      base64_data: Optional[str] = None, metadata: Optional[Dict] = None) -> Dict[str, Any]:
         """Ingest data into the system."""
-        import aiohttp
         import aiofiles
         
         async with aiohttp.ClientSession() as session:
@@ -65,7 +63,6 @@ class CerebrumClient:
     
     async def get_block_info(self, block_name: Optional[str] = None) -> Dict[str, Any]:
         """Get information about blocks."""
-        import aiohttp
         
         async with aiohttp.ClientSession() as session:
             url = f"{self.base_url}/blocks"

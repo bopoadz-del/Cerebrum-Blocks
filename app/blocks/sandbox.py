@@ -181,7 +181,6 @@ class SandboxBlock(UniversalBlock):
         """Execute Python code in sandbox"""
         import time
         import io
-        import sys
 
         sandbox_url = os.getenv("SANDBOX_RUNNER_URL")
         if sandbox_url:

@@ -193,7 +193,14 @@ def restore_backup(archive: Path, target_root: Path) -> Dict[str, Any]:
             name = member.name
             if name.startswith("/") or ".." in Path(name).parts:
                 raise RuntimeError(f"refusing unsafe archive member: {name}")
-        tar.extractall(target_root)
+            if member.issym() or member.islnk():
+                # The name check above cannot see where a link POINTS. A
+                # symlink member named "ok.db" targeting /etc/passwd passes
+                # every path test and then writes outside target_root.
+                raise RuntimeError(f"refusing link archive member: {name}")
+        # PEP 706 filter: refuses absolute paths, parent traversal, links and
+        # device nodes in the library, independently of the loop above.
+        tar.extractall(target_root, filter="data")
 
     verified: Dict[str, Dict[str, int]] = {}
     for db in target_root.glob("*.db"):
