@@ -2130,7 +2130,6 @@ class ConstructionScheduleMixin:
         Durations are rule-of-thumb working-day defaults; replace with
         project-specific data when available.
         """
-        import uuid
 
         data = input_data if isinstance(input_data, dict) else {}
         p = params or {}
