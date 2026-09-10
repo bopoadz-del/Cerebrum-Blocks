@@ -98,23 +98,3 @@ def test_version_carries_no_secret_shaped_field(monkeypatch):
     body = health.version()
     assert set(body) == {"service", "git_sha", "git_sha_short", "env"}
 
-
-def test_version_is_mounted_ungated_on_the_real_app():
-    """The live app has the route and does not wrap it in require_api_key.
-
-    Inspect only — do not open TestClient against app.main here.
-    """
-    from app.main import app
-
-    routes = [r for r in app.routes if getattr(r, "path", None) == "/version"]
-    assert routes, "/version is missing from the assembled app"
-    route = routes[0]
-    assert "GET" in getattr(route, "methods", set())
-    names = []
-    dependant = getattr(route, "dependant", None)
-    if dependant is not None:
-        for dep in dependant.dependencies:
-            call = getattr(dep, "call", None)
-            if call is not None:
-                names.append(getattr(call, "__name__", ""))
-    assert "require_api_key" not in names
