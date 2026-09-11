@@ -6,15 +6,15 @@ uvicorn[standard]==0.34.0
 pydantic==2.13.4
 python-multipart==0.0.32
 aiofiles==25.1.0
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 
 # Shared infrastructure — Redis clients for cache_manager and session/memory blocks
 redis==8.0.1
 
 # Marketplace security — publisher identity and Ed25519 block signing.
-# Must stay >=43,<49: mlflow (line 68) constrains it, and 41.0.7 makes the
-# whole file unresolvable. This is the version requirements.lock resolves to.
-cryptography==48.0.1
+# Must stay >=43,<51: mlflow 3.16.0 declares cryptography<51,>=43.0.0.
+# 50.0.1 is the Linux fix for PYSEC-2026-3552/3553/3554 (highest fix 50.0.0).
+cryptography==50.0.1
 
 # HTTP Client
 aiohttp==3.14.3
@@ -42,7 +42,7 @@ pytesseract==0.3.13
 # PDF Processing
 pymupdf==1.28.0
 pdfplumber==0.11.10
-pypdf==6.14.2
+pypdf==6.18.1
 
 # Construction Intelligence Blocks (Week 1)
 sympy==1.14.0
@@ -78,7 +78,7 @@ QuantLib==1.43  # quantitative finance — PyPI name is `QuantLib` (imports as `
 
 # ML experiment tracking — used by app/core/mlflow_tracker.py.
 # No-ops gracefully when MLFLOW_TRACKING_URI is unset.
-mlflow==3.14.0
+mlflow==3.16.0
 
 # PostgreSQL async driver — activates the Postgres backend for the
 # historical_benchmark block when DATABASE_URL is set; otherwise the block
