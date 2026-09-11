@@ -63,6 +63,12 @@ jobs:
       - name: Secret scan (non-test paths)
         run: python scripts/scan_secrets.py
 
+      - name: Registry census (B04 — advertised blocks must resolve)
+        run: python scripts/census_registry.py
+
+      - name: Silent-return twin (B07)
+        run: python scripts/scan_exception_pass.py
+
       - name: Apply database migrations
         run: |
           sudo apt-get install -y --no-install-recommends postgresql-client
@@ -153,6 +159,12 @@ jobs:
         # only ever sees a clean tree. CI names test files explicitly,
         # so this file is listed here and also in the dedicated job.
         run: pytest -q tests/test_lockfile_consistency.py
+
+      - name: Run store-honesty gates (B04 census, B07 return twin, pip-audit twins)
+        run: |
+          pytest -q tests/test_registry_census.py \
+                    tests/test_scan_exception_return.py \
+                    tests/test_dep_audit.py
 
       - name: Run all-blocks tests
         run: pytest -q tests/test_all_blocks.py tests/blocks/test_document_engine_layout.py
@@ -269,27 +281,19 @@ jobs:
           python -m pip install bandit
           python -m bandit -q -r app -lll
 
-      - name: pip-audit (report-only until the pins are resolved)
-        # REPORT-ONLY, deliberately, and this must not stay that way.
-        #
-        # Five advisories are open against requirements.txt: cryptography
-        # 48.0.1, pypdf 6.14.2 (six CVEs), mlflow 3.14.0, deep-translator
-        # 1.11.4 and click 8.1.8. Four are fixable by version bump.
-        #
-        # They are not bumped here because requirements.lock is a real
-        # `pip freeze` of the whole transitive graph, and the lockfile fence
-        # (rightly) refuses a pin change without a lock delta. Re-resolving
-        # that graph has to happen on Linux; a freeze taken anywhere else
-        # writes platform packages into a file every deploy installs.
-        #
-        # So the findings are VISIBLE and counted rather than suppressed with
-        # --ignore-vuln, which would hide four fixable advisories to make a
-        # gate green. Flip continue-on-error off in the PR that lands the
-        # resolve.
-        continue-on-error: true
+      - name: Registry census (B04 — advertised blocks must resolve)
+        run: python scripts/census_registry.py
+
+      - name: Silent-return twin (B07)
+        run: python scripts/scan_exception_pass.py
+
+      - name: pip-audit (fail-closed; dated notes only, never a bare ignore)
+        # Linux resolve of requirements.txt. Remaining advisories must have
+        # a dated registry note + test twin. A published fix_versions list
+        # makes the note stale. Do not add a bare ignore flag.
         run: |
           python -m pip install pip-audit
-          python -m pip_audit -r requirements.txt --progress-spinner off
+          python scripts/dep_audit.py --python
 
       - name: Run every test file
         # pytest-timeout turns a deadlock into a named failure instead of

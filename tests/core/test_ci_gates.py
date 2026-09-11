@@ -32,6 +32,17 @@ def test_ci_workflow_runs_stub_audit_and_secret_scan():
     assert "python scripts/scan_secrets.py" in workflow, (
         "CI must run the secret scan on non-test paths"
     )
+    assert "python scripts/census_registry.py" in workflow, (
+        "CI must run the B04 registry census"
+    )
+    assert "python scripts/scan_exception_pass.py" in workflow, (
+        "CI must run the B07 silent-return scanner"
+    )
+    assert "python scripts/dep_audit.py" in workflow, (
+        "CI must run the fail-closed pip-audit wrapper"
+    )
+    assert "--ignore-vuln" not in workflow
+    assert "pip-audit (report-only until the pins are resolved)" not in workflow
 
 
 def _job_body(workflow: str, job_id: str) -> str:
