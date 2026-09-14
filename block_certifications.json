@@ -1,0 +1,66 @@
+{
+  "schema": "block_certification.v1",
+  "policy": "A certified block passes all three bars in scripts/certify_block.py. Control-delete (bar 3) is the one that counts: the block's tests must go RED when its entry method is gutted to a plausible success. New certifications must name a real fixture exercised by the tests. include_in_ci entries run on every CI push.",
+  "blocks": [
+    {
+      "block": "chat",
+      "module": "app.blocks.chat",
+      "class": "ChatBlock",
+      "method": "execute",
+      "tests": ["tests/blocks/test_chat.py"],
+      "fixture": "mock provider envelope (in-test)",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "capture",
+      "module": "app.blocks.capture",
+      "class": "CaptureBlock",
+      "method": "execute",
+      "tests": ["tests/blocks/test_capture.py"],
+      "fixture": "PIL image rendered in-test (real pixel payload)",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "knowledge",
+      "module": "app.blocks.knowledge",
+      "class": "KnowledgeBlock",
+      "method": "execute",
+      "tests": ["tests/blocks/test_knowledge.py"],
+      "fixture": null,
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "pdf",
+      "module": "app.blocks.pdf",
+      "class": "PDFBlock",
+      "method": "execute",
+      "tests": ["tests/blocks/test_pdf.py"],
+      "fixture": "PDF written in-test (real file parse)",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "image",
+      "module": "app.blocks.image",
+      "class": "ImageBlock",
+      "method": "execute",
+      "tests": ["tests/blocks/test_image.py"],
+      "fixture": "PIL image in-test (real image payload)",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "agent_swarm",
+      "module": "app.blocks.agent_swarm",
+      "class": "AgentSwarmBlock",
+      "method": "execute",
+      "tests": ["tests/blocks/test_agent_swarm.py"],
+      "fixture": null,
+      "certified": true,
+      "include_in_ci": true
+    }
+  ]
+}
