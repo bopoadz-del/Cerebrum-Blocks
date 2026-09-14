@@ -125,7 +125,7 @@ jobs:
         run: pytest -q tests/test_publish_kit.py tests/test_publish_construction_kit.py
 
       - name: Run core RAG + vector + registry tests
-        run: pytest -q tests/core/test_vector_store.py tests/core/test_registry_integrity.py tests/core/test_block_contracts.py tests/core/test_rag_ingestion.py
+        run: pytest -q tests/core/test_vector_store.py tests/core/test_registry_integrity.py tests/core/test_block_contracts.py tests/core/test_rag_ingestion.py tests/core/test_activation.py
 
       - name: Run kit bundle freshness fence
         # Completeness is not freshness: a kit can hold every declared
