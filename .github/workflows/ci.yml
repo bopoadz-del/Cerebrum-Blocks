@@ -81,6 +81,9 @@ jobs:
       - name: Run typed-block tests
         run: pytest -q tests/test_typed_block.py
 
+      - name: Block certification (three bars, control-delete)
+        run: python scripts/certify_block.py --all
+
       - name: Run kit intake tests (stage K1)
         # The source gate: no source, no encode. Exercised against real .xlsx
         # and .docx, not just structured fixtures.
