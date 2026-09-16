@@ -111,10 +111,80 @@ uvicorn app.main:app --reload           # serve on :8000  (GET /health -> {"stat
 ## Docs
 
 - [API.md](API.md) — the HTTP API surface
+- [docs/STORE_INVENTORY.md](docs/STORE_INVENTORY.md) — the verified inventory (blocks, kits, vertical readiness, known defects)
 - [REPO_STATUS.md](REPO_STATUS.md) — current inventory and status
 - [SKILLS_BLOCK_LOGIC.md](SKILLS_BLOCK_LOGIC.md) — block logic notes
 - [docs/decisions/phase1-dead-controls.md](docs/decisions/phase1-dead-controls.md) — control dispositions (wired vs deleted)
 - [PARKED_BLOCKERS.md](PARKED_BLOCKERS.md) — honestly parked work (e.g. block signing)
+
+## Inventory — verified, honest
+
+The full verified enumeration (every block, every kit, per-vertical
+readiness, and the known-defect list) lives in
+**[docs/STORE_INVENTORY.md](docs/STORE_INVENTORY.md)** and is re-verified
+against the files themselves, not memory. The short version:
+
+- **105 registry blocks** — 97 hand-authored (`Cerebrum Team`), 8
+  unmanifested, **zero stubs** (verified by pattern sweep).
+- **22 kits**, including the five declared-ready verticals: **hotels,
+  insurance, construction, finance, retail** — each with real domain
+  blocks beyond the generic core (`pdf, ocr, chat, image,
+  formula_executor(_v2)`).
+- **Excluded from testing** (no authoritative domain content): medical,
+  legal, veterinary, pharma.
+- **Known defects are listed, not hidden**: five estate blocks live
+  outside the Store (factory vendor mirror) as stubs pending
+  implementation, and `admin_block._preflight`'s database check is
+  honest about nothing yet — both tracked in the inventory file.
+
+## Contribute — build kits and blocks
+
+This store is open for contributions. Every vertical kit and every block
+is expected to follow the same standard, so a capability built once is
+certified once and inherited by every sector.
+
+**A block is:**
+
+- `block_registry/<block_id>/block.json` — the manifest: `id`, `version`,
+  `description` (what it *actually* does), `status`, `author`, `tags`,
+  `blocks` (its dependencies), `core_modules`, `prompts`, `data`.
+- `block_registry/<block_id>/block.py` — the execution adapter:
+  `run(**kwargs) -> {"block_id", "status": "ok"|"error", "result", ...}`.
+  `status: "error"` with `error`/`detail` is the only honest failure —
+  never a silent ok.
+
+**The rules:**
+
+1. **No stubs.** A block that cannot fail is refused. Verifiers must
+   verify (hash, compare, raise on mismatch — see
+   `block_store/kits/universal_kernel/wave1/audit_evidence/` for the
+   reference SHA-256 chain implementation). Gates must gate. Registries
+   must persist. If you cannot implement it, do not publish it — leave it
+   out and say so in the PR.
+2. **Describe what it does, not what it should.** The manifest
+   description is graded against the code in review.
+3. **Fail-closed I/O.** Inputs are typed and validated; a malformed
+   payload is `status: "error"`, never an exception-shaped surprise to
+   the caller.
+4. **A kit is a manifest plus a bundle**:
+   `block_store/kits/<kit>/manifest.json` (id, name, version, description,
+   `blocks` list, `core_modules`, `data`) and `bundle/` with the kit's own
+   modules. Domain logic belongs in a `<vertical>_v2` block; the generic
+   core (`pdf, ocr, chat, image, formula_executor*`) is shared and must
+   not be forked per kit.
+5. **Domain kits need domain content.** A vertical kit without a domain
+   block is generic plumbing wearing a vertical name — the factory's
+   inventory gate flags capabilities that resolve to no domain-relevant
+   block. Build the `<vertical>_v2` block (schema, rules, domain
+   knowledge) before claiming a new vertical is ready.
+6. **Trust is earned, not asserted.** New blocks land as unverified until
+   reviewed against the standard; the factory's declared-ready list moves
+   only after a vertical's kit is real.
+
+**Submit:** a PR against `main` with the manifest + adapter + a test that
+proves the failure path (tamper detection fails, gates fail unmet
+checklists, duplicates are rejected). See `block_registry/` for the
+adapter shape and `block_store/kits/` for kit shape.
 
 ## License
 
