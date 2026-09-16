@@ -130,12 +130,20 @@ class DocumentReasoner:
         for pattern in schedule_patterns:
             for match in re.finditer(pattern, text, re.IGNORECASE):
                 groups = match.groupdict()
-                targets.append({
+                target = {
                     "raw": match.group(0),
-                    "month": groups.get("month", ""),
-                    "year": groups.get("year", ""),
+                    "month": groups.get("month") or "",
+                    "year": groups.get("year") or "",
                     "context": text[max(0, match.start() - 80) : match.end() + 80].strip(),
-                })
+                }
+                # Duration-shaped target ("completion within 14 months") --
+                # normalise to days so the schedule engine can consume it.
+                qty, unit = groups.get("qty"), groups.get("unit")
+                if qty and unit:
+                    per = {"day": 1, "week": 7, "month": 30}[unit.lower().rstrip("s")]
+                    target["duration_days"] = int(qty) * per
+                    target["duration_raw"] = f"{qty} {unit}"
+                targets.append(target)
         return targets
 
     # ------------------------------------------------------------------
@@ -148,9 +156,11 @@ class DocumentReasoner:
             for match in re.finditer(pattern, text, re.IGNORECASE):
                 groups = match.groupdict()
                 equip_name = groups.get("equipment", "unknown")
-                days_raw = groups.get("days", "0")
                 try:
-                    days = int(days_raw)
+                    if groups.get("weeks"):
+                        days = int(groups["weeks"]) * 7
+                    else:
+                        days = int(groups.get("days") or 0)
                 except ValueError:
                     days = 0
                 specs.append({
@@ -222,7 +232,11 @@ class DocumentReasoner:
             category = req["category"]
             target_code = self._wbs_code_for_category(category)
             if target_code:
-                mapping[target_code].append({
+                # setdefault: a config whose wbs_dictionary lacks the target
+                # code must degrade to an extra mapping bucket, not a
+                # KeyError that kills the whole reasoning pass (found by the
+                # W4 planted-RFP probe with a minimal config).
+                mapping.setdefault(target_code, []).append({
                     "type": "requirement",
                     "text": req["text"][:200],
                     "category": category,
@@ -247,7 +261,7 @@ class DocumentReasoner:
             elif unit in ["ft"]:
                 target_code = "5.0"  # Building Construction
             if target_code:
-                mapping[target_code].append({
+                mapping.setdefault(target_code, []).append({
                     "type": "constraint",
                     "raw": con.get("raw", ""),
                     "unit": unit,

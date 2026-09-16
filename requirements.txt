@@ -148,3 +148,4 @@ sentry-sdk[fastapi]==2.66.1
 # expose /metrics in the Prometheus text format and to record per-request
 # counters/histograms via the metrics middleware.
 prometheus_client==0.26.0
+xlrd>=2.0.1  # legacy BIFF .xls BOQs (boq_processor engine by format)

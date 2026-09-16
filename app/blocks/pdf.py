@@ -63,7 +63,11 @@ def _try_ocr_fallback(
 
     started = time.perf_counter()
     try:
-        doc = fitz.open(pdf_path)
+        # Decrypt-to-temp when the stored file is encrypted at rest;
+        # open_plaintext is a no-op for plaintext / legacy files.
+        from app.core.file_crypto import open_plaintext
+        with open_plaintext(pdf_path) as plain_path:
+            doc = fitz.open(plain_path)
     except Exception as e:
         logger.warning("OCR fallback could not open %s: %s", pdf_path, e)
         return None
@@ -201,7 +205,9 @@ class PDFBlock(TypedBlock):
         if ext in ('.xls', '.xlsx'):
             try:
                 import openpyxl
-                wb = openpyxl.load_workbook(pdf_path, read_only=True, data_only=True)
+                from app.core.file_crypto import open_plaintext
+                with open_plaintext(pdf_path) as plain_path:
+                    wb = openpyxl.load_workbook(plain_path, read_only=True, data_only=True)
                 parts = []
                 for sheet_name in wb.sheetnames:
                     ws = wb[sheet_name]
@@ -227,7 +233,9 @@ class PDFBlock(TypedBlock):
         if ext in ('.doc', '.docx'):
             try:
                 import docx as python_docx
-                doc = python_docx.Document(pdf_path)
+                from app.core.file_crypto import open_plaintext
+                with open_plaintext(pdf_path) as plain_path:
+                    doc = python_docx.Document(plain_path)
                 text = '\n'.join(p.text for p in doc.paragraphs if p.text.strip())
                 return {
                     "status": "success",
@@ -255,14 +263,16 @@ class PDFBlock(TypedBlock):
         # 1. Try pdfplumber
         try:
             import pdfplumber
-            with pdfplumber.open(pdf_path) as pdf:
-                buf = ""
-                for page in pdf.pages:
-                    page_text = page.extract_text() or ""
-                    buf += page_text + "\n"
-                text = buf
-                pages = len(pdf.pages)
-                engine = "pdfplumber"
+            from app.core.file_crypto import open_plaintext
+            with open_plaintext(pdf_path) as plain_path:
+                with pdfplumber.open(plain_path) as pdf:
+                    buf = ""
+                    for page in pdf.pages:
+                        page_text = page.extract_text() or ""
+                        buf += page_text + "\n"
+                    text = buf
+                    pages = len(pdf.pages)
+                    engine = "pdfplumber"
         except ImportError:
             last_error = "pdfplumber not installed"
         except Exception as e:
@@ -272,14 +282,16 @@ class PDFBlock(TypedBlock):
         if text is None:
             try:
                 from pypdf import PdfReader
-                reader = PdfReader(pdf_path)
-                buf = ""
-                for page in reader.pages:
-                    page_text = page.extract_text() or ""
-                    buf += page_text + "\n"
-                text = buf
-                pages = len(reader.pages)
-                engine = "pypdf"
+                from app.core.file_crypto import open_plaintext
+                with open_plaintext(pdf_path) as plain_path:
+                    reader = PdfReader(plain_path)
+                    buf = ""
+                    for page in reader.pages:
+                        page_text = page.extract_text() or ""
+                        buf += page_text + "\n"
+                    text = buf
+                    pages = len(reader.pages)
+                    engine = "pypdf"
             except ImportError:
                 last_error = "pypdf not installed"
             except Exception as e:
@@ -289,14 +301,16 @@ class PDFBlock(TypedBlock):
         if text is None:
             try:
                 import fitz  # PyMuPDF
-                doc = fitz.open(pdf_path)
-                buf = ""
-                for page in doc:
-                    buf += page.get_text()
-                text = buf
-                pages = len(doc)
-                doc.close()
-                engine = "PyMuPDF"
+                from app.core.file_crypto import open_plaintext
+                with open_plaintext(pdf_path) as plain_path:
+                    doc = fitz.open(plain_path)
+                    buf = ""
+                    for page in doc:
+                        buf += page.get_text()
+                    text = buf
+                    pages = len(doc)
+                    doc.close()
+                    engine = "PyMuPDF"
             except ImportError:
                 last_error = "PyMuPDF not installed"
             except Exception as e:

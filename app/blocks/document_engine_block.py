@@ -133,10 +133,21 @@ class DocumentEngineBlock(UniversalBlock):
 
         file_paths = self._resolve_path(input_data, params)
 
-        if not any(file_paths.values()):
+        # A raw string that is NOT a recognised document path is an inline
+        # brief: reason over it directly via a synthetic text document
+        # instead of erroring (the no-file scope-extraction path).
+        data = input_data if isinstance(input_data, dict) else {}
+        raw_path = input_data if isinstance(input_data, str) else (data.get("text") or data.get("input") or "")
+        brief_text = data.get("brief") or params.get("brief") or ""
+        if not brief_text and raw_path and not any(file_paths.values()):
+            known_ext = os.path.splitext(raw_path)[1].lower() in (".pdf", ".docx", ".doc", ".xlsx", ".xls")
+            if not known_ext and not os.path.exists(raw_path):
+                brief_text = raw_path
+
+        if not any(file_paths.values()) and not (brief_text and brief_text.strip()):
             return {
                 "status": "error",
-                "error": "No input files provided (pdf/docx/xlsx). Pass file_path as pdf_path, docx_path, or xlsx_path.",
+                "error": "No input provided — pass a document (pdf/docx/xlsx) via pdf_path/docx_path/xlsx_path, or inline text via 'text'/'brief'.",
             }
 
         # Validate paths exist
@@ -178,33 +189,52 @@ class DocumentEngineBlock(UniversalBlock):
 
         # PDF → platform pdf block → fallback to own PDFParser
         if file_paths.get("pdf"):
-            pdf_text = None
-            if self.config.get("use_platform_pdf", True):
-                pdf_text = await self._parse_with_platform_pdf(file_paths["pdf"])
+            pdf_path = file_paths["pdf"]
+            # Decrypt-to-temp when the stored file is encrypted at rest;
+            # open_plaintext is a no-op for plaintext / legacy files.
+            from app.core.file_crypto import open_plaintext
+            with open_plaintext(pdf_path) as pdf_plain:
+                pdf_path = pdf_plain
+                pdf_text = None
+                if self.config.get("use_platform_pdf", True):
+                    pdf_text = await self._parse_with_platform_pdf(pdf_path)
 
-            if pdf_text is not None:
-                try:
-                    from app.blocks.document_engine.parsers.pdf_parser import PDFDocument
-                    doc = PDFDocument(source=file_paths["pdf"], text=pdf_text)
-                    documents.append(doc)
-                except ImportError as e:
-                    parse_errors.append(f"PDFDocument class import failed: {e}")
-            else:
-                try:
-                    from app.blocks.document_engine.parsers.pdf_parser import PDFParser
-                    parser = PDFParser(config)
-                    documents.append(parser.parse(file_paths["pdf"]))
-                except ImportError as e:
-                    parse_errors.append(f"PDF parser unavailable: {e}")
-                except Exception as e:
-                    parse_errors.append(f"PDF parse failed: {e}")
+                # OCR fallback for empty-text-layer PDFs (drawings, scans):
+                # only pay OCR latency when the existing text really is empty.
+                if (
+                    self.config.get("use_platform_ocr", True)
+                    and self.get_dep("ocr") is not None
+                    and (pdf_text is None or len(pdf_text.strip()) < 200)
+                ):
+                    ocr_text = await self._parse_with_platform_ocr(pdf_path)
+                    if ocr_text and len(ocr_text.strip()) > len((pdf_text or "").strip()):
+                        pdf_text = ocr_text
+
+                if pdf_text is not None:
+                    try:
+                        from app.blocks.document_engine.parsers.pdf_parser import PDFDocument
+                        doc = PDFDocument(source=pdf_path, text=pdf_text)
+                        documents.append(doc)
+                    except ImportError as e:
+                        parse_errors.append(f"PDFDocument class import failed: {e}")
+                else:
+                    try:
+                        from app.blocks.document_engine.parsers.pdf_parser import PDFParser
+                        parser = PDFParser(config)
+                        documents.append(parser.parse(pdf_path))
+                    except ImportError as e:
+                        parse_errors.append(f"PDF parser unavailable: {e}")
+                    except Exception as e:
+                        parse_errors.append(f"PDF parse failed: {e}")
 
         # DOCX → own parser (no platform block available)
         if file_paths.get("docx"):
             try:
+                from app.core.file_crypto import open_plaintext
                 from app.blocks.document_engine.parsers.docx_parser import DOCXParser
                 parser = DOCXParser(config)
-                documents.append(parser.parse(file_paths["docx"]))
+                with open_plaintext(file_paths["docx"]) as docx_plain:
+                    documents.append(parser.parse(docx_plain))
             except ImportError as e:
                 parse_errors.append(f"DOCX parser unavailable: {e}")
             except Exception as e:
@@ -213,13 +243,25 @@ class DocumentEngineBlock(UniversalBlock):
         # XLSX → own parser (no platform block available)
         if file_paths.get("xlsx"):
             try:
+                from app.core.file_crypto import open_plaintext
                 from app.blocks.document_engine.parsers.xlsx_parser import XLSXParser
                 parser = XLSXParser(config)
-                documents.append(parser.parse(file_paths["xlsx"]))
+                with open_plaintext(file_paths["xlsx"]) as xlsx_plain:
+                    documents.append(parser.parse(xlsx_plain))
             except ImportError as e:
                 parse_errors.append(f"XLSX parser unavailable: {e}")
             except Exception as e:
                 parse_errors.append(f"XLSX parse failed: {e}")
+
+        # Inline brief → synthetic text document (no file). PDFDocument is a
+        # plain (source, text) carrier; the reasoner reads `.text` the same
+        # way it reads a parsed PDF.
+        if brief_text and brief_text.strip():
+            try:
+                from app.blocks.document_engine.parsers.pdf_parser import PDFDocument
+                documents.append(PDFDocument(source="inline-brief", text=brief_text))
+            except ImportError as e:
+                parse_errors.append(f"PDFDocument class import failed: {e}")
 
         if not documents and parse_errors:
             return {
@@ -254,6 +296,34 @@ class DocumentEngineBlock(UniversalBlock):
         result = structured.to_dict()
         result["status"] = "success"
         result["documents_parsed"] = len(documents)
+
+        # Surface the RAW extracted text alongside the mapper's structured
+        # output. The reasoner+mapper layers throw away the source content
+        # in favour of construction-ontology defaults; without this, a
+        # BOQ-style xlsx upload reaches the LLM as generic equipment
+        # defaults with zero rows from the actual file.
+        raw_chunks: list = []
+        for doc in documents:
+            src = getattr(doc, "source", "") or ""
+            txt = getattr(doc, "text", None)
+            if txt:
+                raw_chunks.append(f"--- {os.path.basename(src)} ---\n{txt}")
+                continue
+            sheets = getattr(doc, "sheets", None)
+            if isinstance(sheets, dict):
+                for sheet_name, rows in sheets.items():
+                    if not rows:
+                        continue
+                    lines = ["\t".join(str(c) for c in row) for row in rows]
+                    raw_chunks.append(
+                        f"--- {os.path.basename(src)} :: {sheet_name} ---\n"
+                        + "\n".join(lines)
+                    )
+        if raw_chunks:
+            joined = "\n\n".join(raw_chunks)
+            result["raw_text"] = joined[:50000]
+            result["raw_text_truncated"] = len(joined) > 50000
+
         result["platform_blocks_used"] = []
         if self.config.get("use_platform_pdf") and self.get_dep("pdf"):
             result["platform_blocks_used"].append("pdf")

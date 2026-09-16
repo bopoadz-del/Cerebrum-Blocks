@@ -1,0 +1,123 @@
+# Store Inventory Survey — Execution Plan
+
+Source: `docs/survey/store_survey_report.html` (full survey, 82 agents, 167 confirmed /
+14 refuted, verified against actual source). This plan is the execution program. The survey
+itself cloned, merged, or pushed nothing.
+
+## Scope
+
+- 16 repos scouted, 12 block clusters audited, 6 connector research topics
+- 59 clone candidates, 60 store upgrades, 48 connector targets
+
+## Guardrails (from the report, binding)
+
+- Never port fabricated features (e.g. StockWisePro `experiments.ts` Math.random backtest).
+- Honest stubs stay honest stubs — upgrading a stub means building the real adapter,
+  never faking numbers.
+- Provenance labels survive extraction: real / honest-stub / mock-functional / aspirational.
+- Every new Store block follows the existing block contract (block.json + execute()/process())
+  and gets a test that would catch a regression (the survey's own standard).
+- The evidence-or-refuse + orchestrator-assigned confidence pattern must be honored wherever
+  a block takes LLM output.
+
+## Wave order
+
+### Wave 1 — Store correctness bugs (highest value, cheapest)
+Fixes that silently corrupt every client platform built from the Store.
+
+1. `document_engine` — port The_Fork fixes:
+   - `_map_wbs` KeyError → `mapping.setdefault(target_code, [])` (crash on trimmed WBS dicts)
+   - raw parsed text passthrough (else BOQ uploads degrade to generic ontology defaults)
+   - inline-brief (text-only, no file) path
+   - `open_plaintext` wrap on every parser call (encrypted-at-rest inputs)
+   - wire `_parse_with_platform_ocr` (dead code today)
+2. `pdf.py` — wrap all file-open paths in `app.core.file_crypto.open_plaintext`
+   (mirroring ocr.py/ocr_v2.py).
+3. `boq_processor.py` — add PDF parsing (pdfplumber table-grid, honest failure on scanned
+   input) + `engine = "xlrd"` for legacy `.xls`.
+4. `spec_analyzer.py` — OCR fallback block under `ocr_fallback_min_chars` (200), plus the
+   broader standard-citation regexes (AS/IBC-year/BS-EN ordering/ASTM trailing).
+5. `drawing_qto.py` — port The_Fork's PDF/DWG extraction (~24 functions incl.
+   `_extract_from_pdf`, `_try_convert_dwg`, title-block/room/cross-ref extraction,
+   Levenshtein OCR-artifact cleanup).
+6. `primavera_parser.py` — wire `compute_cpm` from the orphaned `app/lib/pm_computations.py`
+   and sync that file (+ `app/schemas/cpm.py`) to The_Fork's 818-line version.
+7. Remaining cluster upgrades — document-ocr-pdf (3), bim-construction (4), finance (3),
+   insurance (1), hotel (3), retail (3), medical-legal (3), aviation (4),
+   connector-infra (4), core-infra (8), reasoning-orchestration (13),
+   media-vision-misc (3). Full list in the survey report.
+
+### Wave 2 — Clone candidates (59, by donor)
+Each is a new block or block family in `app/blocks/` + registry entry.
+
+- **Cerebrum (5)** — vdc_clash_detection, vdc_bcf_export, self-healing patch + hot-swap,
+  enterprise connector suite (Procore/QuickBooks-Xero/Salesforce-HubSpot/DocuSign/
+  Box-Dropbox/MS365/Slack/Zapier), sso_saml + SCIM.
+- **Cerebrum-FinanceOps (3)** — finance_planning family (immutable budget versions,
+  allocation remainder routing, scenario adjustment), governance_gate + evidence_chain
+  (fail-closed approval, SHA-256 hash chain), multi_tenant_rbac.
+- **Cerebrum-Steward (3)** — estate-scoped bearer auth + RBAC, resident-engineer
+  governance scaffold (allowlist + approval + append-only audit + injection guard),
+  ingestion provenance (page/sheet/row).
+- **InsureOps (1)** — dual-RAG regulatory chunking (L1/L2 + section-aware chunker).
+- **Me-Agent (5)** — sub_agent_runtime (spawn + env-scrub + schema-retry), agent_state_sync
+  (vector clocks + conflict archive), domain-kit compiler, evidence-or-refuse gate,
+  build-honesty tooling (→ Wave 4, factory CI).
+- **StockWisePro (2)** — user_auth (bcrypt/JWT-refresh-rotation/TOTP MFA) and
+  market_data vertical (dual-provider failover + alert evaluator). NEVER the backtest.
+- **TEKsystems (3)** — verified_outcome_learning engine, hat framework, Power BI connector.
+- **The_Fork (5), The_Level (2), ThreadForge (1), bim-manager-agent (3),
+  cerebrum-hotelops (4), cerebrum-hotelops-v2 (1), stockwisepro-bot (5)**
+- **Clusters** — bim-construction (2), finance (3), insurance (6), retail (1),
+  connector-infra (1), core-infra (2), reasoning-orchestration (1).
+
+### Wave 3 — Governance pair (retire the vacuous audit)
+Port Cerebrum-FinanceOps `governance/service.py` (require_approved_action, 403 fail-closed)
++ `audit/service.py` (SHA-256 hash-chain, verify_chain() full-walk — add the missing
+chain walk) as Store blocks; diff against the always-ok audit/evidence_verifier block
+and replace it.
+
+### Wave 4 — Factory tooling adoption
+Port Me-Agent `scripts/mutation_gate.py` + `scripts/stub_detector.py` + `secret_scan.py`
+into CerebrumDev.ai CI as a pre-merge "hollow function / vacuous test" gate.
+
+### Wave 5 — Connectors (48)
+- ProcoreCdeClient implementing The_Fork's `app/core/cde/protocol.py` (Aconex + Procore
+  behind one door)
+- SAP/ERP ETL family (SapODataConnector first — read-only GL + PO headers)
+- Maximo (real, hotelops), Primavera Cloud (OAuth2 ETL, after batch parser), Power BI
+- Generic inbound webhook receiver (per-source HMAC: Procore/GitHub/Slack/Maximo) onto
+  the HotelEvent-style event bus
+- MCP allowlist hardening before wiring untrusted MCP servers
+- Research topics: construction-project-mgmt (4), erp-sap (5), hospitality-pms (3),
+  crm-collaboration (5), hr-supply-chain (2), mcp-pattern-fit (7)
+
+### Wave 6 — Close-out
+- Register every new block in `block_registry/`, regenerate `blocks.lock.json`
+- Store test suite green; run `scripts/acceptance.py`-equivalent store gates
+- Update Store README/inventory with the new blocks + provenance labels
+- Update the Factory inventory declaration (ready verticals now covered by new blocks)
+
+## Progress ledger
+
+- 2026-09-17: plan created; survey archived into `docs/survey/`. Wave 1 items 1–3 started.
+- 2026-09-17: Waves 1.1–1.4 done and verified (15/15 new regression tests; 22/22
+  blocks+dep-audit; spec suite green).
+  - 1.1 document_engine: KeyError→setdefault (trimmed WBS dicts), raw_text
+    passthrough, inline-brief path, open_plaintext on all parser calls,
+    OCR fallback wired (200-char tripwire), pdf_parser real table extraction
+    (PyMuPDF find_tables; pypdf engine kept), mapper logging.
+  - 1.2 pdf.py: open_plaintext wrap on every open path (pdfplumber/pypdf/fitz/
+    openpyxl/python-docx).
+  - 1.3 boq_processor: .pdf accepted (table-grid grouping + partial/text
+    fallback + 32MB memory guard + skipped-page disclosure), .xls via xlrd
+    (added to requirements), header-row detection under banner rows,
+    two-pass _resolve_columns + _normalize_col.
+  - 1.4 spec_analyzer: synced from The_Fork (OCR fallback under 200 chars,
+    BS EN ordering, ASTM year suffix, AS/IBC codes, grade stopwords,
+    grade/standard resolution via construction_constants).
+  - Known env gaps (pre-existing, not wave regressions): store test suite is
+    flaky in this environment — 3 identical sweeps gave 1 fail / 5 fail / 0
+    fail with different victims; needs a dedicated flake investigation.
+    system-python lacks pandas/sklearn/gTTS metadata; the store venv
+    (.venv) is the correct runner.
