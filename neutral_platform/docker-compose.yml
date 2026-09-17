@@ -1,0 +1,25 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      NEUTRAL_DB_URL: postgresql+psycopg2://neutral:neutral@db:5432/neutral
+      NEUTRAL_AUTH_SECRET: compose-demo-secret
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: neutral
+      POSTGRES_PASSWORD: neutral
+      POSTGRES_DB: neutral
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neutral"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
