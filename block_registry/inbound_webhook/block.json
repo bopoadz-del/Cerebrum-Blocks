@@ -1,0 +1,77 @@
+{
+  "acceptance": [],
+  "author": "Cerebrum Team",
+  "description": "HMAC-SHA256 inbound webhook verification (ported from the Cerebrum donor's webhook security layer, Django coupling removed). Names refusals: malformed_header, stale_timestamp, invalid_signature, unknown_source. Never stores payloads or secrets on its own.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "3d5bdc3f4dc0bdd89f822005a5956f1de2350bb111401feb495897688cf8e1fd",
+    "block.py": "2ad0d324a61f54cf10cc3247f1dc076348be80bd1b15f960e318d7932daab918"
+  },
+  "id": "inbound_webhook",
+  "inputs": [
+    {
+      "description": "Verification request (source, payload, signature)",
+      "name": "input",
+      "required": true,
+      "type": "json"
+    },
+    {
+      "default": "verify",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "verify",
+        "sign",
+        "generate_secret"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 1,
+  "name": "Inbound Webhook",
+  "never": [
+    {
+      "kind": "network",
+      "scope": "outbound_delivery"
+    }
+  ],
+  "outputs": {
+    "result": {
+      "description": "verified: bool (+ named error on refusal) or signature",
+      "type": "json"
+    }
+  },
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "hashlib",
+      "hmac",
+      "json",
+      "secrets",
+      "time"
+    ],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
+  "requires": [],
+  "signature": "02YV6NjgPJkP34JTo1sgSrD6u+MhK3tX93eQwhn8j98VARr6lgEkpHHzbDV31Dvc1pov8hnJpxAVMTrTqnnsAg==",
+  "tags": [
+    "integration",
+    "webhook",
+    "security",
+    "connector-infra"
+  ],
+  "writes": []
+}

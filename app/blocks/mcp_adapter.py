@@ -32,7 +32,10 @@ class MCPAdapterBlock(UniversalBlock):
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
-        action = (params.get("action") or (input_data or {}).get("action") if isinstance(input_data, dict) else "list_tools") or "list_tools"
+        action = params.get("action")
+        if not action and isinstance(input_data, dict):
+            action = input_data.get("action")
+        action = action or "list_tools"
 
         if action == "list_tools":
             return {"status": "success", "tools": self._build_tool_catalog()}

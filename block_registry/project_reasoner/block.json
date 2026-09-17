@@ -1,16 +1,19 @@
 {
-  "acceptance": [
-    {
-      "check": "fails loud when a required credential or key is absent",
-      "id": "missing_credential",
-      "status": "failed"
-    }
-  ],
-  "description": "LLM agent for project planning and reasoning.",
+  "acceptance": [],
+  "description": "LLM agent for project planning and reasoning. The LLM drafts plans and answers; deterministic gates stay in the caller. Missing provider credentials raise by name (tests/blocks/test_project_reasoner_fail_loud.py).",
   "digests": {
-    "block.json": "80fa066337feabaa4e84e1a33618c9382d31a0661dc5fe5c0a586b15f22fd777"
+    "block.json": "8c8029dc410de82ff6f72e277735f09ef1fa03099cffd11b0a7dbb3f57aa14ca"
   },
   "id": "project_reasoner",
+  "inputs": [
+    {
+      "description": "Project reasoning request payload (question or plan request)",
+      "name": "input",
+      "required": true,
+      "type": "json"
+    }
+  ],
+  "layer": 3,
   "name": "Project Reasoner",
   "never": [],
   "permissions": {
@@ -47,8 +50,15 @@
       "scope": "provider"
     }
   ],
-  "signature": "Abyq8O95JFSEpBq4gS7/RUIcwfA6gjzsBbaGd7WTxlfOE+Z5GXCnAU5NQ+NAWOhxwgWEtjHuLv4rNQrOj9rRBA==",
-  "trust_tier": "platform",
+  "requires": [],
+  "signature": "K+cc7lBowY2/v5aL07o0LZmUL+HnTltyaUidRH6TdWNwePs5jEaKaCIjujWWH2P4J4oZlw4qsF2c1x/bI/D+Bg==",
+  "tags": [
+    "domain",
+    "construction",
+    "reasoning",
+    "agent",
+    "llm"
+  ],
   "version": "1.0.0",
   "writes": [
     {

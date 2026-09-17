@@ -29,7 +29,9 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
+
+from app.core.universal_base import UniversalBlock
 
 try:
     from ultralytics import YOLO
@@ -110,3 +112,80 @@ def default_detector() -> Optional[SafetyWorldDetector]:
     except Exception:
         logger.exception("failed to load SafetyWorldDetector from %s", weights)
         return None
+
+
+class SafetyWorldDetectorBlock(UniversalBlock):
+    """UniversalBlock wrapper for the SafetyWorldDetector engine.
+
+    Surfaces what the model SEES — class names, confidence, boxes. It
+    deliberately carries no "violation" / "non-compliance" / "PPE breach"
+    vocabulary: those are application-layer judgments made with the
+    operator in the loop, never this block's output.
+
+    Without SAFETY_WORLD_WEIGHTS (or when the model fails to load) the
+    block refuses honestly instead of returning empty detections.
+    """
+
+    name = "safety_world_detector"
+    version = "1.0.0"
+    requires: List[str] = []
+    layer = 2
+    tags = ["vision", "safety", "detection", "yolo"]
+
+    default_config = {
+        "confidence_threshold": 0.25,
+    }
+
+    def __init__(self, hal_block=None, config: Dict = None):
+        super().__init__(hal_block, config)
+        self._detector: Optional[SafetyWorldDetector] = None
+        self._load_error: Optional[str] = None
+
+    async def _legacy_initialize(self) -> bool:
+        self.initialized = True
+        return True
+
+    def _ensure_detector(self) -> Optional[SafetyWorldDetector]:
+        if self._detector is None and self._load_error is None:
+            self._detector = default_detector()
+            if self._detector is None:
+                self._load_error = (
+                    "SAFETY_WORLD_WEIGHTS not set or the model failed to load"
+                )
+        return self._detector
+
+    async def process(self, input_data: Any, params: Dict = None) -> Dict:
+        params = params or {}
+        action = params.get("action")
+        if isinstance(input_data, dict) and not action:
+            action = input_data.get("action")
+        if action and action != "detect":
+            return {"error": f"Unknown action: {action}", "available": ["detect"]}
+
+        if not isinstance(input_data, dict):
+            return {"error": "input must be a dict with file_path"}
+        file_path = input_data.get("file_path")
+        if not file_path:
+            return {"error": "file_path required"}
+        path = Path(file_path)
+        if not path.is_file():
+            return {"error": f"file not found: {file_path}"}
+
+        conf_raw = input_data.get("confidence", input_data.get("conf"))
+        try:
+            conf = float(conf_raw) if conf_raw is not None else float(
+                self.config["confidence_threshold"]
+            )
+        except (TypeError, ValueError):
+            return {"error": f"confidence must be a number, got {conf_raw!r}"}
+
+        detector = self._ensure_detector()
+        if detector is None:
+            return {"error": self._load_error or "detector unavailable", "available": False}
+
+        detections = detector.detect(path, conf_threshold=conf)
+        return {
+            "detections": detections,
+            "count": len(detections),
+            "class_names": detector.class_names,
+        }
