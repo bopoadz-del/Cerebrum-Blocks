@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from decimal import Decimal, InvalidOperation, ROUND_HALF_EVEN
+from decimal import Decimal, InvalidOperation, ROUND_HALF_EVEN, ROUND_HALF_UP
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from app.reasoning_kernel import ReasoningResult, ReasoningStatus
@@ -43,7 +43,7 @@ class FormulaRegistry:
         return bool(spec and spec.certification is Certification.DOMAIN_APPROVED)
 
 
-_ROUNDING = {"half_even": ROUND_HALF_EVEN}
+_ROUNDING = {"half_even": ROUND_HALF_EVEN, "half_up": ROUND_HALF_UP}
 
 
 def to_decimal(value: Any, field: str) -> Decimal:
@@ -149,25 +149,33 @@ class DeterministicFormulaExecutor:
             return result.stamp_digests()
 
         raw = impl(coerced)
-        if raw is None or isinstance(raw, bool):
+        boolean_output = (spec.output or {}).get("type") == "boolean"
+        if raw is None or (isinstance(raw, bool) and not boolean_output):
             result = ReasoningResult(
                 status=ReasoningStatus.EXECUTION_ERROR, domain=domain, intent=intent,
                 explanation=f"formula {formula_id!r} returned no numeric result",
             )
             return result.stamp_digests()
-        try:
-            value = to_decimal(raw, "result")
-        except FormulaRefused as exc:
-            result = ReasoningResult(
-                status=ReasoningStatus.EXECUTION_ERROR, domain=domain, intent=intent,
-                explanation=str(exc),
-            )
-            return result.stamp_digests()
+        if isinstance(raw, bool):
+            value: Any = raw
+        else:
+            try:
+                value = to_decimal(raw, "result")
+            except FormulaRefused as exc:
+                result = ReasoningResult(
+                    status=ReasoningStatus.EXECUTION_ERROR, domain=domain, intent=intent,
+                    explanation=str(exc),
+                )
+                return result.stamp_digests()
 
-        quantized = (
-            value.quantize(Decimal(1).scaleb(-spec.precision), rounding=_ROUNDING[spec.rounding])
-            if spec.precision is not None
-            else value
+        quantized: Any = (
+            value
+            if isinstance(value, bool)
+            else (
+                value.quantize(Decimal(1).scaleb(-spec.precision), rounding=_ROUNDING[spec.rounding])
+                if spec.precision is not None
+                else value
+            )
         )
 
         result = ReasoningResult(
