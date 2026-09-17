@@ -21,6 +21,7 @@ from app.reasoning_kernel import ReasoningResult, ReasoningStatus
 class ConflictDetector:
     def __init__(self) -> None:
         self._registered: Dict[str, Dict[str, Any]] = {}
+        self._conflicts: List[Dict[str, Any]] = []
 
     def register(self, artifact_id: str, version: str, content: Dict[str, Any], *, domain: str) -> Optional[Dict[str, Any]]:
         """Register an artifact definition. Returns a conflict record when
@@ -28,17 +29,20 @@ class ConflictDetector:
         key = f"{domain}:{artifact_id}"
         existing = self._registered.get(key)
         if existing and existing["content"] != content:
-            return {
+            record = {
                 "conflict_id": f"conflict:{key}:{existing['version']}-vs-{version}",
                 "domain": domain,
                 "artifact_id": artifact_id,
                 "versions": [existing["version"], version],
             }
+            self._conflicts.append(record)
+            return record
         self._registered[key] = {"version": version, "content": content, "domain": domain}
         return None
 
     def conflicts(self) -> List[Dict[str, Any]]:
-        return []
+        """Every conflict registered so far, oldest first."""
+        return list(self._conflicts)
 
 
 class ProvenanceRecorder:

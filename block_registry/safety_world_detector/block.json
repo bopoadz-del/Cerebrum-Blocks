@@ -4,7 +4,7 @@
   "description": "YOLO-Worldv2 detector surfacing what the model sees (vest, hat, person, crack...) \u2014 class, confidence, box. Deliberately judgment-free: no violation/non-compliance vocabulary; application-layer judgments stay with the operator in the loop. Refuses honestly when SAFETY_WORLD_WEIGHTS is unset.",
   "digests": {
     "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
-    "block.json": "ced579cdb7f72449408e9a868c9d4e9c0ebdad60f769619a683da23fe4695f22",
+    "block.json": "8579ccbfbef77815efc9dbb47ce3abd155d4c22ecb934ae48c1422a6c6adcf20",
     "block.py": "aaf0eab62dcde9cd83925542f87801bf17c48fe394656f5c2cf8c4733dce484c"
   },
   "id": "safety_world_detector",
@@ -56,12 +56,14 @@
     }
   ],
   "requires": [],
-  "signature": "B3ekHmI/e/khITp8OE/mCEsxD85GUppJsGrIIYvSxK2FO3bGbmo4ByXHNPVZ5JYEjdCuFosw6+0wlDBVrSSiAA==",
+  "signature": "2+dkYeG9V8mGlvVZF23WpQjxLS9ZKmsr8jUgIV3bsqbe7IBh2tO7dwtIbdZcbQgPx1Rlo60aPbwXchu2+oe6Cg==",
   "tags": [
     "vision",
     "safety",
     "detection",
     "yolo"
   ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": []
 }

@@ -261,3 +261,9 @@ def test_conflict_detector_flags_divergent_definitions():
     conflict = detector.register("con.retention", "1.1.0", {"rate": "0.10"}, domain="construction_ops")
     assert conflict is not None
     assert conflict["versions"] == ["1.0.0", "1.1.0"]
+    # conflicts() must accumulate the recorded conflict, not return []
+    assert detector.conflicts() == [conflict]
+    # a later registration with the SAME content as the registered one is
+    # not a conflict (the divergent 1.1.0 was never registered)
+    assert detector.register("con.retention", "1.0.0", {"rate": "0.05"}, domain="construction_ops") is None
+    assert len(detector.conflicts()) == 1

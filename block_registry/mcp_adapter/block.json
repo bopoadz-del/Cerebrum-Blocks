@@ -4,7 +4,7 @@
   "description": "Exposes every registered Cerebrum block as MCP-style tool descriptions to MCP-aware agents. Read-only catalog: list_tools and describe only \u2014 it never executes a block on behalf of a client.",
   "digests": {
     "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
-    "block.json": "a58cab9d1ce06fafe1713c252d1f7d7840cd39f7e120a17d818db677a59adbb1",
+    "block.json": "2117ae7e8334d6c713549c2583ea6e6aced1443136bbb4ab9fc3afc194d27c55",
     "block.py": "1a6501d2c3c56bfe2cc1fa48fc0ad3ca212c27f87ffc276a9a001ab6273184e3"
   },
   "id": "mcp_adapter",
@@ -61,12 +61,14 @@
     }
   ],
   "requires": [],
-  "signature": "KehDIi1q+jVKn1wua5YlOjTZOHFt6jz/XSuH8brn3LGbouSgGVhXjoqQxGrP3BToDq9stM4yEplqwEvQY55tDQ==",
+  "signature": "QhJ65yY55FyCWqTWw9p0n3FNOJ30qbBGztBA4J87F5AOo5nTnyeK2B7GwBND+M1Sl5La+pHhuSRdlVWWT8hnDg==",
   "tags": [
     "mcp",
     "agents",
     "infrastructure",
     "interop"
   ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": []
 }
