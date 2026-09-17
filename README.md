@@ -12,7 +12,7 @@ blocks and kits through the public API, exactly like any other client.
 
 > ### Part of the CEREBRUM ecosystem — industrialized AI delivery
 >
-> **The Store — [Cerebrum-Blocks](https://github.com/bopoadz-del/Cerebrum-Blocks):** 129 typed blocks (108 registry entries), 19 domain kits + universal kernel, one API. Build a capability once; every sector inherits it.  
+> **The Store — [Cerebrum-Blocks](https://github.com/bopoadz-del/Cerebrum-Blocks):** 133 typed blocks (115 registry entries), 19 domain kits + universal kernel, one API. Build a capability once; every sector inherits it.  
 > **The Factory — [CerebrumDev.ai](https://github.com/bopoadz-del/CerebrumDev.ai):** the client-facing interface that assembles blocks into governed, deployable vertical platforms — evaluation gates in CI, release certification, honest closure reporting.  
 > **The Products — [The Fork](https://github.com/bopoadz-del/The_Fork)** (construction AI — enterprise client pilot) **· [RetailOps](https://github.com/bopoadz-del/TEKsystems_GlobalRetailMNC)** (retail operations — assembled, CI-gated and deployed in under three days).  
 > **The Edge:** sovereign deployment proven — zero-egress on-premise profile, executed air-gap acceptance test, signed sovereignty report.
@@ -34,10 +34,10 @@ products, clients, and domain kits.
 
 | Component | Path | Purpose |
 |---|---|---|
-| Blocks | `app/blocks/` | 129 typed execution blocks (chat, RAG, documents, domain analysis, workbench, …) |
+| Blocks | `app/blocks/` | 133 typed execution blocks (chat, RAG, documents, domain analysis, workbench, …) |
 | Block runtime | `app/core/` | TypedBlock base with fail-closed I/O validation, trust-scope enforcement, grounding stage, capability model |
 | Execute API | `app/routers/execute.py` | `/v1/execute` — auth, tier boundary, trust scope, grounding, capability dispatch |
-| Block registry | `block_registry/` | 108 manifest + adapter entries for discovery and subprocess execution |
+| Block registry | `block_registry/` | 115 manifest + adapter entries for discovery and subprocess execution |
 | Store | `app/routers/store.py` + `block_store/` | Kit catalog, provenance-verified install, 19 domain kits + the universal kernel |
 | Sandbox runner | `sandbox-runner/` | Out-of-process execution service for blocks with elevated capabilities |
 | Containers | `app/containers/` | Domain containers assembling blocks per vertical |
@@ -51,7 +51,31 @@ products, clients, and domain kits.
 | **Formulas** | formula_executor, formula_executor_v2, construction_advisor (cited construction KB) |
 | **Documents** | pdf, ocr, xlsx_schedule, spec_analyzer, bim_extractor |
 | **Domain analysis** | construction_v2, aviation_v2, finance_v2, medical_v2, … (19 verticals) |
-| **Workbench** | workbench (bounded Kimi CLI editing with diff + safety gates) |
+| **Workbench** | workbench (bounded coding-agent CLI editing with diff + safety gates) |
+
+## Unregistered material (COLLECTOR rung 2 — by design)
+
+Some real block code deliberately has no registry entry yet. Registration
+means "certified, versioned, signed" — these are candidate material the
+COLLECTOR can survey and promote, not certified inventory:
+
+- **Vertical v2 blocks** (`agriculture_v2`, `hotel_v2`, `medical_v2`,
+  `pharma_v2`, `oil_gas_v2`, `hr_v2`, `education_v2`, `manufacturing_v2`,
+  `real_estate_v2`, `supply_chain_v2`, `automotive_v2`, `aviation_v2`) —
+  real domain logic, awaiting domain-pack packaging and certification.
+- **Aviation kit modules** (`aviation_cargo_kit`, `aviation_cx_kit`,
+  `aviation_loyalty_kit`, `aviation_pss_kit`, `aviation_revenue_kit`,
+  `aviation_grounding_gate`, `aviation_chat_server`) — kit-level material.
+- **`mcp_consumer`** — executes external MCP servers; registration waits
+  for the allowlist hardening wave (do not advertise untrusted execution).
+- **Aliases** (`document_engine_block`, `validation_pipeline`) — path
+  shims of already-registered blocks; registering them would duplicate
+  identity, not capability.
+
+Newly registered in the close-out: estate blocks (5), `retail_v2`,
+`safety_world_detector`, `mcp_adapter`, `inbound_webhook`, `workbench`.
+All registry blocks are signed (publisher `cerebrum_platform`) and the
+signing + manifest-contract gates run in CI.
 
 ## Domain kits
 

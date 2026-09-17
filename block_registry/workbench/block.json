@@ -1,0 +1,75 @@
+{
+  "acceptance": [],
+  "author": "Cerebrum Team",
+  "description": "Bounded coding-agent workbench: a brief plus mutable paths, a Kimi CLI run, unified diff, and deterministic safety gates on changed files. The agent edits only the declared paths; gates refuse unsafe changes.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "5d234ab80e7c852959b63db15a16e725a37963317a19e5de4de39e0cee22c307",
+    "block.py": "6eb618303831cd625586e414815fadbd7e83f8efff27fbcc39d22afa9395d006"
+  },
+  "id": "workbench",
+  "inputs": [
+    {
+      "description": "brief + mutable_paths payload",
+      "name": "input",
+      "required": true,
+      "type": "json"
+    },
+    {
+      "default": "run",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "run"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "Workbench",
+  "never": [
+    {
+      "kind": "network",
+      "scope": "outbound"
+    }
+  ],
+  "outputs": {
+    "result": {
+      "description": "status, diff, changed_paths, gate_report",
+      "type": "json"
+    }
+  },
+  "permissions": {
+    "blocks": [],
+    "filesystem": true,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "file",
+      "scope": "workspace_inputs"
+    },
+    {
+      "kind": "subprocess",
+      "scope": "agent_cli"
+    }
+  ],
+  "requires": [],
+  "signature": "C79P2P54d76fERI0qHy5zBacgQQs9KfO3+NXTbyKiUUueItwqcI6RyirDg2EFDaJy4xXfAzDoOusx6ttoSScCQ==",
+  "tags": [
+    "workbench",
+    "agent",
+    "diff",
+    "gates",
+    "code"
+  ],
+  "writes": [
+    {
+      "kind": "file",
+      "scope": "mutable_paths_only"
+    }
+  ]
+}
