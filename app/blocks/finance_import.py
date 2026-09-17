@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 from typing import Any, Dict, List, Mapping
 
 from app.core.finance_ops import (
@@ -35,6 +36,14 @@ class FinanceImportBlock(TypedBlock):
     produced_output_types = ["FinanceImportBatch"]
     ui_schema = {"input": {"type": "json", "multiline": True}, "output": {"type": "json"}}
 
+    def __init__(self, hal_block=None, config: Dict = None):
+        super().__init__(hal_block, config)
+        # Ingest idempotency ledger: record_id -> batch digest, plus the set
+        # of already-ingested batch digests. In-instance state; a product
+        # wires durable storage at the caller layer.
+        self._ingested: Dict[str, str] = {}
+        self._seen_batches: set = set()
+
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         data = {**(params or {}), **(input_data if isinstance(input_data, dict) else {})}
         operation = data.get("operation") or "normalize_rows"
@@ -43,9 +52,103 @@ class FinanceImportBlock(TypedBlock):
                 return self._normalize_rows(data)
             if operation == "profile":
                 return self._profile(data)
+            if operation == "parse_file":
+                return self._parse_file(data)
+            if operation == "ingest":
+                return self._ingest(data)
+            if operation == "reset_ingest":
+                self._ingested.clear()
+                self._seen_batches.clear()
+                return {"status": "success", "operation": "reset_ingest"}
         except (KeyError, TypeError, ValueError) as exc:
             return {"status": "validation_error", "operation": operation, "error": str(exc)}
-        return {"status": "unsupported", "operation": operation, "error": f"Unknown operation: {operation}", "available_operations": ["normalize_rows", "profile"]}
+        return {"status": "unsupported", "operation": operation, "error": f"Unknown operation: {operation}", "available_operations": ["normalize_rows", "profile", "parse_file", "ingest", "reset_ingest"]}
+
+    def _parse_file(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Parse a CSV or XLSX file into rows, then normalize them.
+
+        The file bytes never leave the process; openpyxl is imported lazily
+        so CSV-only deployments stay light.
+        """
+        file_path = str(data.get("file_path") or "").strip()
+        if not file_path:
+            raise ValueError("file_path is required")
+        from pathlib import Path
+
+        path = Path(file_path)
+        if not path.is_file():
+            raise ValueError(f"file not found: {file_path}")
+        suffix = path.suffix.lower()
+        if suffix == ".csv":
+            try:
+                with path.open("r", encoding="utf-8-sig", newline="") as fh:
+                    rows = list(csv.DictReader(fh))
+            except (OSError, csv.Error) as exc:
+                raise ValueError(f"csv parse failed: {exc}") from exc
+        elif suffix in (".xlsx", ".xlsm"):
+            try:
+                from openpyxl import load_workbook
+
+                wb = load_workbook(path, read_only=True, data_only=True)
+                ws = wb.active
+                headers = None
+                rows = []
+                for row in ws.iter_rows(values_only=True):
+                    values = ["" if v is None else v for v in row]
+                    if headers is None:
+                        headers = [str(h).strip() for h in values]
+                        continue
+                    record = {headers[i]: values[i] for i in range(min(len(headers), len(values)))}
+                    if any(str(v).strip() for v in record.values()):
+                        rows.append(record)
+                wb.close()
+            except (OSError, ValueError) as exc:
+                raise ValueError(f"xlsx parse failed: {exc}") from exc
+            except ImportError as exc:
+                raise ValueError("openpyxl is required for .xlsx import") from exc
+        else:
+            raise ValueError(f"unsupported file type: {suffix!r} (use .csv or .xlsx)")
+        if not rows:
+            raise ValueError("file contains no data rows")
+        return self._normalize_rows({**data, "rows": rows, "source_file": path.name})
+
+    def _ingest(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Idempotent ingest: the same batch or the same record_id is never
+        double-counted. Batch-level digest first, then per-record dedupe.
+        """
+        rows = data.get("rows")
+        if not isinstance(rows, list) or not rows:
+            raise ValueError("rows must be a non-empty array")
+        batch_digest = stable_digest(rows)
+        if batch_digest in self._seen_batches:
+            return {
+                "status": "success",
+                "operation": "ingest",
+                "already_ingested": True,
+                "batch_digest": batch_digest,
+                "accepted": 0,
+                "duplicates": len(rows),
+            }
+        normalized = self._normalize_rows(data)
+        accepted = []
+        duplicates = []
+        for row in normalized.get("accepted", []):
+            record_id = str(row.get("record_id") or "")
+            if record_id in self._ingested:
+                duplicates.append(record_id)
+                continue
+            self._ingested[record_id] = batch_digest
+            accepted.append(record_id)
+        self._seen_batches.add(batch_digest)
+        return {
+            "status": "success",
+            "operation": "ingest",
+            "already_ingested": False,
+            "batch_digest": batch_digest,
+            "accepted": len(accepted),
+            "duplicates": len(duplicates),
+            "rejected": len(normalized.get("rejected", [])),
+        }
 
     @staticmethod
     def _source_spec(data: Dict[str, Any]) -> tuple[str, Dict[str, Any]]:
