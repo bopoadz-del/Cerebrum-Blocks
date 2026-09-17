@@ -134,6 +134,20 @@ into CerebrumDev.ai CI as a pre-merge "hollow function / vacuous test" gate.
 
 ### PARKED with notes (overnight)
 
+- DONE (batch 4, kernel branch): sandbox isolated-level now requires
+  SANDBOX_RUNNER_URL (refused by name, no in-process fallback for untrusted
+  code); discovery routes search/recommend through the wired vector block
+  (cosine when a real embedder is loaded, honest `via` label otherwise);
+  review purchase verification is backed by a real billing purchase ledger
+  (record_purchase/check_purchase) — fail-closed, never minted verified out
+  of thin air; billing manifest action options updated; retail_v2 manifest
+  brief-scope backfill.
+- Publisher key ROTATED: new Ed25519 keypair, all 111 registry blocks
+  re-signed, verification 100%. New private key stored at
+  ~/.codewhale/keys/cerebrum_platform.pem (move to the secrets manager);
+  data/publishers/cerebrum_platform.pub updated — any consumer pinning the
+  old public key must adopt the new one.
+
 - safety_world_detector: real YOLO-World onnx detector, no UniversalBlock
   wrapper and unregistered. Wrap in a UniversalBlock (process -> detect,
   SA FET Y_WORLD_WEIGHTS env) + register; until then it is consumed only by

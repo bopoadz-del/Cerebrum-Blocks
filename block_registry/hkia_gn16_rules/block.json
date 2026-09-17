@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    },
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Deterministic HKIA GN16/GL16 Layer-1 compliance rule checks for insurance evidence packages. Rule checks only; no live HKIA filing submission.",
   "digests": {
@@ -38,6 +50,7 @@
   ],
   "layer": 1,
   "name": "HKIA GN16 Rules",
+  "never": [],
   "outputs": [
     {
       "description": "Compliance findings with severity, rule_id, citation, and remediation",
@@ -62,8 +75,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "+RxrgzpZwQz+Y72UUroVS9pkNYJbrl1/z7dMhn+p5mWc7e6ohE/fa05WQrnBiJUJavjE91oq2z8hevPnKc6wAQ==",
+  "signature": "d2CfRHtNhWKv/bbsC2aL90vQ15zIFW3esOvqxGqIxS3R2A3dPOor2Hv3vCVo30q0BDVNCo36mScfuX2ft/F3Cg==",
   "tags": [
     "insurance",
     "compliance",
@@ -97,33 +120,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
-    },
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

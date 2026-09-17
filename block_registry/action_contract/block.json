@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Domain-neutral runtime for registering, discovering, and executing actions exposed by domain kits. Includes typed models, registry, execution engine, schema validation, audit helper, and config.",
   "digests": {
@@ -15,6 +22,12 @@
   ],
   "layer": 1,
   "name": "Action Contract Runtime",
+  "never": [
+    {
+      "kind": "caller",
+      "scope": "trust_scope"
+    }
+  ],
   "outputs": [
     {
       "description": "Action execution result",
@@ -31,16 +44,6 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "pIg2no0saQlgzmltV6t0H2awbtNzo+gzjm6TEyuqGD8s5XdEi3eUAQIU+9PUwbPoILjlb5s5ouDIAg7EhaYiDQ==",
-  "tags": [
-    "core",
-    "runtime",
-    "action",
-    "contract",
-    "registry"
-  ],
-  "trust_tier": "platform",
-  "version": "1.0.0",
   "reads": [
     {
       "kind": "caller",
@@ -51,23 +54,20 @@
       "scope": "process"
     }
   ],
+  "signature": "K5oYN86iQ8yuxC0pRvKuBX1VVH8Spy0xnQfoguMeVIiTEWFIfOHDVvDtTrrlYquOat+PIZiMV2iwzKDyFhcNCg==",
+  "tags": [
+    "core",
+    "runtime",
+    "action",
+    "contract",
+    "registry"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [
-    {
-      "kind": "caller",
-      "scope": "trust_scope"
-    }
-  ],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
     }
   ]
 }

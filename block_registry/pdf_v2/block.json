@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Extract text from PDF files with typed output",
   "digests": {
@@ -49,6 +56,7 @@
   ],
   "layer": 3,
   "name": "Pdf V2",
+  "never": [],
   "outputs": [
     {
       "description": "Text",
@@ -73,10 +81,32 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "file",
+      "scope": "input_document"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
   "requires": [
     "ocr"
   ],
-  "signature": "q1kZU5vtuFsUM1iJkYHJY987EXgkAChUNw+f8IrWVYmA3yfUqMcKIWvVxaObHgQuWLJoBgR4Koznw1sbGDqTDQ==",
+  "signature": "xlBt3thwInWohWflgG8JWX9iiY5PKRtXXhvL4KHvJ3eZblFeMZkrKWZlV6UpX3FZrOpik+JYXekTzJJztLyoAw==",
   "tags": [
     "domain",
     "documents",
@@ -112,28 +142,6 @@
     }
   ],
   "version": "2.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "file",
-      "scope": "input_document"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -146,14 +154,6 @@
     {
       "kind": "file",
       "scope": "temp"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
     }
   ]
 }

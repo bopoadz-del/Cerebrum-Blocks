@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -73,6 +80,7 @@
   ],
   "layer": 1,
   "name": "Health Check",
+  "never": [],
   "outputs": [
     {
       "description": "Health status",
@@ -87,12 +95,26 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "llm",
+      "scope": "provider"
+    }
+  ],
   "requires": [
     "database",
     "memory",
     "config"
   ],
-  "signature": "B2W3G+VCk6hfmE3lGRbdlQeYDQcrYMQ7N7G9M1F6/CXtEtT9BMi9i/ZMX4holtg53SFCetWWI2T6zzX0lZyrDg==",
+  "signature": "kpTXaKWg8p2LIKg8zBZ3Wmu6gicaTB26wFkM+MYsATXGKvMcA49lc6pLFFEbPmA09epM5xfwd4JSJ/VkJQmaAg==",
   "tags": [
     "observability",
     "infra",
@@ -148,32 +170,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "llm",
-      "scope": "provider"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

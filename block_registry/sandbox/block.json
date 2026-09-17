@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    },
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "default_config": {
     "allowed_modules": [
@@ -58,6 +70,16 @@
   ],
   "layer": 1,
   "name": "Sandbox",
+  "never": [
+    {
+      "kind": "network",
+      "scope": "guest_code_outbound"
+    },
+    {
+      "kind": "subprocess",
+      "scope": "eval_exec"
+    }
+  ],
   "outputs": [
     {
       "description": "Execution result",
@@ -77,11 +99,33 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
   "requires": [
     "memory",
     "config"
   ],
-  "signature": "x9e6ZDtDuChVu1bt48FLc/G4O6GNehT0VZaBGUAPSqz96EQdktLrVK+r53Y+UJRbMwX95KBOlDIrjcZw6d2DCw==",
+  "signature": "m+Du2Fk8Jd7SXRPblYFjTv5Xjw9evtksq95rOx57UiMw0sgm7A50i7Cag2bCvjFvU739j9CdPJ2HMX8buG1ACw==",
   "tags": [
     "security",
     "isolation",
@@ -112,28 +156,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -150,28 +172,6 @@
     {
       "kind": "subprocess",
       "scope": "local"
-    }
-  ],
-  "never": [
-    {
-      "kind": "network",
-      "scope": "guest_code_outbound"
-    },
-    {
-      "kind": "subprocess",
-      "scope": "eval_exec"
-    }
-  ],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
-    },
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

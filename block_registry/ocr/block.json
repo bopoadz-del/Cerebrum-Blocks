@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Extract text from images using OCR with preprocessing",
   "digests": {
@@ -51,6 +58,7 @@
   ],
   "layer": 3,
   "name": "Ocr",
+  "never": [],
   "outputs": [
     {
       "description": "Extracted Text",
@@ -70,8 +78,38 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "file",
+      "scope": "input_document"
+    },
+    {
+      "kind": "file",
+      "scope": "input_image"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
   "requires": [],
-  "signature": "/2wsKRLLwUq26avWEp5bKFvgsFXdI7ByZkNBC9U9iMjvMNKscynEfReJXQEbRR9gt6NYLkoWk+K6o77s0bhDAg==",
+  "signature": "kNKQK+2jFiMoKxqfy4jqjqwzYsG8i1ijgcxtqp5ZgOQCKGLOWnbIbDwqUDFLwfN3K6jnqg/y+wCcqlPJMyFLBQ==",
   "tags": [
     "domain",
     "vision",
@@ -108,36 +146,6 @@
     }
   ],
   "version": "2.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "file",
-      "scope": "input_document"
-    },
-    {
-      "kind": "file",
-      "scope": "input_image"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -150,14 +158,6 @@
     {
       "kind": "file",
       "scope": "temp"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
     }
   ]
 }

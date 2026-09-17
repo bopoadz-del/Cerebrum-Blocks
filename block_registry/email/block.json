@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -54,6 +66,7 @@
   ],
   "layer": 5,
   "name": "Email",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -68,10 +81,32 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    },
+    {
+      "kind": "network",
+      "scope": "smtp.outbound"
+    },
+    {
+      "kind": "credential",
+      "scope": "env"
+    }
+  ],
   "requires": [
     "config"
   ],
-  "signature": "+q5U04vZAdU0CwDQyrPzD5oHT/RQNUzWmQlhwLQm1ojMU+312P5fPQrDoHntR2ZGz6VwjEvtIJ7/4O98xDH0CQ==",
+  "signature": "HqMl1KtkLVK08v6JBCzntmknn8x+N2MWalhAtE3oj2ARX9zkfPGH+Xj6R4T5jo0Q7VxQH7KiW04Uk3eIiu+XDg==",
   "tags": [
     "email",
     "notification",
@@ -111,28 +146,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    },
-    {
-      "kind": "network",
-      "scope": "smtp.outbound"
-    },
-    {
-      "kind": "credential",
-      "scope": "env"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -149,19 +162,6 @@
     {
       "kind": "email",
       "scope": "outbound"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
-    },
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }

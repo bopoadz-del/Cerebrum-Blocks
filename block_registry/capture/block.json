@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Receive images from any client, OCR extract, AI structure, vector store",
   "digests": {
@@ -119,6 +131,7 @@
   ],
   "layer": 3,
   "name": "Capture",
+  "never": [],
   "outputs": [
     {
       "description": "Capture ID",
@@ -158,10 +171,44 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "file",
+      "scope": "input_image"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    },
+    {
+      "kind": "llm",
+      "scope": "provider"
+    },
+    {
+      "kind": "credential",
+      "scope": "env"
+    }
+  ],
   "requires": [
     "vector_search"
   ],
-  "signature": "vzl0iw/ohsbwYxBYvqrGGPPoXc0JKhlisO/H4cMNU6qW2erc4C23qaPbY9KT/0HcN1m4TprNQGD/nL6Jn3fxAg==",
+  "signature": "2aJTwn2ezXR/bMLN60pHyzNbMOEV1W6D2nlFgYKyJ6PvQ5aaWBDVGS2FULj2Co2XAPjHvEulLNUJSdxIiPFCAg==",
   "tags": [
     "capture",
     "ocr",
@@ -249,40 +296,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "file",
-      "scope": "input_image"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    },
-    {
-      "kind": "llm",
-      "scope": "provider"
-    },
-    {
-      "kind": "credential",
-      "scope": "env"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -291,19 +304,6 @@
     {
       "kind": "file",
       "scope": "local.write"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
-    },
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }

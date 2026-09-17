@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "High-quality PDF to Markdown extraction using Marker",
   "digests": {
@@ -29,6 +36,7 @@
   ],
   "layer": 3,
   "name": "Marker PDF",
+  "never": [],
   "outputs": [
     {
       "description": "Markdown text",
@@ -48,8 +56,26 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "input_document"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
   "requires": [],
-  "signature": "rTn1l4mjhRfIxB7K5P93eNma+uB3Xi6PrvsPSiPGikEfoyse/2iDRt7pbauqFveWpAWJ2cLs3WffLT+uUOQKCw==",
+  "signature": "8Jh4c+gUwrXeXqVOh8Le9K5zRZtOhBF++Vn93lVrkNHW2APY1Wb+vPDGR45hioW1ZXyTL//ScFSZ0NVeI8iUDw==",
   "tags": [
     "domain",
     "documents",
@@ -71,24 +97,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "input_document"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -101,14 +109,6 @@
     {
       "kind": "file",
       "scope": "temp"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
     }
   ]
 }

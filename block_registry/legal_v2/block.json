@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Legal document analysis with typed input/output \u2014 extracts entities, clauses, risks, and compliance flags from contracts and pleadings",
   "digests": {
@@ -33,6 +34,7 @@
   ],
   "layer": 3,
   "name": "Legal v2",
+  "never": [],
   "outputs": [
     {
       "description": "Entities",
@@ -62,8 +64,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "ODdgzXbzpWtVqKoExa2zZNajGggW8HJfJ6yMzjBF8yJfAZZEXvJyFifB8c27QrDODbtGdBnuj4zi6P93P4omAw==",
+  "signature": "2OASy7BfLI31j8l51XKDpBWh9EiasMLOM4i3E1//9HEqadZdysRiH666vRZH96cDB0oYR0NJs3vdkGS8Fcm/Dg==",
   "tags": [
     "domain",
     "legal",
@@ -91,22 +103,10 @@
     }
   ],
   "version": "2.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

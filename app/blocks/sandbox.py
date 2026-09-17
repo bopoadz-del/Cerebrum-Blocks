@@ -149,6 +149,13 @@ class SandboxBlock(UniversalBlock):
         
         policy = self.policies.get(policy_name, self.policies["default"])
         self.execution_count += 1
+
+        # Untrusted code (isolated level) must run in the sandbox runner:
+        # the in-process restricted exec is a static-blocking convenience for
+        # trusted input, NOT an isolation boundary. No SANDBOX_RUNNER_URL →
+        # refuse by name, never fall back in-process.
+        level = str(data.get("level") or self.config.get("default_level", "strict")).lower()
+        isolated = level == SandboxLevel.ISOLATED.value
         
         # Pre-validation
         safety_check = await self._check_safety({"code": code, "language": language})
@@ -163,11 +170,11 @@ class SandboxBlock(UniversalBlock):
         # Execute based on language
         try:
             if language == "python":
-                return await self._execute_python(code, policy, data.get("inputs", {}))
+                return await self._execute_python(code, policy, data.get("inputs", {}), isolated=isolated)
             elif language == "javascript":
-                return await self._execute_javascript(code, policy)
+                return await self._execute_javascript(code, policy, isolated=isolated)
             elif language == "bash":
-                return await self._execute_bash(code, policy)
+                return await self._execute_bash(code, policy, isolated=isolated)
             else:
                 return {"error": f"Unsupported language: {language}"}
         except TimeoutException:
@@ -177,12 +184,33 @@ class SandboxBlock(UniversalBlock):
         except Exception as e:
             return {"error": f"Execution failed: {str(e)}"}
     
-    async def _execute_python(self, code: str, policy: SandboxPolicy, inputs: Dict) -> Dict:
+    async def _execute_python(self, code: str, policy: SandboxPolicy, inputs: Dict, isolated: bool = False) -> Dict:
         """Execute Python code in sandbox"""
         import time
         import io
 
         sandbox_url = os.getenv("SANDBOX_RUNNER_URL")
+        if isolated:
+            if not sandbox_url:
+                return {
+                    "success": False,
+                    "error": "isolated execution requires SANDBOX_RUNNER_URL — no in-process fallback for untrusted code",
+                    "blocked": True,
+                }
+            via = await self._exec_via_runner(
+                sandbox_url,
+                language="python",
+                code=code,
+                input_values=inputs or {},
+                timeout_s=policy.max_cpu_time,
+            )
+            if via is None:
+                return {
+                    "success": False,
+                    "error": "sandbox runner unavailable — refused (no in-process fallback for isolated code)",
+                    "blocked": True,
+                }
+            return via
         if sandbox_url:
             via = await self._exec_via_runner(
                 sandbox_url,
@@ -292,10 +320,33 @@ class SandboxBlock(UniversalBlock):
         
         return open(filepath, mode, *args, **kwargs)
     
-    async def _execute_javascript(self, code: str, policy: SandboxPolicy) -> Dict:
+    async def _execute_javascript(self, code: str, policy: SandboxPolicy, isolated: bool = False) -> Dict:
         """Execute JavaScript in sandbox using Node.js"""
         import subprocess
-        
+
+        if isolated:
+            sandbox_url = os.getenv("SANDBOX_RUNNER_URL")
+            if not sandbox_url:
+                return {
+                    "success": False,
+                    "error": "isolated execution requires SANDBOX_RUNNER_URL — no in-process fallback for untrusted code",
+                    "blocked": True,
+                }
+            via = await self._exec_via_runner(
+                sandbox_url,
+                language="javascript",
+                code=code,
+                input_values={},
+                timeout_s=policy.max_cpu_time,
+            )
+            if via is None:
+                return {
+                    "success": False,
+                    "error": "sandbox runner unavailable — refused (no in-process fallback for isolated code)",
+                    "blocked": True,
+                }
+            return via
+
         # Create temp file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
             f.write(code)
@@ -342,7 +393,7 @@ class SandboxBlock(UniversalBlock):
             rc = result.get("return_code", "N/A") if result else "N/A"
             f.write(f"{ts} | SANDBOX | {status} | {code!r} | {rc}\n")
 
-    async def _execute_bash(self, code: str, policy: SandboxPolicy) -> Dict:
+    async def _execute_bash(self, code: str, policy: SandboxPolicy, isolated: bool = False) -> Dict:
         """Execute bash commands in restricted shell with strict allowlist."""
         import subprocess
 
@@ -354,6 +405,32 @@ class SandboxBlock(UniversalBlock):
             return result
 
         sandbox_url = os.getenv("SANDBOX_RUNNER_URL")
+        if isolated:
+            if not sandbox_url:
+                result = {
+                    "success": False,
+                    "error": "isolated execution requires SANDBOX_RUNNER_URL — no in-process fallback for untrusted code",
+                    "blocked": True,
+                }
+                self._audit_shell(code, allowed=False, result=result)
+                return result
+            via = await self._exec_via_runner(
+                sandbox_url,
+                language="bash",
+                code=code,
+                input_values={},
+                timeout_s=policy.max_cpu_time,
+            )
+            if via is None:
+                result = {
+                    "success": False,
+                    "error": "sandbox runner unavailable — refused (no in-process fallback for isolated code)",
+                    "blocked": True,
+                }
+                self._audit_shell(code, allowed=False, result=result)
+                return result
+            self._audit_shell(code, allowed=True, result=via)
+            return via
         if sandbox_url:
             via = await self._exec_via_runner(
                 sandbox_url,

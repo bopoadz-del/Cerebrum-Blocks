@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Typed financial document analysis for statements, audit reports, KYC/AML, formulas, regulatory flags, and risk scoring.",
   "digests": {
@@ -15,6 +16,7 @@
   ],
   "layer": 3,
   "name": "Finance Document Analysis V2",
+  "never": [],
   "outputs": [
     {
       "description": "Typed finance analysis",
@@ -36,16 +38,6 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "x49kgJJ55um2bR7pwqdUtcZQGdmy784HqiKA7gKq2z8altrRvCJN9/6oOVEZ+dJ1nf3mEy9A82KOsrHsey38Cg==",
-  "tags": [
-    "domain",
-    "finance",
-    "v2",
-    "document_analysis",
-    "deterministic"
-  ],
-  "trust_tier": "platform",
-  "version": "2.0.0",
   "reads": [
     {
       "kind": "caller",
@@ -56,12 +48,20 @@
       "scope": "runtime"
     }
   ],
+  "signature": "A5R5JGCZP9HB/30ujOwBnuyeKyneKcU8//YolOzCdCZx/QF85bSZVwhKKRL0bAIsqocnIomQo59AJ2lywE6xCA==",
+  "tags": [
+    "domain",
+    "finance",
+    "v2",
+    "document_analysis",
+    "deterministic"
+  ],
+  "trust_tier": "platform",
+  "version": "2.0.0",
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

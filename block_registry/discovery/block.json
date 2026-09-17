@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -80,6 +87,7 @@
   ],
   "layer": 4,
   "name": "Discovery",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -94,11 +102,21 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "vector",
     "analytics"
   ],
-  "signature": "pwnGA96p0bLV+bUju5LmKBzbGngb/t7MDmasTNJHYAG2V1GkX1pM4bjVkl85KeYzsGtSSO4dQtEjhbNZa0BEBg==",
+  "signature": "ACu9gmu/TEIQoTIl3WkmG6UZCNfXM4nafuZl+EsDxD0qCHWY80seerQju4wW7UZVqpnNdUZ/3o0aNH594r0uCQ==",
   "tags": [
     "store",
     "ai",
@@ -159,28 +177,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Construction semantic router: maps user messages to action queues with TF-IDF similarity scoring",
   "digests": {
@@ -35,6 +36,7 @@
   ],
   "layer": 2,
   "name": "Smart Orchestrator",
+  "never": [],
   "outputs": [
     {
       "description": "Action Queue",
@@ -54,8 +56,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "+O3JSINmpLBB+NvJ8ALicb7YV+DwVzZbPkyMSOxkHy2nFsQCBRNTKrvcq0Q9ZsHqdfFwszQ11WkDAnlEb2LTDg==",
+  "signature": "x26LOpd3MehaHSVL2U8Zot25Hw/v2VgVfWwXGcEX7B5ukHUFDvNsFObS8SNemLWx5ICcUACzbBoHoJuYSicCAw==",
   "tags": [
     "infrastructure",
     "construction",
@@ -82,22 +94,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

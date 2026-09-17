@@ -1,10 +1,12 @@
 {
+  "acceptance": [],
   "description": "Natural-language access to the construction knowledge base.",
   "digests": {
     "block.json": "a2ea0d22b0b66d71e98ea5e090dc3311a956d4249fb4205afb7679840f05f86d"
   },
   "id": "construction_advisor",
   "name": "Construction Advisor",
+  "never": [],
   "permissions": {
     "blocks": [],
     "filesystem": false,
@@ -12,9 +14,6 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "60vuo5zBLAnny6KO1Xtrj1EUZKgYwa614C+WaF4s5Qb71dqKA+uLoqE3qPE51iYLcWfY0UbynLesQU5ujTcfBw==",
-  "trust_tier": "platform",
-  "version": "1.0.0",
   "reads": [
     {
       "kind": "caller",
@@ -25,12 +24,13 @@
       "scope": "local"
     }
   ],
+  "signature": "lK1jpqpHQ3f/pVDjD0CgddrxJ/0UnHoUJsf0RRbZ9SijikkYYHZMhAIUOINxzhiVTJMomu1fVDmNfWHRy5sPAA==",
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

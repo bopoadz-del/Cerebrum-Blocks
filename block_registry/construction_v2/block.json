@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Construction document analysis with typed input/output",
   "digests": {
@@ -56,6 +57,7 @@
   ],
   "layer": 3,
   "name": "Construction V2",
+  "never": [],
   "outputs": [
     {
       "description": "Concrete",
@@ -85,8 +87,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "IUZJwLu9qqSK20PsavycQjWRCA6GLY5IxSWsLpWKysx6fEitghmfaMs4TD8w9IxawJ4aSlHBUyO1GWv2ygKvDw==",
+  "signature": "b7NJIcF2DOwYhcCATf/KG2iJM8N5b++w5hj4j1QQRAy8jCWnc9CgNariNjRH6U+OzCgt8vAsnK2Hst8hVXAHAA==",
   "tags": [
     "domain",
     "construction",
@@ -127,22 +139,10 @@
     }
   ],
   "version": "2.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

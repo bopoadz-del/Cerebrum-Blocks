@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -42,6 +49,7 @@
   ],
   "layer": 5,
   "name": "Webhook",
+  "never": [],
   "outputs": [
     {
       "name": "result",
@@ -55,8 +63,26 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    },
+    {
+      "kind": "queue",
+      "scope": "jobs"
+    }
+  ],
   "requires": [],
-  "signature": "4XbWpzhbHeQYGJxrp+91ci2L2tvzxTjkUK9YucUpTDPbJIcQVoz/AJXeqpTVDBJ3+qrSQg6oyGt+YEvA+TChAw==",
+  "signature": "U3QdQm/ejrpxXCGnTDqy5VZrEB5L64D5SKVb4Krem8wWRbN4cBX8ZEuk1IAAkez9EVVJKex7RluR6Qtq64JQBw==",
   "tags": [
     "webhook",
     "http",
@@ -86,24 +112,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    },
-    {
-      "kind": "queue",
-      "scope": "jobs"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -112,14 +120,6 @@
     {
       "kind": "network",
       "scope": "http.outbound"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

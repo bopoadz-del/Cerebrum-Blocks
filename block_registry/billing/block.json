@@ -1,9 +1,21 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
     "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
-    "block.json": "309028156fe68befea8e508ab535feaabc044dc24ce7bfe7c1aadc85db294a1f",
+    "block.json": "59fd6822983403f9612672696e23b660c5c3c9127d3090cacec2c2b0107a7265",
     "block.py": "494c6cc16f0556ecc83f802aae7629248efab0b631f15001c0c73f6b1a84df6b"
   },
   "execution": {
@@ -25,6 +37,8 @@
       "options": [
         "record_usage",
         "check_quota",
+        "check_purchase",
+        "record_purchase",
         "create_customer",
         "create_subscription",
         "get_invoice",
@@ -58,6 +72,7 @@
   ],
   "layer": 5,
   "name": "Billing",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -72,12 +87,22 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "config",
     "auth",
     "memory"
   ],
-  "signature": "JJaHgxrWUgC6sZIxcQpvg35Jryjsksz+KoSxj+YJiebTVTC43kQu+Ns0fk2TCBEh6nUOGQA/uQFWj3rVLjxYAw==",
+  "signature": "1W7z/R4VqrJNELsu2EbgnMmQLKGZYOneKw7aH2zeugGVJUNuyN34YnwjQy0xkOlOFg/jHwNfkLZ0DalnNseYAw==",
   "tags": [
     "billing",
     "usage",
@@ -96,6 +121,8 @@
       "options": [
         "record_usage",
         "check_quota",
+        "check_purchase",
+        "record_purchase",
         "create_customer",
         "create_subscription",
         "get_invoice",
@@ -121,33 +148,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
-    },
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }

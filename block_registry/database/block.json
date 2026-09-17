@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -50,6 +57,7 @@
   ],
   "layer": 0,
   "name": "Database",
+  "never": [],
   "outputs": [
     {
       "description": "Rows",
@@ -64,10 +72,28 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "database",
+      "scope": "sql"
+    }
+  ],
   "requires": [
     "config"
   ],
-  "signature": "Vf4bZiQq/mPvnIwvdk03rOTPVk3cZBMwRXfbOIaDEsWxvhorvLMei2fvb+OY7x2Hboh/szRZLl9t+cVMjFKVBQ==",
+  "signature": "rh3Y28ywD+AragebP52+cDSHGa6n4Y+5OPapue6jW2183Kg09y/1PzPl27gE3FtZdpc8bzQtXHuB1dAZghAICw==",
   "tags": [
     "infrastructure",
     "database",
@@ -105,24 +131,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "database",
-      "scope": "sql"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -131,14 +139,6 @@
     {
       "kind": "database",
       "scope": "sql"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

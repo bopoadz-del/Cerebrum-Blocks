@@ -19,7 +19,7 @@ class BillingBlock(UniversalBlock):
     ui_schema = {
         'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
         'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
-        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['record_usage', 'check_quota', 'create_customer', 'create_subscription', 'get_invoice', 'upgrade', 'webhook'], 'default': 'record_usage'}],
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['record_usage', 'check_quota', 'record_purchase', 'check_purchase', 'create_customer', 'create_subscription', 'get_invoice', 'upgrade', 'webhook'], 'default': 'record_usage'}],
         'quick_actions': [],
     }
     
@@ -49,6 +49,9 @@ class BillingBlock(UniversalBlock):
         self.stripe_key = (config or {}).get("stripe_secret_key")
         self.stripe = None
         self.webhook_secret = (config or {}).get("stripe_webhook_secret")
+        # Purchase ledger: owner (api_key or user_id) -> purchased block ids.
+        # Persisted through the memory block when wired; in-memory otherwise.
+        self._purchases: Dict[str, set] = {}
         
         if self.stripe_key:
             try:
@@ -70,6 +73,10 @@ class BillingBlock(UniversalBlock):
             return await self._record_usage(input_data)
         elif action == "check_quota":
             return await self._check_quota(input_data)
+        elif action == "record_purchase":
+            return await self._record_purchase(input_data)
+        elif action == "check_purchase":
+            return await self._check_purchase(input_data)
         elif action == "create_customer":
             return await self._create_customer(input_data)
         elif action == "create_subscription":
@@ -82,6 +89,40 @@ class BillingBlock(UniversalBlock):
             return await self._handle_webhook(input_data)
         return {"error": "Unknown action"}
     
+    async def _record_purchase(self, data: Dict) -> Dict:
+        """Record a verified purchase of a block by an owner."""
+        owner = str(data.get("api_key") or data.get("user_id") or "").strip()
+        block_id = str(data.get("block_id") or "").strip()
+        if not owner or not block_id:
+            return {"recorded": False, "error": "api_key/user_id and block_id required"}
+        self._purchases.setdefault(owner, set()).add(block_id)
+        if self.memory_block:
+            await self.memory_block.execute({
+                "action": "set",
+                "key": f"billing:purchase:{owner}:{block_id}",
+                "value": {"purchased": True},
+                "ttl": 0,
+            })
+        return {"recorded": True, "owner": owner, "block_id": block_id}
+
+    async def _check_purchase(self, data: Dict) -> Dict:
+        """Whether the owner has a recorded purchase of the block."""
+        owner = str(data.get("api_key") or data.get("user_id") or "").strip()
+        block_id = str(data.get("block_id") or "").strip()
+        if not owner or not block_id:
+            return {"purchased": False, "error": "api_key/user_id and block_id required"}
+        if block_id in self._purchases.get(owner, set()):
+            return {"purchased": True, "owner": owner, "block_id": block_id}
+        if self.memory_block:
+            hit = await self.memory_block.execute({
+                "action": "get",
+                "key": f"billing:purchase:{owner}:{block_id}",
+            })
+            if hit.get("hit") and (hit.get("value") or {}).get("purchased"):
+                self._purchases.setdefault(owner, set()).add(block_id)
+                return {"purchased": True, "owner": owner, "block_id": block_id}
+        return {"purchased": False, "owner": owner, "block_id": block_id}
+
     async def _record_usage(self, data: Dict) -> Dict:
         """Record API usage per customer"""
         api_key = data.get("api_key")

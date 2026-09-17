@@ -1,10 +1,18 @@
 {
+  "acceptance": [
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "description": "LLM agent for project planning and reasoning.",
   "digests": {
     "block.json": "80fa066337feabaa4e84e1a33618c9382d31a0661dc5fe5c0a586b15f22fd777"
   },
   "id": "project_reasoner",
   "name": "Project Reasoner",
+  "never": [],
   "permissions": {
     "blocks": [],
     "filesystem": true,
@@ -17,9 +25,6 @@
     "network": true
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "vO7h7Pwe3++HdLZ2suia621l0h7BuTvZpycBpinhiiTngXmZ3H/3qtLLh2v5wxhT+JbaeTEh/wPZXIp44up2DQ==",
-  "trust_tier": "platform",
-  "version": "1.0.0",
   "reads": [
     {
       "kind": "caller",
@@ -42,18 +47,13 @@
       "scope": "provider"
     }
   ],
+  "signature": "Abyq8O95JFSEpBq4gS7/RUIcwfA6gjzsBbaGd7WTxlfOE+Z5GXCnAU5NQ+NAWOhxwgWEtjHuLv4rNQrOj9rRBA==",
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }

@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "returns not_implemented rather than inventing a result",
+      "id": "not_implemented",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Android device storage access via ADB or REST bridge",
   "digests": {
@@ -21,6 +28,7 @@
   ],
   "layer": 4,
   "name": "Android Drive",
+  "never": [],
   "outputs": [
     {
       "description": "Files",
@@ -35,8 +43,14 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
   "requires": [],
-  "signature": "gKJp6Km5mcMY0Fhi9yfcm8q1kimhkc7k+r+m4Gtew/dOTCTF8u21wfi6juZYaC5RNrRgZHoWWsuCrTUf4oL3Dw==",
+  "signature": "I1FHAakVY20UOHqrJh2ux/k6AXEqjYENzCiRo0I+aAG2Ah3ksW4X9Avz4NqSKfYAI4A/31Q7jcGdQcbYgCI7DQ==",
   "tags": [
     "integration",
     "storage",
@@ -51,24 +65,10 @@
     }
   ],
   "version": "1.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "not_implemented",
-      "check": "returns not_implemented rather than inventing a result",
-      "status": "refused"
     }
   ]
 }

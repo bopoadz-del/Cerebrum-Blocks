@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "RS Means-style benchmark unit costs, cost ranges, and market data for construction items",
   "digests": {
@@ -70,6 +71,7 @@
   ],
   "layer": 2,
   "name": "Historical Benchmark",
+  "never": [],
   "outputs": [
     {
       "description": "Unit cost",
@@ -94,8 +96,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "+EAbHfxQ1lIWVjCbIsyRIbXkeknGnmKpstiOADO5gDWAZ/UjCXV4bV4J7ssB0LTlVo7nRxS9kPD1zxHmBst8Dw==",
+  "signature": "GIyc9HV5nrKZQQUdZCEoU0Qq/TGY4r08RjK0TEBbBzNeOW7V3JDrCAsnAI+xMEIsVFDvM7V4w+8Su8T+4pZYBA==",
   "tags": [
     "construction",
     "cost",
@@ -147,22 +159,10 @@
     }
   ],
   "version": "1.1",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

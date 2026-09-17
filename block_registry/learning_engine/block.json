@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Tier promotion + coefficient tuning: learns from user corrections to improve formula accuracy",
   "digests": {
@@ -42,6 +54,7 @@
   ],
   "layer": 3,
   "name": "Learning Engine",
+  "never": [],
   "outputs": [
     {
       "description": "Tier",
@@ -65,10 +78,28 @@
     "imports": [],
     "network": false
   },
-  "publisher_id": "cerebrum_platform",
-  "requires": [],
   "provenance_policy": "independently_labeled_only",
-  "signature": "RRlRoFQcLkAmLAaCdbgWbHZCpBuZ51RmfJiTndP0bgl298a6rJd1zQ1aBub8lJx8xhy8SbueY9uA4BmJRHypDQ==",
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "queue",
+      "scope": "jobs"
+    }
+  ],
+  "requires": [],
+  "signature": "zP4lhFv7GPdS3WZPsPLc59w+CGL3PMKbjtz9+3dimE+6bkTpKsnu4HTXKla8YTCe3lWqO1S/g1dvhBTTzQ5UCQ==",
   "tags": [
     "domain",
     "construction",
@@ -101,41 +132,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "queue",
-      "scope": "jobs"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
-    },
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }

@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -63,6 +70,7 @@
   ],
   "layer": 3,
   "name": "Vector",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -77,11 +85,21 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "config",
     "memory"
   ],
-  "signature": "NM4lBH8jEF4LkDdCHeom6E83tIhv5LoiEdYIwiQZiT26JSUbpvPBfgcQEwJyS2BVzVoDDr2yF0+30AWtSgAdBQ==",
+  "signature": "f35+wfwGKaP9EDOGKwWTRpazHkJM92n/E0AV953Awo7xSsL57lyJixFbR4jfWgV7mDrJ/YyhvzCHWcWT0KanAA==",
   "tags": [
     "ai",
     "vector",
@@ -129,28 +147,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

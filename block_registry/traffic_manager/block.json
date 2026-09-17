@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Governance layer between block-to-block calls",
   "digests": {
@@ -74,6 +81,7 @@
   ],
   "layer": 1,
   "name": "Traffic Manager",
+  "never": [],
   "outputs": [
     {
       "name": "result",
@@ -87,12 +95,26 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "queue",
+      "scope": "jobs"
+    }
+  ],
   "requires": [
     "rate_limiter",
     "failover",
     "queue"
   ],
-  "signature": "G0Er74C2cScSk5PilLi0//CNbRyXkku9BEcCT3f+BpkXF9hKNzLYGjMHKiVMsTSrkJZFxto/39cHwgFaBRM0Bw==",
+  "signature": "rFZ0BLNWO/j/QFd1PwUvC7TRcxDaHP91ZCixAe4Y6DnHQgw5zz2xnSst4GOhLgJhTGj/Qiiclu96v2Gwqz0vDQ==",
   "tags": [
     "security",
     "governance",
@@ -143,20 +165,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "queue",
-      "scope": "jobs"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -165,14 +173,6 @@
     {
       "kind": "memory",
       "scope": "cache"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }
