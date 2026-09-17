@@ -22,12 +22,9 @@ from openpyxl import Workbook
 from pydantic import BaseModel
 from fpdf import FPDF
 
-from neutral_app import db
-from neutral_app.auth import AuthError, issue_token, principal_from_header
-from neutral_app.platform import (
-    close_payload,
-    get_platform,
-)
+from . import db
+from .auth import AuthError, issue_token, principal_from_header
+from .platform import close_payload, get_platform
 
 app = FastAPI(title="Cerebrum Neutral Proof Platform", version="1.0.0")
 
