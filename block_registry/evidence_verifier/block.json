@@ -1,0 +1,120 @@
+{
+  "author": "Cerebrum Team",
+  "description": "SHA-256 tamper evidence: hashes content into chained integrity records (store) and verifies them, failing on tampered content (verify).",
+  "id": "evidence_verifier",
+  "inputs": [
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "default": "store",
+      "options": [
+        "store",
+        "verify",
+        "list"
+      ],
+      "description": "store | verify | list"
+    },
+    {
+      "name": "content",
+      "type": "json",
+      "required": true,
+      "description": "Content to hash (store) or verify"
+    },
+    {
+      "name": "record_id",
+      "type": "string",
+      "required": false,
+      "description": "Integrity record id for verify"
+    }
+  ],
+  "layer": 3,
+  "name": "Evidence Verifier",
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Capability result"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "tags": [
+    "estate",
+    "private_estate_operations",
+    "steward"
+  ],
+  "trust_tier": "platform",
+  "ui_schema": [
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "store",
+        "verify",
+        "list"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Content",
+      "name": "content",
+      "widget": "json"
+    },
+    {
+      "label": "Record Id",
+      "name": "record_id",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0",
+  "execution": {
+    "type": "python",
+    "entrypoint": "block.py"
+  },
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "missing_content",
+      "check": "refuses or errors when content is absent on store/verify",
+      "status": "refused"
+    },
+    {
+      "id": "tampered_content",
+      "check": "fails verification when stored or provided content was tampered",
+      "status": "failed"
+    },
+    {
+      "id": "unknown_record",
+      "check": "errors on an unknown integrity record id",
+      "status": "failed"
+    },
+    {
+      "id": "unknown_action",
+      "check": "errors on an unknown or missing action",
+      "status": "failed"
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "author": "Cerebrum Team",
+  "description": "JSON-file-backed registry of property and asset records: create with duplicate-id rejection and read-back of stored records.",
+  "id": "estate_registry",
+  "inputs": [
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "default": "create",
+      "options": [
+        "create",
+        "read",
+        "list"
+      ],
+      "description": "create | read | list"
+    },
+    {
+      "name": "id",
+      "type": "string",
+      "required": true,
+      "description": "Registry record id (unique)"
+    },
+    {
+      "name": "data",
+      "type": "json",
+      "required": false,
+      "description": "Record payload"
+    }
+  ],
+  "layer": 3,
+  "name": "Estate Registry",
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Capability result"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": true,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "tags": [
+    "estate",
+    "private_estate_operations",
+    "steward"
+  ],
+  "trust_tier": "platform",
+  "ui_schema": [
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "create",
+        "read",
+        "list"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Id",
+      "name": "id",
+      "widget": "text"
+    },
+    {
+      "label": "Data",
+      "name": "data",
+      "widget": "json"
+    }
+  ],
+  "version": "1.0.0",
+  "execution": {
+    "type": "python",
+    "entrypoint": "block.py"
+  },
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "file",
+      "scope": "local.write"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "missing_record_id",
+      "check": "refuses or errors when the record id is absent",
+      "status": "refused"
+    },
+    {
+      "id": "duplicate_id",
+      "check": "rejects a duplicate registry record id",
+      "status": "failed"
+    },
+    {
+      "id": "unknown_record",
+      "check": "errors on an unknown record id on read",
+      "status": "failed"
+    },
+    {
+      "id": "unknown_action",
+      "check": "errors on an unknown or missing action",
+      "status": "failed"
+    }
+  ]
+}

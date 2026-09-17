@@ -1,0 +1,131 @@
+{
+  "author": "Cerebrum Team",
+  "description": "Maintenance work orders: create(title, due), list sorted by due date, and complete(id); unknown work-order ids fail.",
+  "id": "estate_maintenance",
+  "inputs": [
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "default": "create",
+      "options": [
+        "create",
+        "list",
+        "complete"
+      ],
+      "description": "create | list | complete"
+    },
+    {
+      "name": "title",
+      "type": "string",
+      "required": true,
+      "description": "Work order title (create)"
+    },
+    {
+      "name": "due",
+      "type": "string",
+      "required": false,
+      "description": "Due date ISO (create; optional — orders without a due date sort last)"
+    },
+    {
+      "name": "id",
+      "type": "string",
+      "required": false,
+      "description": "Work order id (complete)"
+    }
+  ],
+  "layer": 3,
+  "name": "Estate Maintenance",
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Capability result"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "tags": [
+    "estate",
+    "private_estate_operations",
+    "steward"
+  ],
+  "trust_tier": "platform",
+  "ui_schema": [
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "create",
+        "list",
+        "complete"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Title",
+      "name": "title",
+      "widget": "text"
+    },
+    {
+      "label": "Due",
+      "name": "due",
+      "widget": "text"
+    },
+    {
+      "label": "Id",
+      "name": "id",
+      "widget": "text"
+    }
+  ],
+  "version": "1.0.0",
+  "execution": {
+    "type": "python",
+    "entrypoint": "block.py"
+  },
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "missing_title",
+      "check": "refuses or errors when title is absent on create",
+      "status": "refused"
+    },
+    {
+      "id": "unknown_work_order",
+      "check": "errors on an unknown work order id",
+      "status": "failed"
+    },
+    {
+      "id": "duplicate_work_order",
+      "check": "errors when a work order id already exists",
+      "status": "failed"
+    },
+    {
+      "id": "unknown_action",
+      "check": "errors on an unknown or missing action",
+      "status": "failed"
+    }
+  ]
+}

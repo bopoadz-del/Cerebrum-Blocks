@@ -1,0 +1,111 @@
+{
+  "author": "Cerebrum Team",
+  "description": "Readiness gate: evaluates a checklist ({id, required}) against a state map and passes only when every required item is satisfied, else fails listing unmet items.",
+  "id": "readiness_engine",
+  "inputs": [
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "default": "evaluate",
+      "options": [
+        "evaluate"
+      ],
+      "description": "evaluate"
+    },
+    {
+      "name": "checklist",
+      "type": "json",
+      "required": true,
+      "description": "[{id, required}] checklist"
+    },
+    {
+      "name": "state",
+      "type": "json",
+      "required": false,
+      "description": "Map of item id -> state"
+    }
+  ],
+  "layer": 3,
+  "name": "Readiness Engine",
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Capability result"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "requires": [],
+  "tags": [
+    "estate",
+    "private_estate_operations",
+    "steward"
+  ],
+  "trust_tier": "platform",
+  "ui_schema": [
+    {
+      "label": "Action",
+      "name": "action",
+      "options": [
+        "evaluate"
+      ],
+      "widget": "select"
+    },
+    {
+      "label": "Checklist",
+      "name": "checklist",
+      "widget": "json"
+    },
+    {
+      "label": "State",
+      "name": "state",
+      "widget": "json"
+    }
+  ],
+  "version": "1.0.0",
+  "execution": {
+    "type": "python",
+    "entrypoint": "block.py"
+  },
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ],
+  "never": [],
+  "acceptance": [
+    {
+      "id": "unmet_checklist",
+      "check": "fails the gate when a required checklist item is unmet",
+      "status": "failed"
+    },
+    {
+      "id": "malformed_input",
+      "check": "errors when checklist or state is not well-formed",
+      "status": "failed"
+    },
+    {
+      "id": "unknown_action",
+      "check": "errors on an unknown or missing action",
+      "status": "failed"
+    }
+  ]
+}
