@@ -9,11 +9,14 @@ insert, reorder, or override a rule at evaluation time.
 
 from __future__ import annotations
 
+import logging
 from datetime import date
 from typing import Any, Dict, List, Optional
 
 from app.reasoning_kernel import ReasoningResult, ReasoningStatus
 from app.reasoning_kernel.schemas import DecisionTableSpec, RuleSpec
+
+_log = logging.getLogger(__name__)
 
 _OPS = {
     "eq": lambda a, b: a == b,
@@ -150,7 +153,8 @@ def _op_matches(actual: Any, cond: Any) -> bool:
         return False
     try:
         return bool(fn(actual, value))
-    except (TypeError, ValueError):
+    except (TypeError, ValueError) as exc:
+        _log.debug("condition mismatch %r %r: %s", actual, value, exc)
         return False
 
 

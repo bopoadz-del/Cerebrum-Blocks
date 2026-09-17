@@ -10,11 +10,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from app.reasoning_kernel import ReasoningResult, ReasoningStatus
 from app.reasoning_kernel.schemas import WorkflowSpec
+
+_log = logging.getLogger(__name__)
 
 
 class WorkflowEngine:
@@ -192,7 +195,8 @@ def _guard_holds(guard: str, facts: Dict[str, Any]) -> bool:
         return False
     try:
         return bool(fn(facts.get(field), _coerce(want)))
-    except (TypeError, ValueError):
+    except (TypeError, ValueError) as exc:
+        _log.debug("guard %r not comparable: %s", guard, exc)
         return False
 
 

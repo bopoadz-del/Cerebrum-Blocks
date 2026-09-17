@@ -10,9 +10,12 @@ Two ways to use this:
    Events so Claude Desktop / Copilot / any MCP client can discover the tools.
 """
 
+import logging
 from typing import Any, Dict
 
 from app.core.universal_base import UniversalBlock
+
+_log = logging.getLogger(__name__)
 
 
 class MCPAdapterBlock(UniversalBlock):
@@ -83,8 +86,11 @@ class MCPAdapterBlock(UniversalBlock):
                             "description": f"Action to run on the {name} block",
                             "enum": actions,
                         }
-            except Exception:
-                pass  # non-instantiable or no actions — keep the generic schema
+            except Exception as exc:
+                # non-instantiable or no actions — keep the generic schema
+                _log.debug(
+                    "mcp_adapter: schema enrichment failed for %r: %s", name, exc
+                )
 
             tools.append({
                 "name": name,
