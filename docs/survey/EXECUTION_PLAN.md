@@ -116,8 +116,11 @@ into CerebrumDev.ai CI as a pre-merge "hollow function / vacuous test" gate.
   - 1.4 spec_analyzer: synced from The_Fork (OCR fallback under 200 chars,
     BS EN ordering, ASTM year suffix, AS/IBC codes, grade stopwords,
     grade/standard resolution via construction_constants).
-  - Known env gaps (pre-existing, not wave regressions): store test suite is
-    flaky in this environment — 3 identical sweeps gave 1 fail / 5 fail / 0
-    fail with different victims; needs a dedicated flake investigation.
-    system-python lacks pandas/sklearn/gTTS metadata; the store venv
-    (.venv) is the correct runner.
+  - Known env gaps (pre-existing, not wave regressions): system-python
+    lacks pandas/sklearn/gTTS metadata; the store venv (.venv) is the
+    correct runner.
+  - CORRECTION: the earlier "store suite is flaky" note was wrong. The
+    recurring spec_analyzer test failure was a bug in MY test helper —
+    it unpacked frozensets, whose iteration order is hash-seeded and
+    varies per process. Fixed to tuples; the combined wave suite now
+    passes 4/4 consecutive runs. No suite flakiness remains on record.

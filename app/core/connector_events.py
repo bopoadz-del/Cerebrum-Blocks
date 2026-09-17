@@ -7,7 +7,8 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic.alias_generators import to_camel
 
 
 def _utc_now() -> datetime:
@@ -100,6 +101,10 @@ class FHIRHumanName(BaseModel):
 
 
 class Patient(BaseModel):
+    # Real FHIR payloads are camelCase (birthDate, effectiveDateTime...);
+    # accept both camelCase input and snake_case by name.
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     resource_type: str = "Patient"
     id: Optional[str] = None
     active: Optional[bool] = None
@@ -110,6 +115,8 @@ class Patient(BaseModel):
 
 
 class Observation(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     resource_type: str = "Observation"
     id: Optional[str] = None
     status: Optional[str] = None
@@ -122,6 +129,8 @@ class Observation(BaseModel):
 
 
 class MedicationRequest(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     resource_type: str = "MedicationRequest"
     id: Optional[str] = None
     status: Optional[str] = None
