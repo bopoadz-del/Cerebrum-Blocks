@@ -185,12 +185,47 @@ class HistoricalBenchmarkBlock(UniversalBlock):
         action = params.get("action") or input_data.get("action") if isinstance(input_data, dict) else None
 
         if action == "record" and isinstance(input_data, dict):
-            # Future: persist user-supplied rates to learning_engine.
-            return {
-                "status": "success",
-                "action": "record",
-                "message": "Rate sample recorded (stub — learning_engine integration pending).",
-            }
+            # Delegate to the learning engine's real correction path — a
+            # recorded sample must actually land in the credibility ledger,
+            # not return a vacuous success.
+            correction = input_data.get("correction_data") or {}
+            formula_id = (
+                correction.get("formula_id")
+                or input_data.get("formula_id")
+                or params.get("formula_id")
+            )
+            predicted = correction.get("predicted", input_data.get("predicted"))
+            actual = correction.get("actual", input_data.get("actual"))
+            if not formula_id or predicted is None or actual is None:
+                return {
+                    "status": "error",
+                    "action": "record",
+                    "error": "record requires correction_data or "
+                             "formula_id + predicted + actual",
+                }
+            try:
+                from app.blocks.learning_engine import LearningEngineBlock
+
+                engine = LearningEngineBlock()
+                result = await engine.process(
+                    {
+                        "operation": "record_correction",
+                        "correction_data": {
+                            "formula_id": formula_id,
+                            "predicted": predicted,
+                            "actual": actual,
+                        },
+                    },
+                    params,
+                )
+                return {**result, "action": "record"}
+            except Exception as exc:
+                return {
+                    "status": "error",
+                    "action": "record",
+                    "error": "learning_engine.record_correction failed: "
+                             f"{type(exc).__name__}: {exc}",
+                }
 
         item = params.get("item") or (input_data.get("item") if isinstance(input_data, dict) else "")
         unit = params.get("unit") or (input_data.get("unit") if isinstance(input_data, dict) else "")
