@@ -124,3 +124,36 @@ into CerebrumDev.ai CI as a pre-merge "hollow function / vacuous test" gate.
     it unpacked frozensets, whose iteration order is hash-seeded and
     varies per process. Fixed to tuples; the combined wave suite now
     passes 4/4 consecutive runs. No suite flakiness remains on record.
+- 2026-09-17 (overnight): Wave 1.7 batch 2 shipped (8efc840b) —
+  historical_benchmark 'record' wired to learning_engine.record_correction
+  (vacuous-success stub removed, refusal on incomplete payloads, regression
+  tests green); retail_v2 registered in block_registry/ with adapter +
+  Dockerfile. Confirmed channel_router is NOT pulled by the retail kit
+  manifest (insurance tags already explicit) and hotel_trigger is already
+  honestly labeled 0.1.0-skeleton — no change needed on those.
+
+### PARKED with notes (overnight)
+
+- safety_world_detector: real YOLO-World onnx detector, no UniversalBlock
+  wrapper and unregistered. Wrap in a UniversalBlock (process -> detect,
+  SA FET Y_WORLD_WEIGHTS env) + register; until then it is consumed only by
+  non-registry paths.
+- review.py billing dep: add billing to requires + verify purchase/usage
+  via the billing block before verified=True (current TODO at line 282).
+- discovery.py: route recommend/search through vector.py cosine search.
+- sandbox.py: make SANDBOX_RUNNER_URL path mandatory for untrusted code
+  (drop insecure fallback).
+- connector-infra batch: mcp_adapter cleanup + inbound webhook receiver
+  (port verify_incoming_webhook/WebhookMiddleware from Cerebrum donor).
+- finance cluster: CoA lifecycle (draft/active versions + approval gate)
+  and finance_import CSV/XLSX entry + idempotency.
+- hotel: opera_connector real block (no donor exists — build from
+  hotelops-v2 connect/fetch/normalise/MockLevel pattern); hotel_v2 wire
+  into a product endpoint.
+- core-infra/reasoning registrations: project_reasoner already registered
+  (verify block.json completeness); remaining unregistered built blocks
+  to wrap/register (safety_world_detector, and any core-infra orphans
+  from the cluster list).
+- StockWisePro enhancement items (API-key scopes/IP/expiry, webhook
+  persistence, shared rate-limit store): feature builds, not ports —
+  defer to a dedicated wave.
