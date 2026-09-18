@@ -78,6 +78,16 @@ class WebBlock(UniversalBlock):
 
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         params = params or {}
+        if params.get("provider") == "mock":
+            # Deterministic offline response — tests and offline callers
+            # must not depend on live DNS/HTTP from CI runners.
+            return {
+                "status": "success",
+                "operation": params.get("operation", "fetch"),
+                "provider": "mock",
+                "content": "deterministic mock web response - no network",
+                "note": "provider=mock short-circuits all network access",
+            }
         url = ""
         if isinstance(input_data, str):
             url = input_data

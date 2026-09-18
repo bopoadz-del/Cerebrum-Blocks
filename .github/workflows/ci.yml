@@ -19,7 +19,6 @@ jobs:
       ENV: test
       DATABASE_URL: postgresql://cerebrum:cerebrum@localhost:5433/cerebrum
       EMBEDDING_MODEL: all-MiniLM-L6-v2
-      CEREBRUM_EMBEDDINGS_OFFLINE: "1"
       VECTOR_DIMENSION: "384"
       CEREBRUM_VIRGIN: "false"
     services:
@@ -222,7 +221,6 @@ jobs:
       ENV: test
       DATABASE_URL: postgresql://cerebrum:cerebrum@localhost:5433/cerebrum
       EMBEDDING_MODEL: all-MiniLM-L6-v2
-      CEREBRUM_EMBEDDINGS_OFFLINE: "1"
       VECTOR_DIMENSION: "384"
       CEREBRUM_VIRGIN: "false"
     services:

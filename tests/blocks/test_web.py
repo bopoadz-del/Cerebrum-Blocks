@@ -14,7 +14,7 @@ async def test_web_block_execute_structure(web_block):
     """Test that Web block returns standardized JSON structure."""
     result = await web_block.execute(
         "https://example.com",
-        {"operation": "fetch"}
+        {"operation": "fetch", "provider": "mock"}
     )
     
     # Assert standardized keys
@@ -44,7 +44,7 @@ async def test_web_block_scrape(web_block):
     """Test Web block scrape operation."""
     result = await web_block.execute(
         "https://example.com",
-        {"operation": "scrape"}
+        {"operation": "scrape", "provider": "mock"}
     )
     
     assert result["block"] == "web"
@@ -56,7 +56,7 @@ async def test_web_block_api_request(web_block):
     """Test Web block API request operation."""
     result = await web_block.execute(
         "https://api.example.com/data",
-        {"operation": "api", "method": "GET"}
+        {"operation": "api", "method": "GET", "provider": "mock"}
     )
     
     assert result["block"] == "web"
