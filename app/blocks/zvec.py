@@ -18,9 +18,12 @@ semantic search. With model2vec, the same call returns a real semantic
 vector that clusters meaningfully.
 """
 
+import logging
 import threading
 from typing import Any, Dict, List, Optional
 
+
+_log = logging.getLogger(__name__)
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -78,10 +81,14 @@ def _semantic_encode(texts: List[str]) -> Optional[np.ndarray]:
     model, backend = _get_semantic_model()
     if model is None:
         return None
-    if backend == "model2vec":
-        vecs = model.encode(texts)
-    else:  # sentence_transformers
-        vecs = model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
+    try:
+        if backend == "model2vec":
+            vecs = model.encode(texts)
+        else:  # sentence_transformers
+            vecs = model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
+    except Exception as exc:
+        _log.warning("semantic backend %s failed: %s", backend, exc)
+        return None
     arr = np.asarray(vecs, dtype=np.float32)
     # Defensive L2 normalize (model2vec already returns normalized but be safe).
     norms = np.linalg.norm(arr, axis=1, keepdims=True)
