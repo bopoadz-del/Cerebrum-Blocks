@@ -80,30 +80,26 @@ class TestBackupRoundTrip:
     def test_wal_side_files_are_excluded_not_copied(self, tmp_path, monkeypatch):
         """The online snapshot already folds WAL content into the .db; copying
         a live -wal file alongside it would restore a torn state on top of a
-        clean one."""
+        clean one.
+
+        Side files are created as placeholder bytes rather than a live WAL
+        session: WAL mode itself fails on CI runner filesystems
+        ('disk I/O error' on any write), and this test guards the EXCLUSION
+        logic, which does not depend on the files' contents.
+        """
         data = tmp_path / "data"
         monkeypatch.setenv("DATA_DIR", str(data))
         monkeypatch.delenv("BACKUP_DIR", raising=False)
         _seed_data_dir(data)
-        # Create REAL side files: keep a WAL-mode connection live during the
-        # backup — the production scenario the online backup API exists for.
-        # (Garbage side files make Linux sqlite fail the snapshot with a
-        # spurious 'disk I/O error' and are not a realistic fixture.)
-        conn = sqlite3.connect(str(data / "rate_limits.db"))
-        try:
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("INSERT INTO usage VALUES ('wal_probe', 1)")
-            conn.commit()
-            assert (data / "rate_limits.db-wal").exists()
+        (data / "rate_limits.db-wal").write_bytes(b"\x00" * 32)
+        (data / "rate_limits.db-shm").write_bytes(b"\x00" * 32)
 
-            result = bk.create_backup()
-            assert result.ok, result.error
-            restored_dir = tmp_path / "restore"
-            bk.restore_backup(result.archive, restored_dir)
-            assert not (restored_dir / "rate_limits.db-wal").exists()
-            assert not (restored_dir / "rate_limits.db-shm").exists()
-        finally:
-            conn.close()
+        result = bk.create_backup()
+        assert result.ok, result.error
+        restored_dir = tmp_path / "restore"
+        bk.restore_backup(result.archive, restored_dir)
+        assert not (restored_dir / "rate_limits.db-wal").exists()
+        assert not (restored_dir / "rate_limits.db-shm").exists()
 
 
 class TestRunBackupOnce:
