@@ -84,6 +84,13 @@ def snapshot_sqlite(source: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     src_conn = sqlite3.connect(str(source))
     try:
+        mode = src_conn.execute("PRAGMA journal_mode").fetchone()[0]
+        if str(mode).lower() == "wal":
+            # Fold the WAL into the database before snapshotting: the
+            # online backup API reading a live -wal fails on some
+            # filesystems (CI runners report 'disk I/O error'). A
+            # truncated WAL means the backup reads database pages only.
+            src_conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         dst_conn = sqlite3.connect(str(dest))
         try:
             src_conn.backup(dst_conn)
