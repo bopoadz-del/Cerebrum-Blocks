@@ -40,6 +40,11 @@ def _get_semantic_model():
     backend is installed.
     """
     global _SEMANTIC_MODEL, _SEMANTIC_BACKEND
+    from app.core.vector_store import embeddings_offline
+
+    if embeddings_offline():
+        _SEMANTIC_BACKEND = "missing"
+        return None, None
     if _SEMANTIC_MODEL is not None or _SEMANTIC_BACKEND == "missing":
         return _SEMANTIC_MODEL, _SEMANTIC_BACKEND if _SEMANTIC_BACKEND != "missing" else None
 
