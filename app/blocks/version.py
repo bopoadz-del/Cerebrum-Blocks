@@ -2,6 +2,9 @@
 
 Handles versioning, dependency management, breaking changes,
 rollbacks, and migration paths for block updates.
+
+Persistence is in-process dicts only. Records are lost on restart.
+database and storage are not used to store versions.
 """
 
 import logging
@@ -17,8 +20,8 @@ logger = logging.getLogger("cerebrum.blocks.version")
 
 class VersionBlock(UniversalBlock):
     """
-    Semantic versioning for blocks.
-    Handles updates, breaking changes, rollback, dependencies.
+    Semantic versioning held in process memory.
+    Lost on restart. Not written to a database.
     """
     name = "version"
     version = "1.0.0"
@@ -611,6 +614,7 @@ class VersionBlock(UniversalBlock):
         
     def health(self) -> Dict:
         h = {"name": self.name, "version": self.version}
+        h["persistence"] = "in_process"
         h["tracked_blocks"] = len(self.versions)
         h["total_versions"] = sum(len(v) for v in self.versions.values())
         h["deprecated_versions"] = len(self.deprecated)
