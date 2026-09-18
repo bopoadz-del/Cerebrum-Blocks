@@ -100,6 +100,28 @@ class SearchBlock(UniversalBlock):
             return {"status": "error", "error": "Query is required"}
 
         serper_key = os.getenv("SERPER_API_KEY", "")
+
+        # The tests (and offline callers) request provider="mock": a
+        # deterministic offline result. This branch must come before any
+        # network call — the block previously ignored the provider param
+        # and hit the live network anyway, which hangs in CI.
+        if params.get("provider") == "mock":
+            return {
+                "status": "success",
+                "query": query,
+                "results": [
+                    {
+                        "title": "Mock Search Result",
+                        "url": "https://example.com/mock",
+                        "snippet": "Deterministic offline mock result - no network.",
+                        "display_url": "example.com",
+                        "source": "mock",
+                    }
+                ],
+                "total": 1,
+                "provider": "mock",
+            }
+
         provider = "serper" if serper_key else "duckduckgo"
 
         try:
