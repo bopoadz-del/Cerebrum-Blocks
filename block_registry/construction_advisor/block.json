@@ -2,7 +2,8 @@
   "acceptance": [],
   "description": "Natural-language access to the construction knowledge base.",
   "digests": {
-    "block.json": "a2ea0d22b0b66d71e98ea5e090dc3311a956d4249fb4205afb7679840f05f86d"
+    "block.json": "a2ea0d22b0b66d71e98ea5e090dc3311a956d4249fb4205afb7679840f05f86d",
+    "block.py": "3793e4b84eba79b79b41df51c8a3eb22c2e50fdc00c0cdcc4231d7b100a1c20c"
   },
   "id": "construction_advisor",
   "name": "Construction Advisor",
@@ -24,7 +25,7 @@
       "scope": "local"
     }
   ],
-  "signature": "lK1jpqpHQ3f/pVDjD0CgddrxJ/0UnHoUJsf0RRbZ9SijikkYYHZMhAIUOINxzhiVTJMomu1fVDmNfWHRy5sPAA==",
+  "signature": "6uOTGVmgfg/mp6BBwHHRMgzOAczCLSEUXIk+geQKta6qzcmGCGhRG5NKBiV64enWB3ViNRkdu4HknAOofTl0Bg==",
   "trust_tier": "platform",
   "version": "1.0.0",
   "writes": [

@@ -70,7 +70,6 @@ ALLOWLIST: dict[str, str] = {
     "app/blocks/learning_engine.py:108": "baseline 2026-09-11",
     "app/blocks/learning_engine.py:228": "baseline 2026-09-11",
     "app/blocks/library_container.py:255": "baseline 2026-09-11",
-    "app/blocks/mcp_adapter.py:83": "baseline 2026-09-11",
     "app/blocks/mcp_consumer.py:81": "baseline 2026-09-11",
     "app/blocks/notification.py:192": "baseline 2026-09-11",
     "app/blocks/notification.py:46": "baseline 2026-09-11",
@@ -142,7 +141,6 @@ RETURN_ALLOWLIST: dict[str, str] = {
     "app/blocks/agency_hierarchy.py:382": "baseline 2026-09-11",
     "app/blocks/bim_extractor.py:267": "baseline 2026-09-11",
     "app/blocks/bim_extractor.py:281": "baseline 2026-09-11",
-    "app/blocks/boq_processor.py:176": "baseline 2026-09-11",
     "app/blocks/bordereaux_ingest.py:380": "baseline 2026-09-11",
     "app/blocks/capture.py:594": "baseline 2026-09-11",
     "app/blocks/context_broker.py:194": "baseline 2026-09-11",
@@ -154,7 +152,6 @@ RETURN_ALLOWLIST: dict[str, str] = {
     "app/blocks/ocr.py:305": "baseline 2026-09-11",
     "app/blocks/ocr.py:307": "baseline 2026-09-11",
     "app/blocks/ocr.py:322": "baseline 2026-09-11",
-    "app/blocks/primavera_parser.py:238": "baseline 2026-09-11",
     "app/blocks/producer_record.py:305": "baseline 2026-09-11",
     "app/blocks/secrets.py:260": "baseline 2026-09-11",
     "app/blocks/vector_search.py:32": "baseline 2026-09-11",
@@ -211,6 +208,7 @@ RETURN_ALLOWLIST: dict[str, str] = {
     "scripts/pipeline_kit.py:92": "baseline 2026-09-11",
     "scripts/regenerate_safe_adapters.py:90": "baseline 2026-09-11",
     "scripts/review_kit.py:78": "baseline 2026-09-11",
+
 }
 
 

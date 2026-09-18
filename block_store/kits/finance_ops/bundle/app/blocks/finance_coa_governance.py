@@ -48,6 +48,26 @@ class FinanceCoAGovernanceBlock(TypedBlock):
         ],
     }
 
+    def __init__(self, hal_block=None, config: Dict = None):
+        super().__init__(hal_block, config)
+        # CoA lifecycle ledger: draft_id -> draft record. In-instance state
+        # (like the estate work-order store); a product wires persistence
+        # at the caller layer. Never part of validation output.
+        self._drafts: Dict[str, Dict[str, Any]] = {}
+        self._active: Dict[str, Dict[str, Any]] = {}  # coa_id -> active version
+        self._archive: Dict[str, List[Dict[str, Any]]] = {}  # coa_id -> archived
+        self._seq = 0
+
+    @staticmethod
+    def _now() -> str:
+        from datetime import datetime, timezone
+
+        return datetime.now(timezone.utc).isoformat()
+
+    def _next_id(self) -> str:
+        self._seq += 1
+        return f"draft-{self._seq:04d}"
+
     async def process(self, input_data: Any, params: Dict = None) -> Dict:
         data = {**(params or {}), **(input_data if isinstance(input_data, dict) else {})}
         operation = data.get("operation") or "validate"
@@ -58,13 +78,151 @@ class FinanceCoAGovernanceBlock(TypedBlock):
                 return self._impact_analysis(data)
             if operation == "resolve_mapping":
                 return self._resolve_mapping(data)
+            if operation == "create_draft":
+                return self._create_draft(data)
+            if operation == "propose_activation":
+                return self._propose_activation(data)
+            if operation == "approve_activation":
+                return self._approve_activation(data)
+            if operation == "state":
+                return self._state(data)
         except (TypeError, ValueError) as exc:
             return {"status": "validation_error", "operation": operation, "error": str(exc)}
         return {
             "status": "unsupported",
             "operation": operation,
             "error": f"Unknown operation: {operation}",
-            "available_operations": ["validate", "impact_analysis", "resolve_mapping"],
+            "available_operations": [
+                "validate", "impact_analysis", "resolve_mapping",
+                "create_draft", "propose_activation", "approve_activation", "state",
+            ],
+        }
+
+    def _create_draft(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Register a draft CoA version. Fail-closed: validation issues refuse."""
+        coa_id = str(data.get("coa_id") or "").strip()
+        requester = str(data.get("requester") or "").strip()
+        if not coa_id:
+            raise ValueError("coa_id is required")
+        if not requester:
+            raise ValueError("requester is required (self-approval is refused later on)")
+        accounts = data.get("accounts")
+        if not isinstance(accounts, list) or not accounts:
+            raise ValueError("accounts must be a non-empty array")
+        current = self._active.get(coa_id) or {}
+        validation = self._validate(
+            {
+                "current_accounts": (current.get("accounts") or []),
+                "proposed_accounts": accounts,
+            }
+        )
+        if validation.get("valid") is not True:
+            raise ValueError(
+                "draft refused by validation: "
+                + "; ".join(str(i) for i in (validation.get("issues") or [])[:5])
+            )
+        version = int(current.get("version") or 0) + 1
+        draft_id = self._next_id()
+        self._drafts[draft_id] = {
+            "draft_id": draft_id,
+            "coa_id": coa_id,
+            "version": version,
+            "accounts": accounts,
+            "requester": requester,
+            "status": "draft",
+            "created_at": self._now(),
+            "approved_by": None,
+            "approved_at": None,
+        }
+        return {
+            "status": "success",
+            "operation": "create_draft",
+            "draft_id": draft_id,
+            "coa_id": coa_id,
+            "version": version,
+            "status_of_draft": "draft",
+        }
+
+    def _propose_activation(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        draft_id = str(data.get("draft_id") or "")
+        draft = self._drafts.get(draft_id)
+        if draft is None:
+            raise ValueError(f"unknown draft_id: {draft_id}")
+        if draft["status"] != "draft":
+            raise ValueError(
+                f"draft {draft_id} is {draft['status']}, not draft — cannot propose"
+            )
+        draft["status"] = "pending_approval"
+        return {
+            "status": "success",
+            "operation": "propose_activation",
+            "draft_id": draft_id,
+            "approval_required": True,
+        }
+
+    def _approve_activation(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """The human gate: pending_approval → active, with self-approval refused."""
+        draft_id = str(data.get("draft_id") or "")
+        approver = str(data.get("approver") or "").strip()
+        draft = self._drafts.get(draft_id)
+        if draft is None:
+            raise ValueError(f"unknown draft_id: {draft_id}")
+        if not approver:
+            raise ValueError("approver is required")
+        if approver == draft["requester"]:
+            raise ValueError("self_approval refused: the requester cannot approve")
+        if draft["status"] != "pending_approval":
+            raise ValueError(
+                f"draft {draft_id} is {draft['status']} — propose_activation first"
+            )
+        coa_id = draft["coa_id"]
+        previous = self._active.get(coa_id)
+        if previous:
+            self._archive.setdefault(coa_id, []).append(previous)
+        self._active[coa_id] = {
+            "coa_id": coa_id,
+            "version": draft["version"],
+            "accounts": draft["accounts"],
+            "activated_at": self._now(),
+            "approved_by": approver,
+        }
+        draft["status"] = "active"
+        draft["approved_by"] = approver
+        draft["approved_at"] = self._now()
+        return {
+            "status": "success",
+            "operation": "approve_activation",
+            "draft_id": draft_id,
+            "coa_id": coa_id,
+            "version": draft["version"],
+            "previous_version": (previous or {}).get("version"),
+            "archived_previous": previous is not None,
+        }
+
+    def _state(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "status": "success",
+            "operation": "state",
+            "active": {
+                coa_id: {
+                    "version": a["version"],
+                    "account_count": len(a["accounts"]),
+                    "activated_at": a["activated_at"],
+                    "approved_by": a["approved_by"],
+                }
+                for coa_id, a in self._active.items()
+            },
+            "drafts": [
+                {
+                    "draft_id": d["draft_id"],
+                    "coa_id": d["coa_id"],
+                    "version": d["version"],
+                    "status": d["status"],
+                    "requester": d["requester"],
+                }
+                for d in self._drafts.values()
+                if d["status"] != "active"
+            ],
         }
 
     @staticmethod

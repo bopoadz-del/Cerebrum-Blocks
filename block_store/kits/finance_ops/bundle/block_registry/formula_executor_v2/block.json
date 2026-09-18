@@ -1,10 +1,18 @@
 {
+  "acceptance": [
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "description": "LLM code generation and sandboxed execution for deterministic, auditable calculations across domain kits.",
   "digests": {
     "block.json": "aeb18c56a1454f98d957209314ed558d06619dd9a9d0aab896617f0b8fe93eae"
   },
   "id": "formula_executor_v2",
   "name": "Formula Executor V2",
+  "never": [],
   "permissions": {
     "blocks": [],
     "filesystem": true,
@@ -17,9 +25,6 @@
     "network": true
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "o8rLeg3PHdNNr/14L/XiM1zzANXGuUMEb9L5LZdjmdTpgxmVsXgnh1S/M4PNmsVVPyBuxNEz0TYe2e0TWkLsBA==",
-  "trust_tier": "platform",
-  "version": "2.0.0",
   "reads": [
     {
       "kind": "caller",
@@ -42,6 +47,9 @@
       "scope": "provider"
     }
   ],
+  "signature": "sL/hSa5tD9aAmvEoY6WgRXmCgUjvl45MWFTJP8+5YVpp1H47sDZi4UUPNFzqpyUVRACFD6de2lk77PoRiyNCAQ==",
+  "trust_tier": "platform",
+  "version": "2.0.0",
   "writes": [
     {
       "kind": "caller",
@@ -50,14 +58,6 @@
     {
       "kind": "memory",
       "scope": "cache"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }
