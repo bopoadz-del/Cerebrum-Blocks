@@ -81,6 +81,12 @@ def snapshot_sqlite(source: Path, dest: Path) -> None:
         dst_conn = sqlite3.connect(str(dest))
         try:
             src_conn.backup(dst_conn)
+            # The online backup copies the source's WAL-mode header; the
+            # snapshot then writes -wal/-shm side files of its own. Switching
+            # it to DELETE mode checkpoints and removes them, so the archive
+            # carries exactly one consistent .db file.
+            dst_conn.execute("PRAGMA journal_mode=DELETE")
+            dst_conn.commit()
         finally:
             dst_conn.close()
     finally:

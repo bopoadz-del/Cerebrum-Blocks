@@ -38,8 +38,7 @@ BLOCK_METADATA = {
     "chat": {"layer": 2, "tags": ["ai", "core", "llm"], "requires": []},
     "vector_search": {"layer": 2, "tags": ["ai", "core", "vector", "search"], "requires": []},
     "ai_core": {"layer": 2, "tags": ["ai", "core", "container"], "requires": []},
-    "zvec": {"layer": 2, "tags": ["ai", "vector", "zero-shot"], "requires": []},
-    
+        
     # Domain (Layer 3)
     "pdf": {"layer": 3, "tags": ["domain", "documents", "pdf"], "requires": []},
     "ocr": {"layer": 3, "tags": ["domain", "documents", "ocr", "vision"], "requires": []},

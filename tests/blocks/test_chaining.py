@@ -83,8 +83,7 @@ async def test_standardized_response_format():
         PDFBlock, OCRBlock, ChatBlock, VoiceBlock, ImageBlock,
         VectorSearchBlock, SearchBlock, TranslateBlock, CodeBlock, WebBlock,
         GoogleDriveBlock, OneDriveBlock, LocalDriveBlock, AndroidDriveBlock,
-        ZvecBlock
-    )
+            )
     
     required_keys = [
         "block", "request_id", "status", "result", 
@@ -106,8 +105,7 @@ async def test_standardized_response_format():
         (OneDriveBlock(), None, {"operation": "list"}),
         (LocalDriveBlock(), None, {"operation": "list"}),
         (AndroidDriveBlock(), None, {"operation": "get_paths"}),
-        (ZvecBlock(), "test", {"operation": "embed"}),
-    ]
+            ]
     
     with patch.dict("os.environ", {
         "GROQ_API_KEY": "mock_key",

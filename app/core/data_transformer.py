@@ -84,8 +84,7 @@ class DataTransformer:
         
         # Vector blocks
         self.register("vector_search", "VectorEmbedding", self._vector_to_embedding)
-        self.register("zvec", "VectorEmbedding", self._zvec_to_embedding)
-        
+                
         # Voice blocks
         self.register("voice", "AudioContent", self._voice_to_audio)
         
@@ -301,19 +300,6 @@ class DataTransformer:
         
         return {
             "vector": data.get("embedding", data.get("vector", [])),
-            "dimension": data.get("dimension", len(data.get("embedding", []))),
-            "text": data.get("text", ""),
-            "id": data.get("id", ""),
-            "metadata": data.get("metadata", {})
-        }
-    
-    def _zvec_to_embedding(self, data: Dict) -> Dict:
-        """Transform Zvec block output to VectorEmbedding."""
-        if "result" in data:
-            data = data["result"]
-        
-        return {
-            "vector": data.get("embedding", data.get("embeddings", [])),
             "dimension": data.get("dimension", len(data.get("embedding", []))),
             "text": data.get("text", ""),
             "id": data.get("id", ""),

@@ -85,15 +85,25 @@ class TestBackupRoundTrip:
         monkeypatch.setenv("DATA_DIR", str(data))
         monkeypatch.delenv("BACKUP_DIR", raising=False)
         _seed_data_dir(data)
-        (data / "rate_limits.db-wal").write_bytes(b"\x00" * 32)
-        (data / "rate_limits.db-shm").write_bytes(b"\x00" * 32)
+        # Create REAL side files: keep a WAL-mode connection live during the
+        # backup — the production scenario the online backup API exists for.
+        # (Garbage side files make Linux sqlite fail the snapshot with a
+        # spurious 'disk I/O error' and are not a realistic fixture.)
+        conn = sqlite3.connect(str(data / "rate_limits.db"))
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("INSERT INTO usage VALUES ('wal_probe', 1)")
+            conn.commit()
+            assert (data / "rate_limits.db-wal").exists()
 
-        result = bk.create_backup()
-        assert result.ok, result.error
-        restored_dir = tmp_path / "restore"
-        bk.restore_backup(result.archive, restored_dir)
-        assert not (restored_dir / "rate_limits.db-wal").exists()
-        assert not (restored_dir / "rate_limits.db-shm").exists()
+            result = bk.create_backup()
+            assert result.ok, result.error
+            restored_dir = tmp_path / "restore"
+            bk.restore_backup(result.archive, restored_dir)
+            assert not (restored_dir / "rate_limits.db-wal").exists()
+            assert not (restored_dir / "rate_limits.db-shm").exists()
+        finally:
+            conn.close()
 
 
 class TestRunBackupOnce:

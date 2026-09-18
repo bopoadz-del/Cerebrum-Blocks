@@ -82,8 +82,6 @@ ALLOWLIST: dict[str, str] = {
     "app/blocks/validation.py:510": "baseline 2026-09-11",
     "app/blocks/validation.py:536": "baseline 2026-09-11",
     "app/blocks/workbench.py:237": "baseline 2026-09-11",
-    "app/blocks/zvec.py:63": "baseline 2026-09-11",
-    "app/blocks/zvec.py:71": "baseline 2026-09-11",
     "app/containers/construction/__init__.py:1197": "baseline 2026-09-11",
     "app/containers/construction/__init__.py:372": "baseline 2026-09-11",
     "app/containers/construction/__init__.py:45": "baseline 2026-09-11",
