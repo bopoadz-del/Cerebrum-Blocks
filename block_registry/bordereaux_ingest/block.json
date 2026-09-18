@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    },
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Parse, validate, and normalize simulated insurance bordereaux CSV/JSON rows.",
   "digests": {
@@ -29,6 +41,7 @@
   ],
   "layer": 3,
   "name": "Bordereaux Ingest",
+  "never": [],
   "outputs": [
     {
       "description": "Normalized bordereaux records",
@@ -48,8 +61,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "WFRXL25HLLklFrTIZuQtIzmeDbeomY2UDlm8gRbXT21mCU6zTshTZIId5qz2K58H9S66ztQ6i2dYndQfC3JqBg==",
+  "signature": "gW9ey7YjZ6n5mbRjJ2X83O0Gt19cweJD4h/IaDFZDUU3HhPuusEQMKHeUwsXUF55dtzpcdPw1lXlK7LwdUmUCA==",
   "tags": [
     "insurance",
     "bordereaux",
@@ -76,33 +99,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
-    },
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

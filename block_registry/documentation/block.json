@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -73,6 +80,7 @@
   ],
   "layer": 4,
   "name": "Documentation",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -87,11 +95,21 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "code",
     "vector"
   ],
-  "signature": "ElCIsY/sbx5wuDkXCeg1DgNFI/cl8Z0EmaLvDA5kEJpCX/S9BD4TBSbXSiIXyYJiG4ByYUBP6eAHMAxULUZVCA==",
+  "signature": "XeipXbjfWc2tCDz3JZ7ttX/xmIPLEqWHp+DTTImyVLXoFVQGo51OMGBc0HrylCbxcbHgf86jnW4UYapMZRfUAw==",
   "tags": [
     "platform",
     "docs",
@@ -147,16 +165,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -165,14 +173,6 @@
     {
       "kind": "memory",
       "scope": "cache"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

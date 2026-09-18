@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Ask questions across stored captures and swarm runs using RAG",
   "digests": {
@@ -113,6 +125,7 @@
   ],
   "layer": 3,
   "name": "Knowledge",
+  "never": [],
   "outputs": [
     {
       "description": "Answer",
@@ -137,10 +150,40 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    },
+    {
+      "kind": "database",
+      "scope": "vector"
+    },
+    {
+      "kind": "llm",
+      "scope": "provider"
+    },
+    {
+      "kind": "credential",
+      "scope": "env"
+    }
+  ],
   "requires": [
     "vector_search"
   ],
-  "signature": "HutT8m1UTqOXYY+2GtY0hEJlCqyoOwqrlqalNmnjpPDY+zO1nCn5/lSkMK1uU84lQrlJTHMjctx0FJjVECY+Ag==",
+  "signature": "+HntPaBN6SbIPw2nFll4385GR9kb5yIXJnCT+a/p5dlaX3MvXfv3x7UzyUJ7VWOEG3DVt1xdt7LUZYahjm6CBw==",
   "tags": [
     "knowledge",
     "rag",
@@ -223,53 +266,10 @@
     }
   ],
   "version": "2.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    },
-    {
-      "kind": "database",
-      "scope": "vector"
-    },
-    {
-      "kind": "llm",
-      "scope": "provider"
-    },
-    {
-      "kind": "credential",
-      "scope": "env"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
-    },
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }

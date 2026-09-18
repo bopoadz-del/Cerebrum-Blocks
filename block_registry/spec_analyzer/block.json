@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Extract grade requirements, material specs, and compliance flags from specification PDFs",
   "digests": {
@@ -43,6 +44,7 @@
   ],
   "layer": 3,
   "name": "Spec Analyzer",
+  "never": [],
   "outputs": [
     {
       "description": "Grade Requirements",
@@ -72,10 +74,28 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "file",
+      "scope": "input_document"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "pdf"
   ],
-  "signature": "5usmHkNQuN7PRrjwgwdTTIZCTpaQomYnH1V3c8s993RjJ/f1enV4KU4CT1QPxA5cFctfoE8Qym1DKyp+swpfAQ==",
+  "signature": "MPB5ZaMxX4BaoHs247mbsF4NsgK8d/bUb2pA/z2KFMUq1qC05yWNBmtVKnlRnbrXKC8TWezHhhDHzVqGHR0aDg==",
   "tags": [
     "domain",
     "construction",
@@ -103,30 +123,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "file",
-      "scope": "input_document"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

@@ -102,8 +102,15 @@ class MedicalBlockV2(DomainBlockV2):
 
         # Load any user-supplied custom rules
         custom_rules = params.get("custom_rules") or params.get("rules")
+        # Per-request knowledge instance: custom rules must never leak
+        # across requests through a shared module singleton.
+        knowledge = MedicalKnowledge()
         if custom_rules:
-            _mk.set_custom_rules(custom_rules)
+            knowledge.set_custom_rules(custom_rules)
+        # Per-request slot: fresh instance every process() call, so a
+        # reused block instance never leaks one request's rules into the
+        # next (the old module-level singleton did).
+        self._request_knowledge = knowledge
 
         # Determine analysis type from params or auto-detect
         document_type = params.get("document_type") or params.get("analysis_type") or self._detect_document_type(text)
@@ -284,7 +291,7 @@ class MedicalBlockV2(DomainBlockV2):
             "mortality": self._score_mortality_risk(text),
             "overall_risk": self._compute_overall_risk(text),
         }
-        custom_rule_hits = _mk.check_custom_rules(text)
+        custom_rule_hits = self._request_knowledge.check_custom_rules(text)
         document_date = self._extract_document_date(text)
 
         return {

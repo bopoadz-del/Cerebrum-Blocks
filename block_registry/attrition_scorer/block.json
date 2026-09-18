@@ -1,10 +1,18 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "description": "Heuristic insurance producer attrition risk scoring with transparent factor contributions.",
   "digests": {
     "block.json": "4f241a2160437914b34d9fad61b6b6279b6d0b0f9cc95c38819c0c6c0e828b84"
   },
   "id": "attrition_scorer",
   "name": "Attrition Scorer",
+  "never": [],
   "permissions": {
     "blocks": [],
     "filesystem": false,
@@ -12,9 +20,6 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "KcjijNMbD+bF4tbX1agKTt/vxwvQMHvPnRUJB8OB62kyiS3+iIR6ePsMnlQgiFWDJNyb2EMOwYF18hIrbiryCA==",
-  "trust_tier": "platform",
-  "version": "1.0.0",
   "reads": [
     {
       "kind": "caller",
@@ -25,18 +30,13 @@
       "scope": "runtime"
     }
   ],
+  "signature": "j1bZLIWyTX9IaDsBwxzigVJvCfHxDMNZKi2duEoyQvbf1inY5i8YCh3Z4LMkl6f62wwE7xD89/3tnsUIlMZBCQ==",
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

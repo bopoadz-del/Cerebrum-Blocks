@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    },
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Text-to-speech (gTTS) and speech-to-text (Google STT) \u2014 no API key needed",
   "digests": {
@@ -21,6 +33,7 @@
   ],
   "layer": 3,
   "name": "Voice",
+  "never": [],
   "outputs": [
     {
       "description": "Transcription",
@@ -35,8 +48,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    }
+  ],
   "requires": [],
-  "signature": "wG/HBanz0maimD7z+/7dXzBoJTkL+ciqe4ym8Awm9NywDwJhzqUmtWoix6jMvfX0r1ASS7thdDc2CF2g3WeRCw==",
+  "signature": "0c28eTnb5cXy23xkdEa8UsOpc/PFpFYlRLvgq20pQSrzi9ZsEjkJeV32m+nfdDBYtoJixDg5alcKOnrOcid5BQ==",
   "tags": [
     "domain",
     "audio",
@@ -52,16 +75,6 @@
     }
   ],
   "version": "2.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -70,19 +83,6 @@
     {
       "kind": "file",
       "scope": "temp"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
-    },
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

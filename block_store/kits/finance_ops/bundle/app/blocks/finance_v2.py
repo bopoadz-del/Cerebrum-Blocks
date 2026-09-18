@@ -432,13 +432,62 @@ class FinanceBlockV2(DomainBlockV2):
         return None
 
     def _extract_cash_flows(self, text: str) -> List[float]:
-        """Best-effort parse of cash flow series from params or text."""
-        # If user provided explicit list, skip
-        return []
+        """Parse a period-labelled cash-flow series from free text.
+
+        Only rows shaped like ``Year 1: 1,200,000`` / ``Y2 -500k`` /
+        ``Q3 $2.5m`` count; anything else yields [] (no fabricated series).
+        Callers pass params.cash_flows for explicit data.
+        """
+        if not text:
+            return []
+        out: List[float] = []
+        row_re = re.compile(
+            r"^\s*(?:year|yr|y|period|quarter|q|t|month)\s*\d*\s*[:=]?\s*"
+            r"[$\u20ac\u00a3\u00a5]?\s*([-+]?\d[\d,]*(?:\.\d+)?)\s*"
+            r"(k|m|bn|b|million|billion|thousand)?\s*$",
+            re.IGNORECASE,
+        )
+        for line in text.splitlines():
+            m = row_re.match(line.strip())
+            if not m:
+                continue
+            try:
+                value = float(m.group(1).replace(",", ""))
+            except ValueError:
+                continue
+            mult = (m.group(2) or "").lower()
+            if mult in {"k", "thousand"}:
+                value *= 1_000
+            elif mult in {"m", "million"}:
+                value *= 1_000_000
+            elif mult in {"b", "bn", "billion"}:
+                value *= 1_000_000_000
+            out.append(value)
+        return out
 
     def _extract_returns(self, text: str) -> List[float]:
-        """Best-effort parse of return series."""
-        return []
+        """Parse a period-labelled percentage return series from free text.
+
+        Only rows shaped like ``Year 1: 12.5%`` count; anything else
+        yields [] (no fabricated series).
+        """
+        if not text:
+            return []
+        out: List[float] = []
+        row_re = re.compile(
+            r"^\s*(?:year|yr|y|period|quarter|q|t|month)\s*\d*\s*[:=]?\s*"
+            r"([-+]?\d[\d,]*(?:\.\d+)?)\s*%?\s*$",
+            re.IGNORECASE,
+        )
+        for line in text.splitlines():
+            m = row_re.match(line.strip())
+            if not m:
+                continue
+            try:
+                out.append(float(m.group(1).replace(",", "")))
+            except ValueError:
+                continue
+        return out
 
     # ------------------------------------------------------------------
     # FORMULA EXTRACTION & CALCULATION (private)

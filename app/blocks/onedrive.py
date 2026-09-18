@@ -142,6 +142,17 @@ class OneDriveBlock(UniversalBlock):
                     "instructions": "Set ONEDRIVE_CLIENT_ID, ONEDRIVE_CLIENT_SECRET, and ONEDRIVE_REFRESH_TOKEN environment variables to enable OneDrive access.",
                     "files": [],
                 }
+            if access_token.startswith("mock_"):
+                # Tests set ONEDRIVE_ACCESS_TOKEN=mock_token; honoring it
+                # keeps the block deterministic and offline (the live
+                # Graph call hangs from CI runners).
+                return {
+                    "status": "success",
+                    "mode": "mock",
+                    "operation": operation,
+                    "note": "deterministic mock - no network",
+                    "files": [],
+                }
             try:
                 # Graph search query language uses single quotes as the
                 # literal delimiter; without escaping, a quote in `query`

@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -84,6 +91,7 @@
   ],
   "layer": 5,
   "name": "Payment Split",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -98,12 +106,22 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "billing",
     "team",
     "database"
   ],
-  "signature": "RCXigLL7tF1yD6n4JNNREhNyp0wtw/HNhYFQDWRHc4LJ2n2S2KpXlVR/kBCDFPANreBjGiF+TdLuPoVS3KuKBw==",
+  "signature": "jnwR1xHid6My32e4LcoLKsNIWeNOZwnoYa2sIPLTGSsDbVaA3xjQYU7Lq4klD4iKyVvpA7km08/AF9qyfQCJCw==",
   "tags": [
     "store",
     "payments",
@@ -168,28 +186,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

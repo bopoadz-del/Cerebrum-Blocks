@@ -60,6 +60,32 @@ class DiscoveryBlock(UniversalBlock):
         self.block_profiles: Dict[str, BlockProfile] = {}
         self.user_stacks: Dict[str, List[str]] = {}  # user_id -> installed blocks
         self.usage_patterns: List[Dict] = []  # Aggregated usage patterns
+
+    def _vector_dep(self) -> Optional[Any]:
+        """The wired vector block, only when its embedder is real.
+
+        A vector block with dummy (md5-hash) embeddings returns ~zero cosine
+        between different texts; routing through it would silently empty
+        search results. Honest routing: vector only with a real embedder,
+        keyword scoring otherwise — and the response says which ran.
+        """
+        dep = self.get_dep("vector")
+        if dep is None:
+            return None
+        if getattr(dep, "_embeddings_func", None) is None:
+            return None
+        return dep
+
+    @staticmethod
+    def _profile_blob(profile: BlockProfile) -> str:
+        """Searchable text for one profile (indexed into the vector store)."""
+        parts = [
+            profile.name or "",
+            profile.description or "",
+            "tags: " + ", ".join(profile.tags or []),
+            "use cases: " + "; ".join(profile.use_cases or []),
+        ]
+        return "\n".join(p for p in parts if p.strip())
         
     async def _legacy_initialize(self) -> bool:
         """Initialize discovery engine"""
@@ -69,7 +95,21 @@ class DiscoveryBlock(UniversalBlock):
         
         # Index built-in blocks
         await self._index_builtin_blocks()
-        
+
+        # If the assembler wired the vector block (real embedder), index every
+        # built-in profile so semantic search has vectors to compare against.
+        vector = self._vector_dep()
+        if vector is not None:
+            for profile in self.block_profiles.values():
+                await vector.process(
+                    {
+                        "id": f"block:{profile.block_id}",
+                        "text": self._profile_blob(profile),
+                        "metadata": {"block_id": profile.block_id, "layer": profile.layer},
+                    },
+                    params={"action": "add"},
+                )
+
         # TODO: Load from vector database
         # TODO: Load usage patterns from analytics
         
@@ -272,6 +312,18 @@ class DiscoveryBlock(UniversalBlock):
             return {"error": "Provide current_stack or goal for recommendations"}
             
         scores = {}
+
+        goal_vector_scores: Dict[str, float] = {}
+        vector = self._vector_dep()
+        if goal and vector is not None:
+            found = await vector.process(
+                {"query": goal, "top_k": 100, "threshold": 0.0},
+                params={"action": "search"},
+            )
+            for hit in (found or {}).get("results", []):
+                raw = str(hit.get("id") or "")
+                if raw.startswith("block:"):
+                    goal_vector_scores[raw[len("block:"):]] = float(hit.get("score", 0.0))
         
         for block_id, profile in self.block_profiles.items():
             # Skip already installed
@@ -292,16 +344,22 @@ class DiscoveryBlock(UniversalBlock):
                     score += 0.2
                     reasons.append(f"{installed} works well with this")
                     
-            # 2. Goal similarity - semantic match with use cases
+            # 2. Goal similarity - vector cosine when available, else keyword
             if goal:
-                goal_lower = goal.lower()
-                for use_case in profile.use_cases:
-                    # Simple keyword matching (TODO: use embeddings)
-                    keywords = use_case.lower().split()
-                    matches = sum(1 for kw in keywords if kw in goal_lower)
-                    if matches > 0:
-                        score += 0.25 * (matches / len(keywords))
-                        reasons.append(f"Matches goal: {use_case}")
+                if goal_vector_scores:
+                    vec_score = goal_vector_scores.get(block_id, 0.0)
+                    if vec_score > 0:
+                        score += 0.5 * vec_score
+                        reasons.append(f"Goal similarity {round(vec_score, 2)} (vector)")
+                else:
+                    goal_lower = goal.lower()
+                    for use_case in profile.use_cases:
+                        # Keyword matching — the vector path is preferred when wired
+                        keywords = use_case.lower().split()
+                        matches = sum(1 for kw in keywords if kw in goal_lower)
+                        if matches > 0:
+                            score += 0.25 * (matches / len(keywords))
+                            reasons.append(f"Matches goal: {use_case}")
                         
             # 3. Popularity boost
             if self.config["boost_popular"]:
@@ -353,7 +411,8 @@ class DiscoveryBlock(UniversalBlock):
                 "current_stack": current_stack,
                 "goal": goal
             },
-            "model": self.config["recommendation_model"]
+            "model": self.config["recommendation_model"],
+            "goal_match": "vector" if goal_vector_scores else "keyword",
         }
         
     async def _find_alternatives(self, data: Dict) -> Dict:
@@ -392,13 +451,48 @@ class DiscoveryBlock(UniversalBlock):
         }
         
     async def _semantic_search(self, data: Dict) -> Dict:
-        """Search blocks by semantic meaning"""
+        """Search blocks by semantic meaning (vector cosine when available)."""
         query = data.get("query", "")
         filters = data.get("filters", {})
-        
+
         if not query:
             return {"error": "Query required"}
-            
+
+        vector = self._vector_dep()
+        if vector is not None:
+            found = await vector.process(
+                {"query": query, "top_k": 10},
+                params={"action": "search"},
+            )
+            results = []
+            for hit in (found or {}).get("results", []):
+                block_id = str(hit.get("id") or "")
+                if block_id.startswith("block:"):
+                    block_id = block_id[len("block:"):]
+                profile = self.block_profiles.get(block_id)
+                if profile is None:
+                    continue
+                if "layer" in filters and profile.layer != filters["layer"]:
+                    continue
+                if "tag" in filters and filters["tag"] not in profile.tags:
+                    continue
+                results.append({
+                    "block_id": block_id,
+                    "name": profile.name,
+                    "description": profile.description,
+                    "tags": profile.tags,
+                    "layer": profile.layer,
+                    "score": round(float(hit.get("score", 0.0)), 4),
+                    "rating": profile.avg_rating,
+                })
+            results.sort(key=lambda x: x["score"], reverse=True)
+            return {
+                "query": query,
+                "results": results[:10],
+                "count": len(results),
+                "via": "vector",
+            }
+
         results = []
         query_lower = query.lower()
         query_terms = query_lower.split()
@@ -447,7 +541,8 @@ class DiscoveryBlock(UniversalBlock):
         return {
             "query": query,
             "results": results[:10],
-            "count": len(results)
+            "count": len(results),
+            "via": "keyword",
         }
         
     async def _trending_blocks(self, data: Dict) -> Dict:
@@ -539,12 +634,29 @@ class DiscoveryBlock(UniversalBlock):
         )
         
         self.block_profiles[profile.block_id] = profile
-        
-        # TODO: Index in vector database for semantic search
-        
+
+        # Index into the wired vector block for cosine search. Honest flag:
+        # vector_indexed=False means search stays on keyword scoring.
+        vector = self._vector_dep()
+        vector_indexed = False
+        if vector is not None:
+            await vector.process(
+                {
+                    "id": f"block:{profile.block_id}",
+                    "text": self._profile_blob(profile),
+                    "metadata": {
+                        "block_id": profile.block_id,
+                        "layer": profile.layer,
+                    },
+                },
+                params={"action": "add"},
+            )
+            vector_indexed = True
+
         return {
             "indexed": True,
-            "block_id": profile.block_id
+            "block_id": profile.block_id,
+            "vector_indexed": vector_indexed,
         }
         
     async def _get_categories(self, data: Dict) -> Dict:

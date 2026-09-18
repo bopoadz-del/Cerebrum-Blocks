@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Translate text between 20+ languages \u2014 no API key needed",
   "digests": {
@@ -21,6 +28,7 @@
   ],
   "layer": 3,
   "name": "Translate",
+  "never": [],
   "outputs": [
     {
       "description": "Translation",
@@ -45,8 +53,14 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
   "requires": [],
-  "signature": "QECb4FhI69i4Gp8mPZC+jcFFRsVG3eb3YQMCQK1Vl+Wx706P8e4DcMDB6sRy0pENeXClA+d7W0w7dO6NSUscCQ==",
+  "signature": "qWNxLPEWvuAJ35t+vhHUNp1mLZgQkXALq83CAZvJgqO2SYHgQCThG5x+RA6N/R/WN2bOG0Hy5WscmL0MOLnaCA==",
   "tags": [
     "domain",
     "nlp",
@@ -61,24 +75,10 @@
     }
   ],
   "version": "2.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
     }
   ]
 }

@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Normalize tabular ERP, CRM, HCM, budget, forecast, and project-cost rows.",
   "digests": {
@@ -15,6 +22,7 @@
   ],
   "layer": 3,
   "name": "Finance Import Normalizer",
+  "never": [],
   "outputs": [
     {
       "description": "Deterministic FinanceOps result",
@@ -31,7 +39,13 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "rciljXHETIXW0F0+ocJULhMbm7aqbFduo2pLsY1mWpUROAe0WW8XGcOzvjrhJsLD4yW5dg26vRTGSFLwc8/vDA==",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "signature": "/MMkUA5mOAkdGaU9ZRCoWCdHo964owIetUoRHwHHSWzQNGnAsZsNV3BdINkoVmTis761UOij7ICE4OCj+vJEBA==",
   "tags": [
     "domain",
     "finance_ops",
@@ -41,24 +55,10 @@
   ],
   "trust_tier": "platform",
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

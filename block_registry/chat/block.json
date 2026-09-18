@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "AI chat completions \u2014 DeepSeek primary, local LLM fallback",
   "digests": {
@@ -42,6 +49,7 @@
   ],
   "layer": 2,
   "name": "Chat",
+  "never": [],
   "outputs": [
     {
       "description": "Response",
@@ -56,8 +64,38 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    },
+    {
+      "kind": "llm",
+      "scope": "provider"
+    },
+    {
+      "kind": "credential",
+      "scope": "env"
+    }
+  ],
   "requires": [],
-  "signature": "4u2FDtQN8sBNCRgBvZAdtukXgSd0bUZ8EPM3reExVk4ESof0VBdbSzuXe7Y2EQcCfUrSNYMGZewSbwPWfeVDDg==",
+  "signature": "pugudOFSD/KjutEltaDsAZG1FZ+2bnwF4dItLISmr/LdyJXdnmZQJ/SJQdEP7dxfoMw5lwT0djg6FZdsIqlBDw==",
   "tags": [
     "ai",
     "core",
@@ -89,48 +127,10 @@
     }
   ],
   "version": "3.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    },
-    {
-      "kind": "llm",
-      "scope": "provider"
-    },
-    {
-      "kind": "credential",
-      "scope": "env"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }

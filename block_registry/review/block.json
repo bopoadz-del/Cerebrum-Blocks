@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -75,6 +82,7 @@
   ],
   "layer": 4,
   "name": "Review",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -89,12 +97,22 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "database",
     "auth",
     "team"
   ],
-  "signature": "U9rU/Ya4loplDbhuZkWGw25HNtiDn6lAGvWuPpBBocU/VeEoZchiTYJQRbsuCYrmzpQI6ImvJNtA8DSdyQa4CA==",
+  "signature": "0zVqAfmbEJmxMinF3YvNwP4Gkbl9rq304NUIRGJlIg+WsUGPotdyS+XYS3ZCacoVEjBeQ+5xhhIHzRAQYhubAw==",
   "tags": [
     "store",
     "community",
@@ -150,28 +168,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

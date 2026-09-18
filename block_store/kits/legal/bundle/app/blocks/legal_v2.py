@@ -95,8 +95,15 @@ class LegalBlockV2(DomainBlockV2):
 
         # Load any user-supplied custom rules
         custom_rules = params.get("custom_rules") or params.get("rules")
+        # Per-request knowledge instance: custom rules must never leak
+        # across requests through a shared module singleton.
+        knowledge = LegalKnowledge()
         if custom_rules:
-            _lk.set_custom_rules(custom_rules)
+            knowledge.set_custom_rules(custom_rules)
+        # Per-request slot: fresh instance every process() call, so a
+        # reused block instance never leaks one request's rules into the
+        # next (the old module-level singleton did).
+        self._request_knowledge = knowledge
 
         # Determine analysis type from params or auto-detect
         document_type = params.get("document_type") or params.get("analysis_type") or self._detect_document_type(text)
@@ -273,7 +280,7 @@ class LegalBlockV2(DomainBlockV2):
             "ip_risk": self._score_ip_risk(text),
             "overall_risk": self._compute_overall_risk(text),
         }
-        custom_rule_hits = _lk.check_custom_rules(text)
+        custom_rule_hits = self._request_knowledge.check_custom_rules(text)
         jurisdiction = self._extract_jurisdiction(text)
 
         return {

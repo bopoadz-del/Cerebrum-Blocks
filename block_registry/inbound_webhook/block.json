@@ -1,0 +1,79 @@
+{
+  "acceptance": [],
+  "author": "Cerebrum Team",
+  "description": "HMAC-SHA256 inbound webhook verification (ported from the Cerebrum donor's webhook security layer, Django coupling removed). Names refusals: malformed_header, stale_timestamp, invalid_signature, unknown_source. Never stores payloads or secrets on its own.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "3719967273a95eacfd46146eb7adbe55fafc8cd3a5a2d59be9834a9ccfb3ad5c",
+    "block.py": "2ad0d324a61f54cf10cc3247f1dc076348be80bd1b15f960e318d7932daab918"
+  },
+  "id": "inbound_webhook",
+  "inputs": [
+    {
+      "description": "Verification request (source, payload, signature)",
+      "name": "input",
+      "required": true,
+      "type": "json"
+    },
+    {
+      "default": "verify",
+      "description": "Action",
+      "name": "action",
+      "options": [
+        "verify",
+        "sign",
+        "generate_secret"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 1,
+  "name": "Inbound Webhook",
+  "never": [
+    {
+      "kind": "network",
+      "scope": "outbound_delivery"
+    }
+  ],
+  "outputs": {
+    "result": {
+      "description": "verified: bool (+ named error on refusal) or signature",
+      "type": "json"
+    }
+  },
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "hashlib",
+      "hmac",
+      "json",
+      "secrets",
+      "time"
+    ],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
+  "requires": [],
+  "signature": "PJjfDT9EKnfiwGSmfA59a1MIjvI1DUz7chZLdvHKoR+0Ix7EgN5jLH9ZojkSBthdFnrXyeHoeFYg4ioVY7agCA==",
+  "tags": [
+    "integration",
+    "webhook",
+    "security",
+    "connector-infra"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": []
+}

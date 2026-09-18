@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Formula backend registry: SymPy, Pint, CoolProp, QuantLib",
   "digests": {
@@ -21,6 +28,7 @@
   ],
   "layer": 4,
   "name": "Library Container",
+  "never": [],
   "outputs": [
     {
       "description": "Backend",
@@ -50,8 +58,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "D+M9DXqzxa2qSZ3fp1BG8XqDCUyXgZ/c8TYrPZNWBd2SBdMaQWRn0zHtm03L2EDuvcztQKvGBEQ4mI/F/QoFDw==",
+  "signature": "Kq3ROv2kWipjqqoFhrd/yUlCO6V/rnEsjbEk5eYOdCnfnnlkBybuQByOtVpK4/2skTSBB+6hZzIqdo8Pl+J1CQ==",
   "tags": [
     "library",
     "formula",
@@ -68,28 +86,10 @@
     }
   ],
   "version": "1.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "SHA256/MD5 hashing and metadata extraction for files",
   "digests": {
@@ -35,6 +42,7 @@
   ],
   "layer": 0,
   "name": "File Hasher",
+  "never": [],
   "outputs": [
     {
       "description": "SHA256",
@@ -54,8 +62,22 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "hwfC8rOBt8vLJacmY0BDYjkt1ioiodwENB2DL/iZ5ZHNaFlS+ahL85GC5OdANNe+n35NljpW6jVv0GcsVsVEBg==",
+  "signature": "r1Zuj23B/5wejZTzIjyhT2SlzZn7qb9bQP8ztorJijhyr67NoFOZDHkM1o7f4m/aO/+xZsgmNdDB2MxWOpEWCw==",
   "tags": [
     "infrastructure",
     "security",
@@ -81,32 +103,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

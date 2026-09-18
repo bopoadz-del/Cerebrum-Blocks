@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Extract text from images using OCR with typed output",
   "digests": {
@@ -51,6 +58,7 @@
   ],
   "layer": 3,
   "name": "Ocr V2",
+  "never": [],
   "outputs": [
     {
       "description": "Extracted Text",
@@ -70,8 +78,34 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "file",
+      "scope": "input_document"
+    },
+    {
+      "kind": "file",
+      "scope": "input_image"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
   "requires": [],
-  "signature": "8ODE87Gj16jf61IXGRULidDUao3uLgav2XEKAOSX/uD0YcVeLQEG0h48+mKVTaElMQZf/J84XCLbqJUkG/BGDQ==",
+  "signature": "I4gayRDUMAaxaFnhHHI/MLr758R8FraoLwrj2cPnkjSfqNrxzBpWaTrtjSzdqg1XDzXZIX4U//n8R+cRhp7ZAw==",
   "tags": [
     "domain",
     "vision",
@@ -108,32 +142,6 @@
     }
   ],
   "version": "2.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "file",
-      "scope": "input_document"
-    },
-    {
-      "kind": "file",
-      "scope": "input_image"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -146,14 +154,6 @@
     {
       "kind": "file",
       "scope": "temp"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
     }
   ]
 }

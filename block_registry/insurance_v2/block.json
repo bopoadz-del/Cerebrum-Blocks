@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Insurance document analysis with typed input/output",
   "digests": {
@@ -34,6 +35,7 @@
   ],
   "layer": 3,
   "name": "Insurance V2",
+  "never": [],
   "outputs": [
     {
       "description": "Document type",
@@ -73,8 +75,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "Qs6nrGvxzsRg9Hs5YQ6TOPzZXpIPdIkldYhPs5l5t4qBZ/DZltTeUjBbmQvIxvyfWVcornmTHC6VKhgEiU8WBQ==",
+  "signature": "xOpFlyCw72i3UeEQLLv9cXNjtL+h+UoM6NV7VykOfVdYftZ1Riaz28sPVLeXuKtip2yWWAuupTmlXurvtMasBw==",
   "tags": [
     "domain",
     "insurance",
@@ -99,22 +111,10 @@
     }
   ],
   "version": "2.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

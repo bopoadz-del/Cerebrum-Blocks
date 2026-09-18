@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Celery-style task dispatcher with in-process fallback queue",
   "digests": {
@@ -42,6 +49,7 @@
   ],
   "layer": 0,
   "name": "Async Processor",
+  "never": [],
   "outputs": [
     {
       "description": "Job ID",
@@ -56,8 +64,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "ncKsP9NkUc0Rso/xDc8fk5tWBdaonE4n5nKfw1cITEywRuWAVpHdntCQt9qjpwm9kcG/NHPFcYg7hnfCsP8MAA==",
+  "signature": "teahy/jxMszqQ71t23H3ibnMMzISkuRKUkmj6wA7H/Md8nnimihFQChZze+BEj7dPdTfJEsZIm/UX/wYJBPNCg==",
   "tags": [
     "infrastructure",
     "async",
@@ -88,28 +106,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

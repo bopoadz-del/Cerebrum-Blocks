@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Execute Python or JavaScript code; analyze code for issues",
   "digests": {
@@ -21,6 +28,7 @@
   ],
   "layer": 3,
   "name": "Code",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -45,22 +53,6 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "requires": [],
-  "signature": "AQyuN20oQpKOR7OES9FetX7Y+U19V9p4oQ7irkNWkwhqp2WtmMwIB8D9GEWS5qZCEIdAqISfT2ueyCxlghTQAg==",
-  "tags": [
-    "domain",
-    "code",
-    "execution"
-  ],
-  "trust_tier": "platform",
-  "ui_schema": [
-    {
-      "label": "Paste code to execute or describe code to analyze...",
-      "name": "input",
-      "widget": "text"
-    }
-  ],
-  "version": "2.0",
   "reads": [
     {
       "kind": "caller",
@@ -79,6 +71,22 @@
       "scope": "http.outbound"
     }
   ],
+  "requires": [],
+  "signature": "NyF6kwd2NlIb1qzb8xTJABiS8EnL+bGmXW19s1MDfTkysmX7OfvObnl2td1tln5ZaGFejtB8Ip40KkFURSDTDQ==",
+  "tags": [
+    "domain",
+    "code",
+    "execution"
+  ],
+  "trust_tier": "platform",
+  "ui_schema": [
+    {
+      "label": "Paste code to execute or describe code to analyze...",
+      "name": "input",
+      "widget": "text"
+    }
+  ],
+  "version": "2.0",
   "writes": [
     {
       "kind": "caller",
@@ -95,14 +103,6 @@
     {
       "kind": "subprocess",
       "scope": "local"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
     }
   ]
 }

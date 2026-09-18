@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -74,6 +81,7 @@
   ],
   "layer": 1,
   "name": "Error Tracking",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -88,11 +96,21 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "database",
     "notification"
   ],
-  "signature": "qVdcAv0k7ZNvii4VCntHsTeXG5Obci5Rt9u8cxuRVQ1jMyUwa0GUSTULGD7BXDOONk+s6pOe3l7nAYKWP6CUAg==",
+  "signature": "+1hs0gkasJV/eDELis0PBRKUEAZ5Jnh6vVsSQdYP0KFHWv5aroeTUr7Qh3PJtQY0wS5PWCmP/ij9JVdcJsqLBg==",
   "tags": [
     "observability",
     "debugging",
@@ -149,28 +167,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

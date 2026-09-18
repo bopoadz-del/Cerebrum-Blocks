@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "rejects paths that escape the configured root",
+      "id": "path_escape_rejected",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Sandboxed local filesystem access: list, read, write files",
   "digests": {
@@ -21,6 +28,12 @@
   ],
   "layer": 4,
   "name": "Local Drive",
+  "never": [
+    {
+      "kind": "file",
+      "scope": "escape_root"
+    }
+  ],
   "outputs": [
     {
       "description": "Files",
@@ -40,22 +53,6 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "requires": [],
-  "signature": "E4L2TiBuT/Fnxwf4BE31ki3+GAk28SC+Cn1zdELeRXSXkkZ4ScQhhsxypw4G2YeRd66KyhKHwgwGr0exZnJIBw==",
-  "tags": [
-    "integration",
-    "storage",
-    "local"
-  ],
-  "trust_tier": "platform",
-  "ui_schema": [
-    {
-      "label": "Browse local files...",
-      "name": "input",
-      "widget": "file"
-    }
-  ],
-  "version": "1.1",
   "reads": [
     {
       "kind": "caller",
@@ -70,6 +67,22 @@
       "scope": "process"
     }
   ],
+  "requires": [],
+  "signature": "6BZcKcbIaLT0oYgnucjNsZCtqUp57pZQSmIPB96V2Oy2zlFkwrbruRFChG4OrjhvAVSE5/7/4B1v5PrCqf8LDg==",
+  "tags": [
+    "integration",
+    "storage",
+    "local"
+  ],
+  "trust_tier": "platform",
+  "ui_schema": [
+    {
+      "label": "Browse local files...",
+      "name": "input",
+      "widget": "file"
+    }
+  ],
+  "version": "1.1",
   "writes": [
     {
       "kind": "caller",
@@ -78,19 +91,6 @@
     {
       "kind": "file",
       "scope": "local.write"
-    }
-  ],
-  "never": [
-    {
-      "kind": "file",
-      "scope": "escape_root"
-    }
-  ],
-  "acceptance": [
-    {
-      "id": "path_escape_rejected",
-      "check": "rejects paths that escape the configured root",
-      "status": "refused"
     }
   ]
 }

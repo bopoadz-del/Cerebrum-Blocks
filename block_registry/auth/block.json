@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -59,6 +71,7 @@
   ],
   "layer": 1,
   "name": "Auth",
+  "never": [],
   "outputs": [
     {
       "description": "Authorized",
@@ -73,10 +86,24 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "memory"
   ],
-  "signature": "PISKancoHLVRVdwE5EDUfryfEuQ2/btQR2sjCv3fZM6LvfsgGm4xeFcfchPvWk2VzlZEEB8P5eBzWMnjk6PYCA==",
+  "signature": "GSi4B6Fnb6g7nmoxTXfzbvT5Dq9kjB17RJ/KznWYBtaxwLSFJOM1t9yOeLYf97gyuDmjaTrxieOAvpEoLxlOCA==",
   "tags": [
     "security",
     "auth",
@@ -121,37 +148,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
-    },
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }

@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Extended-boot skill knowledge block \u2014 parses CEREBRUM_SKILL.md (domain file configurable via skill_file). Not loaded in virgin boot.",
   "digests": {
@@ -28,6 +35,7 @@
   ],
   "layer": 2,
   "name": "Skills",
+  "never": [],
   "outputs": [
     {
       "description": "Hints",
@@ -52,8 +60,22 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "0Uyfz5GUnQV26hJVVoWihkLBHAhjoNucdgIh0Slkahu47yMGls+4V74gRq5OyA6kJ+66HRZK48F0Joijq01kDw==",
+  "signature": "p9rhUdaE2MCDbrF04ahLRELDu/MPTjwkWIvxEL/t1snfEuF1Dgv3t1YIxjECVNHiB2ntRUKZCON2edeYUNU+CA==",
   "tags": [
     "ai",
     "core",
@@ -75,32 +97,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

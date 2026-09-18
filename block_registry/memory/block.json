@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "High-speed TTL/LRU cache \u2014 session storage and Redis alternative for edge deployments",
   "digests": {
@@ -58,6 +65,7 @@
   ],
   "layer": 1,
   "name": "Memory",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -72,10 +80,24 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "memory",
+      "scope": "cache"
+    }
+  ],
   "requires": [
     "config"
   ],
-  "signature": "RdhFviDhfYiJBgk+V2Kqymj/dR/hELPE+AFkh79RtkYhfzJw2O/B87pKV+sKEi/oKiqf5lwdkIss/VN8IHSzAw==",
+  "signature": "ISyRd6aDRBbqGA6R3RB1eKRzrRFsgwB5/i4J+1bU6dAAvJ66AJ5ZpXN+EIWJxASzrjtSJXFmcUE9SPtQ9FmPDg==",
   "tags": [
     "security",
     "cache",
@@ -119,20 +141,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "memory",
-      "scope": "cache"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -141,14 +149,6 @@
     {
       "kind": "memory",
       "scope": "cache"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Execute construction formulas in sandbox with unit validation",
   "digests": {
@@ -49,6 +50,7 @@
   ],
   "layer": 3,
   "name": "Formula Executor",
+  "never": [],
   "outputs": [
     {
       "description": "Generated Code",
@@ -73,8 +75,26 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
   "requires": [],
-  "signature": "OHYAYX637NJbmKV6vQHNZv1yoCTKrXWZXuCcMAb2VaDIaGR6JMlragTciV5FCyAepR5omN3K9Lv3EgPWm5nOAw==",
+  "signature": "QDcr+Gq8pBDvmkcOS9hmBPk0qBE4cbJH8e0+zHWhnS3DWJjLkn+GgnXP/C//ZI+BGBgsDpbEwasN5U86FurpCQ==",
   "tags": [
     "domain",
     "construction",
@@ -113,30 +133,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

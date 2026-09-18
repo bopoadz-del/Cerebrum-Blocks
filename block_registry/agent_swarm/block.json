@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Multi-agent task orchestration with dependency resolution and LLM routing",
   "digests": {
@@ -125,6 +137,7 @@
   ],
   "layer": 3,
   "name": "Agent Swarm",
+  "never": [],
   "outputs": [
     {
       "description": "Project ID",
@@ -164,10 +177,40 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    },
+    {
+      "kind": "llm",
+      "scope": "provider"
+    },
+    {
+      "kind": "credential",
+      "scope": "env"
+    },
+    {
+      "kind": "block",
+      "scope": "peer"
+    }
+  ],
   "requires": [
     "vector_search"
   ],
-  "signature": "poseWyhf91DGfqZZOK42QodFzh+z8Gm3KqUCJzAkrUICqy3DvHYb+0ckpVHrwa8v8Y4rahPttZ7MyK0GKUrMBg==",
+  "signature": "Do/JcM/ihnXbnh+RBw3Cl5tEsFKthGLm/56q0NJtnfFU++Bb9hjnxqWvCS9D/+JLf0mA4Xl1pSGbpNRFO/DgAg==",
   "tags": [
     "agents",
     "swarm",
@@ -260,53 +303,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    },
-    {
-      "kind": "llm",
-      "scope": "provider"
-    },
-    {
-      "kind": "credential",
-      "scope": "env"
-    },
-    {
-      "kind": "block",
-      "scope": "peer"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
-    },
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }

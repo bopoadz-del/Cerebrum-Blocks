@@ -20,9 +20,12 @@ with ``error``/``detail`` added on failure.
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List
 
 from app.core.universal_base import UniversalBlock
+
+_log = logging.getLogger(__name__)
 
 BLOCK_ID = "portfolio_rollup"
 
@@ -53,7 +56,8 @@ def _coerce_value(value: Any) -> Any:
     if isinstance(value, str):
         try:
             return float(value)
-        except ValueError:
+        except ValueError as exc:
+            _log.debug("_coerce_value: not numeric %r: %s", value, exc)
             return None
     return None
 

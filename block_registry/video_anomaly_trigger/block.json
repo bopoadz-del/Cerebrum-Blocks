@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Watch video metadata for anomalies and chain to notification or workflow triggers",
   "digests": {
@@ -77,6 +78,7 @@
   ],
   "layer": 2,
   "name": "Video Anomaly Trigger",
+  "never": [],
   "outputs": [
     {
       "description": "Triggered",
@@ -101,10 +103,24 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "block",
+      "scope": "peer"
+    }
+  ],
   "requires": [
     "notification"
   ],
-  "signature": "Ua5Si1YR1/p/a4K+H2r9jBbabFulmgSlpGFav1VXs6cFInl9ClR+CBgN7I4qEr0bGYU0IYT8PbtvLq24tE2wCA==",
+  "signature": "8V5FRODu/4r3/aCh2h75IQ+pevfMIeI63TyZO6NJ7qmQzyRTB486b32ZKaJ203972ep7vXRf0VtUaqmAPSY1Bw==",
   "tags": [
     "connector",
     "video",
@@ -165,20 +181,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "block",
-      "scope": "peer"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -188,7 +190,5 @@
       "kind": "notification",
       "scope": "outbound"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -60,6 +67,7 @@
   ],
   "layer": 2,
   "name": "Monitoring",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -74,11 +82,25 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "llm",
+      "scope": "provider"
+    }
+  ],
   "requires": [
     "config",
     "memory"
   ],
-  "signature": "6D6sAgERqiz5sPk621UGMH6fyDvuUo/X0YMHq3aPbSomeU69OQzKVZOgVWv/1o+wT5GyCI+yhLMD+gdJLYK9Cw==",
+  "signature": "ScaQ1ae54eoBYUkYBPtt9AhIWvlhh/z+12+WW6ddICirXybztEpUGdbI4rg9+2YotcWxkV3SfyubH/DYJZLxCA==",
   "tags": [
     "monitoring",
     "observability",
@@ -121,32 +143,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "llm",
-      "scope": "provider"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

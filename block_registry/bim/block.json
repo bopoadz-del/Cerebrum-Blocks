@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -58,6 +65,7 @@
   ],
   "layer": 6,
   "name": "Bim",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -72,6 +80,20 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "config",
     "storage",
@@ -79,7 +101,7 @@
     "pdf",
     "ocr"
   ],
-  "signature": "AkeNGLPLnuSGJFoJTtiURN9CgpbgjClfZcUEZ0j5kML/3Vxr7Tr7LNXW9uukHACfpanAul/TKmioO7Q40DxzBA==",
+  "signature": "nfCBypbBZ5tq63I0QPxNpyRR2WxNVWX3GBELnIaxzBqHC8h7Z1n+AgDUKjGzg1AtVS53a/Va6YlvB4lpxcyyBg==",
   "tags": [
     "construction",
     "bim",
@@ -124,20 +146,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -154,14 +162,6 @@
     {
       "kind": "memory",
       "scope": "cache"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

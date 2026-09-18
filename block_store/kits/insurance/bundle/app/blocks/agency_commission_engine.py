@@ -265,7 +265,7 @@ class AgencyCommissionEngineBlock(UniversalBlock):
             "overrides": public_overrides,
             "override_total": self._money(override_total),
             "total_commission": self._money(total),
-            "currency": self.formulas.get("currency", "USD"),
+            "currency": self._currency(data),
         }
 
         if data.get("cancellation_date"):
@@ -297,7 +297,7 @@ class AgencyCommissionEngineBlock(UniversalBlock):
             "premium": self._money(premium),
             "overrides": [self._public_override(row) for row in overrides],
             "override_total": self._money(total),
-            "currency": self.formulas.get("currency", "USD"),
+            "currency": self._currency(data),
         }
 
     def _apply_chargeback(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -322,7 +322,7 @@ class AgencyCommissionEngineBlock(UniversalBlock):
             "original_commission": self._money(original_commission),
             **chargeback,
             "net_commission_after_chargeback": self._money(original_commission - chargeback_amount),
-            "currency": self.formulas.get("currency", "USD"),
+            "currency": self._currency(data),
         }
 
     def _effective_schedule_result(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -620,6 +620,16 @@ class AgencyCommissionEngineBlock(UniversalBlock):
 
     def _money(self, value: Decimal) -> float:
         return float(self._money_decimal(value))
+
+    def _currency(self, data: Dict[str, Any]) -> str:
+        """Prefer an explicit policy/request currency, else the schedule default."""
+
+        policy = data.get("policy") if isinstance(data.get("policy"), dict) else {}
+        for source in (data, policy):
+            value = source.get("currency")
+            if value:
+                return str(value).upper()
+        return str(self.formulas.get("currency", "USD")).upper()
 
     def _rate(self, value: Decimal) -> float:
         return float(value.quantize(RATE, rounding=ROUND_HALF_UP))

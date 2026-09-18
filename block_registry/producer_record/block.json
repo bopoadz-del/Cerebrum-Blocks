@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    },
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Insurance producer record Store block for licenses, agency assignment, status, and carrier appointments",
   "digests": {
@@ -32,6 +44,7 @@
   ],
   "layer": 3,
   "name": "Producer Record",
+  "never": [],
   "outputs": [
     {
       "description": "Producer record operation result",
@@ -46,8 +59,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "tXtLKVYhoo2Z+dkyW+1vNg4kCfDMIZgnWfMDLM8e6XfzWgpXBF3fvN1jKxqzNKpRRVveFFq/P19YJeCS7jgwDg==",
+  "signature": "ISS7BaKdFfgwowAbEnDtyCkSupihcDRs3HqI9MWa7JHtVyEb+tuF4g3lEAwE5RcTA0ltm5x5ouCDDMiAAZiADQ==",
   "tags": [
     "domain",
     "insurance",
@@ -75,16 +98,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -93,19 +106,6 @@
     {
       "kind": "database",
       "scope": "vector"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
-    },
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

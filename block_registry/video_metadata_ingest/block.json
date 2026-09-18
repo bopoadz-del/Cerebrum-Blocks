@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Validate video analytics metadata and persist to the video store",
   "digests": {
@@ -33,6 +34,7 @@
   ],
   "layer": 2,
   "name": "Video Metadata Ingest",
+  "never": [],
   "outputs": [
     {
       "description": "Event ID",
@@ -57,8 +59,14 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
   "requires": [],
-  "signature": "MGT++P3lQy6NeWjxazP6wVGTQRvMd74tJFcMWFtXMlThb+Exl4BwOTqFTTQVlpzDjpSX3FcLu3OMzktOQMSoAQ==",
+  "signature": "wRsn+JoUZobGMh/Gt2zWZu2TghD2OgJvsVDPqqe8uJZ0chG5rBH3ARPEwXAXUcZx/bPFHkK+WTpil9p01XXNCQ==",
   "tags": [
     "connector",
     "video",
@@ -84,18 +92,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

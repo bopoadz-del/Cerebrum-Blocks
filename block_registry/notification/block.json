@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Send notifications via Email, Webhook, Slack, or MCP",
   "digests": {
@@ -82,6 +94,7 @@
   ],
   "layer": 2,
   "name": "Notification",
+  "never": [],
   "outputs": [
     {
       "description": "Channel",
@@ -106,8 +119,34 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    },
+    {
+      "kind": "credential",
+      "scope": "env"
+    },
+    {
+      "kind": "block",
+      "scope": "peer"
+    }
+  ],
   "requires": [],
-  "signature": "S98VInJDoKrLn+iaXhENRfwrbKSVNg9MzM1LORS/HmR/dAUHpDUMgWCwhhZ/bwg4DIeDd3X8nE+ZLIlJlZ7MBA==",
+  "signature": "XYrcykGTf1j2MByl7gNkkK3/b2P6cl7YIg+9ITBuVEmCS8ztVrFJ2TeM6wbZnd1AUH9TZK/L1lfK5o+jNykhBg==",
   "tags": [
     "notification",
     "messaging",
@@ -168,32 +207,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    },
-    {
-      "kind": "credential",
-      "scope": "env"
-    },
-    {
-      "kind": "block",
-      "scope": "peer"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -210,19 +223,6 @@
     {
       "kind": "notification",
       "scope": "outbound"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
-    },
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }

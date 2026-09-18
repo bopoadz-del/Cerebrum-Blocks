@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Decimal-safe grouped reconciliation with exception evidence.",
   "digests": {
@@ -15,6 +16,7 @@
   ],
   "layer": 3,
   "name": "Finance Reconciliation",
+  "never": [],
   "outputs": [
     {
       "description": "Deterministic FinanceOps result",
@@ -32,16 +34,6 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "t26QQ9lpQpvIkqVOUBrjRdTzLHzgVwFWSx0BzGWq6yXR6aJftXJhCSK8bIMJNC1e7Jwek2XnMsrg6i09rELGAA==",
-  "tags": [
-    "domain",
-    "finance_ops",
-    "reconciliation",
-    "controls",
-    "deterministic"
-  ],
-  "trust_tier": "platform",
-  "version": "1.0.0",
   "reads": [
     {
       "kind": "caller",
@@ -52,12 +44,20 @@
       "scope": "runtime"
     }
   ],
+  "signature": "+Znw63IdkQQVR2vtM4EStPlS1GU3nymQ5+XyNxIze/uhHoXMLFZlRxOq8VMQUk0TVxX3kCKMR+EJjWE512EUCQ==",
+  "tags": [
+    "domain",
+    "finance_ops",
+    "reconciliation",
+    "controls",
+    "deterministic"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }
