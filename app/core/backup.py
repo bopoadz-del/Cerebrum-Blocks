@@ -74,9 +74,15 @@ class BackupResult:
 
 
 def snapshot_sqlite(source: Path, dest: Path) -> None:
-    """Copy a live SQLite database consistently via the online backup API."""
+    """Copy a live SQLite database consistently via the online backup API.
+
+    The source is opened read-write on purpose: the backup API must read
+    the live -wal when the database is in WAL mode, and a read-only
+    connection to a WAL database fails (sqlite reports a spurious
+    'disk I/O error'). The API itself only reads pages.
+    """
     dest.parent.mkdir(parents=True, exist_ok=True)
-    src_conn = sqlite3.connect(f"file:{source}?mode=ro", uri=True)
+    src_conn = sqlite3.connect(str(source))
     try:
         dst_conn = sqlite3.connect(str(dest))
         try:
