@@ -291,6 +291,10 @@ class MedicalBlockV2(DomainBlockV2):
             "mortality": self._score_mortality_risk(text),
             "overall_risk": self._compute_overall_risk(text),
         }
+        risk_scores_note = (
+            "heuristic keyword scoring — unvalidated, no clinical authority; "
+            "not a clinical decision instrument"
+        )
         custom_rule_hits = self._request_knowledge.check_custom_rules(text)
         document_date = self._extract_document_date(text)
 
@@ -300,6 +304,7 @@ class MedicalBlockV2(DomainBlockV2):
             "clinical_metrics": clinical_metrics,
             "compliance_flags": compliance_flags,
             "risk_scores": risk_scores,
+            "risk_scores_note": risk_scores_note,
             "custom_rule_hits": custom_rule_hits,
             "text": text,
             "raw_text": "",
