@@ -82,7 +82,7 @@ def snapshot_sqlite(source: Path, dest: Path) -> None:
     'disk I/O error'). The API itself only reads pages.
     """
     dest.parent.mkdir(parents=True, exist_ok=True)
-    src_conn = sqlite3.connect(str(source))
+    src_conn = sqlite3.connect(str(source), timeout=5)
     try:
         mode = src_conn.execute("PRAGMA journal_mode").fetchone()[0]
         if str(mode).lower() == "wal":
@@ -91,7 +91,7 @@ def snapshot_sqlite(source: Path, dest: Path) -> None:
             # filesystems (CI runners report 'disk I/O error'). A
             # truncated WAL means the backup reads database pages only.
             src_conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-        dst_conn = sqlite3.connect(str(dest))
+        dst_conn = sqlite3.connect(str(dest), timeout=5)
         try:
             src_conn.backup(dst_conn)
             # The online backup copies the source's WAL-mode header; the

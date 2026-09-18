@@ -193,8 +193,14 @@ class TestArming:
 
         async def boot():
             task = asyncio.get_running_loop().create_task(sched.scheduler_loop())
-            await asyncio.wait_for(ran.wait(), timeout=30)
-            task.cancel()
+            try:
+                await asyncio.wait_for(ran.wait(), timeout=30)
+            finally:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
 
         asyncio.run(boot())
         assert sched.has_any_archive() is True
