@@ -25,6 +25,96 @@ def _build_service(access_token: str = None):
     )
 
 
+def _load_service_account() -> Dict | None:
+    """Service-account credentials for unattended (service-to-service)
+    Drive access. GOOGLE_SERVICE_ACCOUNT_JSON is either the JSON credential
+    blob itself or a path to it. None when not configured."""
+    raw = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
+    if not raw:
+        return None
+    if not raw.startswith("{"):
+        path = raw
+        if not os.path.exists(path):
+            return None
+        raw = open(path, encoding="utf-8").read()
+    try:
+        sa = json.loads(raw)
+    except (ValueError, TypeError) as exc:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "GOOGLE_SERVICE_ACCOUNT_JSON is set but not parseable: %s", exc
+        )
+        return None
+    if sa.get("client_email") and sa.get("private_key"):
+        return sa
+    return None
+
+
+def _service_account_jwt(sa: Dict) -> str:
+    """Mint a JWT bearer assertion signed with the SA private key (RS256)."""
+    import base64
+    import time
+
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import padding
+
+    def _b64(blob: bytes) -> str:
+        return base64.urlsafe_b64encode(blob).rstrip(b"=").decode()
+
+    header = _b64(json.dumps({"alg": "RS256", "typ": "JWT"}).encode())
+    now = int(time.time())
+    claims = _b64(
+        json.dumps(
+            {
+                "iss": sa["client_email"],
+                "scope": " ".join(_SCOPES),
+                "aud": sa.get("token_uri", _OAUTH_TOKEN_URL),
+                "iat": now,
+                "exp": now + 3600,
+            }
+        ).encode()
+    )
+    signing_input = f"{header}.{claims}"
+    key = serialization.load_pem_private_key(
+        sa["private_key"].encode(), password=None
+    )
+    signature = key.sign(
+        signing_input.encode(), padding.PKCS1v15(), hashes.SHA256()
+    )
+    return f"{signing_input}.{_b64(signature)}"
+
+
+async def _service_account_token(sa: Dict) -> str:
+    """Exchange the JWT assertion for an access token (jwt-bearer grant)."""
+    import httpx
+
+    assertion = _service_account_jwt(sa)
+    async with httpx.AsyncClient(timeout=20) as client:
+        resp = await client.post(
+            sa.get("token_uri", _OAUTH_TOKEN_URL),
+            data={
+                "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                "assertion": assertion,
+            },
+        )
+        if resp.status_code == 200:
+            return resp.json()["access_token"]
+        raise RuntimeError(
+            f"Service-account token exchange failed ({resp.status_code}): "
+            f"{resp.text[:500]}"
+        )
+
+
+def _auth_mode() -> str:
+    """Which credential path is active: service_account / user_token / none."""
+    if _load_service_account():
+        return "service_account"
+    if os.getenv("GOOGLE_ACCESS_TOKEN") or os.getenv("GOOGLE_REFRESH_TOKEN"):
+        return "user_token"
+    return "unconfigured"
+
+
 async def _get_access_token() -> str:
     """Refresh an access token, or fall back to GOOGLE_ACCESS_TOKEN.
 
@@ -34,6 +124,11 @@ async def _get_access_token() -> str:
     the first hour; the refresh grant is what makes it keep working.
     """
     import httpx
+
+    service_account = _load_service_account()
+    if service_account:
+        # Unattended service-to-service access: no user OAuth, no browser.
+        return await _service_account_token(service_account)
 
     refresh_token = os.getenv("GOOGLE_REFRESH_TOKEN")
     client_id = os.getenv("GOOGLE_CLIENT_ID")
@@ -146,8 +241,9 @@ class GoogleDriveBlock(UniversalBlock):
             return {
                 "status": "success",
                 "operation": "auth",
-                "authenticated": has_token,
-                "credentials_configured": has_creds,
+                "authenticated": has_token or bool(_load_service_account()),
+                "credentials_configured": has_creds or bool(_load_service_account()),
+                "mode": _auth_mode(),
                 "auth_url": url or None,
                 "instructions": (
                     "Visit auth_url in a browser, approve, then set GOOGLE_ACCESS_TOKEN env var with the returned token."
@@ -221,7 +317,7 @@ class GoogleDriveBlock(UniversalBlock):
                     }
                     for f in data.get("files", [])
                 ]
-                return {"status": "success", "operation": "list", "files": files, "total": len(files)}
+                return {"status": "success", "operation": "list", "mode": _auth_mode(), "files": files, "total": len(files)}
             except Exception:
                 return {
                     "status": "error",
