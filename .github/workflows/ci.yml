@@ -31,7 +31,7 @@ jobs:
         ports:
           - 5433:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U cerebrum -d cerebrum"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -216,7 +216,10 @@ jobs:
     # nobody reads.
     name: Full suite (every test file)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Above the suite's real runtime on purpose: when the cap fires first, the
+    # result is a CANCELLED check that names nothing. Let --timeout=90 be the
+    # thing that fails, because it names the test.
+    timeout-minutes: 45
     env:
       ENV: test
       DATABASE_URL: postgresql://cerebrum:cerebrum@localhost:5433/cerebrum
@@ -300,8 +303,16 @@ jobs:
 
       - name: Run every test file
         # pytest-timeout turns a deadlock into a named failure instead of
-        # burning the 25m job cap with no last-test line. Main's pytest
-        # step is ~45s; 90s per test is headroom, not a skip.
+        # burning the job cap with no last-test line. Main's pytest step is
+        # ~45s; 90s per test is headroom, not a skip.
+        #
+        # PYTHONUNBUFFERED: the previous run died at the 25m cap with its last
+        # visible line at 16%, which is ambiguous -- buffered stdout means the
+        # last FLUSHED line is not necessarily the last line RUN. Unbuffered,
+        # the final line before any kill is the real one, so a hang names
+        # itself instead of being guessed at.
+        env:
+          PYTHONUNBUFFERED: "1"
         run: |
           python -m pip install pytest-timeout==2.4.0
           pytest -v tests/ --timeout=90 --timeout-method=signal -x --tb=short
