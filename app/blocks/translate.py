@@ -92,6 +92,20 @@ class TranslateBlock(UniversalBlock):
         target = _normalize_lang(params.get("target") or params.get("target_language") or "es")
         source = _normalize_lang(params.get("source") or params.get("source_language") or "auto")
 
+        # Tests and offline callers request provider="mock": deterministic,
+        # no network. Previously ignored — the block always called Google
+        # Translate, which hangs on CI.
+        if params.get("provider") == "mock":
+            return {
+                "status": "success",
+                "original": text,
+                "translated": text,
+                "source_language": source,
+                "target_language": target,
+                "char_count": len(text),
+                "provider": "mock",
+            }
+
         try:
             loop = asyncio.get_event_loop()
             translated, detected = await loop.run_in_executor(
