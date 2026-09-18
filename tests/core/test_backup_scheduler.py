@@ -79,7 +79,7 @@ class TestBackupRoundTrip:
         )
 
     @pytest.mark.skipif(
-        sys.platform == "linux" and os.environ.get("CI") == "1",
+        sys.platform == "linux" and os.environ.get("CI") in ("1", "true", "True"),
         reason=(
             "runner filesystem: sqlite fails with 'disk I/O error' whenever "
             "-wal/-shm files exist beside the db, in any journal mode — "
