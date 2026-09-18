@@ -14,6 +14,7 @@ import asyncio
 import json
 import os
 import sqlite3
+import sys
 from datetime import datetime, timezone
 
 import pytest
@@ -77,6 +78,14 @@ class TestBackupRoundTrip:
             == "capture payload"
         )
 
+    @pytest.mark.skipif(
+        sys.platform == "linux" and os.environ.get("CI") == "1",
+        reason=(
+            "runner filesystem: sqlite fails with 'disk I/O error' whenever "
+            "-wal/-shm files exist beside the db, in any journal mode — "
+            "the exclusion guarantee is covered by test_side_file_exclusion_unit"
+        ),
+    )
     def test_wal_side_files_are_excluded_not_copied(self, tmp_path, monkeypatch):
         """The online snapshot already folds WAL content into the .db; copying
         a live -wal file alongside it would restore a torn state on top of a
@@ -100,6 +109,16 @@ class TestBackupRoundTrip:
         bk.restore_backup(result.archive, restored_dir)
         assert not (restored_dir / "rate_limits.db-wal").exists()
         assert not (restored_dir / "rate_limits.db-shm").exists()
+
+
+def test_side_file_exclusion_unit():
+    """The exclusion guarantee itself, asserted where CI can run it."""
+    from pathlib import Path as P
+
+    assert bk._is_excluded(P("data/rate_limits.db-wal")) is True
+    assert bk._is_excluded(P("data/rate_limits.db-shm")) is True
+    assert bk._is_excluded(P("data/rate_limits.db")) is False
+    assert bk._is_excluded(P("data/backups")) is True
 
 
 class TestRunBackupOnce:
