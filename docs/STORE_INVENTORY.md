@@ -7,10 +7,10 @@ sweep. Every claim below is from the files themselves, not from memory.
 
 ## Trust summary
 
-- **115 registry blocks**, every one with a `block.json` manifest
-  (115/115) and a signature (115/115). Census: **0 missing (115
-  advertised)**. Author sweep: **107 declared `Cerebrum Team`**, 8 declare
-  no author.
+- **136 registry blocks**, every one with a `block.json` manifest
+  (136/136) and a signature (136/136). Census: **0 missing (136
+  advertised)**. Author sweep: **113 declared `Cerebrum Team`**, 23
+  declare no author.
 - **Zero stub-like blocks in the Store registry.** The echo-stub pattern
   (`run()` returning `{"status": "ok", "result": <input>}` unconditionally)
   appears nowhere in `block_registry/` (pattern sweep ships in CI). The
@@ -83,7 +83,7 @@ billing_entitlement, notification_mailer, approval_action, block_runner)
 `universal_business` kit does not exist in `block_store/kits/` and is
 removed from this inventory.
 
-## Registry blocks (115) — categories
+## Registry blocks (136) — categories
 
 - **Registered `*_v2` domain blocks (8)**: construction_v2, finance_v2,
   formula_executor_v2, insurance_v2, legal_v2, ocr_v2, pdf_v2, retail_v2.
@@ -105,6 +105,9 @@ removed from this inventory.
   video_metadata_ingest, hkia_gn16_rules.
 - **Estate (real)**: estate_registry, estate_maintenance,
   evidence_verifier, readiness_engine, portfolio_rollup.
+- **Wave-2 clones (from The_Fork / Steward / FinanceOps / StockWisePro
+  donors)**: vdc_clash_detection, vdc_bcf_export, estate_bearer_auth,
+  user_auth, multi_tenant_rbac, procore_cde_client.
 - **Specialist**: jetson_gateway, sympy_reasoning, learning_engine,
   recommendation_template, project_reasoner, attrition_scorer,
   incentive_targeting, distribution_analytics, agency_commission_engine,

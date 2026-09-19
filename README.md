@@ -12,7 +12,7 @@ blocks and kits through the public API, exactly like any other client.
 
 > ### Part of the CEREBRUM ecosystem — industrialized AI delivery
 >
-> **The Store — [Cerebrum-Blocks](https://github.com/bopoadz-del/Cerebrum-Blocks):** 135 block modules (115 registry entries, all manifested + signed), 19 domain kits + universal kernel, one API. Build a capability once; every sector inherits it.  
+> **The Store — [Cerebrum-Blocks](https://github.com/bopoadz-del/Cerebrum-Blocks):** 150 block modules (136 registry entries, all manifested + signed), 19 domain kits + universal kernel, one API. Build a capability once; every sector inherits it.  
 > **The Factory — [CerebrumDev.ai](https://github.com/bopoadz-del/CerebrumDev.ai):** the client-facing interface that assembles blocks into governed, deployable vertical platforms — evaluation gates in CI, release certification, honest closure reporting.  
 > **The Products — [The Fork](https://github.com/bopoadz-del/The_Fork)** (construction AI — enterprise client pilot) **· [RetailOps](https://github.com/bopoadz-del/TEKsystems_GlobalRetailMNC)** (retail operations — assembled, CI-gated and deployed in under three days).  
 > **The Edge:** sovereign deployment proven — zero-egress on-premise profile, executed air-gap acceptance test, signed sovereignty report.
@@ -34,7 +34,7 @@ products, clients, and domain kits.
 
 | Component | Path | Purpose |
 |---|---|---|
-| Blocks | `app/blocks/` | 135 typed execution modules (chat, RAG, documents, domain analysis, workbench, …) |
+| Blocks | `app/blocks/` | 150 typed execution modules (chat, RAG, documents, domain analysis, workbench, …) |
 | Block runtime | `app/core/` | TypedBlock base with fail-closed I/O validation, trust-scope enforcement, grounding stage, capability model |
 | Execute API | `app/routers/execute.py` | `/v1/execute` — auth, tier boundary, trust scope, grounding, capability dispatch |
 | Block registry | `block_registry/` | 115 manifest + adapter entries for discovery and subprocess execution |
@@ -148,7 +148,7 @@ readiness, and the known-defect list) lives in
 **[docs/STORE_INVENTORY.md](docs/STORE_INVENTORY.md)** and is re-verified
 against the files themselves, not memory. The short version:
 
-- **115 registry blocks** — all manifested and signed, 107 authored
+- **136 registry blocks** — all manifested and signed, 113 authored
   `Cerebrum Team`, **zero stubs** (verified by pattern sweep; census
   0 missing).
 - **21 kit directories** — 19 domain kits + `universal_kernel` +
