@@ -89,7 +89,8 @@ def _slope_of(mesh) -> float | None:
         dz = float(b[1][2] - b[0][2])
         dxy = max(float(b[1][0] - b[0][0]), float(b[1][1] - b[0][1]))
         return dz / dxy if dxy else None
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        logging.getLogger(__name__).debug("mesh bounds unavailable; fall gradient unknown: %s", exc)
         return None
 
 
@@ -185,7 +186,8 @@ def _would_create_new_clash(
     try:
         moved = mesh.copy()
         moved.apply_translation([v / 1000.0 for v in vector_mm])
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        logging.getLogger(__name__).debug("mesh copy/translate failed; move not verifiable: %s", exc)
         return None
 
     from app.blocks.geometry_engine import judge_pair

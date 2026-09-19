@@ -119,11 +119,13 @@ def exact_backend_available() -> bool:
     """
     try:
         import manifold3d  # noqa: F401
-    except Exception:
+    except Exception as exc:
+        logging.getLogger(__name__).debug("manifold3d unavailable; exact backend degraded: %s", exc)
         return False
     try:
         import trimesh  # noqa: F401
-    except Exception:
+    except Exception as exc:
+        logging.getLogger(__name__).debug("trimesh unavailable; exact backend degraded: %s", exc)
         return False
     return True
 
