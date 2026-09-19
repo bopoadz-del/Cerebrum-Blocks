@@ -152,12 +152,12 @@ against the files themselves, not memory. The short version:
   `Cerebrum Team`, **zero stubs** (verified by pattern sweep; census
   0 missing).
 - **21 kit directories** — 19 domain kits + `universal_kernel` +
-  `_template` — including the five declared-ready verticals: **hotels,
-  insurance, construction, finance, retail** — each with real domain
-  blocks beyond the generic core (`pdf, ocr, chat, image,
-  formula_executor(_v2)`).
+  `_template` — including the seven declared-ready verticals: **hotels,
+  insurance, construction, finance, retail, real estate, legal** — each
+  with real domain blocks beyond the generic core (`pdf, ocr, chat,
+  image, formula_executor(_v2)`).
 - **Excluded from testing** (no authoritative domain content): medical,
-  legal, veterinary, pharma.
+  veterinary, pharma.
 - **Known defects are listed, not hidden**: the five estate blocks are
   real and registered in the Store (always-ok stubs replaced on `main`,
   `9b8d781f`); `admin_block._preflight`'s database check is tracked in

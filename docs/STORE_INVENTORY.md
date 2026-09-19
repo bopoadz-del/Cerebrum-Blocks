@@ -25,7 +25,7 @@ sweep. Every claim below is from the files themselves, not from memory.
 
 ## Vertical readiness
 
-### Ready — build and test these five
+### Ready — build and test these seven
 
 | Vertical | Kit | Domain blocks (beyond the generic core) |
 |---|---|---|
@@ -34,6 +34,22 @@ sweep. Every claim below is from the files themselves, not from memory.
 | construction | construction | construction_v2, boq_processor, spec_analyzer, sympy_reasoning, drawing_qto, primavera_parser, smart_orchestrator, jetson_gateway, bim_extractor, bim, learning_engine, recommendation_template, project_reasoner |
 | finance | finance, finance_ops | finance_v2, finance_canonical_model, finance_import, finance_data_quality, finance_reconciliation, finance_coa_governance, finance_saas_metrics |
 | retail | retail | retail_v2 |
+| real estate | real_estate | estate_registry, estate_maintenance, evidence_verifier, readiness_engine, portfolio_rollup (real since `main` `9b8d781f`) |
+| legal | legal | legal_v2, legal_knowledge (compliance flags, risk keywords, custom rules) |
+
+Legal is declared with the honest note: the knowledge layer is
+rules-based (compliance flags / risk keywords / custom rules), not an
+authoritative legal corpus.
+
+**mep_coordination — declaration pending on registration + signing.**
+The kit bundle contains seven real blocks (geometry_engine,
+clearance_rules, clash_triage, clash_resolver, bcf_export, version_diff,
+model_clone, 6.9–16.9KB each) with a full per-block test suite and a
+measured acceptance run (schependomlaan IFC 49.3MB: 1,437 elements, 14
+hard clashes, 399 clearance violations, 287 false positives eliminated,
+original file byte-identical after). The blocks live inside the kit
+bundle and are not yet registered in `block_registry/`; registration
+requires the operator publisher key for signing.
 
 The generic core shared by domain kits: `pdf, ocr, chat, image,
 formula_executor, formula_executor_v2`. A capability that resolves only to
@@ -42,15 +58,17 @@ time (2b).
 
 ### Excluded — no testing (declared)
 
-medical, legal, veterinary, pharma. Drafts for these verticals carry the
+medical, veterinary, pharma. Drafts for these verticals carry the
 honest note: no authoritative domain content; domain logic would be
-fabricated.
+fabricated. (Legal was removed from this list on 2026-09-19: `legal_v2`
+is registered, real, and tested.)
 
 ### Unverified — kit exists, not on the ready list
 
 agriculture, automotive, aviation, education, hr, manufacturing,
-mep_coordination, oil_gas, real_estate, supply_chain. Their kits exist in
-the Store; depth is not guaranteed until each is declared ready.
+mep_coordination (declaration pending — see Ready section), oil_gas,
+supply_chain. Their kits exist in the Store; depth is not guaranteed
+until each is declared ready.
 
 ## Full kit list (21)
 
@@ -110,5 +128,5 @@ removed from this inventory.
 - The factory inventory declaration (`app.factory.inventory`) — ready
   verticals and kit domain sets are mirrored there and enforced at draft
   and plan time.
-- Build/test planning: only the five ready verticals are tested until more
-  kits are declared ready.
+- Build/test planning: only the seven ready verticals are tested until
+  more kits are declared ready.

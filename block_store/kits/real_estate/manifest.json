@@ -25,7 +25,11 @@
     "ocr",
     "chat",
     "image",
-    "real_estate_v2",
+    "estate_registry",
+    "estate_maintenance",
+    "evidence_verifier",
+    "readiness_engine",
+    "portfolio_rollup",
     "formula_executor_v2"
   ],
   "prompts": [],
@@ -49,8 +53,24 @@
       "dest": "app/containers/real_estate.py"
     },
     {
-      "src": "app/blocks/real_estate_v2.py",
-      "dest": "app/blocks/real_estate_v2.py"
+      "src": "app/blocks/estate_registry.py",
+      "dest": "app/blocks/estate_registry.py"
+    },
+    {
+      "src": "app/blocks/estate_maintenance.py",
+      "dest": "app/blocks/estate_maintenance.py"
+    },
+    {
+      "src": "app/blocks/evidence_verifier.py",
+      "dest": "app/blocks/evidence_verifier.py"
+    },
+    {
+      "src": "app/blocks/readiness_engine.py",
+      "dest": "app/blocks/readiness_engine.py"
+    },
+    {
+      "src": "app/blocks/portfolio_rollup.py",
+      "dest": "app/blocks/portfolio_rollup.py"
     },
     {
       "src": "app/core/real_estate_knowledge.py",
