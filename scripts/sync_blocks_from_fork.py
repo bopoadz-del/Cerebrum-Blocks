@@ -88,7 +88,6 @@ COPY_BLOCKS: tuple[str, ...] = (
     "webhook",
     "pdf_v2",
     "search",
-    "zvec",
     "ocr",
     "image",
     "local_drive",

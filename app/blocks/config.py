@@ -1,4 +1,8 @@
-"""Configuration Block - Manages block configuration"""
+"""Configuration Block - in-process defaults only.
+
+Does not read config/blocks.json. Does not apply a CEREBRUM_ env prefix.
+storage.data_dir reads DATA_DIR directly. State is lost on restart.
+"""
 
 from app.core.universal_base import UniversalBlock
 from typing import Dict, Any
@@ -8,8 +12,8 @@ import json
 
 class ConfigBlock(UniversalBlock):
     """
-    Configuration Block
-    Loads and manages configuration for all blocks
+    In-process defaults only.
+    Does not read a config file and does not apply an env prefix.
     """
     
     name = "config"
@@ -18,8 +22,7 @@ class ConfigBlock(UniversalBlock):
     layer = 0  # Infrastructure - must initialize first
     tags = ["infrastructure", "core"]
     default_config = {
-        "config_file": "config/blocks.json",
-        "env_prefix": "CEREBRUM_"
+        "persistence": "in_process",
     }
 
     ui_schema = {
@@ -120,5 +123,8 @@ class ConfigBlock(UniversalBlock):
         """Health check"""
         h = {"name": self.name, "version": self.version}
         h["configs_loaded"] = len(self.configs)
+        h["persistence"] = "in_process"
+        h["config_file_read"] = False
+        h["env_prefix_applied"] = False
         h["hardware_profile"] = self.hal.detect().value if self.hal else "unknown"
         return h

@@ -51,7 +51,13 @@ class VectorBlock(UniversalBlock):
         print(f"   Collection: {self.collection}")
         print(f"   Dimension: {self.dimension}")
         
-        # Try to load embedding model
+        # Try to load embedding model (never in offline/CI mode — the
+        # download stalls and the deterministic dummy embedding is the
+        # declared fallback).
+        from app.core.vector_store import embeddings_offline
+
+        if embeddings_offline():
+            return True
         try:
             from sentence_transformers import SentenceTransformer
             self._embeddings_func = SentenceTransformer(self.embedding_model)

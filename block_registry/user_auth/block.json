@@ -1,0 +1,23 @@
+{
+  "acceptance": [],
+  "description": "User authentication (StockWisePro port): bcrypt hashes, access token, refresh rotation (single-use), TOTP (RFC 6238). No backtest, no email.",
+  "digests": {
+    "block.json": "ebd97ee5b282b91c0872bff471db88fee48e8944e8664cb6c5f488e34c634400",
+    "block.py": "94152c6eb28a803f1210044ef8779825e1c96d54ecba2394de92e7b9b3ac85ce"
+  },
+  "id": "user_auth",
+  "name": "User Auth",
+  "never": [],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [],
+  "signature": "pKP6ElRjnPcL2Fexv/iDuxZ9nZ7PdotNEHbqZKWIOBDlpjioA6ygGaH2e+GVbDuhHFH6GrzJg68UkhZNk5E5Aw==",
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": []
+}

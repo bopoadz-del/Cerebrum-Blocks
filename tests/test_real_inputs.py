@@ -34,8 +34,7 @@ TEST_INPUTS = {
     "onedrive":   {"input": {"action": "list"}, "params": {}},
     "android_drive": {"input": {"action": "list"}, "params": {}},
     "vector_search": {"input": {"text": "concrete curing methods"}, "params": {"action": "search"}},
-    "zvec":       {"input": {"text": "concrete curing methods"}, "params": {"action": "search"}},
-    "cache_manager": {
+        "cache_manager": {
         "input": {
             "action": "get",
             "key": "test",

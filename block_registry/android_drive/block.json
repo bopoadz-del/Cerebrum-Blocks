@@ -7,10 +7,10 @@
     }
   ],
   "author": "Cerebrum Team",
-  "description": "Android device storage access via ADB or REST bridge",
+  "description": "Android device storage access \u2014 HONEST STUB: not implemented, refuses by name; needs net-new ADB/bridge integration (no donor)",
   "digests": {
     "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
-    "block.json": "dff31091875f9eb73a8715e4e51c2c3e45305dfb8febd16680d64ce7568e261f",
+    "block.json": "8567e23fc8492aa608a9fa31b79801d7192a92d7fe78bd50983b68073f4e7b46",
     "block.py": "6fb288e2df6a33f36f701c7e44904c39104fb2f705bc09bf830278e4063ea398"
   },
   "execution": {
@@ -50,7 +50,7 @@
     }
   ],
   "requires": [],
-  "signature": "I1FHAakVY20UOHqrJh2ux/k6AXEqjYENzCiRo0I+aAG2Ah3ksW4X9Avz4NqSKfYAI4A/31Q7jcGdQcbYgCI7DQ==",
+  "signature": "UiHoCrgBREsjeB1AEpzjO/dc3Qiy5JDQxouugu1jwFBzaMOeSzEJ/XasIvKrJu1grtrNeli3b0MOrRhW9zDsCw==",
   "tags": [
     "integration",
     "storage",

@@ -98,10 +98,18 @@ class MigrationBlock(UniversalBlock):
                 "current_version": self.current_version
             }
             
-        # Create backup if configured
+        # Backup is not implemented. Do not migrate while pretending a backup exists.
         backup_info = None
         if self.config["backup_before_migrate"] and not dry_run:
             backup_info = await self._create_backup()
+            if backup_info.get("status") == "error":
+                return {
+                    "status": "error",
+                    "error": backup_info.get("error"),
+                    "migrations_run": 0,
+                    "backup_created": False,
+                    "dry_run": dry_run,
+                }
             
         results = []
         
@@ -133,8 +141,8 @@ class MigrationBlock(UniversalBlock):
                     "error": str(e)
                 })
                 
-                # Attempt rollback
-                if backup_info:
+                # Restore only when a real backup exists. It never does today.
+                if backup_info and backup_info.get("status") != "error":
                     await self._restore_backup(backup_info)
                     
                 break
@@ -143,7 +151,7 @@ class MigrationBlock(UniversalBlock):
             "migrations_run": len([r for r in results if r.get("success")]),
             "from_version": self.current_version,
             "to_version": target_version or pending[-1]["version"],
-            "backup_created": backup_info is not None,
+            "backup_created": bool(backup_info) and backup_info.get("status") != "error",
             "results": results,
             "dry_run": dry_run
         }
@@ -443,20 +451,19 @@ async def down(migration_block):
             self.applied_migrations.remove(version)
             
     async def _create_backup(self) -> Dict:
-        """Create database backup before migration"""
-        backup_id = f"bk_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-        
-        # TODO: Implement actual backup
-        
+        """Refuse: database backup is not implemented. Never mint a backup id."""
         return {
-            "backup_id": backup_id,
-            "created_at": datetime.utcnow().isoformat()
+            "status": "error",
+            "error": "migration backup not implemented",
         }
-        
-    async def _restore_backup(self, backup_info: Dict):
-        """Restore from backup"""
-        # TODO: Implement restore
-        pass
+
+    async def _restore_backup(self, backup_info: Dict) -> Dict:
+        """Refuse: restore is not implemented. Never report a restored backup."""
+        return {
+            "status": "error",
+            "error": "migration backup not implemented",
+            "backup_info": backup_info,
+        }
         
     def _compute_checksum(self, content: str) -> str:
         """Compute checksum for migration integrity"""

@@ -8,8 +8,9 @@ import json
 
 class MonitoringBlock(UniversalBlock):
     """
-    Monitoring & Provider Leaderboard Block
-    Tracks reliability scores, latency, auto-routes based on performance
+    Provider leaderboard. Providers are registered, never assumed.
+    Call add_provider. No vendor is built in.
+    Scores live in process memory and are lost on restart.
     """
     
     name = "monitoring"
@@ -18,7 +19,7 @@ class MonitoringBlock(UniversalBlock):
     layer = 2  # Monitoring layer
     tags = ["monitoring", "observability", "core"]
     default_config = {
-        "track_providers": ["kimi"],
+        "track_providers": [],
         "window_size": 100,
         "prediction_threshold": 0.3
     }
@@ -26,7 +27,7 @@ class MonitoringBlock(UniversalBlock):
     ui_schema = {
         'input': {'type': 'json', 'accept': None, 'placeholder': 'JSON payload for the selected action', 'multiline': True},
         'output': {'type': 'json', 'fields': [{'name': 'result', 'type': 'json', 'label': 'Result'}]},
-        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['record_call', 'leaderboard', 'provider_status', 'recommend', 'health_report', 'predictive_failover'], 'default': 'record_call'}, {'name': 'track_providers', 'type': 'json', 'label': 'Track Providers', 'default': ['kimi']}, {'name': 'window_size', 'type': 'number', 'label': 'Window Size', 'default': 100}, {'name': 'prediction_threshold', 'type': 'number', 'label': 'Prediction Threshold', 'default': 0.3}],
+        'params': [{'name': 'action', 'type': 'select', 'label': 'Action', 'options': ['record_call', 'leaderboard', 'provider_status', 'recommend', 'health_report', 'predictive_failover', 'add_provider'], 'default': 'record_call'}, {'name': 'track_providers', 'type': 'json', 'label': 'Track Providers', 'default': []}, {'name': 'window_size', 'type': 'number', 'label': 'Window Size', 'default': 100}, {'name': 'prediction_threshold', 'type': 'number', 'label': 'Prediction Threshold', 'default': 0.3}],
         'quick_actions': [],
     }
     
@@ -34,10 +35,8 @@ class MonitoringBlock(UniversalBlock):
         super().__init__(hal_block, config)
         self.memory_block = None  # Wired by assembler
         
-        # Provider tracking
-        self.providers = {
-            "kimi": {"name": "Kimi (Moonshot)", "type": "cloud", "region": "global"},
-        }
+        # Empty until add_provider or track_providers supplies ids. No vendor default.
+        self.providers = {}
         
         # Metrics window (last 100 calls per provider)
         self.metrics_window = 100
@@ -46,7 +45,10 @@ class MonitoringBlock(UniversalBlock):
         self.uptime_history = defaultdict(lambda: deque(maxlen=self.metrics_window))
         
         # Reliability scores (0-100)
-        self.reliability_scores = {p: 100.0 for p in self.providers}
+        self.reliability_scores = {}
+        for provider_id in (self.config or {}).get("track_providers") or []:
+            if isinstance(provider_id, str) and provider_id:
+                self.add_provider(provider_id)
         
         # Auto-routing threshold
         self.degraded_threshold = 70  # Below 70% = avoid
@@ -78,8 +80,26 @@ class MonitoringBlock(UniversalBlock):
             return await self._health_report()
         elif action == "predictive_failover":
             return await self._predictive_analysis()
+        elif action == "add_provider":
+            info = input_data.get("info") if isinstance(input_data.get("info"), dict) else None
+            return self.add_provider(input_data.get("provider"), info)
         
         return {"error": f"Unknown action: {action}"}
+
+    def add_provider(self, provider_id: Optional[str], info: Optional[Dict] = None) -> Dict:
+        """Register a provider by id. Does not assume a vendor."""
+        if not isinstance(provider_id, str) or not provider_id.strip():
+            return {"status": "error", "error": "provider id required"}
+        provider_id = provider_id.strip()
+        meta = {"name": provider_id, "type": "unspecified", "region": "unspecified"}
+        if info:
+            for key in ("name", "type", "region"):
+                if key in info and info[key]:
+                    meta[key] = info[key]
+        self.providers[provider_id] = meta
+        self.reliability_scores.setdefault(provider_id, 100.0)
+        self.leaderboard_cache = None
+        return {"status": "ok", "provider": provider_id}
     
     async def _record_call(self, data: Dict) -> Dict:
         """Record API call metrics"""
@@ -203,7 +223,13 @@ class MonitoringBlock(UniversalBlock):
         leaderboard = (await self._get_leaderboard())["leaderboard"]
         
         if not leaderboard:
-            return {"recommendation": "local_ollama", "reason": "no_data"}
+            return {
+                "recommended": None,
+                "confidence": None,
+                "status": "error",
+                "error": "no providers registered",
+                "reason": "no providers registered",
+            }
         
         # Find best available provider
         for entry in leaderboard:
@@ -217,10 +243,11 @@ class MonitoringBlock(UniversalBlock):
         
         # If all degraded, use local
         return {
-            "recommended": "local_ollama",
-            "confidence": 100.0,
-            "reason": "All cloud providers degraded - using edge fallback",
-            "emergency_mode": True
+            "recommended": None,
+            "confidence": None,
+            "status": "error",
+            "error": "no provider meets the use threshold",
+            "reason": "no provider meets the use threshold",
         }
     
     async def _predictive_analysis(self) -> Dict:

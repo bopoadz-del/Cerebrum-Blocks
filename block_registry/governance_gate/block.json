@@ -1,0 +1,23 @@
+{
+  "acceptance": [],
+  "description": "Fail-closed approval governance (FinanceOps port): an action with no approved request is refused; approve/reject only from pending with a recorded reviewer and evidence.",
+  "digests": {
+    "block.json": "eb2be656e1c407ad28061b887ffad256fb7ab0eb2ee94b057bfed0ed15d954f0",
+    "block.py": "5e8339b57d8280d014bda497bfb5b14aac5cd66fc139372fc9251cde3121b76b"
+  },
+  "id": "governance_gate",
+  "name": "Governance Gate",
+  "never": [],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [],
+  "signature": "AXy/+G1k39IaPRV/VhYwbW4lTrU7/b+jkYweXwCWrE17CWm0hFs37hnDzuQdmBPZ76t34Ka6XeEQ5BZRiBiSDA==",
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": []
+}

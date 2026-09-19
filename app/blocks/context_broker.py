@@ -29,9 +29,7 @@ class ContextBrokerBlock(UniversalBlock):
             "type": "json",
             "fields": [
                 {"name": "memory", "type": "json", "label": "Memory"},
-                {"name": "drive_files", "type": "json", "label": "Drive Files"},
-                {"name": "chat_history", "type": "json", "label": "Chat History"},
-                {"name": "construction_data", "type": "json", "label": "Construction Data"}
+                {"name": "context", "type": "json", "label": "Context"}
             ]
         },
         "quick_actions": [

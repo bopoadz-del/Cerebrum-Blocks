@@ -299,11 +299,14 @@ class BillingBlock(UniversalBlock):
         if self.auth_block:
             # Would update user role
             pass
-        
+
         return {
-            "upgraded": True,
+            "upgraded": False,
             "plan": new_plan,
-            "note": "Use create_subscription to set up Stripe billing"
+            "error": (
+                "plan upgrade is not implemented — use create_subscription "
+                "to set up Stripe billing"
+            ),
         }
     
     async def _handle_webhook(self, data: Dict) -> Dict:

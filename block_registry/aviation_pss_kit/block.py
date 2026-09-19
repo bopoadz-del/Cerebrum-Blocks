@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Auto-generated adapter for Cerebrum block: zvec
-Wraps app.blocks.zvec into a synchronous run() function.
+Auto-generated adapter for Cerebrum block: aviation_pss_kit
+Wraps app.blocks.aviation_pss_kit into a synchronous run() function.
 """
 
 import asyncio
-from app.blocks import get_block
+from app.blocks.aviation_pss_kit import AviationPssKitBlock
 
 
 def _run_async(coro):
@@ -21,12 +21,11 @@ def _run_async(coro):
 
 def run(**kwargs):
     """
-    Execute the zvec block.
+    Execute the aviation_pss_kit block.
     Accepts keyword args matching the block's inputs/params.
     Returns the standardized block result payload.
     """
-    block_cls = get_block("zvec")
-    instance = block_cls()
+    instance = AviationPssKitBlock()
 
     input_data = kwargs.get("input", kwargs)
     params = {k: v for k, v in kwargs.items() if k != "input"}
@@ -34,7 +33,9 @@ def run(**kwargs):
     envelope = _run_async(instance.execute(input_data, params))
     if envelope.get("status") == "error":
         inner = envelope.get("result", {})
-        message = inner.get("error") if isinstance(inner, dict) else str(inner)
-        raise RuntimeError(message or "zvec block failed")
+        message = envelope.get("error") or (
+            inner.get("error") if isinstance(inner, dict) else str(inner)
+        )
+        raise RuntimeError(message or "aviation_pss_kit block failed")
 
     return envelope.get("result", envelope)
