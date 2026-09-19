@@ -1,0 +1,75 @@
+{
+  "id": "clash_resolver",
+  "name": "Clash Resolver",
+  "version": "1.0.0",
+  "description": "Proposes collision-free moves for clash items, preserving fall direction; batch verification against zone elements.",
+  "author": "Cerebrum Team",
+  "tags": [
+    "mep",
+    "construction",
+    "coordination"
+  ],
+  "trust_tier": "platform",
+  "layer": 3,
+  "inputs": [
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "options": [
+        "resolve",
+        "candidates",
+        "verify"
+      ],
+      "description": "resolve | candidates | verify"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Capability result"
+    }
+  ],
+  "permissions": {
+    "network": false,
+    "filesystem": true,
+    "imports": [],
+    "blocks": []
+  },
+  "requires": [],
+  "never": [],
+  "acceptance": [
+    {
+      "check": "unknown action returns an error envelope",
+      "id": "unknown_action",
+      "status": "error"
+    }
+  ],
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "file",
+      "scope": "local.write"
+    }
+  ],
+  "digests": {
+    "block.py": "c1db4b39cb5549c88d195baa42d26a686b3416202c238cab09e6119154a629dd",
+    "block.json": "52eae036bfdc74db2a0d5ea0f7273f9aec9ad8750a3cff880ef4c64407cedbdc"
+  }
+}

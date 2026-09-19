@@ -1,0 +1,80 @@
+{
+  "id": "model_clone",
+  "name": "Model Clone",
+  "version": "1.0.0",
+  "description": "Applies approved moves to a copy of the IFC model (never the original) via ifc_copy, with optional Speckle streaming.",
+  "author": "Cerebrum Team",
+  "tags": [
+    "mep",
+    "construction",
+    "coordination"
+  ],
+  "trust_tier": "platform",
+  "layer": 3,
+  "inputs": [
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "options": [
+        "apply",
+        "write_change_set",
+        "backend"
+      ],
+      "description": "apply | write_change_set | backend"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Capability result"
+    }
+  ],
+  "permissions": {
+    "network": false,
+    "filesystem": true,
+    "imports": [],
+    "blocks": []
+  },
+  "requires": [],
+  "never": [],
+  "acceptance": [
+    {
+      "check": "speckle backend availability is reported, never faked",
+      "id": "backend",
+      "status": "ok"
+    },
+    {
+      "check": "unknown action returns an error envelope",
+      "id": "unknown_action",
+      "status": "error"
+    }
+  ],
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "file",
+      "scope": "local.write"
+    }
+  ],
+  "digests": {
+    "block.py": "d8c38f5720d239e1114bcea3cfcab89240ba461dd1b1a83b4e22bbc84cef510b",
+    "block.json": "90ed2d82f950f125137a4497093472599f475bb0c875a925e86c2a8453090873"
+  }
+}

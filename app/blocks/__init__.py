@@ -113,6 +113,13 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "historical_benchmark": ("app.blocks.historical_benchmark", "HistoricalBenchmarkBlock"),
     "mcp_adapter": ("app.blocks.mcp_adapter", "MCPAdapterBlock"),
     "mcp_consumer": ("app.blocks.mcp_consumer", "MCPConsumerBlock"),
+    "geometry_engine": ("app.blocks.geometry_engine", "GeometryEngineBlock"),
+    "clearance_rules": ("app.blocks.clearance_rules", "ClearanceRulesBlock"),
+    "clash_triage": ("app.blocks.clash_triage", "ClashTriageBlock"),
+    "clash_resolver": ("app.blocks.clash_resolver", "ClashResolverBlock"),
+    "bcf_export": ("app.blocks.bcf_export", "BcfExportBlock"),
+    "version_diff": ("app.blocks.version_diff", "VersionDiffBlock"),
+    "model_clone": ("app.blocks.model_clone", "ModelCloneBlock"),
 }
 
 

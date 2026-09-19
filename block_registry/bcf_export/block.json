@@ -1,0 +1,79 @@
+{
+  "id": "bcf_export",
+  "name": "BCF Export",
+  "version": "1.0.0",
+  "description": "Exports findings to a BCF 2.1 zip (markup XML + viewpoints when provided) and validates a produced zip.",
+  "author": "Cerebrum Team",
+  "tags": [
+    "mep",
+    "construction",
+    "coordination"
+  ],
+  "trust_tier": "platform",
+  "layer": 3,
+  "inputs": [
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "options": [
+        "export",
+        "validate"
+      ],
+      "description": "export | validate"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Capability result"
+    }
+  ],
+  "permissions": {
+    "network": false,
+    "filesystem": true,
+    "imports": [],
+    "blocks": []
+  },
+  "requires": [],
+  "never": [],
+  "acceptance": [
+    {
+      "check": "missing zip is refused, not faked",
+      "id": "validate_missing",
+      "status": "error"
+    },
+    {
+      "check": "unknown action returns an error envelope",
+      "id": "unknown_action",
+      "status": "error"
+    }
+  ],
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "file",
+      "scope": "local.write"
+    }
+  ],
+  "digests": {
+    "block.py": "62ea52e80e609632892f02474a2c00d90038bde4a2ce269372872ebb36033e81",
+    "block.json": "3b9acbf7cd84b5c4f3e737721445016551e334a6fd37b6087680a9e545812ac7"
+  }
+}

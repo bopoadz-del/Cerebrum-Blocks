@@ -1,0 +1,81 @@
+{
+  "id": "clearance_rules",
+  "name": "Clearance Rules",
+  "version": "1.0.0",
+  "description": "Clearance rule table loader and evaluator: category pairs + axes with precedent resolution; rules must carry a citation.",
+  "author": "Cerebrum Team",
+  "tags": [
+    "mep",
+    "construction",
+    "coordination"
+  ],
+  "trust_tier": "platform",
+  "layer": 3,
+  "inputs": [
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "options": [
+        "evaluate",
+        "find",
+        "load",
+        "resolve"
+      ],
+      "description": "evaluate | find | load | resolve"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Capability result"
+    }
+  ],
+  "permissions": {
+    "network": false,
+    "filesystem": true,
+    "imports": [],
+    "blocks": []
+  },
+  "requires": [],
+  "never": [],
+  "acceptance": [
+    {
+      "check": "rule list loads",
+      "id": "load_rules",
+      "status": "ok"
+    },
+    {
+      "check": "unknown action returns an error envelope",
+      "id": "unknown_action",
+      "status": "error"
+    }
+  ],
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "file",
+      "scope": "local.write"
+    }
+  ],
+  "digests": {
+    "block.py": "ad7cba1ae54fc6fe45f1bf6ea4d23ad5c39cca443b71606cd1dc5e76ffccb003",
+    "block.json": "01733cb5ff73c53a33eea51a8497a19b4c8a71afca82ff5614fa79560601709f"
+  }
+}

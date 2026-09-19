@@ -41,15 +41,18 @@ Legal is declared with the honest note: the knowledge layer is
 rules-based (compliance flags / risk keywords / custom rules), not an
 authoritative legal corpus.
 
-**mep_coordination — declaration pending on registration + signing.**
-The kit bundle contains seven real blocks (geometry_engine,
+**mep_coordination — declaration pending on operator signing.**
+The seven blocks are ported into the Store and registered in
+`block_registry/` (census 122, 0 missing): geometry_engine,
 clearance_rules, clash_triage, clash_resolver, bcf_export, version_diff,
-model_clone, 6.9–16.9KB each) with a full per-block test suite and a
-measured acceptance run (schependomlaan IFC 49.3MB: 1,437 elements, 14
-hard clashes, 399 clearance violations, 287 false positives eliminated,
-original file byte-identical after). The blocks live inside the kit
-bundle and are not yet registered in `block_registry/`; registration
-requires the operator publisher key for signing.
+model_clone (6.9–16.9KB each) with the full per-block test suite ported
+to `tests/blocks/` (53 passing, 2 skipped where the trimesh backend is
+absent) and a measured acceptance run in the kit (schependomlaan IFC
+49.3MB: 1,437 elements, 14 hard clashes, 399 clearance violations, 287
+false positives eliminated, original file byte-identical after). The
+runtime admission gate excludes them until the operator signs their
+manifests with the publisher Ed25519 key (`missing required manifest
+field: signature`).
 
 The generic core shared by domain kits: `pdf, ocr, chat, image,
 formula_executor, formula_executor_v2`. A capability that resolves only to

@@ -1,0 +1,79 @@
+{
+  "id": "version_diff",
+  "name": "Version Diff",
+  "version": "1.0.0",
+  "description": "Diffs two finding sets (resolved / new / regressed / persisting) and scores proposals against the diff.",
+  "author": "Cerebrum Team",
+  "tags": [
+    "mep",
+    "construction",
+    "coordination"
+  ],
+  "trust_tier": "platform",
+  "layer": 3,
+  "inputs": [
+    {
+      "name": "action",
+      "type": "string",
+      "required": false,
+      "options": [
+        "diff",
+        "score"
+      ],
+      "description": "diff | score"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "json",
+      "description": "Capability result"
+    }
+  ],
+  "permissions": {
+    "network": false,
+    "filesystem": false,
+    "imports": [],
+    "blocks": []
+  },
+  "requires": [],
+  "never": [],
+  "acceptance": [
+    {
+      "check": "empty diff of empty sets",
+      "id": "diff_empty",
+      "status": "ok"
+    },
+    {
+      "check": "unknown action returns an error envelope",
+      "id": "unknown_action",
+      "status": "error"
+    }
+  ],
+  "publisher_id": "cerebrum_platform",
+  "signature": "",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    }
+  ],
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    },
+    {
+      "kind": "file",
+      "scope": "local.write"
+    }
+  ],
+  "digests": {
+    "block.py": "c2fec2c1c92161f1f14c21aab8201f0e33071f1b8e250546ea63f4180843af08",
+    "block.json": "5f4ca2c81575bc84fbfc65879a256be4873f72cb9d73bf635a7f40d30d6fead8"
+  }
+}
