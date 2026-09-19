@@ -315,7 +315,17 @@ jobs:
           PYTHONUNBUFFERED: "1"
         run: |
           python -m pip install pytest-timeout==2.4.0
-          pytest -v tests/ --timeout=90 --timeout-method=signal -x --tb=short
+          # --timeout-method=thread, not signal. The signal method raises in
+          # the main thread, and a test hung inside asyncio.run() cannot act
+          # on it: asyncio.run's own cleanup joins the to_thread worker, so
+          # the timeout exception queues up behind the very hang it was
+          # meant to report. Two runs burned their whole job cap (25m, then
+          # 45m) on tests/core/test_backup_scheduler.py with --timeout=90
+          # armed and silent. The thread method dumps EVERY thread's stack
+          # and hard-exits, so a hang costs 90s and names its line.
+          # faulthandler_timeout is the same dump from the interpreter
+          # itself, in case the plugin's timer thread is the one starved.
+          pytest -v tests/ --timeout=90 --timeout-method=thread             -o faulthandler_timeout=75 -x --tb=short
 
   lockfile-consistency:
     # WHY THIS EXISTS
