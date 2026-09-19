@@ -401,7 +401,7 @@ class AgentSwarmBlock(TypedBlock):
         """Filter the global MCP registry down to this agent's allowlist.
 
         agent['tools'] can be either:
-          - block names ("construction", "zvec") — exposes that block's tools
+          - block names ("construction") — exposes that block's tools
           - explicit MCP tool names ("construction_execute") — exact match
           - omitted/empty — agent runs without tools (LLM-only, current default)
 

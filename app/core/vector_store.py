@@ -112,6 +112,18 @@ async def close_pool() -> None:
         logger.info("Vector store Postgres pool closed")
 
 
+def embeddings_offline() -> bool:
+    """Deterministic no-download mode (CI / airgapped deployments).
+
+    When CEREBRUM_EMBEDDINGS_OFFLINE=1 every embedding site must skip
+    model downloads and use its deterministic fallback. The universal
+    kernel test suite explicitly expects the hash fallback to be
+    surfaced with the honesty label, so this mode is a documented
+    contract, not a silent degradation.
+    """
+    return os.getenv("CEREBRUM_EMBEDDINGS_OFFLINE", "") == "1"
+
+
 def get_embedding_model() -> Any | None:
     """Lazy-load the sentence-transformers embedding model."""
     global _embedding_model
@@ -119,6 +131,12 @@ def get_embedding_model() -> Any | None:
         return _embedding_model
 
     model_name = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+    if embeddings_offline():
+        logger.info(
+            "CEREBRUM_EMBEDDINGS_OFFLINE=1: skipping model download; "
+            "callers use the deterministic hash fallback"
+        )
+        return None
     try:
         from sentence_transformers import SentenceTransformer
 

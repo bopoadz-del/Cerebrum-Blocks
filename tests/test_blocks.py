@@ -108,6 +108,10 @@ async def test_monitoring_block():
     monitoring.memory_block = memory
     await monitoring._legacy_initialize()
 
+    for name in ("deepseek", "groq", "openai"):
+        added = monitoring.add_provider(name)
+        assert added["status"] == "ok", added
+
     # Simulate some calls
     print("\n1. Simulating provider calls...")
 
@@ -202,17 +206,10 @@ async def test_monitoring_block():
     print("\n6. Testing PROVIDER STATUS...")
     status = await monitoring.process({
         "action": "provider_status",
-        # The platform tracks kimi only. This asked for "deepseek" and
-        # read status["reliability_score"] straight out, so the block
-        # correctly answered {"error": "Unknown provider"} and the test
-        # raised KeyError. It had been failing since the provider list
-        # changed, unseen, because this file was one of the 103 CI never
-        # ran. Ask about a tracked provider, and pin the unknown answer
-        # rather than tripping over it.
-        "provider": next(iter(monitoring.providers))
+        "provider": "deepseek"
     }, {"action": "provider_status"})
     assert "reliability_score" in status, status
-    assert status["provider"] == next(iter(monitoring.providers))
+    assert status["provider"] == "deepseek"
     print(f"   {status['provider']} reliability: {status['reliability_score']}%")
 
     unknown = await monitoring.process({

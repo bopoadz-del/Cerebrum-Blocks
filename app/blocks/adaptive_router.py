@@ -475,8 +475,9 @@ class AdaptiveRouterBlock(UniversalBlock):
     async def _load_historical_data(self):
         """Load historical data from analytics"""
         if hasattr(self, 'analytics_block') and self.analytics_block:
-            # TODO: Load from analytics
-            pass
+            # No analytics backend is wired in the store build; routing
+            # decisions use current-request signals only. Honest about it.
+            return None
             
     async def _background_learning(self):
         """Background learning task"""

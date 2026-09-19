@@ -250,13 +250,24 @@ class SandboxBlock(UniversalBlock):
         result_value = None
         error = None
         
+        # This sandbox exec()s in the HOST process, so an address-space limit
+        # set here lands on the host -- the API server of whatever platform
+        # cloned this block. It used to set the soft AND hard limit and never
+        # restore either; a non-root process can never raise a hard limit
+        # back, so one sandboxed call capped the whole server for life
+        # (observed as MemoryError across an entire CI run). Lower the SOFT
+        # limit only, never above the existing hard limit, and always put it
+        # back.
+        saved_limit = None
         try:
             # Set memory limit (Unix only)
             if policy.max_memory_mb > 0 and resource is not None:
-                resource.setrlimit(
-                    resource.RLIMIT_AS,
-                    (policy.max_memory_mb * 1024 * 1024, policy.max_memory_mb * 1024 * 1024)
-                )
+                soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+                wanted = policy.max_memory_mb * 1024 * 1024
+                if hard != resource.RLIM_INFINITY:
+                    wanted = min(wanted, hard)
+                saved_limit = (soft, hard)
+                resource.setrlimit(resource.RLIMIT_AS, (wanted, hard))
             
             # Execute with timeout
             exec(code, safe_globals)
@@ -271,6 +282,11 @@ class SandboxBlock(UniversalBlock):
             error = str(e)
         finally:
             sys.stdout, sys.stderr = old_stdout, old_stderr
+            if saved_limit is not None:
+                try:
+                    resource.setrlimit(resource.RLIMIT_AS, saved_limit)
+                except (ValueError, OSError):
+                    pass
         
         execution_time = time.time() - start_time
         
