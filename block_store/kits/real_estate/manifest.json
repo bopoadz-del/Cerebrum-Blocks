@@ -25,6 +25,7 @@
     "ocr",
     "chat",
     "image",
+    "real_estate_v2",
     "estate_registry",
     "estate_maintenance",
     "evidence_verifier",
@@ -51,6 +52,10 @@
     {
       "src": "app/containers/real_estate.py",
       "dest": "app/containers/real_estate.py"
+    },
+    {
+      "src": "app/blocks/real_estate_v2.py",
+      "dest": "app/blocks/real_estate_v2.py"
     },
     {
       "src": "app/blocks/estate_registry.py",
