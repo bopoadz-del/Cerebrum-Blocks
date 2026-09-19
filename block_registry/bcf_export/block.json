@@ -1,14 +1,14 @@
 {
   "acceptance": [
     {
-      "check": "missing zip is refused, not faked",
-      "id": "validate_missing",
-      "status": "error"
+      "check": "an unknown action is refused, not silently accepted",
+      "id": "unknown_action",
+      "status": "refused"
     },
     {
-      "check": "unknown action returns an error envelope",
-      "id": "unknown_action",
-      "status": "error"
+      "check": "an empty payload without required arguments is refused, not faked",
+      "id": "missing_arguments",
+      "status": "refused"
     }
   ],
   "author": "Cerebrum Team",
