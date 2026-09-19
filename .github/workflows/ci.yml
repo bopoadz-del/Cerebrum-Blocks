@@ -216,14 +216,6 @@ jobs:
     # nobody reads.
     name: Full suite (every test file)
     runs-on: ubuntu-latest
-    # REPORT-ONLY, by owner decision (2026-09-19). The Store is a shelf of
-    # blocks: they do not run here, they are cloned into a generated platform,
-    # configured there, and tested there -- by that platform's own suite and
-    # by the Store gate's acceptance run in Docker. What gates a Store PR is
-    # what makes a block safe to clone: the conformance table, the lockfile,
-    # the build, and the backend suite. This job still runs every test file
-    # and still reports; it no longer blocks a merge.
-    continue-on-error: true
     # Above the suite's real runtime on purpose: when the cap fires first, the
     # result is a CANCELLED check that names nothing. Let --timeout=90 be the
     # thing that fails, because it names the test.
@@ -310,6 +302,17 @@ jobs:
           python scripts/dep_audit.py --python
 
       - name: Run every test file
+        # REPORT-ONLY, by owner decision (2026-09-19) -- this STEP, not the
+        # job. The Store is a shelf of blocks: they do not run here, they are
+        # cloned into a generated platform, configured there and tested there,
+        # by that platform's own suite and by the Store gate's acceptance run
+        # in Docker. So a red block test reports but does not block a merge.
+        # The steps above it in this job -- ruff, bandit, the registry census
+        # and the fail-closed dependency audit -- are about whether a block is
+        # SAFE to clone, and they still block. That is why this is step-level:
+        # a job-level continue-on-error would have un-gated the audit too
+        # (tests/test_dep_audit.py pins exactly that).
+        continue-on-error: true
         # pytest-timeout turns a deadlock into a named failure instead of
         # burning the job cap with no last-test line. Main's pytest step is
         # ~45s; 90s per test is headroom, not a skip.
