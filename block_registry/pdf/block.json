@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Extract text from PDF files",
   "digests": {
@@ -28,6 +35,7 @@
   ],
   "layer": 3,
   "name": "Pdf",
+  "never": [],
   "outputs": [
     {
       "description": "Text",
@@ -47,28 +55,6 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "requires": [],
-  "signature": "gxhmTw/PKyZfuOeYJ7gBOM7Pi7gVGTzYqVFJU7mUWo0Y4aqEXSEs+RMmrMKDf1PNNLBzcJliybddCBTvNn3MAQ==",
-  "tags": [
-    "domain",
-    "documents",
-    "pdf",
-    "typed"
-  ],
-  "trust_tier": "platform",
-  "ui_schema": [
-    {
-      "label": "Upload PDF...",
-      "name": "input",
-      "widget": "file"
-    },
-    {
-      "label": "Extract Tables",
-      "name": "extract_tables",
-      "widget": "toggle"
-    }
-  ],
-  "version": "2.0.0",
   "reads": [
     {
       "kind": "caller",
@@ -95,6 +81,28 @@
       "scope": "http.outbound"
     }
   ],
+  "requires": [],
+  "signature": "LvVtyfE9oR09ppLbSS9psxU5W/yWmhANkvr4vAqrHqQ3J+spoFyIpR6x5OzKO9RkgAwYHZE6Yi3OVxgVi0+pCg==",
+  "tags": [
+    "domain",
+    "documents",
+    "pdf",
+    "typed"
+  ],
+  "trust_tier": "platform",
+  "ui_schema": [
+    {
+      "label": "Upload PDF...",
+      "name": "input",
+      "widget": "file"
+    },
+    {
+      "label": "Extract Tables",
+      "name": "extract_tables",
+      "widget": "toggle"
+    }
+  ],
+  "version": "2.0.0",
   "writes": [
     {
       "kind": "caller",
@@ -107,14 +115,6 @@
     {
       "kind": "file",
       "scope": "temp"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
     }
   ]
 }

@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Parse Primavera P6 .xer schedule files: critical path, milestones, resource loading",
   "digests": {
@@ -35,6 +36,7 @@
   ],
   "layer": 3,
   "name": "Primavera Parser",
+  "never": [],
   "outputs": [
     {
       "description": "Activities",
@@ -64,8 +66,22 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "B3FjVnDsh2Rkv6mx/yV9N7d0hGZ1+N+p9d4HV7GM9B3sBAxXMro61BKUKdMJL3+Bif0A1kMqBcGwWw217uu8Ag==",
+  "signature": "AaAuFy5bl26h1XET/TmnLEEmHap8mwP0hn+bWHiEc9wGLku2ykrijQChtB9Cem0Chxt0dGeqg4dO6OU7Tgk6DQ==",
   "tags": [
     "domain",
     "construction",
@@ -93,20 +109,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -120,7 +122,5 @@
       "kind": "file",
       "scope": "temp"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

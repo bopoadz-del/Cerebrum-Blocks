@@ -1,63 +1,25 @@
 {
-  "description": "LLM code generation and sandboxed execution for deterministic, auditable calculations across domain kits.",
+  "acceptance": [],
+  "description": "LLM-assisted formula drafting with a deterministic validation gate and RestrictedPython sandbox execution; never authorizes on its own.",
   "digests": {
-    "block.json": "aeb18c56a1454f98d957209314ed558d06619dd9a9d0aab896617f0b8fe93eae"
+    "block.json": "ad7a5d378db9568ab12c92a848da2a5029f7cb4563c2ab0df9d0ea8c93846aa6",
+    "block.py": "de39dbf2a9bed10512e460e3bc729a487f787bd04cd286d825310d41e4d2f25e"
   },
   "id": "formula_executor_v2",
   "name": "Formula Executor V2",
+  "never": [],
   "permissions": {
     "blocks": [],
     "filesystem": true,
     "imports": [
-      "httpx",
-      "os",
-      "re",
-      "threading"
+      "os"
     ],
     "network": true
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "o8rLeg3PHdNNr/14L/XiM1zzANXGuUMEb9L5LZdjmdTpgxmVsXgnh1S/M4PNmsVVPyBuxNEz0TYe2e0TWkLsBA==",
+  "reads": [],
+  "signature": "+jdEBwRiQlq/7Ppc8w7A3ahHQuvk2tZnbw8fsmJ95NR+AsS+P3S8NWKFE3PcTmqAjYuJhsxeS1VGdqljRxleDQ==",
   "trust_tier": "platform",
   "version": "2.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    },
-    {
-      "kind": "llm",
-      "scope": "provider"
-    }
-  ],
-  "writes": [
-    {
-      "kind": "caller",
-      "scope": "output"
-    },
-    {
-      "kind": "memory",
-      "scope": "cache"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
-    }
-  ]
+  "writes": []
 }

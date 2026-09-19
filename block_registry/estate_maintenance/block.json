@@ -1,46 +1,77 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when title is absent on create",
+      "id": "missing_title",
+      "status": "refused"
+    },
+    {
+      "check": "errors on an unknown work order id",
+      "id": "unknown_work_order",
+      "status": "failed"
+    },
+    {
+      "check": "errors when a work order id already exists",
+      "id": "duplicate_work_order",
+      "status": "failed"
+    },
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Maintenance work orders: create(title, due), list sorted by due date, and complete(id); unknown work-order ids fail.",
+  "digests": {
+    "block.json": "3fdbb662d0babb2359b0d823264a188f2b3a7b1d348a6587bd6beb3d1c8b3e0c",
+    "block.py": "b08f889a32de07dd1a484427a1f41e3620a6e43b97ae4077bad45377f8f780de"
+  },
+  "execution": {
+    "entrypoint": "block.py",
+    "type": "python"
+  },
   "id": "estate_maintenance",
   "inputs": [
     {
-      "name": "action",
-      "type": "string",
-      "required": false,
       "default": "create",
+      "description": "create | list | complete",
+      "name": "action",
       "options": [
         "create",
         "list",
         "complete"
       ],
-      "description": "create | list | complete"
+      "required": false,
+      "type": "string"
     },
     {
+      "description": "Work order title (create)",
       "name": "title",
-      "type": "string",
       "required": true,
-      "description": "Work order title (create)"
+      "type": "string"
     },
     {
+      "description": "Due date ISO (create; optional \u2014 orders without a due date sort last)",
       "name": "due",
-      "type": "string",
       "required": false,
-      "description": "Due date ISO (create; optional — orders without a due date sort last)"
+      "type": "string"
     },
     {
+      "description": "Work order id (complete)",
       "name": "id",
-      "type": "string",
       "required": false,
-      "description": "Work order id (complete)"
+      "type": "string"
     }
   ],
   "layer": 3,
   "name": "Estate Maintenance",
+  "never": [],
   "outputs": [
     {
+      "description": "Capability result",
       "name": "result",
-      "type": "json",
-      "description": "Capability result"
+      "type": "json"
     }
   ],
   "permissions": {
@@ -50,7 +81,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
+  "signature": "Nq2fWEDDQAS1dd/X1bI3wSMA2lYvJFpzoALWV5fNBaXhFfevKDfFtq/w1TZ/ztzdEdQosAzpHJU/1l7vDz9yCw==",
   "tags": [
     "estate",
     "private_estate_operations",
@@ -85,47 +127,10 @@
     }
   ],
   "version": "1.0.0",
-  "execution": {
-    "type": "python",
-    "entrypoint": "block.py"
-  },
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_title",
-      "check": "refuses or errors when title is absent on create",
-      "status": "refused"
-    },
-    {
-      "id": "unknown_work_order",
-      "check": "errors on an unknown work order id",
-      "status": "failed"
-    },
-    {
-      "id": "duplicate_work_order",
-      "check": "errors when a work order id already exists",
-      "status": "failed"
-    },
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

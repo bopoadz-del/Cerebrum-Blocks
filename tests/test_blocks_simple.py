@@ -41,8 +41,7 @@ async def test_imports():
         ("app.blocks.code", "CodeBlock"),
         ("app.blocks.web", "WebBlock"),
         ("app.blocks.search", "SearchBlock"),
-        ("app.blocks.zvec", "ZvecBlock"),
-        ("app.blocks.google_drive", "GoogleDriveBlock"),
+                ("app.blocks.google_drive", "GoogleDriveBlock"),
         ("app.blocks.onedrive", "OneDriveBlock"),
         ("app.blocks.local_drive", "LocalDriveBlock"),
         ("app.blocks.android_drive", "AndroidDriveBlock"),
@@ -137,7 +136,7 @@ async def test_registry():
         log("registry", f"count_{total}", total >= 17)
         
         # Check key virgin-platform blocks exist
-        key_blocks = ["chat", "pdf", "ocr", "vector_search", "zvec"]
+        key_blocks = ["chat", "pdf", "ocr", "vector_search"]
         optional_kit_blocks = ["construction", "medical", "legal", "finance", "security"]
         for block in key_blocks:
             if block in BLOCK_REGISTRY:

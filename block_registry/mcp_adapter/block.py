@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Auto-generated adapter for Cerebrum block: zvec
-Wraps app.blocks.zvec into a synchronous run() function.
+Auto-generated adapter for Cerebrum block: mcp_adapter
+Wraps app.blocks.mcp_adapter into a synchronous run() function.
 """
 
 import asyncio
@@ -21,11 +21,11 @@ def _run_async(coro):
 
 def run(**kwargs):
     """
-    Execute the zvec block.
+    Execute the mcp_adapter block.
     Accepts keyword args matching the block's inputs/params.
     Returns the standardized block result payload.
     """
-    block_cls = get_block("zvec")
+    block_cls = get_block("mcp_adapter")
     instance = block_cls()
 
     input_data = kwargs.get("input", kwargs)
@@ -34,7 +34,8 @@ def run(**kwargs):
     envelope = _run_async(instance.execute(input_data, params))
     if envelope.get("status") == "error":
         inner = envelope.get("result", {})
-        message = inner.get("error") if isinstance(inner, dict) else str(inner)
-        raise RuntimeError(message or "zvec block failed")
-
-    return envelope.get("result", envelope)
+        message = envelope.get("error") or (
+            inner.get("error") if isinstance(inner, dict) else str(inner)
+        )
+        raise RuntimeError(message or "mcp_adapter block failed")
+    return envelope

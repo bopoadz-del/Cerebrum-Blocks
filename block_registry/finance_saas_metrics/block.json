@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    },
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "MRR, ARR, ACV, TCV, NRR, GRR, renewals, and ARR bridges.",
   "digests": {
@@ -15,6 +27,7 @@
   ],
   "layer": 3,
   "name": "Finance SaaS Metrics",
+  "never": [],
   "outputs": [
     {
       "description": "Deterministic FinanceOps result",
@@ -34,7 +47,13 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "KaUj4UF2LJ9tH9yV5G/g9uIM5xhgl88Kd/Z3zG/hg/UJX7LnufWqDEXL53Ppuf6YKfEGXCXzlYoXJtZy7Kx+CA==",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "signature": "l8mb9WYkCUttv/HO5WcaLNSpXLpMCycZIuH/4DNj9YGgK+ygy+Im2lBknQpwYPSahGJApuSxY+kTEmUXH+HWBg==",
   "tags": [
     "domain",
     "finance_ops",
@@ -45,29 +64,10 @@
   ],
   "trust_tier": "platform",
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
-    },
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

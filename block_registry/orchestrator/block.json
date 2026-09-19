@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Chain execution engine with type validation",
   "digests": {
@@ -49,6 +50,7 @@
   ],
   "layer": 2,
   "name": "Orchestrator",
+  "never": [],
   "outputs": [
     {
       "description": "Steps",
@@ -73,11 +75,21 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "memory",
     "traffic_manager"
   ],
-  "signature": "djfdBiyf7QtFYnWPeOApnE2Ni7IpaK+vGEL6amdw2xSovAbHzWvbjNFFPHrGDQJtqYP+ww6hS/+FXoegZV8yDw==",
+  "signature": "JAyqxIt7/zFgx2pD/OPWhhBsM/PMHd1v6L75Zsn/w/nsg54yrKOcN/k+RIspMhFvdWSMWk39utCuE0WtsG/2AA==",
   "tags": [
     "ai",
     "core",
@@ -114,16 +126,6 @@
     }
   ],
   "version": "2.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -133,7 +135,5 @@
       "kind": "memory",
       "scope": "cache"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

@@ -1,10 +1,12 @@
 {
+  "acceptance": [],
   "description": "Insurance domain container adapter.",
   "digests": {
     "block.json": "0e9ab8a8e508ab68137bfc82e80f5d46e3dabb78b00b0d3268e7b68e9b3adfee"
   },
   "id": "insurance",
   "name": "Insurance Container",
+  "never": [],
   "permissions": {
     "blocks": [],
     "filesystem": false,
@@ -12,14 +14,6 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "CCQBwsg7Ya0gjMxpkG8D5T7HGCA7aGiemFG3GaJ7h3Y23SBO+7h4nuATGDtunBeSFRazyqSAmZCR/LjiV6oZDA==",
-  "tags": [
-    "domain",
-    "container",
-    "insurance"
-  ],
-  "trust_tier": "platform",
-  "version": "2.0.0",
   "reads": [
     {
       "kind": "caller",
@@ -30,12 +24,18 @@
       "scope": "runtime"
     }
   ],
+  "signature": "2WU5MMem84T1XKXFgw1knHGdV2UiUV//foGAFCUFCHN5ib7qJ7GmKz/wInnca8G030sZb6a9p6JgvZP/i2HnCA==",
+  "tags": [
+    "domain",
+    "container",
+    "insurance"
+  ],
+  "trust_tier": "platform",
+  "version": "2.0.0",
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

@@ -1,4 +1,16 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    },
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Semantic search over in-memory document collections \u2014 no external DB needed",
   "digests": {
@@ -21,6 +33,7 @@
   ],
   "layer": 2,
   "name": "Vector Search",
+  "never": [],
   "outputs": [
     {
       "description": "Matches",
@@ -35,8 +48,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "database",
+      "scope": "vector"
+    }
+  ],
   "requires": [],
-  "signature": "jHTnLs6LpTsG6G+RNO1jGPH0+flSfFu7ftiWYWpdNfuf60k87W8NTKZ3eSLnM0FXzAnuAYtOX2W/gQxQgdr2Cw==",
+  "signature": "NFd9lFWRMO6MYAbDZdFHkdgk/RwwieoqNBXnLiSEI2rcRFVw9OGfmplDpj5lcn+0k0EPpIc/BMKVMg2IMAIvDw==",
   "tags": [
     "ai",
     "core",
@@ -52,16 +75,6 @@
     }
   ],
   "version": "2.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "database",
-      "scope": "vector"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -70,19 +83,6 @@
     {
       "kind": "database",
       "scope": "vector"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
-    },
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

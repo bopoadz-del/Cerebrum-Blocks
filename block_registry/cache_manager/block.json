@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Redis wrapper with get/set/delete/stats actions",
   "digests": {
@@ -42,6 +49,7 @@
   ],
   "layer": 0,
   "name": "Cache Manager",
+  "never": [],
   "outputs": [
     {
       "description": "Cached Value",
@@ -56,8 +64,26 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "memory",
+      "scope": "cache"
+    }
+  ],
   "requires": [],
-  "signature": "+vAOFpDp+6Oy7+qTlf874z2sLzfhJagpqC/2ewTiOpD2kpC1zjvcD9lHLLHg5EVP2YATkUzWQhwSJz6gMzcDBA==",
+  "signature": "vV+oavi2ymEu2+CKPQ6dLyRZY+Sakg0tKOw0QohBMqMBv77S4Anx0DJpxAtfJSJe7s3ZTnsZ/nXhZd33DhINCg==",
   "tags": [
     "infrastructure",
     "cache",
@@ -87,24 +113,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "memory",
-      "scope": "cache"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -113,14 +121,6 @@
     {
       "kind": "memory",
       "scope": "cache"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

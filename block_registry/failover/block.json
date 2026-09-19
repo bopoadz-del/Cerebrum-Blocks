@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -42,6 +43,7 @@
   ],
   "layer": 2,
   "name": "Failover",
+  "never": [],
   "outputs": [
     {
       "description": "Failover result",
@@ -56,11 +58,25 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "llm",
+      "scope": "provider"
+    }
+  ],
   "requires": [
     "config",
     "monitoring"
   ],
-  "signature": "Xd3s6yPvsz18NTM4vtLBMBUpT8K05yTLOycMmhMS5Ux4wi6QxkDskDoogT4XCdepjASVtvds94DDi2/Ywv9ABw==",
+  "signature": "L7glIjvXf7JDia2l/lsRU0x2GDwNacV3meBPCs6VcsFV9+a0LRw8ClvdE56v+3qggi8toHQ3TLelQaTQPB5PCQ==",
   "tags": [
     "resilience",
     "failover",
@@ -90,26 +106,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "llm",
-      "scope": "provider"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -47,6 +54,7 @@
   ],
   "layer": 0,
   "name": "Config",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -61,10 +69,28 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "llm",
+      "scope": "provider"
+    }
+  ],
   "requires": [
     "hal"
   ],
-  "signature": "v8aRTbjqGLoUFMB8MZZaVBkJgItYFjb532I32mHryBx29ulP3CtRD1Oj7mHwO8HGa9W0wRcd3lT4rnavHN4fBw==",
+  "signature": "BV75BW1FJCyRXoImnKgkEOgzFVIrvcFzd5VUp/ArC9KwGpjUaHDE+TXG/67KRD3Lbya0pNsqz4T5V0ePKb1bCw==",
   "tags": [
     "infrastructure",
     "core"
@@ -98,36 +124,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "llm",
-      "scope": "provider"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

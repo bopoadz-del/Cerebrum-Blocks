@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Edge computing gateway: dispatch construction actions to NVIDIA Jetson fleet with OTA, health monitoring, parallel execution",
   "digests": {
@@ -56,6 +57,7 @@
   ],
   "layer": 2,
   "name": "Jetson Gateway",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -85,8 +87,26 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
   "requires": [],
-  "signature": "zpbDcYjUkwwEjAHRSZOFgsjwkc3l/xC6tSgj4KCNEgc7h1euKN3Mz/3NgGIY0++WgENh7Pb6PTa3lt0hFBz1Ag==",
+  "signature": "5Upoo7yKOIXWXs1L7pE55j7kUYOvmQkZ5X2CcSKHZ2Yfds0zUN4WII4oCh2kx2SSJ1PVCbtZbfewvZseVoyoCw==",
   "tags": [
     "infrastructure",
     "edge",
@@ -129,30 +149,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

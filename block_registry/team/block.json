@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -84,6 +91,7 @@
   ],
   "layer": 3,
   "name": "Team",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -98,12 +106,34 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "team",
+      "scope": "state"
+    }
+  ],
   "requires": [
     "auth",
     "database",
     "billing"
   ],
-  "signature": "7JSVRcl8oIlzUfABGeUULNF0RrtZDbE8p5mZ2ttZ5W/D2J8ZUJlnPJRL7wmOlXJZqlbaJ7wKVWatQxaIH8iOBg==",
+  "signature": "eTfbUhE2N5fvFozlYDWNA13ndH5DOLdJB1UirQR9rlT5tHn7tCnKuwmaZZk8Ayzhjw5yrERgRyfWH7SQ7fcxCg==",
   "tags": [
     "platform",
     "multi-tenant",
@@ -168,28 +198,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "team",
-      "scope": "state"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -198,14 +206,6 @@
     {
       "kind": "file",
       "scope": "local.write"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Corporate Finance transformation and FP&A foundation container.",
   "digests": {
@@ -15,6 +16,7 @@
   ],
   "layer": 3,
   "name": "FinanceOps Container",
+  "never": [],
   "outputs": [
     {
       "description": "Deterministic FinanceOps result",
@@ -38,16 +40,6 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "signature": "52xrQ/N8gAZyfaDIEwezPup7xO/+2ELBexZ4wqTzEvTPkcRGpVpFzKo7nTTHZBJI9CQXL9nFLZW3ZZlkTfSWCA==",
-  "tags": [
-    "domain",
-    "container",
-    "finance_ops",
-    "fp&a",
-    "epm"
-  ],
-  "trust_tier": "platform",
-  "version": "1.0.0",
   "reads": [
     {
       "kind": "caller",
@@ -58,12 +50,20 @@
       "scope": "runtime"
     }
   ],
+  "signature": "/txiSejhu2OF8i9H9gtdWhcSVb7EWA4odaR37nKUewJ3JTZYDG6UqjzjfF6INnEEH2+jN1RTGioOHae02vpfCA==",
+  "tags": [
+    "domain",
+    "container",
+    "finance_ops",
+    "fp&a",
+    "epm"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

@@ -252,14 +252,6 @@ class TestCoreBlocks:
         r = await b.execute("print('hello')", {"language": "python"})
         assert "status" in r
 
-    @pytest.mark.asyncio
-    async def test_zvec_block(self):
-        from app.blocks.zvec import ZvecBlock
-        b = ZvecBlock()
-        r = await b.execute([1, 2, 3], {"action": "embed"})
-        assert "status" in r
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # 5. CONSTRUCTION INTELLIGENCE BLOCKS (individual)
 # ══════════════════════════════════════════════════════════════════════════════

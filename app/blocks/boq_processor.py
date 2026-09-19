@@ -403,5 +403,6 @@ class BOQProcessorBlock(UniversalBlock):
 def _to_float(val) -> float:
     try:
         return float(str(val).replace(",", "").strip())
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as exc:
+        logger.debug("_to_float: unparseable value %r: %s", val, exc)
         return 0.0

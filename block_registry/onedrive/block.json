@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "OneDrive file operations \u2014 set ONEDRIVE_CLIENT_ID + ONEDRIVE_CLIENT_SECRET + ONEDRIVE_REFRESH_TOKEN or ONEDRIVE_ACCESS_TOKEN",
   "digests": {
@@ -21,6 +28,7 @@
   ],
   "layer": 4,
   "name": "Onedrive",
+  "never": [],
   "outputs": [
     {
       "description": "Files",
@@ -35,8 +43,22 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
   "requires": [],
-  "signature": "2Gm+piTYA5heViRvK3xJR0uAkvIjs5kEMndORy8ch6ur6KBX6EIKZgGL1NCl35Z4kkU36R0OnU5160ls/m12BQ==",
+  "signature": "EhRvQt8bSUfyfR7910d56NGLcGiPuTx3SWU7+6PwlYa0eWQWY8jiwkbf++/kI9ArvDZWI/uG+cCLrZ3KPy7xDQ==",
   "tags": [
     "integration",
     "storage",
@@ -52,32 +74,10 @@
     }
   ],
   "version": "2.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

@@ -18,7 +18,7 @@ class ReviewBlock(UniversalBlock):
     """
     name = "review"
     version = "1.0.0"
-    requires = ["database", "auth", "team"]
+    requires = ["database", "auth", "team", "billing"]
     layer = 4
     tags = ["store", "community", "quality", "ratings"]
     
@@ -281,15 +281,41 @@ class ReviewBlock(UniversalBlock):
         }
         
     async def _verify_purchase(self, data: Dict) -> Dict:
-        """Mark a user-block pair as verified purchase"""
+        """Verify a user-block purchase against the billing block's ledger.
+
+        Fail-closed: no billing dependency wired, or no purchase record on
+        the ledger, is a refusal — the pair is never minted verified out of
+        thin air.
+        """
         user_id = data.get("user_id")
         block_id = data.get("block_id")
-        
-        # TODO: Verify actual purchase/usage in billing system
-        
+        if not user_id or not block_id:
+            return {"verified": False, "error": "user_id and block_id required"}
+
+        billing = self.get_dep("billing")
+        if billing is None:
+            return {
+                "verified": False,
+                "user_id": user_id,
+                "block_id": block_id,
+                "error": "billing block not wired — cannot verify purchase",
+            }
+
+        check = await billing.process(
+            {"api_key": user_id, "block_id": block_id},
+            params={"action": "check_purchase"},
+        )
+        if not (check or {}).get("purchased"):
+            return {
+                "verified": False,
+                "user_id": user_id,
+                "block_id": block_id,
+                "error": "no purchase record for this block",
+            }
+
         key = (user_id, block_id)
         self.verified_purchases.add(key)
-        
+
         return {
             "verified": True,
             "user_id": user_id,

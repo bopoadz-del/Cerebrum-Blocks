@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Extract building elements, quantities, and clash report from IFC BIM models",
   "digests": {
@@ -49,6 +50,7 @@
   ],
   "layer": 3,
   "name": "Bim Extractor",
+  "never": [],
   "outputs": [
     {
       "description": "Elements",
@@ -78,8 +80,22 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "MkNPq4AKavx1DyOo5YaDDV0ZDeh9ChpJmQYF7aSh5y432lzaqLZrAxG38p0yjSgIvUE35TF9HKb4I6CzduFXAQ==",
+  "signature": "zFlBqf9taWaJnVqnGvNwHTIVXGrDldqXENDnrIvPPmCtA+NXNneHuiykf2i6+kcul8lHBbO8D7YzZXw5Ok8iAw==",
   "tags": [
     "domain",
     "construction",
@@ -117,20 +133,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -144,7 +146,5 @@
       "kind": "file",
       "scope": "temp"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

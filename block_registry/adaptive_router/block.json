@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -80,6 +87,7 @@
   ],
   "layer": 2,
   "name": "Adaptive Router",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -94,12 +102,26 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "llm",
+      "scope": "provider"
+    }
+  ],
   "requires": [
     "analytics",
     "monitoring",
     "failover"
   ],
-  "signature": "b0fQSLPKxZKHK7b9VflGeMYZ+nNfP7PsOocL2G2ERn/lVJ4eQXLEVMHsWjvxJOw0NYxOb749uAGFD4P9L2aeBA==",
+  "signature": "kbpqOqzEfmNnKjzaTNEwNu/O+BBr6SipJc9W0D844Ak9bJm25KrjApLES1gaJhOBIoImon2f/dV3JEIUU6aQCw==",
   "tags": [
     "ai",
     "optimization",
@@ -160,32 +182,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "llm",
-      "scope": "provider"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

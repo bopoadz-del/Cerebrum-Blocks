@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Parse \u2192 Reason \u2192 Map pipeline for technical document intelligence",
   "digests": {
@@ -56,6 +63,7 @@
   ],
   "layer": 3,
   "name": "Document Engine",
+  "never": [],
   "outputs": [
     {
       "description": "Glossary Terms",
@@ -100,11 +108,29 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "file",
+      "scope": "input_document"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "pdf",
     "ocr"
   ],
-  "signature": "Kr6VELahiM+S+eoZr/Qv8J67ozNoTVpsFul8LdmDXE1UR9+37+gnba2eRKFJVLdTKGIO3N7UVVwsh48Ie1xgCA==",
+  "signature": "mzs67+4WEhx+4NOl0oz9XWG6dIP7uUKSkJyPyColYULK8TsZZCnfHiEeT0utJ8quC5sHg9NrnsWb866jiVmNBQ==",
   "tags": [
     "domain",
     "construction",
@@ -146,24 +172,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "file",
-      "scope": "input_document"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -176,14 +184,6 @@
     {
       "kind": "file",
       "scope": "temp"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
     }
   ]
 }

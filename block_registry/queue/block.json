@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -55,6 +62,7 @@
   ],
   "layer": 2,
   "name": "Queue",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -69,11 +77,29 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "memory",
+      "scope": "cache"
+    },
+    {
+      "kind": "queue",
+      "scope": "jobs"
+    }
+  ],
   "requires": [
     "config",
     "memory"
   ],
-  "signature": "BG5VBNJD7ImFbXG8UVAkBVKXHRgks2pjssU1Cb+lpD0sdYgPqAC3/+SfqV6GGl7oo1IYgE4QUjoSAi3kj6nICQ==",
+  "signature": "IGrKbK6Hiq8F5CX6FeL7uVgODxu4EUw9V/ItvTJSJSyQsOTuo6Zfxy3vArC93jH/HFx5OqoAeJyhWq3SfY4lBg==",
   "tags": [
     "queue",
     "jobs",
@@ -115,24 +141,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "memory",
-      "scope": "cache"
-    },
-    {
-      "kind": "queue",
-      "scope": "jobs"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -141,14 +149,6 @@
     {
       "kind": "queue",
       "scope": "jobs"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

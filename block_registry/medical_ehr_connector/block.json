@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "fails loud when a required credential or key is absent",
+      "id": "missing_credential",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Fetch FHIR Patient, Observation, and MedicationRequest resources from an EHR",
   "digests": {
@@ -105,6 +112,7 @@
   ],
   "layer": 2,
   "name": "Medical Ehr Connector",
+  "never": [],
   "outputs": [
     {
       "description": "Connector Event",
@@ -124,8 +132,26 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
   "requires": [],
-  "signature": "PfTd3m7jCvqMiXu9wQpGYERdTnrkuyYps4YP1OTqo2ALOBt1+NET1lnhdO8FsM3Gs8SiJRYwMQeLo6b8THsHDA==",
+  "signature": "/yfTT3Olrwu07D3tkMjYOO0RRV/AObjEarbbqZbATO7U6F3eg6nvgQHgt42ONFcgCNHkAD44tXVG5Xj+tIfhCw==",
   "tags": [
     "connector",
     "medical",
@@ -207,36 +233,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_credential",
-      "check": "fails loud when a required credential or key is absent",
-      "status": "failed"
     }
   ]
 }

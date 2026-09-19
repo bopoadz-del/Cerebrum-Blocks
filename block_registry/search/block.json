@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "refused"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Search the web via DuckDuckGo (no key required) or Serper API",
   "digests": {
@@ -21,6 +28,7 @@
   ],
   "layer": 3,
   "name": "Search",
+  "never": [],
   "outputs": [
     {
       "description": "Results",
@@ -35,22 +43,6 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "requires": [],
-  "signature": "L7eNIlm2qTQqh+rHImYztzeGShr9g/c4JHVz7LLSXj957j5HoZa46LBuCjQ/plj7tTnS9ERvKc+W7KViZ4FHCg==",
-  "tags": [
-    "domain",
-    "search",
-    "web"
-  ],
-  "trust_tier": "platform",
-  "ui_schema": [
-    {
-      "label": "Search the web...",
-      "name": "input",
-      "widget": "text"
-    }
-  ],
-  "version": "2.0",
   "reads": [
     {
       "kind": "caller",
@@ -69,18 +61,26 @@
       "scope": "env"
     }
   ],
+  "requires": [],
+  "signature": "KXqGohEfeVpvG6tDQhhy21kRz2ANHkS7zE542FQP283y2SvylILqMz5HgXeOHiNlnIXsweMUXrwcp1wsK/tkDg==",
+  "tags": [
+    "domain",
+    "search",
+    "web"
+  ],
+  "trust_tier": "platform",
+  "ui_schema": [
+    {
+      "label": "Search the web...",
+      "name": "input",
+      "widget": "text"
+    }
+  ],
+  "version": "2.0",
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "missing_required_input",
-      "check": "refuses or errors when a required input is absent",
-      "status": "refused"
     }
   ]
 }

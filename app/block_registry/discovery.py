@@ -66,7 +66,17 @@ def registry_reuse_lookup(block_id: str) -> dict:
     if not block_id or "/" in block_id or "\\" in block_id or block_id in {".", ".."}:
         return {"present": False, "id": block_id, "reuse": False}
 
-    manifest = load_manifest(block_id)
+    # Exact folder-name match against the on-disk entries. A direct
+    # path join would let case-insensitive filesystems (Windows/macOS)
+    # resolve 'PDF' to 'pdf/' and turn the negative lookup into a guess.
+    exact = next(
+        (entry.name for entry in REGISTRY_ROOT.iterdir() if entry.name == block_id),
+        None,
+    )
+    if exact is None:
+        return {"present": False, "id": block_id, "reuse": False}
+
+    manifest = load_manifest(exact)
     if manifest is None:
         return {"present": False, "id": block_id, "reuse": False}
 

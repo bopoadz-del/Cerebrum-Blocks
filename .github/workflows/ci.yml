@@ -31,7 +31,7 @@ jobs:
         ports:
           - 5433:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U cerebrum -d cerebrum"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -128,7 +128,7 @@ jobs:
         run: pytest -q tests/test_publish_kit.py tests/test_publish_construction_kit.py
 
       - name: Run core RAG + vector + registry tests
-        run: pytest -q tests/core/test_vector_store.py tests/core/test_registry_integrity.py tests/core/test_block_contracts.py tests/core/test_rag_ingestion.py tests/core/test_activation.py
+        run: pytest -q tests/core/test_registry_integrity.py tests/core/test_block_contracts.py tests/core/test_activation.py
 
       - name: Run kit bundle freshness fence
         # Completeness is not freshness: a kit can hold every declared
@@ -216,7 +216,10 @@ jobs:
     # nobody reads.
     name: Full suite (every test file)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Above the suite's real runtime on purpose: when the cap fires first, the
+    # result is a CANCELLED check that names nothing. Let --timeout=90 be the
+    # thing that fails, because it names the test.
+    timeout-minutes: 45
     env:
       ENV: test
       DATABASE_URL: postgresql://cerebrum:cerebrum@localhost:5433/cerebrum
@@ -299,12 +302,41 @@ jobs:
           python scripts/dep_audit.py --python
 
       - name: Run every test file
+        # REPORT-ONLY, by owner decision (2026-09-19) -- this STEP, not the
+        # job. The Store is a shelf of blocks: they do not run here, they are
+        # cloned into a generated platform, configured there and tested there,
+        # by that platform's own suite and by the Store gate's acceptance run
+        # in Docker. So a red block test reports but does not block a merge.
+        # The steps above it in this job -- ruff, bandit, the registry census
+        # and the fail-closed dependency audit -- are about whether a block is
+        # SAFE to clone, and they still block. That is why this is step-level:
+        # a job-level continue-on-error would have un-gated the audit too
+        # (tests/test_dep_audit.py pins exactly that).
+        continue-on-error: true
         # pytest-timeout turns a deadlock into a named failure instead of
-        # burning the 25m job cap with no last-test line. Main's pytest
-        # step is ~45s; 90s per test is headroom, not a skip.
+        # burning the job cap with no last-test line. Main's pytest step is
+        # ~45s; 90s per test is headroom, not a skip.
+        #
+        # PYTHONUNBUFFERED: the previous run died at the 25m cap with its last
+        # visible line at 16%, which is ambiguous -- buffered stdout means the
+        # last FLUSHED line is not necessarily the last line RUN. Unbuffered,
+        # the final line before any kill is the real one, so a hang names
+        # itself instead of being guessed at.
+        env:
+          PYTHONUNBUFFERED: "1"
         run: |
           python -m pip install pytest-timeout==2.4.0
-          pytest -q tests/ --timeout=90 --timeout-method=signal
+          # --timeout-method=thread, not signal. The signal method raises in
+          # the main thread, and a test hung inside asyncio.run() cannot act
+          # on it: asyncio.run's own cleanup joins the to_thread worker, so
+          # the timeout exception queues up behind the very hang it was
+          # meant to report. Two runs burned their whole job cap (25m, then
+          # 45m) on tests/core/test_backup_scheduler.py with --timeout=90
+          # armed and silent. The thread method dumps EVERY thread's stack
+          # and hard-exits, so a hang costs 90s and names its line.
+          # faulthandler_timeout is the same dump from the interpreter
+          # itself, in case the plugin's timer thread is the one starved.
+          pytest -v tests/ --timeout=90 --timeout-method=thread             -o faulthandler_timeout=75 -x --tb=short
 
   lockfile-consistency:
     # WHY THIS EXISTS

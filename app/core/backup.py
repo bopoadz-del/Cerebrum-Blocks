@@ -74,13 +74,32 @@ class BackupResult:
 
 
 def snapshot_sqlite(source: Path, dest: Path) -> None:
-    """Copy a live SQLite database consistently via the online backup API."""
+    """Copy a live SQLite database consistently via the online backup API.
+
+    The source is opened read-write on purpose: the backup API must read
+    the live -wal when the database is in WAL mode, and a read-only
+    connection to a WAL database fails (sqlite reports a spurious
+    'disk I/O error'). The API itself only reads pages.
+    """
     dest.parent.mkdir(parents=True, exist_ok=True)
-    src_conn = sqlite3.connect(f"file:{source}?mode=ro", uri=True)
+    src_conn = sqlite3.connect(str(source), timeout=5)
     try:
-        dst_conn = sqlite3.connect(str(dest))
+        mode = src_conn.execute("PRAGMA journal_mode").fetchone()[0]
+        if str(mode).lower() == "wal":
+            # Fold the WAL into the database before snapshotting: the
+            # online backup API reading a live -wal fails on some
+            # filesystems (CI runners report 'disk I/O error'). A
+            # truncated WAL means the backup reads database pages only.
+            src_conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        dst_conn = sqlite3.connect(str(dest), timeout=5)
         try:
             src_conn.backup(dst_conn)
+            # The online backup copies the source's WAL-mode header; the
+            # snapshot then writes -wal/-shm side files of its own. Switching
+            # it to DELETE mode checkpoints and removes them, so the archive
+            # carries exactly one consistent .db file.
+            dst_conn.execute("PRAGMA journal_mode=DELETE")
+            dst_conn.commit()
         finally:
             dst_conn.close()
     finally:

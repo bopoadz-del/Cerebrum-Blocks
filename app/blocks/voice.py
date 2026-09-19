@@ -95,6 +95,17 @@ class VoiceBlock(UniversalBlock):
             if lang not in _SUPPORTED_LANGS:
                 lang = "en"
 
+            if params.get("provider") == "mock":
+                # Deterministic offline TTS — no gTTS network call.
+                return {
+                    "status": "success",
+                    "operation": "tts",
+                    "provider": "mock",
+                    "format": "mp3",
+                    "audio_base64": "",
+                    "note": "deterministic mock TTS - no network",
+                }
+
             try:
                 loop = asyncio.get_event_loop()
                 audio_bytes, fmt = await loop.run_in_executor(None, _tts_sync, text[:3000], lang)

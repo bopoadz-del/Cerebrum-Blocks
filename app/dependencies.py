@@ -276,7 +276,7 @@ async def require_api_key(
 async def init_blocks():
     """Lazy-only initialisation — pre-warm runs in a thread pool.
 
-    Earlier we pre-warmed core blocks here (chat/pdf/ocr/construction/zvec/
+    Earlier we pre-warmed core blocks here (chat/pdf/ocr/construction/
     smart_orchestrator/skills) which pulls in sklearn/sympy/ezdxf etc.
     Even as a background asyncio task, those synchronous imports BLOCK
     THE EVENT LOOP. Render's health checker then times out hitting
@@ -301,7 +301,7 @@ async def init_blocks():
         targets = list(BLOCK_REGISTRY.keys())
     else:
         targets = [
-            "chat", "pdf", "ocr", "zvec", "skills",
+            "chat", "pdf", "ocr", "skills",
         ]
 
     def _warm_target(name: str) -> None:

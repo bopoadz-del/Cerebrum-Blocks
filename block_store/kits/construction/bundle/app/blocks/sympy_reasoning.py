@@ -1,4 +1,7 @@
-"""SymPy Reasoning Block - Symbolic variance analysis + data-driven recommendations"""
+"""SymPy Reasoning Block — statistical variance analysis + data-driven
+recommendations. Deliberately NOT a symbolic solver: it computes
+statistical variance and heuristic recommendations. The name is legacy.
+"""
 
 from typing import Any, Dict, List
 from app.core.universal_base import UniversalBlock
@@ -7,7 +10,10 @@ from app.core.universal_base import UniversalBlock
 class SymPyReasoningBlock(UniversalBlock):
     name = "sympy_reasoning"
     version = "1.0.0"
-    description = "Heavy reasoning engine: symbolic variance analysis + data-driven construction recommendations"
+    description = (
+        "Statistical variance analysis and data-driven recommendations "
+        "(heuristic scoring engine; not a symbolic solver)"
+    )
     layer = 3
     tags = ["domain", "construction", "reasoning", "math", "ai"]
     requires = []

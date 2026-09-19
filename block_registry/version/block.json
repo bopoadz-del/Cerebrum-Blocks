@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -77,6 +84,7 @@
   ],
   "layer": 3,
   "name": "Version",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -91,11 +99,21 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "database",
     "storage"
   ],
-  "signature": "C0KXUZqNDwY5quZXQKyRVQaf55PzIp/mvhnntagaqgWMqBuw9zAe9d0GRFUvE3f92dqvV9r72WUnzJx1sGGeAA==",
+  "signature": "2RnDUjY1Fz/Jg4sVfEYP0gMtRt6CLHtQFqyZl+a9ktG9rMG2B0XijSvNbC1F0dmHntLE3FfIep/Z2AWv1gBsBg==",
   "tags": [
     "platform",
     "devops",
@@ -155,28 +173,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

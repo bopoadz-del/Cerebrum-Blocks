@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -71,6 +78,7 @@
   ],
   "layer": 1,
   "name": "Rate Limiter",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -85,11 +93,21 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "memory",
     "database"
   ],
-  "signature": "m0Cby3RN3Q/WCYxNx+1BapXikIrkz5mzAF3mCMgmC0aSP7ATYq13T+xaUyvoEFENrQKJUWWqPaYA5iVl7MfZAw==",
+  "signature": "3bwv7T9/AQ6jSqOMJrmKSg03W9EPLrRXk9bbZwd84VqzE56RS8EoAalDBv0B9t+68FKavdJuAI5xX5StWq/GCg==",
   "tags": [
     "security",
     "protection",
@@ -143,28 +161,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

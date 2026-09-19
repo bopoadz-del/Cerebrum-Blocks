@@ -341,7 +341,8 @@ def _parse_date(val: str) -> Optional[str]:
 def _to_float(val: str) -> float:
     try:
         return float(str(val).replace(",", "").strip())
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as exc:
+        _logger.debug("primavera _to_float: unparseable %r: %s", val, exc)
         return 0.0
 
 
@@ -356,5 +357,6 @@ def _orig_dur_days(row: Dict) -> float:
         raw = row.get("orig_dur", "0")
     try:
         return float(str(raw).replace(",", "").strip()) / 8.0
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as exc:
+        _logger.debug("primavera _orig_dur_days: unparseable %r: %s", raw, exc)
         return 0.0

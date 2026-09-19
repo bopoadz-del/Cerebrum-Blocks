@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Data-driven construction recommendation engine: variance data \u2192 severity-ranked recommendations + action items",
   "digests": {
@@ -42,6 +43,7 @@
   ],
   "layer": 3,
   "name": "Recommendation Template",
+  "never": [],
   "outputs": [
     {
       "description": "Recommendation",
@@ -66,8 +68,26 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "E0BviN3ej+kJEb1f8MNuh5Lim922U9mKmfhInaqNJ3x6HOWiLI+TPFy++iBM8dQa8Ba8s/2QJKTxpyfpxOPODA==",
+  "signature": "vdDUhpuEq4swbckzxQMOa19pDBVCXk9FCZqhjJPGPQwNJQwQFJrRMOdJPJ7EtMPB36tQI+Q/m/++m6THfM7qBA==",
   "tags": [
     "domain",
     "construction",
@@ -99,30 +119,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

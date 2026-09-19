@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Fetch and extract content from any URL",
   "digests": {
@@ -21,6 +22,7 @@
   ],
   "layer": 3,
   "name": "Web",
+  "never": [],
   "outputs": [
     {
       "description": "Title",
@@ -45,8 +47,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    }
+  ],
   "requires": [],
-  "signature": "/Hj0tc4qfbvWRcQiTkGoVTM+64yuUCELM4zPZUH5ZLjB9dIUUV7EafwGJQjwUTH1i1dZnSqo3PoprBMvUyNLCA==",
+  "signature": "Z3hKMCRltG1f7gViPgym2PSCEAAdAR1PHzBu8NdxwKLZiOwsyENFmMGsh7UNZLAxG6EULr+FJfYaCBljjFLlDw==",
   "tags": [
     "domain",
     "web",
@@ -61,22 +73,10 @@
     }
   ],
   "version": "2.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

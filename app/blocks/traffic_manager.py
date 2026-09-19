@@ -16,7 +16,7 @@ class TrafficManagerBlock(UniversalBlock):
     requires = ["rate_limiter", "failover", "queue"]
 
     default_config = {
-        "heavy_blocks": ["zvec", "pdf", "construction"],
+        "heavy_blocks": ["pdf", "construction"],
         "rate_limit_enabled": True,
         "circuit_breaker_enabled": True,
         "queue_enabled": True,
@@ -132,7 +132,7 @@ class TrafficManagerBlock(UniversalBlock):
                 }
 
         # 3. Queue management for heavy blocks
-        heavy_blocks = self.config.get("heavy_blocks", ["zvec", "pdf", "construction"])
+        heavy_blocks = self.config.get("heavy_blocks", ["pdf", "construction"])
         if self.config.get("queue_enabled", True) and target_block in heavy_blocks:
             queue = self.get_dep("queue")
             if queue:

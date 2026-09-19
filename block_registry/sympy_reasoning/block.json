@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Heavy reasoning engine: symbolic variance analysis + data-driven construction recommendations",
   "digests": {
@@ -35,6 +36,7 @@
   ],
   "layer": 3,
   "name": "Sympy Reasoning",
+  "never": [],
   "outputs": [
     {
       "description": "Recommendations",
@@ -59,8 +61,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "zySHN1Ztf6cuwWei/JWua0vo3pzKBZ9pcIfFS2E18KCZQOwsHAyorZDrzBfjF/Z98BOVLYo3CLCbel+oMLCoCg==",
+  "signature": "1eogM95N3uN2548iQwkMMzwnFcoxML2G+h3zI6UNIPBxIFKi4Zts7qJdEY/wGFAaC1oKBrSkTA92pHHsNhQhBg==",
   "tags": [
     "domain",
     "construction",
@@ -87,22 +99,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

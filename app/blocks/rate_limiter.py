@@ -4,6 +4,9 @@ Features:
 - Sliding window, token bucket, leaky bucket algorithms
 - Per-endpoint, per-IP, per-User, per-Team limits
 - Burst handling and custom limits for premium users
+
+Rate state is in-process only (lost on restart).
+memory and database dependencies are not used.
 """
 
 from app.core.universal_base import UniversalBlock
@@ -24,7 +27,7 @@ class RateLimitStrategy(Enum):
 class RateLimiterBlock(UniversalBlock):
     """
     Advanced rate limiting beyond Auth block.
-    Per-endpoint, per-IP, per-team, burst handling.
+    Rate state is in-process only (lost on restart).
     """
     name = "rate_limiter"
     version = "1.0.0"
@@ -379,6 +382,8 @@ class RateLimiterBlock(UniversalBlock):
                     
     def health(self) -> Dict:
         h = {"name": self.name, "version": self.version}
+        h["persistence"] = "in_process"
+        h["note"] = "rate state is in-process only (lost on restart)"
         h["strategy"] = self.config["strategy"]
         h["tracked_counters"] = len(self.counters)
         h["custom_limits"] = len(self.custom_limits)

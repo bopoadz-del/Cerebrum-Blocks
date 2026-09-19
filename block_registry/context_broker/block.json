@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Memory coordinator for cross-block session state",
   "digests": {
@@ -28,6 +29,7 @@
   ],
   "layer": 0,
   "name": "Context Broker",
+  "never": [],
   "outputs": [
     {
       "description": "Memory",
@@ -57,10 +59,20 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "memory"
   ],
-  "signature": "jTHKc1RF2d6fBxlGmCJapqK4FhMVc4ZkcA7mXhSFOlj4CCsbEzCVkkfjgpYk8adKLpdoYGE3idb0oO92accmBg==",
+  "signature": "qijDIRCgPgAQlAPt7YfWGYT7rVTI9WOLH5FdK72A2hxTSCesBsj4Sw5+ungKEUpnMAePUMdI36rbTizWeQxxDA==",
   "tags": [
     "infrastructure",
     "memory",
@@ -81,16 +93,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -100,7 +102,5 @@
       "kind": "memory",
       "scope": "cache"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

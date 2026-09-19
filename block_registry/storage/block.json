@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -49,6 +50,7 @@
   ],
   "layer": 2,
   "name": "Storage",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -63,10 +65,24 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "file",
+      "scope": "local.read"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [
     "config"
   ],
-  "signature": "/ywoykFcAJoRtKnB62og2L15pU57drUvClMqle2Wj7Mw6CzLok4Z+Bx8BELT8w/ivJ/QBKcoK0+TPhOEv2pSAQ==",
+  "signature": "FeT/O7s+v7dU6xrW20S07Hz01NrqvsSIGCKYOUixAf6ZSFH4otWcl3Bg22jKzA/G1dDHsyUjnm6uVCjS+nVTDg==",
   "tags": [
     "storage",
     "files",
@@ -103,20 +119,6 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "file",
-      "scope": "local.read"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
@@ -126,7 +128,5 @@
       "kind": "file",
       "scope": "local.write"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

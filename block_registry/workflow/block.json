@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "Chain blocks into pipelines with variable interpolation and scheduling",
   "digests": {
@@ -59,6 +66,7 @@
   ],
   "layer": 2,
   "name": "Workflow",
+  "never": [],
   "outputs": [
     {
       "description": "Pipeline ID",
@@ -88,8 +96,22 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "iR9D5k0Y8hbmNKl0KmtHhtWB21lbkkSQZEEbb/CGkjzZu+/WoRLyoRnQ2KkoQY+QERyxcbNUL/JjISabmcopBw==",
+  "signature": "nNkGtV3KdWyBcjyCsq0vMvUOT8Vej4jsLRzgycu9BYk8sgyvnMY/4JeJ7pirVF8BMQV2m1dlFl1rf2uFbhtEBg==",
   "tags": [
     "workflow",
     "pipeline",
@@ -136,32 +158,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

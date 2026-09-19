@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import time
 import asyncio
+import logging
 
 
 class HealthCheckBlock(UniversalBlock):
@@ -324,28 +325,64 @@ class HealthCheckBlock(UniversalBlock):
             }
             
     async def _check_external_apis(self) -> Dict:
-        """Check external API health"""
-        # Check configured external APIs
-        apis = {
-            "kimi": "https://api.moonshot.ai/v1/models",
-            # Add more as configured
-        }
-        
+        """Probe configured endpoints, or say plainly that no probe ran.
+
+        Endpoints come only from config key ``external_apis`` (name -> url).
+        Nothing is hardcoded. An empty config is simulated, not healthy.
+        """
+        endpoints = self.config.get("external_apis") or {}
+        if not isinstance(endpoints, dict) or not endpoints:
+            return {
+                "simulated": True,
+                "healthy": False,
+                "apis": {},
+                "component": "external_apis",
+                "note": "external API checks are not configured; no HTTP request was made",
+            }
+
+        timeout = min(10.0, float(self.config.get("timeout_per_check") or 5))
         results = {}
         all_healthy = True
-        
-        for name, url in apis.items():
-            # Simulated check - in production would do actual HTTP request
-            results[name] = {
-                "healthy": True,  # Placeholder
-                "url": url,
-                "status": "unknown"  # Would be actual HTTP status
-            }
-            
+        for name, url in endpoints.items():
+            results[name] = await self._probe_http(str(name), str(url), timeout)
+            if not results[name].get("healthy"):
+                all_healthy = False
         return {
+            "simulated": False,
             "healthy": all_healthy,
             "apis": results,
-            "component": "external_apis"
+            "component": "external_apis",
+        }
+
+    async def _probe_http(self, name: str, url: str, timeout: float) -> Dict:
+        """One bounded HTTP GET. Failures are logged, never swallowed."""
+        logger = logging.getLogger("cerebrum.blocks.health_check")
+
+        def _get() -> int:
+            import urllib.request
+            req = urllib.request.Request(url, method="GET")
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return int(resp.status)
+
+        try:
+            status = await asyncio.wait_for(asyncio.to_thread(_get), timeout=timeout + 1)
+        except Exception as exc:
+            logger.warning(
+                "external api probe failed name=%s url=%s error=%s",
+                name, url, exc,
+            )
+            return {
+                "healthy": False,
+                "url": url,
+                "status": None,
+                "error": type(exc).__name__,
+                "simulated": False,
+            }
+        return {
+            "healthy": 200 <= status < 400,
+            "url": url,
+            "status": status,
+            "simulated": False,
         }
         
     async def _check_disk(self) -> Dict:

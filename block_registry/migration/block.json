@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "",
   "digests": {
@@ -66,6 +73,7 @@
   ],
   "layer": 0,
   "name": "Migration",
+  "never": [],
   "outputs": [
     {
       "description": "Result",
@@ -80,11 +88,25 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "database",
+      "scope": "sql"
+    }
+  ],
   "requires": [
     "database",
     "version"
   ],
-  "signature": "hVW65CrBqrG+u7rHbYboobmsDKw39bHrj2E1yEIsiRcLsWzy0I/j4JbWcJvWtXk2Jnxyw+XztnqaZz7nbZuuCQ==",
+  "signature": "iOO/w9iJga7uSeAj2Thc4IKjLIkVO2V6E159GGlbi0V6EKPb/L//IozHrSYuMhbaWcw58XEGgCyJARr0EYu7BQ==",
   "tags": [
     "infra",
     "database",
@@ -135,32 +157,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "database",
-      "scope": "sql"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

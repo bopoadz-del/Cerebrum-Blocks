@@ -1,4 +1,5 @@
 {
+  "acceptance": [],
   "author": "Cerebrum Team",
   "description": "Parse Excel/CSV Bills of Quantities into structured quantities and cost breakdown",
   "digests": {
@@ -35,6 +36,7 @@
   ],
   "layer": 3,
   "name": "Boq Processor",
+  "never": [],
   "outputs": [
     {
       "description": "Line Items",
@@ -64,8 +66,18 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
   "requires": [],
-  "signature": "4GUQicZarP1JrOPPgWYq3bNTIZTr9I2c9i/8rVwGmSKqo58p96w3uPjRLYLMPfvvU95hlUQo1q0wvXdBHN2aCw==",
+  "signature": "Xe7qqbhdMoSFce8974FzI1ZttxA39EL/c1Gj65R+uPl14nMV0eZ9hKxWgUvCaH3kMZ3ASEIcbJdC4K/wm1zFBQ==",
   "tags": [
     "domain",
     "construction",
@@ -92,22 +104,10 @@
     }
   ],
   "version": "1.0.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
     }
-  ],
-  "never": [],
-  "acceptance": []
+  ]
 }

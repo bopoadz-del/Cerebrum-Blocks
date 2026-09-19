@@ -1,4 +1,11 @@
 {
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    }
+  ],
   "author": "Cerebrum Team",
   "description": "LLM-augmented enhancement of construction quantities/risks/RFIs",
   "digests": {
@@ -42,6 +49,7 @@
   ],
   "layer": 3,
   "name": "Llm Enhancer",
+  "never": [],
   "outputs": [
     {
       "description": "LLM additions",
@@ -66,8 +74,34 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "env",
+      "scope": "process"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
+    },
+    {
+      "kind": "llm",
+      "scope": "provider"
+    },
+    {
+      "kind": "credential",
+      "scope": "env"
+    }
+  ],
   "requires": [],
-  "signature": "VsH3Cx/B1KNGJEDgOmMyG6FPmiShaCKBfV4WjWw1f47Hzwcihhxzktbms0pTJ5yqFBPiCD0ZLbOqyrCWxaccAw==",
+  "signature": "H3yPbS4gpwonuecKLpO9PYxS4lFd5Rba9X1VMaqVKO4i7Sv8JsHm2L9no9tjdE3gqcGiTk3Xq83ArllQFFshCw==",
   "tags": [
     "domain",
     "construction",
@@ -98,44 +132,10 @@
     }
   ],
   "version": "1.0",
-  "reads": [
-    {
-      "kind": "caller",
-      "scope": "input"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "config",
-      "scope": "runtime"
-    },
-    {
-      "kind": "network",
-      "scope": "http.outbound"
-    },
-    {
-      "kind": "llm",
-      "scope": "provider"
-    },
-    {
-      "kind": "credential",
-      "scope": "env"
-    }
-  ],
   "writes": [
     {
       "kind": "caller",
       "scope": "output"
-    }
-  ],
-  "never": [],
-  "acceptance": [
-    {
-      "id": "unknown_action",
-      "check": "errors on an unknown or missing action",
-      "status": "failed"
     }
   ]
 }

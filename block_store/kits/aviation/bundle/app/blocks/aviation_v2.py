@@ -344,7 +344,10 @@ class AviationBlockV2(DomainBlockV2):
     def _extract_airports(self, text: str) -> List[Dict]:
         """Extract airports from text."""
         found = []
-        for match in re.finditer(r"\b([A-Z]{3,4})\b(?:\s+(?:airport|international))?", text, re.IGNORECASE):
+        # Airport codes are uppercase IATA/ICAO; require an explicit
+        # airport-context keyword so prose words ("THE", "FORM") never
+        # become airport entities (survey cluster finding).
+        for match in re.finditer(r"\b([A-Z]{3,4})\b(?=\s+(?:airport|international))", text):
             value = next((g for g in match.groups() if g is not None), None)
             if value:
                 found.append({
