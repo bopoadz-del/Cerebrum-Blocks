@@ -87,7 +87,11 @@ _KIT_BLOCK_SPECS: Dict[str, List[Tuple[str, str, str]]] = {
     ],
     "real_estate": [
         ("real_estate", "app.containers.real_estate", "RealEstateContainer"),
-        ("real_estate_v2", "app.blocks.real_estate_v2", "RealEstateBlockV2"),
+        ("estate_registry", "app.blocks.estate_registry", "EstateRegistryBlock"),
+        ("estate_maintenance", "app.blocks.estate_maintenance", "EstateMaintenanceBlock"),
+        ("evidence_verifier", "app.blocks.evidence_verifier", "EvidenceVerifierBlock"),
+        ("readiness_engine", "app.blocks.readiness_engine", "ReadinessEngineBlock"),
+        ("portfolio_rollup", "app.blocks.portfolio_rollup", "PortfolioRollupBlock"),
         _FORMULA_EXECUTOR_V2_SPEC,
     ],
     "automotive": [
