@@ -134,6 +134,33 @@ into CerebrumDev.ai CI as a pre-merge "hollow function / vacuous test" gate.
 
 ### PARKED with notes (overnight)
 
+- DONE (batch 4, kernel branch): sandbox isolated-level now requires
+  SANDBOX_RUNNER_URL (refused by name, no in-process fallback for untrusted
+  code); discovery routes search/recommend through the wired vector block
+  (cosine when a real embedder is loaded, honest `via` label otherwise);
+  review purchase verification is backed by a real billing purchase ledger
+  (record_purchase/check_purchase) — fail-closed, never minted verified out
+  of thin air; billing manifest action options updated; retail_v2 manifest
+  brief-scope backfill.
+- Publisher key ROTATED: new Ed25519 keypair, all 111 registry blocks
+  re-signed, verification 100%. New private key stored at
+  ~/.codewhale/keys/cerebrum_platform.pem (move to the secrets manager);
+  data/publishers/cerebrum_platform.pub updated — any consumer pinning the
+  old public key must adopt the new one.
+- DONE (batch 5): safety_world_detector wrapped+registered; project_reasoner
+  manifest completed (stale failed-oracle removed, proven by test);
+  mcp_adapter cleaned+registered (read-only catalog, never executes);
+  inbound_webhook HMAC verifier ported from the Cerebrum donor.
+- DONE (batch 6): finance cluster — CoA lifecycle (create_draft →
+  propose_activation → approve_activation with self-approval refused and
+  version archive) + finance_import parse_file (.csv/.xlsx) and idempotent
+  ingest (batch digest + per-record dedupe); hotel — opera_connector is a
+  real fail-closed connector (hotelops-v2 MockLevel pattern: no live
+  config → structured refusal, never fabricated data; real Opera
+  normaliser) and hotel_v2 is wired into POST /v1/connectors/hotel/analyze
+  with POST /v1/connectors/hotel/opera for the connector.
+  All wave-1.7 parked items are now DONE.
+
 - safety_world_detector: real YOLO-World onnx detector, no UniversalBlock
   wrapper and unregistered. Wrap in a UniversalBlock (process -> detect,
   SA FET Y_WORLD_WEIGHTS env) + register; until then it is consumed only by
