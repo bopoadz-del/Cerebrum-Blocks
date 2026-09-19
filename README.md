@@ -12,7 +12,7 @@ blocks and kits through the public API, exactly like any other client.
 
 > ### Part of the CEREBRUM ecosystem — industrialized AI delivery
 >
-> **The Store — [Cerebrum-Blocks](https://github.com/bopoadz-del/Cerebrum-Blocks):** 133 typed blocks (115 registry entries), 19 domain kits + universal kernel, one API. Build a capability once; every sector inherits it.  
+> **The Store — [Cerebrum-Blocks](https://github.com/bopoadz-del/Cerebrum-Blocks):** 135 block modules (115 registry entries, all manifested + signed), 19 domain kits + universal kernel, one API. Build a capability once; every sector inherits it.  
 > **The Factory — [CerebrumDev.ai](https://github.com/bopoadz-del/CerebrumDev.ai):** the client-facing interface that assembles blocks into governed, deployable vertical platforms — evaluation gates in CI, release certification, honest closure reporting.  
 > **The Products — [The Fork](https://github.com/bopoadz-del/The_Fork)** (construction AI — enterprise client pilot) **· [RetailOps](https://github.com/bopoadz-del/TEKsystems_GlobalRetailMNC)** (retail operations — assembled, CI-gated and deployed in under three days).  
 > **The Edge:** sovereign deployment proven — zero-egress on-premise profile, executed air-gap acceptance test, signed sovereignty report.
@@ -34,7 +34,7 @@ products, clients, and domain kits.
 
 | Component | Path | Purpose |
 |---|---|---|
-| Blocks | `app/blocks/` | 133 typed execution blocks (chat, RAG, documents, domain analysis, workbench, …) |
+| Blocks | `app/blocks/` | 135 typed execution modules (chat, RAG, documents, domain analysis, workbench, …) |
 | Block runtime | `app/core/` | TypedBlock base with fail-closed I/O validation, trust-scope enforcement, grounding stage, capability model |
 | Execute API | `app/routers/execute.py` | `/v1/execute` — auth, tier boundary, trust scope, grounding, capability dispatch |
 | Block registry | `block_registry/` | 115 manifest + adapter entries for discovery and subprocess execution |
@@ -82,7 +82,7 @@ signing + manifest-contract gates run in CI.
 19 domain kits ship under `block_store/kits/` (construction, aviation,
 finance, medical, legal, retail, insurance, education, agriculture,
 manufacturing, oil & gas, pharma, real estate, hotel management, HR,
-supply chain, automotive, finance ops, and more), plus the
+supply chain, automotive, finance ops, mep coordination), plus the
 `universal_kernel` capability kits. A kit is a manifest plus a bundle;
 installs are provenance-verified (see Security model).
 
@@ -148,18 +148,20 @@ readiness, and the known-defect list) lives in
 **[docs/STORE_INVENTORY.md](docs/STORE_INVENTORY.md)** and is re-verified
 against the files themselves, not memory. The short version:
 
-- **105 registry blocks** — 97 hand-authored (`Cerebrum Team`), 8
-  unmanifested, **zero stubs** (verified by pattern sweep).
-- **22 kits**, including the five declared-ready verticals: **hotels,
+- **115 registry blocks** — all manifested and signed, 107 authored
+  `Cerebrum Team`, **zero stubs** (verified by pattern sweep; census
+  0 missing).
+- **21 kit directories** — 19 domain kits + `universal_kernel` +
+  `_template` — including the five declared-ready verticals: **hotels,
   insurance, construction, finance, retail** — each with real domain
   blocks beyond the generic core (`pdf, ocr, chat, image,
   formula_executor(_v2)`).
 - **Excluded from testing** (no authoritative domain content): medical,
   legal, veterinary, pharma.
-- **Known defects are listed, not hidden**: five estate blocks live
-  outside the Store (factory vendor mirror) as stubs pending
-  implementation, and `admin_block._preflight`'s database check is
-  honest about nothing yet — both tracked in the inventory file.
+- **Known defects are listed, not hidden**: the five estate blocks are
+  real and registered in the Store (always-ok stubs replaced on `main`,
+  `9b8d781f`); `admin_block._preflight`'s database check is tracked in
+  the inventory file.
 
 ## Contribute — build kits and blocks
 

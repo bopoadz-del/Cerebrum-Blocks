@@ -1,10 +1,10 @@
 # Cerebrum Blocks — Repository Status
 
-> **Date:** 2026-07-22  
-> **Branch:** main  
-> **Python files in `app/blocks/`:** 121  
-> **Registered blocks (`block_registry/`):** 105  
-> **Tests collected:** 660 (8 deselected, 4 collection errors)
+> **Date:** 2026-09-19  
+> **Branch:** feat/cerebrum-reasoning-kernel (verified checkout)  
+> **Python files in `app/blocks/`:** 135 (excluding `__init__.py`)  
+> **Registered blocks (`block_registry/`):** 115 — all manifested + signed, census 0 missing  
+> **Tests collected:** 1944 (0 collection errors)
 
 ---
 
@@ -23,8 +23,8 @@ Earlier hygiene pass moved root-level scripts/tests into `scripts/`, `tests/`, a
 
 | Location | Count |
 |----------|-------|
-| `app/blocks/*.py` (top-level) | 121 |
-| `block_registry/` entries | 105 |
+| `app/blocks/*.py` (top-level) | 135 |
+| `block_registry/` entries | 115 |
 | Containers under `app/containers/` | 2 directories (`construction/`, plus container modules) |
 | Core modules under `app/core/` | 40+ |
 
@@ -59,17 +59,15 @@ Earlier hygiene pass moved root-level scripts/tests into `scripts/`, `tests/`, a
 Collected via `pytest --collect-only`:
 
 ```
-660/668 tests collected (8 deselected), 4 errors in 9.02s
+1944 tests collected in 14.25s (0 collection errors)
 ```
 
-### Collection errors (pre-existing)
+### Collection errors
 
-| File | Cause |
-|------|-------|
-| `tests/blocks/test_vector_search.py` | Missing optional dependency / import issue |
-| `tests/blocks/test_web.py` | Missing optional dependency / import issue |
-| `tests/blocks/test_zvec.py` | `sklearn` not installed |
-| `tests/test_formula_executor_v2.py` | `RestrictedPython` not installed |
+None — all 1944 tests collect cleanly (2026-09-19). The previous four
+optional-dependency collection errors (`test_vector_search.py`,
+`test_web.py`, `test_zvec.py`/sklearn,
+`test_formula_executor_v2.py`/RestrictedPython) no longer reproduce.
 
 ### CI coverage
 
@@ -85,7 +83,7 @@ Collected via `pytest --collect-only`:
 ## Repository Layout
 
 ```
-├── app/blocks/          # 121 .py files (blocks + helpers)
+├── app/blocks/          # 135 .py files (blocks + helpers)
 ├── app/containers/      # Domain containers
 ├── app/core/            # Runtime core
 ├── app/lib/             # Shared domain libraries
@@ -103,9 +101,9 @@ Collected via `pytest --collect-only`:
 
 ## Known Issues
 
-1. **4 test collection errors** due to missing optional deps (`sklearn`,
-   `RestrictedPython`). CI does not fail on these because the files are not yet
-   included in the CI run.
+1. **Optional libraries** — `sklearn`, `RestrictedPython`, and some heavy
+   ML packages remain optional; blocks degrade gracefully when absent.
+   Test collection is clean (1944 collected, 0 errors, 2026-09-19).
 2. **API keys out of credits** — DeepSeek and Anthropic keys need refill.
 3. **Optional libraries** — `opencv-python-headless` and some heavy ML packages
    remain optional; blocks degrade gracefully when absent.
