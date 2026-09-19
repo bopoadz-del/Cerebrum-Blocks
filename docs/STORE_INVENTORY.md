@@ -25,7 +25,7 @@ sweep. Every claim below is from the files themselves, not from memory.
 
 ## Vertical readiness
 
-### Ready — build and test these seven
+### Ready — build and test these eight
 
 | Vertical | Kit | Domain blocks (beyond the generic core) |
 |---|---|---|
@@ -36,23 +36,16 @@ sweep. Every claim below is from the files themselves, not from memory.
 | retail | retail | retail_v2 |
 | real estate | real_estate | estate_registry, estate_maintenance, evidence_verifier, readiness_engine, portfolio_rollup (real since `main` `9b8d781f`) |
 | legal | legal | legal_v2, legal_knowledge (compliance flags, risk keywords, custom rules) |
+| mep coordination | mep_coordination | geometry_engine, clearance_rules, clash_triage, clash_resolver, bcf_export, version_diff, model_clone (registered + signed 2026-09-19) |
 
 Legal is declared with the honest note: the knowledge layer is
 rules-based (compliance flags / risk keywords / custom rules), not an
 authoritative legal corpus.
 
-**mep_coordination — declaration pending on operator signing.**
-The seven blocks are ported into the Store and registered in
-`block_registry/` (census 122, 0 missing): geometry_engine,
-clearance_rules, clash_triage, clash_resolver, bcf_export, version_diff,
-model_clone (6.9–16.9KB each) with the full per-block test suite ported
-to `tests/blocks/` (53 passing, 2 skipped where the trimesh backend is
-absent) and a measured acceptance run in the kit (schependomlaan IFC
-49.3MB: 1,437 elements, 14 hard clashes, 399 clearance violations, 287
-false positives eliminated, original file byte-identical after). The
-runtime admission gate excludes them until the operator signs their
-manifests with the publisher Ed25519 key (`missing required manifest
-field: signature`).
+mep_coordination carries a measured acceptance run in the kit
+(schependomlaan IFC 49.3MB: 1,437 elements, 14 hard clashes, 399
+clearance violations, 287 false positives eliminated, original file
+byte-identical after).
 
 The generic core shared by domain kits: `pdf, ocr, chat, image,
 formula_executor, formula_executor_v2`. A capability that resolves only to
@@ -69,9 +62,8 @@ is registered, real, and tested.)
 ### Unverified — kit exists, not on the ready list
 
 agriculture, automotive, aviation, education, hr, manufacturing,
-mep_coordination (declaration pending — see Ready section), oil_gas,
-supply_chain. Their kits exist in the Store; depth is not guaranteed
-until each is declared ready.
+oil_gas, supply_chain. Their kits exist in the Store; depth is not
+guaranteed until each is declared ready.
 
 ## Full kit list (21)
 
@@ -131,5 +123,5 @@ removed from this inventory.
 - The factory inventory declaration (`app.factory.inventory`) — ready
   verticals and kit domain sets are mirrored there and enforced at draft
   and plan time.
-- Build/test planning: only the seven ready verticals are tested until
+- Build/test planning: only the eight ready verticals are tested until
   more kits are declared ready.

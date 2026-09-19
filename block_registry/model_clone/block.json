@@ -1,44 +1,4 @@
 {
-  "id": "model_clone",
-  "name": "Model Clone",
-  "version": "1.0.0",
-  "description": "Applies approved moves to a copy of the IFC model (never the original) via ifc_copy, with optional Speckle streaming.",
-  "author": "Cerebrum Team",
-  "tags": [
-    "mep",
-    "construction",
-    "coordination"
-  ],
-  "trust_tier": "platform",
-  "layer": 3,
-  "inputs": [
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "options": [
-        "apply",
-        "write_change_set",
-        "backend"
-      ],
-      "description": "apply | write_change_set | backend"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Capability result"
-    }
-  ],
-  "permissions": {
-    "network": false,
-    "filesystem": true,
-    "imports": [],
-    "blocks": []
-  },
-  "requires": [],
-  "never": [],
   "acceptance": [
     {
       "check": "speckle backend availability is reported, never faked",
@@ -51,8 +11,44 @@
       "status": "error"
     }
   ],
+  "author": "Cerebrum Team",
+  "description": "Applies approved moves to a copy of the IFC model (never the original) via ifc_copy, with optional Speckle streaming.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "a572502054fd03612670bc2d087b0765eb8d9f00e30a682b4626158a8dad9186",
+    "block.py": "d8c38f5720d239e1114bcea3cfcab89240ba461dd1b1a83b4e22bbc84cef510b"
+  },
+  "id": "model_clone",
+  "inputs": [
+    {
+      "description": "apply | write_change_set | backend",
+      "name": "action",
+      "options": [
+        "apply",
+        "write_change_set",
+        "backend"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "Model Clone",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": true,
+    "imports": [],
+    "network": false
+  },
   "publisher_id": "cerebrum_platform",
-  "signature": "",
   "reads": [
     {
       "kind": "caller",
@@ -63,6 +59,15 @@
       "scope": "local.read"
     }
   ],
+  "requires": [],
+  "signature": "svQ2Rpwxanb/EETLGYQiM0gvAuGtIZzpMmRP3LnY6QdLrQjPBxZtw6p8fGV0fCBgPIlVKkZ48CNDucEoADyPAg==",
+  "tags": [
+    "mep",
+    "construction",
+    "coordination"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
@@ -72,9 +77,5 @@
       "kind": "file",
       "scope": "local.write"
     }
-  ],
-  "digests": {
-    "block.py": "d8c38f5720d239e1114bcea3cfcab89240ba461dd1b1a83b4e22bbc84cef510b",
-    "block.json": "90ed2d82f950f125137a4497093472599f475bb0c875a925e86c2a8453090873"
-  }
+  ]
 }

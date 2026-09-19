@@ -1,43 +1,4 @@
 {
-  "id": "bcf_export",
-  "name": "BCF Export",
-  "version": "1.0.0",
-  "description": "Exports findings to a BCF 2.1 zip (markup XML + viewpoints when provided) and validates a produced zip.",
-  "author": "Cerebrum Team",
-  "tags": [
-    "mep",
-    "construction",
-    "coordination"
-  ],
-  "trust_tier": "platform",
-  "layer": 3,
-  "inputs": [
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "options": [
-        "export",
-        "validate"
-      ],
-      "description": "export | validate"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Capability result"
-    }
-  ],
-  "permissions": {
-    "network": false,
-    "filesystem": true,
-    "imports": [],
-    "blocks": []
-  },
-  "requires": [],
-  "never": [],
   "acceptance": [
     {
       "check": "missing zip is refused, not faked",
@@ -50,8 +11,43 @@
       "status": "error"
     }
   ],
+  "author": "Cerebrum Team",
+  "description": "Exports findings to a BCF 2.1 zip (markup XML + viewpoints when provided) and validates a produced zip.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "64a89b35d478f46031fe27e71a8dde0336fb555798861add670c33d35c50da23",
+    "block.py": "62ea52e80e609632892f02474a2c00d90038bde4a2ce269372872ebb36033e81"
+  },
+  "id": "bcf_export",
+  "inputs": [
+    {
+      "description": "export | validate",
+      "name": "action",
+      "options": [
+        "export",
+        "validate"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "BCF Export",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": true,
+    "imports": [],
+    "network": false
+  },
   "publisher_id": "cerebrum_platform",
-  "signature": "",
   "reads": [
     {
       "kind": "caller",
@@ -62,6 +58,15 @@
       "scope": "local.read"
     }
   ],
+  "requires": [],
+  "signature": "pxfnQCAJBmeMFI4zkFT/Et2Tv0uVky9VGws/Ci1sqjxxGJJrdV+v5+zrf7e3hqSJpIjCMPoJMYyXVbdKeoG7DQ==",
+  "tags": [
+    "mep",
+    "construction",
+    "coordination"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
@@ -71,9 +76,5 @@
       "kind": "file",
       "scope": "local.write"
     }
-  ],
-  "digests": {
-    "block.py": "62ea52e80e609632892f02474a2c00d90038bde4a2ce269372872ebb36033e81",
-    "block.json": "3b9acbf7cd84b5c4f3e737721445016551e334a6fd37b6087680a9e545812ac7"
-  }
+  ]
 }

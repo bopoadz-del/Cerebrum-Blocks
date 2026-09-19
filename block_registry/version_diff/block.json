@@ -1,43 +1,4 @@
 {
-  "id": "version_diff",
-  "name": "Version Diff",
-  "version": "1.0.0",
-  "description": "Diffs two finding sets (resolved / new / regressed / persisting) and scores proposals against the diff.",
-  "author": "Cerebrum Team",
-  "tags": [
-    "mep",
-    "construction",
-    "coordination"
-  ],
-  "trust_tier": "platform",
-  "layer": 3,
-  "inputs": [
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "options": [
-        "diff",
-        "score"
-      ],
-      "description": "diff | score"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Capability result"
-    }
-  ],
-  "permissions": {
-    "network": false,
-    "filesystem": false,
-    "imports": [],
-    "blocks": []
-  },
-  "requires": [],
-  "never": [],
   "acceptance": [
     {
       "check": "empty diff of empty sets",
@@ -50,8 +11,43 @@
       "status": "error"
     }
   ],
+  "author": "Cerebrum Team",
+  "description": "Diffs two finding sets (resolved / new / regressed / persisting) and scores proposals against the diff.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "e7d174fd6aa0d8660cea51bec7aff7af7242c4fd56586b4617428531ba7f8c3e",
+    "block.py": "c2fec2c1c92161f1f14c21aab8201f0e33071f1b8e250546ea63f4180843af08"
+  },
+  "id": "version_diff",
+  "inputs": [
+    {
+      "description": "diff | score",
+      "name": "action",
+      "options": [
+        "diff",
+        "score"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "Version Diff",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
   "publisher_id": "cerebrum_platform",
-  "signature": "",
   "reads": [
     {
       "kind": "caller",
@@ -62,6 +58,15 @@
       "scope": "local.read"
     }
   ],
+  "requires": [],
+  "signature": "6fREXoN5rBcLjB6HNnCtNu22abKHw6mpbgBOIbUBsGtBxNu2DyK6AHETxFTJjrQcMcE1c//+/BkzDswwWbZLAg==",
+  "tags": [
+    "mep",
+    "construction",
+    "coordination"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
@@ -71,9 +76,5 @@
       "kind": "file",
       "scope": "local.write"
     }
-  ],
-  "digests": {
-    "block.py": "c2fec2c1c92161f1f14c21aab8201f0e33071f1b8e250546ea63f4180843af08",
-    "block.json": "5f4ca2c81575bc84fbfc65879a256be4873f72cb9d73bf635a7f40d30d6fead8"
-  }
+  ]
 }

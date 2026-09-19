@@ -1,44 +1,4 @@
 {
-  "id": "clash_resolver",
-  "name": "Clash Resolver",
-  "version": "1.0.0",
-  "description": "Proposes collision-free moves for clash items, preserving fall direction; batch verification against zone elements.",
-  "author": "Cerebrum Team",
-  "tags": [
-    "mep",
-    "construction",
-    "coordination"
-  ],
-  "trust_tier": "platform",
-  "layer": 3,
-  "inputs": [
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "options": [
-        "resolve",
-        "candidates",
-        "verify"
-      ],
-      "description": "resolve | candidates | verify"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Capability result"
-    }
-  ],
-  "permissions": {
-    "network": false,
-    "filesystem": true,
-    "imports": [],
-    "blocks": []
-  },
-  "requires": [],
-  "never": [],
   "acceptance": [
     {
       "check": "unknown action returns an error envelope",
@@ -46,8 +6,44 @@
       "status": "error"
     }
   ],
+  "author": "Cerebrum Team",
+  "description": "Proposes collision-free moves for clash items, preserving fall direction; batch verification against zone elements.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "66d6144ea9b18790b9684f3cdfdf12696b825c2b538de48aec49a99fdde96913",
+    "block.py": "c1db4b39cb5549c88d195baa42d26a686b3416202c238cab09e6119154a629dd"
+  },
+  "id": "clash_resolver",
+  "inputs": [
+    {
+      "description": "resolve | candidates | verify",
+      "name": "action",
+      "options": [
+        "resolve",
+        "candidates",
+        "verify"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "Clash Resolver",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": true,
+    "imports": [],
+    "network": false
+  },
   "publisher_id": "cerebrum_platform",
-  "signature": "",
   "reads": [
     {
       "kind": "caller",
@@ -58,6 +54,15 @@
       "scope": "local.read"
     }
   ],
+  "requires": [],
+  "signature": "aafG7UgpltC+dctolqf/EEilATBaUu4oJVElbF5DGR643uVbtv+o/absaViXG/q5QGJmrBWL/uQHca1X6seIDQ==",
+  "tags": [
+    "mep",
+    "construction",
+    "coordination"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
@@ -67,9 +72,5 @@
       "kind": "file",
       "scope": "local.write"
     }
-  ],
-  "digests": {
-    "block.py": "c1db4b39cb5549c88d195baa42d26a686b3416202c238cab09e6119154a629dd",
-    "block.json": "52eae036bfdc74db2a0d5ea0f7273f9aec9ad8750a3cff880ef4c64407cedbdc"
-  }
+  ]
 }

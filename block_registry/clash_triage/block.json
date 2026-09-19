@@ -1,47 +1,4 @@
 {
-  "id": "clash_triage",
-  "name": "Clash Triage",
-  "version": "1.0.0",
-  "description": "Ranks clash findings into a build order: resolution rank, zone congestion, workflow-noise filtering, programme CSV loading.",
-  "author": "Cerebrum Team",
-  "tags": [
-    "mep",
-    "construction",
-    "coordination"
-  ],
-  "trust_tier": "platform",
-  "layer": 3,
-  "inputs": [
-    {
-      "name": "action",
-      "type": "string",
-      "required": false,
-      "options": [
-        "triage",
-        "rank",
-        "congestion",
-        "order",
-        "programme",
-        "clash_id"
-      ],
-      "description": "triage | rank | congestion | order | programme | clash_id"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "json",
-      "description": "Capability result"
-    }
-  ],
-  "permissions": {
-    "network": false,
-    "filesystem": true,
-    "imports": [],
-    "blocks": []
-  },
-  "requires": [],
-  "never": [],
   "acceptance": [
     {
       "check": "stable clash id",
@@ -54,8 +11,47 @@
       "status": "error"
     }
   ],
+  "author": "Cerebrum Team",
+  "description": "Ranks clash findings into a build order: resolution rank, zone congestion, workflow-noise filtering, programme CSV loading.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "3485ddc2377a586a5f07af372f8da6968436d5e90861a9008b7fe5a96ffe6b7d",
+    "block.py": "d2365d4f34fd501a7abe5a7ecedc85879aae145b9ac42ef734ec6534ac8e0c1d"
+  },
+  "id": "clash_triage",
+  "inputs": [
+    {
+      "description": "triage | rank | congestion | order | programme | clash_id",
+      "name": "action",
+      "options": [
+        "triage",
+        "rank",
+        "congestion",
+        "order",
+        "programme",
+        "clash_id"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "Clash Triage",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": true,
+    "imports": [],
+    "network": false
+  },
   "publisher_id": "cerebrum_platform",
-  "signature": "",
   "reads": [
     {
       "kind": "caller",
@@ -66,6 +62,15 @@
       "scope": "local.read"
     }
   ],
+  "requires": [],
+  "signature": "Dhy7fUgJuSkYnD/UmbfhSm4BXkNyA0mG7BKuW1cP4WA82UpJga65IrSt1qRZjjAOSZrWfxcMlXb57vOgTq43AQ==",
+  "tags": [
+    "mep",
+    "construction",
+    "coordination"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
@@ -75,9 +80,5 @@
       "kind": "file",
       "scope": "local.write"
     }
-  ],
-  "digests": {
-    "block.py": "d2365d4f34fd501a7abe5a7ecedc85879aae145b9ac42ef734ec6534ac8e0c1d",
-    "block.json": "7a14318842b08ce886510dcadac5174eead2d94998db7900e04b90b35444527d"
-  }
+  ]
 }
