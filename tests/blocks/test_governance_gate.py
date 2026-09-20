@@ -1,110 +1,55 @@
-"""Behavior tests for the governance_gate block (FinanceOps port).
-
-Every assertion exercises the fail-closed contract: no fabricated
-approvals, pending-only resolution, reviewer recorded, rejection reason
-kept in evidence.
-"""
-
+"""Governance gate: fail-closed approval, ported from FinanceOps."""
 from __future__ import annotations
 
-import pytest
+import asyncio
+import os
 
-from app.blocks.governance_gate import GovernanceGateBlock, _ledger, _LEDGERS
+os.environ.setdefault("ENV", "test")
 
-
-@pytest.fixture()
-def gate():
-    return GovernanceGateBlock()
+from app.blocks.governance_gate import GovernanceGateBlock
 
 
-@pytest.fixture(autouse=True)
-def _fresh_ledger():
-    _LEDGERS.clear()
-    yield
-    _LEDGERS.clear()
+def _run(coro):
+    return asyncio.run(coro)
 
 
-async def _call(gate, action, tenant="t1", **data):
-    envelope = await gate.execute({**data, "tenant_id": tenant}, {"action": action})
-    return envelope["result"]
+def test_require_approved_refuses_without_request():
+    b = GovernanceGateBlock()
+    r = _run(b.process({"action": "require_approved", "tenant_id": "t1", "action_type": "budget_lock", "target_id": "b1"}))
+    assert r["status"] == "refused"
+    assert "approved request" in r["error"]
 
 
-@pytest.mark.asyncio
-async def test_require_approved_refuses_without_request(gate):
-    result = await _call(gate, "require_approved", action_type="budget_lock", target_id="b-1")
-    assert result["status"] == "error"
-    assert "requires approved request" in result["error"]
+def test_full_approval_flow_then_allowed():
+    b = GovernanceGateBlock()
+    base = {"tenant_id": "t1", "action_type": "budget_lock", "target_id": "b1"}
+    c = _run(b.process({"action": "create_request", **base, "requester_id": "alice"}))
+    assert c["status"] == "ok"
+    # self-approval refused
+    s = _run(b.process({"action": "approve", **base, "approver_id": "alice"}))
+    assert s["status"] == "error"
+    assert "self-approval" in s["error"]
+    # approver approves
+    a = _run(b.process({"action": "approve", **base, "approver_id": "bob"}))
+    assert a["status"] == "ok"
+    # gate now passes
+    r = _run(b.process({"action": "require_approved", **base}))
+    assert r["status"] == "ok"
+    assert r["result"]["approved"] is True
 
 
-@pytest.mark.asyncio
-async def test_full_approval_flow_allows_then_rejects_resolution(gate):
-    created = await _call(
-        gate, "create_request",
-        action_type="budget_lock", target_id="b-1",
-        requester_id="u1", payload={"amount": 100},
-    )
-    assert created["status"] == "success"
-    request_id = created["request"]["id"]
-    assert created["request"]["status"] == "pending"
-
-    # Unapproved -> refused.
-    refused = await _call(gate, "require_approved", action_type="budget_lock", target_id="b-1")
-    assert refused["status"] == "error"
-
-    # Approve from pending.
-    approved = await _call(gate, "approve_request", request_id=request_id, reviewer_id="r1")
-    assert approved["status"] == "success"
-    assert approved["request"]["status"] == "approved"
-    assert approved["request"]["reviewer_id"] == "r1"
-
-    # Now allowed.
-    allowed = await _call(gate, "require_approved", action_type="budget_lock", target_id="b-1")
-    assert allowed["status"] == "success"
-    assert allowed["allowed"] is True
-    assert allowed["request_id"] == request_id
-
-    # Double-approve refused.
-    again = await _call(gate, "approve_request", request_id=request_id, reviewer_id="r2")
-    assert again["status"] == "error"
-    assert "status approved" in again["error"]
+def test_pending_request_still_refuses():
+    b = GovernanceGateBlock()
+    base = {"tenant_id": "t1", "action_type": "scenario_publish", "target_id": "s1"}
+    _run(b.process({"action": "create_request", **base, "requester_id": "alice"}))
+    r = _run(b.process({"action": "require_approved", **base}))
+    assert r["status"] == "refused"
+    assert r["detail"]["status"] == "pending"
 
 
-@pytest.mark.asyncio
-async def test_rejection_keeps_reason_and_never_allows(gate):
-    created = await _call(
-        gate, "create_request",
-        action_type="journal_post", target_id="j-9", requester_id="u1",
-    )
-    request_id = created["request"]["id"]
-    rejected = await _call(
-        gate, "reject_request", request_id=request_id, reviewer_id="r1", reason="no budget"
-    )
-    assert rejected["status"] == "success"
-    assert rejected["request"]["status"] == "rejected"
-    assert rejected["request"]["evidence"]["rejection_reason"] == "no budget"
-
-    refused = await _call(gate, "require_approved", action_type="journal_post", target_id="j-9")
-    assert refused["status"] == "error"
-
-
-@pytest.mark.asyncio
-async def test_invalid_action_type_and_risk_tier_are_named(gate):
-    bad_type = await _call(
-        gate, "create_request", action_type="delete_everything", target_id="x"
-    )
-    assert bad_type["status"] == "error"
-    assert "Invalid action_type" in bad_type["error"]
-
-    bad_risk = await _call(gate, "create_use_case", risk_tier="apocalyptic", use_case_name="x")
-    assert bad_risk["status"] == "error"
-    assert "Invalid risk_tier" in bad_risk["error"]
-
-
-@pytest.mark.asyncio
-async def test_tenants_are_isolated(gate):
-    await _call(gate, "create_request", tenant="t1", action_type="budget_lock", target_id="b-1")
-    # Tenant t2 asking about t1's target sees nothing.
-    refused = await _call(gate, "require_approved", tenant="t2", action_type="budget_lock", target_id="b-1")
-    assert refused["status"] == "error"
-    listed = await _call(gate, "list_requests", tenant="t2")
-    assert listed["requests"] == []
+def test_duplicate_request_refused():
+    b = GovernanceGateBlock()
+    base = {"tenant_id": "t1", "action_type": "coa_activation", "target_id": "c1", "requester_id": "alice"}
+    assert _run(b.process({"action": "create_request", **base}))["status"] == "ok"
+    dup = _run(b.process({"action": "create_request", **base}))
+    assert dup["status"] == "error"

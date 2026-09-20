@@ -7,29 +7,28 @@
     }
   ],
   "author": "Cerebrum Team",
-  "description": "Fail-closed governance gate ported from Cerebrum-FinanceOps: an action executes only when an approved request exists for (tenant, action_type, target_id); self-approval refused. Approval store is in-process.",
+  "description": "Tamper-evident SHA-256 evidence chain ported from Cerebrum-FinanceOps audit/service.py with the missing full-walk verifier added: record, verify (walks every link), get_latest. Chain store is in-process.",
   "digests": {
     "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
-    "block.json": "b59e07cab8d5685130944de6139b6958ec56a5f627c7143b3e93e4604182a56c",
-    "block.py": "2b4f4b839737ed43372c02b961c3777082e81b436c620ce1adaa0989bfe1deb0"
+    "block.json": "f477e1ad77b139077aabb567204bf6e49057f81064f40a9e001594ae4834c3ec",
+    "block.py": "f1d064e3d5ff62f6991154c061bda62b505a2d8726bcc69a72bbc2ed128a157b"
   },
-  "id": "governance_gate",
+  "id": "evidence_chain",
   "inputs": [
     {
-      "description": "create_request | approve | require_approved | list_requests",
+      "description": "record | verify | get_latest",
       "name": "action",
       "options": [
-        "create_request",
-        "approve",
-        "require_approved",
-        "list_requests"
+        "record",
+        "verify",
+        "get_latest"
       ],
       "required": false,
       "type": "string"
     }
   ],
   "layer": 3,
-  "name": "governance_gate",
+  "name": "evidence_chain",
   "never": [],
   "outputs": [
     {
@@ -52,11 +51,12 @@
     }
   ],
   "requires": [],
-  "signature": "gkPdXWXkjj0IHuF68gLzrT798Sfo9RAPtnIo6htYSKNCyeHmgbuqKbAJcvNl7W8Jv1BMgognUDa6nlxjWj+/Ag==",
+  "signature": "RLj8zZNRR/mA+KOYsCz9+A6Q1DmdIQV2hHfwyeFfj6lsqS/eJaOerstX/xm4fPcJP4bz9jfWtJysMYSTB+11Cw==",
   "tags": [
+    "audit",
+    "evidence",
+    "hash-chain",
     "governance",
-    "approval",
-    "fail-closed",
     "finance_ops"
   ],
   "trust_tier": "platform",
