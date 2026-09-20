@@ -225,6 +225,13 @@ app.include_router(memory.router)
 app.include_router(metrics_router.router)
 app.include_router(monitoring.router)
 app.include_router(health.router)
+# Console Floor pack — the ONE console UI at / plus /v1/capabilities and
+# /v1/store/packs. Mounted before the static router so the console wins at /.
+try:
+    from app.pack_console.router import router as pack_console_router
+    app.include_router(pack_console_router)
+except Exception as _pack_exc:  # pragma: no cover - pack absent
+    logger.warning("Console Floor pack not mounted: %s", _pack_exc)
 app.include_router(static.router)
 app.include_router(capture.router)
 app.include_router(agent_swarm.router)
