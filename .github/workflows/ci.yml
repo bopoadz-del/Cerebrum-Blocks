@@ -336,7 +336,23 @@ jobs:
           # and hard-exits, so a hang costs 90s and names its line.
           # faulthandler_timeout is the same dump from the interpreter
           # itself, in case the plugin's timer thread is the one starved.
-          pytest -v tests/ --timeout=90 --timeout-method=thread             -o faulthandler_timeout=75 -x --tb=short
+          # -rs: print the skip summary with reasons. A suite can report
+          # "green" while a whole harvested file is behind an importorskip
+          # for a dependency nobody declared -- which is exactly what
+          # tests/blocks/test_clash_resolver.py and test_geometry_engine.py
+          # did until trimesh was pinned. An unread skip is a fake test count,
+          # so the reasons go in the log where a reviewer can count them.
+          #
+          # -x REMOVED. It defeated this job's entire stated purpose. Run
+          # 35504322136: the step stopped at the FIRST failure --
+          # test_clash_resolver.py, 5% in, 153 tests of the suite executed --
+          # and continue-on-error turned that red into a green check. The job
+          # written so that "green" would stop meaning "green on a fifth of
+          # the suite" reported green on a twentieth of it, and printed no
+          # skip summary at all because -x exits before pytest writes one.
+          # Report-only means report ALL of it; --timeout=90 (not -x) is what
+          # keeps a hang from eating the job cap.
+          pytest -v -rs tests/ --timeout=90 --timeout-method=thread             -o faulthandler_timeout=75 --tb=short
 
   lockfile-consistency:
     # WHY THIS EXISTS
