@@ -7,7 +7,9 @@
       "module": "app.blocks.chat",
       "class": "ChatBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_chat.py"],
+      "tests": [
+        "tests/blocks/test_chat.py"
+      ],
       "fixture": "mock provider envelope (in-test)",
       "certified": true,
       "include_in_ci": true
@@ -17,7 +19,9 @@
       "module": "app.blocks.capture",
       "class": "CaptureBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_capture.py"],
+      "tests": [
+        "tests/blocks/test_capture.py"
+      ],
       "fixture": "PIL image rendered in-test (real pixel payload)",
       "certified": true,
       "include_in_ci": true
@@ -27,7 +31,9 @@
       "module": "app.blocks.knowledge",
       "class": "KnowledgeBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_knowledge.py"],
+      "tests": [
+        "tests/blocks/test_knowledge.py"
+      ],
       "fixture": null,
       "certified": true,
       "include_in_ci": true
@@ -37,7 +43,9 @@
       "module": "app.blocks.pdf",
       "class": "PDFBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_pdf.py"],
+      "tests": [
+        "tests/blocks/test_pdf.py"
+      ],
       "fixture": "PDF written in-test (real file parse)",
       "certified": true,
       "include_in_ci": true
@@ -47,7 +55,9 @@
       "module": "app.blocks.image",
       "class": "ImageBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_image.py"],
+      "tests": [
+        "tests/blocks/test_image.py"
+      ],
       "fixture": "PIL image in-test (real image payload)",
       "certified": true,
       "include_in_ci": true
@@ -57,10 +67,141 @@
       "module": "app.blocks.agent_swarm",
       "class": "AgentSwarmBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_agent_swarm.py"],
+      "tests": [
+        "tests/blocks/test_agent_swarm.py"
+      ],
       "fixture": null,
       "certified": true,
       "include_in_ci": true
+    },
+    {
+      "block": "sandbox",
+      "module": "app.blocks.sandbox",
+      "class": "SandboxBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_sandbox_isolated_requires_runner.py",
+        "tests/blocks/test_sandbox_does_not_cap_its_host.py",
+        "tests/test_sandbox_runner_client.py"
+      ],
+      "fixture": "real Python source strings executed through the restricted in-process exec, plus a fake sandbox-runner HTTP transport for the isolated path",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "cache_manager",
+      "module": "app.blocks.cache_manager",
+      "class": "CacheManagerBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_cache_manager.py"
+      ],
+      "fixture": "an injected in-process cache client, round-tripped under real scope_key() tenant/project/source-class keys",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "local_drive",
+      "module": "app.blocks.local_drive",
+      "class": "LocalDriveBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_local_drive.py"
+      ],
+      "fixture": "real files written to and read back from a tmp_path drive root, plus ../ escape attempts",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "google_drive",
+      "module": "app.blocks.google_drive",
+      "class": "GoogleDriveBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_google_drive.py",
+        "tests/blocks/test_google_drive_service_account.py"
+      ],
+      "fixture": "an RSA-2048 key generated in-test; a real RS256 service-account JWT is minted and its header/claims decoded",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "onedrive",
+      "module": "app.blocks.onedrive",
+      "class": "OneDriveBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_onedrive.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about OneDriveBlock.process payloads). tests/blocks/test_onedrive.py asserts only the UniversalBlock envelope keys, which execute() supplies regardless of what process() returns."
+    },
+    {
+      "block": "search",
+      "module": "app.blocks.search",
+      "class": "SearchBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_search.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about SearchBlock.process payloads). tests/blocks/test_search.py asserts only the UniversalBlock envelope keys."
+    },
+    {
+      "block": "translate",
+      "module": "app.blocks.translate",
+      "class": "TranslateBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_translate.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about TranslateBlock.process payloads). tests/blocks/test_translate.py asserts only the UniversalBlock envelope keys; no test reads result['result']['translated']."
+    },
+    {
+      "block": "web",
+      "module": "app.blocks.web",
+      "class": "WebBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_web.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about WebBlock.process payloads). tests/blocks/test_web.py asserts only the UniversalBlock envelope keys."
+    },
+    {
+      "block": "learning_engine",
+      "module": "app.blocks.learning_engine",
+      "class": "LearningEngineBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_learning_engine_durability.py",
+        "tests/core/test_learning_engine_config.py",
+        "tests/test_drift_detection.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about LearningEngineBlock.process payloads). No learning_engine test calls process() or execute() at all -- every one reaches into _save_state/_update_credibility/_store directly, so the block's dispatcher is entirely uncovered."
+    },
+    {
+      "block": "webhook",
+      "module": "app.blocks.webhook",
+      "class": "WebhookBlock",
+      "method": "process",
+      "tests": [],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 NOT RUNNABLE: the Store has no test for this block. tests/blocks/test_inbound_webhook.py covers app/blocks/inbound_webhook.py, a different block. app/blocks/webhook.py (outbound send/register/trigger) has zero coverage."
     }
   ]
 }

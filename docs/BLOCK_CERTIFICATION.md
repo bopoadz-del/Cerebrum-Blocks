@@ -56,3 +56,24 @@ gut proves nothing about the block's payloads.
 | pdf | PDFBlock.execute (inherited TypedBlock) | PDF written in-test |
 | image | ImageBlock.execute (inherited UniversalBlock) | PIL image in-test |
 | agent_swarm | AgentSwarmBlock.execute | — |
+| sandbox | SandboxBlock.process | real Python source executed through the restricted in-process exec + fake runner transport |
+| cache_manager | CacheManagerBlock.process | injected cache client, round-tripped under real `scope_key()` tenant/project/class keys |
+| local_drive | LocalDriveBlock.process | real files written to and read back from a tmp_path drive root |
+| google_drive | GoogleDriveBlock.process | RSA-2048 key generated in-test; a real RS256 service-account JWT minted and decoded |
+
+### Entered, not yet certified
+
+Recorded per the rule above — failing bar 3 is tracked here, not dropped.
+Every one of these fails for the *same* reason: the block's only tests
+assert the `UniversalBlock` envelope (`block`, `request_id`, `status`,
+`result`, …), and `execute()` supplies those keys whatever `process()`
+returns. Shape-only tests cannot notice a gutted entry method.
+
+| block | entry | failing bar |
+| --- | --- | --- |
+| onedrive | OneDriveBlock.process | 3 — envelope-only tests stay green on the gut |
+| search | SearchBlock.process | 3 — envelope-only tests stay green on the gut |
+| translate | TranslateBlock.process | 3 — no test reads `result["result"]["translated"]` |
+| web | WebBlock.process | 3 — envelope-only tests stay green on the gut |
+| learning_engine | LearningEngineBlock.process | 3 — no test calls `process()`/`execute()` at all; every test reaches into `_save_state`/`_store` directly, so the dispatcher is uncovered |
+| webhook | WebhookBlock.process | 3 not runnable — the Store has no test for this block (`tests/blocks/test_inbound_webhook.py` covers the *different* `inbound_webhook` block) |
