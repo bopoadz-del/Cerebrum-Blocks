@@ -8,13 +8,12 @@
       "class": "ChatBlock",
       "method": "process",
       "tests": [
-        "tests/blocks/test_chat.py"
+        "tests/blocks/test_chat.py",
+        "tests/blocks/test_chat_real_payload.py"
       ],
-      "fixture": "mock provider envelope (in-test)",
-      "certified": false,
-      "include_in_ci": false,
-      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about ChatBlock.process payloads)",
-      "note": "Was filed against execute, which this class inherits from TypedBlock, so the control-delete gutted app/core/typed_block.py - a file these tests never reach - and the certification passed without measuring the block. Re-filed against process, the method the block defines in its own file, it fails: the tests assert only the UniversalBlock envelope, which execute() supplies whatever process() returns."
+      "fixture": "app/prompts/construction_expert.txt - a real system-prompt artifact on disk, loaded by process() and asserted in the conversation the doubled provider echoes back. The Moonshot chat-completion envelope itself is constructed in-test (no recorded provider response exists in the Store); assertions are on the text/provider/model/tokens process() lifted out of it, on the RAG-rewritten user turn, and on the offline template's own 240-char echo truncation.",
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "capture",
@@ -22,13 +21,12 @@
       "class": "CaptureBlock",
       "method": "process",
       "tests": [
-        "tests/blocks/test_capture.py"
+        "tests/blocks/test_capture.py",
+        "tests/blocks/test_capture_real_payload.py"
       ],
-      "fixture": "PIL image rendered in-test (real pixel payload)",
-      "certified": false,
-      "include_in_ci": false,
-      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about CaptureBlock.process payloads)",
-      "note": "Was filed against execute, which this class inherits from TypedBlock, so the control-delete gutted app/core/typed_block.py - a file these tests never reach - and the certification passed without measuring the block. Re-filed against process, the method the block defines in its own file, it fails: the tests assert only the UniversalBlock envelope, which execute() supplies whatever process() returns."
+      "fixture": "a 400x100 PNG drawn with PIL and written to disk in-test (precedent: tests/test_image_detection.py) - process() reads it back off disk, base64s it into the vision request (asserted byte-for-byte against the file) and greyscales it for the OCR path. The Kimi Vision / structuring envelopes and the Chroma add/query responses are doubled in-test; assertions are on the capture record process() built from them.",
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "knowledge",
@@ -48,13 +46,12 @@
       "class": "PDFBlock",
       "method": "process",
       "tests": [
-        "tests/blocks/test_pdf.py"
+        "tests/blocks/test_pdf.py",
+        "tests/blocks/test_pdf_real_payload.py"
       ],
-      "fixture": "PDF written in-test (real file parse)",
-      "certified": false,
-      "include_in_ci": false,
-      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about PDFBlock.process payloads)",
-      "note": "Was filed against execute, which this class inherits from TypedBlock, so the control-delete gutted app/core/typed_block.py - a file these tests never reach - and the certification passed without measuring the block. Re-filed against process, the method the block defines in its own file, it fails: the tests assert only the UniversalBlock envelope, which execute() supplies whatever process() returns."
+      "fixture": "tests/fixtures/drawing_tm_1100010.pdf - a 485 KB Jacobs construction drawing parsed end-to-end through process() (title block, drawing notes, legend and match-line callouts asserted verbatim), driven both by file_path and as raw bytes; plus a real .xlsx workbook written in-test for the openpyxl branch.",
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "image",
@@ -186,12 +183,14 @@
       "class": "OCRBlock",
       "method": "process",
       "tests": [
-        "tests/blocks/test_ocr.py"
+        "tests/blocks/test_ocr.py",
+        "tests/blocks/test_ocr_real_payload.py"
       ],
-      "fixture": "PIL image constructed in-test",
+      "fixture": "none reachable - see note. tests/blocks/test_ocr_real_payload.py drives tests/fixtures/drawing_tm_1100010.pdf at process() and pins the crash.",
       "certified": false,
       "include_in_ci": false,
-      "note": "NOT CERTIFIED. BAR3 FAIL: tests/blocks/test_ocr.py stays GREEN when OCRBlock.process is gutted to a plausible success -- it asserts only the TypedBlock envelope keys (block/request_id/status/result/confidence/metadata), never a value that has to come from reading an image. No real OCR fixture exists in the Store. The_Fork's tests/test_doc_index_ocr.py would cover this but cannot be harvested: app.core.doc_index and app.core.projects do not exist here."
+      "failing_bar": "BAR3 satisfied by the new tests (the gut goes RED), but the block is NOT certified: no test can assert text read from an image, because OCRBlock.process cannot read one.",
+      "note": "NOT CERTIFIED. Root cause, corrected: the earlier note blamed a missing OCR fixture. The fixture is not the blocker. For ANY input that resolves to an existing file, process() -> _process_image() -> _detect_markup(), whose first statement is an unconditional `from app.core.redline import detect_redlines, summarize_markup` OUTSIDE the function's try. app/core/redline.py does not exist in this repository, and neither does app/core/image_quality.py (imported for summarize_ocr_quality at ocr.py:199 and deskew at ocr.py:348). So every image and every PDF raises ModuleNotFoundError before a pixel is read, and UniversalBlock.execute swallows it into a generic error envelope -- which is why the block looked certifiable. app/blocks/ocr_v2.py:192 has the same dead import. tests/blocks/test_ocr_real_payload.py asserts the four error payloads process() can still produce and pins the ModuleNotFoundError so the gap is executable rather than a note; those two pins must be replaced with assertions on extracted text when app.core.redline and app.core.image_quality land. Fixing this needs block/platform source, which is out of scope for a coverage lane."
     },
     {
       "block": "safety_world_detector",
