@@ -59,13 +59,11 @@ Some real block code deliberately has no registry entry yet. Registration
 means "certified, versioned, signed" — these are candidate material the
 COLLECTOR can survey and promote, not certified inventory:
 
-- **Vertical v2 blocks** (`agriculture_v2`, `hotel_v2`, `medical_v2`,
-  `pharma_v2`, `oil_gas_v2`, `hr_v2`, `education_v2`, `manufacturing_v2`,
-  `real_estate_v2`, `supply_chain_v2`, `automotive_v2`, `aviation_v2`) —
-  real domain logic, awaiting domain-pack packaging and certification.
 - **Alias** (`document_engine_block`) — a path shim of the
   already-registered `document_engine` block (the package shadows the
   module); registering it would duplicate identity, not capability.
+- **Library helpers** (`ifc_loader`, `_knowledge`, `_procedure_routing`) —
+  shared modules consumed by registered blocks, not blocks themselves.
 
 Newly registered in the close-out: estate blocks (5), `retail_v2`,
 `safety_world_detector`, `mcp_adapter`, `inbound_webhook`, `workbench`.
@@ -143,9 +141,10 @@ readiness, and the known-defect list) lives in
 **[docs/STORE_INVENTORY.md](docs/STORE_INVENTORY.md)** and is re-verified
 against the files themselves, not memory. The short version:
 
-- **136 registry blocks** — all manifested and signed, 113 authored
+- **148 registry blocks** — all manifested and signed, 125 authored
   `Cerebrum Team`, **zero stubs** (verified by pattern sweep; census
-  0 missing).
+  0 missing). All 20 vertical `*_v2` domain blocks are now registered
+  and signed.
 - **21 kit directories** — 19 domain kits + `universal_kernel` +
   `_template` — including the eight declared-ready verticals: **hotels,
   insurance, construction, finance, retail, real estate, legal, mep

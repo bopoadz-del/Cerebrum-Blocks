@@ -1,0 +1,68 @@
+{
+  "acceptance": [
+    {
+      "check": "an empty payload is refused, not silently accepted",
+      "id": "empty_payload",
+      "status": "refused"
+    },
+    {
+      "check": "an unknown action is refused, not silently accepted",
+      "id": "unknown_action",
+      "status": "refused"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "Manufacturing domain analysis: deterministic document-type detection and entity extraction for the manufacturing vertical.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "8e66645ec96d1374b424e001341156f9c1c8d89e1eb716e5adfe943364a0f65e",
+    "block.py": "e463ebe95a70a0b4be1681d5ae1cb376cfbba6a89371e9c878eda476f3941a69"
+  },
+  "id": "manufacturing_v2",
+  "inputs": [
+    {
+      "description": "Document text to analyze",
+      "name": "text",
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "manufacturing_v2",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "requires": [],
+  "signature": "7VoJNib+h6N9R1PrHKb84CTmHpTHqLUOP4FJHf+5tcSgdYaBVWMvMRmzwCRQ18cIcg6i1JkgaQfTpUSbY4yxCg==",
+  "tags": [
+    "domain",
+    "vertical",
+    "manufacturing"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
+}

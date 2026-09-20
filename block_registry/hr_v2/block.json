@@ -1,0 +1,68 @@
+{
+  "acceptance": [
+    {
+      "check": "an empty payload is refused, not silently accepted",
+      "id": "empty_payload",
+      "status": "refused"
+    },
+    {
+      "check": "an unknown action is refused, not silently accepted",
+      "id": "unknown_action",
+      "status": "refused"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "HR domain analysis: deterministic document-type detection and entity extraction for the HR vertical.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "0b0e75de519de1fb00de7a4dff7fc81527123ce9f488e7419de81bc1d5964ca8",
+    "block.py": "00b2be44d3e3bc71a6a83b6cb354ebc67969c61fd131cb4d525d673084b8d9d8"
+  },
+  "id": "hr_v2",
+  "inputs": [
+    {
+      "description": "Document text to analyze",
+      "name": "text",
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "hr_v2",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "requires": [],
+  "signature": "y9yuOjATLkvYe2E+5kX/Kmfb/dvDb7+Puy+tlt2KFXyoGVc/G3/q/V0wezoQ1YLE5UZIEJU96QLAFpqwagTQBw==",
+  "tags": [
+    "domain",
+    "vertical",
+    "hr"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
+}
