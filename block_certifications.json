@@ -6,25 +6,29 @@
       "block": "chat",
       "module": "app.blocks.chat",
       "class": "ChatBlock",
-      "method": "execute",
+      "method": "process",
       "tests": [
         "tests/blocks/test_chat.py"
       ],
       "fixture": "mock provider envelope (in-test)",
-      "certified": true,
-      "include_in_ci": true
+      "certified": false,
+      "include_in_ci": false,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about ChatBlock.process payloads)",
+      "note": "Was filed against execute, which this class inherits from TypedBlock, so the control-delete gutted app/core/typed_block.py - a file these tests never reach - and the certification passed without measuring the block. Re-filed against process, the method the block defines in its own file, it fails: the tests assert only the UniversalBlock envelope, which execute() supplies whatever process() returns."
     },
     {
       "block": "capture",
       "module": "app.blocks.capture",
       "class": "CaptureBlock",
-      "method": "execute",
+      "method": "process",
       "tests": [
         "tests/blocks/test_capture.py"
       ],
       "fixture": "PIL image rendered in-test (real pixel payload)",
-      "certified": true,
-      "include_in_ci": true
+      "certified": false,
+      "include_in_ci": false,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about CaptureBlock.process payloads)",
+      "note": "Was filed against execute, which this class inherits from TypedBlock, so the control-delete gutted app/core/typed_block.py - a file these tests never reach - and the certification passed without measuring the block. Re-filed against process, the method the block defines in its own file, it fails: the tests assert only the UniversalBlock envelope, which execute() supplies whatever process() returns."
     },
     {
       "block": "knowledge",
@@ -42,13 +46,15 @@
       "block": "pdf",
       "module": "app.blocks.pdf",
       "class": "PDFBlock",
-      "method": "execute",
+      "method": "process",
       "tests": [
         "tests/blocks/test_pdf.py"
       ],
       "fixture": "PDF written in-test (real file parse)",
-      "certified": true,
-      "include_in_ci": true
+      "certified": false,
+      "include_in_ci": false,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about PDFBlock.process payloads)",
+      "note": "Was filed against execute, which this class inherits from TypedBlock, so the control-delete gutted app/core/typed_block.py - a file these tests never reach - and the certification passed without measuring the block. Re-filed against process, the method the block defines in its own file, it fails: the tests assert only the UniversalBlock envelope, which execute() supplies whatever process() returns."
     },
     {
       "block": "image",
