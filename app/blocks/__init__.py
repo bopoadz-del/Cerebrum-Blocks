@@ -118,6 +118,8 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "bcf_export": ("app.blocks.bcf_export", "BcfExportBlock"),
     "version_diff": ("app.blocks.version_diff", "VersionDiffBlock"),
     "model_clone": ("app.blocks.model_clone", "ModelCloneBlock"),
+    "market_data": ("app.blocks.market_data", "MarketDataBlock"),
+    "regulatory_chunker": ("app.blocks.regulatory_chunker", "RegulatoryChunkerBlock"),
     "governance_gate": ("app.blocks.governance_gate", "GovernanceGateBlock"),
     "evidence_chain": ("app.blocks.evidence_chain", "EvidenceChainBlock"),
 }
