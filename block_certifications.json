@@ -111,12 +111,13 @@
       "class": "SpecAnalyzerBlock",
       "method": "process",
       "tests": [
-        "tests/blocks/test_spec_analyzer_wave1.py"
+        "tests/blocks/test_spec_analyzer_wave1.py",
+        "tests/blocks/test_spec_analyzer_entrypoint.py"
       ],
-      "fixture": "in-test strings only (no real artifact)",
-      "certified": false,
-      "include_in_ci": false,
-      "note": "BAR3 FAIL: tests/blocks/test_spec_analyzer_wave1.py calls the private helper SpecAnalyzerBlock._extract_grades directly and never invokes process(), so the control-delete of process() leaves the suite GREEN. The advertised entry point has zero coverage. No real spec artifact exists in the Store to fix this with."
+      "fixture": "one- and two-page specification PDFs written with PyMuPDF in tests/blocks/test_spec_analyzer_entrypoint.py and reopened from disk by the block's own _extract_text",
+      "certified": true,
+      "include_in_ci": true,
+      "note": "Entry point covered 2026-09-20. The wave-1 file still calls the private _extract_grades and stays as-is; tests/blocks/test_spec_analyzer_entrypoint.py drives await SpecAnalyzerBlock().process(...) over a real PDF and asserts the resolved table values (C30 -> fck_mpa 30, ASTM A615 -> rebar, ACI 318 -> its covers text), that max_pages actually truncates the read, and the verbatim text of both refusals."
     },
     {
       "block": "project_reasoner",
@@ -341,13 +342,14 @@
       "method": "process",
       "tests": [
         "tests/blocks/test_learning_engine_durability.py",
+        "tests/blocks/test_learning_engine_entrypoint.py",
         "tests/core/test_learning_engine_config.py",
         "tests/test_drift_detection.py"
       ],
-      "fixture": null,
-      "certified": false,
+      "fixture": "a real learning_engine.json written to tmp_path through an injected FileLearningStore and read back by a second block instance (tests/blocks/test_learning_engine_entrypoint.py)",
+      "certified": true,
       "include_in_ci": true,
-      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about LearningEngineBlock.process payloads). No learning_engine test calls process() or execute() at all -- every one reaches into _save_state/_update_credibility/_store directly, so the block's dispatcher is entirely uncovered."
+      "note": "Entry point covered 2026-09-20. The three pre-existing files still reach into _save_state/_update_credibility/_store and stay as-is; tests/blocks/test_learning_engine_entrypoint.py drives await LearningEngineBlock().process(...) and asserts the fitted coefficient (scale 1.10 from five 10%-low corrections), the bronze->silver promotion on the 10th execution, the recomputed credibility tier (EXPERIMENTAL at accuracy 1.0 / n=10, QUARANTINE below 0.5), state surviving into a second block over the same file store, and the verbatim text of all four refusals."
     },
     {
       "block": "webhook",
@@ -359,6 +361,34 @@
       "certified": false,
       "include_in_ci": true,
       "failing_bar": "BAR3 NOT RUNNABLE: the Store has no test for this block. tests/blocks/test_inbound_webhook.py covers app/blocks/inbound_webhook.py, a different block. app/blocks/webhook.py (outbound send/register/trigger) has zero coverage."
+    },
+    {
+      "block": "bcf_export",
+      "module": "app.blocks.bcf_export",
+      "class": "BcfExportBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_bcf_export.py",
+        "tests/blocks/test_bcf_export_entrypoint.py"
+      ],
+      "fixture": "real .bcfzip archives written to tmp_path by the block and read back with the stdlib zipfile + ElementTree; a hand-built broken archive for the validator",
+      "certified": true,
+      "include_in_ci": true,
+      "note": "Certified 2026-09-20. tests/blocks/test_bcf_export.py exercised the module functions export_bcf/validate_bcf_zip and never constructed BcfExportBlock, so the _ACTIONS dispatcher was uncovered. tests/blocks/test_bcf_export_entrypoint.py drives await BcfExportBlock().process(...), reads the archive that call produced off disk (Topic titles, the formatted measurement, the cited clause, the conditional PerspectiveCamera), and pins both refusals block_registry/bcf_export/block.json advertises as acceptance criteria."
+    },
+    {
+      "block": "clash_resolver",
+      "module": "app.blocks.clash_resolver",
+      "class": "ClashResolverBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_clash_resolver.py",
+        "tests/blocks/test_clash_resolver_entrypoint.py"
+      ],
+      "fixture": "tests/blocks/test_clash_resolver.py builds real trimesh solids (runs now that trimesh is pinned in requirements.txt); tests/blocks/test_clash_resolver_entrypoint.py drives the entry point with element stand-ins and asserts the move vectors the block computed",
+      "certified": true,
+      "include_in_ci": true,
+      "note": "Certified 2026-09-20 on the entry point. CAVEAT: tests/blocks/test_clash_resolver.py (374 lines: mutation probe on the fall guard, batch rollback, exhausted-search escalation) is behind a module-level pytest.importorskip('trimesh') and trimesh was in no requirements file, so it skipped everywhere and pytest exited 5 on that path alone. trimesh==4.12.2 is now pinned in requirements.txt + requirements.lock but has NOT been installed or run here (the shared .venv must not be modified), so those tests are still unverified on this machine. The entry-point file deliberately needs no geometry backend -- its elements carry mesh=None so _would_create_new_clash returns before importing geometry_engine -- and covers the gravity fall constraint, the candidate-set ordering, the flagged-vs-proposed distinction and both advertised refusals."
     }
   ]
 }
