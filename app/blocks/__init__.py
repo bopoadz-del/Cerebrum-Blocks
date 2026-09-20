@@ -111,7 +111,6 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "construction_advisor": ("app.blocks.construction_advisor", "ConstructionAdvisorBlock"),
     "historical_benchmark": ("app.blocks.historical_benchmark", "HistoricalBenchmarkBlock"),
     "mcp_adapter": ("app.blocks.mcp_adapter", "MCPAdapterBlock"),
-    "mcp_consumer": ("app.blocks.mcp_consumer", "MCPConsumerBlock"),
     "geometry_engine": ("app.blocks.geometry_engine", "GeometryEngineBlock"),
     "clearance_rules": ("app.blocks.clearance_rules", "ClearanceRulesBlock"),
     "clash_triage": ("app.blocks.clash_triage", "ClashTriageBlock"),

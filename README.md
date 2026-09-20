@@ -63,14 +63,9 @@ COLLECTOR can survey and promote, not certified inventory:
   `pharma_v2`, `oil_gas_v2`, `hr_v2`, `education_v2`, `manufacturing_v2`,
   `real_estate_v2`, `supply_chain_v2`, `automotive_v2`, `aviation_v2`) —
   real domain logic, awaiting domain-pack packaging and certification.
-- **Aviation kit modules** (`aviation_cargo_kit`, `aviation_cx_kit`,
-  `aviation_loyalty_kit`, `aviation_pss_kit`, `aviation_revenue_kit`,
-  `aviation_grounding_gate`, `aviation_chat_server`) — kit-level material.
-- **`mcp_consumer`** — executes external MCP servers; registration waits
-  for the allowlist hardening wave (do not advertise untrusted execution).
-- **Aliases** (`document_engine_block`, `validation_pipeline`) — path
-  shims of already-registered blocks; registering them would duplicate
-  identity, not capability.
+- **Alias** (`document_engine_block`) — a path shim of the
+  already-registered `document_engine` block (the package shadows the
+  module); registering it would duplicate identity, not capability.
 
 Newly registered in the close-out: estate blocks (5), `retail_v2`,
 `safety_world_detector`, `mcp_adapter`, `inbound_webhook`, `workbench`.
