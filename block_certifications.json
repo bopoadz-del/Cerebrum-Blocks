@@ -288,12 +288,12 @@
       "class": "OneDriveBlock",
       "method": "process",
       "tests": [
-        "tests/blocks/test_onedrive.py"
+        "tests/blocks/test_onedrive.py",
+        "tests/blocks/test_onedrive_graph_grant.py"
       ],
-      "fixture": null,
-      "certified": false,
-      "include_in_ci": true,
-      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about OneDriveBlock.process payloads). tests/blocks/test_onedrive.py asserts only the UniversalBlock envelope keys, which execute() supplies regardless of what process() returns."
+      "fixture": "a faked httpx transport replaying a real-shaped Microsoft refresh-token grant and Graph /me/drive payloads against a synthetic credential set; the token endpoint URL, the grant form fields, the Files.Read scope and the bearer forwarded to Graph are asserted on what the block actually sent",
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "search",
@@ -301,12 +301,12 @@
       "class": "SearchBlock",
       "method": "process",
       "tests": [
-        "tests/blocks/test_search.py"
+        "tests/blocks/test_search.py",
+        "tests/blocks/test_search_providers.py"
       ],
-      "fixture": null,
-      "certified": false,
-      "include_in_ci": true,
-      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about SearchBlock.process payloads). tests/blocks/test_search.py asserts only the UniversalBlock envelope keys."
+      "fixture": "a scripted Serper JSON body served through a faked httpx.AsyncClient.post and a fake ddgs.DDGS context manager; assertions are on the endpoint/X-API-KEY header/request body the block built and on the rows it normalised (display_url derived with urlparse), not on the envelope",
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "translate",
@@ -314,12 +314,12 @@
       "class": "TranslateBlock",
       "method": "process",
       "tests": [
-        "tests/blocks/test_translate.py"
+        "tests/blocks/test_translate.py",
+        "tests/blocks/test_translate_payload.py"
       ],
-      "fixture": null,
-      "certified": false,
-      "include_in_ci": true,
-      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about TranslateBlock.process payloads). tests/blocks/test_translate.py asserts only the UniversalBlock envelope keys; no test reads result['result']['translated']."
+      "fixture": "deep_translator.GoogleTranslator and single_detection replaced with recorders; assertions are on the ISO code _normalize_lang resolved each language name to, the exact (5000-char truncated) text handed to the translator, and the detected source reported back",
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "web",
@@ -327,12 +327,12 @@
       "class": "WebBlock",
       "method": "process",
       "tests": [
-        "tests/blocks/test_web.py"
+        "tests/blocks/test_web.py",
+        "tests/blocks/test_web_fetch_offline.py"
       ],
-      "fixture": null,
-      "certified": false,
-      "include_in_ci": true,
-      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about WebBlock.process payloads). tests/blocks/test_web.py asserts only the UniversalBlock envelope keys."
+      "fixture": "a real HTML document parsed by BeautifulSoup in-test, served as real httpx.Response objects through a faked AsyncClient.get, over a fixed socket.getaddrinfo host table so app.core.url_guard runs its real private-address logic offline",
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "learning_engine",
@@ -354,11 +354,12 @@
       "module": "app.blocks.webhook",
       "class": "WebhookBlock",
       "method": "process",
-      "tests": [],
-      "fixture": null,
-      "certified": false,
-      "include_in_ci": true,
-      "failing_bar": "BAR3 NOT RUNNABLE: the Store has no test for this block. tests/blocks/test_inbound_webhook.py covers app/blocks/inbound_webhook.py, a different block. app/blocks/webhook.py (outbound send/register/trigger) has zero coverage."
+      "tests": [
+        "tests/blocks/test_webhook_outbound.py"
+      ],
+      "fixture": "a faked aiohttp.ClientSession recording every outbound POST (url, json body, headers, allow_redirects) plus a fixed socket.getaddrinfo host table; X-Webhook-Signature is recomputed in-test with hmac/sha256 and compared byte for byte",
+      "certified": true,
+      "include_in_ci": true
     }
   ]
 }
