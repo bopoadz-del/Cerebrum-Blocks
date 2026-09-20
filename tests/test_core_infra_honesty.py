@@ -32,16 +32,43 @@ async def test_health_check_unconfigured_apis_are_simulated():
 
 
 @pytest.mark.asyncio
-async def test_queue_is_in_process_and_names_missing_redis():
-    block = QueueBlock(None, {"redis_url": "redis://localhost:6379/0"})
-    assert block.use_redis is False
+async def test_queue_without_redis_url_is_in_process_and_says_so(monkeypatch):
+    """No REDIS_URL: the deque backend, declared as such, with no Redis
+    claim of any kind. (The Redis backend itself is covered by
+    tests/blocks/test_queue.py on a fakeredis server.)"""
+    monkeypatch.delenv("REDIS_URL", raising=False)
+    block = QueueBlock(None, {})
     queued = await block._enqueue({"job_type": "noop", "queue": "default"})
+    assert block.use_redis is False
     assert queued["backend"] == "memory"
     assert queued["persistence"] == "in_process"
-    assert queued["redis"] == "not_implemented"
+    assert "redis" not in queued
     health = block.health()
     assert health["backend"] == "memory"
-    assert health["redis_implemented"] is False
+    assert health["persistence"] == "in_process"
+    assert health["redis_configured"] is False
+    assert health["redis_state"] == "not_configured"
+
+
+@pytest.mark.asyncio
+async def test_queue_names_an_unreachable_redis_instead_of_hiding_it(monkeypatch):
+    """REDIS_URL set but Redis unreachable: fall back to memory and SAY so."""
+    from app.core import redis_infra
+
+    async def unreachable():
+        return None
+
+    monkeypatch.setenv("REDIS_URL", "redis://queue-honesty-test:6379/0")
+    monkeypatch.setattr(redis_infra, "get_redis_client", unreachable)
+    block = QueueBlock(None, {})
+    queued = await block._enqueue({"job_type": "noop", "queue": "default"})
+    assert block.use_redis is False
+    assert queued["backend"] == "memory"
+    assert queued["persistence"] == "in_process"
+    assert queued["redis"] == "configured_but_unreachable"
+    health = block.health()
+    assert health["redis_configured"] is True
+    assert health["redis_state"] == "configured_but_unreachable"
 
 
 def test_config_does_not_claim_file_or_env_prefix():

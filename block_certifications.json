@@ -1061,6 +1061,30 @@
       "certified": true,
       "include_in_ci": false,
       "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "queue",
+      "module": "app.blocks.queue",
+      "class": "QueueBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_queue.py"
+      ],
+      "fixture": "a fakeredis server (in-process Redis with the real list/zset/string semantics) bound in at the app.core.redis_infra seam the block consumes, so the block's own key layout, LPOP/LPUSH ordering, ZSET reservations and JSON job records run against a store that outlives the block instance; a real job payload dict is round-tripped through it. Assertions are on what process() computed: the job id it minted, the backend it declared, the payload handed back on dequeue, the re-delivery after the visibility timeout, and the refusal to ack an expired reservation.",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "notification",
+      "module": "app.blocks.notification",
+      "class": "NotificationBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_notification_delivery.py"
+      ],
+      "fixture": "real socket servers on 127.0.0.1 started in-test: an http.server ThreadingHTTPServer sink that records the raw POST bytes and headers and answers a scripted status sequence (500 then 200 for the retry), and a raw-socket ESMTP responder that stdlib smtplib completes a session against and which keeps the DATA bytes. The sink recomputes HMAC-SHA256 over the bytes it received with a key minted per test. Assertions are on the delivery record process() returned and on the bytes the sinks captured.",
+      "certified": true,
+      "include_in_ci": true
     }
   ]
 }

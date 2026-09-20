@@ -168,6 +168,11 @@ pytest-cov==7.1.0
 pytest-json-report==1.5.0
 respx==0.23.1
 python-magic==0.4.27
+# In-process Redis with real data-structure semantics. tests/blocks/test_queue.py
+# drives the queue block's Redis backend (LPOP/LPUSH ordering, ZSET
+# reservations, visibility-timeout re-delivery) against it, so the backend is
+# tested in CI without a Redis service. Pulls sortedcontainers.
+fakeredis==2.38.0
 
 # High-quality PDF -> Markdown extraction is optional and local-only.
 # See requirements-marker.txt. The platform base image does NOT install it
