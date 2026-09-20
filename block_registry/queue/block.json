@@ -7,11 +7,11 @@
     }
   ],
   "author": "Cerebrum Team",
-  "description": "Job queue. Redis backend (redis-py, pooled, visibility timeout on reserve: an unacked job reappears after the timeout) when REDIS_URL is set; in-process deque otherwise, declared as such.",
+  "description": "",
   "digests": {
     "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
-    "block.json": "51bfe10e516694c09d094c989de9223c556264b3dda291864349c0bb845bbf63",
-    "block.py": "d8007d6a44075577092bf917c27191eaab0827497207a20bd6fa8482f5814925"
+    "block.json": "e768d27afadf29e05a729df5ebe71194b3dc3071d4a460f84f74d5e7bc57cf7e",
+    "block.py": "0a12a09833e081b98fe7c3e175f6b0d43126abaab2f7d0e204c0107f143e4660"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/queue:latest",
@@ -32,7 +32,6 @@
       "options": [
         "enqueue",
         "dequeue",
-        "ack",
         "status",
         "list"
       ],
@@ -40,25 +39,18 @@
       "type": "string"
     },
     {
-      "default": "auto",
-      "description": "Backend (auto: redis when REDIS_URL is set, else memory)",
+      "default": "memory",
+      "description": "Backend",
       "name": "backend",
       "required": false,
       "type": "string"
     },
     {
       "default": null,
-      "description": "Redis Url (REDIS_URL env takes precedence)",
+      "description": "Redis Url",
       "name": "redis_url",
       "required": false,
       "type": "string"
-    },
-    {
-      "default": 30.0,
-      "description": "Visibility timeout (s, redis backend)",
-      "name": "visibility_timeout",
-      "required": false,
-      "type": "number"
     },
     {
       "default": 4,
@@ -101,14 +93,6 @@
     {
       "kind": "queue",
       "scope": "jobs"
-    },
-    {
-      "kind": "env",
-      "scope": "process"
-    },
-    {
-      "kind": "network",
-      "scope": "redis"
     }
   ],
   "requires": [
@@ -135,7 +119,6 @@
       "options": [
         "enqueue",
         "dequeue",
-        "ack",
         "status",
         "list"
       ],
@@ -152,17 +135,12 @@
       "widget": "text"
     },
     {
-      "label": "Visibility timeout (s, redis backend)",
-      "name": "visibility_timeout",
-      "widget": "number"
-    },
-    {
       "label": "Max Workers",
       "name": "max_workers",
       "widget": "number"
     }
   ],
-  "version": "1.1.0",
+  "version": "1.0.0",
   "writes": [
     {
       "kind": "caller",
@@ -171,10 +149,6 @@
     {
       "kind": "queue",
       "scope": "jobs"
-    },
-    {
-      "kind": "network",
-      "scope": "redis"
     }
   ]
 }
