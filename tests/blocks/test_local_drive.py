@@ -68,3 +68,47 @@ async def test_local_drive_rejects_path_outside_data_dir(local_drive_block):
     assert result["result"]["status"] == "error"
     err = result["result"].get("error", "")
     assert "escapes" in err.lower() or "outside" in err.lower() or "permitted" in err.lower()
+
+
+# ── Harvested from The_Fork tests/blocks/test_local_drive.py ────────────────
+# The Store's file already covered list, write and the path-escape refusal
+# more thoroughly than The_Fork's (real tmp_path assertions, ../etc rejection),
+# so the Fork file is not copied over it. The one test the Store was missing
+# is the write -> read round-trip: without it, `write` is only checked for a
+# success envelope and nothing proves the bytes come back.
+
+
+@pytest.mark.asyncio
+async def test_local_drive_block_write_and_read(local_drive_block, tmp_path):
+    """Write then read the same path: the bytes must survive the round-trip."""
+    test_path = "test_write.txt"
+    write_result = await local_drive_block.execute(
+        None,
+        {"operation": "write", "file_path": test_path, "content": "Hello from test!"},
+    )
+
+    assert write_result["block"] == "local_drive"
+    assert write_result["result"]["status"] == "success"
+    assert write_result["result"]["operation"] == "write"
+    # The file really landed on disk inside the sandbox root.
+    assert (tmp_path / test_path).read_text() == "Hello from test!"
+
+    read_result = await local_drive_block.execute(
+        None,
+        {"operation": "read", "file_path": test_path},
+    )
+
+    assert read_result["block"] == "local_drive"
+    assert read_result["result"]["operation"] == "read"
+    assert read_result["result"]["content"] == "Hello from test!"
+
+
+@pytest.mark.asyncio
+async def test_local_drive_read_outside_the_root_is_refused(local_drive_block):
+    """The escape check must cover `read`, not just `list`."""
+    result = await local_drive_block.execute(
+        None,
+        {"operation": "read", "file_path": "../../etc/passwd"},
+    )
+    assert result["result"]["status"] == "error"
+    assert "escapes" in result["result"].get("error", "").lower()
