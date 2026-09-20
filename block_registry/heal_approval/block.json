@@ -1,35 +1,34 @@
 {
   "acceptance": [
     {
-      "check": "an unapproved or missing request is refused, never passed",
-      "id": "fail_closed_refusal",
+      "check": "a consumed, expired or mismatched approval is refused, never passed",
+      "id": "consume_fail_closed",
       "status": "refused"
     }
   ],
   "author": "Cerebrum Team",
-  "description": "Fail-closed governance gate ported from Cerebrum-FinanceOps: an action executes only when an approved request exists for (tenant, action_type, target_id); self-approval refused. Approval store is in-process.",
+  "description": "TTL'd one-time heal approval ported from Cerebrum-Steward resident_engineer/heal/approval.py: SHA-256 digest over (tenant, action, principal), one-hour TTL, consume-once with replay refusal. Approval store is in-process.",
   "digests": {
     "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
-    "block.json": "b59e07cab8d5685130944de6139b6958ec56a5f627c7143b3e93e4604182a56c",
-    "block.py": "2b4f4b839737ed43372c02b961c3777082e81b436c620ce1adaa0989bfe1deb0"
+    "block.json": "f20e4a36155e4d9249b8ecbd192b344bbcd10ec17ea66d6cc9b49a20810b1e6b",
+    "block.py": "ab8469efb292e5144e22acddf74e286a4f8c1d5f3bf21dcceebe0ca81f561849"
   },
-  "id": "governance_gate",
+  "id": "heal_approval",
   "inputs": [
     {
-      "description": "create_request | approve | require_approved | list_requests",
+      "description": "create | consume | digest",
       "name": "action",
       "options": [
-        "create_request",
-        "approve",
-        "require_approved",
-        "list_requests"
+        "create",
+        "consume",
+        "digest"
       ],
       "required": false,
       "type": "string"
     }
   ],
   "layer": 3,
-  "name": "governance_gate",
+  "name": "heal_approval",
   "never": [],
   "outputs": [
     {
@@ -52,12 +51,12 @@
     }
   ],
   "requires": [],
-  "signature": "gkPdXWXkjj0IHuF68gLzrT798Sfo9RAPtnIo6htYSKNCyeHmgbuqKbAJcvNl7W8Jv1BMgognUDa6nlxjWj+/Ag==",
+  "signature": "Qzi3J5H4Y9OPajTLQFDBZ+lQtTU6xHX1VHVfu3ssGAzS4toJNmIj8S9sIANHF5Rcbdvou4Zf+Fcl+wLjiAQQBw==",
   "tags": [
     "governance",
     "approval",
-    "fail-closed",
-    "finance_ops"
+    "steward",
+    "resident-engineer"
   ],
   "trust_tier": "platform",
   "version": "1.0.0",

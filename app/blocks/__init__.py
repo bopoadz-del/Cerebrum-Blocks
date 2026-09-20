@@ -37,7 +37,7 @@ _GENERIC_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "monitoring": ("app.blocks.monitoring", "MonitoringBlock"),
     "file_hasher": ("app.blocks.file_hasher", "FileHasherBlock"),
     "orchestrator": ("app.blocks.orchestrator", "OrchestratorBlock"),
-    "validation_pipeline": ("app.blocks.validation_pipeline", "ValidationPipelineBlock"),
+    "validation_pipeline": ("app.blocks.validation", "ValidationBlock"),
     "async_processor": ("app.blocks.async_processor", "AsyncProcessorBlock"),
     "video_metadata_ingest": ("app.blocks.video_metadata_ingest", "VideoMetadataIngestBlock"),
     "video_anomaly_trigger": ("app.blocks.video_anomaly_trigger", "VideoAnomalyTriggerBlock"),
@@ -111,7 +111,6 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "construction_advisor": ("app.blocks.construction_advisor", "ConstructionAdvisorBlock"),
     "historical_benchmark": ("app.blocks.historical_benchmark", "HistoricalBenchmarkBlock"),
     "mcp_adapter": ("app.blocks.mcp_adapter", "MCPAdapterBlock"),
-    "mcp_consumer": ("app.blocks.mcp_consumer", "MCPConsumerBlock"),
     "geometry_engine": ("app.blocks.geometry_engine", "GeometryEngineBlock"),
     "clearance_rules": ("app.blocks.clearance_rules", "ClearanceRulesBlock"),
     "clash_triage": ("app.blocks.clash_triage", "ClashTriageBlock"),
@@ -119,6 +118,12 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "bcf_export": ("app.blocks.bcf_export", "BcfExportBlock"),
     "version_diff": ("app.blocks.version_diff", "VersionDiffBlock"),
     "model_clone": ("app.blocks.model_clone", "ModelCloneBlock"),
+    "ingestion_provenance": ("app.blocks.ingestion_provenance", "IngestionProvenanceBlock"),
+    "heal_approval": ("app.blocks.heal_approval", "HealApprovalBlock"),
+    "market_data": ("app.blocks.market_data", "MarketDataBlock"),
+    "regulatory_chunker": ("app.blocks.regulatory_chunker", "RegulatoryChunkerBlock"),
+    "governance_gate": ("app.blocks.governance_gate", "GovernanceGateBlock"),
+    "evidence_chain": ("app.blocks.evidence_chain", "EvidenceChainBlock"),
 }
 
 

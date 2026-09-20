@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Adapter for Cerebrum block: governance_gate
+Adapter for Cerebrum block: ingestion_provenance
 """
 
 import asyncio
 
-from app.blocks.governance_gate import GovernanceGateBlock
+from app.blocks.ingestion_provenance import IngestionProvenanceBlock
 
 
 def _run_async(coro):
@@ -20,11 +20,11 @@ def _run_async(coro):
 
 
 def run(**kwargs):
-    """Execute the governance_gate block."""
-    instance = GovernanceGateBlock()
+    """Execute the ingestion_provenance block."""
+    instance = IngestionProvenanceBlock()
     input_data = kwargs.get("input", kwargs)
     params = {k: v for k, v in kwargs.items() if k != "input"}
     envelope = _run_async(instance.execute(input_data, params))
     if envelope.get("status") in ("error", "refused"):
-        raise RuntimeError(envelope.get("error") or "governance_gate block failed")
+        raise RuntimeError(envelope.get("error") or "ingestion_provenance block failed")
     return envelope.get("result", envelope)
