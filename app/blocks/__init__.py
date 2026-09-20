@@ -118,6 +118,7 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "bcf_export": ("app.blocks.bcf_export", "BcfExportBlock"),
     "version_diff": ("app.blocks.version_diff", "VersionDiffBlock"),
     "model_clone": ("app.blocks.model_clone", "ModelCloneBlock"),
+    "finance_planning": ("app.blocks.finance_planning", "FinancePlanningBlock"),
     "scim_provisioning": ("app.blocks.scim_provisioning", "ScimProvisioningBlock"),
     "sso_saml": ("app.blocks.sso_saml", "SsoSamlBlock"),
     "evidence_or_refuse": ("app.blocks.evidence_or_refuse", "EvidenceOrRefuseBlock"),
