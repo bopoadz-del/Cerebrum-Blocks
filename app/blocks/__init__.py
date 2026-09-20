@@ -118,6 +118,8 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "bcf_export": ("app.blocks.bcf_export", "BcfExportBlock"),
     "version_diff": ("app.blocks.version_diff", "VersionDiffBlock"),
     "model_clone": ("app.blocks.model_clone", "ModelCloneBlock"),
+    "evidence_or_refuse": ("app.blocks.evidence_or_refuse", "EvidenceOrRefuseBlock"),
+    "domain_kit_compiler": ("app.blocks.domain_kit_compiler", "DomainKitCompilerBlock"),
     "agent_state_sync": ("app.blocks.agent_state_sync", "AgentStateSyncBlock"),
     "sub_agent_runtime": ("app.blocks.sub_agent_runtime", "SubAgentRuntimeBlock"),
     "ingestion_provenance": ("app.blocks.ingestion_provenance", "IngestionProvenanceBlock"),
