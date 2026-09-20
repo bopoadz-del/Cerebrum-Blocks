@@ -16,7 +16,7 @@ Ported exactly:
   with clampDays (donor: non-finite or out of 1..365 -> 7) and the weekly
   learning-report text.
 
-The executed Telegram command handlers are not ported: route() returns the
+The executed messaging-bot command handlers are not ported: route() returns the
 donor's exact command strings (e.g. "/score AAPL") so the caller can run
 them. Company-name search and the DuckDuckGo fallback are dependency
 boundaries (wire("search") / wire("web_search")); unwired, the router logs
@@ -234,7 +234,7 @@ class RuleIntentRouterBlock(UniversalBlock):
         "in-process. NEVER the backtest."
     )
     layer = 4
-    tags = ["nlp", "intent", "router", "learning", "telegram", "stockwisepro-bot"]
+    tags = ["nlp", "intent", "router", "learning", "stockwisepro-bot"]
     requires = []
 
     default_config = {}
@@ -254,7 +254,7 @@ class RuleIntentRouterBlock(UniversalBlock):
 
     def _log_chat_intent(
         self,
-        telegram_id: Any,
+        chat_id: Any,
         raw_message: str,
         detected_intent: Optional[str] = None,
         extracted_ticker: Optional[str] = None,
@@ -263,7 +263,7 @@ class RuleIntentRouterBlock(UniversalBlock):
     ) -> int:
         row = {
             "id": len(self._log) + 1,
-            "telegram_id": telegram_id,
+            "chat_id": chat_id,
             "raw_message": raw_message,
             "detected_intent": detected_intent,
             "extracted_ticker": extracted_ticker,
@@ -325,55 +325,55 @@ class RuleIntentRouterBlock(UniversalBlock):
         ]
         missed.sort(key=lambda r: r["created_at"], reverse=True)
         return [
-            {k: r[k] for k in ("id", "telegram_id", "raw_message", "detected_intent", "user_corrected_intent", "created_at")}
+            {k: r[k] for k in ("id", "chat_id", "raw_message", "detected_intent", "user_corrected_intent", "created_at")}
             for r in missed[:limit]
         ]
 
     # ---------------------------------------------------------------- chat.ts classifier
 
-    def _route(self, text: str, telegram_id: Any) -> Dict[str, Any]:
+    def _route(self, text: str, chat_id: Any) -> Dict[str, Any]:
         lower = text.lower().strip()
         tickers = extract_ticker_candidates(text)
         first_ticker = tickers[0] if tickers else None
 
         # 0. Replacement / removal commands
         if not text.startswith("/") and re.match(r"^(replace|remove|don't like|hate|swap out|drop)\s+", text, flags=re.IGNORECASE):
-            self._log_chat_intent(telegram_id, text, "replacement", first_ticker, None, False)
+            self._log_chat_intent(chat_id, text, "replacement", first_ticker, None, False)
             return {"intent": "replacement", "ticker": first_ticker, "command": None}
 
         # 1. Pending flows (experiment, mimic amount)
-        if not text.startswith("/") and telegram_id in self._pending_mimic:
-            self._log_chat_intent(telegram_id, text, "mimic", None, "mimic", False)
+        if not text.startswith("/") and chat_id in self._pending_mimic:
+            self._log_chat_intent(chat_id, text, "mimic", None, "mimic", False)
             return {"intent": "mimic", "command": "mimic"}
 
         if not text.startswith("/") and re.match(r"^\$?\d+[\d,]*\.?\d*\s*$", text.strip()):
-            self._log_chat_intent(telegram_id, text, "mimic_expired", None, None, False)
+            self._log_chat_intent(chat_id, text, "mimic_expired", None, None, False)
             return {"intent": "mimic_expired", "command": None, "reply": MIMIC_EXPIRED_REPLY}
 
         if not text.startswith("/") and lower.startswith("exp:"):
-            self._log_chat_intent(telegram_id, text, "experiment", None, "experiment", False)
+            self._log_chat_intent(chat_id, text, "experiment", None, "experiment", False)
             return {"intent": "experiment", "command": "experiment", "payload": text[4:].strip()}
-        if not text.startswith("/") and telegram_id in self._pending_experiment:
-            self._pending_experiment.discard(telegram_id)
-            self._log_chat_intent(telegram_id, text, "experiment", None, "experiment", False)
+        if not text.startswith("/") and chat_id in self._pending_experiment:
+            self._pending_experiment.discard(chat_id)
+            self._log_chat_intent(chat_id, text, "experiment", None, "experiment", False)
             return {"intent": "experiment", "command": "experiment", "payload": text.strip()}
 
         # 2. Ticker-only message -> score
         ticker_only = is_ticker_only(text)
         if ticker_only:
-            self._log_chat_intent(telegram_id, text, "ticker_score", ticker_only, "score", False)
+            self._log_chat_intent(chat_id, text, "ticker_score", ticker_only, "score", False)
             return {"intent": "ticker_score", "ticker": ticker_only, "command": f"/score {ticker_only}"}
 
         # 3. Natural language parsing
         ruled = _route_intent(text, first_ticker)
         if ruled["intent"] != "unmatched":
-            self._log_chat_intent(telegram_id, text, ruled["intent"], ruled.get("ticker"), ruled.get("command"), False)
+            self._log_chat_intent(chat_id, text, ruled["intent"], ruled.get("ticker"), ruled.get("command"), False)
             return ruled
 
         # 4. Company name search (e.g., "apple", "google") - injected backend
         word_count = len(text.strip().split())
         if re.match(r"^[a-zA-Z0-9\s\.\&\-]+$", text) and 1 < len(text) < 40 and word_count <= 4:
-            self._log_chat_intent(telegram_id, text, "company_search", None, "search", False)
+            self._log_chat_intent(chat_id, text, "company_search", None, "search", False)
             return {"intent": "company_search", "command": "search", "query": text.strip()}
 
         # 5. Fallback
@@ -389,8 +389,8 @@ class RuleIntentRouterBlock(UniversalBlock):
                 text = payload.get("text")
                 if text is None or not str(text).strip():
                     return _envelope("refused", error="text_required", detail={"action": action})
-                telegram_id = payload.get("telegram_id", 0)
-                decision = self._route(str(text), telegram_id)
+                chat_id = payload.get("chat_id", 0)
+                decision = self._route(str(text), chat_id)
 
                 if decision["intent"] == "fallback":
                     reply = None
@@ -401,7 +401,7 @@ class RuleIntentRouterBlock(UniversalBlock):
                         except Exception:  # noqa: BLE001 - search failure falls through to the correction UI
                             results = []
                         if results:
-                            log_id = self._log_chat_intent(telegram_id, str(text), "fallback", None, None, True)
+                            log_id = self._log_chat_intent(chat_id, str(text), "fallback", None, None, True)
                             return _envelope("ok", {
                                 "intent": "fallback",
                                 "is_fallback": True,
@@ -409,7 +409,7 @@ class RuleIntentRouterBlock(UniversalBlock):
                                 "log_id": log_id,
                                 "corrections": [{"intent": i, "callback": f"correct_intent:{i}:{log_id}"} for i in CORRECTION_INTENTS],
                             })
-                    log_id = self._log_chat_intent(telegram_id, str(text), "fallback", None, None, True)
+                    log_id = self._log_chat_intent(chat_id, str(text), "fallback", None, None, True)
                     return _envelope(
                         "refused",
                         result={
@@ -443,7 +443,7 @@ class RuleIntentRouterBlock(UniversalBlock):
                 return _envelope("ok", {"text": _learning_report(stats, missed, week_ending)})
             if action == "log":
                 log_id = self._log_chat_intent(
-                    payload.get("telegram_id", 0),
+                    payload.get("chat_id", 0),
                     str(payload.get("raw_message") or ""),
                     payload.get("detected_intent"),
                     payload.get("extracted_ticker"),

@@ -15,7 +15,7 @@
   "description": "Rule-based intent router ported from stockwisepro-bot src/commands/chat.ts + learning.ts + db.ts nl_logs (real): deterministic $TICKER / uppercase-word extraction, ticker-only detection, the ordered regex intent ladder (help, portfolio, watchlist, simulate, metrics, mimic, alert, watchlist add/remove, news, score, search, default score), pending-flow / expired mimic checks, and the fallback path (web search first, then log + correction keyboard with the donor correct_intent callback data). Command handlers are not executed - route() returns the donor command strings. Company search and DuckDuckGo fallback are injected (wire search/web_search); unwired, the router logs the fallback and refuses to invent an answer. Intent log is in-process. NEVER the backtest.",
   "digests": {
     "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
-    "block.json": "04b04d14f5e05729b58426f6071349218f72ab005a9d1d4d5955a4cc976967fa",
+    "block.json": "808e7c34ad4e6d1efbf71682c6f04e44a5abfd3e21bc5575070627b85182e3d2",
     "block.py": "245066871e98062cbcd13812c2394eec6b85ee9e746c0edf95e9076dbeb246f6"
   },
   "id": "rule_intent_router",
@@ -59,13 +59,12 @@
     }
   ],
   "requires": [],
-  "signature": "d63QyeBT+N7n0ToI/gSpSKNogPQAlzIzCQ1y0+MNFYVQJaVcfG62CEaoj+SqbYcJsbZusch/GNgM86nkwY+PAA==",
+  "signature": "TrO45W6ZBJPqaksik8OONhrs1kUMCAC5dJvJU+/BzzBAubytajS81rh0pmDi0mPNWiIrAaep/AEkt0Qpn2JABA==",
   "tags": [
     "nlp",
     "intent",
     "router",
     "learning",
-    "telegram",
     "stockwisepro-bot"
   ],
   "trust_tier": "platform",
