@@ -116,3 +116,8 @@ jobs:
             exit 1
           fi
           echo "ready answered $code"
+
+      - name: Container logs if boot failed
+        if: failure()
+        run: |
+          docker logs console-floor-gate || true
