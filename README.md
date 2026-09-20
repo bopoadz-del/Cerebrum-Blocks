@@ -141,10 +141,11 @@ readiness, and the known-defect list) lives in
 **[docs/STORE_INVENTORY.md](docs/STORE_INVENTORY.md)** and is re-verified
 against the files themselves, not memory. The short version:
 
-- **148 registry blocks** — all manifested and signed, 125 authored
-  `Cerebrum Team`, **zero stubs** (verified by pattern sweep; census
-  0 missing). All 20 vertical `*_v2` domain blocks are now registered
-  and signed.
+- **198 registry blocks** — all manifested and signed, **zero stubs**
+  (verified by pattern sweep; census 0 missing). All 20 vertical `*_v2`
+  domain blocks are registered and signed, plus the full wave-2 clone
+  program across 14 donor repos (provenance-labelled: real /
+  honest-stub / mock-functional).
 - **21 kit directories** — 19 domain kits + `universal_kernel` +
   `_template` — including the eight declared-ready verticals: **hotels,
   insurance, construction, finance, retail, real estate, legal, mep

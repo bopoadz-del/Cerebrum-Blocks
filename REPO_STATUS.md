@@ -3,7 +3,7 @@
 > **Date:** 2026-09-19  
 > **Branch:** feat/cerebrum-reasoning-kernel (verified checkout)  
 > **Python files in `app/blocks/`:** 148 (excluding `__init__.py`)  
-> **Registered blocks (`block_registry/`):** 148 — all manifested + signed, census 0 missing  
+> **Registered blocks (`block_registry/`):** 198 — all manifested + signed, census 0 missing  
 > **Tests collected:** 1944 (0 collection errors)
 
 ---
