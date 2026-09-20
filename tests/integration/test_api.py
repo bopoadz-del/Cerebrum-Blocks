@@ -21,11 +21,16 @@ class TestAPIEndpoints:
     """Test suite for API endpoints."""
     
     def test_root_endpoint(self):
-        """Root returns API metadata as JSON (frontend SPA is on a separate host)."""
+        """Root serves the Console Floor pack console (the product UI).
+        The JSON API metadata remains available at /api."""
         response = client.get("/")
         assert response.status_code == 200
-        assert "application/json" in response.headers.get("content-type", "")
-        data = response.json()
+        assert "text/html" in response.headers.get("content-type", "")
+        assert "Product Console" in response.text
+
+        api_response = client.get("/api")
+        assert api_response.status_code == 200
+        data = api_response.json()
         assert data["name"] == "Cerebrum Blocks"
         assert "blocks" in data
     

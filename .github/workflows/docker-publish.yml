@@ -82,3 +82,42 @@ jobs:
       - name: Print image digest
         if: github.event_name != 'pull_request' && steps.docker-secrets.outputs.available == 'true'
         run: echo "Image digest - ${{ steps.build-and-push.outputs.digest }}"
+
+  # Store-gate for the Console Floor pack: the image must BUILD (release
+  # gate runs inside the build) and BOOT (/health, /ready, /v1/capabilities
+  # and the console at /). This is the boot verification the pack requires.
+  pack-store-gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build the Console Floor pack image (release gate inside the build)
+        run: docker build -f block_store/packs/console_floor/Dockerfile -t console-floor:gate .
+
+      - name: Boot the image and verify the console contract
+        run: |
+          docker run -d --name console-floor-gate -p 18000:8000 console-floor:gate
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:18000/health >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:18000/health | head -c 200
+          echo
+          curl -fsS http://127.0.0.1:18000/v1/capabilities | grep -q '"capabilities"'
+          curl -fsS http://127.0.0.1:18000/ | grep -q 'Product Console'
+          # /ready must ANSWER (a 503 with a dependency report is an answer;
+          # a connection failure is not).
+          code=$(curl -s -o /tmp/ready.json -w '%{http_code}' http://127.0.0.1:18000/ready)
+          if [ "$code" != "200" ] && [ "$code" != "503" ]; then
+            echo "ready answered $code — unexpected"
+            exit 1
+          fi
+          echo "ready answered $code"
+
+      - name: Container logs if boot failed
+        if: failure()
+        run: |
+          docker logs console-floor-gate || true
