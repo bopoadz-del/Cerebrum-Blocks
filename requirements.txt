@@ -68,6 +68,18 @@ shapely==2.1.2
 # Intelligence Blocks (Week 3)
 pint==0.25.3
 ifcopenshell==0.8.5
+# Mesh geometry backend. Imported by app/blocks/ifc_loader.py
+# (trimesh.Trimesh) and app/blocks/geometry_engine.py
+# (trimesh.proximity.ProximityQuery), which clash_resolver calls to
+# re-check a proposed move against its neighbourhood. It was in no
+# requirements file, so tests/blocks/test_clash_resolver.py and
+# tests/blocks/test_geometry_engine.py -- both gated on
+# pytest.importorskip("trimesh") -- skipped on every machine and in CI,
+# and a file of nothing but skips exits 5.
+# Pinned to the last 4.x: the code uses the 3.x/4.x surface
+# (Trimesh(vertices=, faces=, process=), .bounds, .apply_translation,
+# proximity.ProximityQuery) and 5.x has not been run against it here.
+trimesh==4.12.2
 
 # Intelligence Blocks (Week 4)
 scikit-learn==1.9.0
