@@ -120,7 +120,8 @@
       ],
       "fixture": null,
       "certified": false,
-      "include_in_ci": false
+      "include_in_ci": false,
+      "note": "NOT CERTIFIED - BAR3 FAIL: suite stayed GREEN on a plausible-success gut. tests/test_historical_benchmark_pg.py exercises the 746-line parallel copy at tests/_fixtures/historical_benchmark.py and never imports app/blocks/historical_benchmark.py. The_Fork's tests/test_historical_benchmark.py cannot be harvested: this block has no supported_locations(), 22 location keys against The_Fork's 80+, no cost `basis` on any rate, and _location_factor() returns a bare float, so an unlisted country is silently priced at the US baseline instead of being flagged location_matched=False."
     },
     {
       "block": "sympy_reasoning",
@@ -132,7 +133,8 @@
       ],
       "fixture": null,
       "certified": false,
-      "include_in_ci": false
+      "include_in_ci": false,
+      "note": "NOT CERTIFIED - BAR3 FAIL: suite stayed GREEN on a plausible-success gut. No runnable test exists for this block: tests/test_e2e.py's TestConstructionBlocks is module-skipped as legacy and tests/test_real_inputs.py is a script, not a pytest module. The_Fork has no sympy_reasoning test to harvest, and its own block is 489 lines to this one's 218 (no free-expression evaluation, no quantity-variance path)."
     }
   ]
 }
