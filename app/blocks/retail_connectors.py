@@ -953,7 +953,10 @@ class EntraIdConnector(RetailConnector):
         )
 
     async def normalize(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        return []
+        raise ConnectorError(
+            "Microsoft Entra ID normalize is not implemented in this pilot (planned capability).",
+            error_code="not_implemented",
+        )
 
     async def push(self, operation: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         raise ConnectorError(
@@ -1273,7 +1276,10 @@ class SapErpConnector(RetailConnector):
         )
 
     async def normalize(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        return []
+        raise ConnectorError(
+            "SAP / ERP normalize is not implemented in this pilot (planned capability).",
+            error_code="not_implemented",
+        )
 
     async def push(self, operation: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         raise ConnectorError(
@@ -1381,7 +1387,10 @@ class StoreDigitalTwinConnector(RetailConnector):
         )
 
     async def normalize(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        return []
+        raise ConnectorError(
+            "Store Digital Twin normalize is not implemented in this pilot (planned capability).",
+            error_code="not_implemented",
+        )
 
     async def push(self, operation: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         raise ConnectorError(

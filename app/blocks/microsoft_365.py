@@ -371,7 +371,7 @@ class _ConnStore:
         self.connections[str(obj.id)] = obj
 
     def commit(self):
-        return None
+        return {"persisted": False, "note": "in-process store — nothing to commit"}
 
     def refresh(self, obj):
         return obj

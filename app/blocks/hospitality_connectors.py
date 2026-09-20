@@ -331,7 +331,7 @@ class BaseConnector(ABC):
         raise ConnectorError(f"{self.name} live URL not configured")
 
     def live_headers(self) -> Dict[str, str]:
-        return {}
+        raise ConnectorError(f"{self.name} has no live integration configured")
 
     @abstractmethod
     def normalise(self, resource: str, raw: Any) -> List[HotelEvent]:
