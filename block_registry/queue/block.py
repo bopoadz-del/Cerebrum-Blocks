@@ -16,6 +16,7 @@ reached the block falls back to memory and declares ``redis:
 
 import asyncio
 import json
+import logging
 import os
 import time
 import uuid
@@ -24,6 +25,8 @@ from enum import Enum
 from typing import Any, Callable, Dict, Optional
 
 from app.core.universal_base import UniversalBlock
+
+logger = logging.getLogger(__name__)
 
 
 class JobStatus(Enum):
@@ -130,7 +133,8 @@ class QueueBlock(UniversalBlock):
             client = aioredis.from_url(self.redis_url, decode_responses=True)
             await client.ping()
             return client
-        except Exception:
+        except Exception as exc:
+            logger.warning("queue: config redis_url unreachable (%s); falling back to memory", exc)
             return None
 
     def _backend_fields(self) -> Dict[str, Any]:

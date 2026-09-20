@@ -30,10 +30,19 @@ class UnsafeURLError(ValueError):
     """Raised when a URL is not safe to request (bad scheme or private host)."""
 
 
-def _is_public_ip(ip_str: str) -> bool:
+def _parse_ip(ip_str: str):
+    """The address, or None when the resolver handed back something that is
+    not one (an unparseable address is refused, never trusted)."""
     try:
-        ip = ipaddress.ip_address(ip_str)
+        return ipaddress.ip_address(ip_str)
     except ValueError:
+        ip = None
+    return ip
+
+
+def _is_public_ip(ip_str: str) -> bool:
+    ip = _parse_ip(ip_str)
+    if ip is None:
         return False
     # is_global is False for private, loopback, link-local and reserved ranges.
     return ip.is_global and not ip.is_multicast
@@ -41,9 +50,8 @@ def _is_public_ip(ip_str: str) -> bool:
 
 def _is_operator_reachable_ip(ip_str: str) -> bool:
     """Public, loopback or private unicast -- never link-local/metadata."""
-    try:
-        ip = ipaddress.ip_address(ip_str)
-    except ValueError:
+    ip = _parse_ip(ip_str)
+    if ip is None:
         return False
     if ip.is_multicast or ip.is_link_local or ip.is_unspecified:
         return False

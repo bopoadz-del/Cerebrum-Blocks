@@ -11,7 +11,7 @@
   "digests": {
     "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
     "block.json": "51bfe10e516694c09d094c989de9223c556264b3dda291864349c0bb845bbf63",
-    "block.py": "d137f98834afe8a76aa03d4b6a885d629a0e7079c64fea5b675f2da931899b82"
+    "block.py": "d8007d6a44075577092bf917c27191eaab0827497207a20bd6fa8482f5814925"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/queue:latest",

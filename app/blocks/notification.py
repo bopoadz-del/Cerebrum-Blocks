@@ -24,6 +24,7 @@ that did not leave the process.
 import hashlib
 import hmac
 import json
+import logging
 import os
 import smtplib
 import ssl
@@ -36,6 +37,8 @@ from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import parse_qs, unquote, urlparse
 
 from app.core.url_guard import UnsafeURLError, validate_outbound_url
+
+logger = logging.getLogger(__name__)
 from pydantic import BaseModel, Field
 
 from app.core.universal_base import UniversalBlock
@@ -76,8 +79,10 @@ class NotificationHub:
                     await callback(event)
                 else:
                     callback(event)
-            except Exception:
-                pass  # Non-blocking — don't let one subscriber break others
+            except Exception as exc:
+                # Non-blocking: one subscriber must not break the others, but
+                # the failure is named, not swallowed.
+                logger.warning("notification subscriber for %s failed: %s", event.event_type, exc)
 
     async def send_and_emit(self, channel: str, message: str, result: Dict, source: str = "notification"):
         """Emit a delivery event after sending."""
@@ -231,8 +236,8 @@ class NotificationBlock(TypedBlock):
                     result=result,
                     source=self.name,
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("notification hub emit failed after %s delivery: %s", channel, exc)
 
         return result
 
