@@ -21,7 +21,9 @@ def _envelope(status, result=None, error=None, detail=None):
 def _num(value: Any) -> float:
     try:
         return float(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError) as exc:
+        import logging
+        logging.getLogger(__name__).debug("non-numeric statement value coerced to 0.0: %s", exc)
         return 0.0
 
 

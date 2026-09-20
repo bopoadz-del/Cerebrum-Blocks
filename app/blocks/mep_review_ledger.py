@@ -232,7 +232,6 @@ import uuid
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
-from typing import Any
 
 FULL = "full"
 CONDITIONAL = "conditional"
@@ -350,7 +349,7 @@ def annotate_bcf(path: str | Path, by_pair: dict[frozenset, dict[str, Any]]) -> 
 
 import json as _json
 from pathlib import Path as _Path
-from typing import Any, Dict
+from typing import Dict
 
 from app.core.universal_base import UniversalBlock
 

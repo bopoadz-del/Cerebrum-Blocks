@@ -70,7 +70,6 @@ find":
 """
 
 
-from enum import StrEnum
 
 
 class Severity(StrEnum):
@@ -299,8 +298,6 @@ visible in the report, and attached to whoever made it.
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from fractions import Fraction
-from typing import Any
 
 
 
@@ -727,7 +724,6 @@ once, at build time, and it is stored.
 """
 
 
-import re
 
 #: Prefix every canary carries, so a hit is unmistakably a canary and not a
 #: coincidence in ordinary prose.

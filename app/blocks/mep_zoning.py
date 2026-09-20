@@ -263,7 +263,7 @@ def neighbours_of(
 # ---------------------------------------------------------------------------
 
 from types import SimpleNamespace
-from typing import Any, Dict
+from typing import Dict
 
 from app.core.universal_base import UniversalBlock
 

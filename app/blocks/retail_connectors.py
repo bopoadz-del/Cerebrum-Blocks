@@ -229,7 +229,6 @@ and tests are reproducible.
 """
 
 
-from typing import Any, Dict, List
 
 # base contract symbols are defined above in this same module
 
@@ -382,7 +381,6 @@ rather than pretending to fetch live data.
 
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 # base contract symbols are defined above in this same module
 # mock_data symbols are defined above in this same module
@@ -488,8 +486,6 @@ class PosConnector(GenericRestMixin, RetailConnector):
         )
 
 
-def build() -> PosConnector:
-    return PosConnector()
 
 """Inventory & WMS connector — Manhattan / Blue Yonder / RELEX / Generic.
 
@@ -505,9 +501,6 @@ action's ``rows`` input without any extra mapping.
 """
 
 
-import os
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 # base contract symbols are defined above in this same module
 # mock_data symbols are defined above in this same module
@@ -632,8 +625,6 @@ def to_inventory_risk_rows(normalized_records: List[Dict[str, Any]]) -> List[Dic
     return rows
 
 
-def build() -> InventoryWmsConnector:
-    return InventoryWmsConnector()
 
 """CRM & Loyalty connector — honest stub with a small illustrative sample.
 
@@ -647,9 +638,6 @@ sample is intentionally tiny and documented as illustrative only.
 """
 
 
-import os
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 # base contract symbols are defined above in this same module
 
@@ -753,8 +741,6 @@ class CrmLoyaltyConnector(RetailConnector):
         )
 
 
-def build() -> CrmLoyaltyConnector:
-    return CrmLoyaltyConnector()
 
 """Supplier / EDI connector — Ariba / EDI 850/856/810 / Portal.
 
@@ -763,9 +749,6 @@ actual delivery, quantities, short/damaged/rejected counts, and notices.
 """
 
 
-import os
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 # base contract symbols are defined above in this same module
 # mock_data symbols are defined above in this same module
@@ -868,8 +851,6 @@ class SupplierEdiConnector(GenericRestMixin, RetailConnector):
         )
 
 
-def build() -> SupplierEdiConnector:
-    return SupplierEdiConnector()
 
 """Microsoft Entra ID connector — honest stub for SSO / roles / group mapping.
 
@@ -881,9 +862,6 @@ in this pilot, and never fabricates roles/groups/users.
 """
 
 
-import os
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 # base contract symbols are defined above in this same module
 
@@ -965,8 +943,6 @@ class EntraIdConnector(RetailConnector):
         )
 
 
-def build() -> EntraIdConnector:
-    return EntraIdConnector()
 
 """Power BI connector — export, publish/refresh stubs, embed placeholder.
 
@@ -988,9 +964,6 @@ without them.
 import base64
 import csv
 import io
-import os
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 # base contract symbols are defined above in this same module
 # mock_data symbols are defined above in this same module
@@ -1191,8 +1164,6 @@ class PowerBiConnector(RetailConnector):
         }
 
 
-def build() -> PowerBiConnector:
-    return PowerBiConnector()
 
 """SAP / ERP connector — honest stub.
 
@@ -1203,9 +1174,6 @@ but still declines to pull/push, since no vendor client exists yet.
 """
 
 
-import os
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 # base contract symbols are defined above in this same module
 
@@ -1288,8 +1256,6 @@ class SapErpConnector(RetailConnector):
         )
 
 
-def build() -> SapErpConnector:
-    return SapErpConnector()
 
 """Store Digital Twin connector — honest stub with a documented data shape.
 
@@ -1301,9 +1267,6 @@ fabricate planogram or fixture data — they raise :class:`ConnectorError`.
 """
 
 
-import os
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 # base contract symbols are defined above in this same module
 
@@ -1399,8 +1362,6 @@ class StoreDigitalTwinConnector(RetailConnector):
         )
 
 
-def build() -> StoreDigitalTwinConnector:
-    return StoreDigitalTwinConnector()
 
 """Facade for the ported TEKsystems RetailOps connector contract.
 
@@ -1423,7 +1384,6 @@ normalize / push. A ConnectorError raised by a connector is surfaced as
 a structured refusal envelope — never as fabricated output.
 """
 
-from typing import Any, Dict
 
 from app.core.universal_base import UniversalBlock
 
