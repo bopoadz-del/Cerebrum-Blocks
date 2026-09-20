@@ -123,13 +123,28 @@ def _gutter(class_name: str, method: str, source: str) -> str:
 
 
 def _run_pytest(test_paths: list[str]) -> subprocess.CompletedProcess:
+    # -rs: a skipped file is not a passing file. Without the skip summary a
+    # block certified "tests green" can be one whose entire suite sat behind
+    # an importorskip for an undeclared dependency.
     return subprocess.run(
-        [sys.executable, "-m", "pytest", *test_paths, "-q"],
+        [sys.executable, "-m", "pytest", *test_paths, "-q", "-rs"],
         cwd=str(REPO_ROOT),
         capture_output=True,
         text=True,
         timeout=600,
     )
+
+
+PYTEST_TAIL_LINES = 25
+
+
+def _pytest_tail(proc: subprocess.CompletedProcess) -> list[str]:
+    """The last lines of a failed pytest run, indented for the findings list."""
+    captured = f"{proc.stdout or ''}{proc.stderr or ''}".strip()
+    if not captured:
+        return ["  (pytest produced no output)"]
+    tail = captured.splitlines()[-PYTEST_TAIL_LINES:]
+    return ["  pytest output (tail):", *(f"  | {line}" for line in tail)]
 
 
 def _git_clean(path: Path) -> bool:
@@ -186,7 +201,12 @@ def certify(entry: dict) -> tuple[bool, list[str]]:
     # Bar 3 — control-delete. Baseline GREEN required; mutation must go RED.
     baseline = _run_pytest(test_paths)
     if baseline.returncode != 0:
+        # Name the failure. "exit 1" on its own sent a reviewer to reproduce
+        # the whole run locally to learn WHICH assertion broke; the pytest
+        # tail was captured and thrown away. A gate that reports a number
+        # instead of a reason is a gate nobody can act on from the log.
         findings.append(f"BAR3 FAIL: baseline tests not green (exit {baseline.returncode})")
+        findings.extend(_pytest_tail(baseline))
         return False, findings
 
     if not _git_clean(imp_path):
