@@ -118,6 +118,7 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "bcf_export": ("app.blocks.bcf_export", "BcfExportBlock"),
     "version_diff": ("app.blocks.version_diff", "VersionDiffBlock"),
     "model_clone": ("app.blocks.model_clone", "ModelCloneBlock"),
+    "rag_tenant_isolation": ("app.blocks.rag_tenant_isolation", "RagTenantIsolationBlock"),
     "zone_arbitration": ("app.blocks.zone_arbitration", "ZoneArbitrationBlock"),
     "dexpi_ingest": ("app.blocks.dexpi_ingest", "DexpiIngestBlock"),
     "openbox_scoring": ("app.blocks.openbox_scoring", "OpenboxScoringBlock"),
