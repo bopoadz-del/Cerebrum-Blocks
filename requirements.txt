@@ -80,6 +80,32 @@ ifcopenshell==0.8.5
 # (Trimesh(vertices=, faces=, process=), .bounds, .apply_translation,
 # proximity.ProximityQuery) and 5.x has not been run against it here.
 trimesh==4.12.2
+# trimesh's two OPTIONAL backends (its own `easy` extra names both). Bare
+# trimesh imports fine, so the pin above made the geometry tests RUN -- and
+# then judged interpenetrating solids "clear", which is the confident wrong
+# answer geometry_engine exists to prevent. manifold3d is already declared a
+# kit runtime dep by block_store/kits/mep_coordination/manifest.json -- the
+# Store's own pin file was the copy that lacked it. rtree is declared nowhere
+# and is added here on the evidence below.
+#
+#   manifold3d  -- exact_backend_available() imports it. Without it
+#     _mesh_pair_measure() never attempts the boolean path, so penetration
+#     volume is never measured. Two 1m cubes overlapping by 0.5m came back
+#     kind='clear', and clash_resolver then proposed moves straight into a
+#     wall (_would_create_new_clash returned None for every candidate, so
+#     nothing was rejected and nothing escalated).
+#   rtree       -- trimesh's pure-python ray engine builds its triangle
+#     spatial index through rtree, so mesh.contains() raises
+#     ModuleNotFoundError without it. geometry_engine._surfaces_intersect()
+#     is the documented fallback when the boolean backend is absent or
+#     raises, and that ImportError was being swallowed by the broad
+#     `except Exception` around it, silently degrading every judgement to a
+#     distance measurement.
+#
+# Pinned to what the harvested suites were actually run against (46/46 green,
+# tests/blocks/test_geometry_engine.py + test_clash_resolver.py).
+manifold3d==3.5.3
+rtree==1.4.1
 
 # Intelligence Blocks (Week 4)
 scikit-learn==1.9.0
