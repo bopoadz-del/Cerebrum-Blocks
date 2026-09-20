@@ -7,7 +7,9 @@
       "module": "app.blocks.chat",
       "class": "ChatBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_chat.py"],
+      "tests": [
+        "tests/blocks/test_chat.py"
+      ],
       "fixture": "mock provider envelope (in-test)",
       "certified": true,
       "include_in_ci": true
@@ -17,7 +19,9 @@
       "module": "app.blocks.capture",
       "class": "CaptureBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_capture.py"],
+      "tests": [
+        "tests/blocks/test_capture.py"
+      ],
       "fixture": "PIL image rendered in-test (real pixel payload)",
       "certified": true,
       "include_in_ci": true
@@ -27,7 +31,9 @@
       "module": "app.blocks.knowledge",
       "class": "KnowledgeBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_knowledge.py"],
+      "tests": [
+        "tests/blocks/test_knowledge.py"
+      ],
       "fixture": null,
       "certified": true,
       "include_in_ci": true
@@ -37,7 +43,9 @@
       "module": "app.blocks.pdf",
       "class": "PDFBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_pdf.py"],
+      "tests": [
+        "tests/blocks/test_pdf.py"
+      ],
       "fixture": "PDF written in-test (real file parse)",
       "certified": true,
       "include_in_ci": true
@@ -47,7 +55,9 @@
       "module": "app.blocks.image",
       "class": "ImageBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_image.py"],
+      "tests": [
+        "tests/blocks/test_image.py"
+      ],
       "fixture": "PIL image in-test (real image payload)",
       "certified": true,
       "include_in_ci": true
@@ -57,10 +67,49 @@
       "module": "app.blocks.agent_swarm",
       "class": "AgentSwarmBlock",
       "method": "execute",
-      "tests": ["tests/blocks/test_agent_swarm.py"],
+      "tests": [
+        "tests/blocks/test_agent_swarm.py"
+      ],
       "fixture": null,
       "certified": true,
       "include_in_ci": true
+    },
+    {
+      "block": "drawing_qto",
+      "module": "app.blocks.drawing_qto",
+      "class": "DrawingQTOBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_drawing_qto.py"
+      ],
+      "fixture": "tests/fixtures/drawing_tm_1100010.pdf",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "boq_processor",
+      "module": "app.blocks.boq_processor",
+      "class": "BOQProcessorBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_boq_processor_wave1.py"
+      ],
+      "fixture": "xlsx + text/grid PDFs written in-test (real file parse via block.process)",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "spec_analyzer",
+      "module": "app.blocks.spec_analyzer",
+      "class": "SpecAnalyzerBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_spec_analyzer_wave1.py"
+      ],
+      "fixture": "in-test strings only (no real artifact)",
+      "certified": false,
+      "include_in_ci": false,
+      "note": "BAR3 FAIL: tests/blocks/test_spec_analyzer_wave1.py calls the private helper SpecAnalyzerBlock._extract_grades directly and never invokes process(), so the control-delete of process() leaves the suite GREEN. The advertised entry point has zero coverage. No real spec artifact exists in the Store to fix this with."
     }
   ]
 }
