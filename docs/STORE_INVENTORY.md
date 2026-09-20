@@ -7,8 +7,8 @@ sweep. Every claim below is from the files themselves, not from memory.
 
 ## Trust summary
 
-- **148 registry blocks**, every one with a `block.json` manifest
-  (148/148) and a signature (148/148). Census: **0 missing (148
+- **198 registry blocks**, every one with a `block.json` manifest
+  (198/198) and a signature (198/198). Census: **0 missing (198
   advertised)**. Author sweep: **125 declared `Cerebrum Team`**, 23
   declare no author.
 - **Zero stub-like blocks in the Store registry.** The echo-stub pattern
@@ -83,7 +83,7 @@ billing_entitlement, notification_mailer, approval_action, block_runner)
 `universal_business` kit does not exist in `block_store/kits/` and is
 removed from this inventory.
 
-## Registry blocks (148) — categories
+## Registry blocks (198) — categories
 
 - **Registered `*_v2` domain blocks (20)**: agriculture_v2, automotive_v2,
   aviation_v2, construction_v2, education_v2, finance_v2,

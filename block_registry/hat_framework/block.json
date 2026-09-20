@@ -1,0 +1,76 @@
+{
+  "acceptance": [
+    {
+      "check": "a hat without a base agent is refused, never composed",
+      "id": "hat_requires_base",
+      "status": "refused"
+    },
+    {
+      "check": "composing onto a missing base is refused, never fabricated",
+      "id": "missing_base",
+      "status": "refused"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "Hat framework ported from TEKsystems retailops/agents/catalog.py: a manifest contract (kind base|hat, policies, formulas) and a catalog with register/get/bases/hats/compose. Compose overlays a hat onto its base agent and refuses on a missing base or unknown hat. In-process catalog.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "652388b77aff32966be9e6de3d2a057af8556455eaf985b438787e1cb94f6a95",
+    "block.py": "aaa367c4056eb72afd92b00fb1cc979ed38d24ee3365640472f924ced839a915"
+  },
+  "id": "hat_framework",
+  "inputs": [
+    {
+      "description": "register | get | bases | hats | compose",
+      "name": "action",
+      "options": [
+        "register",
+        "get",
+        "bases",
+        "hats",
+        "compose"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "hat_framework",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "requires": [],
+  "signature": "ZM09N0R/auEmLKBg7gyVCvoeYYVt7tPhCJYnuyXWA2zOgW2OwBk2frthgF3FaBYrwnI7q+dGT/Z9PYliU9dqCA==",
+  "tags": [
+    "agent",
+    "hat",
+    "composition",
+    "teksystems"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
+}

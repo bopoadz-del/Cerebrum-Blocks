@@ -1,0 +1,67 @@
+{
+  "acceptance": [
+    {
+      "check": "a sheet without a domain field is refused, not compiled",
+      "id": "domain_required",
+      "status": "refused"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "Domain kit compiler ported from Me-Agent domain-kits/compiler/engine.py: sheet validation (domain required), slugging, table-to-lookup-block conversion, and a failure-mode test per generated block.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "261cb187db530ab7273640ec94d13757db4f80a77289792ce897b2ba86c52e06",
+    "block.py": "5e35c2dcecff0ef9c32e384bdeb55008d80ae829fdbeaf763c14565cfd02641e"
+  },
+  "id": "domain_kit_compiler",
+  "inputs": [
+    {
+      "description": "compile | slug",
+      "name": "action",
+      "options": [
+        "compile",
+        "slug"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "domain_kit_compiler",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "requires": [],
+  "signature": "KgSQ4Cl5rZX7hHTlvDqiOeGji5oJtakZtp7iZXZwpICnrbXrX5EZENyyWyLqTEAkoiyJ6DXV933NV5Chln6KAA==",
+  "tags": [
+    "domain-kit",
+    "compiler",
+    "me-agent"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
+}
