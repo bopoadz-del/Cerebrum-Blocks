@@ -1,0 +1,68 @@
+{
+  "acceptance": [
+    {
+      "check": "an empty payload is refused, not silently accepted",
+      "id": "empty_payload",
+      "status": "refused"
+    },
+    {
+      "check": "an unknown action is refused, not silently accepted",
+      "id": "unknown_action",
+      "status": "refused"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "Automotive domain analysis: deterministic document-type detection and entity extraction for the automotive vertical.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "fc45f5eb48e407b3ed928d4d4a89eddfe8376054ec26bae7aee71c6cdc2c4af7",
+    "block.py": "eb3a05efc4de39351ec2020d360f9e29200ffb480fad7561d4dffece9f208bff"
+  },
+  "id": "automotive_v2",
+  "inputs": [
+    {
+      "description": "Document text to analyze",
+      "name": "text",
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "automotive_v2",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "requires": [],
+  "signature": "S0bYzwbjraTv9Tvce4f/YVBBAQ3w5Nq8spfzLF3hdkQ5mgzTuhCw1BbI9YTv3dH4KdZpxGdaM75TbWrbxEjzDw==",
+  "tags": [
+    "domain",
+    "vertical",
+    "automotive"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
+}

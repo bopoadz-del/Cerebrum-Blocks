@@ -1,220 +1,132 @@
-"""Governance gate block — the Cerebrum-FinanceOps governance service,
-neutralized for the Store (in-process tenant-scoped ledger instead of
-SQLAlchemy) with the contract preserved: valid action types and risk
-tiers, fail-closed ``require_approved`` (an unapproved action is
-refused, never silently passed), pending-only approve/reject with a
-recorded reviewer, and rejection reasons kept in evidence.
+"""Governance Gate — fail-closed action approval, ported from
+Cerebrum-FinanceOps ``governance/service.py`` (require_approved_action).
 
-Donor: Cerebrum-FinanceOps backend/app/governance/service.py.
+The SQLAlchemy/FastAPI layers are not ported; the gate itself is:
+an action may execute only when an approval request for
+(tenant, action_type, target_id) exists and is approved. Anything else
+is refused. The approval store is in-process (honest about it — no
+database is wired in the Store build).
 """
-
 from __future__ import annotations
 
-import itertools
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+import time
+from typing import Any, Dict
 
 from app.core.universal_base import UniversalBlock
 
-_VALID_ACTION_TYPES = {
-    "coa_activation",
-    "journal_post",
-    "budget_lock",
-    "scenario_publish",
-    "export_distribution",
-}
-_VALID_RISK_TIERS = {"low", "medium", "high"}
-_VALID_USE_CASE_STATUSES = {"draft", "active", "retired"}
-_VALID_VALIDATION_STATUSES = {"pending", "approved", "failed"}
 
-# tenant_id -> ledger
-_LEDGERS: Dict[str, Dict[str, Any]] = {}
-_ids = itertools.count(1)
-
-
-def _ledger(tenant_id: str) -> Dict[str, Any]:
-    return _LEDGERS.setdefault(
-        tenant_id, {"requests": {}, "use_cases": [], "model_records": []}
-    )
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _next_id(prefix: str) -> str:
-    return f"{prefix}-{next(_ids)}"
+def _envelope(status: str, result: Any = None, error: str = None, detail: Any = None) -> Dict[str, Any]:
+    return {"block_id": "governance_gate", "status": status, "result": result, "error": error, "detail": detail}
 
 
 class GovernanceGateBlock(UniversalBlock):
+    """Fail-closed approval gate: no approved request -> refused."""
+
     name = "governance_gate"
     version = "1.0.0"
     description = (
-        "Fail-closed approval governance: an action with no approved "
-        "request is refused; approve/reject only from pending, with a "
-        "recorded reviewer and evidence."
+        "Fail-closed governance gate ported from Cerebrum-FinanceOps: an action "
+        "executes only when an approved request exists for (tenant, action_type, "
+        "target_id). Approval store is in-process."
     )
-    layer = 1
-    tags = ["security", "governance", "approval", "enterprise"]
+    layer = 3
+    tags = ["governance", "approval", "fail-closed", "finance_ops"]
     requires = []
 
-    async def process(self, input_data: Any, params: Dict = None) -> Dict:
-        params = params or {}
-        data = input_data if isinstance(input_data, dict) else {}
-        action = params.get("action", data.get("action", "require_approved"))
-        tenant_id = str(params.get("tenant_id", data.get("tenant_id", "local")))
-        ledger = _ledger(tenant_id)
+    default_config = {}
 
-        if action == "create_request":
-            return self._create_request(ledger, tenant_id, data)
-        if action == "list_requests":
-            return self._list_requests(ledger, data)
-        if action == "get_request":
-            return self._get_request(ledger, data)
-        if action == "approve_request":
-            return self._resolve(ledger, data, "approved")
-        if action == "reject_request":
-            return self._resolve(ledger, data, "rejected")
-        if action == "require_approved":
-            return self._require_approved(ledger, tenant_id, data)
-        if action == "create_use_case":
-            return self._create_use_case(ledger, data)
-        if action == "list_use_cases":
-            return {
-                "status": "success",
-                "use_cases": ledger["use_cases"],
-            }
-        if action == "create_model_governance":
-            return self._create_model_governance(ledger, data)
-        if action == "list_model_governance":
-            return {
-                "status": "success",
-                "model_records": ledger["model_records"],
-            }
-        return {"status": "error", "error": f"Unknown action: {action}"}
+    ui_schema = {
+        "input": {"type": "json", "placeholder": '{"action": "require_approved", "tenant_id": "t1", "action_type": "budget_lock", "target_id": "b1"}', "multiline": True},
+        "output": {"type": "json", "fields": [
+            {"name": "status", "type": "string", "label": "Status"},
+            {"name": "result", "type": "json", "label": "Result"},
+            {"name": "error", "type": "string", "label": "Error"},
+        ]},
+    }
 
-    # -- approval requests --------------------------------------------------
+    # In-process approval store: tenant -> (action_type, target_id) -> record.
+    def __init__(self, hal_block=None, config: Dict[str, Any] = None):
+        super().__init__(hal_block=hal_block, config=config)
+        self._requests: Dict[str, Dict[str, Any]] = {}
 
-    def _create_request(self, ledger: Dict, tenant_id: str, data: Dict) -> Dict:
-        action_type = data.get("action_type", "")
-        if action_type not in _VALID_ACTION_TYPES:
-            return {"status": "error", "error": "Invalid action_type"}
-        if not data.get("target_id"):
-            return {"status": "error", "error": "target_id required"}
-        request_id = _next_id("apr")
+    async def process(self, input_data: Any, params: Dict = None) -> Dict[str, Any]:
+        payload = input_data if isinstance(input_data, dict) else {}
+        action = str(payload.get("action", "require_approved")).lower()
+        try:
+            if action == "create_request":
+                return self._create(payload)
+            if action == "approve":
+                return self._approve(payload)
+            if action == "require_approved":
+                return self._require(payload)
+            if action == "list_requests":
+                return _envelope("ok", {"requests": list(self._requests.values())})
+            return _envelope(
+                "error", error=f"unknown action: {action}",
+                detail={"known": ["create_request", "approve", "require_approved", "list_requests"]},
+            )
+        except Exception as exc:  # noqa: BLE001 - envelope must never crash consumers
+            return _envelope("error", error=str(exc), detail={"type": type(exc).__name__})
+
+    async def execute(self, input_data: Any, params: Dict = None) -> Dict[str, Any]:
+        return await self.process(input_data, params)
+
+    # -- internals ---------------------------------------------------------
+
+    @staticmethod
+    def _key(tenant_id: str, action_type: str, target_id: str) -> str:
+        return f"{tenant_id}|{action_type}|{target_id}"
+
+    def _create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        tenant_id = str(payload.get("tenant_id", ""))
+        action_type = str(payload.get("action_type", ""))
+        target_id = str(payload.get("target_id", ""))
+        requester = str(payload.get("requester_id", ""))
+        if not (tenant_id and action_type and target_id and requester):
+            return _envelope("error", error="tenant_id, action_type, target_id and requester_id are required")
+        key = self._key(tenant_id, action_type, target_id)
+        if key in self._requests:
+            return _envelope("error", error="an approval request already exists for this action/target")
         record = {
-            "id": request_id,
+            "id": key,
             "tenant_id": tenant_id,
-            "project_id": data.get("project_id"),
-            "action_type": action_type,
-            "target_id": data["target_id"],
-            "requester_id": data.get("requester_id"),
-            "status": "pending",
-            "payload": data.get("payload", {}),
-            "evidence": data.get("evidence", {}),
-            "reviewer_id": None,
-            "created_at": _now(),
-            "resolved_at": None,
-        }
-        ledger["requests"][request_id] = record
-        return {"status": "success", "request": dict(record)}
-
-    def _list_requests(self, ledger: Dict, data: Dict) -> Dict:
-        out = list(ledger["requests"].values())
-        if data.get("status"):
-            out = [r for r in out if r["status"] == data["status"]]
-        if data.get("project_id"):
-            out = [r for r in out if r["project_id"] == data["project_id"]]
-        return {
-            "status": "success",
-            "requests": sorted(out, key=lambda r: r["created_at"], reverse=True),
-        }
-
-    def _get_request(self, ledger: Dict, data: Dict) -> Dict:
-        record = ledger["requests"].get(data.get("request_id", ""))
-        if record is None:
-            return {"status": "error", "error": "Approval request not found"}
-        return {"status": "success", "request": dict(record)}
-
-    def _resolve(self, ledger: Dict, data: Dict, new_status: str) -> Dict:
-        record = ledger["requests"].get(data.get("request_id", ""))
-        if record is None:
-            return {"status": "error", "error": "Approval request not found"}
-        if record["status"] != "pending":
-            return {
-                "status": "error",
-                "error": f"Cannot {'approve' if new_status == 'approved' else 'reject'} "
-                f"request in status {record['status']}",
-            }
-        record["status"] = new_status
-        record["reviewer_id"] = data.get("reviewer_id")
-        record["resolved_at"] = _now()
-        if new_status == "rejected" and data.get("reason"):
-            evidence = dict(record["evidence"] or {})
-            evidence["rejection_reason"] = data["reason"]
-            record["evidence"] = evidence
-        return {"status": "success", "request": dict(record)}
-
-    def _require_approved(self, ledger: Dict, tenant_id: str, data: Dict) -> Dict:
-        """Fail-closed: the action/target must carry an approved request."""
-        action_type = data.get("action_type", "")
-        target_id = data.get("target_id", "")
-        matches = [
-            r
-            for r in ledger["requests"].values()
-            if r["action_type"] == action_type and r["target_id"] == target_id
-        ]
-        if not matches:
-            return {
-                "status": "error",
-                "error": "Action requires approved request",
-            }
-        latest = max(matches, key=lambda r: r["created_at"])
-        if latest["status"] != "approved":
-            return {
-                "status": "error",
-                "error": f"Action requires approved request: {latest['id']}",
-            }
-        return {
-            "status": "success",
-            "allowed": True,
-            "request_id": latest["id"],
             "action_type": action_type,
             "target_id": target_id,
+            "requester_id": requester,
+            "status": "pending",
+            "created_at": time.time(),
         }
+        self._requests[key] = record
+        return _envelope("ok", {"request": record})
 
-    # -- AI use cases -------------------------------------------------------
+    def _approve(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        tenant_id = str(payload.get("tenant_id", ""))
+        action_type = str(payload.get("action_type", ""))
+        target_id = str(payload.get("target_id", ""))
+        approver = str(payload.get("approver_id", ""))
+        if not approver:
+            return _envelope("error", error="approver_id is required")
+        key = self._key(tenant_id, action_type, target_id)
+        record = self._requests.get(key)
+        if record is None:
+            return _envelope("error", error="no approval request exists for this action/target")
+        if record["requester_id"] == approver:
+            return _envelope("error", error="self-approval is refused")
+        record["status"] = "approved"
+        record["approved_by"] = approver
+        record["approved_at"] = time.time()
+        return _envelope("ok", {"request": record})
 
-    def _create_use_case(self, ledger: Dict, data: Dict) -> Dict:
-        risk_tier = data.get("risk_tier", "")
-        if risk_tier not in _VALID_RISK_TIERS:
-            return {"status": "error", "error": "Invalid risk_tier"}
-        status = data.get("status", "draft")
-        if status not in _VALID_USE_CASE_STATUSES:
-            return {"status": "error", "error": "Invalid status"}
-        record = {
-            "id": _next_id("uc"),
-            "project_id": data.get("project_id"),
-            "use_case_name": data.get("use_case_name", ""),
-            "description": data.get("description"),
-            "model_name": data.get("model_name"),
-            "risk_tier": risk_tier,
-            "status": status,
-            "created_at": _now(),
-        }
-        ledger["use_cases"].append(record)
-        return {"status": "success", "use_case": dict(record)}
-
-    def _create_model_governance(self, ledger: Dict, data: Dict) -> Dict:
-        validation_status = data.get("validation_status", "pending")
-        if validation_status not in _VALID_VALIDATION_STATUSES:
-            return {"status": "error", "error": "Invalid validation_status"}
-        record = {
-            "id": _next_id("mg"),
-            "model_name": data.get("model_name", ""),
-            "validation_status": validation_status,
-            "notes": data.get("notes"),
-            "created_at": _now(),
-        }
-        ledger["model_records"].append(record)
-        return {"status": "success", "model_governance": dict(record)}
+    def _require(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        tenant_id = str(payload.get("tenant_id", ""))
+        action_type = str(payload.get("action_type", ""))
+        target_id = str(payload.get("target_id", ""))
+        if not (tenant_id and action_type and target_id):
+            return _envelope("error", error="tenant_id, action_type and target_id are required")
+        record = self._requests.get(self._key(tenant_id, action_type, target_id))
+        if record is None:
+            # Fail-closed: no request -> refused.
+            return _envelope("refused", error="action requires an approved request", detail={"reason": "no_request"})
+        if record["status"] != "approved":
+            return _envelope("refused", error="action requires an approved request", detail={"request_id": record["id"], "status": record["status"]})
+        return _envelope("ok", {"approved": True, "request": record})

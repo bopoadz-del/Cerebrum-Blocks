@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Auto-generated adapter for Cerebrum block: governance_gate
-Wraps app.blocks.governance_gate into a synchronous run() function.
+Adapter for Cerebrum block: governance_gate
 """
 
 import asyncio
+
 from app.blocks.governance_gate import GovernanceGateBlock
 
 
@@ -20,14 +20,11 @@ def _run_async(coro):
 
 
 def run(**kwargs):
+    """Execute the governance_gate block."""
     instance = GovernanceGateBlock()
     input_data = kwargs.get("input", kwargs)
     params = {k: v for k, v in kwargs.items() if k != "input"}
     envelope = _run_async(instance.execute(input_data, params))
-    if envelope.get("status") == "error":
-        inner = envelope.get("result", {})
-        message = envelope.get("error") or (
-            inner.get("error") if isinstance(inner, dict) else str(inner)
-        )
-        raise RuntimeError(message or "governance_gate block failed")
+    if envelope.get("status") in ("error", "refused"):
+        raise RuntimeError(envelope.get("error") or "governance_gate block failed")
     return envelope.get("result", envelope)

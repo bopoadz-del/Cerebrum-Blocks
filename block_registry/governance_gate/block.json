@@ -1,13 +1,43 @@
 {
-  "acceptance": [],
-  "description": "Fail-closed approval governance (FinanceOps port): an action with no approved request is refused; approve/reject only from pending with a recorded reviewer and evidence.",
+  "acceptance": [
+    {
+      "check": "an unapproved or missing request is refused, never passed",
+      "id": "fail_closed_refusal",
+      "status": "refused"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "Fail-closed governance gate ported from Cerebrum-FinanceOps: an action executes only when an approved request exists for (tenant, action_type, target_id); self-approval refused. Approval store is in-process.",
   "digests": {
-    "block.json": "eb2be656e1c407ad28061b887ffad256fb7ab0eb2ee94b057bfed0ed15d954f0",
-    "block.py": "5e8339b57d8280d014bda497bfb5b14aac5cd66fc139372fc9251cde3121b76b"
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "b59e07cab8d5685130944de6139b6958ec56a5f627c7143b3e93e4604182a56c",
+    "block.py": "2b4f4b839737ed43372c02b961c3777082e81b436c620ce1adaa0989bfe1deb0"
   },
   "id": "governance_gate",
-  "name": "Governance Gate",
+  "inputs": [
+    {
+      "description": "create_request | approve | require_approved | list_requests",
+      "name": "action",
+      "options": [
+        "create_request",
+        "approve",
+        "require_approved",
+        "list_requests"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "governance_gate",
   "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
   "permissions": {
     "blocks": [],
     "filesystem": false,
@@ -15,9 +45,26 @@
     "network": false
   },
   "publisher_id": "cerebrum_platform",
-  "reads": [],
-  "signature": "AXy/+G1k39IaPRV/VhYwbW4lTrU7/b+jkYweXwCWrE17CWm0hFs37hnDzuQdmBPZ76t34Ka6XeEQ5BZRiBiSDA==",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "requires": [],
+  "signature": "gkPdXWXkjj0IHuF68gLzrT798Sfo9RAPtnIo6htYSKNCyeHmgbuqKbAJcvNl7W8Jv1BMgognUDa6nlxjWj+/Ag==",
+  "tags": [
+    "governance",
+    "approval",
+    "fail-closed",
+    "finance_ops"
+  ],
   "trust_tier": "platform",
   "version": "1.0.0",
-  "writes": []
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
 }

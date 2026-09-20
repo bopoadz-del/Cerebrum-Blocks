@@ -7,9 +7,9 @@ sweep. Every claim below is from the files themselves, not from memory.
 
 ## Trust summary
 
-- **136 registry blocks**, every one with a `block.json` manifest
-  (136/136) and a signature (136/136). Census: **0 missing (136
-  advertised)**. Author sweep: **113 declared `Cerebrum Team`**, 23
+- **198 registry blocks**, every one with a `block.json` manifest
+  (198/198) and a signature (198/198). Census: **0 missing (198
+  advertised)**. Author sweep: **125 declared `Cerebrum Team`**, 23
   declare no author.
 - **Zero stub-like blocks in the Store registry.** The echo-stub pattern
   (`run()` returning `{"status": "ok", "result": <input>}` unconditionally)
@@ -83,14 +83,18 @@ billing_entitlement, notification_mailer, approval_action, block_runner)
 `universal_business` kit does not exist in `block_store/kits/` and is
 removed from this inventory.
 
-## Registry blocks (136) — categories
+## Registry blocks (198) — categories
 
-- **Registered `*_v2` domain blocks (8)**: construction_v2, finance_v2,
-  formula_executor_v2, insurance_v2, legal_v2, ocr_v2, pdf_v2, retail_v2.
-- **Unregistered `*_v2` modules (12)** — real code, no registry entry yet
-  (COLLECTOR rung 2, by design): agriculture_v2, automotive_v2,
-  aviation_v2, education_v2, hotel_v2, hr_v2, manufacturing_v2,
-  medical_v2, oil_gas_v2, pharma_v2, real_estate_v2, supply_chain_v2.
+- **Registered `*_v2` domain blocks (20)**: agriculture_v2, automotive_v2,
+  aviation_v2, construction_v2, education_v2, finance_v2,
+  formula_executor_v2, hotel_v2, hr_v2, insurance_v2, legal_v2,
+  manufacturing_v2, medical_v2, ocr_v2, oil_gas_v2, pdf_v2, pharma_v2,
+  real_estate_v2, retail_v2, supply_chain_v2 — every vertical v2 now
+  registered and signed (the 12 remaining were registered 2026-09-20).
+- **Unregistered modules (4, by design)**: `document_engine_block` (alias
+  shim for the registered `document_engine` package), and the library
+  helpers `ifc_loader`, `_knowledge`, `_procedure_routing` — helpers, not
+  blocks; the registry counts blocks.
 - **Generic core**: pdf, ocr, chat, image, formula_executor(_v2).
 - **Cross-cutting plumbing**: database, storage, queue, workflow,
   notification, team, validation, audit, dashboard, analytics, event_bus,

@@ -1,0 +1,75 @@
+{
+  "acceptance": [
+    {
+      "check": "a provider with a non-HTTPS endpoint is refused, not registered",
+      "id": "https_required",
+      "status": "refused"
+    },
+    {
+      "check": "a provider without its X.509 certificate is refused, not registered",
+      "id": "cert_required",
+      "status": "refused"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "SSO SAML provider registry ported from Cerebrum enterprise/sso_saml.py: provider configuration contract (entity ids, SSO/SLO URLs, X.509 cert required, HTTPS-only endpoints, attribute/role mapping). The python3-saml assertion-validation layer is NOT ported. Store is in-process.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "3b96ca03ee47f6b47a3ccf1cc9a9b2071f58f41379d3cb3518f6522c0ad6e3d7",
+    "block.py": "c4ad571b11da7fb0ea7ba5fdba117f01e4069e7f5d77d7e7f761fd56cb6f6855"
+  },
+  "id": "sso_saml",
+  "inputs": [
+    {
+      "description": "register | deactivate | list",
+      "name": "action",
+      "options": [
+        "register",
+        "deactivate",
+        "list"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "sso_saml",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "requires": [],
+  "signature": "kB9f5rBXQHTEK3nnXbBKg7LuU2sn4rFGTJtTv43MnaERxkg8QSN3GgMKb1Ty8JYiYe3MnbTkQoZRGitjDr89CQ==",
+  "tags": [
+    "sso",
+    "saml",
+    "enterprise",
+    "auth",
+    "cerebrum"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "acceptance": [
+    {
+      "check": "an empty payload is refused, not silently accepted",
+      "id": "empty_payload",
+      "status": "refused"
+    },
+    {
+      "check": "an unknown action is refused, not silently accepted",
+      "id": "unknown_action",
+      "status": "refused"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "Oil & gas domain analysis: deterministic document-type detection and entity extraction for the oil & gas vertical.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "f4761579146eb5e7b003df92f298b1781d2de98763bcd37f63a09fea28258826",
+    "block.py": "de9ba18dbe6956f6209eefcb9e5251cac214a3eb379d5b1ad1a03df5b403d8e9"
+  },
+  "id": "oil_gas_v2",
+  "inputs": [
+    {
+      "description": "Document text to analyze",
+      "name": "text",
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "oil_gas_v2",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Capability result",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "requires": [],
+  "signature": "0oq5JYTSzMBB+lIkeL46zx+jJ9nkhZUsgL2zC+yUOTTVAaSkrX0Z/Y7XRJtZ/xYf/4SMHbKhvwxrjJJrRVwxDg==",
+  "tags": [
+    "domain",
+    "vertical",
+    "oil_gas"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
+}

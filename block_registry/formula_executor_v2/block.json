@@ -2,6 +2,7 @@
   "acceptance": [],
   "description": "LLM-assisted formula drafting with a deterministic validation gate and RestrictedPython sandbox execution; never authorizes on its own.",
   "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
     "block.json": "ad7a5d378db9568ab12c92a848da2a5029f7cb4563c2ab0df9d0ea8c93846aa6",
     "block.py": "de39dbf2a9bed10512e460e3bc729a487f787bd04cd286d825310d41e4d2f25e"
   },
@@ -18,7 +19,7 @@
   },
   "publisher_id": "cerebrum_platform",
   "reads": [],
-  "signature": "+jdEBwRiQlq/7Ppc8w7A3ahHQuvk2tZnbw8fsmJ95NR+AsS+P3S8NWKFE3PcTmqAjYuJhsxeS1VGdqljRxleDQ==",
+  "signature": "BJCJT/V4kPfzzUaS/DDQnQlFcYqeS33UlvHQu+pw4XhPmtEBBIn4/WJeX09A1OTuMscN1N0nbF6Vsz8uKwAbBA==",
   "trust_tier": "platform",
   "version": "2.0.0",
   "writes": []
