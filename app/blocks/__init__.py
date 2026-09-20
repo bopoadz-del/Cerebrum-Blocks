@@ -37,7 +37,7 @@ _GENERIC_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "monitoring": ("app.blocks.monitoring", "MonitoringBlock"),
     "file_hasher": ("app.blocks.file_hasher", "FileHasherBlock"),
     "orchestrator": ("app.blocks.orchestrator", "OrchestratorBlock"),
-    "validation_pipeline": ("app.blocks.validation_pipeline", "ValidationPipelineBlock"),
+    "validation_pipeline": ("app.blocks.validation", "ValidationBlock"),
     "async_processor": ("app.blocks.async_processor", "AsyncProcessorBlock"),
     "video_metadata_ingest": ("app.blocks.video_metadata_ingest", "VideoMetadataIngestBlock"),
     "video_anomaly_trigger": ("app.blocks.video_anomaly_trigger", "VideoAnomalyTriggerBlock"),
