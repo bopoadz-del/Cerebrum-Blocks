@@ -294,12 +294,9 @@ class BillingBlock(UniversalBlock):
         """Upgrade user plan"""
         api_key = data.get("api_key")
         new_plan = data.get("plan")
-        
-        # Update in auth block
-        if self.auth_block:
-            # Would update user role
-            pass
 
+        # Plan upgrades are not implemented; a caller must use
+        # create_subscription to set up Stripe billing instead.
         return {
             "upgraded": False,
             "plan": new_plan,
@@ -321,19 +318,33 @@ class BillingBlock(UniversalBlock):
             event = self.stripe.Webhook.construct_event(
                 payload, sig_header, self.webhook_secret
             )
-            
-            # Handle events
-            if event["type"] == "invoice.payment_succeeded":
-                # Update user subscription status
-                pass
-            elif event["type"] == "customer.subscription.deleted":
-                # Downgrade to free
-                pass
-            
-            return {"handled": True, "type": event["type"]}
-            
         except Exception as e:
             return {"error": f"Webhook error: {str(e)}"}
+
+        event_type = event["type"]
+        # Honest handling: an event type with no implemented action is
+        # reported as NOT handled; it never claims handled while doing
+        # nothing.
+        if event_type == "invoice.payment_succeeded":
+            return {
+                "handled": False,
+                "type": event_type,
+                "note": (
+                    "payment_succeeded is not implemented — subscription "
+                    "status is managed via create_subscription"
+                ),
+            }
+        if event_type == "customer.subscription.deleted":
+            return {
+                "handled": False,
+                "type": event_type,
+                "note": "subscription.deleted downgrade is not implemented",
+            }
+        return {
+            "handled": False,
+            "type": event_type,
+            "note": "unhandled event type",
+        }
     
     def _calculate_cost(self, block: str, tokens: int) -> int:
         """Calculate cost in cents"""
