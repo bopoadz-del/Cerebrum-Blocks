@@ -389,6 +389,678 @@
       "certified": true,
       "include_in_ci": true,
       "note": "Certified 2026-09-20 on the entry point. CAVEAT: tests/blocks/test_clash_resolver.py (374 lines: mutation probe on the fall guard, batch rollback, exhausted-search escalation) is behind a module-level pytest.importorskip('trimesh') and trimesh was in no requirements file, so it skipped everywhere and pytest exited 5 on that path alone. trimesh==4.12.2 is now pinned in requirements.txt + requirements.lock but has NOT been installed or run here (the shared .venv must not be modified), so those tests are still unverified on this machine. The entry-point file deliberately needs no geometry backend -- its elements carry mesh=None so _would_create_new_clash returns before importing geometry_engine -- and covers the gravity fall constraint, the candidate-set ordering, the flagged-vs-proposed distinction and both advertised refusals."
+    },
+    {
+      "block": "agency_commission_engine",
+      "module": "app.blocks.agency_commission_engine",
+      "class": "AgencyCommissionEngineBlock",
+      "method": "process",
+      "tests": [
+        "tests/insurance/test_agency_commission_engine.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "agency_hierarchy",
+      "module": "app.blocks.agency_hierarchy",
+      "class": "AgencyHierarchyBlock",
+      "method": "process",
+      "tests": [
+        "tests/insurance/test_agency_hierarchy.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "android_drive",
+      "module": "app.blocks.android_drive",
+      "class": "AndroidDriveBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_all_blocks.py",
+        "tests/blocks/test_android_drive.py",
+        "tests/blocks/test_chaining.py",
+        "tests/blocks/test_stub_honesty.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "attrition_scorer",
+      "module": "app.blocks.attrition_scorer",
+      "class": "AttritionScorerBlock",
+      "method": "process",
+      "tests": [
+        "tests/insurance/test_attrition_scorer.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "audit_chain",
+      "module": "app.blocks.audit_chain",
+      "class": "AuditChainBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_audit_chain.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "auth",
+      "module": "app.blocks.auth",
+      "class": "AuthBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_auth.py",
+        "tests/test_wave2_clones.py"
+      ],
+      "fixture": "a tmp_path working directory; inputs are constructed in-test",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "aviation_cargo_kit",
+      "module": "app.blocks.aviation_cargo_kit",
+      "class": "AviationCargoKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_aviation_domain_kits.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "aviation_chat_server",
+      "module": "app.blocks.aviation_chat_server",
+      "class": "AviationChatServerBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_aviation_chat_server.py",
+        "tests/blocks/test_aviation_grounding_closure.py",
+        "tests/blocks/test_phase4_mechanisms.py"
+      ],
+      "fixture": "real files written to and read back from a tmp_path in-test",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "aviation_cx_kit",
+      "module": "app.blocks.aviation_cx_kit",
+      "class": "AviationCxKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_aviation_domain_kits.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "aviation_grounding_gate",
+      "module": "app.blocks.aviation_grounding_gate",
+      "class": "AviationGroundingGateBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_aviation_domain_kits.py",
+        "tests/blocks/test_aviation_grounding_gate.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "aviation_loyalty_kit",
+      "module": "app.blocks.aviation_loyalty_kit",
+      "class": "AviationLoyaltyKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_aviation_domain_kits.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "aviation_pss_kit",
+      "module": "app.blocks.aviation_pss_kit",
+      "class": "AviationPssKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_aviation_domain_kits.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "aviation_revenue_kit",
+      "module": "app.blocks.aviation_revenue_kit",
+      "class": "AviationRevenueKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_aviation_domain_kits.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "billing",
+      "module": "app.blocks.billing",
+      "class": "BillingBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_review_billing_verification.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "bordereaux_ingest",
+      "module": "app.blocks.bordereaux_ingest",
+      "class": "BordereauxIngestBlock",
+      "method": "process",
+      "tests": [
+        "tests/insurance/test_bordereaux_distribution.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "channel_router",
+      "module": "app.blocks.channel_router",
+      "class": "ChannelRouterBlock",
+      "method": "process",
+      "tests": [
+        "tests/insurance/test_channel_router.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "code",
+      "module": "app.blocks.code",
+      "class": "CodeBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_all_blocks.py",
+        "tests/test_e2e.py",
+        "tests/test_sandbox_runner_client.py",
+        "tests/blocks/test_chaining.py",
+        "tests/blocks/test_code.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "construction_advisor",
+      "module": "app.blocks.construction_advisor",
+      "class": "ConstructionAdvisorBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_construction_advisor_transitions.py",
+        "tests/blocks/test_phase4_mechanisms.py"
+      ],
+      "fixture": "real files written to and read back from a tmp_path in-test",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "discovery",
+      "module": "app.blocks.discovery",
+      "class": "DiscoveryBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_discovery_vector_routing.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "distribution_analytics",
+      "module": "app.blocks.distribution_analytics",
+      "class": "DistributionAnalyticsBlock",
+      "method": "process",
+      "tests": [
+        "tests/insurance/test_bordereaux_distribution.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "estate_bearer_auth",
+      "module": "app.blocks.estate_bearer_auth",
+      "class": "EstateBearerAuthBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_wave2_clones.py"
+      ],
+      "fixture": "a tmp_path working directory; inputs are constructed in-test",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "file_hasher",
+      "module": "app.blocks.file_hasher",
+      "class": "FileHasherBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_e2e.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "finance_canonical_model",
+      "module": "app.blocks.finance_canonical_model",
+      "class": "FinanceCanonicalModelBlock",
+      "method": "process",
+      "tests": [
+        "tests/finance_ops/test_foundation_blocks.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "finance_coa_governance",
+      "module": "app.blocks.finance_coa_governance",
+      "class": "FinanceCoAGovernanceBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_finance_lifecycle_and_import.py",
+        "tests/finance_ops/test_foundation_blocks.py"
+      ],
+      "fixture": "real files written to and read back from a tmp_path in-test",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "finance_data_quality",
+      "module": "app.blocks.finance_data_quality",
+      "class": "FinanceDataQualityBlock",
+      "method": "process",
+      "tests": [
+        "tests/finance_ops/test_foundation_blocks.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "finance_import",
+      "module": "app.blocks.finance_import",
+      "class": "FinanceImportBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_finance_lifecycle_and_import.py",
+        "tests/finance_ops/test_foundation_blocks.py"
+      ],
+      "fixture": "real files written to and read back from a tmp_path in-test",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "finance_reconciliation",
+      "module": "app.blocks.finance_reconciliation",
+      "class": "FinanceReconciliationBlock",
+      "method": "process",
+      "tests": [
+        "tests/finance_ops/test_foundation_blocks.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "finance_saas_metrics",
+      "module": "app.blocks.finance_saas_metrics",
+      "class": "FinanceSaaSMetricsBlock",
+      "method": "process",
+      "tests": [
+        "tests/finance_ops/test_foundation_blocks.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "governance_gate",
+      "module": "app.blocks.governance_gate",
+      "class": "GovernanceGateBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_governance_gate.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "hkia_gn16_rules",
+      "module": "app.blocks.hkia_gn16_rules",
+      "class": "HKIAGN16RulesBlock",
+      "method": "process",
+      "tests": [
+        "tests/insurance/test_hkia_gn16_rules.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "inbound_webhook",
+      "module": "app.blocks.inbound_webhook",
+      "class": "InboundWebhookBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_inbound_webhook.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "incentive_targeting",
+      "module": "app.blocks.incentive_targeting",
+      "class": "IncentiveTargetingBlock",
+      "method": "process",
+      "tests": [
+        "tests/insurance/test_incentive_targeting.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "library_container",
+      "module": "app.blocks.library_container",
+      "class": "LibraryContainerBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_library_container.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "llm_enhancer",
+      "module": "app.blocks.llm_enhancer",
+      "class": "LLMEnhancerBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_llm_enhancer.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "marker",
+      "module": "app.blocks.marker",
+      "class": "MarkerBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_marker.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "mcp_adapter",
+      "module": "app.blocks.mcp_adapter",
+      "class": "MCPAdapterBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_mcp_adapter_block.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "medical_ehr_connector",
+      "module": "app.blocks.medical_ehr_connector",
+      "class": "MedicalEHRConnectorBlock",
+      "method": "execute",
+      "tests": [
+        "tests/blocks/test_medical_ehr_connector.py",
+        "tests/integration/test_kit_connector_e2e.py"
+      ],
+      "fixture": "a tmp_path working directory; inputs are constructed in-test",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "memory",
+      "module": "app.blocks.memory",
+      "class": "MemoryBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_auth.py",
+        "tests/test_blocks.py",
+        "tests/core/test_memory_isolation.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "monitoring",
+      "module": "app.blocks.monitoring",
+      "class": "MonitoringBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_blocks.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "primavera_parser",
+      "module": "app.blocks.primavera_parser",
+      "class": "PrimaveraParserBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_e2e.py",
+        "tests/blocks/test_primavera_parser_wave1.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "producer_record",
+      "module": "app.blocks.producer_record",
+      "class": "ProducerRecordBlock",
+      "method": "process",
+      "tests": [
+        "tests/insurance/test_producer_record.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "review",
+      "module": "app.blocks.review",
+      "class": "ReviewBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_review_billing_verification.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "team",
+      "module": "app.blocks.team",
+      "class": "TeamBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_team_state_survives_a_new_block_instance.py"
+      ],
+      "fixture": "real files written to and read back from a tmp_path in-test",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "user_auth",
+      "module": "app.blocks.user_auth",
+      "class": "UserAuthBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_wave2_clones.py"
+      ],
+      "fixture": "a tmp_path working directory; inputs are constructed in-test",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "validation",
+      "module": "app.blocks.validation",
+      "class": "ValidationBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_validation_stages.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "video_anomaly_trigger",
+      "module": "app.blocks.video_anomaly_trigger",
+      "class": "VideoAnomalyTriggerBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_video_anomaly_trigger.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "video_metadata_ingest",
+      "module": "app.blocks.video_metadata_ingest",
+      "class": "VideoMetadataIngestBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_video_metadata_ingest.py",
+        "tests/integration/test_kit_connector_e2e.py"
+      ],
+      "fixture": "a tmp_path working directory; inputs are constructed in-test",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "voice",
+      "module": "app.blocks.voice",
+      "class": "VoiceBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_all_blocks.py",
+        "tests/blocks/test_chaining.py",
+        "tests/blocks/test_voice.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "workbench",
+      "module": "app.blocks.workbench",
+      "class": "WorkbenchBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_workbench.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
+    },
+    {
+      "block": "workflow",
+      "module": "app.blocks.workflow",
+      "class": "WorkflowBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_e2e.py",
+        "tests/blocks/test_workflow.py"
+      ],
+      "fixture": "in-test data only - no on-disk artifact",
+      "certified": true,
+      "include_in_ci": false,
+      "note": "Verified individually by control-delete on 2026-09-20 and passed all three bars. Held out of CI because the full set has not been run in a single --all invocation, which is what CI does; include it once that run is green and its added runtime is acceptable."
     }
   ]
 }
