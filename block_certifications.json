@@ -46,9 +46,9 @@
       "block": "image",
       "module": "app.blocks.image",
       "class": "ImageBlock",
-      "method": "execute",
-      "tests": ["tests/blocks/test_image.py"],
-      "fixture": "PIL image in-test (real image payload)",
+      "method": "process",
+      "tests": ["tests/blocks/test_image.py", "tests/test_image_detection.py"],
+      "fixture": "PNG written to disk by PIL and re-opened from disk by the block (tests/test_image_detection.py, harvested from The_Fork)",
       "certified": true,
       "include_in_ci": true
     },
@@ -61,6 +61,49 @@
       "fixture": null,
       "certified": true,
       "include_in_ci": true
+    },
+    {
+      "block": "ocr",
+      "module": "app.blocks.ocr",
+      "class": "OCRBlock",
+      "method": "process",
+      "tests": ["tests/blocks/test_ocr.py"],
+      "fixture": "PIL image constructed in-test",
+      "certified": false,
+      "include_in_ci": false,
+      "note": "NOT CERTIFIED. BAR3 FAIL: tests/blocks/test_ocr.py stays GREEN when OCRBlock.process is gutted to a plausible success -- it asserts only the TypedBlock envelope keys (block/request_id/status/result/confidence/metadata), never a value that has to come from reading an image. No real OCR fixture exists in the Store. The_Fork's tests/test_doc_index_ocr.py would cover this but cannot be harvested: app.core.doc_index and app.core.projects do not exist here."
+    },
+    {
+      "block": "safety_world_detector",
+      "module": "app.blocks.safety_world_detector",
+      "class": "SafetyWorldDetectorBlock",
+      "method": "process",
+      "tests": ["tests/blocks/test_safety_world_detector_block.py"],
+      "fixture": "image file written to disk in-test; refusal paths exercised without weights",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "bim",
+      "module": "app.blocks.bim",
+      "class": "BIMBlock",
+      "method": "process",
+      "tests": ["tests/test_real_inputs.py"],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": false,
+      "note": "NOT CERTIFIED. BAR3 FAIL: baseline tests not green (pytest exit 5 -- no tests collected). tests/test_real_inputs.py is the only file in the Store that names this block and it is a plain script with no test functions, so BIMBlock has zero pytest coverage. The_Fork's tests/test_bim.py was harvested and dropped: the Store's BIMBlock is version 1.0.0 and returns no top-level `status` key on any path."
+    },
+    {
+      "block": "bim_extractor",
+      "module": "app.blocks.bim_extractor",
+      "class": "BIMExtractorBlock",
+      "method": "process",
+      "tests": ["tests/test_real_inputs.py"],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": false,
+      "note": "NOT CERTIFIED. BAR3 FAIL: baseline tests not green (pytest exit 5 -- no tests collected); BIMExtractorBlock has zero pytest coverage in the Store. The real fixture is now present (tests/fixtures/sample_office.ifc, 22 KB IFC4) but no test reads it. The_Fork's tests/test_bim_extractor.py was harvested and dropped: 15 of 18 failed on genuine gaps, the worst being that process() returns status=success with hard-coded demo quantities when file_path is missing or the file does not exist."
     }
   ]
 }
