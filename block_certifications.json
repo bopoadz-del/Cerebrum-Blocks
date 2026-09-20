@@ -54,11 +54,12 @@
       "block": "image",
       "module": "app.blocks.image",
       "class": "ImageBlock",
-      "method": "execute",
+      "method": "process",
       "tests": [
-        "tests/blocks/test_image.py"
+        "tests/blocks/test_image.py",
+        "tests/test_image_detection.py"
       ],
-      "fixture": "PIL image in-test (real image payload)",
+      "fixture": "PNG written to disk by PIL and re-opened from disk by the block (tests/test_image_detection.py, harvested from The_Fork)",
       "certified": true,
       "include_in_ci": true
     },
@@ -110,6 +111,248 @@
       "certified": false,
       "include_in_ci": false,
       "note": "BAR3 FAIL: tests/blocks/test_spec_analyzer_wave1.py calls the private helper SpecAnalyzerBlock._extract_grades directly and never invokes process(), so the control-delete of process() leaves the suite GREEN. The advertised entry point has zero coverage. No real spec artifact exists in the Store to fix this with."
+    },
+    {
+      "block": "project_reasoner",
+      "module": "app.blocks.project_reasoner",
+      "class": "ProjectReasonerBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_project_reasoner.py"
+      ],
+      "fixture": "real 3-activity CPM network executed end-to-end through PlanExecutor + app/lib/pm_computations (compute_cpm/gantt/histogram/compress are the real functions; only the two LLM calls are doubled)",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "formula_executor",
+      "module": "app.blocks.formula_executor",
+      "class": "FormulaExecutorBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_formula_executor_real_documents.py"
+      ],
+      "fixture": "tests/fixtures/real_doc_formula_vectors.json - 247 line extensions from two real priced bills, 19 activities from a real 2013 Primavera P6 baseline .xer, and an interim payment on the bill's own 15.18M validated-row valuation",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "formula_executor_v2",
+      "module": "app.blocks.formula_executor_v2",
+      "class": "FormulaExecutorV2Block",
+      "method": "process",
+      "tests": [
+        "tests/test_formula_executor_v2.py"
+      ],
+      "fixture": "real sandboxed execution of generated numpy/sympy/pint code through app/core/sandbox (results asserted on the computed values, not on a mocked envelope); only the codegen LLM call is doubled",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "historical_benchmark",
+      "module": "app.blocks.historical_benchmark",
+      "class": "HistoricalBenchmarkBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_historical_benchmark_pg.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": false,
+      "note": "NOT CERTIFIED - BAR3 FAIL: suite stayed GREEN on a plausible-success gut. tests/test_historical_benchmark_pg.py exercises the 746-line parallel copy at tests/_fixtures/historical_benchmark.py and never imports app/blocks/historical_benchmark.py. The_Fork's tests/test_historical_benchmark.py cannot be harvested: this block has no supported_locations(), 22 location keys against The_Fork's 80+, no cost `basis` on any rate, and _location_factor() returns a bare float, so an unlisted country is silently priced at the US baseline instead of being flagged location_matched=False."
+    },
+    {
+      "block": "sympy_reasoning",
+      "module": "app.blocks.sympy_reasoning",
+      "class": "SymPyReasoningBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_e2e.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": false,
+      "note": "NOT CERTIFIED - BAR3 FAIL: suite stayed GREEN on a plausible-success gut. No runnable test exists for this block: tests/test_e2e.py's TestConstructionBlocks is module-skipped as legacy and tests/test_real_inputs.py is a script, not a pytest module. The_Fork has no sympy_reasoning test to harvest, and its own block is 489 lines to this one's 218 (no free-expression evaluation, no quantity-variance path)."
+    },
+    {
+      "block": "ocr",
+      "module": "app.blocks.ocr",
+      "class": "OCRBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_ocr.py"
+      ],
+      "fixture": "PIL image constructed in-test",
+      "certified": false,
+      "include_in_ci": false,
+      "note": "NOT CERTIFIED. BAR3 FAIL: tests/blocks/test_ocr.py stays GREEN when OCRBlock.process is gutted to a plausible success -- it asserts only the TypedBlock envelope keys (block/request_id/status/result/confidence/metadata), never a value that has to come from reading an image. No real OCR fixture exists in the Store. The_Fork's tests/test_doc_index_ocr.py would cover this but cannot be harvested: app.core.doc_index and app.core.projects do not exist here."
+    },
+    {
+      "block": "safety_world_detector",
+      "module": "app.blocks.safety_world_detector",
+      "class": "SafetyWorldDetectorBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_safety_world_detector_block.py"
+      ],
+      "fixture": "image file written to disk in-test; refusal paths exercised without weights",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "bim",
+      "module": "app.blocks.bim",
+      "class": "BIMBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_real_inputs.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": false,
+      "note": "NOT CERTIFIED. BAR3 FAIL: baseline tests not green (pytest exit 5 -- no tests collected). tests/test_real_inputs.py is the only file in the Store that names this block and it is a plain script with no test functions, so BIMBlock has zero pytest coverage. The_Fork's tests/test_bim.py was harvested and dropped: the Store's BIMBlock is version 1.0.0 and returns no top-level `status` key on any path."
+    },
+    {
+      "block": "bim_extractor",
+      "module": "app.blocks.bim_extractor",
+      "class": "BIMExtractorBlock",
+      "method": "process",
+      "tests": [
+        "tests/test_real_inputs.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": false,
+      "note": "NOT CERTIFIED. BAR3 FAIL: baseline tests not green (pytest exit 5 -- no tests collected); BIMExtractorBlock has zero pytest coverage in the Store. The real fixture is now present (tests/fixtures/sample_office.ifc, 22 KB IFC4) but no test reads it. The_Fork's tests/test_bim_extractor.py was harvested and dropped: 15 of 18 failed on genuine gaps, the worst being that process() returns status=success with hard-coded demo quantities when file_path is missing or the file does not exist."
+    },
+    {
+      "block": "sandbox",
+      "module": "app.blocks.sandbox",
+      "class": "SandboxBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_sandbox_isolated_requires_runner.py",
+        "tests/blocks/test_sandbox_does_not_cap_its_host.py",
+        "tests/test_sandbox_runner_client.py"
+      ],
+      "fixture": "real Python source strings executed through the restricted in-process exec, plus a fake sandbox-runner HTTP transport for the isolated path",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "cache_manager",
+      "module": "app.blocks.cache_manager",
+      "class": "CacheManagerBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_cache_manager.py"
+      ],
+      "fixture": "an injected in-process cache client, round-tripped under real scope_key() tenant/project/source-class keys",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "local_drive",
+      "module": "app.blocks.local_drive",
+      "class": "LocalDriveBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_local_drive.py"
+      ],
+      "fixture": "real files written to and read back from a tmp_path drive root, plus ../ escape attempts",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "google_drive",
+      "module": "app.blocks.google_drive",
+      "class": "GoogleDriveBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_google_drive.py",
+        "tests/blocks/test_google_drive_service_account.py"
+      ],
+      "fixture": "an RSA-2048 key generated in-test; a real RS256 service-account JWT is minted and its header/claims decoded",
+      "certified": true,
+      "include_in_ci": true
+    },
+    {
+      "block": "onedrive",
+      "module": "app.blocks.onedrive",
+      "class": "OneDriveBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_onedrive.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about OneDriveBlock.process payloads). tests/blocks/test_onedrive.py asserts only the UniversalBlock envelope keys, which execute() supplies regardless of what process() returns."
+    },
+    {
+      "block": "search",
+      "module": "app.blocks.search",
+      "class": "SearchBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_search.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about SearchBlock.process payloads). tests/blocks/test_search.py asserts only the UniversalBlock envelope keys."
+    },
+    {
+      "block": "translate",
+      "module": "app.blocks.translate",
+      "class": "TranslateBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_translate.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about TranslateBlock.process payloads). tests/blocks/test_translate.py asserts only the UniversalBlock envelope keys; no test reads result['result']['translated']."
+    },
+    {
+      "block": "web",
+      "module": "app.blocks.web",
+      "class": "WebBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_web.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about WebBlock.process payloads). tests/blocks/test_web.py asserts only the UniversalBlock envelope keys."
+    },
+    {
+      "block": "learning_engine",
+      "module": "app.blocks.learning_engine",
+      "class": "LearningEngineBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_learning_engine_durability.py",
+        "tests/core/test_learning_engine_config.py",
+        "tests/test_drift_detection.py"
+      ],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 FAIL: suite stayed GREEN on a plausible-success gut (tests prove nothing about LearningEngineBlock.process payloads). No learning_engine test calls process() or execute() at all -- every one reaches into _save_state/_update_credibility/_store directly, so the block's dispatcher is entirely uncovered."
+    },
+    {
+      "block": "webhook",
+      "module": "app.blocks.webhook",
+      "class": "WebhookBlock",
+      "method": "process",
+      "tests": [],
+      "fixture": null,
+      "certified": false,
+      "include_in_ci": true,
+      "failing_bar": "BAR3 NOT RUNNABLE: the Store has no test for this block. tests/blocks/test_inbound_webhook.py covers app/blocks/inbound_webhook.py, a different block. app/blocks/webhook.py (outbound send/register/trigger) has zero coverage."
     }
   ]
 }
