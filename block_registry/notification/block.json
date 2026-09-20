@@ -12,11 +12,11 @@
     }
   ],
   "author": "Cerebrum Team",
-  "description": "Send notifications via Email, Webhook, Slack, or MCP",
+  "description": "Send notifications via Email, signed Webhook, SMTP, Slack, or MCP; undeliverable ones land in a declared outbox",
   "digests": {
     "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
-    "block.json": "ffc09eb2019c89be5901bc548a19164425ff03258b45a0ba5d23f90146df9e52",
-    "block.py": "54b89f6527312074e29a1c5504bd0a6cc437dabd7f78b437c38baf4896c4fd4e"
+    "block.json": "b89361fbd665b86ce0f2a341a9aa29ecb0e336dbfbe014666a794e2e4542e9f3",
+    "block.py": "6030d483eacc778c0557fea4f25daa6150edf7677dcb62b327b4d7bd99045b72"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/notification:latest",
@@ -37,7 +37,8 @@
       "options": [
         "send",
         "broadcast",
-        "health"
+        "health",
+        "outbox"
       ],
       "required": false,
       "type": "string"
@@ -110,6 +111,11 @@
       "description": "Message ID",
       "name": "message_id",
       "type": "text"
+    },
+    {
+      "description": "Delivery record: mode live|outbox, delivered, attempts, target, signed",
+      "name": "delivery",
+      "type": "json"
     }
   ],
   "permissions": {
@@ -166,7 +172,8 @@
       "options": [
         "send",
         "broadcast",
-        "health"
+        "health",
+        "outbox"
       ],
       "widget": "select"
     },
@@ -206,7 +213,7 @@
       "widget": "text"
     }
   ],
-  "version": "1.0.0",
+  "version": "1.1.0",
   "writes": [
     {
       "kind": "caller",
@@ -223,6 +230,10 @@
     {
       "kind": "notification",
       "scope": "outbound"
+    },
+    {
+      "kind": "network",
+      "scope": "http.outbound"
     }
   ]
 }
