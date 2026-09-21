@@ -83,5 +83,12 @@
       "kind": "caller",
       "scope": "output"
     }
+  ],
+  "verticals": [
+    "construction",
+    "interior_design",
+    "architecture",
+    "facility_management",
+    "facilities_management"
   ]
 }

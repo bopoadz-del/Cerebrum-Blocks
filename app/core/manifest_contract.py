@@ -155,8 +155,47 @@ BRIEF_SCOPE_FAIL_CLOSED = False
 #: Brief-scope keys are excluded for the same reason as the original
 #: seven: adding them to live manifests must not invalidate signatures
 #: the operator cannot re-sign from this repo.
-UNSIGNED_CONTRACT_KEYS = frozenset(CONTRACT_MANIFEST_KEYS) | frozenset(
-    BRIEF_SCOPE_KEYS
+#: -- vertical scope -------------------------------------------------------
+#:
+#: Every platform the Factory builds is built for a vertical. A block that
+#: declares ``verticals`` is eligible ONLY for blueprints in one of them; a
+#: block that declares nothing is eligible everywhere, which is every block
+#: that existed before this field did.
+#:
+#: The words are the Store's, as data on the block. The Factory holds one
+#: general rule and no list of domains -- so scoping another block, or
+#: opening one to a fifth vertical, is an edit here and never a Factory change.
+VERTICALS = "verticals"
+VERTICAL_SCOPE_KEYS = (VERTICALS,)
+
+_VERTICAL_SLUG_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
+
+
+def vertical_scope_errors(manifest: dict) -> list:
+    """Why a manifest's ``verticals`` is malformed; empty when it is fine.
+
+    Absent is fine and means "every vertical". Present-but-empty is refused:
+    it would read as "no vertical at all", a block nothing can ever attach,
+    and that is never what an author meant by leaving a list blank.
+    """
+    if VERTICALS not in manifest:
+        return []
+    value = manifest[VERTICALS]
+    if not isinstance(value, list) or not value:
+        return ["verticals must be a non-empty list of vertical slugs, or be absent"]
+    bad = [v for v in value if not isinstance(v, str) or not _VERTICAL_SLUG_RE.match(v)]
+    if bad:
+        return [f"verticals entries must be lower snake_case slugs: {bad!r}"]
+    if len(set(value)) != len(value):
+        return ["verticals lists the same slug twice"]
+    return []
+
+
+UNSIGNED_CONTRACT_KEYS = (
+    frozenset(CONTRACT_MANIFEST_KEYS)
+    | frozenset(BRIEF_SCOPE_KEYS)
+    # Same reason as the two above: landed after the last operator re-sign.
+    | frozenset(VERTICAL_SCOPE_KEYS)
 )
 
 

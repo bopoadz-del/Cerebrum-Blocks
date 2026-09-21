@@ -31,6 +31,8 @@ from app.core.manifest_contract import (
     SCOPE_RESOURCE_KINDS,
     TRAINING_ELIGIBILITY_POLICY,
     UNSIGNED_CONTRACT_KEYS,
+    VERTICAL_SCOPE_KEYS,
+    vertical_scope_errors,
     check_acceptance,
     check_brief_scope_fields,
     check_contract_fields,
@@ -263,10 +265,16 @@ def test_declared_contract_fields_reports_what_a_manifest_adopted():
 
 
 def test_the_contract_fields_are_all_excluded_from_the_signed_digest():
-    assert UNSIGNED_CONTRACT_KEYS == frozenset(CONTRACT_MANIFEST_KEYS) | frozenset(
-        BRIEF_SCOPE_KEYS
+    # Pinned exactly, on purpose: an unsigned field can be edited without
+    # breaking a signature, so widening this set must be a stated decision
+    # and never a side effect. ``verticals`` joined it deliberately.
+    assert UNSIGNED_CONTRACT_KEYS == (
+        frozenset(CONTRACT_MANIFEST_KEYS)
+        | frozenset(BRIEF_SCOPE_KEYS)
+        | frozenset(VERTICAL_SCOPE_KEYS)
     )
     assert set(BRIEF_SCOPE_KEYS) <= UNSIGNED_CONTRACT_KEYS
+    assert VERTICAL_SCOPE_KEYS == ("verticals",)
 
 
 def test_brief_scope_is_report_only_until_the_flip():
@@ -438,3 +446,53 @@ def test_the_audit_script_loads_the_same_checker():
     warnings = module.audit_block(ROOT / "block_registry" / "pdf")
     # Report-only: missing brief-scope fields must not fail-close the store.
     assert not any("brief-scope" in err for err in warnings["errors"])
+
+
+# -- vertical scope --------------------------------------------------------
+#
+# Every platform the Factory builds is built for a vertical. A block that
+# declares ``verticals`` is eligible only for blueprints in one of them.
+
+
+_SCOPED = ("contract_retrieval", "drawing_qto", "formula_executor_v2")
+_OWNER_DECLARED = {"construction", "interior_design", "architecture", "facility_management"}
+
+
+@pytest.mark.parametrize("block_id", _SCOPED)
+def test_the_three_construction_family_blocks_declare_their_verticals(block_id):
+    """Owner, 2026-09-21: these attach to construction, interior design,
+    architecture and facility management platforms -- "only these four"."""
+    manifest = json.loads(
+        (ROOT / "block_registry" / block_id / "block.json").read_text(encoding="utf-8")
+    )
+
+    assert vertical_scope_errors(manifest) == []
+    assert _OWNER_DECLARED <= set(manifest["verticals"])
+    # Anything beyond the four may only be another spelling of one of them.
+    assert set(manifest["verticals"]) - _OWNER_DECLARED <= {"facilities_management"}
+
+
+@pytest.mark.parametrize("block_id", _SCOPED)
+def test_adding_the_field_did_not_invalidate_the_signature(block_id):
+    """The operator's key is not in this repo, so nothing here can re-sign.
+    ``verticals`` is stripped from the signed digest exactly like the fields
+    before it; this proves it on the real manifests, not a fixture."""
+    from app.core.publisher_registry import BlockVerifier
+
+    result = BlockVerifier().verify_block(ROOT / "block_registry" / block_id)
+
+    assert result["verified"] is True, result
+
+
+def test_a_block_that_declares_nothing_is_eligible_everywhere():
+    assert vertical_scope_errors({"id": "x"}) == []
+
+
+@pytest.mark.parametrize(
+    "value",
+    [[], "construction", ["Construction"], ["interior design"], ["a", "a"], [7], None],
+)
+def test_a_malformed_scope_is_refused(value):
+    """An EMPTY list is refused rather than read as "no vertical at all": a
+    block nothing can ever attach is never what a blank list meant."""
+    assert vertical_scope_errors({"id": "x", "verticals": value})
