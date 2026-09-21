@@ -130,5 +130,12 @@
       "kind": "file",
       "scope": "temp"
     }
+  ],
+  "verticals": [
+    "construction",
+    "interior_design",
+    "architecture",
+    "facility_management",
+    "facilities_management"
   ]
 }

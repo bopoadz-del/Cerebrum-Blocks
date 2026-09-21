@@ -22,5 +22,12 @@
   "signature": "BJCJT/V4kPfzzUaS/DDQnQlFcYqeS33UlvHQu+pw4XhPmtEBBIn4/WJeX09A1OTuMscN1N0nbF6Vsz8uKwAbBA==",
   "trust_tier": "platform",
   "version": "2.0.0",
-  "writes": []
+  "writes": [],
+  "verticals": [
+    "construction",
+    "interior_design",
+    "architecture",
+    "facility_management",
+    "facilities_management"
+  ]
 }
