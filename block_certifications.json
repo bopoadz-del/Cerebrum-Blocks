@@ -1095,8 +1095,8 @@
         "tests/blocks/test_transaction_state_machine.py"
       ],
       "fixture": "in-test generated deterministic transition payloads (task/order/trip/transaction verticals from the embedded TRANSITIONS table); assertions are on the payload states, actor guards, idempotent replays and error listings process() returns.",
-      "certified": false,
-      "include_in_ci": false
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "payment_escrow",
@@ -1107,8 +1107,8 @@
         "tests/blocks/test_payment_escrow.py"
       ],
       "fixture": "in-test generated Decimal money payloads exercising hold/release/partial/refund/freeze; assertions are on exact Decimal fee and net amounts, state transitions and error codes process() returns.",
-      "certified": false,
-      "include_in_ci": false
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "task_listing",
@@ -1119,8 +1119,8 @@
         "tests/blocks/test_task_listing.py"
       ],
       "fixture": "in-test generated listing payloads with real coordinates (Manhattan/Jersey City/LA) exercised through haversine distance_match; assertions are on listing ids, validation errors, distances, filters and price bands process() returns.",
-      "certified": false,
-      "include_in_ci": false
+      "certified": true,
+      "include_in_ci": true
     }
   ]
 }

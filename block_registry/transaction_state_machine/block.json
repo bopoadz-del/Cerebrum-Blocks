@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic fail-closed lifecycle state machine for marketplace entities (task, order, trip, transaction verticals) with actor guards, idempotent replay and a per-entity audit trail.",
+  "execution": {
+    "entrypoint": "block.py",
+    "image": "ghcr.io/cerebrum-blocks/transaction_state_machine:latest",
+    "type": "python"
+  },
   "id": "transaction_state_machine",
   "inputs": [
     {
@@ -74,6 +79,24 @@
     "core-spine"
   ],
   "trust_tier": "platform",
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected operation",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Operation",
+      "name": "operation",
+      "options": [
+        "transition",
+        "allowed",
+        "machine",
+        "replay"
+      ],
+      "widget": "select"
+    }
+  ],
   "version": "1.0.0",
   "writes": [
     {

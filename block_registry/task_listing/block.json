@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic task-marketplace listing logic: fail-closed creation and validation, haversine geo-qualification, category/budget/keyword filtering, and embedded per-category price bands.",
+  "execution": {
+    "entrypoint": "block.py",
+    "image": "ghcr.io/cerebrum-blocks/task_listing:latest",
+    "type": "python"
+  },
   "id": "task_listing",
   "inputs": [
     {
@@ -79,6 +84,25 @@
     "deterministic"
   ],
   "trust_tier": "platform",
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected operation",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Operation",
+      "name": "operation",
+      "options": [
+        "create",
+        "validate",
+        "distance_match",
+        "filter_search",
+        "suggest_price_band"
+      ],
+      "widget": "select"
+    }
+  ],
   "version": "1.0.0",
   "writes": [
     {
