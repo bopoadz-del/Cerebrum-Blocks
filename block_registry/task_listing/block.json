@@ -1,0 +1,89 @@
+{
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "failed"
+    },
+    {
+      "check": "control-delete mutation turns the block's tests red",
+      "id": "control_delete",
+      "status": "failed"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "Deterministic task-marketplace listing logic: fail-closed creation and validation, haversine geo-qualification, category/budget/keyword filtering, and embedded per-category price bands.",
+  "id": "task_listing",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected operation",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "create",
+      "description": "Listing operation",
+      "name": "operation",
+      "options": [
+        "create",
+        "validate",
+        "distance_match",
+        "filter_search",
+        "suggest_price_band"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "Task Listing",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Listing operation result (created listing, validation report, geo matches, filtered results, price band)",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "hashlib",
+      "json",
+      "math",
+      "typing"
+    ],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "requires": [],
+  "tags": [
+    "domain",
+    "marketplace",
+    "task",
+    "listing",
+    "geo",
+    "deterministic"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
+}

@@ -169,6 +169,9 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "regulatory_chunker": ("app.blocks.regulatory_chunker", "RegulatoryChunkerBlock"),
     "governance_gate": ("app.blocks.governance_gate", "GovernanceGateBlock"),
     "evidence_chain": ("app.blocks.evidence_chain", "EvidenceChainBlock"),
+    "transaction_state_machine": ("app.blocks.transaction_state_machine", "TransactionStateMachineBlock"),
+    "payment_escrow": ("app.blocks.payment_escrow", "PaymentEscrowBlock"),
+    "task_listing": ("app.blocks.task_listing", "TaskListingBlock"),
 }
 
 

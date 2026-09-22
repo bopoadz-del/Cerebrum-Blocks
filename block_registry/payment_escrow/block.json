@@ -1,0 +1,97 @@
+{
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "failed"
+    },
+    {
+      "check": "control-delete mutation turns the block's tests red",
+      "id": "control_delete",
+      "status": "failed"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "Deterministic escrow lifecycle for marketplace payments: hold, fee quote, release, partial release, refund, and dispute freeze, with exact Decimal fee math frozen at hold time. Delegates capture and settlement to billing/payment_split (declared requires).",
+  "id": "payment_escrow",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected operation",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "status",
+      "description": "Escrow operation",
+      "name": "operation",
+      "options": [
+        "hold",
+        "fee_quote",
+        "release",
+        "partial_release",
+        "refund",
+        "freeze",
+        "unfreeze",
+        "status"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "Payment Escrow",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Escrow operation result (hold record, fee quote, disbursement, refund, freeze, status snapshot)",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "decimal",
+      "typing"
+    ],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    },
+    {
+      "kind": "config",
+      "scope": "runtime"
+    }
+  ],
+  "requires": [
+    "billing",
+    "payment_split"
+  ],
+  "tags": [
+    "domain",
+    "marketplace",
+    "payments",
+    "escrow",
+    "deterministic",
+    "core-spine"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
+}

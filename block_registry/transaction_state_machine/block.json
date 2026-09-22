@@ -1,0 +1,84 @@
+{
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "failed"
+    },
+    {
+      "check": "control-delete mutation turns the block's tests red",
+      "id": "control_delete",
+      "status": "failed"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "Deterministic fail-closed lifecycle state machine for marketplace entities (task, order, trip, transaction verticals) with actor guards, idempotent replay and a per-entity audit trail.",
+  "id": "transaction_state_machine",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected operation",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "transition",
+      "description": "State machine operation",
+      "name": "operation",
+      "options": [
+        "transition",
+        "allowed",
+        "machine",
+        "replay"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "Transaction State Machine",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Operation result (transition outcome, allowed events, machine description, replay report)",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "typing"
+    ],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "requires": [],
+  "tags": [
+    "domain",
+    "marketplace",
+    "state-machine",
+    "deterministic",
+    "core-spine"
+  ],
+  "trust_tier": "platform",
+  "version": "1.0.0",
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
+}
