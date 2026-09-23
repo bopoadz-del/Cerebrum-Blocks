@@ -1,10 +1,10 @@
-{
+﻿{
   "manifest": {
     "domain_id": "marketplace_ops",
     "version": "0.1.0",
-    "name": "Marketplace Ops - candidate pack",
-    "description": "Candidate Domain Pack for gig-economy marketplaces (task marketplaces, food delivery, ride share, two-sided transactions). Assembles the thirteen certified, signed marketplace blocks: transaction lifecycle, escrow payments, listings, bidding, reputation, messaging, dispatch, geolocation, surge pricing, disputes, insurance compliance, loyalty referrals, and vendor catalogs. CANDIDATE: not yet domain-approved - requires domain expert review before production authority.",
-    "certification": "candidate",
+    "name": "Marketplace Ops",
+    "description": "Domain-approved pack for gig-economy marketplaces (task marketplaces, food delivery, ride share, two-sided transactions). Assembles the thirteen certified, signed marketplace blocks: transaction lifecycle, escrow payments, listings, bidding, reputation, messaging, dispatch, geolocation, surge pricing, disputes, insurance compliance, loyalty referrals, and vendor catalogs. Domain-approved by the platform owner on 2026-09-23.",
+    "certification": "domain_approved",
     "donor_repo": null,
     "donor_commit": null
   },
@@ -63,7 +63,7 @@
       "inputs": [{"name": "amount", "type": "decimal"}, {"name": "rate", "type": "decimal"}, {"name": "fixed", "type": "decimal"}],
       "output": {"name": "fee", "type": "decimal"},
       "units": {"output": "currency"},
-      "certification": "candidate"
+      "certification": "domain_approved"
     },
     {
       "formula_id": "mp.surge_fare",
@@ -75,7 +75,7 @@
       "inputs": [{"name": "base", "type": "decimal"}, {"name": "per_km", "type": "decimal"}, {"name": "km", "type": "decimal"}, {"name": "per_min", "type": "decimal"}, {"name": "min", "type": "decimal"}, {"name": "multiplier", "type": "decimal"}],
       "output": {"name": "total", "type": "decimal"},
       "units": {"output": "currency"},
-      "certification": "candidate"
+      "certification": "domain_approved"
     }
   ],
   "decision_tables": [
@@ -90,7 +90,7 @@
         {"when": {"demand_supply_ratio": {"op": "ge", "value": 0}}, "then": {"multiplier": "1.00"}}
       ],
       "default_outcome": {"multiplier": "1.00"},
-      "certification": "candidate"
+      "certification": "domain_approved"
     },
     {
       "table_id": "mp.dispatch_weights",
@@ -100,7 +100,7 @@
         {"when": {}, "then": {"skills": 0.40, "distance": 0.30, "load": 0.15, "reputation": 0.15}}
       ],
       "default_outcome": {"skills": 0.40, "distance": 0.30, "load": 0.15, "reputation": 0.15},
-      "certification": "candidate"
+      "certification": "domain_approved"
     }
   ],
   "workflows": [
@@ -119,7 +119,7 @@
         {"from": "in_progress", "to": "disputed", "permitted_actors": ["customer", "provider"], "evidence_required": ["evidence_digest"]}
       ],
       "immutable_states": ["reviewed", "cancelled", "refunded"],
-      "certification": "candidate"
+      "certification": "domain_approved"
     },
     {
       "workflow_id": "mp.order_lifecycle",
@@ -135,7 +135,7 @@
         {"from": "delivered", "to": "reviewed", "permitted_actors": ["customer"], "evidence_required": []}
       ],
       "immutable_states": ["reviewed", "cancelled", "refunded"],
-      "certification": "candidate"
+      "certification": "domain_approved"
     },
     {
       "workflow_id": "mp.trip_lifecycle",
@@ -151,7 +151,7 @@
         {"from": "completed", "to": "reviewed", "permitted_actors": ["customer"], "evidence_required": []}
       ],
       "immutable_states": ["reviewed", "cancelled", "refunded"],
-      "certification": "candidate"
+      "certification": "domain_approved"
     }
   ],
   "approvals": [
@@ -165,7 +165,7 @@
       "self_approval": "prohibited",
       "payload_binding": "required",
       "replay_prevention": "required",
-      "certification": "candidate"
+      "certification": "domain_approved"
     }
   ],
   "actions": {

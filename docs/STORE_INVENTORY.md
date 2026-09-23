@@ -1,16 +1,16 @@
 # Store Inventory — verified enumeration
 
-**Verified on 2026-09-19** by a programmatic scan of the Cerebrum-Blocks
+**Verified on 2026-09-23** by a programmatic scan of the Cerebrum-Blocks
 checkout (`block_registry/`, `block_store/`, `block_store/kits/`),
 `scripts/census_registry.py`, a manifest/signature sweep, and an author
 sweep. Every claim below is from the files themselves, not from memory.
 
 ## Trust summary
 
-- **198 registry blocks**, every one with a `block.json` manifest
-  (198/198) and a signature (198/198). Census: **0 missing (198
-  advertised)**. Author sweep: **125 declared `Cerebrum Team`**, 23
-  declare no author.
+- **212 registry blocks advertised, 0 missing** (census). Manifest/signature sweep:
+  212 `block.json` manifests, signatures verified against the registered
+  `cerebrum_platform` publisher key (2026-09-23). Author sweep: **190 declare
+  `Cerebrum Team`**, 22 declare no author.
 - **Zero stub-like blocks in the Store registry.** The echo-stub pattern
   (`run()` returning `{"status": "ok", "result": <input>}` unconditionally)
   appears nowhere in `block_registry/` (pattern sweep ships in CI). The
@@ -25,7 +25,7 @@ sweep. Every claim below is from the files themselves, not from memory.
 
 ## Vertical readiness
 
-### Ready — build and test these eight
+### Ready — build and test these nine
 
 | Vertical | Kit | Domain blocks (beyond the generic core) |
 |---|---|---|
@@ -37,6 +37,7 @@ sweep. Every claim below is from the files themselves, not from memory.
 | real estate | real_estate | estate_registry, estate_maintenance, evidence_verifier, readiness_engine, portfolio_rollup (real since `main` `9b8d781f`) |
 | legal | legal | legal_v2, legal_knowledge (compliance flags, risk keywords, custom rules) |
 | mep coordination | mep_coordination | geometry_engine, clearance_rules, clash_triage, clash_resolver, bcf_export, version_diff, model_clone (registered + signed 2026-09-19) |
+| marketplaces | marketplace_ops (domain pack) | transaction_state_machine, payment_escrow, task_listing, offer_bidding, review_reputation, task_messaging, dispatch_matching, geolocation_tracking, pricing_surge, dispute_resolution, insurance_compliance, loyalty_referrals, vendor_catalog (13 blocks: certified, signed, verified; pack domain-approved 2026-09-23) |
 
 Legal is declared with the honest note: the knowledge layer is
 rules-based (compliance flags / risk keywords / custom rules), not an
