@@ -178,6 +178,9 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "dispatch_matching": ("app.blocks.dispatch_matching", "DispatchMatchingBlock"),
     "geolocation_tracking": ("app.blocks.geolocation_tracking", "GeolocationTrackingBlock"),
     "pricing_surge": ("app.blocks.pricing_surge", "PricingSurgeBlock"),
+    "dispute_resolution": ("app.blocks.dispute_resolution", "DisputeResolutionBlock"),
+    "insurance_compliance": ("app.blocks.insurance_compliance", "InsuranceComplianceBlock"),
+    "loyalty_referrals": ("app.blocks.loyalty_referrals", "LoyaltyReferralsBlock"),
 }
 
 

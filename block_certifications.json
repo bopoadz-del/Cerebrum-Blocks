@@ -1193,6 +1193,42 @@
       "fixture": "in-test generated fare payloads with controlled ratios; assertions are on exact Decimal breakdowns, tier step-ups, cap enforcement and totals process() returns.",
       "certified": true,
       "include_in_ci": true
+    },
+    {
+      "block": "dispute_resolution",
+      "module": "app.blocks.dispute_resolution",
+      "class": "DisputeResolutionBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_dispute_resolution.py"
+      ],
+      "fixture": "in-test generated dispute payloads with party lists, evidence digests and step windows; assertions are on the state lifecycle, party/platform gates, escalation deadlines and history process() returns.",
+      "certified": false,
+      "include_in_ci": false
+    },
+    {
+      "block": "insurance_compliance",
+      "module": "app.blocks.insurance_compliance",
+      "class": "InsuranceComplianceBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_insurance_compliance.py"
+      ],
+      "fixture": "in-test generated policy records with validity windows and verticals; assertions are on covered lines, explicit gaps, expiry handling and incident verdicts process() returns.",
+      "certified": false,
+      "include_in_ci": false
+    },
+    {
+      "block": "loyalty_referrals",
+      "module": "app.blocks.loyalty_referrals",
+      "class": "LoyaltyReferralsBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_loyalty_referrals.py"
+      ],
+      "fixture": "in-test generated referral and credit payloads with step numbers; assertions are on two-sided grants, caps, expiry, FIFO redemption rows and Decimal balances process() returns.",
+      "certified": false,
+      "include_in_ci": false
     }
   ]
 }

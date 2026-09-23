@@ -1,0 +1,109 @@
+{
+  "acceptance": [
+    {
+      "check": "errors on an unknown or missing action",
+      "id": "unknown_action",
+      "status": "failed"
+    },
+    {
+      "check": "refuses or errors when a required input is absent",
+      "id": "missing_required_input",
+      "status": "failed"
+    },
+    {
+      "check": "control-delete mutation turns the block's tests red",
+      "id": "control_delete",
+      "status": "failed"
+    }
+  ],
+  "author": "Cerebrum Team",
+  "description": "Deterministic marketplace insurance gate: per-vertical required coverage lines, policy validity windows, explicit gap reporting, and incident intake with the coverage verdict attached.",
+  "execution": {
+    "entrypoint": "block.py",
+    "image": "ghcr.io/cerebrum-blocks/insurance_compliance:latest",
+    "type": "python"
+  },
+  "id": "insurance_compliance",
+  "inputs": [
+    {
+      "description": "JSON payload for the selected operation",
+      "name": "input",
+      "required": false,
+      "type": "json"
+    },
+    {
+      "default": "verify_coverage",
+      "description": "Compliance operation",
+      "name": "operation",
+      "options": [
+        "register_policy",
+        "verify_coverage",
+        "required_coverage",
+        "incident_intake"
+      ],
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "layer": 3,
+  "name": "Insurance Compliance",
+  "never": [],
+  "outputs": [
+    {
+      "description": "Compliance operation result (registered policy, coverage verdict with gaps, required lines, incident record)",
+      "name": "result",
+      "type": "json"
+    }
+  ],
+  "permissions": {
+    "blocks": [],
+    "filesystem": false,
+    "imports": [
+      "datetime",
+      "typing"
+    ],
+    "network": false
+  },
+  "publisher_id": "cerebrum_platform",
+  "reads": [
+    {
+      "kind": "caller",
+      "scope": "input"
+    }
+  ],
+  "requires": [],
+  "tags": [
+    "domain",
+    "marketplace",
+    "insurance",
+    "compliance",
+    "trust",
+    "deterministic"
+  ],
+  "trust_tier": "platform",
+  "ui_schema": [
+    {
+      "label": "JSON payload for the selected operation",
+      "name": "input",
+      "widget": "json"
+    },
+    {
+      "label": "Operation",
+      "name": "operation",
+      "options": [
+        "register_policy",
+        "verify_coverage",
+        "required_coverage",
+        "incident_intake"
+      ],
+      "widget": "select"
+    }
+  ],
+  "version": "1.0.0",
+  "writes": [
+    {
+      "kind": "caller",
+      "scope": "output"
+    }
+  ]
+}
