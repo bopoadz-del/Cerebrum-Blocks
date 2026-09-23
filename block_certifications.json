@@ -1203,8 +1203,8 @@
         "tests/blocks/test_dispute_resolution.py"
       ],
       "fixture": "in-test generated dispute payloads with party lists, evidence digests and step windows; assertions are on the state lifecycle, party/platform gates, escalation deadlines and history process() returns.",
-      "certified": false,
-      "include_in_ci": false
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "insurance_compliance",
@@ -1215,8 +1215,8 @@
         "tests/blocks/test_insurance_compliance.py"
       ],
       "fixture": "in-test generated policy records with validity windows and verticals; assertions are on covered lines, explicit gaps, expiry handling and incident verdicts process() returns.",
-      "certified": false,
-      "include_in_ci": false
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "loyalty_referrals",
@@ -1227,8 +1227,8 @@
         "tests/blocks/test_loyalty_referrals.py"
       ],
       "fixture": "in-test generated referral and credit payloads with step numbers; assertions are on two-sided grants, caps, expiry, FIFO redemption rows and Decimal balances process() returns.",
-      "certified": false,
-      "include_in_ci": false
+      "certified": true,
+      "include_in_ci": true
     }
   ]
 }
