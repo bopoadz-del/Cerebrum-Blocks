@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic marketplace insurance gate: per-vertical required coverage lines, policy validity windows, explicit gap reporting, and incident intake with the coverage verdict attached.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "c5fd82d7e860b7fd4c0512dd0340ec3e8ec5bcc1b0db7385c5d3bb20c4695164",
+    "block.py": "c7b0522298c32976839aa293d33b9eee0fc085dcf18c6a692ca74f05741df1f4"
+  },
   "execution": {
     "entrypoint": "block.py",
     "image": "ghcr.io/cerebrum-blocks/insurance_compliance:latest",
@@ -72,6 +77,7 @@
     }
   ],
   "requires": [],
+  "signature": "BbwJEuOXgWFqFFYxDIeMgdqdtmb4tQanHKAiWT7NV8lefSl5exOAzII+b0crWjIBzFoGQ/kWndzinsyiUJCCBA==",
   "tags": [
     "domain",
     "marketplace",

@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic task-scoped message threads: thread creation, participant-gated sends, moderation flags, after-cursor listing, and dispute-ready evidence bundles. Not an LLM block; generative conversation stays with the chat block.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "e37aa3f9f7f2eac805fc4a9b896cd924b992d16700824e1e18b4f629a62b41f7",
+    "block.py": "dc63cb018597bcd08ec92ca415ca486e721978288ef337a0a7d3af115a9f16b0"
+  },
   "execution": {
     "entrypoint": "block.py",
     "image": "ghcr.io/cerebrum-blocks/task_messaging:latest",
@@ -78,6 +83,7 @@
     }
   ],
   "requires": [],
+  "signature": "LqTnlpT+S6Dr7ygiAIzedtKrkbBjRkpkhNaIaNJK4C1ztkF/NI0YnKUNX+qnLEqtJjwnUjgq/51clxS8Nsf5CQ==",
   "tags": [
     "domain",
     "marketplace",

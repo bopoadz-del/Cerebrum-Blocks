@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic marketplace dispute lifecycle: party-gated opening and evidence submission by digest, platform-only resolution with recorded reasoning, sequence-based auto-escalation deadlines, and an auditable history.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "f1268a238cb2617e176b15554931d5bd926578f8d54591474b2bf04a81d85e1b",
+    "block.py": "a53328a1044d70eca1476cd5bd4e8ff2cccc847c69036189b7ba9910cea278b2"
+  },
   "execution": {
     "entrypoint": "block.py",
     "image": "ghcr.io/cerebrum-blocks/dispute_resolution:latest",
@@ -78,6 +83,7 @@
   "requires": [
     "evidence_or_refuse"
   ],
+  "signature": "BwE5+XUyEOXHv4BEuUoCMuVLdgRLFcUIenQwAQ8E/1FIixJqj/TMABH/0obs+H2PgpDTZwY68nPnSI3amhXZCQ==",
   "tags": [
     "domain",
     "marketplace",

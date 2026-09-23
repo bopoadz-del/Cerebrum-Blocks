@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic fail-closed lifecycle state machine for marketplace entities (task, order, trip, transaction verticals) with actor guards, idempotent replay and a per-entity audit trail.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "dbbb7a5ab6c851b30f8f8593c44f7b7e53e353e57654bf9092f9090d16c58324",
+    "block.py": "84dc9260dc333b1a4e55ba38a33fbfbd45573778a55bb772537fa476ace5ab32"
+  },
   "execution": {
     "entrypoint": "block.py",
     "image": "ghcr.io/cerebrum-blocks/transaction_state_machine:latest",
@@ -71,6 +76,7 @@
     }
   ],
   "requires": [],
+  "signature": "1MHvYnM0hVRNA3b9PXtkgjVadXZ86MiPA/wGR95iSqV7xua/F301bRmR+y7IAL2W8I6urQo53eD1Fkw/tBQYCg==",
   "tags": [
     "domain",
     "marketplace",

@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic marketplace loyalty: two-sided referral credits with capped uses per referrer, sequence-based expiry, FIFO redemption against purchases, and a fully auditable ledger in exact Decimal money math.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "65d82b092f271c97157e25c183ad6c01f7a867fb0c36047fbc23de507de7dc4d",
+    "block.py": "e95a25f3521b54277e0380310ec75a14680ef2ef24246aca80b65cb74c5a51c1"
+  },
   "execution": {
     "entrypoint": "block.py",
     "image": "ghcr.io/cerebrum-blocks/loyalty_referrals:latest",
@@ -76,6 +81,7 @@
     }
   ],
   "requires": [],
+  "signature": "z4z3bYZvKdPmvgQ9iPRvXbpH8S7DakZCiF5XMD7IRTkHEf7RlA0ALMCuSCTaadae5yOn/I58QWtmklAo/zY+Bw==",
   "tags": [
     "domain",
     "marketplace",

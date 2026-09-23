@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic marketplace pricing: base fare plus distance/time components, tiered surge multiplier from a caller-supplied demand/supply ratio with hard caps, and decomposed auditable totals in exact Decimal math.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "1878ee606af52380902fbdcfd216217d836103000ca566c29975c709c28d49e5",
+    "block.py": "24b3207b62ef26e4951413ba93c8d41cce89cec5b8d25f7e28b6f446a3809947"
+  },
   "execution": {
     "entrypoint": "block.py",
     "image": "ghcr.io/cerebrum-blocks/pricing_surge:latest",
@@ -75,6 +80,7 @@
     }
   ],
   "requires": [],
+  "signature": "zOZbm5/LNyzGX0kKhLUQJnsQJSFQ+VRDqzJ9asv1GdmqPDhIw/bR2c0KWtOsmtWv8NidnePxqx0TKcmXygXaCw==",
   "tags": [
     "domain",
     "marketplace",

@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic task-marketplace bidding: provider offers, customer accept/decline/counter, budget guards, actor enforcement, and an auditable weighted ranking of open offers.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "b78863d1397cbc360aae71fe71a863451a4b52acc469616867e4e89ad067e050",
+    "block.py": "2d473b916e7308daf6bfd57d9117be83686289ac84256537b996a5ca9e270938"
+  },
   "execution": {
     "entrypoint": "block.py",
     "image": "ghcr.io/cerebrum-blocks/offer_bidding:latest",
@@ -77,6 +82,7 @@
     }
   ],
   "requires": [],
+  "signature": "3q6jVmCeaqgvC5N6pAU+favKRtaVEgToMB6AgALQWd0EMLQVpHxUjrttUL0dwCthiOS5+cklO4PrWOYgfJ4pCw==",
   "tags": [
     "domain",
     "marketplace",

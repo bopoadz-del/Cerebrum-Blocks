@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic geolocation tracking: sequence-numbered position updates, haversine distance traveled, circular geofence enter/exit events, and ETA estimates from caller-supplied distance and speed.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "498efabf2634807196ef0f5911a22ae3744b9799e508e7d2b491401bc6fb8361",
+    "block.py": "65e44d38d2aea5dd559bc85f5680f4624703ec3b42908169b7839c9cd24561d2"
+  },
   "execution": {
     "entrypoint": "block.py",
     "image": "ghcr.io/cerebrum-blocks/geolocation_tracking:latest",
@@ -74,6 +79,7 @@
     }
   ],
   "requires": [],
+  "signature": "BXveUh7O115qDx9jAB9qPYQa3m9Ln0xAgiXLtsOLzwTDPhC1AS+S9PUPIl0QU5auKWRwHqA41wt6lzo0i8FEDA==",
   "tags": [
     "domain",
     "marketplace",

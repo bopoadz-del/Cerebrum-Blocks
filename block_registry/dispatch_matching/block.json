@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic job-to-worker dispatch: skill/distance/load/reputation scoring with component decomposition, capacity-guarded exclusive assignment, accept/reject lifecycle with sequence-based timeouts, and release on cancel.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "42c3c097ed8fb138d61ebfd9b4b85ffc4a210c4e9ab5d24b8a4ee0b9d7175709",
+    "block.py": "71a5f4c535af45e899552c545a103cf53b987d1173d7a5b097928cf0a6a12727"
+  },
   "execution": {
     "entrypoint": "block.py",
     "image": "ghcr.io/cerebrum-blocks/dispatch_matching:latest",
@@ -79,6 +84,7 @@
     }
   ],
   "requires": [],
+  "signature": "Dcl4nQ0LcPYavOua6yOOy6qgNsLc8xtAB0iTyy9/lQXoywlkefVzECjQ38WSuZnWNQKI07+65VZqryriMnw7DA==",
   "tags": [
     "domain",
     "marketplace",

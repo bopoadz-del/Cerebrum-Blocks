@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic escrow lifecycle for marketplace payments: hold, fee quote, release, partial release, refund, and dispute freeze, with exact Decimal fee math frozen at hold time. Delegates capture and settlement to billing/payment_split (declared requires).",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "c96dec5142d68758765c72841053de8abfb115098ecbe17ac09dc3af748ff3a1",
+    "block.py": "71d9eccfda8a9c6b7e29cb4230a99650d93fd8ac4edb23027e07af013a9cd1d5"
+  },
   "execution": {
     "entrypoint": "block.py",
     "image": "ghcr.io/cerebrum-blocks/payment_escrow:latest",
@@ -83,6 +88,7 @@
     "billing",
     "payment_split"
   ],
+  "signature": "rv8yWdqnSN41PbmJElEIRjrZaqcDq0sg4r6teIBdZykctNe/iIGyctXYRqsn1JsUv4XfAhYpSqdF8gANijOGCA==",
   "tags": [
     "domain",
     "marketplace",
