@@ -1157,6 +1157,42 @@
       "fixture": "in-test generated threads and messages including blocklisted bodies; assertions are on sequences, participant gates, moderation flags, cursors and evidence digests process() returns.",
       "certified": true,
       "include_in_ci": true
+    },
+    {
+      "block": "dispatch_matching",
+      "module": "app.blocks.dispatch_matching",
+      "class": "DispatchMatchingBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_dispatch_matching.py"
+      ],
+      "fixture": "in-test generated workers and jobs with skills, capacity and sequence steps; assertions are on candidate ranking with component scores, capacity guards, exclusive assignment and timeout lifecycle process() returns.",
+      "certified": false,
+      "include_in_ci": false
+    },
+    {
+      "block": "geolocation_tracking",
+      "module": "app.blocks.geolocation_tracking",
+      "class": "GeolocationTrackingBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_geolocation_tracking.py"
+      ],
+      "fixture": "in-test generated position sequences with real Manhattan/Jersey City coordinates and a 3 km geofence; assertions are on haversine segments, enter/exit events, out-of-order refusals and ETA math process() returns.",
+      "certified": false,
+      "include_in_ci": false
+    },
+    {
+      "block": "pricing_surge",
+      "module": "app.blocks.pricing_surge",
+      "class": "PricingSurgeBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_pricing_surge.py"
+      ],
+      "fixture": "in-test generated fare payloads with controlled ratios; assertions are on exact Decimal breakdowns, tier step-ups, cap enforcement and totals process() returns.",
+      "certified": false,
+      "include_in_ci": false
     }
   ]
 }

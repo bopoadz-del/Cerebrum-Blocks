@@ -175,6 +175,9 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "offer_bidding": ("app.blocks.offer_bidding", "OfferBiddingBlock"),
     "review_reputation": ("app.blocks.review_reputation", "ReviewReputationBlock"),
     "task_messaging": ("app.blocks.task_messaging", "TaskMessagingBlock"),
+    "dispatch_matching": ("app.blocks.dispatch_matching", "DispatchMatchingBlock"),
+    "geolocation_tracking": ("app.blocks.geolocation_tracking", "GeolocationTrackingBlock"),
+    "pricing_surge": ("app.blocks.pricing_surge", "PricingSurgeBlock"),
 }
 
 
