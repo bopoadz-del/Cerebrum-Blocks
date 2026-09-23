@@ -18,6 +18,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Deterministic delivery catalog: vendor registration with service areas, item management with exact Decimal pricing, availability toggles, keyword/category/budget search, and status snapshots. Inactive vendors cannot list items.",
+  "digests": {
+    "Dockerfile": "905bd5e509638c2df98d8f1039fba18adde147d0d7ffbf70778ca87888cd0da1",
+    "block.json": "6ab3b83f7c7cbe88a5db6e4ddc51831d560a1eb007aa7d972d31681ddf449c00",
+    "block.py": "b7c1c059780874ba22cc7329e5acb0ee9c15fe7cd762c774b0d45be03d70a922"
+  },
   "execution": {
     "entrypoint": "block.py",
     "image": "ghcr.io/cerebrum-blocks/vendor_catalog:latest",
@@ -74,6 +79,7 @@
     }
   ],
   "requires": [],
+  "signature": "8+H2keRLqhYz7Byadne++XdkWdrlCe8AEths2qZLJQlqVOzw08eZvWW9Df+cXuohZvuyASF5NHH0KseiT863AA==",
   "tags": [
     "domain",
     "marketplace",

@@ -1239,8 +1239,8 @@
         "tests/blocks/test_vendor_catalog.py"
       ],
       "fixture": "in-test generated vendor and item payloads with Decimal prices; assertions are on registration, availability gates, closed category set, search filters and inactive-vendor refusals process() returns.",
-      "certified": false,
-      "include_in_ci": false
+      "certified": true,
+      "include_in_ci": true
     }
   ]
 }
