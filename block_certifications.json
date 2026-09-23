@@ -1167,8 +1167,8 @@
         "tests/blocks/test_dispatch_matching.py"
       ],
       "fixture": "in-test generated workers and jobs with skills, capacity and sequence steps; assertions are on candidate ranking with component scores, capacity guards, exclusive assignment and timeout lifecycle process() returns.",
-      "certified": false,
-      "include_in_ci": false
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "geolocation_tracking",
@@ -1179,8 +1179,8 @@
         "tests/blocks/test_geolocation_tracking.py"
       ],
       "fixture": "in-test generated position sequences with real Manhattan/Jersey City coordinates and a 3 km geofence; assertions are on haversine segments, enter/exit events, out-of-order refusals and ETA math process() returns.",
-      "certified": false,
-      "include_in_ci": false
+      "certified": true,
+      "include_in_ci": true
     },
     {
       "block": "pricing_surge",
@@ -1191,8 +1191,8 @@
         "tests/blocks/test_pricing_surge.py"
       ],
       "fixture": "in-test generated fare payloads with controlled ratios; assertions are on exact Decimal breakdowns, tier step-ups, cap enforcement and totals process() returns.",
-      "certified": false,
-      "include_in_ci": false
+      "certified": true,
+      "include_in_ci": true
     }
   ]
 }
