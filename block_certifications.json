@@ -1121,6 +1121,42 @@
       "fixture": "in-test generated listing payloads with real coordinates (Manhattan/Jersey City/LA) exercised through haversine distance_match; assertions are on listing ids, validation errors, distances, filters and price bands process() returns.",
       "certified": true,
       "include_in_ci": true
+    },
+    {
+      "block": "offer_bidding",
+      "module": "app.blocks.offer_bidding",
+      "class": "OfferBiddingBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_offer_bidding.py"
+      ],
+      "fixture": "in-test generated offer payloads with budgets and scoring inputs; assertions are on offer states, amounts, budget/actor refusals, rank ordering and score components process() returns.",
+      "certified": false,
+      "include_in_ci": false
+    },
+    {
+      "block": "review_reputation",
+      "module": "app.blocks.review_reputation",
+      "class": "ReviewReputationBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_review_reputation.py"
+      ],
+      "fixture": "in-test generated review payloads with controlled ages and comments; assertions are on decayed scores, Laplace confidence, fraud flags and effective weights process() returns.",
+      "certified": false,
+      "include_in_ci": false
+    },
+    {
+      "block": "task_messaging",
+      "module": "app.blocks.task_messaging",
+      "class": "TaskMessagingBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_task_messaging.py"
+      ],
+      "fixture": "in-test generated threads and messages including blocklisted bodies; assertions are on sequences, participant gates, moderation flags, cursors and evidence digests process() returns.",
+      "certified": false,
+      "include_in_ci": false
     }
   ]
 }

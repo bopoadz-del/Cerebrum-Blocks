@@ -172,6 +172,9 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "transaction_state_machine": ("app.blocks.transaction_state_machine", "TransactionStateMachineBlock"),
     "payment_escrow": ("app.blocks.payment_escrow", "PaymentEscrowBlock"),
     "task_listing": ("app.blocks.task_listing", "TaskListingBlock"),
+    "offer_bidding": ("app.blocks.offer_bidding", "OfferBiddingBlock"),
+    "review_reputation": ("app.blocks.review_reputation", "ReviewReputationBlock"),
+    "task_messaging": ("app.blocks.task_messaging", "TaskMessagingBlock"),
 }
 
 
