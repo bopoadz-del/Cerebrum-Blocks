@@ -1229,6 +1229,18 @@
       "fixture": "in-test generated referral and credit payloads with step numbers; assertions are on two-sided grants, caps, expiry, FIFO redemption rows and Decimal balances process() returns.",
       "certified": true,
       "include_in_ci": true
+    },
+    {
+      "block": "vendor_catalog",
+      "module": "app.blocks.vendor_catalog",
+      "class": "VendorCatalogBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_vendor_catalog.py"
+      ],
+      "fixture": "in-test generated vendor and item payloads with Decimal prices; assertions are on registration, availability gates, closed category set, search filters and inactive-vendor refusals process() returns.",
+      "certified": false,
+      "include_in_ci": false
     }
   ]
 }

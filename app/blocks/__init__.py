@@ -181,6 +181,7 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "dispute_resolution": ("app.blocks.dispute_resolution", "DisputeResolutionBlock"),
     "insurance_compliance": ("app.blocks.insurance_compliance", "InsuranceComplianceBlock"),
     "loyalty_referrals": ("app.blocks.loyalty_referrals", "LoyaltyReferralsBlock"),
+    "vendor_catalog": ("app.blocks.vendor_catalog", "VendorCatalogBlock"),
 }
 
 
