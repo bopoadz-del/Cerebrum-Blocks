@@ -74,10 +74,42 @@ this layer exists to prevent, and it would arrive signed.
 15 of the 17 kits have a sheet, carrying **994 questions** — 647 `[GATE]`, 279
 `[GAP]`, 68 unmarked (all of them FM's).
 
-**`datacentre` and `offshore_marine` have no sheet.** They still run, on the
-derived per-quantity questions, and every caller that reports interview state says
-`questions_source: derived` and never reports them ready. A kit with no sheet and a
-kit whose sheet is fully answered both have nothing outstanding; reporting them
-alike would call a domain nobody has interviewed ready to gate. Adding an
-eighteenth kit without a sheet fails `test_all_fifteen_sheets_are_installed_...`
-rather than shipping quietly.
+`datacentre` and `offshore_marine` have no sheet. **Neither is un-interviewed** —
+see below.
+
+## The other register: `design_basis.yaml`
+
+Six kits were built with their own figure register before the question sheets
+existed, and it is the better artefact by a distance. The figure names are the
+domain's own — `lay_tension_min_kn`, `ups_autonomy_min_at_full_load`, not
+`dimension` — each entry carries the qualifiers that figure is meaningless
+without, and the file declares its own scope: *"spread- and vessel-specific, never
+carry to another spread or sister vessel"*. `og_operations` calls its block
+`operating_basis`, because that is what it is.
+
+| kit | register | state |
+|---|---|---|
+| **datacentre** | `design_basis` | **17 of 18 answered**, facility_01. Open: `pue_guaranteed` |
+| fire_protection | `design_basis` | declared, 11 open |
+| offshore_marine | `design_basis` | declared, 11 open |
+| og_operations | `operating_basis` | declared, 12 open |
+| rail | `design_basis` | declared, 10 open |
+| water_treatment | `design_basis` | declared, 9 open |
+
+**Where a kit has a register, that IS its register** and nothing generates a second
+one beside it. A generated per-quantity `figures:` block was written over all six,
+and on the one whose register was *filled in* it reported 9 unanswered figures for a
+facility that had answered 17 of 18 — an answered domain presented as an empty one,
+while the real file sat in the same directory. The block is gone from those six,
+`scripts/add_figure_questions.py` now skips them and says so, and a test per kit
+fails if one comes back.
+
+Four of the six (fire_protection, og_operations, rail, water_treatment) have **both**
+a register and a sheet. They are not alternatives: the register holds *this asset's*
+figures, the sheet asks *the organisation's* rules. Both have to be answered, and
+`questions_source` reports `design_basis+owner_sheet`.
+
+An empty register is not "nothing to ask" — it is everything still to ask. A kit
+with neither a sheet nor a register reports `questions_source: derived` and is never
+reported ready; adding an eighteenth kit with neither fails a test rather than
+shipping quietly.

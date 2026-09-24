@@ -197,24 +197,71 @@ class ReasoningKitBlock(UniversalBlock):
         that a domain nobody has interviewed is ready.
         """
         interview = getattr(kit, "interview", None)
-        if interview is None:
-            unfilled = list(getattr(getattr(kit, "manifest", None), "unfilled", lambda: [])())
-            return {
+        basis = getattr(kit, "design_basis", None)
+        manifest = getattr(kit, "manifest", None)
+
+        state: Dict[str, Any] = {
+            "sheet_supplied": interview is not None,
+            "design_basis_supplied": basis is not None,
+        }
+
+        # The kit's OWN figure register, where it has one. This comes first
+        # because it is the only source that can already hold answers: one of the
+        # six is filled in. Reporting such a kit as un-interviewed, which an
+        # earlier version did, calls an answered domain an empty one.
+        if basis is not None:
+            state["design_basis"] = basis.status()
+
+        if interview is not None:
+            state.update(interview.status({}))
+            state["title"] = interview.title
+            state["next"] = [q.as_dict() for q in interview.outstanding({})[:5]]
+
+        if basis is not None:
+            # Top-level, so no caller can read "1 figure open" as "nobody has
+            # interviewed this domain". One of the six registers is filled.
+            state["interview_ran"] = basis.ran
+
+        if basis is not None and interview is not None:
+            # Both, and they answer different questions: the register holds this
+            # facility's figures, the sheet asks the organisation's rules.
+            state["questions_source"] = "design_basis+owner_sheet"
+            state["note"] = (
+                f"Two sources, and they are not alternatives. The figure register "
+                f"({len(basis.answered)}/{len(basis.figures)} answered) holds the "
+                f"figures for {basis.facility or 'this asset'}; the owner's question "
+                f"sheet ({len(interview.outstanding({}))} gating questions outstanding) "
+                f"asks the organisation's own rules. Both have to be answered."
+            )
+        elif basis is not None:
+            state["questions_source"] = "design_basis"
+            state["figures"] = len(basis.figures)
+            state["answered"] = len(basis.answered)
+            state["outstanding"] = len(basis.open)
+            state["ready"] = basis.ran and not basis.open
+            if not basis.ran:
+                state["note"] = (
+                    "This kit's figure register is declared and EMPTY — no interview "
+                    "has run, every value is null. Nothing needing one of these "
+                    "figures can be answered.")
+            else:
+                state["note"] = (
+                    f"Answered from this kit's own figure register for "
+                    f"{basis.facility or 'its declared scope'}: "
+                    f"{len(basis.answered)} of {len(basis.figures)} figures. "
+                    f"{basis.scope}")
+        elif interview is not None:
+            state["questions_source"] = "owner_sheet"
+        else:
+            unfilled = list(getattr(manifest, "unfilled", lambda: [])())
+            state.update({
                 "questions_source": "derived",
-                "sheet_supplied": False,
                 "note": (
-                    "No question sheet has been supplied for this kit. The questions it "
-                    "asks are DERIVED from its quantity names, one per quantity, and are "
-                    "not the domain owner's own. Nothing here is answered."
+                    "This kit has neither a question sheet nor a figure register. The "
+                    "questions it asks are DERIVED from its quantity names, one per "
+                    "quantity, and are not the domain owner's own. Nothing is answered."
                 ),
                 "outstanding": len(unfilled),
                 "ready": False,
-            }
-        state = interview.status({})
-        state.update({
-            "questions_source": "owner_sheet",
-            "sheet_supplied": True,
-            "title": interview.title,
-            "next": [q.as_dict() for q in interview.outstanding({})[:5]],
-        })
+            })
         return state

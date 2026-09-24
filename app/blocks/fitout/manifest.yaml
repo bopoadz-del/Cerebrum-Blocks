@@ -62,9 +62,6 @@ scope_refusals:
   - pattern: "can we open on time"
     authority: "current approval and delivery status"
 
-
-
-
 # The questions this kit needs answered, and nothing else. Every value is
 # null and stays null until someone answers: the owner during the build, or
 # the operator later through /v1/reasoning/pending. An unanswered figure is

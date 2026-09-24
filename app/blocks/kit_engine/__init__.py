@@ -32,9 +32,11 @@ from app.blocks.kit_engine.invariants import (  # noqa: F401
     check_arithmetic,
 )
 from app.blocks.kit_engine.interview import (  # noqa: F401
+    DesignBasis,
     Interview,
     InterviewError,
     Question,
+    load_design_basis,
     load_interview,
     parse_interview,
 )

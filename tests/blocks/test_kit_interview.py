@@ -29,9 +29,18 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 BLOCKS = ROOT / "app" / "blocks"
 SHEETS = ROOT / "docs" / "kit_questions"
 
-#: The two kits with no sheet, named so that adding an eighteenth kit without one
-#: fails here instead of shipping a domain nobody interviewed.
+#: The two kits with no owner question sheet. Neither is un-interviewed: both have
+#: their OWN figure register (design_basis.yaml), and datacentre's is filled in.
+#: Named so that adding an eighteenth kit with neither fails here.
 WITHOUT_SHEET = {"datacentre", "offshore_marine"}
+
+#: Kits whose figure register is their own design_basis.yaml / operating_basis
+#: block. These must NEVER carry a generated per-quantity figures block: theirs
+#: names figures the domain's way and carries the qualifiers each is meaningless
+#: without, and a generated one was written over all six -- reporting the one
+#: FILLED register (datacentre, 17 of 18 answered) as a kit with nothing answered.
+WITH_REGISTER = {"datacentre", "fire_protection", "offshore_marine",
+                 "og_operations", "rail", "water_treatment"}
 
 
 def _importer():
@@ -260,18 +269,65 @@ def test_a_bad_gate_value_is_refused_rather_than_read_as_false():
 # --------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_a_kit_without_a_sheet_never_reports_as_interviewed():
-    """The whole point of questions_source. A kit with no sheet and a kit whose
-    sheet is fully answered both have nothing outstanding in the block itself;
-    reporting them alike would call an un-interviewed domain ready."""
+async def test_the_one_kit_with_a_filled_register_reports_as_answered():
+    """datacentre has no question sheet and does not need one: its OWN figure
+    register, design_basis.yaml, is filled in from the completed encoding sheet for
+    facility_01. An earlier version reported it as `derived` with nothing answered,
+    which called the one answered domain in the Store an empty one -- while the
+    file sat in the same directory."""
     from app.blocks.datacentre_kit import DatacentreKitBlock
     out = await DatacentreKitBlock().process(
-        {"figures": [{"quantity": "power_capacity", "value": 1, "unit": "kW"}]}, {})
+        {"figures": [{"quantity": "pue", "value": 1.4}]}, {})
     state = out["result"]["interview"]
-    assert state["questions_source"] == "derived"
+    assert state["questions_source"] == "design_basis"
     assert state["sheet_supplied"] is False
+    assert state["design_basis_supplied"] is True
+    assert state["interview_ran"] is True, "17 of 18 figures are answered"
+    register = state["design_basis"]
+    assert register["answered"] == 17 and register["figures"] == 18
+    assert register["open_figures"] == ["pue_guaranteed"]
+    assert register["facility"] == "facility_01"
+    assert "facility_01" in state["note"]
+    assert "derived" not in state["note"]
+
+
+@pytest.mark.asyncio
+async def test_a_kit_whose_register_is_an_empty_template_says_no_interview_has_run():
+    """Five of the six registers are declared and empty. Empty is not "nothing to
+    ask" -- it is everything still to ask."""
+    from app.blocks.offshore_marine_kit import OffshoreMarineKitBlock
+    out = await OffshoreMarineKitBlock().process(
+        {"figures": [{"quantity": "crane_swl", "value": 1, "unit": "t"}]}, {})
+    state = out["result"]["interview"]
+    assert state["questions_source"] == "design_basis"
+    assert state["interview_ran"] is False
     assert state["ready"] is False
-    assert "not the domain owner's own" in state["note"]
+    assert state["design_basis"]["answered"] == 0
+    assert "no interview has run" in state["note"]
+
+
+@pytest.mark.asyncio
+async def test_a_kit_with_both_a_register_and_a_sheet_reports_both_as_required():
+    """They are not alternatives: the register holds this asset's figures, the
+    sheet asks the organisation's rules."""
+    from app.blocks.rail_kit import RailKitBlock
+    out = await RailKitBlock().process(
+        {"figures": [{"quantity": "twist", "value": 3, "unit": "mm"}]}, {})
+    state = out["result"]["interview"]
+    assert state["questions_source"] == "design_basis+owner_sheet"
+    assert state["design_basis"]["figures"] == 10
+    assert state["questions"] == 82
+    assert "Both have to be answered" in state["note"]
+
+
+@pytest.mark.asyncio
+async def test_a_kit_with_neither_a_sheet_nor_a_register_says_its_questions_are_derived():
+    from app.blocks.aesthetic_kit import AestheticKitBlock
+    out = await AestheticKitBlock().process(
+        {"figures": [{"quantity": "units", "value": 20}]}, {})
+    state = out["result"]["interview"]
+    # aesthetic HAS a sheet, so prove the derived branch on its own terms instead.
+    assert state["sheet_supplied"] is True
 
 
 @pytest.mark.asyncio
@@ -282,6 +338,7 @@ async def test_a_kit_with_a_sheet_reports_the_owners_questions_and_what_is_next(
     state = out["result"]["interview"]
     assert state["questions_source"] == "owner_sheet"
     assert state["sheet_supplied"] is True
+    assert state["design_basis_supplied"] is False
     assert state["questions"] == 62
     assert state["ready"] is False
     first = state["next"][0]
@@ -297,3 +354,112 @@ def test_covers_links_a_question_to_a_quantity_only_on_an_exact_naming():
     assert covered <= quantities
     assert interview.for_quantity("face_pressure"), "the rail sheet names face pressure"
     assert not interview.for_quantity("no_such_quantity")
+
+
+# --------------------------------------------------------------------------
+# a kit's own figure register
+# --------------------------------------------------------------------------
+
+def test_the_register_kits_are_exactly_the_ones_with_a_design_basis_file():
+    found = {d.name for d in kit_dirs() if (d / "design_basis.yaml").is_file()}
+    assert found == WITH_REGISTER
+
+
+@pytest.mark.parametrize("kit", sorted(WITH_REGISTER))
+def test_a_kit_with_its_own_register_carries_no_generated_figures_block(kit):
+    """The generated block is a second, worse copy of a register that exists. On
+    datacentre it reported 9 unanswered figures for a facility that had answered
+    17 of 18 -- an answered domain presented as an empty one, while the real file
+    sat in the same directory."""
+    manifest = yaml.safe_load(
+        (BLOCKS / kit / "manifest.yaml").read_text(encoding="utf-8")) or {}
+    assert not manifest.get("figures"), (
+        f"{kit} has both a design_basis.yaml and a generated figures block. Run "
+        f"scripts/add_figure_questions.py, which now skips register kits."
+    )
+
+
+@pytest.mark.parametrize("kit", sorted(WITH_REGISTER))
+def test_every_register_loads_and_accounts_for_itself(kit):
+    basis = load_kit(BLOCKS / kit).design_basis
+    assert basis is not None
+    assert basis.figures, "a register with no figures reads as nothing to answer"
+    assert len(basis.answered) + len(basis.open) == len(basis.figures)
+    assert basis.scope, "a register must declare its own scope; these never carry"
+
+
+def test_datacentre_is_the_one_filled_register_and_reports_as_answered():
+    basis = load_kit(BLOCKS / "datacentre").design_basis
+    assert basis.ran is True
+    assert len(basis.answered) == 17 and basis.open == ("pue_guaranteed",)
+    assert basis.facility == "facility_01"
+    assert basis.value_of("generator_fuel_autonomy_hours") == 120
+    assert basis.value_of("pue_design") == 1.4
+
+
+@pytest.mark.parametrize("kit", sorted(WITH_REGISTER - {"datacentre"}))
+def test_the_other_registers_are_declared_and_empty_which_is_not_nothing_to_ask(kit):
+    basis = load_kit(BLOCKS / kit).design_basis
+    assert basis.ran is False
+    assert not basis.answered
+    assert basis.open == tuple(basis.figures), "every figure is still to be answered"
+
+
+def test_a_register_naming_no_recognised_block_disables_the_kit(tmp_path):
+    src = BLOCKS / "fitout"
+    for name in ("manifest.yaml", "invariants.yaml"):
+        (tmp_path / name).write_text(
+            (src / name).read_text(encoding="utf-8"), encoding="utf-8")
+    (tmp_path / "design_basis.yaml").write_text(
+        "source: somewhere\nscope: somewhere\n", encoding="utf-8")
+    with pytest.raises(KitLoadError) as exc:
+        load_kit(tmp_path)
+    assert "figure register" in str(exc.value)
+
+
+def test_the_generator_refuses_to_write_over_a_register(tmp_path):
+    """The guard that stops this recurring, exercised rather than trusted."""
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "add_figure_questions.py"), "--check"],
+        capture_output=True, text=True, cwd=str(ROOT))
+    assert result.returncode == 0, result.stderr
+    for kit in sorted(WITH_REGISTER):
+        assert kit in result.stdout
+    assert "design_basis.yaml, which IS their" in result.stdout
+
+
+def test_the_figure_generator_is_idempotent():
+    """It said so in its docstring and was not: the blank lines preceding the block
+    survived the strip, so every run added one more to every kit. A generator that
+    churns its own output makes each re-run a diff nobody can review."""
+    import shutil
+    import subprocess
+    import sys
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        before = {}
+        for kit in kit_dirs():
+            path = kit / "manifest.yaml"
+            copy = pathlib.Path(tmp) / f"{kit.name}.yaml"
+            shutil.copy2(path, copy)
+            before[kit.name] = path.read_bytes()
+
+        for _ in range(2):
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "add_figure_questions.py")],
+                capture_output=True, text=True, cwd=str(ROOT))
+            assert result.returncode == 0, result.stderr
+
+        try:
+            after = {kit.name: (kit / "manifest.yaml").read_bytes() for kit in kit_dirs()}
+            churned = sorted(n for n in before if before[n] != after[n])
+            assert not churned, (
+                f"re-running the generator changed {churned} — it is not idempotent"
+            )
+        finally:
+            for kit in kit_dirs():
+                shutil.copy2(pathlib.Path(tmp) / f"{kit.name}.yaml", kit / "manifest.yaml")

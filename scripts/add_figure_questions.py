@@ -192,6 +192,12 @@ def write_block(kit: str, figures: Dict[str, Any]) -> None:
     # Replace an existing block rather than appending a second one.
     text = re.sub(r"\n# The questions this kit needs answered.*\Z", "", text, flags=re.S)
     text = re.sub(r"\nfigures:\n(?:[ \t].*\n?|\n)*\Z", "\n", text)
+    # Strip AGAIN after removing the block. The first rstrip ran before the block
+    # was cut, so the blank lines that preceded it survived and a fresh separator
+    # was added on top of them -- one more blank line in every kit on every run, in
+    # a script whose docstring says it is idempotent. A generator that churns its
+    # output makes every re-run a diff nobody can review.
+    text = text.rstrip("\n")
 
     lines = [
         "",
@@ -244,6 +250,19 @@ def main() -> int:
 
     kits = sorted(p.parent.name for p in BLOCKS.glob("*/manifest.yaml")
                   if (p.parent / "invariants.yaml").is_file())
+
+    # A kit that already has a design_basis.yaml HAS a figure register, and a
+    # better one: the figure names are the domain's own, each entry carries the
+    # qualifiers that figure is meaningless without, and the file declares its own
+    # scope. Generating a second register beside it produced one that was coarser
+    # and unanswerable -- and on the one kit whose register was FILLED IN it wrote
+    # 9 null figures over a facility that had answered 17 of 18, so the kit
+    # reported an answered domain as an empty one. The file was in the same
+    # directory the whole time and this script never read it.
+    with_register = sorted(
+        kit for kit in kits if (BLOCKS / kit / "design_basis.yaml").is_file())
+    kits = [kit for kit in kits if kit not in with_register]
+
     total_q = total_skipped = 0
     for kit in kits:
         figures, count, skipped = build_block(kit)
@@ -261,6 +280,11 @@ def main() -> int:
                 raise SystemExit(f"{kit}: a value got filled, which this must never do: {unfilled}")
         print(f"  {kit:22} {count:3} question(s) | {skipped:2} artifact quantit(ies) skipped")
     print(f"{len(kits)} kits | {total_q} questions | {total_skipped} artifacts skipped")
+    if with_register:
+        print("\nSKIPPED — these kits already have design_basis.yaml, which IS their")
+        print("figure register. Fill that file; nothing is generated beside it:")
+        for kit in with_register:
+            print(f"  {kit}")
     return 0
 
 

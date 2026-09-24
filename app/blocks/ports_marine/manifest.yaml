@@ -78,9 +78,6 @@ spec_extensions:
   claim_class:            true
   same_source:            true
 
-
-
-
 # The questions this kit needs answered, and nothing else. Every value is
 # null and stays null until someone answers: the owner during the build, or
 # the operator later through /v1/reasoning/pending. An unanswered figure is

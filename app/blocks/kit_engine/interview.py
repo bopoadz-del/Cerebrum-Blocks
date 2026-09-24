@@ -39,6 +39,12 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 import yaml
 
 QUESTIONS_FILE = "questions.yaml"
+DESIGN_BASIS_FILE = "design_basis.yaml"
+
+#: The register's own block name, in the order we look for it. A data centre has
+#: a design basis; an operating plant has an operating basis. Same shape, and the
+#: kit names it for what it is.
+REGISTER_BLOCKS = ("design_basis", "operating_basis")
 
 #: The one answer-format entry that is the answer itself rather than a field that
 #: must accompany it. Everything else in the sheet's format line is required.
@@ -170,6 +176,113 @@ class Interview:
             # answered a question this kit never asked.
             "answers_to_unknown_questions": unknown,
         }
+
+
+@dataclass(frozen=True)
+class DesignBasis:
+    """A kit's own figure register: ``design_basis.yaml``.
+
+    Six kits were built with one of these BEFORE the generic per-quantity figure
+    list existed, and it is the better artefact by a distance: the figure names are
+    the domain's own (``lay_tension_min_kn``, ``ups_autonomy_min_at_full_load``,
+    not "dimension"), each entry carries the qualifiers that figure is meaningless
+    without, and the file states its own scope -- "spread- and vessel-specific,
+    never carry to another spread or sister vessel".
+
+    It exists for exactly this: interview and provenance bookkeeping. Where a kit
+    has one, IT is the register and nothing should generate a second one beside it.
+    A generated figure list did get written over these, and on the one kit whose
+    register was filled in it reported 9 unanswered figures for a facility that had
+    answered 17 of 18 -- an answered domain presented as an empty one.
+    """
+
+    kit_dir: str
+    block: str = "design_basis"
+    source: str = ""
+    scope: str = ""
+    facility: str = ""
+    interview_status: str = ""
+    figures: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+
+    @property
+    def answered(self) -> Tuple[str, ...]:
+        return tuple(
+            name for name, spec in self.figures.items()
+            if (spec or {}).get("value") is not None
+        )
+
+    @property
+    def open(self) -> Tuple[str, ...]:
+        """Figures the register declares and nobody has answered. A null value is
+        LEGAL here and is not a stub: the figure has no value, so anything needing
+        it refuses."""
+        return tuple(
+            name for name, spec in self.figures.items()
+            if (spec or {}).get("value") is None
+        )
+
+    @property
+    def ran(self) -> bool:
+        """Whether an interview has actually put values in. Five of the six
+        registers are templates with every value null, and one is filled."""
+        return bool(self.answered)
+
+    def value_of(self, name: str) -> Any:
+        return (self.figures.get(name) or {}).get("value")
+
+    def status(self) -> Dict[str, Any]:
+        return {
+            "figures_source": self.block,
+            "source_document": f"{self.kit_dir}/{DESIGN_BASIS_FILE}",
+            "source": self.source,
+            "scope": self.scope,
+            "facility": self.facility,
+            "figures": len(self.figures),
+            "answered": len(self.answered),
+            "open": len(self.open),
+            "open_figures": list(self.open),
+            "interview_ran": self.ran,
+            # Deliberately NOT called `ready`. A filled register answers the
+            # facility it was written for; readiness is the owner's word, not a
+            # count of non-null fields.
+            "fully_answered": self.ran and not self.open,
+        }
+
+
+def load_design_basis(directory: pathlib.Path) -> Optional[DesignBasis]:
+    """The kit's own figure register, or None when it has no ``design_basis.yaml``."""
+    directory = pathlib.Path(directory)
+    path = directory / DESIGN_BASIS_FILE
+    if not path.is_file():
+        return None
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError) as exc:
+        raise InterviewError(f"{path}: unreadable: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise InterviewError(f"{path}: not a mapping")
+    # The register's block is named for what it IS: a data centre has a design
+    # basis, an operating plant has an operating basis. Enumerated rather than
+    # "whatever the first mapping is", because guessing the block would one day
+    # read a comment-block or a scope field as the figure register.
+    block = next((name for name in REGISTER_BLOCKS if name in raw), None)
+    if block is None:
+        raise InterviewError(
+            f"{path}: no figure register block — expected one of "
+            f"{', '.join(REGISTER_BLOCKS)}. A file with none reads as a kit with no "
+            f"figures to answer, which is the opposite of what this file means")
+    figures = raw.get(block)
+    if not isinstance(figures, dict):
+        raise InterviewError(f"{path}: {block} must be a mapping of figure to spec")
+    return DesignBasis(
+        kit_dir=directory.name,
+        block=block,
+        source=str(raw.get("source") or ""),
+        scope=str(raw.get("scope") or ""),
+        facility=str(raw.get("facility") or ""),
+        interview_status=str(raw.get("interview_status") or ""),
+        figures={str(k): (v or {}) for k, v in figures.items()},
+    )
 
 
 def parse_interview(raw: Any, where: str = "questions.yaml") -> Interview:

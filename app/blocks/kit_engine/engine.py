@@ -61,8 +61,10 @@ from app.blocks.kit_engine.invariants import (
     parse_invariant,
 )
 from app.blocks.kit_engine.interview import (
+    DesignBasis,
     Interview,
     InterviewError,
+    load_design_basis,
     load_interview,
 )
 from app.blocks.kit_engine.manifest import Manifest, ManifestError, parse_manifest
@@ -98,6 +100,11 @@ class Kit:
     #: which is NOT the same as a kit whose interview is complete, and every
     #: caller that reports interview state has to say which it is.
     interview: Optional[Interview] = None
+    #: The kit's own figure register, where it has one. Six kits were built with a
+    #: design_basis.yaml before the generic figure list existed, and it is the
+    #: better artefact: domain figure names, mandatory qualifiers per figure, and
+    #: its own declared scope. Where this is present it IS the register.
+    design_basis: Optional[DesignBasis] = None
 
     @property
     def name(self) -> str:
@@ -368,8 +375,13 @@ def load_kit(directory: pathlib.Path, env: Optional[Dict[str, str]] = None) -> K
             f"would ask one domain's questions and gate another's figures"
         )
 
+    try:
+        design_basis = load_design_basis(directory)
+    except InterviewError as exc:
+        raise KitLoadError(str(exc)) from exc
+
     return Kit(manifest=manifest, invariants=invariants, path=directory,
-               interview=interview)
+               interview=interview, design_basis=design_basis)
 
 
 class KitRegistry:
