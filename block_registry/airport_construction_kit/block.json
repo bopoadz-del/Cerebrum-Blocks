@@ -1,78 +1,88 @@
 {
   "acceptance": [
     {
-      "check": "INV-AC-1-OLS-QUALIFIER (qualifier at per the routing map, severity refuse): An OLS figure without {missing} cannot be acted on.",
-      "id": "inv_ac_1_ols_qualifier",
+      "check": "INV-APC-AUTH-OLS (authority at H1, severity refuse): OLS/declared-distance figure governed by ICAO Annex 14 \u2014 a lesser source is not acceptable proof",
+      "id": "inv_apc_auth_ols",
       "status": "refused"
     },
     {
-      "check": "INV-AC-2-DECLARED-DISTANCE (qualifier at per the routing map, severity refuse): A declared distance without {missing} cannot be acted on: a temporary table and a permanent one are different distances on the same runway, and 13L is not 31R.",
-      "id": "inv_ac_2_declared_distance",
+      "check": "INV-APC-OLS-QUALIFIERS (qualifier at H3, severity refuse): OLS figure missing {missing}",
+      "id": "inv_apc_ols_qualifiers",
       "status": "refused"
     },
     {
-      "check": "INV-AC-3-SAFETY-AREA (qualifier at per the routing map, severity refuse): A safety-area dimension without {missing} cannot be acted on \u2014 the required length is a function of the category and the code.",
-      "id": "inv_ac_3_safety_area",
+      "check": "INV-APC-DECLARED-DISTANCE (qualifier at H3, severity refuse): declared distance missing {missing}",
+      "id": "inv_apc_declared_distance",
       "status": "refused"
     },
     {
-      "check": "INV-AC-4-PCN-QUALIFIER (qualifier at per the routing map, severity refuse): A PCN without {missing} is a number that cannot be compared to any ACN.",
-      "id": "inv_ac_4_pcn_qualifier",
+      "check": "INV-APC-SAFETY-AREA (qualifier at H3, severity refuse): safety area missing {missing}",
+      "id": "inv_apc_safety_area",
       "status": "refused"
     },
     {
-      "check": "INV-AC-5-UNITS-DATUM (unit_discipline at per the routing map, severity refuse): Units and datum, stated and not mixed: metres against feet, WGS-84 against a local grid, or magnetic against true are all the same defect.",
-      "id": "inv_ac_5_units_datum",
+      "check": "INV-APC-PCN (qualifier at H3, severity refuse): PCN/ACR missing {missing}",
+      "id": "inv_apc_pcn",
       "status": "refused"
     },
     {
-      "check": "INV-AC-6-PROVENANCE (provenance at per the routing map, severity refuse): A figure does not carry across runway, airport or revision \u2014 and 'a similar runway' is not this runway.",
-      "id": "inv_ac_6_provenance",
+      "check": "INV-APC-UNITS-DATUM (unit_discipline at H2, severity refuse): units ambiguous \u2014 aviation works in feet, construction in metres",
+      "id": "inv_apc_units_datum",
       "status": "refused"
     },
     {
-      "check": "INV-AC-7-NAVAID-LIVE (currency at per the routing map, severity refuse): NAVAID answer with no current status \u2014 the state is UNKNOWN. A siting drawing shows where the aerial is, not whether it is working.",
-      "id": "inv_ac_7_navaid_live",
+      "check": "INV-APC-WGS84 (unit_discipline at H2, severity refuse): position without WGS-84 confirmation",
+      "id": "inv_apc_wgs84",
       "status": "refused"
     },
     {
-      "check": "INV-AC-8-NOTAM-CURRENCY (currency at per the routing map, severity refuse): A declared distance is only current until the next NOTAM or AIRAC issue \u2014 currency here is a cycle, not a clock.",
-      "id": "inv_ac_8_notam_currency",
+      "check": "INV-APC-MAGNETIC (unit_discipline at H2, severity refuse): bearing without magnetic/true basis \u2014 runway designator is magnetic",
+      "id": "inv_apc_magnetic",
       "status": "refused"
     },
     {
-      "check": "INV-AC-9-PHASING-LIVE (currency at per the routing map, severity refuse): Phasing plan revision unverifiable \u2014 a works figure without the approved revision it belongs to cannot be acted on.",
-      "id": "inv_ac_9_phasing_live",
+      "check": "INV-APC-PROVENANCE (provenance at H3, severity refuse): forbidden derivation: {value}",
+      "id": "inv_apc_provenance",
       "status": "refused"
     },
     {
-      "check": "INV-AC-13-PCN-CURRENCY (currency at per the routing map, severity refuse): A PCN is superseded by the next pavement evaluation or an overlay \u2014 the number survives the pavement it described.",
-      "id": "inv_ac_13_pcn_currency",
+      "check": "INV-APC-CURRENCY (currency at H3, severity refuse): declared distance stale on {value}",
+      "id": "inv_apc_currency",
       "status": "refused"
     },
     {
-      "check": "INV-AC-14-OLS-CURRENCY (currency at per the routing map, severity refuse): An OLS assessment is superseded the moment an obstacle is erected or works commence inside the surface.",
-      "id": "inv_ac_14_ols_currency",
+      "check": "INV-APC-CURRENCY-OLS-GEOMETRY (currency at H3, severity refuse): OLS geometry is stale once an obstacle change or a safeguarding revision has happened",
+      "id": "inv_apc_currency_ols_geometry",
       "status": "refused"
     },
     {
-      "check": "INV-AC-10-AUTHORITY (authority at per the routing map, severity refuse): This figure comes from the approved table, the safeguarding assessment or the pavement evaluation. A design drawing or a site record is a different class of thing, and scaling off a drawing is the classic substitution.",
-      "id": "inv_ac_10_authority",
+      "check": "INV-APC-CURRENCY-ILS (currency at H3, severity refuse): ILS critical area is stale once a NAVAID change or siting revision has happened",
+      "id": "inv_apc_currency_ils",
       "status": "refused"
     },
     {
-      "check": "INV-AC-11-GROUNDING (grounding at per the routing map, severity refuse): {quantity} = {value} is not grounded: no source was supplied for it. This kit never asserts a value of its own.",
-      "id": "inv_ac_11_grounding",
+      "check": "INV-APC-CURRENCY-RSA (currency at H3, severity refuse): the runway safety area limit is stale once the runway category has changed",
+      "id": "inv_apc_currency_rsa",
       "status": "refused"
     },
     {
-      "check": "INV-AC-12-SCOPE-REFUSAL (scope at per the routing map, severity refuse): Operational-authority questions are refused before retrieval.",
-      "id": "inv_ac_12_scope_refusal",
+      "check": "INV-APC-CURRENCY-PCN (currency at H3, severity refuse): PCN is stale once its pavement evaluation interval has elapsed",
+      "id": "inv_apc_currency_pcn",
+      "status": "refused"
+    },
+    {
+      "check": "INV-APC-CURRENCY-AGL (currency at H3, severity refuse): AGL serviceability is stale once a light change or the service interval has passed",
+      "id": "inv_apc_currency_agl",
+      "status": "refused"
+    },
+    {
+      "check": "INV-APC-CURRENCY-PHASING (currency at H3, severity refuse): the phasing plan is stale once it has been revised",
+      "id": "inv_apc_currency_phasing",
       "status": "refused"
     }
   ],
   "author": "Cerebrum Team",
-  "description": "Declarative airport construction reasoning kit on the shared reasoning layer. 14 invariants declared in app/blocks/airport_construction/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/airport_construction/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/airport_construction/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "description": "Declarative airport construction reasoning kit on the shared reasoning layer. 16 invariants declared in app/blocks/airport_construction/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/airport_construction/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/airport_construction/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/airport_construction_kit:latest",
     "type": "docker"

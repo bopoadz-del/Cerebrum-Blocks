@@ -1,7 +1,6 @@
-# Known gaps — airport & aviation construction
+all figures — pending interview, domain encoding sheet, Airport & Aviation Construction.
 
-**all figures — pending interview, domain encoding sheet, Airport & Aviation
-Construction.** Every figure, per airport.
+Every figure, per airport.
 
 That is the right entry, and it changes this kit's job rather than weakening it:
 **this kit never asserts a value.** It asserts what must ACCOMPANY one. There is
