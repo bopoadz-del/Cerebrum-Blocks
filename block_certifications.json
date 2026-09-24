@@ -1461,6 +1461,17 @@
       ],
       "fixture": "app/blocks/water_treatment/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
       "include_in_ci": true
+    },
+    {
+      "block": "stadium_venue_kit",
+      "module": "app.blocks.stadium_venue_kit",
+      "class": "StadiumVenueKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/stadium_venue/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
     }
   ]
 }
