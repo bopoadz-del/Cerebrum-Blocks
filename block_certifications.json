@@ -1241,6 +1241,17 @@
       "fixture": "in-test generated vendor and item payloads with Decimal prices; assertions are on registration, availability gates, closed category set, search filters and inactive-vendor refusals process() returns.",
       "certified": true,
       "include_in_ci": true
+    },
+    {
+      "block": "offshore_marine_reasoning",
+      "module": "app.blocks.offshore_marine_reasoning",
+      "class": "OffshoreMarineReasoningBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_offshore_marine_reasoning.py"
+      ],
+      "fixture": "app/blocks/offshore_marine/manifest.yaml - a real qualified manifest on disk, loaded by process() via InstallationBasis. The loader refuses a partially-qualified figure at load time and the test asserts the refusal names the figure and every missing qualifier; the gate's ten never-allowed derivations are each driven through process()'s reasoning path and asserted to name which inference was attempted.",
+      "include_in_ci": true
     }
   ]
 }
