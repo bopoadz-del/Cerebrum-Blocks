@@ -108,10 +108,24 @@ class StateProvider:
 
     @property
     def max_age_seconds(self) -> Optional[float]:
-        try:
-            return float(self.max_age)
-        except (TypeError, ValueError):
+        """Seconds, or None when ``max_age`` names an EVENT rather than a duration.
+
+        Written out rather than ``try: float(...) except: return None``. None here
+        carries a meaning -- "this window is an event, ask ``max_age_event``" -- and
+        a swallowed exception makes an unparseable value indistinguishable from a
+        deliberate event name. The repo's own CI guard forbids the silent form, and
+        it is right to: the two cases need telling apart.
+        """
+        value = self.max_age
+        if value is None or isinstance(value, bool):
             return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        # A duration written as a YAML string ("3600") is still a duration.
+        text = str(value).strip()
+        if re.fullmatch(r"-?\d+(?:\.\d+)?", text):
+            return float(text)
+        return None
 
     @property
     def max_age_event(self) -> Optional[str]:

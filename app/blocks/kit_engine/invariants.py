@@ -720,6 +720,24 @@ def _number(token: str) -> float:
     return float(token.replace(",", ""))
 
 
+def _as_number(value: Any) -> Optional[float]:
+    """The value as a float, or None when it genuinely is not a number.
+
+    Explicit rather than ``try: float(...) except``: the caller has to be able to
+    ACT on "not a number" — a band it cannot evaluate must report that, not return
+    silently. A numeric string ("1.4", "1,200") is still a number; True/False are
+    not, because ``float(True)`` is 1.0 and a boolean is never a magnitude.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).strip().replace(",", "")
+    if re.fullmatch(r"-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?", text):
+        return float(text)
+    return None
+
+
 def check_arithmetic(text: str, tolerance: float = 0.01) -> Optional[Tuple[str, float, float]]:
     """Find a stated ``a op b = c`` whose result is wrong.
 
@@ -851,10 +869,19 @@ def eval_band(inv: Invariant, figure: Figure, manifest: Manifest) -> Optional[Fi
 
     if figure.value is None or isinstance(figure.value, bool):
         return None
-    try:
-        value = float(figure.value)
-    except (TypeError, ValueError):
-        return None
+    value = _as_number(figure.value)
+    if value is None:
+        # A band that could not be evaluated is NOT a pass. This used to `try:
+        # float(...) except: return None`, so a figure carrying a non-numeric value
+        # sailed through the one check that exists to catch an impossible magnitude
+        # -- a skipped check reported as a pass, which is the defect this whole
+        # layer exists to prevent. The repo's CI guard caught it.
+        return _finding(
+            inv, figure,
+            f"{figure.quantity} is governed by a possible-range band but its value "
+            f"{figure.value!r} is not a number, so the range could not be checked — "
+            f"an unchecked band is not a pass",
+        )
     if low is not None and value < float(low):
         return _finding(
             inv, figure,

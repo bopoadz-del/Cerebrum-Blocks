@@ -435,3 +435,39 @@ def test_the_rewritten_datacentre_kit_covers_all_eight_kinds(kit):
         "qualifier", "scope", "authority", "provenance",
         "currency", "band", "derivation", "grounding", "unit_discipline",
     }
+
+
+# --------------------------------------------------------------------------
+# a check that could not run is not a pass
+# --------------------------------------------------------------------------
+
+def test_a_band_it_cannot_evaluate_reports_that_rather_than_passing():
+    """The repo's silent-except guard caught this. `try: float(v) except: return
+    None` meant a figure carrying a non-numeric value sailed through the one check
+    that exists to catch an impossible magnitude -- a skipped check reported as a
+    pass, which is the defect the whole layer exists to prevent."""
+    from app.blocks.kit_engine.invariants import _as_number
+
+    assert _as_number("not a number") is None
+    assert _as_number("1.4") == 1.4, "a numeric string is still a number"
+    assert _as_number("1,200") == 1200.0
+    assert _as_number(True) is None, "a boolean is never a magnitude"
+    assert _as_number(None) is None
+
+
+def test_a_non_numeric_value_under_a_band_is_refused_by_the_engine(tmp_path):
+    import shutil
+
+    from app.blocks.kit_engine import Figure, load_kit
+
+    root = pathlib.Path(__file__).resolve().parents[2] / "app" / "blocks" / "datacentre"
+    for name in ("manifest.yaml", "invariants.yaml", "design_basis.yaml"):
+        shutil.copy2(root / name, tmp_path / name)
+    kit = load_kit(tmp_path)
+
+    outcome = kit.tool_time([Figure(
+        quantity="pue", value="one point four", origin="document", source_id="d1",
+        text="PUE one point four")])
+    messages = " ".join(f.message for f in outcome.findings)
+    assert outcome.verdict == "refused", messages
+    assert "not a number" in messages and "unchecked band is not a pass" in messages
