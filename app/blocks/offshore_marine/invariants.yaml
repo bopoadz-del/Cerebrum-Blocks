@@ -8,6 +8,11 @@ invariants:
   hook: H3
   evidence: {sheet: "§4"}
   message: "lay tension / strain / stress is a band — return both min and max from the same analysis; {missing} missing"
+  measurement: >-
+    Probe lay_tension, strain, stress x20 answered single-sided. Before: n
+    single-sided figures were returned as if usable. After: 0, and n refusals
+    naming the missing bound. A companion probe returning both bounds from ONE
+    source must pass; both bounds from two different sources must refuse.
 
 - id: INV-OM-STATIC-DYNAMIC
   kind: qualifier
@@ -17,6 +22,11 @@ invariants:
   hook: H3
   evidence: {sheet: "§4, §9.3"}
   message: "allowable missing {missing} — a static value applied to a dynamic condition is wrong in the unsafe direction"
+  measurement: >-
+    Probe strain, stress, lay_tension x20 with static_or_dynamic, region absent
+    from the figure. Before: n answers stated the figure with nothing to act on.
+    After: 0 such answers, and n refusals naming every missing field. Over-refusal
+    check: the same probe WITH static_or_dynamic, region present must pass.
 
 - id: INV-OM-SPREAD-TYPE
   kind: qualifier
@@ -26,6 +36,11 @@ invariants:
   hook: H3
   evidence: {sheet: "spread-type rule"}
   message: "envelope figure missing spread_type — an S-lay limit is not a J-lay limit"
+  measurement: >-
+    Probe every declared quantity x20 with spread_type absent from the figure.
+    Before: n answers stated the figure with nothing to act on. After: 0 such
+    answers, and n refusals naming every missing field. Over-refusal check: the
+    same probe WITH spread_type present must pass.
 
 - id: INV-OM-CAPABILITY-LIVE
   kind: derivation
@@ -37,6 +52,10 @@ invariants:
   hook: H3
   evidence: {sheet: "§9.5.2, live-state rule"}
   message: "DP capability without failure case and current equipment state is not a capability statement"
+  measurement: >-
+    Probe dp_capability x20 with vessel_monitoring, manual_log unavailable. Before:
+    n answers used the design basis as the current state. After: 0, and n reporting
+    state UNKNOWN with no design figure in the refusal.
 
 - id: INV-OM-FORECAST-WINDOW
   kind: qualifier
@@ -46,6 +65,12 @@ invariants:
   hook: H3
   evidence: {sheet: "§9.5.3, forecast rule"}
   message: "forecast does not cover operation + contingency — {missing}"
+  measurement: >-
+    Probe forecast_hs, forecast_tp, forecast_dir x20 with forecast_horizon_h,
+    contingency_h, operation_duration_h absent from the figure. Before: n answers
+    stated the figure with nothing to act on. After: 0 such answers, and n refusals
+    naming every missing field. Over-refusal check: the same probe WITH
+    forecast_horizon_h, contingency_h, operation_duration_h present must pass.
 
 - id: INV-OM-PROVENANCE
   kind: provenance
@@ -55,6 +80,13 @@ invariants:
   hook: H3
   evidence: {sheet: "§11.4.1"}
   message: "figure carried across spread, vessel or depth-band boundary"
+  measurement: >-
+    Probe every declared quantity x20 with a figure carried attempting
+    cross_spread_carry, sister_vessel_carry, adjacent_depth_band_carry. Before: n
+    answers quoted it without remark. After: 0 quoted, and n refusals naming which
+    boundary was crossed. Over-refusal check (the bug this kind had by hand): a
+    companion probe naming ONE entity twice — what a CORRECT answer looks like —
+    must NOT refuse.
 
 - id: INV-OM-CURRENCY-ANALYSIS
   kind: currency
@@ -64,6 +96,12 @@ invariants:
   hook: H3
   evidence: {sheet: "§11.5"}
   message: "installation analysis is stale — {value} has occurred since it was issued"
+  measurement: >-
+    Probe lay_tension, strain, stress x20 after a pipe_spec_change event, then x20
+    with certified_installation_analysis_state unreachable. Before: n answers
+    quoted the superseded figure, and the unreachable case fell back to the design
+    basis. After: 0 superseded figures; 20 refusals naming pipe_spec_change and 20
+    reporting state UNKNOWN with no design figure in the refusal.
 
 - id: INV-OM-SCOPE-GO
   kind: scope
@@ -73,6 +111,12 @@ invariants:
   hook: H0
   evidence: {sheet: "§12, §14.1"}
   message: "go/no-go is a named-person decision"
+  measurement: >-
+    Each of the 6 declared refusal patterns x5 (30 runs) with a monkeypatched
+    retrieval spy. Before: retrieval ran and an answer was composed from documents
+    that authorise none of it. After: 30 refusals naming who decides, and the spy
+    records ZERO retrieval calls — the assertion is not that the answer says no, it
+    is that retrieval never happened.
 
 - id: INV-OM-UNIT-TENSION
   kind: unit_discipline
@@ -83,6 +127,11 @@ invariants:
   hook: H2
   evidence: {sheet: "§16 tension"}
   message: "tension unit family ambiguous or mixed"
+  measurement: >-
+    40 synthetic lay_tension figures, 10 of them exhibiting kips, mixed and 20 with
+    none of t, kN stated. Before: 10 were narrated as results. After: 10 refused,
+    each naming the unit or datum at fault. The 30 correctly-dimensioned figures
+    must all still pass.
 
 # ---------------------------------------------------------------------------
 # Engine-required completions of the DECLARED staleness triggers.

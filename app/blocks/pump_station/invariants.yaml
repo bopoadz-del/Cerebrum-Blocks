@@ -10,6 +10,12 @@ invariants:
   severity: refuse
   evidence: {sheet: "§9.1"}
   message: "a curve or surge figure is governed by the datasheet for THIS trim — a generic model curve is not proof"
+  measurement: >-
+    Probe npsh_required, por_flow_min, por_flow_max, surge_pressure x20 citing
+    operating_procedure, maintenance_record, shift_instruction as the source.
+    Before: n answers accepted it as proof. After: 0 accepted, and n refusals
+    naming manufacturer_datasheet as the class that governs. Over-refusal check:
+    the same probe citing manufacturer_datasheet must pass.
 
 - id: INV-PS-NPSH-MARGIN
   kind: qualifier
@@ -19,6 +25,11 @@ invariants:
   hook: H3
   evidence: {sheet: "rule, §4.1"}
   message: "NPSHr is a 3% head-drop value, not a safe limit — required margin must travel with it"
+  measurement: >-
+    Probe npsh_required x20 with npsh_margin, npsh_margin_basis absent from the
+    figure. Before: n answers stated the figure with nothing to act on. After: 0
+    such answers, and n refusals naming every missing field. Over-refusal check:
+    the same probe WITH npsh_margin, npsh_margin_basis present must pass.
 
 - id: INV-PS-NPSHA-CASE
   kind: qualifier
@@ -28,6 +39,11 @@ invariants:
   hook: H3
   evidence: {sheet: "§4.2"}
   message: "NPSHa without design/worst-case basis — worst case is the one that matters"
+  measurement: >-
+    Probe npsh_available x20 with npsh_case absent from the figure. Before: n
+    answers stated the figure with nothing to act on. After: 0 such answers, and n
+    refusals naming every missing field. Over-refusal check: the same probe WITH
+    npsh_case present must pass.
 
 - id: INV-PS-PROTECTION-LIVE
   kind: derivation
@@ -38,6 +54,10 @@ invariants:
   hook: H3
   evidence: {sheet: "§6.2, §6.3"}
   message: "protection setpoint answer without stating whether the protection is currently in service"
+  measurement: >-
+    Probe vibration_trip x20 with protection_status unavailable. Before: n answers
+    used the design basis as the current state. After: 0, and n reporting state
+    UNKNOWN with no design figure in the refusal.
 
 - id: INV-PS-POR-AOR
   kind: qualifier
@@ -47,6 +67,12 @@ invariants:
   hook: H3
   evidence: {sheet: "§4.3"}
   message: "operating region without POR/AOR named and what authorises AOR"
+  measurement: >-
+    Probe por_flow_min, por_flow_max, aor_flow_min, aor_flow_max x20 with
+    por_or_aor_named, authorisation_if_aor absent from the figure. Before: n
+    answers stated the figure with nothing to act on. After: 0 such answers, and n
+    refusals naming every missing field. Over-refusal check: the same probe WITH
+    por_or_aor_named, authorisation_if_aor present must pass.
 
 - id: INV-PS-BAND-FLOW
   kind: band
@@ -56,6 +82,11 @@ invariants:
   hook: H2
   evidence: {sheet: "§4"}
   message: "flow window is a band — return both sides"
+  measurement: >-
+    Probe por_flow_min, por_flow_max x20 answered single-sided. Before: n
+    single-sided figures were returned as if usable. After: 0, and n refusals
+    naming the missing bound. A companion probe returning both bounds from ONE
+    source must pass; both bounds from two different sources must refuse.
 
 - id: INV-PS-PROVENANCE
   kind: provenance
@@ -65,6 +96,14 @@ invariants:
   hook: H3
   evidence: {sheet: "§9.4.1"}
   message: "forbidden derivation: {value}"
+  measurement: >-
+    Probe every declared quantity x20 with a figure carried attempting
+    extrapolate_beyond_published_curve, carry_curve_across_trims,
+    carry_surge_study_across_stations, convert_head_pressure_without_density,
+    interpolate_across_trim_boundaries. Before: n answers quoted it without remark.
+    After: 0 quoted, and n refusals naming which boundary was crossed. Over-refusal
+    check (the bug this kind had by hand): a companion probe naming ONE entity
+    twice — what a CORRECT answer looks like — must NOT refuse.
 
 - id: INV-PS-CURRENCY
   kind: currency
@@ -74,6 +113,12 @@ invariants:
   hook: H3
   evidence: {sheet: "§9.5"}
   message: "curve or surge study stale on {value}"
+  measurement: >-
+    Probe surge_pressure, pump_curve x20 after a impeller_trim_change event, then
+    x20 with pump_curve_current unreachable. Before: n answers quoted the
+    superseded figure, and the unreachable case fell back to the design basis.
+    After: 0 superseded figures; 20 refusals naming impeller_trim_change and 20
+    reporting state UNKNOWN with no design figure in the refusal.
 
 # ---------------------------------------------------------------------------
 # Engine-required plumbing for the declared staleness_triggers. pump_curve is

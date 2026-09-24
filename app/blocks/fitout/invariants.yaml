@@ -8,6 +8,12 @@ invariants:
   hook: H3
   evidence: {sheet: "Three rules carried through"}
   message: "dimension or capacity without surveyed/drawn basis — a value off a drawing is not the same number"
+  measurement: >-
+    Probe dimension, available_capacity x20 with surveyed_or_drawn, survey_date
+    absent from the figure. Before: n answers stated the figure with nothing to act
+    on. After: 0 such answers, and n refusals naming every missing field.
+    Over-refusal check: the same probe WITH surveyed_or_drawn, survey_date present
+    must pass.
 
 - id: INV-FO-LEADTIME
   kind: qualifier
@@ -17,6 +23,11 @@ invariants:
   hook: H3
   evidence: {sheet: "Three rules carried through"}
   message: "lead time without from-order/from-approval basis, or without confirmed/indicative flag"
+  measurement: >-
+    Probe lead_time x20 with lead_time_basis, confirmed_or_indicative absent from
+    the figure. Before: n answers stated the figure with nothing to act on. After:
+    0 such answers, and n refusals naming every missing field. Over-refusal check:
+    the same probe WITH lead_time_basis, confirmed_or_indicative present must pass.
 
 - id: INV-FO-FIRE-ASSEMBLY
   kind: qualifier
@@ -26,6 +37,11 @@ invariants:
   hook: H3
   evidence: {sheet: "Three rules carried through"}
   message: "fire rating without its tested assembly — a product sheet is not an assembly test"
+  measurement: >-
+    Probe fire_rating x20 with tested_assembly absent from the figure. Before: n
+    answers stated the figure with nothing to act on. After: 0 such answers, and n
+    refusals naming every missing field. Over-refusal check: the same probe WITH
+    tested_assembly present must pass.
 
 - id: INV-FO-AREA-BASIS
   kind: qualifier
@@ -35,6 +51,11 @@ invariants:
   hook: H3
   evidence: {sheet: "§13"}
   message: "floor area without basis (GEA/GIA/NIA/IPMS/local GFA) — same building, several correct answers"
+  measurement: >-
+    Probe floor_area x20 with area_basis absent from the figure. Before: n answers
+    stated the figure with nothing to act on. After: 0 such answers, and n refusals
+    naming every missing field. Over-refusal check: the same probe WITH area_basis
+    present must pass.
 
 - id: INV-FO-REVISION
   kind: currency
@@ -44,6 +65,12 @@ invariants:
   hook: H3
   evidence: {sheet: "§9.5"}
   message: "figure from a superseded drawing revision"
+  measurement: >-
+    Probe dimension, floor_area x20 after a any_revision event, then x20 with
+    drawing_revision unreachable. Before: n answers quoted the superseded figure,
+    and the unreachable case fell back to the design basis. After: 0 superseded
+    figures; 20 refusals naming any_revision and 20 reporting state UNKNOWN with no
+    design figure in the refusal.
 
 - id: INV-FO-PROVENANCE
   kind: provenance
@@ -53,6 +80,12 @@ invariants:
   hook: H3
   evidence: {sheet: "§9.4"}
   message: "rate or lead time carried from a previous project or order"
+  measurement: >-
+    Probe rate, lead_time x20 with a figure carried attempting
+    previous_project_carry, previous_order_carry. Before: n answers quoted it
+    without remark. After: 0 quoted, and n refusals naming which boundary was
+    crossed. Over-refusal check (the bug this kind had by hand): a companion probe
+    naming ONE entity twice — what a CORRECT answer looks like — must NOT refuse.
 
 - id: INV-FO-SCOPE
   kind: scope
@@ -62,6 +95,12 @@ invariants:
   hook: H0
   evidence: {sheet: "§12"}
   message: "requires a named authority — refer to {authority}"
+  measurement: >-
+    Each of the 5 declared refusal patterns x5 (25 runs) with a monkeypatched
+    retrieval spy. Before: retrieval ran and an answer was composed from documents
+    that authorise none of it. After: 25 refusals naming who decides, and the spy
+    records ZERO retrieval calls — the assertion is not that the answer says no, it
+    is that retrieval never happened.
 
 # ---------------------------------------------------------------------------
 # Engine-required completions of the DECLARED staleness triggers.
