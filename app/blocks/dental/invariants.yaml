@@ -1,0 +1,77 @@
+invariants:
+
+- id: INV-DEN-AUTH-MRD
+  kind: authority
+  applies_to: {quantity: anaesthetic_mrd}
+  hook: H1
+  governing_class: regulator
+  fallback_class: SPC
+  demote: [textbook, course_material, clinician_preference]
+  severity: refuse
+  evidence: {sheet: "§1.7"}
+  message: "MRD governed by regulator; {value} from a lesser class is not the governing source"
+
+- id: INV-DEN-DOSE-QUALIFIERS
+  kind: qualifier
+  applies_to: {quantity: [anaesthetic_mrd, mg_per_cartridge]}
+  requires: [agent, concentration_pct, cartridge_volume_mL, with_vaso, adult_or_paediatric]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§1, §8.1"}
+  message: "dose missing {missing} — same cartridge, different drug loads at different concentrations"
+
+- id: INV-DEN-SOURCE-SPECIFICITY
+  kind: qualifier
+  applies_to: {quantity: anaesthetic_mrd}
+  requires: [source_kind]
+  requires_any_of: [source_edition_year, protocol_version, protocol_approved_date]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§1.7, §11.2"}
+  message: "MRD without source specificity — edition or protocol version required"
+
+- id: INV-DEN-STEP-VISIBILITY
+  kind: derivation
+  applies_to: {quantity: anaesthetic_mrd}
+  block_if: [calculation_hidden]
+  requires_steps: [weight_kg, weight_source, mg_per_kg_used, total_mg, mg_per_cartridge_used, cartridges_result, rounding_applied]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§8.5"}
+  message: "mg/kg chain performed without step visibility — a bare answer cannot be checked"
+
+- id: INV-DEN-CONFLICT-REFUSE
+  kind: derivation
+  applies_to: {quantity: anaesthetic_mrd}
+  block_if: [sources_conflict]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§11.6.3"}
+  message: "two sources conflict on a dose — refuse and report"
+
+- id: INV-DEN-TORQUE-SYSTEM
+  kind: qualifier
+  applies_to: {quantity: implant_torque}
+  requires: [implant_system]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§5.1"}
+  message: "implant torque without system — torque values are not transferable between systems"
+
+- id: INV-DEN-PROVENANCE
+  kind: provenance
+  applies_to: {quantity: any}
+  forbid: [scale_adult_dose_for_child, estimate_weight, carry_torque_between_systems, carry_mrd_from_superseded_textbook, convert_brand_units, use_cartridge_count_without_concentration]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§11.4.1"}
+  message: "forbidden derivation: {value}"
+
+- id: INV-DEN-CURRENCY
+  kind: currency
+  applies_to: {quantity: any}
+  window: {provider: protocol_current, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§11.5"}
+  message: "protocol currency unverifiable — refuse, do not warn"

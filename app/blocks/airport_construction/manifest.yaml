@@ -1,198 +1,94 @@
-# Airport & Aviation Construction — kit VOCABULARY.
-#
-# Source of truth: the domain encoding sheet for Airport & Aviation
-# Construction, and the design note in airport_construction_design.md.
-#
-# THIS KIT NEVER ASSERTS A VALUE. Its job is to assert what must ACCOMPANY one.
-# That makes it the cleanest of the set: there is nothing to fabricate and
-# nothing to keep current except the state gates. "All figures per airport" is
-# the right KNOWN_GAPS entry and it does not weaken the kit.
-#
-# Severity is `refuse` from day one, not `flag`. A qualifier-less declared
-# distance, or an ILS question answered confidently, is worse than no answer.
-# The measurement that follows proves the layer does not OVER-refuse, rather
-# than proving it is safe to tighten.
 kit: airport_construction
 version: 1
-interview_status: "not run — this kit asserts qualifiers, never values (KNOWN_GAPS.md)"
+hooks_used: [H0, H1, H2, H3, H4]
 
 quantities:
-  obstacle_limitation_surface:
-    units: [m, ft]
-    aliases: [OLS, approach surface, transitional surface, OFZ]
-    classes: [any_elevation_or_distance, any_figure]
-  TORA:
-    units: [m, ft]
-    aliases: [take-off run available]
-    classes: [any_elevation_or_distance, any_figure, any_declared_distance]
-  TODA:
-    units: [m, ft]
-    aliases: [take-off distance available]
-    classes: [any_elevation_or_distance, any_figure, any_declared_distance]
-  ASDA:
-    units: [m, ft]
-    aliases: [accelerate-stop distance available]
-    classes: [any_elevation_or_distance, any_figure, any_declared_distance]
-  LDA:
-    units: [m, ft]
-    aliases: [landing distance available]
-    classes: [any_elevation_or_distance, any_figure, any_declared_distance]
-  RESA:
-    units: [m, ft]
-    aliases: [runway end safety area]
-    classes: [any_elevation_or_distance, any_figure, any_safety_area]
-  runway_strip:
-    units: [m, ft]
-    classes: [any_elevation_or_distance, any_figure, any_safety_area]
-  graded_area:
-    units: [m, ft]
-    classes: [any_elevation_or_distance, any_figure, any_safety_area]
-  threshold_elevation:
-    units: [m, ft]
-    classes: [any_elevation_or_distance, any_figure]
-  obstacle_elevation:
-    units: [m, ft]
-    classes: [any_elevation_or_distance, any_figure]
-  coordinates:
-    aliases: [position, survey coordinates]
-    classes: [any_elevation_or_distance, any_figure]
-  PCN:
-    # Deliberately NOT in any_elevation_or_distance: a PCN is a bearing-strength
-    # number with no unit and no datum. An earlier cut of the engine treated
-    # `any_*` as a wildcard and demanded a vertical datum for one.
-    aliases: [pavement classification number]
-    classes: [any_figure]
-  NAVAID_area:
-    units: [m, ft]
-    aliases: [ILS critical area, ILS sensitive area, localiser area]
-    classes: [any_figure, any_live_state]
-  ILS_protection:
-    aliases: [ILS protection, glidepath protection]
-    classes: [any_figure, any_live_state]
-  AGL_serviceability:
-    aliases: [aeronautical ground lighting, AGL]
-    classes: [any_figure, any_live_state]
-  phasing_plan:
-    aliases: [works phasing, staging plan]
-    classes: [any_figure, any_works]
-  works_area:
-    units: [m, ft]
-    classes: [any_figure, any_works]
-  declared_distance_during_works:
-    units: [m, ft]
-    classes: [any_figure, any_works, any_declared_distance]
+  ols_penetration_height: {units: [m]}
+  ils_critical_area:      {units: [m]}
+  rsa_limit:              {units: [m]}
+  rofa_limit:             {units: [m]}
+  tsa_limit:              {units: [m]}
+  tofa_limit:             {units: [m]}
+  declared_distance:      {units: [m]}
+  pcn:                    {units: [—]}
+  acr:                    {units: [—]}
+  crane_radius:           {units: [m]}
+  agl_unserviceable:      {units: [count]}
+  jet_blast_distance:     {units: [m]}
+
+  # Correction 6 (spec §1): a staleness_triggers KEY must be a declared
+  # quantity. ols_geometry and phasing_plan are artifacts the sheet's
+  # triggers name, not figures — declared unitless so the trigger has
+  # something to be keyed on.
+  ols_geometry:           {units: [—]}
+  phasing_plan:           {units: [—]}
 
 qualifier_fields:
-  runway_designator:      {type: string, pattern: "^[0-3][0-9][LCR]?$"}
-  direction:              {type: enum, values: [takeoff, landing, both]}
-  aerodrome_code:         {type: string, pattern: "^[1-4][A-F]$"}
-  runway_category:        {type: enum, values: [non_instrument, non_precision,
-                                                precision_I, precision_II, precision_III]}
-  surface_name:           {type: enum, values: [approach, transitional, inner_horizontal,
-                                                conical, outer_horizontal, take_off_climb, OFZ]}
-  reference_point:        {type: string}              # THR / ARP / runway end
-  datum_m_or_ft:          {type: enum, values: [AMSL_m, AMSL_ft]}
+  runway_designator:      {type: string}
+  direction:              {type: enum,   values: [primary, secondary]}
+  aerodrome_reference_code: {type: string}
+  surface_name:           {type: enum,   values: [approach, transitional, inner_horizontal, conical, takeoff_climb, OFZ]}
+  reference_point:        {type: string}
+  datum_m_or_ft:          {type: enum,   values: [m, ft]}
+  amsl_basis:              {type: enum,   values: [AMSL, local]}
   effective_date:         {type: date}
   temporary:              {type: bool}
-  pavement_type:          {type: enum, values: [rigid, flexible]}
-  subgrade_category:      {type: enum, values: [A, B, C, D]}
-  tyre_pressure_category: {type: enum, values: [W, X, Y, Z]}
-  evaluation_method:      {type: enum, values: [technical, using_aircraft]}
-  safeguarding_ref:       {type: string}
-  NAVAID_ref:             {type: string}
-  AGL_status:             {type: enum, values: [serviceable, unserviceable, unknown]}
-  airport:                {type: string}
+  pavement_type:          {type: enum,   values: [rigid, flexible]}
+  subgrade_category:      {type: string}
+  tyre_pressure_category: {type: string}
+  evaluation_method:      {type: enum,   values: [ACN_PCN, ACR_PCR]}
+  runway_category:        {type: enum,   values: [non_instrument, non_precision, CAT_I, CAT_II, CAT_III]}
+  wgs84_confirmed:        {type: bool}
+  # Correction 7: an enum value that parses as a boolean must be quoted, or
+  # `true` becomes the Python boolean True and never matches the string
+  # "true" a host or a figure sends — true north would fail this check while
+  # the boolean sailed through it.
+  magnetic_or_true:       {type: enum,   values: [magnetic, "true"]}
 
 source_classes:
-  # rank 1 governs. `reject_as_proof` is what a class may NOT stand in for.
-  approved_declared_distance_table:
-    rank: 1
-    name_patterns: ["declared distance table", "\\bAIP\\b", "aerodrome manual"]
-  safeguarding_assessment:
-    rank: 1
-    name_patterns: ["safeguarding assessment", "obstacle assessment"]
-  pavement_evaluation:
-    rank: 1
-    name_patterns: ["pavement evaluation", "\\bPCN\\b report", "ACN[/-]PCN study"]
-  photometric_record:
-    rank: 1
-    name_patterns: ["photometric", "light intensity measurement"]
-  navaid_siting_drawing:
-    rank: 3
-    name_patterns: ["siting drawing", "navaid siting"]
-    # A siting drawing shows where the aerial is, not whether it is working.
-    reject_as_proof: [navaid_status_record]
-  navaid_status_record:
-    rank: 1
-    name_patterns: ["navaid status", "serviceability record", "\\bNOTAM\\b"]
-  design_standard:
-    rank: 2
-    name_patterns: ["annex 14", "design standard", "CS-ADR", "advisory circular"]
-  design_drawing:
-    rank: 4
-    name_patterns: ["design drawing", "general arrangement", "\\bGA\\b drawing"]
-    # Scaling a clearance off a drawing is the classic substitution.
-    reject_as_proof: [approved_declared_distance_table, safeguarding_assessment,
-                      pavement_evaluation]
-  contractor_record:
-    rank: 5
-    name_patterns: ["site (record|note|diary)", "contractor (record|submission)"]
-    reject_as_proof: [approved_declared_distance_table, safeguarding_assessment,
-                      pavement_evaluation, navaid_status_record]
+  icao_annex_14:          {rank: 1}
+  national_aviation_reg:  {rank: 2}
+  aerodrome_manual:       {rank: 3}
+  safeguarding_assessment: {rank: 4, reject_as_proof: [undated, pre_works]}
+  approved_phasing_plan:  {rank: 5, reject_as_proof: [draft, superseded_revision]}
+  NAVAID_siting_drawings: {rank: 6}
+  design_drawings:        {rank: 7}
+  method_statement:       {rank: 8}
+  site_instruction:       {rank: 9}
+  # Correction 1: every class named in reject_as_proof or demote must itself
+  # be a declared source class, or the rule that names it can never fire and
+  # the loader refuses. Ranked below every governing class.
+  undated:                {rank: 10}
+  pre_works:              {rank: 11}
+  draft:                  {rank: 12}
+  superseded_revision:    {rank: 13}
 
 state_providers:
-  # What "current" means at an aerodrome. NOTAM and AIRAC are cycles, not
-  # clocks: a figure is current until the next issue, whatever the wall time.
-  notam:                  {kind: cycle, max_age: next_notam_issue}
-  airac_cycle:            {kind: cycle, max_age: airac_cycle_change}
-  navaid_status:          {kind: status, max_age: 3600}
-  agl_status:             {kind: status, max_age: 3600}
-  phasing_plan_revision:  {kind: revision, max_age: phasing_plan_revised}
-  # A pavement evaluation and a safeguarding assessment both expire on an EVENT
-  # (an overlay, a new obstacle), not on a date. Declared as providers because
-  # the loader refuses a staleness trigger no currency invariant can fire.
-  pavement_evaluation_record: {kind: revision, max_age: pavement_evaluated}
-  safeguarding_record:        {kind: revision, max_age: safeguarding_reassessed}
+  notam_state:            {kind: cycle,    max_age: next_issue}
+  airac_cycle:            {kind: cycle,    max_age: next_cycle}
+  phasing_plan_current:   {kind: revision, max_age: event}
+  NAVAID_status:          {kind: status,   max_age: realtime}
+  agl_status:             {kind: status,   max_age: shift}
 
 staleness_triggers:
-  TORA:                       [airac_cycle_change, temporary_table_issued]
-  TODA:                       [airac_cycle_change, temporary_table_issued]
-  ASDA:                       [airac_cycle_change, temporary_table_issued]
-  LDA:                        [airac_cycle_change, temporary_table_issued]
-  declared_distance_during_works: [airac_cycle_change, phasing_plan_revised]
-  obstacle_limitation_surface: [new_obstacle_erected, works_commenced,
-                                safeguarding_reassessed]
-  PCN:                        [pavement_evaluated, overlay_constructed]
-  NAVAID_area:                [navaid_unserviceable, flight_check_due]
-  ILS_protection:             [navaid_unserviceable, flight_check_due]
-  AGL_serviceability:         [lamp_failure_reported, photometric_due]
-  phasing_plan:               [phasing_plan_revised]
-  works_area:                 [phasing_plan_revised]
+  declared_distance:      [airac_cycle_change, threshold_change]
+  ols_geometry:           [obstacle_change, safeguarding_revision]
+  ils_critical_area:      [NAVAID_change, siting_revision]
+  rsa_limit:              [runway_category_change]
+  pcn:                    [pavement_evaluation_interval]
+  agl_unserviceable:      [light_change, service_interval]
+  phasing_plan:           [revision]
 
 scope_refusals:
-  # AC7. No document makes these answerable, so retrieving at all is wrong: it
-  # produces citations that read as though they authorised the decision.
-  - label: crane or plant siting
-    pattern: "can\\s+we\\s+(put|site|place|position|erect)\\s+(the\\s+|a\\s+)?(crane|piling\\s+rig|plant|mast|tower)"
-    authority: "the aerodrome operator, with the safeguarding authority"
-  - label: working with the runway open
-    pattern: "is\\s+it\\s+safe\\s+to\\s+work\\s+with\\s+the\\s+runway\\s+open|can\\s+we\\s+work\\s+(with|while)\\s+the\\s+runway\\s+(is\\s+)?open"
-    authority: "the aerodrome operator"
-  - label: handback
-    pattern: "can\\s+we\\s+hand\\s+(this\\s+|it\\s+)?back(\\s+tonight)?"
-    authority: "the aerodrome operator, on engineering acceptance"
-  - label: NAVAID impact
-    pattern: "will\\s+this\\s+(affect|interfere\\s+with)\\s+(the\\s+)?(ILS|glidepath|glide\\s+path|localiser|localizer|NAVAID|DME)"
-    authority: "the ANSP"
+  - pattern: "can we put the crane here"
+    authority: "safeguarding — obstacle notification required"
+  - pattern: "is it safe to work with the runway open"
+    authority: "approved CSPP / method of working plan"
+  - pattern: "can we hand this back tonight"
+    authority: "duty airfield officer"
+  - pattern: "will this affect the ILS"
+    authority: "ANSP / CNS engineering"
 
-figures:
-  # Declared so the gap is visible and countable. This kit never fills one.
-  declared_distance_tora:  {value: null}
-  declared_distance_toda:  {value: null}
-  declared_distance_asda:  {value: null}
-  declared_distance_lda:   {value: null}
-  ols_approach_slope:      {value: null}
-  ols_transitional_slope:  {value: null}
-  resa_length:             {value: null}
-  runway_strip_width:      {value: null}
-  pcn:                     {value: null}
+spec_extensions:
+  claim_class:            true
+  same_source:            true

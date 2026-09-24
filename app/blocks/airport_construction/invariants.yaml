@@ -1,185 +1,158 @@
-# Airport & Aviation Construction — invariant records.
-#
-# Severity `refuse` throughout, from day one. This is the safety-of-life column
-# of the severity policy: the promotion path here is to measure that the layer
-# does not OVER-refuse, not to prove it is safe to tighten.
-#
-# THERE IS NO AIRPORT CORPUS. The Master Corpus is a Saudi infrastructure
-# project, so every measurement below is against SYNTHETIC fixtures. That proves
-# the layer refuses correctly; it cannot produce a live repeat-probe number like
-# the 20/20 on R1 until an airport project exists in the platform. Said here
-# rather than in a green report that measures nothing.
 invariants:
 
-  # ---- AC1 ----------------------------------------------------------------
-  - id: INV-AC-1-OLS-QUALIFIER
-    kind: qualifier
-    applies_to: {quantity: obstacle_limitation_surface}
-    requires: [surface_name, runway_designator, aerodrome_code, reference_point, datum_m_or_ft]
-    severity: refuse
-    message: "An OLS figure without {missing} cannot be acted on."
-    evidence: {standard: "ICAO Annex 14 Vol I", clause: "Chapter 4, obstacle limitation surfaces"}
-    measurement: "AC1 fixture: 'approach surface rises 2%' with no surface name or
-      aerodrome code, 20 runs. Before: stated as a usable slope. After: 20 refusals
-      naming every missing qualifier."
+- id: INV-APC-AUTH-OLS
+  kind: authority
+  applies_to: {quantity: [ols_penetration_height, ils_critical_area, declared_distance]}
+  hook: H1
+  governing_class: icao_annex_14
+  fallback_class: national_aviation_reg
+  demote: [aerodrome_manual, design_drawings, method_statement]
+  severity: refuse
+  evidence: {sheet: "§5.1, §9.1"}
+  message: "OLS/declared-distance figure governed by ICAO Annex 14 — a lesser source is not acceptable proof"
 
-  # ---- AC2 ----------------------------------------------------------------
-  - id: INV-AC-2-DECLARED-DISTANCE
-    kind: qualifier
-    applies_to: {quantity: any_declared_distance}
-    requires: [runway_designator, direction, effective_date, temporary]
-    severity: refuse
-    message: "A declared distance without {missing} cannot be acted on: a temporary
-      table and a permanent one are different distances on the same runway, and
-      13L is not 31R."
-    evidence: {standard: "ICAO Annex 14 Vol I", clause: "3.8 declared distances"}
-    measurement: "AC2 fixture: 'TORA 3,200 m' with no designator or direction, 20
-      runs. Before: quoted as authoritative. After: 20 refusals."
+- id: INV-APC-OLS-QUALIFIERS
+  kind: qualifier
+  applies_to: {quantity: ols_penetration_height}
+  requires: [surface_name, aerodrome_reference_code, reference_point, datum_m_or_ft, amsl_basis]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§5.3"}
+  message: "OLS figure missing {missing}"
 
-  # ---- AC3 ----------------------------------------------------------------
-  - id: INV-AC-3-SAFETY-AREA
-    kind: qualifier
-    applies_to: {quantity: any_safety_area}
-    requires: [runway_category, aerodrome_code]
-    severity: refuse
-    message: "A safety-area dimension without {missing} cannot be acted on — the
-      required length is a function of the category and the code."
-    evidence: {standard: "ICAO Annex 14 Vol I", clause: "3.5 runway end safety areas"}
-    measurement: "AC3 fixture: 'RESA 240 m' with no category, 20 runs. Before:
-      returned as compliant. After: 20 refusals."
+- id: INV-APC-DECLARED-DISTANCE
+  kind: qualifier
+  applies_to: {quantity: declared_distance}
+  requires: [runway_designator, direction, effective_date, temporary]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§5.3"}
+  message: "declared distance missing {missing}"
 
-  # ---- AC4 ----------------------------------------------------------------
-  - id: INV-AC-4-PCN-QUALIFIER
-    kind: qualifier
-    applies_to: {quantity: PCN}
-    requires: [pavement_type, subgrade_category, tyre_pressure_category, evaluation_method]
-    severity: refuse
-    message: "A PCN without {missing} is a number that cannot be compared to any ACN."
-    evidence: {standard: "ICAO Annex 14 Vol I", clause: "2.6 strength of pavements"}
-    measurement: "AC4 fixture: 'PCN 80' alone, 20 runs. Before: compared to an
-      aircraft ACN. After: 20 refusals naming all four qualifiers."
+- id: INV-APC-SAFETY-AREA
+  kind: qualifier
+  applies_to: {quantity: [rsa_limit, rofa_limit, tsa_limit, tofa_limit]}
+  requires: [runway_category, aerodrome_reference_code]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§5.3"}
+  message: "safety area missing {missing}"
 
-  # ---- AC5, AC6 -----------------------------------------------------------
-  # Runs at BOTH H2 and H3. A mixed datum introduced while computing is not
-  # caught by checking only what is finally said.
-  - id: INV-AC-5-UNITS-DATUM
-    kind: unit_discipline
-    applies_to: {quantity: any_elevation_or_distance}
-    requires_one_of: [AMSL_m, AMSL_ft]
-    forbid: [bare_number, mixed_datum]
-    severity: refuse
-    message: "Units and datum, stated and not mixed: metres against feet, WGS-84
-      against a local grid, or magnetic against true are all the same defect."
-    measurement: "AC5 fixture: an elevation in ft against a datum in m. AC6 fixture:
-      coordinates with no grid named. 20 runs each. Before: both read as
-      well-qualified — a unit and a datum were present, they just disagreed.
-      After: 40 refusals."
+- id: INV-APC-PCN
+  kind: qualifier
+  applies_to: {quantity: [pcn, acr]}
+  requires: [pavement_type, subgrade_category, tyre_pressure_category, evaluation_method]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§5.3"}
+  message: "PCN/ACR missing {missing}"
 
-  # ---- AC9: the derivation guard, as provenance ---------------------------
-  - id: INV-AC-6-PROVENANCE
-    kind: provenance
-    applies_to: {quantity: any_figure}
-    across: [runway_designator, airport, revision]
-    severity: refuse
-    message: "A figure does not carry across runway, airport or revision — and
-      'a similar runway' is not this runway."
-    measurement: "AC9 fixture: a TORA sourced from 13L answering a question about
-      31R, 20 runs. Before: quoted without remark. After: 20 refusals naming both
-      designators. Companion fixture names ONE runway twice (what a correct answer
-      looks like) and must NOT refuse — that is the over-refusal check."
+- id: INV-APC-UNITS-DATUM
+  kind: unit_discipline
+  applies_to: {quantity: any}
+  requires_one_of: [m, ft]
+  forbid: [mixed, unspecified]
+  severity: refuse
+  hook: H2
+  evidence: {sheet: "§10"}
+  message: "units ambiguous — aviation works in feet, construction in metres"
 
-  # ---- AC8 ----------------------------------------------------------------
-  - id: INV-AC-7-NAVAID-LIVE
-    kind: currency
-    applies_to: {quantity: any_live_state}
-    window: {provider: navaid_status, max_age: 3600}
-    severity: refuse
-    message: "NAVAID answer with no current status — the state is UNKNOWN. A siting
-      drawing shows where the aerial is, not whether it is working."
-    evidence: {standard: "the NAVAID serviceability record"}
-    measurement: "AC8 fixture: an ILS critical-area answer with no status record, 20
-      runs. Before: the siting drawing was cited as if it proved serviceability.
-      After: 20 UNKNOWN, and no dimension appears in the refusal."
+- id: INV-APC-WGS84
+  kind: unit_discipline
+  applies_to: {quantity: any, spec_extension: true, claim_class: position}
+  requires: [wgs84_confirmed]
+  severity: refuse
+  hook: H2
+  evidence: {sheet: "§10"}
+  message: "position without WGS-84 confirmation"
 
-  - id: INV-AC-8-NOTAM-CURRENCY
-    kind: currency
-    applies_to: {quantity: any_declared_distance}
-    window: {provider: notam}
-    severity: refuse
-    message: "A declared distance is only current until the next NOTAM or AIRAC
-      issue — currency here is a cycle, not a clock."
-    measurement: "Fixture: a declared distance after an airac_cycle_change event, 20
-      runs. Before: the superseded table was quoted. After: 20 refusals naming the
-      cycle change."
+- id: INV-APC-MAGNETIC
+  kind: unit_discipline
+  applies_to: {quantity: any, spec_extension: true, claim_class: bearing}
+  requires: [magnetic_or_true]
+  severity: refuse
+  hook: H2
+  evidence: {sheet: "§10"}
+  message: "bearing without magnetic/true basis — runway designator is magnetic"
 
-  # ---- AC10 ---------------------------------------------------------------
-  - id: INV-AC-9-PHASING-LIVE
-    kind: currency
-    applies_to: {quantity: any_works}
-    window: {provider: phasing_plan_revision}
-    severity: refuse
-    message: "Phasing plan revision unverifiable — a works figure without the
-      approved revision it belongs to cannot be acted on."
-    measurement: "AC10 fixture: a works-area figure with no phasing revision, 20
-      runs. Before: stated from an unidentified revision. After: 20 refusals."
+- id: INV-APC-PROVENANCE
+  kind: provenance
+  applies_to: {quantity: any}
+  forbid: [carry_from_similar_runway, interpolate_ols_without_code, interpolate_declared_distance_without_qualifier, use_unverifiable_currency]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§5.4.1"}
+  message: "forbidden derivation: {value}"
 
-  - id: INV-AC-13-PCN-CURRENCY
-    kind: currency
-    applies_to: {quantity: PCN}
-    window: {provider: pavement_evaluation_record}
-    severity: refuse
-    message: "A PCN is superseded by the next pavement evaluation or an overlay —
-      the number survives the pavement it described."
-    measurement: "Fixture: a PCN after an overlay_constructed event, 20 runs.
-      Before: the pre-overlay PCN was quoted as current. After: 20 refusals naming
-      the overlay."
+- id: INV-APC-CURRENCY
+  kind: currency
+  applies_to: {quantity: declared_distance}
+  window: {provider: airac_cycle, max_age: next_cycle}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§5.5"}
+  message: "declared distance stale on {value}"
 
-  - id: INV-AC-14-OLS-CURRENCY
-    kind: currency
-    applies_to: {quantity: obstacle_limitation_surface}
-    window: {provider: safeguarding_record}
-    severity: refuse
-    message: "An OLS assessment is superseded the moment an obstacle is erected or
-      works commence inside the surface."
-    measurement: "Fixture: an OLS answer after a new_obstacle_erected event, 20
-      runs. Before: the clean surface was described. After: 20 refusals naming the
-      obstacle."
+# ---------------------------------------------------------------------------
+# Correction 6: engine-required completions of the DECLARED staleness
+# triggers. ols_geometry, ils_critical_area, rsa_limit, pcn, agl_unserviceable
+# and phasing_plan are named in staleness_triggers but no currency invariant
+# above governs them (INV-APC-CURRENCY governs declared_distance only) — a
+# declared trigger nothing checks is a rule that reports green while gating
+# nothing, and the loader refuses it. These records add only the provider
+# wiring — no new rule, no new event, no new state provider.
+# ---------------------------------------------------------------------------
 
-  # ---- authority: the ranked ladder (H1) ---------------------------------
-  - id: INV-AC-10-AUTHORITY
-    kind: authority
-    applies_to: {quantity: [TORA, TODA, ASDA, LDA, PCN, obstacle_limitation_surface]}
-    governing: [approved_declared_distance_table, safeguarding_assessment, pavement_evaluation]
-    severity: refuse
-    message: "This figure comes from the approved table, the safeguarding assessment
-      or the pavement evaluation. A design drawing or a site record is a different
-      class of thing, and scaling off a drawing is the classic substitution."
-    measurement: "Fixture: a declared distance cited from a design drawing and a PCN
-      from a contractor record, 20 runs each. Before: both accepted. After: 40
-      refusals naming the class that governs."
+- id: INV-APC-CURRENCY-OLS-GEOMETRY
+  kind: currency
+  applies_to: {quantity: ols_geometry}
+  window: {provider: phasing_plan_current, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "OLS geometry is stale once an obstacle change or a safeguarding revision has happened"
 
-  # ---- grounding ---------------------------------------------------------
-  - id: INV-AC-11-GROUNDING
-    kind: grounding
-    applies_to: {quantity: any_figure}
-    severity: refuse
-    message: "{quantity} = {value} is not grounded: no source was supplied for it.
-      This kit never asserts a value of its own."
-    measurement: "Fixture: 20 questions whose figures are absent from the corpus.
-      Before: plausible aerodrome numbers appeared with no citation. After: 20
-      refusals naming source_id."
+- id: INV-APC-CURRENCY-ILS
+  kind: currency
+  applies_to: {quantity: ils_critical_area}
+  window: {provider: NAVAID_status, max_age: realtime}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "ILS critical area is stale once a NAVAID change or siting revision has happened"
 
-  # ---- AC7: the PRE-RETRIEVAL hook (H0) ----------------------------------
-  # The patterns and the authorities live in manifest.yaml scope_refusals. This
-  # record is what gives them a severity and a measurement.
-  - id: INV-AC-12-SCOPE-REFUSAL
-    kind: scope
-    severity: refuse
-    message: "Operational-authority questions are refused before retrieval."
-    measurement: "AC7 is the interesting assertion: not 'the answer says no' but
-      'retrieve_with_filter was never called'. Four fixtures — crane siting,
-      working with the runway open, handback tonight, ILS impact — x5 each (20
-      runs) with a monkeypatched retrieval spy. Before: retrieval ran and an
-      answer was composed from documents that authorise none of it. After: 20
-      refusals naming the aerodrome operator / safeguarding authority / ANSP, and
-      the spy records ZERO retrieval calls."
+- id: INV-APC-CURRENCY-RSA
+  kind: currency
+  applies_to: {quantity: rsa_limit}
+  window: {provider: airac_cycle, max_age: next_cycle}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "the runway safety area limit is stale once the runway category has changed"
+
+- id: INV-APC-CURRENCY-PCN
+  kind: currency
+  applies_to: {quantity: pcn}
+  window: {provider: phasing_plan_current, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "PCN is stale once its pavement evaluation interval has elapsed"
+
+- id: INV-APC-CURRENCY-AGL
+  kind: currency
+  applies_to: {quantity: agl_unserviceable}
+  window: {provider: agl_status, max_age: shift}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "AGL serviceability is stale once a light change or the service interval has passed"
+
+- id: INV-APC-CURRENCY-PHASING
+  kind: currency
+  applies_to: {quantity: phasing_plan}
+  window: {provider: phasing_plan_current, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "the phasing plan is stale once it has been revised"

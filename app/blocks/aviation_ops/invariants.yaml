@@ -1,0 +1,153 @@
+invariants:
+
+- id: INV-AVO-AUTH-WEIGHT
+  kind: authority
+  applies_to: {quantity: [mtow, mzfw, performance_distance]}
+  hook: H1
+  governing_class: AFM
+  # Correction 2: fallback_class must name a DECLARED class. The manifest
+  # declares OM_A_OM_B, not OM_B.
+  fallback_class: OM_A_OM_B
+  demote: [planning_default, previous_loadsheet, crew_note]
+  severity: refuse
+  evidence: {sheet: "§7.1, §11.1"}
+  message: "weight or performance figure governed by AFM — {value} from a lesser class is not acceptable proof"
+
+- id: INV-AVO-WEIGHT-QUALIFIERS
+  kind: qualifier
+  applies_to: {quantity: [mtow, mzfw, performance_distance]}
+  requires: [aircraft_registration, configuration, runway, temperature_c, qnh_hpa]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§7.3"}
+  message: "weight/performance figure missing {missing}"
+
+- id: INV-AVO-FUEL-QUALIFIERS
+  kind: qualifier
+  applies_to: {quantity: fuel_minimum}
+  requires: [sector, alternate, reserve_policy]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§7.3"}
+  message: "fuel minimum missing {missing}"
+
+- id: INV-AVO-FDP-QUALIFIERS
+  kind: qualifier
+  applies_to: {quantity: [fdp_limit, rest_requirement]}
+  requires: [report_time, sectors_flown, acclimatisation_state, augmentation, ftl_authority]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§7.3"}
+  message: "FDP/rest figure missing {missing}"
+
+- id: INV-AVO-RATE-QUALIFIERS
+  kind: qualifier
+  applies_to: {quantity: [handling_rate, delay_cost]}
+  requires: [station, aircraft_category, shift, contract_or_adhoc]
+  severity: flag
+  hook: H3
+  evidence: {sheet: "§7.3"}
+  message: "rate figure missing {missing} — a rate without station and shift is not actionable"
+
+- id: INV-AVO-DELAY-PHASE
+  kind: qualifier
+  applies_to: {quantity: delay_cost}
+  requires: [delay_phase]
+  severity: flag
+  hook: H3
+  evidence: {sheet: "§3"}
+  message: "delay cost without phase — gate, taxi and airborne are different numbers"
+
+- id: INV-AVO-REGISTRATION
+  kind: provenance
+  applies_to: {quantity: any}
+  forbid: [carry_from_sister_aircraft_same_type, carry_rate_from_similar_station, interpolate_performance_without_qualifier, use_unverifiable_currency]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§7.4.1"}
+  message: "forbidden derivation: {value}"
+
+- id: INV-AVO-CURRENCY
+  kind: currency
+  applies_to: {quantity: any}
+  window: {provider: manual_revision, max_age: next_issue}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§7.5"}
+  message: "manual, contract or NOTAM stale on {value}"
+
+# ---------------------------------------------------------------------------
+# Correction 6: engine-required completions of the DECLARED staleness
+# triggers. The sheet's triggers key on seven artifacts (weight_limits,
+# performance_data, mel_interval, duty_limits, contract_rate, fuel_price,
+# compensation) that are not figures; each is now a declared quantity above,
+# and each needs a currency invariant that governs it and names a declared
+# state provider, or the loader refuses the trigger as never-fireable. The
+# blanket INV-AVO-CURRENCY record above already matches quantity: any, but
+# the wiring here makes the provider-per-artifact mapping explicit rather
+# than relying on the blanket record alone. No new rule, no new event —
+# provider wiring only.
+# ---------------------------------------------------------------------------
+
+- id: INV-AVO-CURRENCY-WEIGHT-LIMITS
+  kind: currency
+  applies_to: {quantity: weight_limits}
+  window: {provider: manual_revision, max_age: next_issue}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "weight limits are stale once the configuration changed or the AFM was revised"
+
+- id: INV-AVO-CURRENCY-PERFORMANCE
+  kind: currency
+  applies_to: {quantity: performance_data}
+  window: {provider: manual_revision, max_age: next_issue}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "performance data is stale once the AFM was revised or the runway changed"
+
+- id: INV-AVO-CURRENCY-MEL
+  kind: currency
+  applies_to: {quantity: mel_interval}
+  window: {provider: manual_revision, max_age: next_issue}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "an MEL interval is stale once it has expired"
+
+- id: INV-AVO-CURRENCY-DUTY
+  kind: currency
+  applies_to: {quantity: duty_limits}
+  window: {provider: manual_revision, max_age: next_issue}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "duty limits are stale once the FTL authority or the FTL scheme changed"
+
+- id: INV-AVO-CURRENCY-CONTRACT-RATE
+  kind: currency
+  applies_to: {quantity: contract_rate}
+  window: {provider: contract_revision, max_age: next_issue}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "a contract rate is stale once the contract has been renewed"
+
+- id: INV-AVO-CURRENCY-FUEL-PRICE
+  kind: currency
+  applies_to: {quantity: fuel_price}
+  window: {provider: contract_revision, max_age: next_issue}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "a fuel price is stale once the contract or index it is drawn from has moved"
+
+- id: INV-AVO-CURRENCY-COMPENSATION
+  kind: currency
+  applies_to: {quantity: compensation}
+  window: {provider: manual_revision, max_age: next_issue}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "a compensation figure is stale once the regime governing it has changed"

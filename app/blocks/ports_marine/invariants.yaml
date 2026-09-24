@@ -1,0 +1,102 @@
+invariants:
+
+- id: INV-PM-AUTH-CAPACITY
+  kind: authority
+  applies_to: {quantity: [quay_wall_load, crane_rail_load, bollard_swl, fender_reaction]}
+  hook: H1
+  governing_class: design_dossier
+  fallback_class: as_built_drawings
+  demote: [operating_manual, berth_procedure, shift_instruction]
+  severity: refuse
+  evidence: {sheet: "§A, §D"}
+  message: "asset capacity governed by design dossier — {value} from a lesser class is not acceptable proof"
+
+- id: INV-PM-DEPTH-BASIS
+  kind: qualifier
+  applies_to: {quantity: declared_depth}
+  requires: [depth_datum, survey_date, tide_state_assumed]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§A.2"}
+  message: "depth missing {missing} — datum, survey date and tide state are required"
+
+- id: INV-PM-ASSET-CAPACITY
+  kind: qualifier
+  applies_to: {quantity: [bollard_swl, fender_reaction, fender_energy, crane_rail_load]}
+  requires: [asset_id, certification_ref]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§A.4"}
+  message: "asset capacity without asset ID and cert ref — {missing}"
+
+- id: INV-PM-STACK-QUALIFIER
+  kind: qualifier
+  applies_to: {quantity: [stack_height, wind_limit]}
+  requires: [stack_area, wind_state]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§A.5"}
+  message: "stack height without {missing}"
+
+- id: INV-PM-CERT-CURRENCY
+  kind: currency
+  applies_to: {quantity: [bollard_swl, fender_reaction, crane_rail_load]}
+  window: {provider: survey_current, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§D.2, §E"}
+  message: "certification stale on {value}"
+
+- id: INV-PM-PROVENANCE
+  kind: provenance
+  applies_to: {quantity: any}
+  forbid: [carry_from_similar_berth, use_old_survey_without_date, interpolate_depth_between_soundings, assume_chart_datum_equals_berth_datum]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§D.4"}
+  message: "forbidden derivation: {value}"
+
+# ---------------------------------------------------------------------------
+# Correction 6: engine-required completions of the DECLARED staleness
+# triggers. declared_depth, quay_wall_load, fender_capacity and
+# stack_height_limit are named in staleness_triggers but no currency
+# invariant above governs them — a declared trigger nothing checks is a rule
+# that reports green while gating nothing, and the loader refuses it. These
+# records add only the provider wiring — no new rule, no new event.
+# ---------------------------------------------------------------------------
+
+- id: INV-PM-CURRENCY-DEPTH
+  kind: currency
+  applies_to: {quantity: declared_depth}
+  window: {provider: survey_current, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "declared depth is stale once dredging, silting or a survey supersession has happened"
+
+- id: INV-PM-CURRENCY-QUAY
+  kind: currency
+  applies_to: {quantity: quay_wall_load}
+  window: {provider: berth_maintenance, max_age: shift}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "quay wall load is stale once a modification or an inspection finding has been recorded"
+
+- id: INV-PM-CURRENCY-FENDER-CAPACITY
+  kind: currency
+  applies_to: {quantity: fender_capacity}
+  window: {provider: fender_bollard_condition, max_age: shift}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "fender capacity is stale once its certification interval has lapsed or an incident has occurred"
+
+- id: INV-PM-CURRENCY-STACK-LIMIT
+  kind: currency
+  applies_to: {quantity: stack_height_limit}
+  window: {provider: berth_maintenance, max_age: shift}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "stack height limit is stale once the operating manual has been revised"

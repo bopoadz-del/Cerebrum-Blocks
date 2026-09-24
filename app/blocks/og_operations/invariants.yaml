@@ -1,0 +1,116 @@
+invariants:
+
+- id: INV-OGO-AUTH-MAWP
+  kind: authority
+  applies_to: {quantity: [pressure, mawp, maop, psv_set]}
+  hook: H1
+  governing_class: design_dossier_u1a
+  fallback_class: equipment_datasheet
+  demote: [as_built_pid, operating_procedure, shift_instruction, vendor_advice]
+  severity: refuse
+  evidence: {sheet: "§9.1"}
+  message: "MAWP and PSV set are governed by the design dossier and the datasheet — a P&ID annotation or a spreadsheet is not proof"
+
+- id: INV-OGO-WHICH-PRESSURE
+  kind: qualifier
+  applies_to: {quantity: pressure}
+  requires: [pressure_kind, gauge_or_absolute]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.3, §14"}
+  message: "pressure without which-pressure and gauge/absolute — the classic fatal confusion"
+
+- id: INV-OGO-ENVELOPE-TIER
+  kind: qualifier
+  applies_to: {quantity: [pressure, sif_setpoint, psv_set]}
+  requires: [envelope_tier]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§4.1"}
+  message: "envelope figure without alarm/trip/SOL/design tier named"
+
+- id: INV-OGO-SCE-LIVE
+  kind: derivation
+  applies_to: {quantity: [sif_setpoint, esd_closure_time]}
+  requires_state: [override_register, isolation_register]
+  block_if_missing_state: true
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.5.2"}
+  message: "protective-function answer without current override and isolation state"
+
+- id: INV-OGO-UNITS
+  kind: unit_discipline
+  applies_to: {quantity: [flow, concentration]}
+  requires: [flow_basis]
+  forbid: [mixed, unspecified]
+  severity: refuse
+  hook: H2
+  evidence: {sheet: "§14"}
+  message: "flow or concentration without basis — standard/normal/actual and %LEL/%vol/ppm are not interchangeable"
+
+- id: INV-OGO-EXPOSURE-AVERAGING
+  kind: qualifier
+  applies_to: {quantity: [h2s_limit, benzene_limit, co_limit]}
+  requires: [exposure_averaging]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.3"}
+  message: "exposure limit without TWA/STEL/ceiling — averaging changes the number entirely"
+
+- id: INV-OGO-CITATION-REV
+  kind: qualifier
+  applies_to: {quantity: any}
+  requires: [document_revision, moc_state]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.5.1"}
+  message: "figure without document revision and MOC state — a pre-MOC P&ID is citable and wrong"
+
+- id: INV-OGO-PROVENANCE
+  kind: provenance
+  applies_to: {quantity: any}
+  forbid: [extrapolate_remaining_life, carry_limits_between_facilities, interpolate_corrosion_without_cml_data, carry_setpoint_from_sister_asset]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.4.1"}
+  message: "forbidden derivation: {value}"
+
+- id: INV-OGO-CURRENCY
+  kind: currency
+  applies_to: {quantity: [corrosion_rate, remaining_life, psv_set, sif_setpoint]}
+  window: {provider: sCE_status, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.5"}
+  message: "figure stale on {value}"
+
+# ---------------------------------------------------------------------------
+# Engine-required completions of the DECLARED staleness triggers.
+# The sheet names the events that invalidate pid_data, psv_certification,
+# sif_proof_test, hazop_lopa, operating_procedure and gas_detector; the loader
+# refuses a trigger that no currency invariant can fire, because a declared
+# trigger nothing checks is a rule that reports green while gating nothing.
+# These two records add only the provider wiring for those six artifacts --
+# no new rule, no new event.
+# ---------------------------------------------------------------------------
+
+- id: INV-OGO-CURRENCY-DOCS
+  kind: currency
+  applies_to: {quantity: [pid_data, hazop_lopa, operating_procedure]}
+  window: {provider: permit_register, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "document-controlled record is stale once its trigger event has occurred"
+  measurement: "Probe P&ID data / HAZOP-LOPA / operating procedure x20 after an approved_moc / process_change / revision event. Before: the pre-event record was quoted. After: 20 refusals naming the event."
+
+- id: INV-OGO-CURRENCY-SCE
+  kind: currency
+  applies_to: {quantity: [psv_certification, sif_proof_test, gas_detector]}
+  window: {provider: sCE_status, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "safety-critical-element record is stale once its interval or calibration has elapsed"
+  measurement: "Probe PSV certification / SIF proof test / gas detector calibration x20 after an interval_elapsed / calibration_expiry event. Before: the last-known record was quoted. After: 20 refusals naming the event."

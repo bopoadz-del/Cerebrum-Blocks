@@ -1,0 +1,75 @@
+invariants:
+
+- id: INV-AES-AUTH-BRAND-UNIT
+  kind: authority
+  applies_to: {quantity: neuromodulator_dose}
+  hook: H1
+  governing_class: SPC
+  require_qualifier: product_brand
+  severity: refuse
+  evidence: {sheet: "§1.1.1, §13"}
+  message: "neuromodulator units are brand-specific — {value} is not equivalent without brand"
+
+- id: INV-AES-DOSE-QUALIFIERS
+  kind: qualifier
+  applies_to: {quantity: [neuromodulator_dose, filler_volume, hyaluronidase_dose]}
+  requires: [product_brand, treatment_area]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§3.1, §8.3"}
+  message: "dose missing {missing} — brand and area required"
+
+- id: INV-AES-REVERSIBILITY
+  kind: derivation
+  applies_to: {quantity: hyaluronidase_dose}
+  block_if: [product_not_reversible]
+  requires: [product_class]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§1.2.1"}
+  message: "reversal proposed for a non-HA product — {value} is not reversible"
+
+- id: INV-AES-DEVICE-QUALIFIER
+  kind: qualifier
+  applies_to: {quantity: [device_fluence, device_pulse_duration, device_cooling_temp]}
+  requires: [device, skin_type_fitzpatrick, treatment_area, pass_number]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§4.1, §8.3"}
+  message: "device setting missing {missing} — settings are not transferable"
+
+- id: INV-AES-HYALURONIDASE-INDICATION
+  kind: qualifier
+  applies_to: {quantity: hyaluronidase_dose}
+  requires: [indication, protocol_version]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§3.3, §8.3"}
+  message: "hyaluronidase without indication (elective/occlusion) and protocol version"
+
+- id: INV-AES-CONFLICT-REFUSE
+  kind: derivation
+  applies_to: {quantity: any, spec_extension: true, claim_class: dose}
+  block_if: [sources_conflict]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§8.6.3"}
+  message: "two sources conflict on a dose — refuse and report"
+
+- id: INV-AES-PROVENANCE
+  kind: provenance
+  applies_to: {quantity: any}
+  forbid: [convert_units_between_brands, interpolate_settings_across_skin_types_without_test_patch, carry_settings_between_devices, carry_protocols_from_previous_clinics_or_courses, interpolate_hyaluronidase_between_indications]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§8.4.1"}
+  message: "forbidden derivation: {value}"
+
+- id: INV-AES-CURRENCY
+  kind: currency
+  applies_to: {quantity: any}
+  window: {provider: protocol_current, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§8.5"}
+  message: "protocol currency unverifiable — refuse"
