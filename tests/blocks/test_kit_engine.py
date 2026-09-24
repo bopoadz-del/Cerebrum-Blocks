@@ -471,3 +471,65 @@ def test_a_non_numeric_value_under_a_band_is_refused_by_the_engine(tmp_path):
     messages = " ".join(f.message for f in outcome.findings)
     assert outcome.verdict == "refused", messages
     assert "not a number" in messages and "unchecked band is not a pass" in messages
+
+
+def test_an_export_time_record_is_actually_evaluated_at_export_time(kit):
+    """`at(H4)` mapped H4 to H3 alone, so a record declaring `hook: H4` was selected
+    at NO hook: H3 skipped it (its hook is H4) and H4 looked for H3. The Store had
+    one -- water_treatment's INV-WT-CURRENCY -- and it had never fired in its life.
+
+    Load-time refuses a record that could never fire, and it was right to pass this
+    one: `allowed_hooks` adds H4 wherever H3 is legal, so the DECLARATION was valid.
+    The hole was in the router, which cannot be seen by a check that reads the
+    record's own fields.
+    """
+    from app.blocks.kit_engine.invariants import (
+        H3_ANSWER_TIME,
+        H4_EXPORT_TIME,
+        parse_invariant,
+    )
+
+    record = parse_invariant({
+        "id": "INV-EXPORT-ONLY", "kind": "currency", "severity": "refuse",
+        "hook": "H4",
+        "applies_to": {"quantity": "pue"},
+        "window": {"provider": "bms", "max_age": "event"},
+        "message": "pue from a superseded reading",
+        "measurement": "20 exports after a bms change. Before: n stale. After: 0.",
+    }, kit.manifest.quantity_classes(), where="test")
+    kit.invariants.append(record)
+
+    assert record.hooks() == (H4_EXPORT_TIME,)
+    assert record in kit.at(H4_EXPORT_TIME), (
+        "a record declaring H4 must be evaluated at H4 — otherwise it is a dead rule "
+        "that load-time cannot see"
+    )
+    assert record not in kit.at(H3_ANSWER_TIME), "H4 is later material, not answer time"
+
+    # And the H3 set still re-runs at H4: that is what H4 is for.
+    answer_time = kit.at(H3_ANSWER_TIME)
+    assert answer_time, "the kit has answer-time records"
+    assert all(inv in kit.at(H4_EXPORT_TIME) for inv in answer_time)
+
+
+def test_every_store_record_is_reachable_at_some_hook():
+    """The property the H4 bug violated, asserted across the whole Store rather than
+    for one kit: a record the router never asks for is a rule that does not exist."""
+    from app.blocks.kit_engine import load_kit as _load
+
+    unreachable = []
+    for manifest in sorted(pathlib.Path("app/blocks").glob("*/manifest.yaml")):
+        directory = manifest.parent
+        if not (directory / "invariants.yaml").is_file():
+            continue
+        loaded = _load(directory)
+        for inv in loaded.invariants:
+            # H0 included: a `scope` record runs pre-retrieval, where the dispatch is
+            # `eval_scope` against the MANIFEST's patterns rather than a per-record
+            # check. It still has to be one the router asks for at H0, which is what
+            # this asserts; that its patterns actually refuse is
+            # test_every_invariant_bites.py's job.
+            if not any(inv in loaded.at(hook) for hook in ("H0", "H1", "H2", "H3", "H4")):
+                unreachable.append(f"{directory.name}:{inv.id} ({inv.kind}, "
+                                   f"declares {inv.hooks()})")
+    assert not unreachable, f"records no hook ever asks for: {unreachable}"

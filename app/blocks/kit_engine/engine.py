@@ -124,9 +124,20 @@ class Kit:
         return not self.unmeasured
 
     def at(self, hook: str) -> List[Invariant]:
-        # H4 re-runs H3 on the deliverable: same invariants, later material.
-        wanted = H3_ANSWER_TIME if hook == H4_EXPORT_TIME else hook
-        return [inv for inv in self.invariants if wanted in inv.hooks()]
+        # H4 re-runs H3 on the deliverable: same invariants, later material -- AND
+        # anything declared export-time in its own right.
+        #
+        # Mapping H4 to H3 alone made a record that declares `hook: H4` unreachable
+        # at EVERY hook: H3 skipped it (its hook is H4) and H4 looked for H3. The
+        # Store had one, water_treatment's INV-WT-CURRENCY, and it had never fired.
+        # Load-time refuses a record that could never fire, but that check reads the
+        # record's own fields and cannot see a hook the router never asks for.
+        if hook == H4_EXPORT_TIME:
+            return [
+                inv for inv in self.invariants
+                if H3_ANSWER_TIME in inv.hooks() or H4_EXPORT_TIME in inv.hooks()
+            ]
+        return [inv for inv in self.invariants if hook in inv.hooks()]
 
     # -- H0 ---------------------------------------------------------------
 

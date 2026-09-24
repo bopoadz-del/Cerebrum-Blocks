@@ -34,14 +34,6 @@ SHEETS = ROOT / "docs" / "kit_questions"
 #: Named so that adding an eighteenth kit with neither fails here.
 WITHOUT_SHEET = {"datacentre", "offshore_marine"}
 
-#: Kits whose figure register is their own design_basis.yaml / operating_basis
-#: block. These must NEVER carry a generated per-quantity figures block: theirs
-#: names figures the domain's way and carries the qualifiers each is meaningless
-#: without, and a generated one was written over all six -- reporting the one
-#: FILLED register (datacentre, 17 of 18 answered) as a kit with nothing answered.
-WITH_REGISTER = {"datacentre", "fire_protection", "offshore_marine",
-                 "og_operations", "rail", "water_treatment"}
-
 
 def _importer():
     spec = importlib.util.spec_from_file_location(
@@ -57,6 +49,21 @@ def kit_dirs():
         p.parent for p in BLOCKS.glob("*/manifest.yaml")
         if (p.parent / "invariants.yaml").is_file()
     )
+
+
+#: EVERY kit's figure register is its own design_basis.yaml (operating_basis for
+#: og_operations). Six were built with one; the other eleven got a generated
+#: per-quantity `figures:` block in the manifest instead, which could not say "this
+#: value is meaningless without its train and its averaging basis" -- and which,
+#: written over the one FILLED register, reported datacentre's 17-of-18 answered
+#: facility as a kit with nothing answered. There is now one register per kit and
+#: no manifest carries a figures block.
+WITH_REGISTER = {d.name for d in kit_dirs()}
+
+#: The six whose register was authored by hand and is the record. The other eleven
+#: are generated from each kit's own manifest, invariants and question sheet.
+HAND_WRITTEN_REGISTERS = {"datacentre", "fire_protection", "offshore_marine",
+                          "og_operations", "rail", "water_treatment"}
 
 
 def sheet_kits():
@@ -336,9 +343,11 @@ async def test_a_kit_with_a_sheet_reports_the_owners_questions_and_what_is_next(
     out = await FitoutKitBlock().process(
         {"figures": [{"quantity": "rate", "value": 1, "unit": "currency_per_m2"}]}, {})
     state = out["result"]["interview"]
-    assert state["questions_source"] == "owner_sheet"
+    assert state["questions_source"] == "design_basis+owner_sheet", (
+        "every kit now carries its own figure register alongside the owner's sheet"
+    )
     assert state["sheet_supplied"] is True
-    assert state["design_basis_supplied"] is False
+    assert state["design_basis_supplied"] is True
     assert state["questions"] == 62
     assert state["ready"] is False
     first = state["next"][0]
@@ -360,9 +369,20 @@ def test_covers_links_a_question_to_a_quantity_only_on_an_exact_naming():
 # a kit's own figure register
 # --------------------------------------------------------------------------
 
-def test_the_register_kits_are_exactly_the_ones_with_a_design_basis_file():
+def test_every_kit_has_exactly_one_figure_register_and_it_is_the_design_basis():
     found = {d.name for d in kit_dirs() if (d / "design_basis.yaml").is_file()}
-    assert found == WITH_REGISTER
+    assert found == WITH_REGISTER, (
+        f"kits with no figure register: {sorted(WITH_REGISTER - found)}. Run "
+        f"scripts/generate_kit_registers.py."
+    )
+    carrying_both = [
+        d.name for d in kit_dirs()
+        if (yaml.safe_load((d / "manifest.yaml").read_text(encoding="utf-8")) or {}).get("figures")
+    ]
+    assert not carrying_both, (
+        f"{carrying_both} carry BOTH a register and a manifest figures block — the "
+        f"same fact in two places, free to disagree"
+    )
 
 
 @pytest.mark.parametrize("kit", sorted(WITH_REGISTER))
