@@ -212,7 +212,10 @@ def _finding(
     """Build the finding, applying the never-refuse-the-operator rule."""
     # The kit's declared message is a HEADLINE and the computed detail always
     # follows it. Applied here, once, so no evaluator can drop the specifics.
-    message = _text(inv, message)
+    # Compose first, THEN render: a declared headline carries {missing} and
+    # {value} too, and substituting only the computed half left "{missing}"
+    # printed literally in the operator's refusal.
+    message = _render(_text(inv, message), missing, figure)
     severity = inv.severity
     softened = None
     if figure is not None and figure.is_operators_own and severity == "refuse":
