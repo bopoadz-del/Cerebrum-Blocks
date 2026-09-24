@@ -218,6 +218,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative stadium venue reasoning kit on the shared reasoning layer. 43 invariants declared in app/blocks/stadium_venue/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/stadium_venue/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/stadium_venue/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "589c1520f6a932b4a8cc8fe643c2aa457f41e219390131cc75ebf099bbc45b73",
+    "block.py": "97ed0ffdd6ef246e7ca53e141931cf0b10d003bfdd2df63cef45b2a7cb5fe5b3"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/stadium_venue_kit:latest",
     "type": "docker"
@@ -279,6 +284,7 @@
     }
   ],
   "requires": [],
+  "signature": "8KG5FXDccdVDWwMUxJ71wQhK0+8OlLEQOwr6XjQGwjr/iRxd6CVED0Xf1t37/qN8UA4CKgiveZ2+DiSKYG8xCQ==",
   "tags": [
     "gate",
     "kit",
