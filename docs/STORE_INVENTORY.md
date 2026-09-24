@@ -7,7 +7,7 @@ sweep. Every claim below is from the files themselves, not from memory.
 
 ## Trust summary
 
-- **212 registry blocks advertised, 0 missing** (census). Manifest/signature sweep:
+- **232 registry blocks advertised** (census). 17 declarative reasoning kits added 2026-09-24, all certified and signed. Manifest/signature sweep:
   212 `block.json` manifests, signatures verified against the registered
   `cerebrum_platform` publisher key (2026-09-23). Author sweep: **190 declare
   `Cerebrum Team`**, 22 declare no author.
@@ -22,6 +22,47 @@ sweep. Every claim below is from the files themselves, not from memory.
   replaced are gone — Store `main` `9b8d781f`. There is no factory vendor
   mirror of store blocks; the factory consumes this inventory like any
   other client.
+
+### Declarative reasoning kits — 17 verticals
+
+Added 2026-09-24. Each kit is a DECLARATION, not code: `app/blocks/<kit>/manifest.yaml`
+is the vocabulary (quantities, qualifier fields, the source-class authority ladder,
+state providers, staleness triggers, scope refusals) and `invariants.yaml` is the
+records. One shared evaluator (`app/blocks/kit_engine/`) runs them across five hooks —
+H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time — and
+knows nothing about any domain.
+
+Block ids are `<kit>_kit`. The five `<kit>_reasoning` blocks built on hand-written
+gates are untouched and still published beside them.
+
+All 17 are **certified** (three bars, control-delete included) and **signed**
+with the `cerebrum_platform` key; `scripts/verify_block.py` verifies every one.
+
+**NO INTERVIEW HAS RUN for any of these domains.** Every declared figure value is
+null, and each kit reports `interview_status`, `unfilled_figures` and
+`unmeasured_invariants` with every answer. 128 of 217 records
+carry no measurement case yet, so those kits report `ships: false` — spec §4 says no
+invariant ships without one, enforced at the ship gate rather than the load gate.
+
+| Kit | Invariants | Kinds | Declared hooks | Unmeasured |
+|---|---|---|---|---|
+| aesthetic | 8 | 5 | H1,H3 | 8 |
+| airport_construction | 16 | 5 | H1,H2,H3 | 16 |
+| architecture | 8 | 4 | H1,H3 | 8 |
+| aviation_ops | 15 | 4 | H1,H3 | 15 |
+| datacentre | 14 | 9 |  | 0 |
+| dental | 8 | 5 | H1,H3 | 8 |
+| fire_protection | 21 | 9 |  | 0 |
+| fitout | 11 | 4 | H0,H3 | 7 |
+| fm | 7 | 5 | H1,H3 | 6 |
+| heritage | 7 | 5 | H1,H3 | 7 |
+| offshore_marine | 13 | 7 | H0,H2,H3 | 9 |
+| og_construction | 13 | 6 | H0,H1,H3 | 8 |
+| og_operations | 11 | 6 | H1,H2,H3 | 9 |
+| ports_marine | 10 | 4 | H1,H3 | 10 |
+| pump_station | 13 | 6 | H1,H2,H3 | 8 |
+| rail | 28 | 9 |  | 0 |
+| water_treatment | 14 | 5 | H1,H3,H4 | 9 |
 
 ## Vertical readiness
 
