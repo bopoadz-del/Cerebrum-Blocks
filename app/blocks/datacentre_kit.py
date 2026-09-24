@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class DatacentreKitBlock(ReasoningKitBlock):
-    name = "datacentre_reasoning"
+    name = "datacentre_kit"
     kit_name = "datacentre"
     description = (
         "Declarative data centre reasoning kit on the shared reasoning layer: eight "

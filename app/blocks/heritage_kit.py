@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class HeritageKitBlock(ReasoningKitBlock):
-    name = "heritage_reasoning"
+    name = "heritage_kit"
     kit_name = "heritage"
     description = (
         "Declarative heritage building restoration reasoning kit on the shared reasoning layer: eight "

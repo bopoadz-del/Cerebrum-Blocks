@@ -38,6 +38,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative heritage reasoning kit on the shared reasoning layer. 7 invariants declared in app/blocks/heritage/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/heritage/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/heritage/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "4aa611de8bad77e4e72f7099f7387da5f3b466fc62be4e511eedb9a8c2f369cc",
+    "block.py": "ac175f7c8d9a569801388a00f8d3761481188e6ec79f8acf073ea8d26532c784"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/heritage_kit:latest",
     "type": "docker"
@@ -99,6 +104,7 @@
     }
   ],
   "requires": [],
+  "signature": "pdF0iu8JczI5+vJnCdywrrf/7apQHYBLSRZL3/48NYgpbEUOKwpSn5b+nM7M66I7BdTU9SiqQFiO0kIkgRz+BA==",
   "tags": [
     "gate",
     "heritage",

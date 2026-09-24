@@ -38,6 +38,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative fm reasoning kit on the shared reasoning layer. 7 invariants declared in app/blocks/fm/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/fm/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/fm/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "375db8efdd16c5f5919e5eeff9e65938e64581f908dc256df1799b2a9b7033bc",
+    "block.py": "0055e06a40c4cb70639a24abeb86979acbf5bf6c6c6b209deca37e118534652a"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/fm_kit:latest",
     "type": "docker"
@@ -99,6 +104,7 @@
     }
   ],
   "requires": [],
+  "signature": "PS5+uguatYbLzLYyrfzX7479vdcLj5s6AsfEOXJBHkZWPHPHzmyPp1Zgjvm6TSSigLqgHPuzCubtmRTAvXJbBA==",
   "tags": [
     "fm",
     "gate",

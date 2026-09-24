@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class OffshoreMarineKitBlock(ReasoningKitBlock):
-    name = "offshore_marine_reasoning"
+    name = "offshore_marine_kit"
     kit_name = "offshore_marine"
     description = (
         "Declarative offshore marine operations reasoning kit on the shared reasoning layer: eight "

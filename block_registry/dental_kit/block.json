@@ -43,6 +43,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative dental reasoning kit on the shared reasoning layer. 8 invariants declared in app/blocks/dental/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/dental/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/dental/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "42beaa17d6db5453d7edfd0fe02d074e8a4944dfe2e94266472ba0ce55430f42",
+    "block.py": "4c05ecacf478589c55f31d1ecdd363567e8c5ddbd9f5497b630f9aba360f2377"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/dental_kit:latest",
     "type": "docker"
@@ -104,6 +109,7 @@
     }
   ],
   "requires": [],
+  "signature": "tymhIE/FSZ2ninFDEGaKff2Wh0r1FT85UgozhbobVVE4nOcozyd+2+5ES1Hn7pPZ4XEMeg535cZknqetUViCAQ==",
   "tags": [
     "dental",
     "gate",

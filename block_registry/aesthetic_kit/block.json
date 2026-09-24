@@ -43,6 +43,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative aesthetic reasoning kit on the shared reasoning layer. 8 invariants declared in app/blocks/aesthetic/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/aesthetic/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/aesthetic/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "4859192c1d90faf83e3b04f0be8d43931ef4961cf9d79038a30d6a9d1ad6827c",
+    "block.py": "f7e79b952a19d3dda94af989f6a1d212dad9955f2345d98c07af8ffe6c31122e"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/aesthetic_kit:latest",
     "type": "docker"
@@ -104,6 +109,7 @@
     }
   ],
   "requires": [],
+  "signature": "+fCGKbVOemDXHkQ/h7kwgOEWT2OVszQ/Sdt6OYHIc/wcCaKhAUNZGtZ+TPHN1IKXhTG7jS3RlPQzI6DiC7YDDg==",
   "tags": [
     "aesthetic",
     "gate",

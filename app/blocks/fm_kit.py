@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class FmKitBlock(ReasoningKitBlock):
-    name = "fm_reasoning"
+    name = "fm_kit"
     kit_name = "fm"
     description = (
         "Declarative facility management reasoning kit on the shared reasoning layer: eight "

@@ -73,6 +73,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative datacentre reasoning kit on the shared reasoning layer. 14 invariants declared in app/blocks/datacentre/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/datacentre/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/datacentre/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "e7679c23d5878833a1799b0b6b2dc0635eb412240651c6270ed58922136614f2",
+    "block.py": "f2719c90b77f5fd405a701a48a3508d822ea9a32a4acdc63e15b261b046c2eff"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/datacentre_kit:latest",
     "type": "docker"
@@ -134,6 +139,7 @@
     }
   ],
   "requires": [],
+  "signature": "AweDeLDK3YkoACnxht6QY0q7lQ9jUOiYcgwyDL2jRiOwiFtPuMqWD38YwfTOJRgV2dk903xGZGMe9RiSHhjAAA==",
   "tags": [
     "datacentre",
     "gate",

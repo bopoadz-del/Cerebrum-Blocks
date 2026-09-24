@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class PortsMarineKitBlock(ReasoningKitBlock):
-    name = "ports_marine_reasoning"
+    name = "ports_marine_kit"
     kit_name = "ports_marine"
     description = (
         "Declarative ports and marine reasoning kit on the shared reasoning layer: eight "

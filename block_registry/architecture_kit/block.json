@@ -43,6 +43,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative architecture reasoning kit on the shared reasoning layer. 8 invariants declared in app/blocks/architecture/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/architecture/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/architecture/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "09c9e1b486b4b4e1fd060570be6df13c787742c5b0b6149da4edfb022d94a84a",
+    "block.py": "7171d0c5ceb17c88a289cadc396a4d8ddf63b5bebe471d2191471f20b0aebf5d"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/architecture_kit:latest",
     "type": "docker"
@@ -104,6 +109,7 @@
     }
   ],
   "requires": [],
+  "signature": "DP4oS5SjVQvuF1jhh8kBI3eAHpSklIU+z/E2k/KgI46SqSl4tMd+gqo76qpLKQregJlNzcZVFFiEw+wCHrENBw==",
   "tags": [
     "architecture",
     "gate",

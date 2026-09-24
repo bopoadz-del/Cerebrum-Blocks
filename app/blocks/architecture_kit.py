@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class ArchitectureKitBlock(ReasoningKitBlock):
-    name = "architecture_reasoning"
+    name = "architecture_kit"
     kit_name = "architecture"
     description = (
         "Declarative architecture design office reasoning kit on the shared reasoning layer: eight "

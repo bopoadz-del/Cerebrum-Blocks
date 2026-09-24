@@ -53,6 +53,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative ports marine reasoning kit on the shared reasoning layer. 10 invariants declared in app/blocks/ports_marine/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/ports_marine/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/ports_marine/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "5de6fab3b43fc800c88e8bc5cb19a3e50a6c1c1a0702c11eca9ccf8f467aa5f3",
+    "block.py": "b447e9af990a2b907b936272d66aa2f864dc656f9c78812b783abdeb892a384f"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/ports_marine_kit:latest",
     "type": "docker"
@@ -114,6 +119,7 @@
     }
   ],
   "requires": [],
+  "signature": "Zwir+0qwxwM0WxYtnGS/GWQezdMMHRVeqTREY8rFgpxEklk/JqyBoqNEBZVeQGCL1oC6OppzP0fsPXr33teXBA==",
   "tags": [
     "gate",
     "kit",

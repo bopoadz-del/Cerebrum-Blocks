@@ -68,6 +68,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative og construction reasoning kit on the shared reasoning layer. 13 invariants declared in app/blocks/og_construction/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/og_construction/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/og_construction/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "55a321f8c190b5afda8a40245e7d587054da22740719318752db8fae5bfa2854",
+    "block.py": "f8f7a475dd8cb1fe6a3743fa38853c980a35bd3ea224e2b3ddbd0cba7d075fb1"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/og_construction_kit:latest",
     "type": "docker"
@@ -129,6 +134,7 @@
     }
   ],
   "requires": [],
+  "signature": "UlwLWoBmZMmoH7R9FfIwJ+ZaivK/RDTfg0jQVVx5FKYgwFDKcmkc0fY1sBoxGJWRe8+6e4LAlpY5mCyOrN0lCA==",
   "tags": [
     "gate",
     "kit",

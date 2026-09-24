@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class FitoutKitBlock(ReasoningKitBlock):
-    name = "fitout_reasoning"
+    name = "fitout_kit"
     kit_name = "fitout"
     description = (
         "Declarative fit-out contracting reasoning kit on the shared reasoning layer: eight "

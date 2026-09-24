@@ -108,6 +108,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative fire protection reasoning kit on the shared reasoning layer. 21 invariants declared in app/blocks/fire_protection/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/fire_protection/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/fire_protection/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "efcd56dd6564287a3d56dce7b2ec50fcb8a6da0e57e00558178e54b02d0b0577",
+    "block.py": "4761b4bba4535c1883bdb25f7209d6cd5871fb22aa0b476006f5715d0cddbf06"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/fire_protection_kit:latest",
     "type": "docker"
@@ -169,6 +174,7 @@
     }
   ],
   "requires": [],
+  "signature": "3Vd2aFLlHA0exGuc4aB/chk6vo3NCg50EghnY+N/TPb8RjHE1WxZm/qZLYjRRvzlWuG5JYxQw/Wxpji94A+9Ag==",
   "tags": [
     "fire",
     "gate",

@@ -78,6 +78,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative aviation ops reasoning kit on the shared reasoning layer. 15 invariants declared in app/blocks/aviation_ops/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/aviation_ops/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/aviation_ops/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "756fa2f53043570ccfd90e33ea2174cd2e69819b081cb538a95090c960d859cd",
+    "block.py": "5e3514fdfee92d83199f0a5bf575440016a17aa20a15c4c4d96ca578ef5d0fe2"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/aviation_ops_kit:latest",
     "type": "docker"
@@ -139,6 +144,7 @@
     }
   ],
   "requires": [],
+  "signature": "EP8xClKxlbXejkt8s3Sj4zAKNBRL8XGKQ/CZuMf0EuGe7MTLZGUhyq0DqlAqms6AlA5DlQTNa+VivBIsJGv8CQ==",
   "tags": [
     "aviation",
     "gate",

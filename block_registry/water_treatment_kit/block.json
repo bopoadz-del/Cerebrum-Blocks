@@ -73,6 +73,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative water treatment reasoning kit on the shared reasoning layer. 14 invariants declared in app/blocks/water_treatment/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/water_treatment/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/water_treatment/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "24c79e4821cd355e6f82d79ca98b266704f50a691e2055a1c421fd8140043b43",
+    "block.py": "e9d646716aff79b1d297014c7b979fd83fa42f7be5a8fffc77c736b8e547303b"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/water_treatment_kit:latest",
     "type": "docker"
@@ -134,6 +139,7 @@
     }
   ],
   "requires": [],
+  "signature": "GRD6begR20gw1mQxEAT4IPTCNZqTlGfJXwynK58p8oGQiC49Sb6/hn2O72lpd0k2uNQrJyC1AUvK6hntrY9vDw==",
   "tags": [
     "gate",
     "kit",

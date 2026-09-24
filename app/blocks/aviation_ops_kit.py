@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class AviationOpsKitBlock(ReasoningKitBlock):
-    name = "aviation_ops_reasoning"
+    name = "aviation_ops_kit"
     kit_name = "aviation_ops"
     description = (
         "Declarative aviation operations reasoning kit on the shared reasoning layer: eight "

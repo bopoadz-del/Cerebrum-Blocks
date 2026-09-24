@@ -83,6 +83,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative airport construction reasoning kit on the shared reasoning layer. 16 invariants declared in app/blocks/airport_construction/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/airport_construction/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/airport_construction/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "a5c938adfe813c0eeabc032b68ccb48f89040212203ebab90f643ac75fa4c72c",
+    "block.py": "f9dde4a54184cb8c79e8058d6e72127a9d2019077de408324494ccb98bebfeb2"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/airport_construction_kit:latest",
     "type": "docker"
@@ -144,6 +149,7 @@
     }
   ],
   "requires": [],
+  "signature": "5/KD6kOXNvnv4hWNfMxe7np4KIJ4elnmrbdjUSu9SQcW0rD4dBImtI3HYALyY++KIGH5Ut5wG3UiXqRZXSBLBQ==",
   "tags": [
     "airport",
     "gate",

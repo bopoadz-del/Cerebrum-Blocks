@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class PumpStationKitBlock(ReasoningKitBlock):
-    name = "pump_station_reasoning"
+    name = "pump_station_kit"
     kit_name = "pump_station"
     description = (
         "Declarative water pump station operations reasoning kit on the shared reasoning layer: eight "

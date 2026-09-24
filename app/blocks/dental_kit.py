@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class DentalKitBlock(ReasoningKitBlock):
-    name = "dental_reasoning"
+    name = "dental_kit"
     kit_name = "dental"
     description = (
         "Declarative dental clinics reasoning kit on the shared reasoning layer: eight "

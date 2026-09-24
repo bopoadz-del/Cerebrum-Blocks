@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class FireProtectionKitBlock(ReasoningKitBlock):
-    name = "fire_protection_reasoning"
+    name = "fire_protection_kit"
     kit_name = "fire_protection"
     description = (
         "Declarative fire protection and firefighting systems reasoning kit on the shared reasoning layer: eight "

@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class OgConstructionKitBlock(ReasoningKitBlock):
-    name = "og_construction_reasoning"
+    name = "og_construction_kit"
     kit_name = "og_construction"
     description = (
         "Declarative oil and gas construction reasoning kit on the shared reasoning layer: eight "

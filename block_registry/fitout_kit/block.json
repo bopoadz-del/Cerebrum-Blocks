@@ -58,6 +58,11 @@
   ],
   "author": "Cerebrum Team",
   "description": "Declarative fitout reasoning kit on the shared reasoning layer. 11 invariants declared in app/blocks/fitout/invariants.yaml across the kinds the portable spec defines (grounding, qualifier, unit_discipline, authority, provenance, currency, scope, derivation, band) and the five hooks (H0 pre-retrieval, H1 ranking, H2 tool-time, H3 answer-time, H4 export-time). Vocabulary in app/blocks/fitout/manifest.yaml. Scope refusals classify BEFORE retrieval. Fail closed: a kit that does not parse is DISABLED and refuses every statement rather than passing them through with no invariants. NO INTERVIEW HAS RUN, so every declared figure value is null and the block refuses rather than inventing one (app/blocks/fitout/KNOWN_GAPS.md). Measured by tests/blocks/test_reasoning_kits.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "e55216e033fdfb572e84788aa961117aca413dceff4fbd52022421d807703299",
+    "block.py": "0d6b438ed086e3c3a024453613881c46dc1325f1b4387c0d36aa369c7c8d6e31"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/fitout_kit:latest",
     "type": "docker"
@@ -119,6 +124,7 @@
     }
   ],
   "requires": [],
+  "signature": "Y/1BQQxxi4xgHDrsxnjSo2s1CMg8cCAc2/F3hnZZ3BX1utc2MpKBLg00IDjLsIf9lbDjtf9ps7n1qqVk64+iAw==",
   "tags": [
     "fitout",
     "gate",

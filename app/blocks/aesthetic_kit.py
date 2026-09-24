@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class AestheticKitBlock(ReasoningKitBlock):
-    name = "aesthetic_reasoning"
+    name = "aesthetic_kit"
     kit_name = "aesthetic"
     description = (
         "Declarative cosmetic and aesthetic clinics reasoning kit on the shared reasoning layer: eight "

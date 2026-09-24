@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class RailKitBlock(ReasoningKitBlock):
-    name = "rail_reasoning"
+    name = "rail_kit"
     kit_name = "rail"
     description = (
         "Declarative railway and metro construction reasoning kit on the shared reasoning layer: eight "

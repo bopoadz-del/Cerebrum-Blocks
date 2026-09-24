@@ -17,7 +17,7 @@ from app.blocks.kit_block import ReasoningKitBlock
 
 
 class WaterTreatmentKitBlock(ReasoningKitBlock):
-    name = "water_treatment_reasoning"
+    name = "water_treatment_kit"
     kit_name = "water_treatment"
     description = (
         "Declarative water treatment plant operations reasoning kit on the shared reasoning layer: eight "
