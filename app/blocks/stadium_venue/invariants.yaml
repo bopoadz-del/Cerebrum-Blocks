@@ -478,3 +478,26 @@ invariants:
   # by its own id. One record carries the severity and the measurement; the thirteen
   # patterns and their named authorities live in the manifest, where the engine
   # reads them.
+
+# ─── GROUNDING: a figure nobody supplied is invented ────────────────────────
+# NOT in the G2 draft, and its absence was a hole, not a simplification. The
+# shared evaluator runs `eval_grounding` ONLY for a declared record of this kind
+# — there is no generic leg — so a kit without one never asks whether a figure
+# exists in evidence at all. Forty-three records checked how a figure was
+# qualified, sourced, banded, aged and carried, and none of them checked that it
+# came from anywhere. In a domain whose figures are licensed capacity, egress
+# width and rigging point capacity, an uncited number stated as fact is the worst
+# outcome this kit can produce, and it was the one outcome it did not gate.
+#
+# `any` and not one of this manifest's `any_*` classes: a class is opt-in per
+# quantity, so a new quantity added without remembering to tag it would arrive
+# ungated. Every figure needs a source, spelled out as every figure.
+
+- id: INV-SV-GROUNDING
+  kind: grounding
+  applies_to: {quantity: any}
+  hook: H3
+  severity: refuse
+  evidence: {standard: "this kit never asserts a figure of its own"}
+  message: "{quantity} = {value} is not grounded: no source was supplied for it. This kit never asserts a venue figure of its own"
+  measurement: "20 probes whose figures are absent from the corpus, across all four archetypes (5 each), asking for capacity, exit width, lux and rigging capacity. Before: with this kind absent the figure passed every other record — it was qualified, in-band, in-date and uncarried, and nothing asked where it came from, so a plausible capacity appeared with no citation. After: 20 refusals naming source_id as missing. Control: the same 20 with a document origin and a source_id pass, so the record is not refusing everything."
