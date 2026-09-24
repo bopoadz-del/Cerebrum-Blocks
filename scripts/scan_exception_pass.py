@@ -173,7 +173,10 @@ RETURN_ALLOWLIST: dict[str, str] = {
     "app/core/logging_config.py:240": "baseline 2026-09-11",
     "app/core/mlflow_tracker.py:64": "baseline 2026-09-11",
     "app/core/sandbox.py:302": "baseline 2026-09-11",
-    "app/core/vector_store.py:159": "baseline 2026-09-11",
+    # app/core/vector_store.py:159 was `except Exception: return {}` in
+    # ``_json_meta``. It now logs which chunk failed to decode and why, so it is
+    # no longer a silent empty return and no longer needs a line here. Removed
+    # rather than moved: the baseline only ever gets smaller.
     "app/dependencies.py:125": "baseline 2026-09-11",
     "app/lib/pm_computations.py:340": "baseline 2026-09-11",
     "app/routers/health.py:140": "baseline 2026-09-11",
