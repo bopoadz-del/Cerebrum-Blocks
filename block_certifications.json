@@ -1252,6 +1252,215 @@
       ],
       "fixture": "app/blocks/offshore_marine/manifest.yaml - a real qualified manifest on disk, loaded by process() via InstallationBasis. The loader refuses a partially-qualified figure at load time and the test asserts the refusal names the figure and every missing qualifier; the gate's ten never-allowed derivations are each driven through process()'s reasoning path and asserted to name which inference was attempted.",
       "include_in_ci": true
+    },
+    {
+      "block": "og_operations_reasoning",
+      "module": "app.blocks.og_operations_reasoning",
+      "class": "OgOperationsReasoningBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_og_operations_reasoning.py"
+      ],
+      "fixture": "app/blocks/og_operations/manifest.yaml - a real qualified operating-basis manifest on disk, loaded by process() via OperatingBasis. The loader refuses a partially-qualified figure at load time and the test asserts the refusal names the figure and every missing qualifier; the five never-allowed derivations (including the cross-facility limit carry, checked by distinct-facility tokens plus a carry verb rather than a mention-counting regex) are each driven through process() and asserted to name which inference was attempted.",
+      "include_in_ci": true
+    },
+    {
+      "block": "water_treatment_reasoning",
+      "module": "app.blocks.water_treatment_reasoning",
+      "class": "WaterTreatmentReasoningBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_water_treatment_reasoning.py"
+      ],
+      "fixture": "app/blocks/water_treatment/manifest.yaml - a real qualified manifest on disk (9 figures), loaded by process() via TreatmentBasis. The loader refuses a partially-qualified figure at load time and a test asserts the refusal names the figure and every missing qualifier; the never-allowed derivations (CT table interpolation, nameplate hypochlorite strength, design-document compliance, similar-plant carry, theoretical detention where T10 is required) are each driven through process() and asserted to name which inference was attempted.",
+      "include_in_ci": true
+    },
+    {
+      "block": "aesthetic_kit",
+      "module": "app.blocks.aesthetic_kit",
+      "class": "AestheticKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/aesthetic/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "airport_construction_kit",
+      "module": "app.blocks.airport_construction_kit",
+      "class": "AirportConstructionKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/airport_construction/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "architecture_kit",
+      "module": "app.blocks.architecture_kit",
+      "class": "ArchitectureKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/architecture/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "aviation_ops_kit",
+      "module": "app.blocks.aviation_ops_kit",
+      "class": "AviationOpsKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/aviation_ops/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "datacentre_kit",
+      "module": "app.blocks.datacentre_kit",
+      "class": "DatacentreKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/datacentre/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "dental_kit",
+      "module": "app.blocks.dental_kit",
+      "class": "DentalKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/dental/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "fire_protection_kit",
+      "module": "app.blocks.fire_protection_kit",
+      "class": "FireProtectionKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/fire_protection/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "fitout_kit",
+      "module": "app.blocks.fitout_kit",
+      "class": "FitoutKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/fitout/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "fm_kit",
+      "module": "app.blocks.fm_kit",
+      "class": "FmKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/fm/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "heritage_kit",
+      "module": "app.blocks.heritage_kit",
+      "class": "HeritageKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/heritage/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "offshore_marine_kit",
+      "module": "app.blocks.offshore_marine_kit",
+      "class": "OffshoreMarineKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/offshore_marine/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "og_construction_kit",
+      "module": "app.blocks.og_construction_kit",
+      "class": "OgConstructionKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/og_construction/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "og_operations_kit",
+      "module": "app.blocks.og_operations_kit",
+      "class": "OgOperationsKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/og_operations/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "ports_marine_kit",
+      "module": "app.blocks.ports_marine_kit",
+      "class": "PortsMarineKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/ports_marine/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "pump_station_kit",
+      "module": "app.blocks.pump_station_kit",
+      "class": "PumpStationKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/pump_station/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "rail_kit",
+      "module": "app.blocks.rail_kit",
+      "class": "RailKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/rail/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
+    },
+    {
+      "block": "water_treatment_kit",
+      "module": "app.blocks.water_treatment_kit",
+      "class": "WaterTreatmentKitBlock",
+      "method": "process",
+      "tests": [
+        "tests/blocks/test_reasoning_kits.py"
+      ],
+      "fixture": "app/blocks/water_treatment/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "include_in_ci": true
     }
   ]
 }

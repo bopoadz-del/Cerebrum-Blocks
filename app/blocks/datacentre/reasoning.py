@@ -36,7 +36,7 @@ import yaml
 # provenance / manifest
 # --------------------------------------------------------------------------
 
-_MANIFEST_PATH = pathlib.Path(__file__).parent / "manifest.yaml"
+_MANIFEST_PATH = pathlib.Path(__file__).parent / "design_basis.yaml"
 
 
 class DesignBasis:
