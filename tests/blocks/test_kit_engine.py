@@ -533,3 +533,91 @@ def test_every_store_record_is_reachable_at_some_hook():
                 unreachable.append(f"{directory.name}:{inv.id} ({inv.kind}, "
                                    f"declares {inv.hooks()})")
     assert not unreachable, f"records no hook ever asks for: {unreachable}"
+
+
+# --------------------------------------------------------------------------
+# G1: a key the engine does not read is refused, not discarded
+# --------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bad_key,value", [
+    ("cross_check", ["a", "b"]),
+    ("require_qualifiers", ["x"]),
+    ("override_class_on_event_day", "pitch_report"),
+    ("spec_extension", True),
+])
+def test_unknown_invariant_key_refuses(tmp_path, bad_key, value):
+    """A key the parser discards gates NOTHING while the record loads clean and
+    reports green. All four of these were written into a real kit draft."""
+    (tmp_path / "manifest.yaml").write_text(
+        yaml.safe_dump({"kit": "probe", "quantities": {"q": {"units": ["m"]}}}),
+        encoding="utf-8")
+    (tmp_path / "invariants.yaml").write_text(yaml.safe_dump({"invariants": [{
+        "id": "X", "kind": "qualifier", "severity": "refuse",
+        "applies_to": {"quantity": "q"}, "requires": ["f"], "message": "m",
+        "measurement": "Probe x20 without the field. Before: n stated. After: 0.",
+        bad_key: value,
+    }]}), encoding="utf-8")
+
+    with pytest.raises(KitLoadError) as exc:
+        load_kit(tmp_path)
+    assert bad_key in str(exc.value)
+    assert "X" in str(exc.value), "the record must be named, or nobody can find it"
+
+
+def test_an_unread_applies_to_key_refuses(tmp_path):
+    """`applies_to` selects what a record governs. The engine reads `quantity` and
+    `claim_class` and nothing else, so anything else there reads as a narrowing and
+    is not one. Six Store invariants carried a dead `spec_extension` for weeks."""
+    (tmp_path / "manifest.yaml").write_text(
+        yaml.safe_dump({"kit": "probe", "quantities": {"q": {"units": ["m"]}}}),
+        encoding="utf-8")
+    (tmp_path / "invariants.yaml").write_text(yaml.safe_dump({"invariants": [{
+        "id": "Y", "kind": "qualifier", "severity": "refuse",
+        "applies_to": {"quantity": "q", "spec_extension": True},
+        "requires": ["f"], "message": "m",
+        "measurement": "Probe x20. Before: n. After: 0.",
+    }]}), encoding="utf-8")
+
+    with pytest.raises(KitLoadError) as exc:
+        load_kit(tmp_path)
+    assert "spec_extension" in str(exc.value) and "Y" in str(exc.value)
+
+
+def test_the_allowed_key_set_is_the_dataclass_not_a_second_copy():
+    """A hand-written allowlist drifts from the parser, and the parser is what
+    decides behaviour. Adding a field to Invariant must allow that key with no
+    second edit; removing one must stop allowing it."""
+    from dataclasses import fields as dataclass_fields
+
+    from app.blocks.kit_engine.invariants import (
+        ALLOWED_APPLIES_TO_KEYS,
+        Invariant,
+        _allowed_invariant_keys,
+    )
+
+    allowed = _allowed_invariant_keys()
+    declared = {f.name for f in dataclass_fields(Invariant) if not f.name.startswith("_")}
+    assert declared <= allowed, f"a real field is refused: {sorted(declared - allowed)}"
+    # Exactly one alias, and it is the one the parser accepts.
+    assert allowed - declared == {"governing_class"}
+    assert ALLOWED_APPLIES_TO_KEYS == frozenset({"quantity", "claim_class"})
+
+
+def test_every_key_the_store_uses_is_allowed():
+    """The guard must not disable the Store it protects. A draft allowlist omitted
+    `measurement`, which is on all 217 records."""
+    from app.blocks.kit_engine.invariants import (
+        ALLOWED_APPLIES_TO_KEYS,
+        _allowed_invariant_keys,
+    )
+
+    allowed = _allowed_invariant_keys()
+    offenders = []
+    for path in sorted(pathlib.Path("app/blocks").glob("*/invariants.yaml")):
+        for record in (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get(
+                "invariants") or []:
+            for key in set(record) - allowed:
+                offenders.append(f"{path.parent.name}/{record.get('id')}:{key}")
+            for key in set(record.get("applies_to") or {}) - ALLOWED_APPLIES_TO_KEYS:
+                offenders.append(f"{path.parent.name}/{record.get('id')}:applies_to.{key}")
+    assert not offenders, offenders

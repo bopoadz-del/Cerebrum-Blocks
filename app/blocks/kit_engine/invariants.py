@@ -202,6 +202,49 @@ def _render(message: str, missing: Sequence[str], figure: Optional[Figure] = Non
     return text
 
 
+#: Every key ``parse_invariant`` consumes, DERIVED from the dataclass rather than
+#: hand-listed, plus the one alias the parser accepts (``governing_class`` for
+#: ``governing``). Hand-listing it would be the same fact in two places, and the
+#: place it would drift from is the one that decides behaviour.
+#:
+#: Why this exists: a key the parser does not read was silently DISCARDED. A record
+#: could carry ``cross_check: [a, b]`` or ``require_qualifiers: [...]`` and load
+#: clean, gating nothing, reporting green. Six invariants in the Store already carry
+#: a dead ``applies_to.spec_extension`` that has never done anything.
+def _allowed_invariant_keys() -> frozenset:
+    from dataclasses import fields as _fields
+
+    return frozenset(
+        {f.name for f in _fields(Invariant) if not f.name.startswith("_")}
+        | {"governing_class"}
+    )
+
+
+#: The only ``applies_to`` keys the engine reads. ``quantity`` selects what the
+#: record governs; ``claim_class`` narrows it to one kind of claim. Anything else is
+#: decoration that reads as a narrowing and is not one.
+ALLOWED_APPLIES_TO_KEYS = frozenset({"quantity", "claim_class"})
+
+
+def _refuse_unknown_keys(raw: Dict[str, Any], inv_id: str, where: str) -> None:
+    allowed = _allowed_invariant_keys()
+    unknown = sorted(set(raw) - allowed)
+    if unknown:
+        raise InvariantError(
+            f"{where}: {inv_id} declares key(s) this engine does not read: "
+            f"{', '.join(unknown)}. A key the parser discards gates NOTHING while the "
+            f"record loads clean and reports green. Use one of: "
+            f"{', '.join(sorted(allowed))}"
+        )
+    unknown_applies = sorted(set(raw.get("applies_to") or {}) - ALLOWED_APPLIES_TO_KEYS)
+    if unknown_applies:
+        raise InvariantError(
+            f"{where}: {inv_id} declares applies_to key(s) this engine does not read: "
+            f"{', '.join(unknown_applies)}. Only {', '.join(sorted(ALLOWED_APPLIES_TO_KEYS))} "
+            f"select what a record governs; anything else reads as a narrowing and is not one"
+        )
+
+
 def parse_invariant(raw: Any, classes: Dict[str, Tuple[str, ...]], where: str) -> Invariant:
     """Parse one invariant record. Every rejection prevents a silent no-op."""
     if not isinstance(raw, dict):
@@ -209,6 +252,10 @@ def parse_invariant(raw: Any, classes: Dict[str, Tuple[str, ...]], where: str) -
     inv_id = str(raw.get("id") or "").strip()
     if not inv_id:
         raise InvariantError(f"{where}: an invariant must declare an id")
+    # Before anything is interpreted: a key this engine does not read is refused,
+    # naming the key and the record. Checked here, ahead of the per-kind rules, so a
+    # typo in a key cannot be reported as a missing field somewhere else.
+    _refuse_unknown_keys(raw, inv_id, where)
     kind = str(raw.get("kind") or "").strip()
     if kind not in KINDS:
         raise InvariantError(

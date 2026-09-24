@@ -2,7 +2,7 @@ invariants:
 
 - id: INV-ARC-AUTH-CODE
   kind: authority
-  applies_to: {quantity: any, spec_extension: true, claim_class: code_requirement}
+  applies_to: {quantity: any, claim_class: code_requirement}
   hook: H1
   governing_class: building_code
   fallback_class: planning_consent

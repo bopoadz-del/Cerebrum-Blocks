@@ -76,7 +76,7 @@ invariants:
 
 - id: INV-AES-CONFLICT-REFUSE
   kind: derivation
-  applies_to: {quantity: any, spec_extension: true, claim_class: dose}
+  applies_to: {quantity: any, claim_class: dose}
   block_if: [sources_conflict]
   severity: refuse
   hook: H3
