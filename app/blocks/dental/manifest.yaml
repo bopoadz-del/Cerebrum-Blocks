@@ -83,3 +83,108 @@ scope_refusals:
 spec_extensions:
   claim_class:            true
   same_source:            true
+
+
+
+
+# The questions this kit needs answered, and nothing else. Every value is
+# null and stays null until someone answers: the owner during the build, or
+# the operator later through /v1/reasoning/pending. An unanswered figure is
+# NOT a stub -- the platform refuses anything needing it and names the
+# question, so there is no plausible number to mistake for a real one. An
+# answer is recorded with answered_by, answered_at and source, because an
+# unattributed figure is not evidence whoever supplied it.
+#
+# `requires` is derived from this kit's own qualifier invariants, so an answer
+# that satisfies the question cannot then be refused for incompleteness.
+figures:
+  anaesthetic_mrd:
+    value: null
+    unit: mg_per_kg
+    question: >-
+      What is the anaesthetic mrd in mg_per_kg for this platform? The answer must
+      arrive with agent, concentration_pct, cartridge_volume_mL, with_vaso,
+      adult_or_paediatric, source_kind — without those it cannot be acted on and
+      will be refused. Leave unanswered rather than estimating: an unanswered
+      figure refuses, an estimate ships.
+    requires: [agent, concentration_pct, cartridge_volume_mL, with_vaso, adult_or_paediatric, source_kind]
+    answered_by: null
+    answered_at: null
+    source: null
+  autoclave_hold_time:
+    value: null
+    unit: min
+    question: >-
+      What is the autoclave hold time in min for this platform? Leave unanswered
+      rather than estimating: an unanswered figure refuses, an estimate ships.
+    requires: []
+    answered_by: null
+    answered_at: null
+    source: null
+  autoclave_temperature:
+    value: null
+    unit: degC
+    question: >-
+      What is the autoclave temperature in degC for this platform? Leave unanswered
+      rather than estimating: an unanswered figure refuses, an estimate ships.
+    requires: []
+    answered_by: null
+    answered_at: null
+    source: null
+  drill_speed:
+    value: null
+    unit: rpm
+    question: >-
+      What is the drill speed in rpm for this platform? Leave unanswered rather
+      than estimating: an unanswered figure refuses, an estimate ships.
+    requires: []
+    answered_by: null
+    answered_at: null
+    source: null
+  emergency_drug_dose:
+    value: null
+    unit: mg
+    question: >-
+      What is the emergency drug dose in mg or mL for this platform? Leave
+      unanswered rather than estimating: an unanswered figure refuses, an estimate
+      ships.
+    requires: []
+    answered_by: null
+    answered_at: null
+    source: null
+  implant_torque:
+    value: null
+    unit: Ncm
+    question: >-
+      What is the implant torque in Ncm for this platform? The answer must arrive
+      with implant_system — without those it cannot be acted on and will be
+      refused. Leave unanswered rather than estimating: an unanswered figure
+      refuses, an estimate ships.
+    requires: [implant_system]
+    answered_by: null
+    answered_at: null
+    source: null
+  mg_per_cartridge:
+    value: null
+    unit: mg
+    question: >-
+      What is the mg per cartridge in mg for this platform? The answer must arrive
+      with agent, concentration_pct, cartridge_volume_mL, with_vaso,
+      adult_or_paediatric — without those it cannot be acted on and will be
+      refused. Leave unanswered rather than estimating: an unanswered figure
+      refuses, an estimate ships.
+    requires: [agent, concentration_pct, cartridge_volume_mL, with_vaso, adult_or_paediatric]
+    answered_by: null
+    answered_at: null
+    source: null
+  radiography_setting:
+    value: null
+    unit: kV
+    question: >-
+      What is the radiography setting in kV or mA or s for this platform? Leave
+      unanswered rather than estimating: an unanswered figure refuses, an estimate
+      ships.
+    requires: []
+    answered_by: null
+    answered_at: null
+    source: null

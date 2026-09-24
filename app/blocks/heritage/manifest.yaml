@@ -73,3 +73,102 @@ scope_refusals:
 spec_extensions:
   claim_class:            true
   same_source:            true
+
+
+
+
+# The questions this kit needs answered, and nothing else. Every value is
+# null and stays null until someone answers: the owner during the build, or
+# the operator later through /v1/reasoning/pending. An unanswered figure is
+# NOT a stub -- the platform refuses anything needing it and names the
+# question, so there is no plausible number to mistake for a real one. An
+# answer is recorded with answered_by, answered_at and source, because an
+# unattributed figure is not evidence whoever supplied it.
+#
+# `requires` is derived from this kit's own qualifier invariants, so an answer
+# that satisfies the question cannot then be refused for incompleteness.
+figures:
+  cleaning_parameter:
+    value: null
+    unit: —
+    question: >-
+      What is the cleaning parameter in — for this platform? The answer must arrive
+      with evidence_basis, consent_ref — without those it cannot be acted on and
+      will be refused. Leave unanswered rather than estimating: an unanswered
+      figure refuses, an estimate ships.
+    requires: [evidence_basis, consent_ref]
+    answered_by: null
+    answered_at: null
+    source: null
+  compressive_strength:
+    value: null
+    unit: MPa
+    question: >-
+      What is the compressive strength in MPa or Nmm2 for this platform? The answer
+      must arrive with evidence_basis, consent_ref, substrate_ref — without those
+      it cannot be acted on and will be refused. Leave unanswered rather than
+      estimating: an unanswered figure refuses, an estimate ships.
+    requires: [evidence_basis, consent_ref, substrate_ref]
+    answered_by: null
+    answered_at: null
+    source: null
+  mortar_mix:
+    value: null
+    unit: ratio
+    question: >-
+      What is the mortar mix in ratio or pct for this platform? The answer must
+      arrive with evidence_basis, consent_ref, substrate_ref — without those it
+      cannot be acted on and will be refused. Leave unanswered rather than
+      estimating: an unanswered figure refuses, an estimate ships.
+    requires: [evidence_basis, consent_ref, substrate_ref]
+    answered_by: null
+    answered_at: null
+    source: null
+  retention_ratio:
+    value: null
+    unit: pct
+    question: >-
+      What is the retention ratio in pct for this platform? The answer must arrive
+      with evidence_basis, consent_ref — without those it cannot be acted on and
+      will be refused. Leave unanswered rather than estimating: an unanswered
+      figure refuses, an estimate ships.
+    requires: [evidence_basis, consent_ref]
+    answered_by: null
+    answered_at: null
+    source: null
+  structural_capacity:
+    value: null
+    unit: kN
+    question: >-
+      What is the structural capacity in kN or kNm for this platform? The answer
+      must arrive with evidence_basis, consent_ref — without those it cannot be
+      acted on and will be refused. Leave unanswered rather than estimating: an
+      unanswered figure refuses, an estimate ships.
+    requires: [evidence_basis, consent_ref]
+    answered_by: null
+    answered_at: null
+    source: null
+  substrate_strength:
+    value: null
+    unit: MPa
+    question: >-
+      What is the substrate strength in MPa for this platform? The answer must
+      arrive with evidence_basis, consent_ref — without those it cannot be acted on
+      and will be refused. Leave unanswered rather than estimating: an unanswered
+      figure refuses, an estimate ships.
+    requires: [evidence_basis, consent_ref]
+    answered_by: null
+    answered_at: null
+    source: null
+  vapour_permeability:
+    value: null
+    unit: g_m2_day
+    question: >-
+      What is the vapour permeability in g_m2_day for this platform? The answer
+      must arrive with evidence_basis, consent_ref — without those it cannot be
+      acted on and will be refused. Leave unanswered rather than estimating: an
+      unanswered figure refuses, an estimate ships.
+    requires: [evidence_basis, consent_ref]
+    answered_by: null
+    answered_at: null
+    source: null

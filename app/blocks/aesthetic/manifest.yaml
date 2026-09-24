@@ -82,3 +82,110 @@ scope_refusals:
 spec_extensions:
   claim_class:            true
   same_source:            true
+
+
+
+
+# The questions this kit needs answered, and nothing else. Every value is
+# null and stays null until someone answers: the owner during the build, or
+# the operator later through /v1/reasoning/pending. An unanswered figure is
+# NOT a stub -- the platform refuses anything needing it and names the
+# question, so there is no plausible number to mistake for a real one. An
+# answer is recorded with answered_by, answered_at and source, because an
+# unattributed figure is not evidence whoever supplied it.
+#
+# `requires` is derived from this kit's own qualifier invariants, so an answer
+# that satisfies the question cannot then be refused for incompleteness.
+figures:
+  anaesthetic_max_dose:
+    value: null
+    unit: mg
+    question: >-
+      What is the anaesthetic max dose in mg for this platform? Leave unanswered
+      rather than estimating: an unanswered figure refuses, an estimate ships.
+    requires: []
+    answered_by: null
+    answered_at: null
+    source: null
+  device_cooling_temp:
+    value: null
+    unit: degC
+    question: >-
+      What is the device cooling temp in degC for this platform? The answer must
+      arrive with device, skin_type_fitzpatrick, treatment_area, pass_number —
+      without those it cannot be acted on and will be refused. Leave unanswered
+      rather than estimating: an unanswered figure refuses, an estimate ships.
+    requires: [device, skin_type_fitzpatrick, treatment_area, pass_number]
+    answered_by: null
+    answered_at: null
+    source: null
+  device_fluence:
+    value: null
+    unit: J_cm2
+    question: >-
+      What is the device fluence in J_cm2 for this platform? The answer must arrive
+      with device, skin_type_fitzpatrick, treatment_area, pass_number — without
+      those it cannot be acted on and will be refused. Leave unanswered rather than
+      estimating: an unanswered figure refuses, an estimate ships.
+    requires: [device, skin_type_fitzpatrick, treatment_area, pass_number]
+    answered_by: null
+    answered_at: null
+    source: null
+  device_pulse_duration:
+    value: null
+    unit: ms
+    question: >-
+      What is the device pulse duration in ms for this platform? The answer must
+      arrive with device, skin_type_fitzpatrick, treatment_area, pass_number —
+      without those it cannot be acted on and will be refused. Leave unanswered
+      rather than estimating: an unanswered figure refuses, an estimate ships.
+    requires: [device, skin_type_fitzpatrick, treatment_area, pass_number]
+    answered_by: null
+    answered_at: null
+    source: null
+  filler_volume:
+    value: null
+    unit: mL
+    question: >-
+      What is the filler volume in mL for this platform? The answer must arrive
+      with product_brand, treatment_area — without those it cannot be acted on and
+      will be refused. Leave unanswered rather than estimating: an unanswered
+      figure refuses, an estimate ships.
+    requires: [product_brand, treatment_area]
+    answered_by: null
+    answered_at: null
+    source: null
+  hyaluronidase_dose:
+    value: null
+    unit: IU
+    question: >-
+      What is the hyaluronidase dose in IU for this platform? The answer must
+      arrive with product_brand, treatment_area, indication, protocol_version —
+      without those it cannot be acted on and will be refused. Leave unanswered
+      rather than estimating: an unanswered figure refuses, an estimate ships.
+    requires: [product_brand, treatment_area, indication, protocol_version]
+    answered_by: null
+    answered_at: null
+    source: null
+  neuromodulator_dose:
+    value: null
+    unit: units
+    question: >-
+      What is the neuromodulator dose in units for this platform? The answer must
+      arrive with product_brand, treatment_area — without those it cannot be acted
+      on and will be refused. Leave unanswered rather than estimating: an
+      unanswered figure refuses, an estimate ships.
+    requires: [product_brand, treatment_area]
+    answered_by: null
+    answered_at: null
+    source: null
+  peel_contact_time:
+    value: null
+    unit: min
+    question: >-
+      What is the peel contact time in min for this platform? Leave unanswered
+      rather than estimating: an unanswered figure refuses, an estimate ships.
+    requires: []
+    answered_by: null
+    answered_at: null
+    source: null
