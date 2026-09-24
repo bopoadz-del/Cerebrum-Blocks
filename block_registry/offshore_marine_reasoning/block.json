@@ -62,7 +62,12 @@
     }
   ],
   "author": "Cerebrum Team",
-  "description": "Deterministic offshore marine operations reasoning gate (structure only — domain encoding sheet, Offshore Oil & Gas Marine Operations; reference pattern app/blocks/datacentre/ and app/blocks/aviation_grounding_gate.py). INV-1..5 enforced, ten never-allowed derivations each naming itself, vessel-monitoring + manual-log two-source live-state gate, REJECT_AS_PROOF and the sister-vessel trap. Go/no-go questions refuse BEFORE retrieval. NO INTERVIEW HAS RUN: every manifest value is null and the block refuses rather than supplying a figure it does not have (app/blocks/offshore_marine/KNOWN_GAPS.md). All refusals are measured by tests/blocks/test_offshore_marine_reasoning.py.",
+  "description": "Deterministic offshore marine operations reasoning gate (structure only \u2014 domain encoding sheet, Offshore Oil & Gas Marine Operations; reference pattern app/blocks/datacentre/ and app/blocks/aviation_grounding_gate.py). INV-1..5 enforced, ten never-allowed derivations each naming itself, vessel-monitoring + manual-log two-source live-state gate, REJECT_AS_PROOF and the sister-vessel trap. Go/no-go questions refuse BEFORE retrieval. NO INTERVIEW HAS RUN: every manifest value is null and the block refuses rather than supplying a figure it does not have (app/blocks/offshore_marine/KNOWN_GAPS.md). All refusals are measured by tests/blocks/test_offshore_marine_reasoning.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "b0ba48b2fe010e19ff816b05c7ae3dc158055d42dd7eff506dd3f16f20d3e003",
+    "block.py": "88d1d5538ac1ff21d39c05e0c9e73af7e2a095e22758720848e77542408aa0ef"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/offshore_marine_reasoning:latest",
     "type": "docker"
@@ -160,6 +165,7 @@
     }
   ],
   "requires": [],
+  "signature": "VZqSQ4IsKC1jdRZjjI9AUAgvC2yUz5yuPKjRFOt+v7oHxefcihjALQ9Nt9FRXa7xwtARp4XR/6C67Dz7FyBlBQ==",
   "tags": [
     "offshore",
     "marine",
