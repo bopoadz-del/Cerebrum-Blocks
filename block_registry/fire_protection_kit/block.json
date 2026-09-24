@@ -93,12 +93,12 @@
     {
       "check": "INV-FP-DENSITY-BAND (band at per the routing map, severity flag): A design density outside 0.02-1.5 gpm/ft2 is outside anything NFPA 13 tabulates for any hazard classification \u2014 check the unit or the decimal it was read in.",
       "id": "inv_fp_density_band",
-      "status": "flag"
+      "status": "partial"
     },
     {
       "check": "INV-FP-RATING-BAND (band at per the routing map, severity flag): A fire rating above 4 hours is outside anything a standard tested assembly supports \u2014 check whether the number is really hours.",
       "id": "inv_fp_rating_band",
-      "status": "flag"
+      "status": "partial"
     },
     {
       "check": "INV-FP-DERIVATION (derivation at per the routing map, severity refuse): The answer contradicts itself, or its stated working and stated result disagree.",

@@ -53,7 +53,7 @@
     {
       "check": "INV-DC-RIDE-THROUGH-BAND (band at per the routing map, severity flag): A thermal ride-through above two hours is outside anything this facility's thermal mass supports \u2014 check whether seconds were read as minutes.",
       "id": "inv_dc_ride_through_band",
-      "status": "flag"
+      "status": "partial"
     },
     {
       "check": "INV-DC-DERIVATION (derivation at per the routing map, severity refuse): The stated working and the stated result disagree.",

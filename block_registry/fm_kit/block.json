@@ -18,7 +18,7 @@
     {
       "check": "INV-FM-SLA (qualifier at H3, severity flag): response/rectification time without clock-start and clock-stop definitions \u2014 {missing}",
       "id": "inv_fm_sla",
-      "status": "flag"
+      "status": "partial"
     },
     {
       "check": "INV-FM-PROVENANCE (provenance at H3, severity refuse): figure inferred from register / work order / PPM schedule rather than verified: {value}",

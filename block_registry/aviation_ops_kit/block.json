@@ -23,12 +23,12 @@
     {
       "check": "INV-AVO-RATE-QUALIFIERS (qualifier at H3, severity flag): rate figure missing {missing} \u2014 a rate without station and shift is not actionable",
       "id": "inv_avo_rate_qualifiers",
-      "status": "flag"
+      "status": "partial"
     },
     {
       "check": "INV-AVO-DELAY-PHASE (qualifier at H3, severity flag): delay cost without phase \u2014 gate, taxi and airborne are different numbers",
       "id": "inv_avo_delay_phase",
-      "status": "flag"
+      "status": "partial"
     },
     {
       "check": "INV-AVO-REGISTRATION (provenance at H3, severity refuse): forbidden derivation: {value}",

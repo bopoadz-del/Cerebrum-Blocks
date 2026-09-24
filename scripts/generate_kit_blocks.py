@@ -119,9 +119,44 @@ def acceptance_from(invariants: list) -> list:
             "id": str(inv["id"]).lower().replace("-", "_"),
             "check": f"{inv['id']} ({inv['kind']} at {hook}, severity "
                      f"{inv['severity']}): {inv.get('message') or 'enforced'}",
-            "status": "refused" if inv["severity"] == "refuse" else inv["severity"],
+            "status": _acceptance_status(inv),
         })
     return out
+
+
+#: Invariant severity -> the BlockResult status the block surfaces for it.
+#:
+#: An invariant severity and a BlockResult status are two different vocabularies,
+#: and this used to pass any non-`refuse` severity straight through:
+#: `"refused" if severity == "refuse" else severity`. So nine `flag` invariants
+#: across five kits wrote `status: "flag"` into their signed block.json, which is
+#: not a BlockResult status, and the Lane 2 contract test rejected all five.
+#:
+#: `ok` is deliberately absent from the values: the contract also rejects an
+#: acceptance criterion claiming `ok`, because a fail-loud check that reports a
+#: pass proves nothing happened.
+_SEVERITY_TO_STATUS = {
+    "refuse": "refused",   # the answer is blocked outright
+    "flag": "partial",     # the answer stands, carrying a caveat the caller must see
+}
+
+
+def _acceptance_status(inv: dict) -> str:
+    """The BlockResult status for one invariant, or a loud failure.
+
+    Raises rather than passing an unmapped severity through. Passing it through is
+    exactly how `flag` reached five signed manifests: the generator was silent, the
+    signature was valid, and the contract test found it in CI.
+    """
+    severity = str(inv.get("severity") or "")
+    try:
+        return _SEVERITY_TO_STATUS[severity]
+    except KeyError:
+        raise SystemExit(
+            f"{inv.get('id')}: severity {severity!r} has no BlockResult status. Add it "
+            f"to _SEVERITY_TO_STATUS in this script — do not let it reach block.json, "
+            f"where it validates as a signature and fails as a contract."
+        ) from None
 
 
 def build(kit: str, check_only: bool = False) -> list:

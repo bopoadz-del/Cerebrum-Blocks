@@ -128,17 +128,17 @@
     {
       "check": "INV-RAIL-SPEED-BAND (band at per the routing map, severity flag): A speed above 125 mph is outside anything a handback or TSR figure plausibly states on this network \u2014 check the unit it was computed in.",
       "id": "inv_rail_speed_band",
-      "status": "flag"
+      "status": "partial"
     },
     {
       "check": "INV-RAIL-SFT-BAND (band at per the routing map, severity flag): An SFT outside -10 to 60 degC is outside anything a UK/European rail stressing record plausibly states \u2014 check the unit it was computed in.",
       "id": "inv_rail_sft_band",
-      "status": "flag"
+      "status": "partial"
     },
     {
       "check": "INV-RAIL-FACE-PRESSURE-BAND (band at per the routing map, severity flag): A face pressure outside 0-10 bar is outside anything a TBM schedule plausibly states \u2014 check the unit it was computed in.",
       "id": "inv_rail_face_pressure_band",
-      "status": "flag"
+      "status": "partial"
     }
   ],
   "author": "Cerebrum Team",
