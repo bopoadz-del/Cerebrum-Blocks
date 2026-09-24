@@ -26,7 +26,7 @@
       "status": "refused"
     },
     {
-      "check": "AC6: refuse-on-conflict is verified — the verdict is refused AND both conflicting sources are named in the reason",
+      "check": "AC6: refuse-on-conflict is verified \u2014 the verdict is refused AND both conflicting sources are named in the reason",
       "id": "refuse_on_conflict_verified",
       "status": "refused"
     },
@@ -62,7 +62,12 @@
     }
   ],
   "author": "Cerebrum Team",
-  "description": "Deterministic water treatment plant operations reasoning gate (structure only — domain encoding sheet, Water Treatment Plant Operations; reference pattern app/blocks/offshore_marine/ and app/blocks/aviation_grounding_gate.py). INV-1..5 enforced, never-allowed derivations each naming itself, SCADA/analyser + chemical-delivery-log two-source live-state gate, REJECT_AS_PROOF and the similar-plant trap. Water-safety and entry/notice questions refuse BEFORE retrieval. NO INTERVIEW HAS RUN: every manifest value is null and the block refuses rather than supplying a figure it does not have (app/blocks/water_treatment/KNOWN_GAPS.md). All refusals are measured by tests/blocks/test_water_treatment_reasoning.py.",
+  "description": "Deterministic water treatment plant operations reasoning gate (structure only \u2014 domain encoding sheet, Water Treatment Plant Operations; reference pattern app/blocks/offshore_marine/ and app/blocks/aviation_grounding_gate.py). INV-1..5 enforced, never-allowed derivations each naming itself, SCADA/analyser + chemical-delivery-log two-source live-state gate, REJECT_AS_PROOF and the similar-plant trap. Water-safety and entry/notice questions refuse BEFORE retrieval. NO INTERVIEW HAS RUN: every manifest value is null and the block refuses rather than supplying a figure it does not have (app/blocks/water_treatment/KNOWN_GAPS.md). All refusals are measured by tests/blocks/test_water_treatment_reasoning.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "f07c6dc01419f656e1fafe6f6fcef61bdc95c0a02f0dd2d48b7a594559f124f6",
+    "block.py": "c5635e5a52188bd8d4eff738806c87e36da54be09a445ce1da19be8a26cac4bc"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/water_treatment_reasoning:latest",
     "type": "docker"
@@ -232,6 +237,7 @@
     }
   ],
   "requires": [],
+  "signature": "E3O9M/rGmaxAGNRS5Z797UuXiogVeFuDrekFCoqug0FXQEEAaVWLYEkKjW7fHi+/lFT8FqSqmygoJXS8HmvRBA==",
   "tags": [
     "water",
     "treatment",

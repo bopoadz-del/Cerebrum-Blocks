@@ -67,7 +67,12 @@
     }
   ],
   "author": "Cerebrum Team",
-  "description": "Deterministic oil & gas operations reasoning gate (structure only — domain encoding sheet, Oil & Gas Operations; reference pattern app/blocks/offshore_marine/ and app/blocks/aviation_grounding_gate.py). INV-1..5 enforced, five never-allowed derivations each naming itself, monitoring + override/isolation/permit-log two-source live-state gate, REJECT_AS_PROOF and the sister-asset trap. Keep-running, containment, trip-bypass, inspection-extension and fitness-for-service questions refuse BEFORE retrieval. NO INTERVIEW HAS RUN: every manifest value is null and the block refuses rather than supplying a figure it does not have (app/blocks/og_operations/KNOWN_GAPS.md). All refusals are measured by tests/blocks/test_og_operations_reasoning.py.",
+  "description": "Deterministic oil & gas operations reasoning gate (structure only \u2014 domain encoding sheet, Oil & Gas Operations; reference pattern app/blocks/offshore_marine/ and app/blocks/aviation_grounding_gate.py). INV-1..5 enforced, five never-allowed derivations each naming itself, monitoring + override/isolation/permit-log two-source live-state gate, REJECT_AS_PROOF and the sister-asset trap. Keep-running, containment, trip-bypass, inspection-extension and fitness-for-service questions refuse BEFORE retrieval. NO INTERVIEW HAS RUN: every manifest value is null and the block refuses rather than supplying a figure it does not have (app/blocks/og_operations/KNOWN_GAPS.md). All refusals are measured by tests/blocks/test_og_operations_reasoning.py.",
+  "digests": {
+    "Dockerfile": "f726e1716e53cfca226f3034515f400b072823aa06e7899efea7bc46c3b571a6",
+    "block.json": "f628c825b6530b97848d7b485bc2cbb9e64d94ce50020df3b7986ff03d8fe474",
+    "block.py": "578621a3f3dbea88d7b8becbe2acb2e6abae64933d0dc30b8f7dbcfa7d9f3a2b"
+  },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/og_operations_reasoning:latest",
     "type": "docker"
@@ -213,6 +218,7 @@
     }
   ],
   "requires": [],
+  "signature": "y2CotqKUe2PVSa443zZ4xjKrULBQ+sapoXX1BCoCe/IEwGHJgQxuIj8bulQeSypTlO/XFbDhB/WaaPzibu7vCg==",
   "tags": [
     "oil_gas",
     "operations",
