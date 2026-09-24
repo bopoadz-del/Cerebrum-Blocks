@@ -1,0 +1,133 @@
+invariants:
+
+- id: INV-OM-BAND
+  kind: band
+  applies_to: {quantity: [lay_tension, strain, stress]}
+  band: {min: present, max: present, same_source: true}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§4"}
+  message: "lay tension / strain / stress is a band — return both min and max from the same analysis; {missing} missing"
+
+- id: INV-OM-STATIC-DYNAMIC
+  kind: qualifier
+  applies_to: {quantity: [strain, stress, lay_tension]}
+  requires: [static_or_dynamic, region]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§4, §9.3"}
+  message: "allowable missing {missing} — a static value applied to a dynamic condition is wrong in the unsafe direction"
+
+- id: INV-OM-SPREAD-TYPE
+  kind: qualifier
+  applies_to: {quantity: any}
+  requires: [spread_type]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "spread-type rule"}
+  message: "envelope figure missing spread_type — an S-lay limit is not a J-lay limit"
+
+- id: INV-OM-CAPABILITY-LIVE
+  kind: derivation
+  applies_to: {quantity: dp_capability}
+  requires: [failure_case]
+  requires_state: [vessel_monitoring, manual_log]
+  block_if_missing_state: true
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.5.2, live-state rule"}
+  message: "DP capability without failure case and current equipment state is not a capability statement"
+
+- id: INV-OM-FORECAST-WINDOW
+  kind: qualifier
+  applies_to: {quantity: [forecast_hs, forecast_tp, forecast_dir]}
+  requires: [forecast_horizon_h, contingency_h, operation_duration_h]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.5.3, forecast rule"}
+  message: "forecast does not cover operation + contingency — {missing}"
+
+- id: INV-OM-PROVENANCE
+  kind: provenance
+  applies_to: {quantity: any}
+  forbid: [cross_spread_carry, sister_vessel_carry, adjacent_depth_band_carry]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§11.4.1"}
+  message: "figure carried across spread, vessel or depth-band boundary"
+
+- id: INV-OM-CURRENCY-ANALYSIS
+  kind: currency
+  applies_to: {quantity: [lay_tension, strain, stress]}
+  window: {provider: certified_installation_analysis_state, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§11.5"}
+  message: "installation analysis is stale — {value} has occurred since it was issued"
+
+- id: INV-OM-SCOPE-GO
+  kind: scope
+  applies_to: {quantity: any}
+  refusal_class: go_decision
+  severity: refuse
+  hook: H0
+  evidence: {sheet: "§12, §14.1"}
+  message: "go/no-go is a named-person decision"
+
+- id: INV-OM-UNIT-TENSION
+  kind: unit_discipline
+  applies_to: {quantity: lay_tension}
+  requires_one_of: [t, kN]
+  forbid: [kips, mixed]
+  severity: refuse
+  hook: H2
+  evidence: {sheet: "§16 tension"}
+  message: "tension unit family ambiguous or mixed"
+
+# ---------------------------------------------------------------------------
+# Engine-required completions of the DECLARED staleness triggers.
+# The sheet names the events that invalidate each figure; the loader refuses a
+# trigger that no currency invariant can fire, because a declared trigger
+# nothing checks is a rule that reports green while gating nothing. These
+# records add only the provider wiring -- no new rule, no new event.
+# ---------------------------------------------------------------------------
+
+- id: INV-OM-CURRENCY-DP
+  kind: currency
+  applies_to: {quantity: dp_capability}
+  window: {provider: vessel_monitoring, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "DP capability is stale once a thruster, generator or reference has failed"
+  measurement: "Probe DP capability x20 after a thruster_failure event. Before: the intact figure was quoted. After: 20 refusals naming the failure."
+
+- id: INV-OM-CURRENCY-CRANE
+  kind: currency
+  applies_to: {quantity: [crane_swl, mbr]}
+  window: {provider: manual_log, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "SWL and MBR are stale once configuration, boom, radius or pipe spec changed"
+  measurement: "Probe crane SWL x20 after a configuration_change event. Before: the old SWL was quoted. After: 20 refusals."
+
+- id: INV-OM-CURRENCY-FORECAST
+  kind: currency
+  applies_to: {quantity: [forecast_hs, forecast_tp, forecast_dir]}
+  window: {provider: forecast, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "a forecast figure is current only until the next issue"
+  measurement: "Probe the weather figures x20 after a next_issue event. Before: the superseded issue was quoted. After: 20 refusals."
+
+- id: INV-OM-CURRENCY-STINGER
+  kind: currency
+  applies_to: {quantity: stinger_setting}
+  window: {provider: as_set_stinger, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "the as-set stinger is stale after any roller adjustment; nominal is not as-set"
+  measurement: "Probe the stinger setting x20 after an any_roller_adjustment event. Before: nominal was returned as as-set. After: 20 refusals."

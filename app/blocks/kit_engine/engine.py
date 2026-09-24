@@ -93,6 +93,19 @@ class Kit:
     def name(self) -> str:
         return self.manifest.kit
 
+    @property
+    def unmeasured(self) -> List[str]:
+        """Records with no measurement case. Spec §4 says no invariant SHIPS
+        without one -- the word is *ships*, and §5 puts the AC tests in the
+        kit's own tests/. So this LOADS and the ship gate (certification,
+        signing) is what refuses. An invariant you cannot count is an opinion,
+        and this is the list of opinions."""
+        return [inv.id for inv in self.invariants if not inv.measurement]
+
+    @property
+    def ships(self) -> bool:
+        return not self.unmeasured
+
     def at(self, hook: str) -> List[Invariant]:
         # H4 re-runs H3 on the deliverable: same invariants, later material.
         wanted = H3_ANSWER_TIME if hook == H4_EXPORT_TIME else hook
@@ -197,6 +210,10 @@ class Kit:
         events: Sequence[str],
         now: Optional[float],
     ) -> Optional[Finding]:
+        # One governance gate, here, rather than repeated in nine evaluators --
+        # a kind that forgot to check would silently govern every quantity.
+        if not inv.governs(figure):
+            return None
         if inv.kind == "grounding":
             return eval_grounding(inv, figure, self.manifest)
         if inv.kind == "qualifier":
@@ -210,7 +227,7 @@ class Kit:
         if inv.kind == "currency":
             return eval_currency(inv, figure, self.manifest, state, events, now)
         if inv.kind == "derivation":
-            return eval_derivation(inv, figure, self.manifest, siblings)
+            return eval_derivation(inv, figure, self.manifest, siblings, state)
         if inv.kind == "band":
             return eval_band(inv, figure, self.manifest)
         return None
@@ -318,7 +335,7 @@ def load_kit(directory: pathlib.Path, env: Optional[Dict[str, str]] = None) -> K
         for inv in invariants
         if inv.kind == "currency"
         for quantity in manifest.quantities
-        if inv.governs(quantity)
+        if inv.governs(Figure(quantity=quantity))
     }
     ungoverned = sorted(set(manifest.staleness_triggers) - governed)
     if ungoverned:

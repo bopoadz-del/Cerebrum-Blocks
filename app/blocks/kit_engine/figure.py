@@ -46,8 +46,24 @@ class Figure:
     text: str = ""
     #: The entity the QUESTION is about, when the host knows it. Provenance
     #: compares the figure's own entity against this; it does not guess from
-    #: prose. Keys are qualifier field names (runway_designator, contract, …).
+    #: prose. Keys are qualifier field names (runway_designator, contract, ...).
     asked_about: Dict[str, Any] = field(default_factory=dict)
+    #: What KIND of claim this figure is making (dose, code_requirement,
+    #: position, bearing, historical, work_recommendation ...). An invariant may
+    #: narrow to one via applies_to.claim_class. The host sets it; no invariant
+    #: guesses it from prose, because guessing the claim class is the defect.
+    claim_class: Optional[str] = None
+    #: Named derivations the host detected while producing the figure, matched
+    #: against a provenance or derivation record's `forbid` list.
+    derivations: List[str] = field(default_factory=list)
+    #: Named blocking conditions the host detected (sources_conflict,
+    #: calculation_hidden, product_not_reversible ...), matched against `block_if`.
+    conditions: List[str] = field(default_factory=list)
+    #: Steps the host actually showed, matched against `requires_steps`.
+    steps: List[str] = field(default_factory=list)
+    #: For a two-sided band: {"min": .., "max": .., "source_id_min": ..,
+    #: "source_id_max": ..}. `same_source` compares the last two.
+    bounds: Dict[str, Any] = field(default_factory=dict)
 
     def known(self, name: str) -> bool:
         """A key present with None counts as NOT known.

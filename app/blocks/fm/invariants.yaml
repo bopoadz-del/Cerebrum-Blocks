@@ -1,0 +1,79 @@
+invariants:
+
+# Correction 2 (domains 11-16, applied here): every kit carries one
+# kind: authority invariant firing at H1. The FM ladder is the regime ladder —
+# a work order is not a certificate, and a site procedure is not a statute.
+- id: INV-FM-AUTH-COMPLIANCE
+  kind: authority
+  applies_to: {quantity: compliance_status}
+  hook: H1
+  governing_class: statutory_regulation
+  fallback_class: authority_notice
+  demote: [client_policy, site_procedure, verbal_instruction]
+  severity: refuse
+  evidence: {sheet: "§5, §9.1"}
+  message: "compliance status governed by statute or authority notice — {value} from a lesser class is not proof"
+
+- id: INV-FM-REGIME
+  kind: qualifier
+  applies_to: {quantity: [compliance_status, asset_field]}
+  requires: [regime, deferral_authority]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§5, §2"}
+  message: "statutory/contractual/manufacturer/warranty/discretionary not named — {missing}"
+
+- id: INV-FM-INSERVICE
+  kind: derivation
+  applies_to: {quantity: in_service_status}
+  requires_state: [bms_status, manual_log]
+  block_if_missing_state: true
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§7.4, live-state rule"}
+  message: "current resilience state unavailable — BMS reading and manual log both required"
+
+- id: INV-FM-SLA
+  kind: qualifier
+  applies_to: {quantity: [response_time, rectification_time]}
+  requires: [sla_clock_start, sla_clock_stop]
+  severity: flag
+  hook: H3
+  evidence: {sheet: "§3.1"}
+  message: "response/rectification time without clock-start and clock-stop definitions — {missing}"
+
+- id: INV-FM-PROVENANCE
+  kind: provenance
+  applies_to: {quantity: any}
+  forbid: [infer_from_register, infer_from_work_order, infer_from_ppm]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.4"}
+  message: "figure inferred from register / work order / PPM schedule rather than verified: {value}"
+
+- id: INV-FM-CURRENCY
+  kind: currency
+  applies_to: {quantity: [in_service_status, compliance_status]}
+  window: {provider: bms_status, max_age: realtime}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.5"}
+  message: "state reported as current but no live source confirms it"
+
+# ---------------------------------------------------------------------------
+# Engine-required completions of the DECLARED staleness triggers.
+# The sheet names the events that invalidate each figure; the loader refuses a
+# trigger that no currency invariant can fire, because a declared trigger
+# nothing checks is a rule that reports green while gating nothing. These
+# records add only the provider wiring -- no new rule, no new event.
+# ---------------------------------------------------------------------------
+
+- id: INV-FM-RECORD-CURRENCY
+  kind: currency
+  applies_to: {quantity: [asset_register_entry, condition_survey, warranty]}
+  window: {provider: manual_log, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "a register entry, a condition survey and a warranty are all invalidated by a physical change; the manual log is the verification, the register is not"
+  measurement: "Probe each of the three x20 after its declared event (any_physical_change, intervening_works, non_approved_intervention). Before: the record was quoted as current. After: 60 refusals."

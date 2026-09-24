@@ -1,0 +1,70 @@
+invariants:
+
+# Correction 2: one kind: authority invariant at H1 per kit. In heritage the
+# ladder is what makes "stronger is not better" enforceable — a generic guide or
+# another building's example is explicitly not proof about THIS fabric.
+- id: INV-HE-AUTH-FABRIC
+  kind: authority
+  applies_to: {quantity: [mortar_mix, compressive_strength, substrate_strength, vapour_permeability]}
+  hook: H1
+  governing_class: materials_analysis
+  fallback_class: conservation_management_plan
+  demote: [professional_body_guidance, generic_guide, another_building_example, manufacturer_data]
+  severity: refuse
+  evidence: {sheet: "§8.1"}
+  message: "a figure about this fabric is governed by analysis OF this fabric — {value} from a generic source is not proof"
+
+- id: INV-HE-COMPATIBILITY
+  kind: derivation
+  applies_to: {quantity: [mortar_mix, compressive_strength, vapour_permeability]}
+  forbid: [performance_grounds_alone, stronger_is_better]
+  requires: [substrate_ref]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "rule 1"}
+  message: "material proposed without compatibility assessment — stronger is not better here"
+
+- id: INV-HE-EVIDENCE-BASIS
+  kind: qualifier
+  applies_to: {quantity: any, spec_extension: true, claim_class: historical}
+  requires: [evidence_basis]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "rule 2"}
+  message: "historical claim without documented/inferred/assumed basis — {missing}"
+
+- id: INV-HE-CONSENT-GATE
+  kind: qualifier
+  applies_to: {quantity: any, spec_extension: true, claim_class: work_recommendation}
+  requires: [consent_ref]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "rule 3"}
+  message: "no work recommendation without consent position and reference — {missing}"
+
+- id: INV-HE-SUBSTRATE
+  kind: qualifier
+  applies_to: {quantity: [mortar_mix, compressive_strength]}
+  requires: [substrate_ref]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§1.1.1, §8.3"}
+  message: "mortar strength without the substrate it must remain weaker than — {missing}"
+
+- id: INV-HE-PROVENANCE
+  kind: provenance
+  applies_to: {quantity: any}
+  forbid: [carry_between_buildings, carry_between_elevations, reconstruct_from_comparator, infer_mortar_visually]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§8.4.1"}
+  message: "forbidden derivation: {value}"
+
+- id: INV-HE-CURRENCY
+  kind: currency
+  applies_to: {quantity: any}
+  window: {provider: discovery_since_spec, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§8.5.2"}
+  message: "specification predates an unreported discovery — refusal, not silent acceptance"

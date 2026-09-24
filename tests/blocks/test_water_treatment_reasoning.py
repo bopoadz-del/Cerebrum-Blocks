@@ -276,7 +276,7 @@ def test_a_partially_qualified_figure_is_refused_at_load_time(tmp_path):
 
 def test_every_shipped_figure_carries_every_mandatory_qualifier():
     raw = yaml.safe_load(
-        (pathlib.Path("app/blocks/water_treatment/manifest.yaml")).read_text(encoding="utf-8")
+        (pathlib.Path("app/blocks/water_treatment/design_basis.yaml")).read_text(encoding="utf-8")
     )
     for name, entry in raw["design_basis"].items():
         missing = [key for key in MANDATORY_QUALIFIERS if key not in entry]

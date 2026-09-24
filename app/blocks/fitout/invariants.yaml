@@ -1,0 +1,112 @@
+invariants:
+
+- id: INV-FO-SURVEYED
+  kind: qualifier
+  applies_to: {quantity: [dimension, available_capacity]}
+  requires: [surveyed_or_drawn, survey_date]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "Three rules carried through"}
+  message: "dimension or capacity without surveyed/drawn basis — a value off a drawing is not the same number"
+
+- id: INV-FO-LEADTIME
+  kind: qualifier
+  applies_to: {quantity: lead_time}
+  requires: [lead_time_basis, confirmed_or_indicative]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "Three rules carried through"}
+  message: "lead time without from-order/from-approval basis, or without confirmed/indicative flag"
+
+- id: INV-FO-FIRE-ASSEMBLY
+  kind: qualifier
+  applies_to: {quantity: fire_rating}
+  requires: [tested_assembly]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "Three rules carried through"}
+  message: "fire rating without its tested assembly — a product sheet is not an assembly test"
+
+- id: INV-FO-AREA-BASIS
+  kind: qualifier
+  applies_to: {quantity: floor_area}
+  requires: [area_basis]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§13"}
+  message: "floor area without basis (GEA/GIA/NIA/IPMS/local GFA) — same building, several correct answers"
+
+- id: INV-FO-REVISION
+  kind: currency
+  applies_to: {quantity: [dimension, floor_area]}
+  window: {provider: drawing_revision, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.5"}
+  message: "figure from a superseded drawing revision"
+
+- id: INV-FO-PROVENANCE
+  kind: provenance
+  applies_to: {quantity: [rate, lead_time]}
+  forbid: [previous_project_carry, previous_order_carry]
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "§9.4"}
+  message: "rate or lead time carried from a previous project or order"
+
+- id: INV-FO-SCOPE
+  kind: scope
+  applies_to: {quantity: any}
+  refusal_class: authority_determination
+  severity: refuse
+  hook: H0
+  evidence: {sheet: "§12"}
+  message: "requires a named authority — refer to {authority}"
+
+# ---------------------------------------------------------------------------
+# Engine-required completions of the DECLARED staleness triggers.
+# The sheet names the events that invalidate each figure; the loader refuses a
+# trigger that no currency invariant can fire, because a declared trigger
+# nothing checks is a rule that reports green while gating nothing. These
+# records add only the provider wiring -- no new rule, no new event.
+# ---------------------------------------------------------------------------
+
+- id: INV-FO-CAPACITY-CURRENCY
+  kind: currency
+  applies_to: {quantity: available_capacity}
+  window: {provider: capacity_spare, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "spare capacity is stale the moment another tenant takes it"
+  measurement: "Probe available capacity x20 after an another_tenant_takes_it event. Before: the old spare was quoted. After: 20 refusals."
+
+- id: INV-FO-LEADTIME-CURRENCY
+  kind: currency
+  applies_to: {quantity: lead_time}
+  window: {provider: approval_status, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "a confirmed lead time lapses; a lapsed confirmation is an indicative quote"
+  measurement: "Probe lead time x20 after a supplier_confirmation_lapsed event. Before: confirmed was still claimed. After: 20 refusals."
+
+- id: INV-FO-RATING-CURRENCY
+  kind: currency
+  applies_to: {quantity: fire_rating}
+  window: {provider: drawing_revision, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "a fire rating is stale after any design change to the assembly"
+  measurement: "Probe fire rating x20 after an any_design_change event. Before: the old rating stood. After: 20 refusals."
+
+- id: INV-FO-RATE-CURRENCY
+  kind: currency
+  applies_to: {quantity: rate}
+  window: {provider: market_reference, max_age: event}
+  severity: refuse
+  hook: H3
+  evidence: {sheet: "staleness_triggers"}
+  message: "a rate is stale on market or currency movement"
+  measurement: "Probe rates x20 after a market_movement event. Before: the stale rate was quoted. After: 20 flags or refusals."

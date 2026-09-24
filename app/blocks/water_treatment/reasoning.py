@@ -48,7 +48,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import yaml
 
-_MANIFEST_PATH = pathlib.Path(__file__).parent / "manifest.yaml"
+_MANIFEST_PATH = pathlib.Path(__file__).parent / "design_basis.yaml"
 
 #: Every figure carries these. A null VALUE is legal — the interview has not
 #: run. A missing QUALIFIER is not: half-qualified is how a CT value read off

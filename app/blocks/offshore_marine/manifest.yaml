@@ -1,187 +1,90 @@
-# Offshore marine operations reasoning layer — installation spread design basis.
-#
-# Source of truth: the domain encoding sheet for Offshore Oil & Gas Marine
-# Operations. NO INTERVIEW HAS RUN. Every `value` below is null on purpose and
-# stays null until the interview fills it; see KNOWN_GAPS.md.
-#
-# A null value is legal. A MISSING QUALIFIER IS NOT: the loader refuses any
-# figure that does not carry every key in MANDATORY_QUALIFIERS, at load time,
-# naming the figure and the keys it lacks. A half-qualified figure is how a
-# sagbend allowable ends up answering an overbend question.
-#
-# spread_type is part of the identity of every figure, not a label on it:
-#   s_lay      shallow, moored            J-lay is not S-lay
-#   j_lay      deep, dynamically positioned
-#   reel_lay   flexible + cable, deep, DP
-#   heavy_lift live-asset modules
-# Nothing carries between them. See DERIVATION_GUARD in reasoning.py.
-source: "domain encoding sheet, Offshore Oil & Gas Marine Operations"
-scope: "spread- and vessel-specific — never carry to another spread or sister vessel"
-interview_status: "not run — every value is null (KNOWN_GAPS.md)"
+kit: offshore_marine
+version: 1
+hooks_used: [H0, H1, H2, H3, H4]
 
-design_basis:
-  # ---- lay tension envelope (INV-1: bands only, never single-sided) --------
-  lay_tension_min_kn:
-    value: null
-    unit: kN
-    spread_type: null
-    water_depth_range_m: null
-    pipe_or_cable_spec: null
-    static_or_dynamic: null
-    region: null
-    source: null
-    analysis_rev: null
-    sea_state_assumed: null
-    scope: null
-    date_recorded: null
-    valid_until: null
-  lay_tension_max_kn:
-    value: null
-    unit: kN
-    spread_type: null
-    water_depth_range_m: null
-    pipe_or_cable_spec: null
-    static_or_dynamic: null
-    region: null
-    source: null
-    analysis_rev: null
-    sea_state_assumed: null
-    scope: null
-    date_recorded: null
-    valid_until: null
+quantities:
+  lay_tension:            {units: [t, kN],     aliases: [tension, top_tension, residual_tension]}
+  strain:                 {units: [pct],       aliases: [overbend_strain, sagbend_strain]}
+  stress:                 {units: [MPa],       aliases: [allowable_stress, touchdown_stress]}
+  departure_angle:        {units: [deg]}
+  stinger_radius:         {units: [m]}
+  pipe_ovality:           {units: [pct]}
+  buckle_arrestor_spacing: {units: [m]}
+  dp_capability:          {units: [kt]}
+  crane_swl:              {units: [t]}
+  mbr:                    {units: [m]}
+  forecast_hs:            {units: [m]}
+  forecast_tp:            {units: [s]}
+  forecast_dir:           {units: [deg]}
+  water_depth:            {units: [m]}
 
-  # ---- strain / stress allowables (INV-2: static|dynamic AND region) ------
-  allowable_strain_overbend_pct:
-    value: null
-    unit: "%"
-    spread_type: null
-    water_depth_range_m: null
-    pipe_or_cable_spec: null
-    static_or_dynamic: null
-    region: overbend
-    source: null
-    analysis_rev: null
-    sea_state_assumed: null
-    scope: null
-    date_recorded: null
-    valid_until: null
-  allowable_strain_sagbend_pct:
-    value: null
-    unit: "%"
-    spread_type: null
-    water_depth_range_m: null
-    pipe_or_cable_spec: null
-    static_or_dynamic: null
-    region: sagbend
-    source: null
-    analysis_rev: null
-    sea_state_assumed: null
-    scope: null
-    date_recorded: null
-    valid_until: null
-  allowable_stress_touchdown_mpa:
-    value: null
-    unit: MPa
-    spread_type: null
-    water_depth_range_m: null
-    pipe_or_cable_spec: null
-    static_or_dynamic: null
-    region: touchdown
-    source: null
-    analysis_rev: null
-    sea_state_assumed: null
-    scope: null
-    date_recorded: null
-    valid_until: null
+  # Spec §1: a staleness trigger is keyed on a QUANTITY. These are the
+  # artifacts the sheet's triggers name — records the domain talks about,
+  # unitless, so the trigger has something to be keyed on.
+  stinger_setting:       {units: [—]}
 
-  # ---- stinger (as-set is live state; nominal is not as-set) --------------
-  stinger_radius_nominal_m:
-    value: null
-    unit: m
-    spread_type: s_lay
-    water_depth_range_m: null
-    pipe_or_cable_spec: null
-    static_or_dynamic: null
-    region: overbend
-    source: null
-    analysis_rev: null
-    sea_state_assumed: null
-    scope: null
-    date_recorded: null
-    valid_until: null
+qualifier_fields:
+  spread_type:            {type: enum,   values: [s_lay, j_lay, reel_lay, heavy_lift]}
+  water_depth_band:       {type: enum,   values: [shallow, deep, ultradeep]}
+  static_or_dynamic:      {type: enum,   values: [static, dynamic]}
+  region:                 {type: enum,   values: [overbend, sagbend, touchdown, none]}
+  pipe_or_cable_spec:     {type: string}
+  failure_case:           {type: string}
+  forecast_horizon_h:     {type: number}
+  contingency_h:          {type: number}
+  operation_duration_h:   {type: number}
+  configuration:          {type: string}
+  radius:                 {type: number}
+  daf_applied:            {type: bool}
 
-  # ---- DP / station keeping (INV-4: failure_case AND live_state_ref) ------
-  dp_capability_intact_hs_m:
-    value: null
-    unit: m
-    spread_type: null
-    water_depth_range_m: null
-    pipe_or_cable_spec: null
-    static_or_dynamic: dynamic
-    region: none
-    source: null
-    analysis_rev: null
-    sea_state_assumed: null
-    scope: null
-    date_recorded: null
-    valid_until: null
+source_classes:
+  class_rules:                     {rank: 1}
+  flag_statutory:                  {rank: 2}
+  certified_installation_analysis: {rank: 3, reject_as_proof: [draft_analysis, sister_project_analysis, nominal_analysis]}
+  approved_procedure:              {rank: 4, reject_as_proof: [draft_procedure, superseded_revision]}
+  mws_approval:                    {rank: 5, reject_as_proof: [verbal_approval]}
+  vessel_manual:                   {rank: 6}
+  site_instruction:                {rank: 7}
+  # The classes named in reject_as_proof above must themselves be declared, or
+  # the rule could never fire. Ranked below every governing class.
+  draft_analysis:                  {rank: 8}
+  sister_project_analysis:         {rank: 8}
+  nominal_analysis:                {rank: 8}
+  draft_procedure:                 {rank: 8}
+  superseded_revision:             {rank: 8}
+  verbal_approval:                 {rank: 9}
 
-  # ---- weather criteria (INV-5: never Hs alone, never without alpha) ------
-  operating_criterion_hs_m:
-    value: null
-    unit: m
-    spread_type: null
-    water_depth_range_m: null
-    pipe_or_cable_spec: null
-    static_or_dynamic: dynamic
-    region: none
-    source: null
-    analysis_rev: null
-    sea_state_assumed: null
-    scope: null
-    date_recorded: null
-    valid_until: null
-  operating_criterion_tp_s:
-    value: null
-    unit: s
-    spread_type: null
-    water_depth_range_m: null
-    pipe_or_cable_spec: null
-    static_or_dynamic: dynamic
-    region: none
-    source: null
-    analysis_rev: null
-    sea_state_assumed: null
-    scope: null
-    date_recorded: null
-    valid_until: null
-  forecast_alpha_factor:
-    value: null
-    unit: null
-    spread_type: null
-    water_depth_range_m: null
-    pipe_or_cable_spec: null
-    static_or_dynamic: null
-    region: none
-    source: null
-    analysis_rev: null
-    sea_state_assumed: null
-    scope: null
-    date_recorded: null
-    valid_until: null
+state_providers:
+  vessel_monitoring:   {kind: status,   max_age: realtime}
+  manual_log:          {kind: status,   max_age: shift}
+  as_set_stinger:      {kind: status,   max_age: event}
+  forecast:            {kind: cycle,    max_age: next_issue}
+  # Referenced by INV-OM-CURRENCY-ANALYSIS. Spec 1: window.provider names a
+  # state_providers entry, so the analysis revision is declared as one.
+  certified_installation_analysis_state: {kind: revision, max_age: event}
 
-  # ---- heavy lift (SWL is configuration-specific, never carried) ----------
-  crane_swl_t:
-    value: null
-    unit: t
-    spread_type: heavy_lift
-    water_depth_range_m: null
-    pipe_or_cable_spec: null
-    static_or_dynamic: null
-    region: none
-    source: null
-    analysis_rev: null
-    sea_state_assumed: null
-    scope: null
-    date_recorded: null
-    valid_until: null
+staleness_triggers:
+  lay_tension:         [stinger_change, tensioner_change, pipe_spec_change, route_change, water_depth_band_change]
+  strain:              [stinger_change, roller_adjustment, pipe_spec_change]
+  stress:              [stinger_change, roller_adjustment, pipe_spec_change]
+  dp_capability:       [thruster_failure, generator_failure, reference_failure]
+  crane_swl:           [configuration_change, boom_change, radius_change]
+  stinger_setting:     [any_roller_adjustment]
+  mbr:                 [pipe_spec_change, straightener_setting_change]
+  forecast_hs:         [next_issue]
+  forecast_tp:         [next_issue]
+  forecast_dir:        [next_issue]
+
+scope_refusals:
+  - pattern: "can we (start|begin|commence) (the )?(lift|pull.?in|lay|tie.?in)"
+    authority: "master / OIM / construction manager"
+  - pattern: "is (the )?weather (ok|good|fine|acceptable|suitable)"
+    authority: "master, against an issued forecast"
+  - pattern: "can we run on (one|two|three) thrusters?"
+    authority: "master, against the post-failure capability plot"
+  - pattern: "is it safe to (dive|put a diver)"
+    authority: "diving supervisor"
+  - pattern: "can we get (closer|nearer)"
+    authority: "asset operator + marine superintendent"
+  - pattern: "should we (proceed|continue|push on)"
+    authority: "master / OIM / construction manager"

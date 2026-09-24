@@ -9,16 +9,31 @@ every kit. Nothing here knows what a runway or a slab is.
   currency         has the thing that invalidates it happened?            H3
   scope            is the question answerable from documents at all?      H0
   derivation       do the stated working and the stated result agree?     H3
-  band             is the value physically possible?                      H2
+  band             is the value possible / is it two-sided?               H2
 
 Each kind exists because a defect of that shape shipped to a live product and
-was caught by counting, not by review. The comments name them.
+was caught by counting, not by review.
+
+HOOKS. The spec's routing map (§2) fixes a hook per kind. A record may state its
+`hook:` explicitly, and the loader accepts it only when it is that kind's spec
+hook -- or H4, which by definition re-runs the H3 checks on the deliverable.
+Anything else is a load failure naming the table, because silently relocating a
+rule to a hook the host never calls is how a kit reports green while gating
+nothing.
+
+MEASUREMENT. Spec §4: "No invariant SHIPS without a measurement case." The word
+is *ships*, and §5 puts the AC tests in the kit's own ``tests/``. So a record
+with no ``measurement:`` LOADS, ``Kit.unmeasured`` names it, and the ship gate
+(certification and signing) is where it bites.
+
+SCOPE. Correction 1: the refusal patterns live in the MANIFEST. A `scope` record
+carries the severity and the measurement, not patterns of its own.
 
 Two rules hold in every domain and are enforced here, not left to kit authors:
 
   * **Never refuse the operator's own figure.** If they typed the rate it is
-    authoritative input, not a claim to check: the severity is softened to
-    `flag` and the finding records what it was softened from.
+    authoritative input, not a claim to check: the severity softens to `flag`
+    and the finding records what it was softened from.
   * A finding names the invariant AND what is missing. "Blocked" on its own
     teaches the caller nothing and gets the layer switched off.
 """
@@ -26,7 +41,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from app.blocks.kit_engine.figure import Figure, Finding, SEVERITIES
 from app.blocks.kit_engine.manifest import Manifest
@@ -42,8 +57,8 @@ H2_TOOL_TIME = "H2"
 H3_ANSWER_TIME = "H3"
 H4_EXPORT_TIME = "H4"
 
-#: Which hook each kind runs at. unit_discipline runs at TWO hooks on purpose:
-#: H2 alone misses figures the model states without a tool; H3 alone lets a
+#: The spec's routing map. unit_discipline runs at TWO hooks on purpose: H2
+#: alone misses figures the model states without a tool; H3 alone lets a
 #: corrupted value reach exports and source panels before anyone checks.
 HOOKS_BY_KIND: Dict[str, Tuple[str, ...]] = {
     "scope": (H0_PRE_RETRIEVAL,),
@@ -58,6 +73,29 @@ HOOKS_BY_KIND: Dict[str, Tuple[str, ...]] = {
 }
 
 
+def legal_hooks(kind: str, band: Optional[Dict[str, Any]] = None) -> Tuple[str, ...]:
+    """Hooks a record of *kind* may declare.
+
+    H4 re-runs H3, so any H3 kind may also name H4 -- that is the export-time
+    pass, not a relocation.
+
+    `band` is two rules wearing one name, and they belong at different hooks.
+    §2 puts band at H2 because "an impossible value reaches every downstream
+    consumer" -- that is the POSSIBILITY band, and it must be caught where the
+    value is born. A TWO-SIDEDNESS band (`min: present, max: present`) is not
+    about an impossible value at all: it is about the ANSWER being single-sided,
+    which is an answer-time property and cannot be seen at tool time, because at
+    tool time there is one figure and no answer yet. So a presence-band may
+    declare H3 (and H4); a numeric band may not.
+    """
+    hooks = HOOKS_BY_KIND[kind]
+    if kind == "band" and band and (
+        str(band.get("min")) == "present" or str(band.get("max")) == "present"
+    ):
+        hooks = hooks + (H3_ANSWER_TIME,)
+    return hooks + (H4_EXPORT_TIME,) if H3_ANSWER_TIME in hooks else hooks
+
+
 class InvariantError(ValueError):
     """An invariant record is not usable. The kit is disabled, and refuses."""
 
@@ -68,22 +106,31 @@ class Invariant:
     kind: str
     severity: str
     applies_to: Dict[str, Any] = field(default_factory=dict)
+    hook: Optional[str] = None
     requires: Tuple[str, ...] = ()
     requires_one_of: Tuple[str, ...] = ()
+    requires_any_of: Tuple[str, ...] = ()
+    requires_steps: Tuple[str, ...] = ()
+    requires_state: Tuple[str, ...] = ()
+    block_if_missing_state: bool = False
+    block_if: Tuple[str, ...] = ()
     forbid: Tuple[str, ...] = ()
     across: Tuple[str, ...] = ()
     band: Dict[str, Any] = field(default_factory=dict)
     window: Dict[str, Any] = field(default_factory=dict)
     governing: Tuple[str, ...] = ()
+    fallback_class: Optional[str] = None
+    demote: Tuple[str, ...] = ()
+    require_qualifier: Optional[str] = None
+    trigger_source: Optional[str] = None
+    refusal_class: Optional[str] = None
     evidence: Dict[str, Any] = field(default_factory=dict)
     message: str = ""
-    #: A repeat-probe question, N runs, a number before and after. An invariant
-    #: you cannot count is an opinion, so the loader requires this.
     measurement: str = ""
     _classes: Dict[str, Tuple[str, ...]] = field(default_factory=dict, repr=False)
 
     def hooks(self) -> Tuple[str, ...]:
-        return HOOKS_BY_KIND[self.kind]
+        return (self.hook,) if self.hook else HOOKS_BY_KIND[self.kind]
 
     def quantities(self) -> Tuple[str, ...]:
         raw = self.applies_to.get("quantity")
@@ -91,33 +138,47 @@ class Invariant:
             return ()
         return (str(raw),) if isinstance(raw, str) else tuple(str(q) for q in raw)
 
-    def governs(self, quantity: str) -> bool:
-        """`any_*` is a CLASS the manifest defines, never a wildcard.
+    def claim_class(self) -> Optional[str]:
+        value = self.applies_to.get("claim_class")
+        return str(value) if value else None
 
-        The first cut treated it as match-all, and INV-UNITS-DATUM then demanded
-        a vertical datum for a PCN — a bearing-strength number with neither unit
-        nor datum. `any` alone still means every quantity, spelled out.
+    def governs(self, figure: Figure) -> bool:
+        """Does this invariant govern *figure*?
+
+        ``any_*`` is a CLASS the manifest defines, never a wildcard: the first
+        cut treated it as match-all and the units-and-datum record then demanded
+        a vertical datum for a PCN, which has neither. ``any`` alone means every
+        quantity, spelled out.
+
+        A ``claim_class`` narrows further, and a figure carrying no claim class
+        does not match a record that names one -- guessing the claim class from
+        prose is the defect, not the fix.
         """
         wanted = self.quantities()
-        if not wanted or wanted == ("any",):
-            return True
-        for name in wanted:
-            if name == quantity:
-                return True
-            if name.startswith("any_") and quantity in self._classes.get(name, ()):
-                return True
-        return False
+        matched = not wanted or wanted == ("any",)
+        if not matched:
+            for name in wanted:
+                if name == figure.quantity:
+                    matched = True
+                    break
+                if name.startswith("any_") and figure.quantity in self._classes.get(name, ()):
+                    matched = True
+                    break
+        if not matched:
+            return False
+        wanted_class = self.claim_class()
+        if wanted_class and figure.claim_class != wanted_class:
+            return False
+        return True
 
 
-def _text(inv: "Invariant", computed: str) -> str:
+def _text(inv: Invariant, computed: str) -> str:
     """The kit's declared message is a HEADLINE, not a replacement.
 
     The first cut used ``inv.message or computed``, so any kit that declared a
-    message silently DISCARDED the specifics — which facility the figure came
-    from, which equation disagreed with its own result. That is exactly the
-    "blocked teaches the caller nothing" failure this layer exists to prevent,
-    and it was in the evaluator itself. The declared text leads; the computed
-    detail always follows.
+    message silently DISCARDED the specifics -- which facility the figure came
+    from, which equation disagreed with its own result. That is the "blocked
+    teaches the caller nothing" failure, in the evaluator itself.
     """
     headline = (inv.message or "").strip()
     computed = (computed or "").strip()
@@ -129,9 +190,15 @@ def _text(inv: "Invariant", computed: str) -> str:
 
 
 def _render(message: str, missing: Sequence[str], figure: Optional[Figure] = None) -> str:
-    text = message.replace("{missing}", ", ".join(missing) if missing else "its qualifiers")
+    """Correction 6: only {missing} and {value} are placeholders."""
+    listed = ", ".join(missing) if missing else ""
+    text = message.replace("{missing}", listed or "its qualifiers")
+    if figure is not None and figure.value is not None:
+        text = text.replace("{value}", str(figure.value))
+    else:
+        text = text.replace("{value}", listed or "the figure")
     if figure is not None:
-        text = text.replace("{value}", str(figure.value)).replace("{quantity}", figure.quantity)
+        text = text.replace("{quantity}", figure.quantity)
     return text
 
 
@@ -153,50 +220,76 @@ def parse_invariant(raw: Any, classes: Dict[str, Tuple[str, ...]], where: str) -
             f"{where}: {inv_id} has severity {severity!r}; expected one of "
             f"{', '.join(SEVERITIES)}"
         )
-    measurement = str(raw.get("measurement") or "").strip()
-    if not measurement:
-        raise InvariantError(
-            f"{where}: {inv_id} declares no measurement case. An invariant you cannot "
-            f"count is an opinion — name the repeat-probe question and the number"
-        )
+    hook = raw.get("hook")
+    if hook is not None:
+        hook = str(hook).strip()
+        if hook not in legal_hooks(kind, raw.get("band")):
+            raise InvariantError(
+                f"{where}: {inv_id} declares hook {hook!r}, but a {kind} invariant runs "
+                f"at {', '.join(legal_hooks(kind))} per the routing map. Relocating a rule "
+                f"to a hook the host does not call makes the kit report green while "
+                f"gating nothing"
+            )
+
+    governing = raw.get("governing") or raw.get("governing_class")
+    governing_t = (
+        (str(governing),) if isinstance(governing, str)
+        else tuple(str(c) for c in (governing or ()))
+    )
 
     inv = Invariant(
         id=inv_id,
         kind=kind,
         severity=severity,
         applies_to=dict(raw.get("applies_to") or {}),
+        hook=hook,
         requires=tuple(str(f) for f in (raw.get("requires") or ())),
         requires_one_of=tuple(str(f) for f in (raw.get("requires_one_of") or ())),
+        requires_any_of=tuple(str(f) for f in (raw.get("requires_any_of") or ())),
+        requires_steps=tuple(str(f) for f in (raw.get("requires_steps") or ())),
+        requires_state=tuple(str(f) for f in (raw.get("requires_state") or ())),
+        block_if_missing_state=bool(raw.get("block_if_missing_state", False)),
+        block_if=tuple(str(f) for f in (raw.get("block_if") or ())),
         forbid=tuple(str(f) for f in (raw.get("forbid") or ())),
         across=tuple(str(f) for f in (raw.get("across") or ())),
         band=dict(raw.get("band") or {}),
         window=dict(raw.get("window") or {}),
-        governing=tuple(str(c) for c in (raw.get("governing") or ())),
+        governing=governing_t,
+        fallback_class=str(raw["fallback_class"]) if raw.get("fallback_class") else None,
+        demote=tuple(str(c) for c in (raw.get("demote") or ())),
+        require_qualifier=str(raw["require_qualifier"]) if raw.get("require_qualifier") else None,
+        trigger_source=str(raw["trigger_source"]) if raw.get("trigger_source") else None,
+        refusal_class=str(raw["refusal_class"]) if raw.get("refusal_class") else None,
         evidence=dict(raw.get("evidence") or {}),
         message=str(raw.get("message") or ""),
-        measurement=measurement,
+        measurement=str(raw.get("measurement") or "").strip(),
         _classes=classes,
     )
 
     # A record that could never fire reports green while gating nothing.
-    if kind == "qualifier" and not inv.requires:
+    if kind == "qualifier" and not (inv.requires or inv.requires_any_of or inv.requires_one_of):
         raise InvariantError(f"{where}: {inv_id} is a qualifier invariant requiring no fields")
-    if kind == "unit_discipline" and not (inv.requires_one_of or inv.forbid):
+    if kind == "unit_discipline" and not (inv.requires_one_of or inv.forbid or inv.requires):
         raise InvariantError(
-            f"{where}: {inv_id} must declare requires_one_of or forbid"
+            f"{where}: {inv_id} must declare requires_one_of, requires or forbid"
         )
-    if kind == "provenance" and not inv.across:
+    if kind == "provenance" and not (inv.across or inv.forbid):
         raise InvariantError(
-            f"{where}: {inv_id} must name the dimensions a figure may not cross"
+            f"{where}: {inv_id} must name the dimensions a figure may not cross, or the "
+            f"forbidden derivations by name"
         )
     if kind == "currency" and not inv.window.get("provider"):
         raise InvariantError(f"{where}: {inv_id} must name a state provider in window")
-    if kind == "band" and not (inv.band.get("min") is not None or inv.band.get("max") is not None):
+    if kind == "band" and inv.band.get("min") is None and inv.band.get("max") is None:
         raise InvariantError(f"{where}: {inv_id} declares no band min or max")
     if kind == "authority" and not inv.governing:
-        raise InvariantError(
-            f"{where}: {inv_id} must name the governing source class(es)"
-        )
+        raise InvariantError(f"{where}: {inv_id} must name the governing source class(es)")
+    # NOTE: a `derivation` record needs NO declared condition. Its baseline is
+    # the spec's own definition of the kind -- "do the stated working and the
+    # stated result agree?" -- which is arithmetic consistency plus
+    # self-contradiction between sibling figures, and neither is declared. An
+    # earlier version demanded block_if/forbid/requires_* here and disabled three
+    # kits whose derivation records were perfectly correct.
     for wanted in inv.quantities():
         if wanted.startswith("any_") and wanted not in classes:
             raise InvariantError(
@@ -209,12 +302,8 @@ def parse_invariant(raw: Any, classes: Dict[str, Tuple[str, ...]], where: str) -
 def _finding(
     inv: Invariant, figure: Optional[Figure], message: str, missing: Sequence[str] = ()
 ) -> Finding:
-    """Build the finding, applying the never-refuse-the-operator rule."""
-    # The kit's declared message is a HEADLINE and the computed detail always
-    # follows it. Applied here, once, so no evaluator can drop the specifics.
-    # Compose first, THEN render: a declared headline carries {missing} and
-    # {value} too, and substituting only the computed half left "{missing}"
-    # printed literally in the operator's refusal.
+    """Compose the headline, render the placeholders, then apply the
+    never-refuse-the-operator rule. Done here once so no evaluator can skip it."""
     message = _render(_text(inv, message), missing, figure)
     severity = inv.severity
     softened = None
@@ -237,27 +326,42 @@ def _finding(
     )
 
 
+# ------------------------------------------------ shared state precondition --
+
+def state_precondition(
+    inv: Invariant, figure: Figure, state: Optional[Dict[str, Any]]
+) -> Optional[Finding]:
+    """``requires_state`` + ``block_if_missing_state``, usable by any kind.
+
+    An unreachable source yields UNKNOWN, never a fallback to the design basis:
+    a design figure presented as a current state is the defect this exists to
+    stop, so the refusal names the sources and says nothing about the figure.
+    """
+    if not inv.requires_state or not inv.block_if_missing_state:
+        return None
+    records = state or {}
+    missing = [name for name in inv.requires_state if records.get(name) is None]
+    if not missing:
+        return None
+    detail = "state UNKNOWN — " + ", ".join(missing) + " unavailable"
+    if len(inv.requires_state) > 1:
+        detail += f"; all of {', '.join(inv.requires_state)} are required"
+    return _finding(inv, figure, detail + ". Live state has no design-basis fallback", missing)
+
+
 # ---------------------------------------------------------------- grounding --
 
 def eval_grounding(inv: Invariant, figure: Figure, manifest: Manifest) -> Optional[Finding]:
     """A figure the model produced with no source is an invented figure.
-
-    Live: "a rate nobody supplied". ``operator`` origin is exempt by definition —
-    the operator IS the source.
-    """
-    if not inv.governs(figure.quantity):
-        return None
-    if figure.origin in ("operator",):
+    Live: "a rate nobody supplied". ``operator`` origin is exempt by definition."""
+    if figure.origin == "operator":
         return None
     if figure.origin in ("document", "tool") and figure.source_id:
         return None
     return _finding(
         inv, figure,
-        _render((
-            "{quantity} = {value} is not grounded: origin is "
-            + figure.origin
-            + " with no source_id. A figure nobody supplied is invented"
-        ), (), figure),
+        f"{figure.quantity} is not grounded: origin is {figure.origin} with no source_id. "
+        f"A figure nobody supplied is invented",
         ["source_id"],
     )
 
@@ -265,15 +369,14 @@ def eval_grounding(inv: Invariant, figure: Figure, manifest: Manifest) -> Option
 # ---------------------------------------------------------------- qualifier --
 
 def eval_qualifier(inv: Invariant, figure: Figure, manifest: Manifest) -> Optional[Finding]:
-    if not inv.governs(figure.quantity):
-        return None
     missing = figure.missing(inv.requires)
+    if inv.requires_any_of and not any(figure.known(f) for f in inv.requires_any_of):
+        missing = missing + [f"one of {', '.join(inv.requires_any_of)}"]
     if not missing:
         return None
     return _finding(
         inv, figure,
-        _render("a {quantity} figure without {missing} cannot be acted on",
-                missing, figure),
+        f"a {figure.quantity} figure without {', '.join(missing)} cannot be acted on",
         missing,
     )
 
@@ -282,34 +385,33 @@ def eval_qualifier(inv: Invariant, figure: Figure, manifest: Manifest) -> Option
 
 _BARE_NUMBER = re.compile(r"(?<![\w.])-?\d[\d,]*(?:\.\d+)?(?![\w.%])")
 _UNIT_NEAR_NUMBER = re.compile(
-    r"-?\d[\d,]*(?:\.\d+)?\s*(?:mm|cm|m|km|ft|in|nm|kg|t|kN|kPa|MPa|psi|psig|%|"
-    r"days?|hours?|s|deg|°|mg/l|ppm)\b",
+    r"-?\d[\d,]*(?:\.\d+)?\s*(?:mm|cm|m|km|ft|in|nm|kg|t|kN|kPa|MPa|psi|psig|barg|bara|bar|%|pct|"
+    r"days?|hours?|h|min|s|deg|°|mg/l|mgL|ppm|IU|Ncm|rpm|kV|mA|units?|tiers?|NTU|kt|log)\b",
     re.IGNORECASE,
 )
-_UNIT_TOKEN = re.compile(r"-?\d[\d,]*(?:\.\d+)?\s*(mm|m|ft|metres|meters|feet|in|inches)\b",
-                         re.IGNORECASE)
+_UNIT_TOKEN = re.compile(
+    r"-?\d[\d,]*(?:\.\d+)?\s*(mm|m|ft|metres|meters|feet|in|inches)\b", re.IGNORECASE
+)
 _UNIT_NORMAL = {
     "mm": "mm", "m": "m", "metres": "m", "meters": "m",
     "ft": "ft", "feet": "ft", "in": "in", "inches": "in",
 }
 
-#: Datum families whose members must never be mixed in one statement.
 DATUM_FAMILIES: Dict[str, Tuple[str, ...]] = {
-    "vertical": ("AMSL_m", "AMSL_ft", "AOD", "chart datum", "berth datum"),
+    "vertical": ("AMSL_m", "AMSL_ft", "AOD", "chart datum", "berth datum",
+                 "chart_datum", "berth_datum", "LAT", "MHWS"),
     "horizontal": ("WGS-84", "WGS84", "local grid", "national grid"),
     "bearing": ("magnetic", "true"),
 }
-
-#: A datum whose NAME encodes the unit the figure must be in.
 DATUM_UNITS: Dict[str, str] = {"AMSL_m": "m", "AMSL_ft": "ft"}
 
 
 def _datum_unit_conflict(figure: Figure) -> Optional[str]:
     """The figure's unit disagrees with the unit its datum names.
 
-    This is the well-qualified-but-wrong case: a unit IS present and a datum IS
-    present, and they contradict. An elevation in feet against a metre datum
-    reads as complete and is not the height it looks like.
+    The well-qualified-but-wrong case: a unit IS present and a datum IS present,
+    and they contradict. An elevation in feet against a metre datum reads as
+    complete and is not the height it looks like.
     """
     for name, value in figure.qualifiers.items():
         expected = DATUM_UNITS.get(str(value))
@@ -338,86 +440,107 @@ def _mixed_datum(text: str) -> Optional[str]:
 def eval_unit_discipline(
     inv: Invariant, figure: Figure, manifest: Manifest
 ) -> Optional[Finding]:
-    if not inv.governs(figure.quantity):
-        return None
+    if inv.requires:
+        missing = figure.missing(inv.requires)
+        if missing:
+            return _finding(inv, figure, f"{figure.quantity} without {', '.join(missing)}", missing)
 
-    if "mixed_datum" in inv.forbid:
+    if "mixed_datum" in inv.forbid or "mixed" in inv.forbid:
         conflict = _datum_unit_conflict(figure)
         if conflict:
-            return _finding(inv, figure, (
-                f"mixed datum: {conflict}. The datum names its own unit, so a figure "
-                f"quoted in the other one is not the value it appears to be"
-            ))
+            return _finding(inv, figure, f"mixed datum: {conflict}")
         mixed = _mixed_datum(figure.text)
         if mixed:
-            return _finding(inv, figure, (
-                f"two datums in one statement ({mixed}) — a figure carries one datum "
-                f"or it cannot be compared to anything"
-            ))
+            return _finding(
+                inv, figure,
+                f"two datums in one statement ({mixed}) — a figure carries one datum or "
+                f"it cannot be compared to anything",
+            )
 
     # The unit must be one the kit declares legal for this quantity. Live: a
     # slab calculator bound metres to a millimetre parameter and returned
     # `0.2 mm` with status success.
     spec = manifest.quantities.get(figure.quantity)
     if spec and spec.units and figure.unit and figure.unit not in spec.units:
-        return _finding(inv, figure, (
-            f"unit {figure.unit!r} is not legal for {figure.quantity} "
-            f"(expected one of {', '.join(spec.units)})"
-        ), ["unit"])
+        return _finding(
+            inv, figure,
+            f"unit {figure.unit!r} is not legal for {figure.quantity} (expected one of "
+            f"{', '.join(spec.units)})", ["unit"],
+        )
 
     if inv.requires_one_of:
         haystack = (figure.text or "").lower()
         values = {str(v).lower() for v in figure.qualifiers.values() if v is not None}
+        if figure.unit:
+            values.add(str(figure.unit).lower())
         if not any(t.lower() in haystack or t.lower() in values for t in inv.requires_one_of):
-            return _finding(inv, figure, (
-                "no datum stated — one of "
-                + ", ".join(inv.requires_one_of)
-                + " is required, because a figure without a datum is not a measurement"
-            ), list(inv.requires_one_of))
+            return _finding(
+                inv, figure, "none of " + ", ".join(inv.requires_one_of) + " stated",
+                list(inv.requires_one_of),
+            )
 
-    if "bare_number" in inv.forbid and not figure.unit:
+    if ("bare_number" in inv.forbid or "unspecified" in inv.forbid) and not figure.unit:
         if _BARE_NUMBER.search(figure.text or "") and not _UNIT_NEAR_NUMBER.search(figure.text or ""):
-            return _finding(inv, figure, (
+            return _finding(
+                inv, figure,
                 "bare number — every figure carries its unit; a number whose unit the "
-                "reader must guess is how metres become millimetres"
-            ), ["unit"])
+                "reader must guess is how metres become millimetres", ["unit"],
+            )
     return None
 
 
 # ---------------------------------------------------------------- authority --
 
 def eval_authority(inv: Invariant, figure: Figure, manifest: Manifest) -> Optional[Finding]:
-    """The figure must come from the class of source that governs the question.
+    """The figure must come from the class of source that governs.
 
     Live: a site-office mobilisation statement answering a specification
-    question. The ladder is in the manifest; `reject_as_proof` says which class
-    may not stand in for which.
+    question. The ladder is in the manifest; ``reject_as_proof`` says which class
+    may not stand in for which; ``demote`` names classes this record refuses
+    outright however they rank; ``require_qualifier`` is the qualifier without
+    which the class means nothing (brand, for a neuromodulator unit).
     """
-    if not inv.governs(figure.quantity):
-        return None
+    if inv.require_qualifier and not figure.known(inv.require_qualifier):
+        return _finding(
+            inv, figure,
+            f"{figure.quantity} carries no {inv.require_qualifier}, so its source class "
+            f"cannot mean anything", [inv.require_qualifier],
+        )
     if figure.source_class is None:
-        return _finding(inv, figure, (
+        return _finding(
+            inv, figure,
             f"{figure.quantity} carries no source class, so it cannot be ranked against "
-            f"the class that governs ({', '.join(inv.governing)})"
-        ), ["source_class"])
-    if figure.source_class in inv.governing:
+            f"the class that governs ({', '.join(inv.governing)})", ["source_class"],
+        )
+    # DECLARED order, not sorted. The record names the governing class first and
+    # the fallback second; sorting alphabetically made the refusal cite whichever
+    # class happened to sort first, which is not the one that governs.
+    accepted = list(inv.governing) + ([inv.fallback_class] if inv.fallback_class else [])
+    if figure.source_class in accepted:
         return None
+    if figure.source_class in inv.demote:
+        return _finding(
+            inv, figure,
+            f"a {figure.source_class} is demoted for {figure.quantity}: "
+            f"{' or '.join(accepted)} governs",
+        )
     mine = manifest.source_classes.get(figure.source_class)
-    for governing_name in inv.governing:
-        governing = manifest.source_classes.get(governing_name)
+    for name in accepted:
+        governing = manifest.source_classes.get(name)
         if governing is None:
             continue
         if figure.source_class in governing.reject_as_proof:
-            return _finding(inv, figure, (
-                f"a {figure.source_class} is not proof of {figure.quantity}: "
-                f"{governing_name} governs, and {figure.source_class} is explicitly "
-                f"rejected as proof of it"
-            ))
+            return _finding(
+                inv, figure,
+                f"a {figure.source_class} is not proof of {figure.quantity}: {name} governs, "
+                f"and {figure.source_class} is explicitly rejected as proof",
+            )
         if mine is not None and mine.rank > governing.rank:
-            return _finding(inv, figure, (
-                f"{figure.source_class} (rank {mine.rank}) is outranked by "
-                f"{governing_name} (rank {governing.rank}) for {figure.quantity}"
-            ))
+            return _finding(
+                inv, figure,
+                f"{figure.source_class} (rank {mine.rank}) is outranked by {name} "
+                f"(rank {governing.rank}) for {figure.quantity}",
+            )
     return None
 
 
@@ -433,16 +556,18 @@ _CARRY_VERB = re.compile(
 def eval_provenance(inv: Invariant, figure: Figure, manifest: Manifest) -> Optional[Finding]:
     """Was the figure carried from another entity or revision?
 
-    The check is NOT "this dimension appears twice". Naming the same runway
-    twice is what a CORRECT answer looks like, and a mention-counting regex
-    blocks it — that bug was written and fixed by hand in the first kit built
-    this way. Carrying means the figure's OWN entity differs from the entity the
-    question is about, or two DISTINCT values appear with a carry verb.
+    The check is NOT "this dimension appears twice". Naming the same runway twice
+    is what a CORRECT answer looks like, and a mention-counting regex blocks it --
+    that bug was written and fixed by hand in the first kit built this way.
+    Carrying means the figure's OWN entity differs from the entity the question is
+    about, two DISTINCT values appear with a carry verb, or the host reports a
+    named forbidden derivation in ``figure.derivations``.
 
     Live: delay damages computed on another contract's amount.
     """
-    if not inv.governs(figure.quantity):
-        return None
+    named = [d for d in figure.derivations if d in inv.forbid]
+    if named:
+        return _finding(inv, figure, f"forbidden derivation: {', '.join(named)}", named)
 
     for dimension in inv.across:
         mine = figure.qualifiers.get(dimension)
@@ -450,21 +575,23 @@ def eval_provenance(inv: Invariant, figure: Figure, manifest: Manifest) -> Optio
             mine = figure.revision if figure.revision is not None else mine
         theirs = figure.asked_about.get(dimension)
         if mine is not None and theirs is not None and str(mine) != str(theirs):
-            return _finding(inv, figure, (
+            return _finding(
+                inv, figure,
                 f"this figure belongs to {dimension}={mine}; the question is about "
-                f"{dimension}={theirs}. A figure does not carry across {dimension}"
-            ), [dimension])
+                f"{dimension}={theirs}. A figure does not carry across {dimension}",
+                [dimension],
+            )
 
     text = figure.text or ""
     if _CARRY_VERB.search(text):
         for dimension in inv.across:
-            spec = manifest.qualifier_fields.get(dimension)
-            values = _distinct_values(text, spec)
+            values = _distinct_values(text, manifest.qualifier_fields.get(dimension))
             if len(values) >= 2:
-                return _finding(inv, figure, (
-                    f"carrying a figure across {dimension} "
-                    f"({' -> '.join(values[:2])}) is never allowed"
-                ), [dimension])
+                return _finding(
+                    inv, figure,
+                    f"carrying a figure across {dimension} ({' -> '.join(values[:2])}) is "
+                    f"never allowed", [dimension],
+                )
     return None
 
 
@@ -497,33 +624,45 @@ def eval_currency(
     """Has the thing that invalidates this figure happened?
 
     Currency is usually an EVENT, not a clock: "any valve operation", "any
-    approved MOC". A provider that cannot be read yields UNKNOWN — never a
-    fallback to the design basis, because a design figure presented as a live
-    state is the defect.
+    approved MOC". A provider that cannot be read yields UNKNOWN -- never a
+    fallback to the design basis.
     """
-    if not inv.governs(figure.quantity):
-        return None
+    blocked = state_precondition(inv, figure, state)
+    if blocked is not None:
+        return blocked
+
     provider_name = str(inv.window.get("provider"))
     provider = manifest.state_providers.get(provider_name)
     if provider is None:
-        return _finding(inv, figure, (
-            f"state provider '{provider_name}' is not declared by this kit, so "
-            f"currency cannot be established"
-        ), [provider_name])
+        return _finding(
+            inv, figure,
+            f"state provider '{provider_name}' is not declared by this kit, so currency "
+            f"cannot be established", [provider_name],
+        )
 
     record = (state or {}).get(provider_name)
     if record is None:
-        return _finding(inv, figure, (
-            f"state UNKNOWN — {provider_name} unavailable. Live state has no "
-            f"design-basis fallback: a design figure is not a current state"
-        ), [provider_name])
+        return _finding(
+            inv, figure,
+            f"state UNKNOWN — {provider_name} unavailable. Live state has no design-basis "
+            f"fallback: a design figure is not a current state", [provider_name],
+        )
 
-    happened = [e for e in (events or ()) if e in manifest.staleness_triggers.get(figure.quantity, ())]
+    if inv.trigger_source and figure.qualifiers.get(inv.trigger_source) is True:
+        return _finding(
+            inv, figure,
+            f"{inv.trigger_source} is true — the record predates a disturbance",
+            [inv.trigger_source],
+        )
+
+    triggers = set(manifest.staleness_triggers.get(figure.quantity, ()))
+    happened = [e for e in (events or ()) if e in triggers]
     if happened:
-        return _finding(inv, figure, (
+        return _finding(
+            inv, figure,
             f"{figure.quantity} is stale: " + ", ".join(happened)
-            + " has happened since it was recorded"
-        ), happened)
+            + " has happened since it was recorded", happened,
+        )
 
     max_age = inv.window.get("max_age", provider.max_age)
     try:
@@ -536,9 +675,11 @@ def eval_currency(
         moment = now if now is not None else _time.time()
         as_of = record.get("as_of") if isinstance(record, dict) else None
         if as_of is None or (moment - float(as_of)) > seconds:
-            return _finding(inv, figure, (
-                f"{provider_name} record is older than its {seconds:g}s validity"
-            ), [provider_name])
+            return _finding(
+                inv, figure,
+                f"{provider_name} record is older than its {seconds:g}s validity",
+                [provider_name],
+            )
     return None
 
 
@@ -547,10 +688,11 @@ def eval_currency(
 def eval_scope(manifest: Manifest, question: str, severity: str = "refuse") -> Optional[Finding]:
     """Classify the question BEFORE retrieval.
 
-    No document makes an operational-authority question answerable, so
-    retrieving at all is wrong: it produces citations that read as though they
-    authorised the decision. Live: "can we put the crane here", "will this
-    affect the ILS".
+    Correction 1: the patterns live in the MANIFEST's ``scope_refusals``; a scope
+    record carries the severity and the measurement, not patterns of its own. No
+    document makes an operational-authority question answerable, so retrieving at
+    all is wrong -- it produces citations that read as though they authorised the
+    decision.
     """
     for refusal in manifest.scope_refusals:
         if refusal.matches(question):
@@ -560,8 +702,8 @@ def eval_scope(manifest: Manifest, question: str, severity: str = "refuse") -> O
                 severity=severity,
                 message=(
                     f"refused before retrieval ({refusal.label}): this is "
-                    f"{refusal.authority}'s decision. No document makes it answerable, "
-                    f"so nothing was retrieved"
+                    f"{refusal.authority}'s decision. No document makes it answerable, so "
+                    f"nothing was retrieved"
                 ),
             )
     return None
@@ -581,9 +723,8 @@ def _number(token: str) -> float:
 def check_arithmetic(text: str, tolerance: float = 0.01) -> Optional[Tuple[str, float, float]]:
     """Find a stated ``a op b = c`` whose result is wrong.
 
-    Live: "L/20 = 4800/20 = **200 mm**" — the rule right, the span right, the
-    result wrong. That is the hardest defect to see by reading, and it is
-    trivial to catch by evaluating.
+    Live: "L/20 = 4800/20 = **200 mm**" -- rule right, span right, result wrong.
+    The hardest defect to see by reading and trivial to catch by evaluating.
     """
     for match in _EQUATION.finditer(text or ""):
         left, op, right, stated = match.groups()
@@ -611,25 +752,50 @@ def check_arithmetic(text: str, tolerance: float = 0.01) -> Optional[Tuple[str, 
 
 
 def eval_derivation(
-    inv: Invariant, figure: Figure, manifest: Manifest, siblings: Sequence[Figure] = ()
+    inv: Invariant,
+    figure: Figure,
+    manifest: Manifest,
+    siblings: Sequence[Figure] = (),
+    state: Optional[Dict[str, Any]] = None,
 ) -> Optional[Finding]:
-    """Do the stated working and the stated result agree — and does the answer
-    agree with itself?
-
-    Two live defects, one kind: an equation whose arithmetic is wrong, and the
-    same quantity stated twice with different values in one answer ("40 days"
-    and "400 days").
+    """Do the stated working and the stated result agree -- and does the answer
+    agree with itself? Plus the ``block_if`` conditions, ``requires_steps`` and
+    the ``requires_state`` preconditions the domain sheets put on this kind.
     """
-    if not inv.governs(figure.quantity):
-        return None
+    blocked = state_precondition(inv, figure, state)
+    if blocked is not None:
+        return blocked
+
+    fired = [c for c in inv.block_if if c in figure.conditions]
+    if fired:
+        return _finding(inv, figure, f"blocking condition: {', '.join(fired)}", fired)
+
+    named = [d for d in figure.derivations if d in inv.forbid]
+    if named:
+        return _finding(inv, figure, f"forbidden derivation: {', '.join(named)}", named)
+
+    if inv.requires_steps:
+        missing = [s for s in inv.requires_steps if s not in figure.steps]
+        if missing:
+            return _finding(
+                inv, figure,
+                "calculation shown without " + ", ".join(missing)
+                + " — a bare answer cannot be checked", missing,
+            )
+
+    if inv.requires:
+        missing = figure.missing(inv.requires)
+        if missing:
+            return _finding(inv, figure, f"without {', '.join(missing)}", missing)
 
     wrong = check_arithmetic(figure.text)
     if wrong:
         shown, expected, stated = wrong
-        return _finding(inv, figure, (
-            f"stated working and stated result disagree: '{shown}' — "
-            f"{expected:g}, not {stated:g}"
-        ))
+        return _finding(
+            inv, figure,
+            f"stated working and stated result disagree: '{shown}' — {expected:g}, not "
+            f"{stated:g}",
+        )
 
     for other in siblings:
         if other is figure or other.quantity != figure.quantity:
@@ -637,42 +803,68 @@ def eval_derivation(
         if other.value is None or figure.value is None:
             continue
         if other.unit == figure.unit and other.value != figure.value:
-            return _finding(inv, figure, (
-                f"the answer contradicts itself on {figure.quantity}: "
-                f"{figure.value} and {other.value} "
-                f"{figure.unit or ''}".strip()
-            ))
+            return _finding(
+                inv, figure,
+                f"the answer contradicts itself on {figure.quantity}: {figure.value} and "
+                f"{other.value} {figure.unit or ''}".strip(),
+            )
     return None
 
 
 # --------------------------------------------------------------------- band --
 
 def eval_band(inv: Invariant, figure: Figure, manifest: Manifest) -> Optional[Finding]:
-    """Is the value physically possible? Caught where it is born, at H2.
+    """Two meanings, both declared in the manifest and both real.
 
-    Live: a slab calculator returned `0.2 mm` with status success, because
-    metres were bound to a millimetre parameter. Nothing downstream questioned
-    it, and it was narrated to the user as a result.
+    ``{min: <number>, max: <number>}`` is a POSSIBILITY band: is the value
+    physically possible? Live: a slab calculator returned ``0.2 mm`` with status
+    success because metres were bound to a millimetre parameter.
+
+    ``{min: present, max: present, same_source: true}`` is a TWO-SIDEDNESS band:
+    the figure must be returned as a band at all. A single-sided lay tension is
+    not a conservative answer, it is an unusable one -- and ``same_source`` means
+    both bounds come from ONE analysis, not one from each.
     """
-    if not inv.governs(figure.quantity):
+    low, high = inv.band.get("min"), inv.band.get("max")
+
+    if str(low) == "present" or str(high) == "present":
+        bounds = figure.bounds or {}
+        missing = [
+            name for name, wanted in (("min", low), ("max", high))
+            if str(wanted) == "present" and bounds.get(name) is None
+        ]
+        if missing:
+            return _finding(
+                inv, figure,
+                f"{figure.quantity} is a band — {', '.join(missing)} missing; a "
+                f"single-sided figure is not a conservative answer, it is an unusable one",
+                missing,
+            )
+        if inv.band.get("same_source"):
+            if bounds.get("source_id_min") != bounds.get("source_id_max"):
+                return _finding(
+                    inv, figure,
+                    f"the two bounds of {figure.quantity} come from different sources — a "
+                    f"band assembled from two analyses is not a band", ["same_source"],
+                )
         return None
+
     if figure.value is None or isinstance(figure.value, bool):
         return None
     try:
         value = float(figure.value)
     except (TypeError, ValueError):
         return None
-    low, high = inv.band.get("min"), inv.band.get("max")
     if low is not None and value < float(low):
-        return _finding(inv, figure, (
-            f"{figure.quantity} = {figure.value}{figure.unit or ''} is below the "
-            f"possible minimum {low}{figure.unit or ''} — check the unit it was "
-            f"computed in"
-        ))
+        return _finding(
+            inv, figure,
+            f"{figure.quantity} = {figure.value}{figure.unit or ''} is below the possible "
+            f"minimum {low}{figure.unit or ''} — check the unit it was computed in",
+        )
     if high is not None and value > float(high):
-        return _finding(inv, figure, (
-            f"{figure.quantity} = {figure.value}{figure.unit or ''} is above the "
-            f"possible maximum {high}{figure.unit or ''} — check the unit it was "
-            f"computed in"
-        ))
+        return _finding(
+            inv, figure,
+            f"{figure.quantity} = {figure.value}{figure.unit or ''} is above the possible "
+            f"maximum {high}{figure.unit or ''} — check the unit it was computed in",
+        )
     return None

@@ -132,8 +132,6 @@ def _kit_with(tmp_path, record, quantities=None):
           "applies_to": {"quantity": "thing"}}, "governing source class"),
         ({"id": "E", "kind": "currency", "severity": "refuse", "measurement": "m",
           "applies_to": {"quantity": "thing"}}, "state provider"),
-        ({"id": "F", "kind": "qualifier", "severity": "refuse", "requires": ["x"],
-          "applies_to": {"quantity": "not_declared"}}, "no measurement case"),
         ({"id": "G", "kind": "qualifier", "severity": "refuse", "requires": ["x"],
           "measurement": "m", "applies_to": {"quantity": "not_declared"}},
          "manifest does not declare"),
@@ -142,7 +140,7 @@ def _kit_with(tmp_path, record, quantities=None):
          "decoration"),
     ],
     ids=["no-requires", "no-across", "no-band", "no-governing", "no-provider",
-         "no-measurement", "undeclared-quantity", "undefined-class"],
+         "undeclared-quantity", "undefined-class"],
 )
 def test_a_record_that_could_never_fire_refuses_to_load(tmp_path, record, expected):
     with pytest.raises(KitLoadError, match=expected):
@@ -156,8 +154,8 @@ def test_any_star_is_a_class_not_a_wildcard(kit):
     ones, or one loose invariant governs everything.
     """
     units = next(inv for inv in kit.invariants if inv.id == "INV-DC-UNITS")
-    assert units.governs("pue") is True
-    assert units.governs("resilience_level") is False
+    assert units.governs(Figure(quantity="pue")) is True
+    assert units.governs(Figure(quantity="resilience_level")) is False
 
 
 # ── the budget ────────────────────────────────────────────────────────────
@@ -384,6 +382,49 @@ def test_every_shipped_invariant_names_its_measurement_case(kit):
         assert any(ch.isdigit() for ch in inv.measurement), (
             f"{inv.id}'s measurement names no number of runs: {inv.measurement}"
         )
+
+
+def test_a_record_with_no_measurement_loads_but_does_not_ship(tmp_path):
+    """Spec §4 says no invariant SHIPS without a measurement case -- the word is
+    *ships*, and §5 puts the AC tests in the kit's own tests/. So the kit LOADS
+    and gates; the ship gate (certification, signing) is what refuses."""
+    (tmp_path / "manifest.yaml").write_text(
+        yaml.safe_dump({
+            "kit": "unmeasured_probe",
+            "quantities": {"thing": {}},
+            "qualifier_fields": {"who": {"type": "string"}},
+        }),
+        encoding="utf-8",
+    )
+    (tmp_path / "invariants.yaml").write_text(
+        yaml.safe_dump({"invariants": [{
+            "id": "INV-PROBE", "kind": "qualifier", "severity": "refuse",
+            "applies_to": {"quantity": "thing"}, "requires": ["who"],
+        }]}),
+        encoding="utf-8",
+    )
+
+    probe = load_kit(tmp_path)
+
+    assert probe.invariants, "the kit must still gate"
+    assert probe.unmeasured == ["INV-PROBE"]
+    assert probe.ships is False
+
+
+def test_a_kit_whose_records_all_declare_a_measurement_ships(kit):
+    assert kit.unmeasured == []
+    assert kit.ships is True
+
+
+def test_a_presence_band_may_run_at_answer_time_a_numeric_band_may_not():
+    """Two rules wear the name `band`. A POSSIBILITY band must be caught where
+    the value is born (H2). A TWO-SIDEDNESS band is about the ANSWER being
+    single-sided, which cannot be seen at tool time -- there is one figure and no
+    answer yet."""
+    from app.blocks.kit_engine.invariants import legal_hooks
+
+    assert "H3" in legal_hooks("band", {"min": "present", "max": "present"})
+    assert "H3" not in legal_hooks("band", {"min": 1.0, "max": 3.5})
 
 
 def test_the_rewritten_datacentre_kit_covers_all_eight_kinds(kit):
