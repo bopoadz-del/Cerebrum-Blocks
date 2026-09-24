@@ -389,3 +389,116 @@ def test_a_blocked_statement_never_returns_a_figure():
     assert verdict["verdict"] == "block"
     assert "corrected" not in verdict
     assert "0.25" not in verdict["blocked_reason"]
+
+
+# --- through the block's own entry method -------------------------------
+#
+# The tests above drive gate_answer. Certification bar 3 gutted
+# OffshoreMarineReasoningBlock.process to a plausible success and the suite
+# stayed GREEN -- proving nothing about the block's payloads. These tests go
+# through process() and assert on what it returns, so a gutted entry method
+# goes red.
+
+import asyncio
+
+from app.blocks.offshore_marine_reasoning import OffshoreMarineReasoningBlock
+
+
+def _process(input_data: dict, params: dict | None = None) -> dict:
+    block = OffshoreMarineReasoningBlock()
+    return asyncio.run(block.process(input_data, params or {}))
+
+
+def test_process_refuses_a_go_decision_and_names_the_scope_refusal():
+    envelope = _process({"query": "can we start the lift?", "answer": "yes, go ahead."})
+
+    assert envelope["block_id"] == "offshore_marine_reasoning"
+    assert envelope["status"] == "success"
+    result = envelope["result"]
+    assert result["verdict"] == "refused"
+    assert "scope refusal" in result["blocked_reason"]
+    assert "named-person decision" in result["blocked_reason"]
+
+
+def test_process_blocks_a_single_sided_tension_naming_inv1():
+    envelope = _process({
+        "query": "what top tension do we hold?",
+        "answer": "hold a lay tension of 850 kN.",
+        "spread_type": "s_lay",
+        "live_state": {"monitoring": {"dp": "ok"}, "manual_log": {"components_out": []}},
+    })
+
+    result = envelope["result"]
+    assert result["verdict"] == "block"
+    assert "INV-1" in result["blocked_reason"]
+
+
+def test_process_passes_a_qualified_band_and_reports_the_interview_state():
+    """The gap is part of the payload: a caller must see that nothing is filled."""
+    envelope = _process({
+        "query": "what tension range applies?",
+        "answer": "hold 780 to 900 kN on the s_lay spread.",
+        "spread_type": "s_lay",
+        "live_state": {"monitoring": {"dp": "ok"}, "manual_log": {"components_out": []}},
+    })
+
+    result = envelope["result"]
+    assert result["verdict"] == "pass", result.get("blocked_reason")
+    assert "not run" in result["interview_status"]
+    assert len(result["unfilled_figures"]) == 11
+    assert "lay_tension_min_kn" in result["unfilled_figures"]
+
+
+def test_process_reports_unknown_spread_state_when_monitoring_is_absent():
+    envelope = _process({
+        "query": "what is our current DP capability right now?",
+        "answer": "DP capability is 2.8 m Hs.",
+        "spread_type": "j_lay",
+    })
+
+    result = envelope["result"]
+    assert result["verdict"] == "block"
+    assert "UNKNOWN" in result["blocked_reason"]
+    assert "2.8" not in result["blocked_reason"]
+
+
+def test_process_surfaces_the_degraded_transition_rather_than_inferring_it():
+    envelope = _process({
+        "query": "what is the current thruster state?",
+        "answer": "the spread is available.",
+        "spread_type": "j_lay",
+        # A thruster-state question IS a station-keeping question, so INV-4
+        # applies: the failure case and the live-state reference are part of
+        # asking it properly, not extras.
+        "failure_case": "one thruster out",
+        "live_state_ref": "spread-state-2026-09-24T06:00Z",
+        "live_state": {
+            "monitoring": {"dp": "ok", "thrusters": "5 of 6"},
+            "manual_log": {
+                "components_out": [{"component": "thruster-3", "since": time.time() - 1800}]
+            },
+        },
+    })
+
+    result = envelope["result"]
+    assert result["verdict"] == "pass", result.get("blocked_reason")
+    corrected = result["corrected"]
+    assert corrected["degraded_from"] == "N+1" and corrected["degraded_to"] == "N"
+    assert corrected["degraded_component"] == "thruster-3"
+    assert corrected["time_in_degraded_seconds"] >= 1800
+
+
+def test_process_requires_both_a_query_and_an_answer():
+    assert _process({"query": "", "answer": "something"})["status"] == "refused"
+    assert _process({"query": "what tension?", "answer": ""})["status"] == "refused"
+
+
+def test_process_refuses_a_live_state_that_is_not_the_two_source_shape():
+    envelope = _process({
+        "query": "what is our DP capability?",
+        "answer": "2.8 m Hs.",
+        "live_state": "monitoring is fine",
+    })
+
+    assert envelope["status"] == "refused"
+    assert "monitoring" in envelope["error"] and "manual_log" in envelope["error"]
