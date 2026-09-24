@@ -60,6 +60,11 @@ from app.blocks.kit_engine.invariants import (
     eval_unit_discipline,
     parse_invariant,
 )
+from app.blocks.kit_engine.interview import (
+    Interview,
+    InterviewError,
+    load_interview,
+)
 from app.blocks.kit_engine.manifest import Manifest, ManifestError, parse_manifest
 
 logger = logging.getLogger(__name__)
@@ -88,6 +93,11 @@ class Kit:
     invariants: List[Invariant]
     path: pathlib.Path
     budget: int = DEFAULT_BUDGET
+    #: The domain owner's own question sheet, when one was supplied. None means
+    #: no sheet exists for this kit and it still runs on the derived questions --
+    #: which is NOT the same as a kit whose interview is complete, and every
+    #: caller that reports interview state has to say which it is.
+    interview: Optional[Interview] = None
 
     @property
     def name(self) -> str:
@@ -345,7 +355,21 @@ def load_kit(directory: pathlib.Path, env: Optional[Dict[str, str]] = None) -> K
             f"trigger could never fire. Add a currency invariant, or drop the trigger"
         )
 
-    return Kit(manifest=manifest, invariants=invariants, path=directory)
+    # The interview. A sheet that will not parse DISABLES the kit: falling back
+    # to "no questions" would read as an interview with nothing outstanding.
+    try:
+        interview = load_interview(directory)
+    except InterviewError as exc:
+        raise KitLoadError(str(exc)) from exc
+    if interview is not None and interview.kit != manifest.kit:
+        raise KitLoadError(
+            f"{directory / 'questions.yaml'}: interview names kit '{interview.kit}' but "
+            f"the manifest is '{manifest.kit}' — an interview attached to the wrong kit "
+            f"would ask one domain's questions and gate another's figures"
+        )
+
+    return Kit(manifest=manifest, invariants=invariants, path=directory,
+               interview=interview)
 
 
 class KitRegistry:

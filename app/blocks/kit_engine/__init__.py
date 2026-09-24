@@ -31,4 +31,11 @@ from app.blocks.kit_engine.invariants import (  # noqa: F401
     Invariant,
     check_arithmetic,
 )
+from app.blocks.kit_engine.interview import (  # noqa: F401
+    Interview,
+    InterviewError,
+    Question,
+    load_interview,
+    parse_interview,
+)
 from app.blocks.kit_engine.manifest import Manifest, ManifestError  # noqa: F401

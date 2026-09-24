@@ -180,4 +180,41 @@ class ReasoningKitBlock(UniversalBlock):
         result["unmeasured_invariants"] = list(getattr(kit, "unmeasured", []))
         result["ships"] = bool(getattr(kit, "ships", False))
         result["kit_disabled"] = isinstance(kit, DisabledKit)
+        result["interview"] = self._interview_state(kit)
         return result
+
+    def _interview_state(self, kit) -> Dict[str, Any]:
+        """What the domain owner's sheet still wants answered.
+
+        The caller passes no answers here — a Store block cannot read a
+        platform's answer store and must never hold one. So this reports the
+        interview as it stands in the kit: every gating question outstanding.
+        The platform's own kernel overlays the answers it holds.
+
+        ``questions_source`` is the point of this method. A kit with no sheet and
+        a kit whose sheet is fully answered both have nothing outstanding here,
+        and reporting them the same way would say the loudest possible untruth:
+        that a domain nobody has interviewed is ready.
+        """
+        interview = getattr(kit, "interview", None)
+        if interview is None:
+            unfilled = list(getattr(getattr(kit, "manifest", None), "unfilled", lambda: [])())
+            return {
+                "questions_source": "derived",
+                "sheet_supplied": False,
+                "note": (
+                    "No question sheet has been supplied for this kit. The questions it "
+                    "asks are DERIVED from its quantity names, one per quantity, and are "
+                    "not the domain owner's own. Nothing here is answered."
+                ),
+                "outstanding": len(unfilled),
+                "ready": False,
+            }
+        state = interview.status({})
+        state.update({
+            "questions_source": "owner_sheet",
+            "sheet_supplied": True,
+            "title": interview.title,
+            "next": [q.as_dict() for q in interview.outstanding({})[:5]],
+        })
+        return state
