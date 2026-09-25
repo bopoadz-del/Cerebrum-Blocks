@@ -621,3 +621,90 @@ def test_every_key_the_store_uses_is_allowed():
             for key in set(record.get("applies_to") or {}) - ALLOWED_APPLIES_TO_KEYS:
                 offenders.append(f"{path.parent.name}/{record.get('id')}:applies_to.{key}")
     assert not offenders, offenders
+
+
+# --- inert live-state gates cannot be declared ------------------------------
+
+def test_requires_state_on_a_kind_that_ignores_it_refuses_to_load():
+    """An inert state gate under-refuses in silence, so it must not parse.
+
+    A dead qualifier over-refuses and somebody notices. A dead STATE gate lets the
+    figure through with the state UNKNOWN, which is the one outcome the whole
+    live-state rule exists to prevent — and it reads, in the declaration, exactly
+    like a working gate. stadium_venue declared two of these on `qualifier`
+    records: a licensed capacity with the open-stand set unknown, and a rigging
+    load with the roof position unknown.
+    """
+    from app.blocks.kit_engine.invariants import InvariantError, parse_invariant
+
+    with pytest.raises(InvariantError) as exc:
+        parse_invariant({
+            "id": "X-QUAL-STATE", "kind": "qualifier",
+            "applies_to": {"quantity": "q"}, "requires": ["a"],
+            "requires_state": ["stands_open"], "block_if_missing_state": True,
+            "severity": "refuse", "message": "m",
+            "measurement": "irrelevant to this test",
+        }, {}, "test")
+    assert "requires_state" in str(exc.value)
+    assert "qualifier" in str(exc.value)
+    assert "stands_open" in str(exc.value), "the refusal must name the unchecked state"
+
+
+def test_requires_state_without_block_if_missing_state_refuses_to_load():
+    """`state_precondition` returns before checking unless it is armed, so an
+    unarmed requirement is declared and never enforced."""
+    from app.blocks.kit_engine.invariants import InvariantError, parse_invariant
+
+    with pytest.raises(InvariantError) as exc:
+        parse_invariant({
+            "id": "X-CUR-STATE", "kind": "currency",
+            "applies_to": {"quantity": "q"},
+            "window": {"provider": "p", "max_age": "event"},
+            "requires_state": ["pa_operational"],
+            "severity": "refuse", "message": "m",
+            "measurement": "irrelevant to this test",
+        }, {}, "test")
+    assert "block_if_missing_state" in str(exc.value)
+
+
+def test_an_armed_state_gate_on_a_state_aware_kind_still_loads():
+    """The companion. A guard that refused every state gate would pass both tests
+    above while disabling the feature."""
+    from app.blocks.kit_engine.invariants import parse_invariant
+
+    inv = parse_invariant({
+        "id": "X-DERIV-STATE", "kind": "derivation",
+        "applies_to": {"quantity": "q"},
+        "requires_state": ["roof_state"], "block_if_missing_state": True,
+        "severity": "refuse", "message": "m",
+        "measurement": "irrelevant to this test",
+    }, {}, "test")
+    assert inv.requires_state == ("roof_state",)
+    assert inv.block_if_missing_state is True
+
+
+def test_state_aware_kinds_matches_the_evaluators_that_read_state():
+    """The constant must stay true of the code, or the guard above starts lying.
+
+    Drift is how the original hole opened: `state_precondition`'s docstring says
+    "usable by any kind", and only two evaluators ever called it. A hand-maintained
+    list would rot the same way, so this reads the source of every `eval_*`
+    function and derives the set.
+    """
+    import inspect
+
+    from app.blocks.kit_engine import invariants as module
+
+    reads_state = set()
+    for name, fn in vars(module).items():
+        if not name.startswith("eval_") or not callable(fn):
+            continue
+        if "state_precondition(" in inspect.getsource(fn):
+            reads_state.add(name[len("eval_"):])
+
+    assert reads_state == set(module.STATE_AWARE_KINDS), (
+        f"STATE_AWARE_KINDS says {sorted(module.STATE_AWARE_KINDS)} but the "
+        f"evaluators that call state_precondition are {sorted(reads_state)}. "
+        f"Either an evaluator gained or lost the call, or the constant is stale — "
+        f"and a stale constant here means requires_state is silently inert again."
+    )
