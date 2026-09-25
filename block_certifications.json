@@ -1468,9 +1468,21 @@
       "class": "StadiumVenueKitBlock",
       "method": "process",
       "tests": [
-        "tests/blocks/test_reasoning_kits.py"
+        "tests/blocks/test_reasoning_kits.py",
+        "tests/blocks/test_stadium_venue_reasoning.py"
       ],
-      "fixture": "app/blocks/stadium_venue/manifest.yaml and invariants.yaml - the kit's real declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer.",
+      "fixture": "app/blocks/stadium_venue/manifest.yaml, invariants.yaml and design_basis.yaml - the kit's real 46-record declaration on disk, loaded by process() through the shared evaluator. The tests drive process() and assert what only a real sweep produces: the H0 refusal returned BEFORE retrieval with retrieval_permitted false, every declared scope pattern refusing (each probe checked against its own pattern so a bad probe fails rather than passes), all five hooks in hooks_run, an undeclared qualifier refused by name, and the interview state travelling with the answer. test_stadium_venue_reasoning.py adds the assertion the refusal suites cannot make: a fully qualified, sourced, current capacity PASSING all four hooks, then one removal at a time to prove the pass was earned - which is how the three unenforced-declaration defects were found.",
+      "include_in_ci": true
+    },
+    {
+      "block": "reference_corpus",
+      "module": "app.blocks.reference_corpus",
+      "method": "process",
+      "class": "ReferenceCorpusBlock",
+      "tests": [
+        "tests/blocks/test_reference_corpus.py"
+      ],
+      "fixture": "the real licence and host rules in app/blocks/reference_corpus.py exercised through process(): a document admitted only on an 'open' licence with all seven ingest fields present, a tenant_only licence refused by name (the Green Guide case - a personal purchase licence allowing three downloads can only ever be tenant-supplied), a mirror host refused against the real REFUSED_HOSTS list, and the reserved 'ref:' project prefix enforced. The retrieval plan is delegated to the real RagTenantIsolationBlock._plan, not a double, so a chunk labelled corpus=reference cannot answer as a tenant's own.",
       "include_in_ci": true
     }
   ]
