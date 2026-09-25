@@ -6,36 +6,36 @@ invariants:
 
 - id: INV-SV-ARCHETYPE
   kind: qualifier
-  applies_to: {quantity: any, claim_class: safety_critical}
+  applies_to: {quantity: any}
   hook: H3
   requires: [archetype, governing_body]
   severity: refuse
   evidence: {sheet: "G2 archetype diversity"}
-  message: "safety-critical figure missing {missing} — the same number means a different thing in a fixed championship venue and a touring event"
-  measurement: "Probe 20 safety-critical figures with no archetype. Before: n stated as if universal. After: 0 stated, 20 refusals naming archetype. Over-refusal check: 20 figures carrying archetype + governing_body pass this record."
+  message: "venue figure missing {missing} — the same number means a different thing in a fixed championship venue and a touring event"
+  measurement: "Probe 20 figures with no archetype, across all four archetypes' quantities. Before: n stated as if universal. After: 0 stated, 20 refusals naming archetype. Over-refusal check: 20 figures carrying archetype + governing_body pass this record."
   # DRAFT SAID: kind `authority` with `requires` and no governing_class. An
   # authority record must name a governing source class or it cannot load; what
   # this actually does is demand two qualifiers, which is a qualifier.
 
 - id: INV-SV-QUAL-CONFIG
   kind: qualifier
-  applies_to: {quantity: any, claim_class: safety_critical}
+  applies_to: {quantity: any}
   hook: H3
   requires: [config_type, venue_id]
   severity: refuse
   evidence: {sheet: "G2 configuration mandatory"}
-  message: "safety-critical figure missing {missing} — a football configuration is not a concert configuration"
-  measurement: "Probe 20 safety-critical figures with no config_type. Before: n quoted across configurations. After: 0, 20 refusals. Over-refusal: 20 configured figures pass."
+  message: "venue figure missing {missing} — a football configuration is not a concert configuration"
+  measurement: "Probe 20 figures with no config_type. Before: n quoted across configurations. After: 0, 20 refusals. Over-refusal: 20 configured figures pass."
 
 - id: INV-SV-QUAL-EVENT-STATE
   kind: qualifier
-  applies_to: {quantity: any, claim_class: safety_critical}
+  applies_to: {quantity: any}
   hook: H3
   requires: [event_state, operational_phase]
   severity: refuse
   evidence: {sheet: "G2 event day is a different ruleset"}
-  message: "safety-critical figure missing {missing} — event day and non-event day are different rulesets"
-  measurement: "Probe 20 safety-critical figures with no event_state. Before: n answered with a non-event-day figure on a match day. After: 0, 20 refusals. Over-refusal: 20 stated figures pass."
+  message: "venue figure missing {missing} — event day and non-event day are different rulesets"
+  measurement: "Probe 20 figures with no event_state. Before: n answered with a non-event-day figure on a match day. After: 0, 20 refusals. Over-refusal: 20 stated figures pass."
 
 - id: INV-SV-QUAL-PITCH
   kind: qualifier
@@ -72,11 +72,15 @@ invariants:
   applies_to: {quantity: rigging_point_load}
   hook: H3
   requires: [point_id, config_type]
-  requires_state: [roof_state]
   severity: refuse
   evidence: {sheet: "G2 roof, rigging points"}
   message: "rigging load missing {missing} — a rigging figure belongs to ONE point"
-  measurement: "Probe 20 rigging loads with no point_id. Before: n quoted a house capacity for a specific point. After: 0, 20 refusals. Over-refusal: 20 point-identified loads with roof state pass."
+  measurement: "Probe 20 rigging loads with no point_id. Before: n quoted a house capacity for a specific point. After: 0, 20 refusals. Over-refusal: 20 point-identified loads pass this record."
+  # `requires_state: [roof_state]` was declared HERE and did nothing. Only
+  # `eval_currency` and `eval_derivation` call `state_precondition`; a qualifier
+  # record never reads the field, so the roof state was declared and unenforced —
+  # a rigging load could be asserted with the roof position UNKNOWN. The state gate
+  # is now INV-SV-DERIV-RIGGING-ROOF, on the kind that enforces it.
 
 - id: INV-SV-QUAL-EGRESS
   kind: qualifier
@@ -93,11 +97,15 @@ invariants:
   applies_to: {quantity: any_crowd}
   hook: H3
   requires: [config_type, safety_certificate_ref, p_factor, s_factor]
-  requires_state: [stands_open]
   severity: refuse
   evidence: {sheet: "G2 capacity = usable seats x lower(P,S)"}
   message: "capacity figure missing {missing} — capacity is not a seat count"
-  measurement: "Probe 20 capacity figures with no P and S factors. Before: n answered with the seat count. After: 0, 20 refusals naming P/S. Over-refusal: 20 with both factors and stands_open pass."
+  measurement: "Probe 20 capacity figures with no P and S factors. Before: n answered with the seat count. After: 0, 20 refusals naming P/S. Over-refusal: 20 with both factors pass this record."
+  # `requires_state: [stands_open]` was declared HERE and did nothing, for the same
+  # reason as INV-SV-QUAL-RIGGING: a qualifier record never reads it. A licensed
+  # capacity could be asserted with no idea which stands were open, which is the
+  # single most load-bearing state a capacity depends on. The state gate is now
+  # INV-SV-DERIV-CAPACITY-STATE.
 
 - id: INV-SV-QUAL-STEWARD
   kind: qualifier
@@ -407,6 +415,7 @@ invariants:
   kind: derivation
   applies_to: {quantity: any, claim_class: egress}
   requires_state: [exit_door_operational, gate_operational]
+  block_if_missing_state: true
   hook: H3
   severity: refuse
   evidence: {sheet: "G2 egress requires live state"}
@@ -417,6 +426,7 @@ invariants:
   kind: derivation
   applies_to: {quantity: any, claim_class: operational_technology}
   requires_state: [technology_override_state]
+  block_if_missing_state: true
   hook: H3
   severity: refuse
   evidence: {sheet: "G2 operational tech overrides"}
@@ -430,6 +440,7 @@ invariants:
   kind: derivation
   applies_to: {quantity: any, claim_class: touring_event}
   requires_state: [host_venue_cooperation]
+  block_if_missing_state: true
   hook: H3
   severity: refuse
   evidence: {sheet: "G2 guest in someone else's building"}
@@ -440,6 +451,7 @@ invariants:
   kind: derivation
   applies_to: {quantity: any_pitch}
   requires_state: [surface_conversion_current, tenant_schedule]
+  block_if_missing_state: true
   hook: H3
   severity: refuse
   evidence: {sheet: "G2 surface transitions between tenants"}
@@ -450,6 +462,7 @@ invariants:
   kind: derivation
   applies_to: {quantity: any, claim_class: emergency_communication}
   requires_state: [pa_operational, scoreboard_operational]
+  block_if_missing_state: true
   hook: H3
   severity: refuse
   evidence: {sheet: "G2 PA and scoreboard are emergency assets"}
@@ -478,6 +491,38 @@ invariants:
   # by its own id. One record carries the severity and the measurement; the thirteen
   # patterns and their named authorities live in the manifest, where the engine
   # reads them.
+
+# ─── DERIVATION (state gates moved off the qualifier records) ───────────────
+# These two exist because `requires_state` on a `qualifier` record is inert: only
+# `eval_currency` and `eval_derivation` call `state_precondition`. The state was
+# declared on the qualifier records and enforced nowhere, so a capacity could be
+# asserted without knowing which stands were open and a rigging load without
+# knowing where the roof was. Same requirement, now on the kind that reads it.
+
+- id: INV-SV-DERIV-CAPACITY-STATE
+  kind: derivation
+  applies_to: {quantity: any_crowd}
+  hook: H3
+  requires_state: [stands_open, tenant_schedule]
+  block_if_missing_state: true
+  severity: refuse
+  evidence: {sheet: "G2 licensed capacity is config-conditioned; multiple tenants"}
+  message: "capacity cannot be stated with the open-stand set or the tenant schedule UNKNOWN"
+  measurement: "20 capacity figures, fully qualified with P and S factors, run with stands_open absent and again with tenant_schedule absent (40 runs). Before: both passed — the qualifier record declared stands_open and no code read it, so the number was asserted with the open-stand set unknown. After: 40 refusals naming the unreadable provider. Over-refusal: the same 20 with both providers readable pass."
+  # `tenant_schedule` as well as `stands_open`: the draft's own DERIV-TENANT-SCHEDULE
+  # record was never written into this kit, so a multi-tenant venue's capacity had
+  # no tenant-schedule gate at all.
+
+- id: INV-SV-DERIV-RIGGING-ROOF
+  kind: derivation
+  applies_to: {quantity: rigging_point_load}
+  hook: H3
+  requires_state: [roof_state]
+  block_if_missing_state: true
+  severity: refuse
+  evidence: {sheet: "G2 roof, rigging points"}
+  message: "rigging load cannot be stated with the roof position UNKNOWN"
+  measurement: "20 point-identified rigging loads with roof_state absent. Before: all 20 passed — the qualifier record declared roof_state and nothing read it. After: 20 refusals naming roof_state. Over-refusal: the same 20 with a readable roof_state pass."
 
 # ─── GROUNDING: a figure nobody supplied is invented ────────────────────────
 # NOT in the G2 draft, and its absence was a hole, not a simplification. The
