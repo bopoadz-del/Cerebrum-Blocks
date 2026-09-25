@@ -119,7 +119,26 @@ def is_figure(quantity: str, spec: Dict[str, Any], invariants: List[Dict[str, An
 
 def qualifiers_for(quantity: str, invariants: List[Dict[str, Any]],
                    classes: Dict[str, Tuple[str, ...]]) -> List[str]:
-    """Fields this kit's own qualifier invariants demand with this figure."""
+    """Fields this kit's own qualifier invariants demand with this figure.
+
+    ``claim_class`` is deliberately IGNORED here, and that is a choice about what a
+    register is for. A blanket record narrowed to one claim class still contributes
+    its fields to every entry, because the register is the sheet an owner fills in
+    before anyone knows which figures a host will label — listing a field the kit
+    might demand is prudent, and omitting it would under-ask.
+
+    THEREFORE THE REGISTER IS NOT EVIDENCE ABOUT ENFORCEMENT. A field appearing on
+    all of a kit's entries does not mean every figure is required to carry it; it may
+    be demanded only of one claim class. Reading it the other way is a circular
+    argument — the register is generated FROM these records, so it cannot be used to
+    conclude anything about them — and I made exactly that mistake on stadium_venue:
+    cited its register as proof that three records should not be claim_class-gated,
+    when the register only said so because this function ignored their gate. The
+    owner's G2 spec stands; ask the invariants what is enforced, never the register.
+
+    Two kits are affected today: stadium_venue (six identity fields) and heritage
+    (consent_ref, evidence_basis).
+    """
     wanted: List[str] = []
     for record in invariants:
         if record.get("kind") != "qualifier":

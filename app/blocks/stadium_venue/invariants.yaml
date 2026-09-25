@@ -6,36 +6,36 @@ invariants:
 
 - id: INV-SV-ARCHETYPE
   kind: qualifier
-  applies_to: {quantity: any}
+  applies_to: {quantity: any, claim_class: safety_critical}
   hook: H3
   requires: [archetype, governing_body]
   severity: refuse
   evidence: {sheet: "G2 archetype diversity"}
-  message: "venue figure missing {missing} — the same number means a different thing in a fixed championship venue and a touring event"
-  measurement: "Probe 20 figures with no archetype, across all four archetypes' quantities. Before: n stated as if universal. After: 0 stated, 20 refusals naming archetype. Over-refusal check: 20 figures carrying archetype + governing_body pass this record."
+  message: "safety-critical figure missing {missing} — the same number means a different thing in a fixed championship venue and a touring event"
+  measurement: "Probe 20 safety-critical figures with no archetype, across all four archetypes' quantities. Before: n stated as if universal. After: 0 stated, 20 refusals naming archetype. Over-refusal check: 20 figures carrying archetype + governing_body pass this record."
   # DRAFT SAID: kind `authority` with `requires` and no governing_class. An
   # authority record must name a governing source class or it cannot load; what
   # this actually does is demand two qualifiers, which is a qualifier.
 
 - id: INV-SV-QUAL-CONFIG
   kind: qualifier
-  applies_to: {quantity: any}
+  applies_to: {quantity: any, claim_class: safety_critical}
   hook: H3
   requires: [config_type, venue_id]
   severity: refuse
   evidence: {sheet: "G2 configuration mandatory"}
-  message: "venue figure missing {missing} — a football configuration is not a concert configuration"
-  measurement: "Probe 20 figures with no config_type. Before: n quoted across configurations. After: 0, 20 refusals. Over-refusal: 20 configured figures pass."
+  message: "safety-critical figure missing {missing} — a football configuration is not a concert configuration"
+  measurement: "Probe 20 safety-critical figures with no config_type. Before: n quoted across configurations. After: 0, 20 refusals. Over-refusal: 20 configured figures pass."
 
 - id: INV-SV-QUAL-EVENT-STATE
   kind: qualifier
-  applies_to: {quantity: any}
+  applies_to: {quantity: any, claim_class: safety_critical}
   hook: H3
   requires: [event_state, operational_phase]
   severity: refuse
   evidence: {sheet: "G2 event day is a different ruleset"}
-  message: "venue figure missing {missing} — event day and non-event day are different rulesets"
-  measurement: "Probe 20 figures with no event_state. Before: n answered with a non-event-day figure on a match day. After: 0, 20 refusals. Over-refusal: 20 stated figures pass."
+  message: "safety-critical figure missing {missing} — event day and non-event day are different rulesets"
+  measurement: "Probe 20 safety-critical figures with no event_state. Before: n answered with a non-event-day figure on a match day. After: 0, 20 refusals. Over-refusal: 20 stated figures pass."
 
 - id: INV-SV-QUAL-PITCH
   kind: qualifier

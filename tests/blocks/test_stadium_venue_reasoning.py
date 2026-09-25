@@ -1,13 +1,13 @@
 """Sports venue kit — the companion the refusal tests cannot provide.
 
 Every other suite that touches this kit asserts a REFUSAL.
-``test_every_invariant_bites.py`` proves each of the 44 records fires, by id.
+``test_every_invariant_bites.py`` proves each of the 46 records fires, by id.
 ``test_reasoning_kits.py`` proves eight cross-kit properties — the kit loads, it
 refuses its scope questions before retrieval, an ungrounded figure is never waved
 through, an undeclared qualifier is refused.
 
 All of those pass if the kit refuses EVERYTHING. That is the failure this file
-exists to catch: forty-four records at ``severity: refuse`` and no test anywhere
+exists to catch: forty-six records at ``severity: refuse`` and no test anywhere
 proving the kit ever says yes. A platform that refuses every question looks
 exactly like a working gate — it reports fail-closed, which reads as correct
 behaviour — and the only thing that separates a gate from a wall is a figure that
@@ -74,6 +74,11 @@ def _capacity(**overrides) -> Figure:
         origin="document", source_id="SC-2026-014",
         source_class="safety_certificate", revision="C",
         effective_date="2026-09-01", qualifiers=dict(CAPACITY_QUALIFIERS),
+        # A licensed capacity under a safety certificate IS safety-critical, and the
+        # HOST sets this — no invariant guesses a claim class from prose, because
+        # guessing it is the defect. Three identity records apply only to this class
+        # by the owner's own design; see the labelling test below for what that costs.
+        claim_class="safety_critical",
     )
     fields.update(overrides)
     return Figure(**fields)
@@ -255,3 +260,42 @@ def test_no_interview_has_run_and_the_kit_says_so(kit):
         f"values appeared with no interview: {kit.design_basis.answered}"
     )
     assert len(kit.design_basis.open) == 25
+
+
+# --- what the claim_class design costs, pinned so it stays visible -----------
+
+def test_an_unlabelled_figure_skips_the_identity_records(kit):
+    """A deliberate design consequence, asserted so it is a decision and not a bug.
+
+    Three records — INV-SV-ARCHETYPE, INV-SV-QUAL-CONFIG, INV-SV-QUAL-EVENT-STATE —
+    apply only to ``claim_class: safety_critical``, per the G2 spec. The engine never
+    guesses a claim class from prose, correctly, so a figure the HOST does not label
+    is not governed by those three: it can be asserted with no archetype, no venue_id
+    and no event_state.
+
+    That is the owner's call and it is the right shape for records about the moment a
+    figure describes. It is pinned here because the cost is invisible otherwise: the
+    figure passes, nothing is logged, and the identity rules simply do not run. If a
+    host is ever found shipping unlabelled venue figures, THIS is the test that says
+    what happens next, and the fix is in the host's labelling, not in the kit.
+    """
+    unlabelled = _capacity(claim_class=None, qualifiers={
+        k: v for k, v in CAPACITY_QUALIFIERS.items()
+        if k not in ("archetype", "governing_body", "venue_id",
+                     "config_type", "event_state", "operational_phase")
+    })
+    governing = [inv.id for inv in kit.at("H3") if inv.governs(unlabelled)]
+    for record in ("INV-SV-ARCHETYPE", "INV-SV-QUAL-CONFIG", "INV-SV-QUAL-EVENT-STATE"):
+        assert record not in governing, (
+            f"{record} now governs an unlabelled figure. If that was intended, this "
+            f"test should be deleted and the identity gate documented as unconditional"
+        )
+
+    # It is still not waved through — the records that do NOT depend on a host label
+    # catch it, which is why the design is defensible rather than merely documented.
+    outcome = kit.answer_time([unlabelled], _state(*CAPACITY_STATE), [])
+    assert outcome.verdict == "refused", (
+        "an unlabelled capacity missing every identity field passed entirely — the "
+        "claim_class design is only acceptable while the unlabelled path is still "
+        "governed by something"
+    )
