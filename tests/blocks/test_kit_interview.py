@@ -32,7 +32,7 @@ SHEETS = ROOT / "docs" / "kit_questions"
 #: The two kits with no owner question sheet. Neither is un-interviewed: both have
 #: their OWN figure register (design_basis.yaml), and datacentre's is filled in.
 #: Named so that adding an eighteenth kit with neither fails here.
-WITHOUT_SHEET = {"datacentre", "offshore_marine"}
+WITHOUT_SHEET = {"datacentre", "offshore_marine", "stadium_venue"}
 
 
 def _importer():
@@ -119,7 +119,7 @@ def test_gate_and_gap_counts_match_the_sheets_own_marks(kit):
         re.findall(r"\[GAP\]", sheet_text))
 
 
-def test_all_fifteen_sheets_are_installed_and_the_other_two_are_named():
+def test_every_sheet_is_installed_and_the_kits_without_one_are_named():
     installed = {d.name for d in kit_dirs() if (d / "questions.yaml").is_file()}
     missing = {d.name for d in kit_dirs()} - installed
     assert installed == set(sheet_kits())

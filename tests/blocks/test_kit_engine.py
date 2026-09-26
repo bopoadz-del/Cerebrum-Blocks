@@ -533,3 +533,178 @@ def test_every_store_record_is_reachable_at_some_hook():
                 unreachable.append(f"{directory.name}:{inv.id} ({inv.kind}, "
                                    f"declares {inv.hooks()})")
     assert not unreachable, f"records no hook ever asks for: {unreachable}"
+
+
+# --------------------------------------------------------------------------
+# G1: a key the engine does not read is refused, not discarded
+# --------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bad_key,value", [
+    ("cross_check", ["a", "b"]),
+    ("require_qualifiers", ["x"]),
+    ("override_class_on_event_day", "pitch_report"),
+    ("spec_extension", True),
+])
+def test_unknown_invariant_key_refuses(tmp_path, bad_key, value):
+    """A key the parser discards gates NOTHING while the record loads clean and
+    reports green. All four of these were written into a real kit draft."""
+    (tmp_path / "manifest.yaml").write_text(
+        yaml.safe_dump({"kit": "probe", "quantities": {"q": {"units": ["m"]}}}),
+        encoding="utf-8")
+    (tmp_path / "invariants.yaml").write_text(yaml.safe_dump({"invariants": [{
+        "id": "X", "kind": "qualifier", "severity": "refuse",
+        "applies_to": {"quantity": "q"}, "requires": ["f"], "message": "m",
+        "measurement": "Probe x20 without the field. Before: n stated. After: 0.",
+        bad_key: value,
+    }]}), encoding="utf-8")
+
+    with pytest.raises(KitLoadError) as exc:
+        load_kit(tmp_path)
+    assert bad_key in str(exc.value)
+    assert "X" in str(exc.value), "the record must be named, or nobody can find it"
+
+
+def test_an_unread_applies_to_key_refuses(tmp_path):
+    """`applies_to` selects what a record governs. The engine reads `quantity` and
+    `claim_class` and nothing else, so anything else there reads as a narrowing and
+    is not one. Six Store invariants carried a dead `spec_extension` for weeks."""
+    (tmp_path / "manifest.yaml").write_text(
+        yaml.safe_dump({"kit": "probe", "quantities": {"q": {"units": ["m"]}}}),
+        encoding="utf-8")
+    (tmp_path / "invariants.yaml").write_text(yaml.safe_dump({"invariants": [{
+        "id": "Y", "kind": "qualifier", "severity": "refuse",
+        "applies_to": {"quantity": "q", "spec_extension": True},
+        "requires": ["f"], "message": "m",
+        "measurement": "Probe x20. Before: n. After: 0.",
+    }]}), encoding="utf-8")
+
+    with pytest.raises(KitLoadError) as exc:
+        load_kit(tmp_path)
+    assert "spec_extension" in str(exc.value) and "Y" in str(exc.value)
+
+
+def test_the_allowed_key_set_is_the_dataclass_not_a_second_copy():
+    """A hand-written allowlist drifts from the parser, and the parser is what
+    decides behaviour. Adding a field to Invariant must allow that key with no
+    second edit; removing one must stop allowing it."""
+    from dataclasses import fields as dataclass_fields
+
+    from app.blocks.kit_engine.invariants import (
+        ALLOWED_APPLIES_TO_KEYS,
+        Invariant,
+        _allowed_invariant_keys,
+    )
+
+    allowed = _allowed_invariant_keys()
+    declared = {f.name for f in dataclass_fields(Invariant) if not f.name.startswith("_")}
+    assert declared <= allowed, f"a real field is refused: {sorted(declared - allowed)}"
+    # Exactly one alias, and it is the one the parser accepts.
+    assert allowed - declared == {"governing_class"}
+    assert ALLOWED_APPLIES_TO_KEYS == frozenset({"quantity", "claim_class"})
+
+
+def test_every_key_the_store_uses_is_allowed():
+    """The guard must not disable the Store it protects. A draft allowlist omitted
+    `measurement`, which is on all 217 records."""
+    from app.blocks.kit_engine.invariants import (
+        ALLOWED_APPLIES_TO_KEYS,
+        _allowed_invariant_keys,
+    )
+
+    allowed = _allowed_invariant_keys()
+    offenders = []
+    for path in sorted(pathlib.Path("app/blocks").glob("*/invariants.yaml")):
+        for record in (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get(
+                "invariants") or []:
+            for key in set(record) - allowed:
+                offenders.append(f"{path.parent.name}/{record.get('id')}:{key}")
+            for key in set(record.get("applies_to") or {}) - ALLOWED_APPLIES_TO_KEYS:
+                offenders.append(f"{path.parent.name}/{record.get('id')}:applies_to.{key}")
+    assert not offenders, offenders
+
+
+# --- inert live-state gates cannot be declared ------------------------------
+
+def test_requires_state_on_a_kind_that_ignores_it_refuses_to_load():
+    """An inert state gate under-refuses in silence, so it must not parse.
+
+    A dead qualifier over-refuses and somebody notices. A dead STATE gate lets the
+    figure through with the state UNKNOWN, which is the one outcome the whole
+    live-state rule exists to prevent — and it reads, in the declaration, exactly
+    like a working gate. stadium_venue declared two of these on `qualifier`
+    records: a licensed capacity with the open-stand set unknown, and a rigging
+    load with the roof position unknown.
+    """
+    from app.blocks.kit_engine.invariants import InvariantError, parse_invariant
+
+    with pytest.raises(InvariantError) as exc:
+        parse_invariant({
+            "id": "X-QUAL-STATE", "kind": "qualifier",
+            "applies_to": {"quantity": "q"}, "requires": ["a"],
+            "requires_state": ["stands_open"], "block_if_missing_state": True,
+            "severity": "refuse", "message": "m",
+            "measurement": "irrelevant to this test",
+        }, {}, "test")
+    assert "requires_state" in str(exc.value)
+    assert "qualifier" in str(exc.value)
+    assert "stands_open" in str(exc.value), "the refusal must name the unchecked state"
+
+
+def test_requires_state_without_block_if_missing_state_refuses_to_load():
+    """`state_precondition` returns before checking unless it is armed, so an
+    unarmed requirement is declared and never enforced."""
+    from app.blocks.kit_engine.invariants import InvariantError, parse_invariant
+
+    with pytest.raises(InvariantError) as exc:
+        parse_invariant({
+            "id": "X-CUR-STATE", "kind": "currency",
+            "applies_to": {"quantity": "q"},
+            "window": {"provider": "p", "max_age": "event"},
+            "requires_state": ["pa_operational"],
+            "severity": "refuse", "message": "m",
+            "measurement": "irrelevant to this test",
+        }, {}, "test")
+    assert "block_if_missing_state" in str(exc.value)
+
+
+def test_an_armed_state_gate_on_a_state_aware_kind_still_loads():
+    """The companion. A guard that refused every state gate would pass both tests
+    above while disabling the feature."""
+    from app.blocks.kit_engine.invariants import parse_invariant
+
+    inv = parse_invariant({
+        "id": "X-DERIV-STATE", "kind": "derivation",
+        "applies_to": {"quantity": "q"},
+        "requires_state": ["roof_state"], "block_if_missing_state": True,
+        "severity": "refuse", "message": "m",
+        "measurement": "irrelevant to this test",
+    }, {}, "test")
+    assert inv.requires_state == ("roof_state",)
+    assert inv.block_if_missing_state is True
+
+
+def test_state_aware_kinds_matches_the_evaluators_that_read_state():
+    """The constant must stay true of the code, or the guard above starts lying.
+
+    Drift is how the original hole opened: `state_precondition`'s docstring says
+    "usable by any kind", and only two evaluators ever called it. A hand-maintained
+    list would rot the same way, so this reads the source of every `eval_*`
+    function and derives the set.
+    """
+    import inspect
+
+    from app.blocks.kit_engine import invariants as module
+
+    reads_state = set()
+    for name, fn in vars(module).items():
+        if not name.startswith("eval_") or not callable(fn):
+            continue
+        if "state_precondition(" in inspect.getsource(fn):
+            reads_state.add(name[len("eval_"):])
+
+    assert reads_state == set(module.STATE_AWARE_KINDS), (
+        f"STATE_AWARE_KINDS says {sorted(module.STATE_AWARE_KINDS)} but the "
+        f"evaluators that call state_precondition are {sorted(reads_state)}. "
+        f"Either an evaluator gained or lost the call, or the constant is stale — "
+        f"and a stale constant here means requires_state is silently inert again."
+    )

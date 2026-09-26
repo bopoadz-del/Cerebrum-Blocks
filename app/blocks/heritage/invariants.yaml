@@ -38,7 +38,7 @@ invariants:
 
 - id: INV-HE-EVIDENCE-BASIS
   kind: qualifier
-  applies_to: {quantity: any, spec_extension: true, claim_class: historical}
+  applies_to: {quantity: any, claim_class: historical}
   requires: [evidence_basis]
   severity: refuse
   hook: H3
@@ -52,7 +52,7 @@ invariants:
 
 - id: INV-HE-CONSENT-GATE
   kind: qualifier
-  applies_to: {quantity: any, spec_extension: true, claim_class: work_recommendation}
+  applies_to: {quantity: any, claim_class: work_recommendation}
   requires: [consent_ref]
   severity: refuse
   hook: H3

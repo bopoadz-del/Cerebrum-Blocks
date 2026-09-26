@@ -15,8 +15,20 @@ import math
 import os
 from typing import Any
 
-import asyncpg
-from asyncpg import Pool
+try:
+    import asyncpg
+    from asyncpg import Pool
+
+    DRIVER_AVAILABLE = True
+except ImportError:  # the driver is optional; see the module docstring
+    # The docstring above promises this module fails SOFT so the rest of the
+    # application can still boot -- and a hard `import asyncpg` broke that promise at
+    # this line, before any of the fail-soft branches could run. Every file that
+    # imports this one was uncollectable without the driver, including the retrieval
+    # recall probes, which is the instrument that would notice.
+    asyncpg = None  # type: ignore[assignment]
+    Pool = Any  # type: ignore[assignment,misc]
+    DRIVER_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +168,16 @@ def _json_meta(value: Any) -> dict:
         return value
     try:
         return json.loads(value) if isinstance(value, str) else dict(value)
-    except Exception:
+    except Exception as exc:  # noqa: BLE001 — logged, not swallowed
+        # This used to return {} in silence, and the metadata it drops carries
+        # `chunk_index`. The retriever then falls back to the enumeration index, so a
+        # chunk whose metadata failed to parse is reported under a DIFFERENT chunk
+        # number as fact. Say which chunk and why, or the citation is wrong and
+        # nothing shows it.
+        logger.warning(
+            "chunk metadata did not decode (%s: %s); the chunk keeps its content but "
+            "loses chunk_index, so any citation of it will carry a substituted index",
+            type(exc).__name__, exc)
         return {}
 
 
@@ -201,6 +222,14 @@ def embed_text(text: str) -> list[float]:
 
 
 def _pool_unavailable() -> bool:
+    if not DRIVER_AVAILABLE:
+        # Said once per call rather than swallowed: "no results" because the driver
+        # is absent is a different fact from "no results" because nothing matched,
+        # and a caller that cannot tell them apart will report an empty corpus.
+        logger.warning(
+            "Vector store driver (asyncpg) is not installed; returning empty result. "
+            "This is NOT an empty corpus")
+        return True
     if _pool is None:
         logger.warning("Vector store pool is not initialized; returning empty result")
         return True
@@ -399,17 +428,32 @@ async def add_chunks(document_id: str, chunks: list[dict]) -> int:
         return 0
 
 
+#: One similarity threshold, in one place. It was 0.5 here, 0.3 in
+#: ``hybrid_search`` and 0.3 hard-coded again in ``rag/retriever.py`` — three
+#: numbers for one concept, and the odd one out was the default nobody passed, so a
+#: caller that forgot the argument silently got a stricter cut than every caller
+#: that remembered.
+DEFAULT_SIMILARITY_THRESHOLD = 0.3
+
+
 async def search_vectors(
     project_id: str,
     query_text: str,
     top_k: int = 5,
-    threshold: float = 0.5,
+    threshold: float = DEFAULT_SIMILARITY_THRESHOLD,
 ) -> list[dict]:
     """Search chunks by cosine similarity.
 
     Returns up to ``top_k`` results with ``score >= threshold``. Each result
     contains ``chunk_id``, ``document_id``, ``content``, ``score``, and
     ``metadata``.
+
+    THE THRESHOLD IS APPLIED IN SQL, BEFORE THE LIMIT. It used to be applied in
+    Python afterwards, which made raising the threshold SHRINK the result set
+    instead of reaching deeper: a caller asking for 5 above 0.5 got however many of
+    the nearest 5 happened to clear the bar — sometimes none — while chunks that
+    cleared it sat unfetched at rank 6. A narrowing pipe of exactly the kind that
+    turns a present clause into an honest-looking refusal.
     """
     if _pool_unavailable():
         return []
@@ -418,47 +462,124 @@ async def search_vectors(
     async with _pool.acquire() as conn:
         rows = await conn.fetch(
             """
-            SELECT id, document_id, content, chunk_metadata,
-                   1 - (embedding <=> $1::vector) AS score
-            FROM chunks
-            WHERE project_id = $2
-            ORDER BY embedding <=> $1::vector
+            SELECT id, document_id, content, chunk_metadata, score
+            FROM (
+                SELECT id, document_id, content, chunk_metadata,
+                       1 - (embedding <=> $1::vector) AS score,
+                       embedding <=> $1::vector AS distance
+                FROM chunks
+                WHERE project_id = $2
+            ) scored
+            WHERE score >= $4
+            ORDER BY distance
             LIMIT $3
             """,
             embedding,
             project_id,
             top_k,
+            float(threshold),
         )
 
-    results = []
-    for row in rows:
-        score = float(row["score"])
-        if score >= threshold:
-            results.append(
-                {
-                    "chunk_id": str(row["id"]),
-                    "document_id": str(row["document_id"]),
-                    "content": row["content"],
-                    "score": score,
-                    "metadata": _json_meta(row["chunk_metadata"]),
-                }
-            )
-    return results
+    return [
+        {
+            "chunk_id": str(row["id"]),
+            "document_id": str(row["document_id"]),
+            "content": row["content"],
+            "score": float(row["score"]),
+            "metadata": _json_meta(row["chunk_metadata"]),
+        }
+        for row in rows
+    ]
+
+
+#: The candidate pool a reranker sees, as a multiple of the answers wanted. The
+#: reranker can only promote what the first stage fetched, so this multiple IS the
+#: recall ceiling — and it was a bare ``max(top_k * 4, 20)``.
+#:
+#: A fixed multiple is the defect that made a present clause reachable 1 turn in 6 on
+#: a sibling platform. It held while the corpus was many small files. It broke
+#: silently when the corpus became nine very large specification PDFs: with hundreds
+#: of chunks per document, twenty candidates by pure vector distance are all
+#: neighbours from the same few pages, and the asked-for clause loses before the
+#: keyword stage is ever consulted.
+#:
+#: So the pool is derived from how chunky the corpus ACTUALLY is, not assumed. Pass
+#: ``chunks_per_doc_p95`` from ``corpus_shape()``; the fallback is deliberately
+#: generous rather than tuned for a demo.
+CANDIDATE_POOL_MULTIPLE = 4
+CANDIDATE_POOL_FLOOR = 20
+FALLBACK_CHUNKS_PER_DOC_P95 = 10
+
+
+def candidate_pool_size(top_k: int, chunks_per_doc_p95: int | None = None) -> int:
+    """How many candidates a reranker must see to have a chance of finding it.
+
+    Scaled by the p95 chunks-per-document of the real corpus: a corpus whose typical
+    document is 300 chunks needs a far deeper pool than one whose documents are 3,
+    for the same ``top_k``, because the near neighbours of any query are drawn from a
+    single document's worth of pages.
+    """
+    p95 = int(chunks_per_doc_p95 or FALLBACK_CHUNKS_PER_DOC_P95)
+    p95 = max(p95, 1)
+    scaled = top_k * CANDIDATE_POOL_MULTIPLE * max(p95 // FALLBACK_CHUNKS_PER_DOC_P95, 1)
+    return max(scaled, CANDIDATE_POOL_FLOOR)
+
+
+async def corpus_shape(project_id: str) -> dict:
+    """What this corpus actually looks like: documents, chunks, and the p95
+    chunks-per-document that ``candidate_pool_size`` needs.
+
+    Measured rather than assumed, because the assumption is what broke. Returns
+    zeroes when there is no pool, and a caller that gets zeroes must use the
+    fallback rather than treating an unmeasured corpus as a small one.
+    """
+    if _pool_unavailable():
+        return {"documents": 0, "chunks": 0, "chunks_per_doc_p95": 0, "measured": False}
+    async with _pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            SELECT count(*) AS documents,
+                   coalesce(sum(n), 0) AS chunks,
+                   coalesce(
+                       percentile_disc(0.95) WITHIN GROUP (ORDER BY n), 0
+                   ) AS p95
+            FROM (
+                SELECT document_id, count(*) AS n
+                FROM chunks
+                WHERE project_id = $1
+                GROUP BY document_id
+            ) per_doc
+            """,
+            project_id,
+        )
+    return {
+        "documents": int(row["documents"]),
+        "chunks": int(row["chunks"]),
+        "chunks_per_doc_p95": int(row["p95"]),
+        "measured": True,
+    }
 
 
 async def hybrid_search(
     project_id: str,
     query_text: str,
     top_k: int = 5,
-    threshold: float = 0.3,
+    threshold: float = DEFAULT_SIMILARITY_THRESHOLD,
+    chunks_per_doc_p95: int | None = None,
 ) -> list[dict]:
     """Combine vector similarity with a simple keyword overlap score.
 
     Vector and keyword scores are normalized to [0, 1] and combined as
     ``0.7 * vector_score + 0.3 * keyword_score``.
+
+    The candidate pool is derived from the corpus shape — see
+    ``candidate_pool_size``. A reranker cannot promote what the first stage never
+    fetched, so that number is the recall ceiling and it is not a constant.
     """
     candidates = await search_vectors(
-        project_id, query_text, top_k=max(top_k * 4, 20), threshold=0.0
+        project_id, query_text,
+        top_k=candidate_pool_size(top_k, chunks_per_doc_p95),
+        threshold=0.0,
     )
     if not candidates:
         return []

@@ -31,8 +31,6 @@ import os
 import threading
 from typing import Any, Dict, List, Optional
 
-import sympy
-
 from app.core.credibility import CredibilityTier
 
 
@@ -217,6 +215,14 @@ def evaluate(rule_id: str, **values: Any) -> Dict[str, Any]:
     expr_str = entry.get("expression")
     if not expr_str:
         raise ValueError(f"entry {rule_id!r} has no expression")
+    # sympy is imported HERE, not at module scope. It is needed only to evaluate a
+    # formula entry, and a module-level import made the whole KB — including
+    # `search_knowledge`, which is pure token overlap and needs no algebra — refuse to
+    # import without a computer-algebra system installed. That took the RETRIEVAL EVAL
+    # HARNESS (scripts/run_retrieval_eval.py) offline, so the one instrument that
+    # measures whether retrieval finds what the corpus holds could not run at all.
+    import sympy
+
     # evaluate=False keeps sympy from collapsing the parsed tree before
     # substitution; we run .evalf() once at the end for the final float.
     expr = sympy.sympify(expr_str, evaluate=False)

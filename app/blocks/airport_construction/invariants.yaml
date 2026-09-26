@@ -96,7 +96,7 @@ invariants:
 
 - id: INV-APC-WGS84
   kind: unit_discipline
-  applies_to: {quantity: any, spec_extension: true, claim_class: position}
+  applies_to: {quantity: any, claim_class: position}
   requires: [wgs84_confirmed]
   severity: refuse
   hook: H2
@@ -110,7 +110,7 @@ invariants:
 
 - id: INV-APC-MAGNETIC
   kind: unit_discipline
-  applies_to: {quantity: any, spec_extension: true, claim_class: bearing}
+  applies_to: {quantity: any, claim_class: bearing}
   requires: [magnetic_or_true]
   severity: refuse
   hook: H2

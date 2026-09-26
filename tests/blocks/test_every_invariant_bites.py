@@ -176,8 +176,8 @@ def _sweep(kit, figures, state=None, events=()) -> List[str]:
 def test_the_record_sweep_is_honest():
     """Guards the parametrisation below: an empty or shrunken list would pass
     every test in this file silently."""
-    assert len(ALL_RECORDS) >= 217, len(ALL_RECORDS)
-    assert len({kit for kit, _, _ in ALL_RECORDS}) == 17
+    assert len(ALL_RECORDS) >= 260, len(ALL_RECORDS)
+    assert len({kit for kit, _, _ in ALL_RECORDS}) == len(_kits())
     assert len({i for _, i, _ in ALL_RECORDS}) == len(ALL_RECORDS), "duplicate ids"
 
 

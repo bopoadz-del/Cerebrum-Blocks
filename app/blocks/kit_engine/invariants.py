@@ -72,6 +72,26 @@ HOOKS_BY_KIND: Dict[str, Tuple[str, ...]] = {
     "derivation": (H3_ANSWER_TIME,),
 }
 
+#: Kinds whose evaluator actually calls ``state_precondition``. ``requires_state``
+#: declared on any other kind is INERT — the field parses, the record reads as a
+#: live-state gate, and nothing ever checks the state.
+#:
+#: That is the most dangerous kind of decoration this format can carry. A dead
+#: qualifier over-refuses and somebody notices within a day; a dead STATE gate
+#: under-refuses, silently, and the figure is asserted with the state UNKNOWN —
+#: which is the one outcome ``state_precondition``'s own docstring says must never
+#: happen ("an unreachable source yields UNKNOWN, never a fallback to the design
+#: basis"). ``stadium_venue`` shipped seven of them: exit doors, gates, PA,
+#: scoreboard, host venue cooperation, roof position and open stands, all declared,
+#: none enforced, and a licensed capacity could be stated without knowing which
+#: stands were open.
+#:
+#: ``test_state_aware_kinds_matches_the_evaluators_that_read_state`` asserts this
+#: set against the source of every ``eval_*`` function, so it cannot drift from
+#: which code actually reads the field — the drift being exactly how the original
+#: hole opened.
+STATE_AWARE_KINDS: frozenset = frozenset({"currency", "derivation"})
+
 
 def legal_hooks(kind: str, band: Optional[Dict[str, Any]] = None) -> Tuple[str, ...]:
     """Hooks a record of *kind* may declare.
@@ -202,6 +222,49 @@ def _render(message: str, missing: Sequence[str], figure: Optional[Figure] = Non
     return text
 
 
+#: Every key ``parse_invariant`` consumes, DERIVED from the dataclass rather than
+#: hand-listed, plus the one alias the parser accepts (``governing_class`` for
+#: ``governing``). Hand-listing it would be the same fact in two places, and the
+#: place it would drift from is the one that decides behaviour.
+#:
+#: Why this exists: a key the parser does not read was silently DISCARDED. A record
+#: could carry ``cross_check: [a, b]`` or ``require_qualifiers: [...]`` and load
+#: clean, gating nothing, reporting green. Six invariants in the Store already carry
+#: a dead ``applies_to.spec_extension`` that has never done anything.
+def _allowed_invariant_keys() -> frozenset:
+    from dataclasses import fields as _fields
+
+    return frozenset(
+        {f.name for f in _fields(Invariant) if not f.name.startswith("_")}
+        | {"governing_class"}
+    )
+
+
+#: The only ``applies_to`` keys the engine reads. ``quantity`` selects what the
+#: record governs; ``claim_class`` narrows it to one kind of claim. Anything else is
+#: decoration that reads as a narrowing and is not one.
+ALLOWED_APPLIES_TO_KEYS = frozenset({"quantity", "claim_class"})
+
+
+def _refuse_unknown_keys(raw: Dict[str, Any], inv_id: str, where: str) -> None:
+    allowed = _allowed_invariant_keys()
+    unknown = sorted(set(raw) - allowed)
+    if unknown:
+        raise InvariantError(
+            f"{where}: {inv_id} declares key(s) this engine does not read: "
+            f"{', '.join(unknown)}. A key the parser discards gates NOTHING while the "
+            f"record loads clean and reports green. Use one of: "
+            f"{', '.join(sorted(allowed))}"
+        )
+    unknown_applies = sorted(set(raw.get("applies_to") or {}) - ALLOWED_APPLIES_TO_KEYS)
+    if unknown_applies:
+        raise InvariantError(
+            f"{where}: {inv_id} declares applies_to key(s) this engine does not read: "
+            f"{', '.join(unknown_applies)}. Only {', '.join(sorted(ALLOWED_APPLIES_TO_KEYS))} "
+            f"select what a record governs; anything else reads as a narrowing and is not one"
+        )
+
+
 def parse_invariant(raw: Any, classes: Dict[str, Tuple[str, ...]], where: str) -> Invariant:
     """Parse one invariant record. Every rejection prevents a silent no-op."""
     if not isinstance(raw, dict):
@@ -209,6 +272,10 @@ def parse_invariant(raw: Any, classes: Dict[str, Tuple[str, ...]], where: str) -
     inv_id = str(raw.get("id") or "").strip()
     if not inv_id:
         raise InvariantError(f"{where}: an invariant must declare an id")
+    # Before anything is interpreted: a key this engine does not read is refused,
+    # naming the key and the record. Checked here, ahead of the per-kind rules, so a
+    # typo in a key cannot be reported as a missing field somewhere else.
+    _refuse_unknown_keys(raw, inv_id, where)
     kind = str(raw.get("kind") or "").strip()
     if kind not in KINDS:
         raise InvariantError(
@@ -295,6 +362,23 @@ def parse_invariant(raw: Any, classes: Dict[str, Tuple[str, ...]], where: str) -
             raise InvariantError(
                 f"{where}: {inv_id} applies to class '{wanted}', which no quantity "
                 f"declares. An invariant that matches nothing is a decoration"
+            )
+    # An inert live-state gate UNDER-refuses in silence, so it must not be
+    # declarable. See STATE_AWARE_KINDS for how this hole opened.
+    if inv.requires_state:
+        if kind not in STATE_AWARE_KINDS:
+            raise InvariantError(
+                f"{where}: {inv_id} declares requires_state on kind '{kind}', which "
+                f"never reads it — only {', '.join(sorted(STATE_AWARE_KINDS))} call "
+                f"state_precondition. Move the state gate to one of those kinds, or "
+                f"the figure is asserted with {', '.join(inv.requires_state)} UNKNOWN"
+            )
+        if not inv.block_if_missing_state:
+            raise InvariantError(
+                f"{where}: {inv_id} declares requires_state "
+                f"({', '.join(inv.requires_state)}) without block_if_missing_state, "
+                f"so state_precondition returns before checking it. Arm it with "
+                f"block_if_missing_state: true, or drop the requirement"
             )
     return inv
 
