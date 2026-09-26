@@ -33,7 +33,6 @@ Earlier hygiene pass moved root-level scripts/tests into `scripts/`, `tests/`, a
 | Block | Purpose | Source | Tier |
 |-------|---------|--------|------|
 | `universal_kernel` | Product-neutral 24-capability kernel kit (trust, intelligence, operations, frontier) | Mixed (Fork + Factory + new) | **premium** |
-| `action_contract` | Generic action-contract runtime (models, registry, execution, schema validation) | Cerebrum-Steward | standard |
 | `finance_canonical_model` | Canonical chart-of-accounts and financial data model | FinanceOps kit |
 | `finance_coa_governance` | COA governance rules and validation | FinanceOps kit |
 | `finance_data_quality` | Financial data quality checks | FinanceOps kit |
@@ -41,7 +40,6 @@ Earlier hygiene pass moved root-level scripts/tests into `scripts/`, `tests/`, a
 | `finance_reconciliation` | Account reconciliation engine | FinanceOps kit |
 | `finance_saas_metrics` | SaaS / subscription KPI calculations | FinanceOps kit |
 | `finance_v2` | Composite FinanceOps reasoning block | FinanceOps kit |
-| `finance_ops` | FinanceOps domain container | FinanceOps kit |
 | `agency_commission_engine` | Commission calculation and chargebacks | InsureOps kit |
 | `agency_hierarchy` | Agency/producer hierarchy management | InsureOps kit |
 | `attrition_scorer` | Churn / attrition scoring | InsureOps kit |
@@ -115,3 +113,5 @@ optional-dependency collection errors (`test_vector_search.py`,
 - **Build:** `pip install -r requirements.txt`
 - **Start:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - **MCP Server:** Mounted at `/mcp`
+
+> Retired from `block_registry/` 2026-09-26: `action_contract` (a library package, `app/blocks/core/action_contract/`, imported directly — it has no block class) and `finance_ops` (a container, `app/containers/finance_ops.py`). Both were manifest-only entries with no runtime the Factory could attach; the code is unchanged.
