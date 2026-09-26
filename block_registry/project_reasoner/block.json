@@ -2,7 +2,8 @@
   "acceptance": [],
   "description": "LLM agent for project planning and reasoning. The LLM drafts plans and answers; deterministic gates stay in the caller. Missing provider credentials raise by name (tests/blocks/test_project_reasoner_fail_loud.py).",
   "digests": {
-    "block.json": "8c8029dc410de82ff6f72e277735f09ef1fa03099cffd11b0a7dbb3f57aa14ca"
+    "block.json": "8c8029dc410de82ff6f72e277735f09ef1fa03099cffd11b0a7dbb3f57aa14ca",
+    "block.py": "b2685028a2fcefadc85fa8f47a812ce3f8d7f0399f9c85a9a1bfb64e8c073212"
   },
   "id": "project_reasoner",
   "inputs": [
@@ -51,7 +52,7 @@
     }
   ],
   "requires": [],
-  "signature": "K+cc7lBowY2/v5aL07o0LZmUL+HnTltyaUidRH6TdWNwePs5jEaKaCIjujWWH2P4J4oZlw4qsF2c1x/bI/D+Bg==",
+  "signature": "mBIP3R0xKnlVUkaRNpfV1i9dQx4gM3vmUDBfiosKtCLwwIEesRzNFLpoFS9j2esH78lOSX2Mxe+V7LamgRISBA==",
   "tags": [
     "domain",
     "construction",

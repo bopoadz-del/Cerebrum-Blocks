@@ -14,7 +14,8 @@
   "author": "Cerebrum Team",
   "description": "Deterministic HKIA GN16/GL16 Layer-1 compliance rule checks for insurance evidence packages. Rule checks only; no live HKIA filing submission.",
   "digests": {
-    "block.json": "8302a515d3c14ece6777b94320d4ef4a2138559a1385aff8d920539669645ba2"
+    "block.json": "8302a515d3c14ece6777b94320d4ef4a2138559a1385aff8d920539669645ba2",
+    "block.py": "e19aec9481fcd100c985f1cde4bd0ed9c89e64bf9d097e13dddfb08d37cbf957"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/hkia_gn16_rules:latest",
@@ -86,7 +87,7 @@
     }
   ],
   "requires": [],
-  "signature": "d2CfRHtNhWKv/bbsC2aL90vQ15zIFW3esOvqxGqIxS3R2A3dPOor2Hv3vCVo30q0BDVNCo36mScfuX2ft/F3Cg==",
+  "signature": "xknaqIP6BwR7TodHpgPGBymkf1u0hMKxAZLBiDaJQGZ2YN9iWmj/hgsxUdJ1X8PHEd/EVWTYlrnWGm/Jjj20DA==",
   "tags": [
     "insurance",
     "compliance",

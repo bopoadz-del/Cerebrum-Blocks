@@ -14,7 +14,8 @@
   "author": "Cerebrum Team",
   "description": "Chart of Accounts hierarchy, mapping, effective dating, and impact controls.",
   "digests": {
-    "block.json": "b34498e5f8fc4fb22d7a24d8e518f68dfeebfe5581232e583fbebfac70b112ce"
+    "block.json": "b34498e5f8fc4fb22d7a24d8e518f68dfeebfe5581232e583fbebfac70b112ce",
+    "block.py": "fb9bf803a81e1c10431082f41f8cf163624621d41da4d350d5ebce72bbbf0a83"
   },
   "id": "finance_coa_governance",
   "inputs": [
@@ -52,7 +53,7 @@
       "scope": "input"
     }
   ],
-  "signature": "70HMIjOQtTt8JPfj+Vy4deHeXSqSykII82VSO+0xmQdAo7DMx8R8HkWbgLP5G0VjL/RK6Q8TG+beGeZl3wfxBQ==",
+  "signature": "FqF8rlfc5XCF/G5Zd7rgPY1RoIb++N7rvdJEC8uOE/MT00enbN6TDmbwLArHed7csk6jppc5ATAAAe9wut//Bg==",
   "tags": [
     "domain",
     "finance_ops",

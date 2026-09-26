@@ -14,7 +14,8 @@
   "author": "Cerebrum Team",
   "description": "Insurance producer record Store block for licenses, agency assignment, status, and carrier appointments",
   "digests": {
-    "block.json": "b7da020dffacebe6832872ccf228001da463bb9757f9e3c022d688d7fc8a2b2b"
+    "block.json": "b7da020dffacebe6832872ccf228001da463bb9757f9e3c022d688d7fc8a2b2b",
+    "block.py": "20ec5a7e3f431c30a43d92ccbe2b26235bd0046a3bae014121f1d280aba8c0c0"
   },
   "execution": {
     "image": "ghcr.io/cerebrum-blocks/producer_record:latest",
@@ -70,7 +71,7 @@
     }
   ],
   "requires": [],
-  "signature": "ISS7BaKdFfgwowAbEnDtyCkSupihcDRs3HqI9MWa7JHtVyEb+tuF4g3lEAwE5RcTA0ltm5x5ouCDDMiAAZiADQ==",
+  "signature": "kO5XEnJ/DJuHQAAFyGGSYucL7ZEoMNVBh8U+9ZW1r/JE7n0+oqSOQBW43quYTuFrL4N7hU07y616DNwYdTB+AQ==",
   "tags": [
     "domain",
     "insurance",

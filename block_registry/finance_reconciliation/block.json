@@ -3,7 +3,8 @@
   "author": "Cerebrum Team",
   "description": "Decimal-safe grouped reconciliation with exception evidence.",
   "digests": {
-    "block.json": "f7dc7251b085a292cc489b7cab7835e40313c20c4aed1e672cdeedad23fdfe2c"
+    "block.json": "f7dc7251b085a292cc489b7cab7835e40313c20c4aed1e672cdeedad23fdfe2c",
+    "block.py": "e7c6dd873eb6b9f408b234ae6eec50b2330f8a2b14246057bd870d487e59ccf8"
   },
   "id": "finance_reconciliation",
   "inputs": [
@@ -44,7 +45,7 @@
       "scope": "runtime"
     }
   ],
-  "signature": "+Znw63IdkQQVR2vtM4EStPlS1GU3nymQ5+XyNxIze/uhHoXMLFZlRxOq8VMQUk0TVxX3kCKMR+EJjWE512EUCQ==",
+  "signature": "LtoNl94lLXGqSldoM7ZR9kjEwElkeUHeov77bl7HmEH3N8PzSKxthcgar47fTwqZzg4B2aCOWtH8QFd1DyxcAw==",
   "tags": [
     "domain",
     "finance_ops",

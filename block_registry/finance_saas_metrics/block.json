@@ -14,7 +14,8 @@
   "author": "Cerebrum Team",
   "description": "MRR, ARR, ACV, TCV, NRR, GRR, renewals, and ARR bridges.",
   "digests": {
-    "block.json": "97f01d0f9a449460bec40d4e46481ae5c86a2af921c51175967f3be693365aa1"
+    "block.json": "97f01d0f9a449460bec40d4e46481ae5c86a2af921c51175967f3be693365aa1",
+    "block.py": "370e193d0540d1cbb76c40fde89301fe21b059f196f7fc8c3a96992c1846c1ae"
   },
   "id": "finance_saas_metrics",
   "inputs": [
@@ -53,7 +54,7 @@
       "scope": "input"
     }
   ],
-  "signature": "l8mb9WYkCUttv/HO5WcaLNSpXLpMCycZIuH/4DNj9YGgK+ygy+Im2lBknQpwYPSahGJApuSxY+kTEmUXH+HWBg==",
+  "signature": "d2KXXieiRwavF6v++DcBE8QpZaih/whlDGs8Pn8gSVauVjZBTLVwI6by0zPp03pCE/z7vxXWkcb8qehd4YKhBA==",
   "tags": [
     "domain",
     "finance_ops",

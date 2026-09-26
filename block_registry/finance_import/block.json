@@ -9,7 +9,8 @@
   "author": "Cerebrum Team",
   "description": "Normalize tabular ERP, CRM, HCM, budget, forecast, and project-cost rows.",
   "digests": {
-    "block.json": "1e889b2ca98ed9413e8b2aeb9afb05a841137b394eb6363b71bdd7613e6f4185"
+    "block.json": "1e889b2ca98ed9413e8b2aeb9afb05a841137b394eb6363b71bdd7613e6f4185",
+    "block.py": "2772f9953c1cd27c815fd7ced9965caf54cba88e800d5526c1af0742bda053c4"
   },
   "id": "finance_import",
   "inputs": [
@@ -45,7 +46,7 @@
       "scope": "input"
     }
   ],
-  "signature": "/MMkUA5mOAkdGaU9ZRCoWCdHo964owIetUoRHwHHSWzQNGnAsZsNV3BdINkoVmTis761UOij7ICE4OCj+vJEBA==",
+  "signature": "ufeyfS/t3XpvrlsNXEJhK5OSoScbJhfFhPDr7swHgoKCsZnww1U6gtIaiKkFnyrOcGzVfjXEa7+AS0U6YAPaAw==",
   "tags": [
     "domain",
     "finance_ops",

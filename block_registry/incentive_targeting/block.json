@@ -8,7 +8,8 @@
   ],
   "description": "Heuristic insurance producer incentive targeting and budget simulation.",
   "digests": {
-    "block.json": "aa3536597df3a5106247b9e60f63d583ac8817e091ecfbc2d8db3784df028c6f"
+    "block.json": "aa3536597df3a5106247b9e60f63d583ac8817e091ecfbc2d8db3784df028c6f",
+    "block.py": "98fd3bd734c5939fbca8bf5dd2c250d9c82f2c819f462c29080ee4c6878b794f"
   },
   "id": "incentive_targeting",
   "name": "Incentive Targeting",
@@ -30,7 +31,7 @@
       "scope": "runtime"
     }
   ],
-  "signature": "rCXc59BrufezEYLVvA7QL3FWSVdZGMk9A9ijDC0snP3RWxn3R6Z/i3q/XNrIwQJnXQ4ABsJ2iPZQmFjmEWtAAQ==",
+  "signature": "o2lqDvMLlb10UST+y7sMT57WhswmvSjafLVyS1WDHAPp3nuwmvAk9Qn/2nvcs0CkB1eORlEtoykvQHvlr4eTBw==",
   "trust_tier": "platform",
   "version": "1.0.0",
   "writes": [

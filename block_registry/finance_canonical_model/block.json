@@ -14,7 +14,8 @@
   "author": "Cerebrum Team",
   "description": "Governed FinanceOps dimensions, fact types, normalization, and validation.",
   "digests": {
-    "block.json": "dc473aaaec9a88a4331ed5dc784f6d621eafddb86805479b0d7bce27d8fcb8e6"
+    "block.json": "dc473aaaec9a88a4331ed5dc784f6d621eafddb86805479b0d7bce27d8fcb8e6",
+    "block.py": "272679b8570f56d467b1cc27b440aa3b2c5c4e632400bc7be488737cc56ffd66"
   },
   "id": "finance_canonical_model",
   "inputs": [
@@ -54,7 +55,7 @@
       "scope": "runtime"
     }
   ],
-  "signature": "fmV019YexdB/hcW6PkM/ySTNRgHoC++yuDg4M9+AeaZTbeiDdTwzsSIVgo5WFu2jxX20O8mCp1clTzZQTuiGAQ==",
+  "signature": "nuEYoEWMU3w9/CBOz+oppDRLc9t5sGmkhfWtvKZUobaLPmVdkOI61ds7JwcKKWUq2ngnCf12HvDRNBifpt+nBA==",
   "tags": [
     "domain",
     "finance_ops",

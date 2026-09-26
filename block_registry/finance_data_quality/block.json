@@ -3,7 +3,8 @@
   "author": "Cerebrum Team",
   "description": "Finance-side data quality and journal-balance controls.",
   "digests": {
-    "block.json": "02557be5e028f4162f35292530918600fd2e9c914ff1d3834d35c28400978244"
+    "block.json": "02557be5e028f4162f35292530918600fd2e9c914ff1d3834d35c28400978244",
+    "block.py": "1c4396f552d651c54bd17a223ddc4da47b65dd7177cd877e8a1711761bef476b"
   },
   "id": "finance_data_quality",
   "inputs": [
@@ -45,7 +46,7 @@
       "scope": "runtime"
     }
   ],
-  "signature": "QiOXLB3nUzd96ZVM/voJOEi5BihePfqTFUNdFCSmhrbBzM29nR6ylwqTLyBJ/rz9vf8KH+EzyouY4SeeNpv5Ag==",
+  "signature": "9n7pEqiMckh5JP8btu6JJSK1ydTEbEu09lBxSDtEpw7j1/xAGLjB8ZIg5zlqOpVY3GMqZihi5hGFSXkwYJ9WAA==",
   "tags": [
     "domain",
     "finance_ops",

@@ -14,7 +14,8 @@
   "author": "Cerebrum Team",
   "description": "Deterministic insurance agency commission engine for life FYC, P&C new business, renewals, hierarchy overrides, chargebacks, and effective dating.",
   "digests": {
-    "block.json": "63f33495e958ffa842cbe0ad698a84b1a16b609dbbbed84f86f3b0cbdb23846f"
+    "block.json": "63f33495e958ffa842cbe0ad698a84b1a16b609dbbbed84f86f3b0cbdb23846f",
+    "block.py": "8400f50d0a485b80b3923077324d99ed155876581ecfe492580a79c328afe0e1"
   },
   "id": "agency_commission_engine",
   "inputs": [
@@ -81,7 +82,7 @@
       "scope": "runtime"
     }
   ],
-  "signature": "ax8/HY9uLdkbZWhcyVU8Wcu3z5uL0PbDpGkpvD3m1TMp1dsA7eY49/tUaGbIFwtyWKRPTNy7CR7Az2+FIPuYDA==",
+  "signature": "Pf1rZfYXYRwsANPDc++aFwlN5gp8tSqLy39E+jvwyym6CfJ7fRZD90zdMAL8SkDUe+bNVypdsh1CZKZI5lAgDQ==",
   "tags": [
     "domain",
     "insurance",

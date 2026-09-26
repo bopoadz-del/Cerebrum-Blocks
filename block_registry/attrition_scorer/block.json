@@ -8,7 +8,8 @@
   ],
   "description": "Heuristic insurance producer attrition risk scoring with transparent factor contributions.",
   "digests": {
-    "block.json": "4f241a2160437914b34d9fad61b6b6279b6d0b0f9cc95c38819c0c6c0e828b84"
+    "block.json": "4f241a2160437914b34d9fad61b6b6279b6d0b0f9cc95c38819c0c6c0e828b84",
+    "block.py": "d763040f7f97e3ece176d6de7e0dc6aa059dffb87ddc22dc3a7a14160ffaca7d"
   },
   "id": "attrition_scorer",
   "name": "Attrition Scorer",
@@ -30,7 +31,7 @@
       "scope": "runtime"
     }
   ],
-  "signature": "j1bZLIWyTX9IaDsBwxzigVJvCfHxDMNZKi2duEoyQvbf1inY5i8YCh3Z4LMkl6f62wwE7xD89/3tnsUIlMZBCQ==",
+  "signature": "kdpvjRfsxgJECgkX4UBXv3UTMjkBIsW9cIhwTy1dznGbneCk2Xaam9QpGbupJQxSbn9ti13ZLUicpEx4mY8zBQ==",
   "trust_tier": "platform",
   "version": "1.0.0",
   "writes": [
