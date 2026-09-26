@@ -182,6 +182,40 @@ _EXTENDED_BLOCK_DEFS: Dict[str, Tuple[str, str]] = {
     "insurance_compliance": ("app.blocks.insurance_compliance", "InsuranceComplianceBlock"),
     "loyalty_referrals": ("app.blocks.loyalty_referrals", "LoyaltyReferralsBlock"),
     "vendor_catalog": ("app.blocks.vendor_catalog", "VendorCatalogBlock"),
+    # ---- advertised in block_registry but previously unreachable -------------
+    # Each of these ships a real, mostly certified implementation and a signed
+    # block.json, and had no entry here. A registry manifest with no runtime
+    # mapping cannot be attached to a product: the Factory's CLONER PARSES this
+    # file (it does not import it) to find the module and class an adapter would
+    # call, and refuses by name rather than shipping "an adapter around nothing".
+    # A live build died on exactly that -- action_contract -- and the same wall
+    # stood in front of all sixteen of these.
+    #
+    # The adapter itself is not the Store's to add: block.py sits inside the
+    # signed file set and the operator's key is in neither repo, which is why the
+    # Factory generates the adapter and asks only for this mapping. Precedent:
+    # formula_executor died in CLONER for the same missing entry.
+    #
+    # Module and class are taken from block_certifications.json where the block
+    # is certified -- an authoritative mapping the control-delete already
+    # exercises -- not from guesswork. All sixteen import (finance_v2 only under
+    # an environment with sympy installed, which CI has).
+    "agency_commission_engine": ("app.blocks.agency_commission_engine", "AgencyCommissionEngineBlock"),
+    "agency_hierarchy": ("app.blocks.agency_hierarchy", "AgencyHierarchyBlock"),
+    "attrition_scorer": ("app.blocks.attrition_scorer", "AttritionScorerBlock"),
+    "channel_router": ("app.blocks.channel_router", "ChannelRouterBlock"),
+    "finance_canonical_model": ("app.blocks.finance_canonical_model", "FinanceCanonicalModelBlock"),
+    "finance_coa_governance": ("app.blocks.finance_coa_governance", "FinanceCoAGovernanceBlock"),
+    "finance_data_quality": ("app.blocks.finance_data_quality", "FinanceDataQualityBlock"),
+    "finance_import": ("app.blocks.finance_import", "FinanceImportBlock"),
+    "finance_reconciliation": ("app.blocks.finance_reconciliation", "FinanceReconciliationBlock"),
+    "finance_saas_metrics": ("app.blocks.finance_saas_metrics", "FinanceSaaSMetricsBlock"),
+    "finance_v2": ("app.blocks.finance_v2", "FinanceBlockV2"),
+    "hkia_gn16_rules": ("app.blocks.hkia_gn16_rules", "HKIAGN16RulesBlock"),
+    "incentive_targeting": ("app.blocks.incentive_targeting", "IncentiveTargetingBlock"),
+    "legal_v2": ("app.blocks.legal_v2", "LegalBlockV2"),
+    "producer_record": ("app.blocks.producer_record", "ProducerRecordBlock"),
+    "project_reasoner": ("app.blocks.project_reasoner", "ProjectReasonerBlock"),
 }
 
 
